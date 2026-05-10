@@ -1086,6 +1086,7 @@ def _get_env_config() -> Dict[str, Any]:
         "container_persistent": os.getenv("TERMINAL_CONTAINER_PERSISTENT", "true").lower() in ("true", "1", "yes"),
         "docker_volumes": _parse_env_var("TERMINAL_DOCKER_VOLUMES", "[]", json.loads, "valid JSON"),
         "docker_run_as_host_user": os.getenv("TERMINAL_DOCKER_RUN_AS_HOST_USER", "false").lower() in ("true", "1", "yes"),
+        "docker_exec_user": os.getenv("TERMINAL_DOCKER_EXEC_USER", "").strip() or None,
     }
 
 

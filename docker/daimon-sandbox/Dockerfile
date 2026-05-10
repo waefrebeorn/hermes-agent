@@ -40,11 +40,12 @@ RUN mkdir -p /opt/hermes-agent && chown agent:agent /opt/hermes-agent
 # Create secrets directory (credential server reads from here)
 RUN mkdir -p /run/secrets
 
-# Git config for the agent user
-RUN su agent -c 'git config --global user.name "daimon[bot]"' \
-    && su agent -c 'git config --global user.email "daimon[bot]@nousresearch.com"' \
-    && su agent -c 'git config --global credential.helper daimon' \
-    && su agent -c 'git config --global init.defaultBranch main'
+# Git config for the agent user — set at SYSTEM level (/etc/gitconfig)
+# because /home is mounted as tmpfs at runtime, wiping per-user configs.
+RUN git config --system user.name "daimon[bot]" \
+    && git config --system user.email "daimon[bot]@nousresearch.com" \
+    && git config --system credential.helper daimon \
+    && git config --system init.defaultBranch main
 
 # Build credential server
 COPY credential-server.c /tmp/credential-server.c
@@ -54,6 +55,13 @@ RUN gcc -O2 -Wall -o /usr/local/bin/credential-server /tmp/credential-server.c \
 # Install credential helper client
 COPY git-credential-daimon /usr/local/bin/git-credential-daimon
 RUN chmod 755 /usr/local/bin/git-credential-daimon
+
+# gh CLI wrapper — fetches token from credential server per-invocation
+# so the token never persists in environment variables.
+COPY gh-wrapper.sh /usr/local/bin/gh-wrapper
+RUN chmod 755 /usr/local/bin/gh-wrapper \
+    && mv /usr/bin/gh /usr/bin/gh-real \
+    && ln -s /usr/local/bin/gh-wrapper /usr/bin/gh
 
 # Default working directory
 WORKDIR /workspaces
