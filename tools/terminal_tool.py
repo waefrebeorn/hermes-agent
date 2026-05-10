@@ -1143,6 +1143,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
             forward_env=docker_forward_env,
             env=docker_env,
             run_as_host_user=cc.get("docker_run_as_host_user", False),
+            exec_user=cc.get("docker_exec_user"),
         )
     
     elif env_type == "singularity":

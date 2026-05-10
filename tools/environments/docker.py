@@ -300,12 +300,14 @@ class DockerEnvironment(BaseEnvironment):
         host_cwd: str = None,
         auto_mount_cwd: bool = False,
         run_as_host_user: bool = False,
+        exec_user: str | None = None,
     ):
         if cwd == "~":
             cwd = "/root"
         super().__init__(cwd=cwd, timeout=timeout)
         self._persistent = persistent_filesystem
         self._task_id = task_id
+        self._exec_user = exec_user  # e.g., "1000:1000" or "agent" — passed to docker exec --user
         self._forward_env = _normalize_forward_env_names(forward_env)
         self._env = _normalize_env_dict(env)
         self._container_id: Optional[str] = None
@@ -560,6 +562,12 @@ class DockerEnvironment(BaseEnvironment):
         cmd = [self._docker_exe, "exec"]
         if stdin_data is not None:
             cmd.append("-i")
+
+        # Run as a specific user inside the container (e.g., "1000:1000").
+        # Prevents the exec'd process from running as root, which blocks
+        # access to root-owned secrets files (mode 600).
+        if self._exec_user:
+            cmd.extend(["--user", self._exec_user])
 
         # Only inject -e env args during init_session (login=True).
         # Subsequent commands get env vars from the snapshot.
