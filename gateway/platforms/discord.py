@@ -4096,11 +4096,14 @@ class DiscordAdapter(BasePlatformAdapter):
             thread_id = str(message.channel.id)
             parent_channel_id = self._get_parent_channel_id(message.channel)
 
-        # ── Daimon: thread-creator filter + ban check ──
+        # ── Daimon: thread-creator filter + ban check + dedup ──
         if self._daimon and self._daimon.active:
             if self._daimon.is_banned(str(message.author.id)):
                 return
             if is_thread and thread_id:
+                # Idempotency: skip duplicate messages (Discord can deliver twice)
+                if self._daimon.is_duplicate_trigger(thread_id, str(message.id)):
+                    return
                 _author_role_ids = [str(r.id) for r in message.author.roles] if hasattr(message.author, 'roles') else None
                 _allowed, _denial_reason = self._daimon.should_process_in_thread(str(message.author.id), thread_id, role_ids=_author_role_ids)
                 if not _allowed:
@@ -4178,6 +4181,7 @@ class DiscordAdapter(BasePlatformAdapter):
                                 author_id=str(message.author.id),
                                 content=_content,
                                 has_attachments=bool(message.attachments),
+                                message_id=str(message.id),
                             )
                     return
         # Auto-thread: when enabled, automatically create a thread for every

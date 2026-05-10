@@ -58,9 +58,13 @@ class DaimonDiscordHooks:
         """Check if a user is banned."""
         return user_id in self._banned
 
-    def buffer_message(self, thread_id: str, author_name: str, author_id: str, content: str, has_attachments: bool = False) -> None:
+    def buffer_message(self, thread_id: str, author_name: str, author_id: str, content: str, has_attachments: bool = False, message_id: str = "") -> None:
         """Buffer a non-mention message for later context flush."""
         from datetime import datetime, timezone
+        if message_id and self._window_buffer.has_seen(thread_id, message_id):
+            return  # dedup
+        if message_id:
+            self._window_buffer.mark_seen(thread_id, message_id)
         msg = BufferedMessage(
             author_name=author_name,
             author_id=author_id,
@@ -82,10 +86,12 @@ class DaimonDiscordHooks:
         """Clear buffer for a thread (cleanup on close)."""
         self._window_buffer.clear(thread_id)
 
-    def increment_turn(self, thread_id: str) -> None:
-        """Increment turn counter after agent response delivery."""
-        if self._manager:
-            self._manager.increment_turn(thread_id)
+    def is_duplicate_trigger(self, thread_id: str, message_id: str) -> bool:
+        """Check if an @mention trigger message is a duplicate (dedup)."""
+        if self._window_buffer.has_seen(thread_id, message_id):
+            return True
+        self._window_buffer.mark_seen(thread_id, message_id)
+        return False
 
     def should_process_in_thread(self, author_id: str, thread_id: str, role_ids: Optional[list[str]] = None) -> tuple[bool, str]:
         """Check if a message should be processed (thread ownership + turn cap).

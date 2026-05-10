@@ -15,11 +15,8 @@ from gateway.daimon.config import DaimonConfig, load_daimon_config
 from gateway.daimon.concurrency import ConcurrencyManager
 from gateway.daimon.thread_filter import ThreadOwnershipTracker
 from gateway.daimon.workspace import WorkspaceManager
-from gateway.daimon.tool_limiter import ToolLimiter
-from gateway.daimon.tool_gate import register_limiter, unregister_limiter
 from gateway.daimon.agent_overrides import AgentOverrides, compute_overrides
 from gateway.daimon.redaction import redact_response
-from gateway.daimon.tier import Tier
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +45,6 @@ class DaimonSessionManager:
         )
         self._threads = ThreadOwnershipTracker()
         self._workspace = WorkspaceManager()
-        self._turn_counts: dict[str, int] = {}  # thread_id → message turns used
 
     @property
     def config(self) -> DaimonConfig:
@@ -83,10 +79,6 @@ class DaimonSessionManager:
                 )
 
         return True, ""
-
-    def increment_turn(self, thread_id: str) -> None:
-        """Increment the turn counter for a thread. Call after agent response delivery."""
-        self._turn_counts[thread_id] = self._turn_counts.get(thread_id, 0) + 1
 
     def start_session(
         self, thread_id: str, user_id: str, raw_config: dict
@@ -134,8 +126,9 @@ class DaimonSessionManager:
         # Unregister thread ownership
         self._threads.unregister(thread_id)
 
-        # Clean up turn counter
-        self._turn_counts.pop(thread_id, None)
+        # Clean up turn counter (authoritative registry in gateway_hooks)
+        from gateway.daimon.gateway_hooks import clear_thread_turns
+        clear_thread_turns(thread_id)
 
         # Release concurrency slot (may promote next from queue)
         return self._concurrency.release(thread_id)

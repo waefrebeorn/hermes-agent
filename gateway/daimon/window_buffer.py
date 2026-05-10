@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import threading
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,24 @@ class WindowBuffer:
         self._max_threads = max_threads
         self._lock = threading.Lock()
         self._buffers: dict[str, deque[BufferedMessage]] = {}
+        # Idempotency: track recent message IDs to prevent double-processing
+        self._seen_ids: dict[str, deque[str]] = {}  # thread_id → recent message IDs
+        _SEEN_IDS_MAX = 100  # per thread
+
+    def has_seen(self, thread_id: str, message_id: str) -> bool:
+        """Check if a message ID has already been processed (dedup)."""
+        with self._lock:
+            seen = self._seen_ids.get(thread_id)
+            if seen and message_id in seen:
+                return True
+            return False
+
+    def mark_seen(self, thread_id: str, message_id: str) -> None:
+        """Mark a message ID as processed."""
+        with self._lock:
+            if thread_id not in self._seen_ids:
+                self._seen_ids[thread_id] = deque(maxlen=100)
+            self._seen_ids[thread_id].append(message_id)
 
     def append(self, thread_id: str, msg: BufferedMessage) -> None:
         """Add a message to the thread's buffer. Evicts oldest if at cap."""
@@ -62,9 +80,10 @@ class WindowBuffer:
             return list(buf)
 
     def clear(self, thread_id: str) -> None:
-        """Remove buffer for a thread (cleanup on close/archive)."""
+        """Remove buffer and seen IDs for a thread (cleanup on close/archive)."""
         with self._lock:
             self._buffers.pop(thread_id, None)
+            self._seen_ids.pop(thread_id, None)
 
     @property
     def tracked_threads(self) -> int:

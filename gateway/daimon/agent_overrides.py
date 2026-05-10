@@ -1,10 +1,10 @@
 """Compute AIAgent construction overrides based on Daimon tier."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
-from gateway.daimon.config import DaimonConfig, load_daimon_config
+from gateway.daimon.config import load_daimon_config
 from gateway.daimon.tier import Tier, resolve_tier
 
 
