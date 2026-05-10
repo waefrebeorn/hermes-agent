@@ -709,17 +709,6 @@ def handle_function_call(
         if function_name in _AGENT_LOOP_TOOLS:
             return json.dumps({"error": f"{function_name} must be handled by the agent loop"})
 
-        # ── Daimon tool gate ──
-        try:
-            from gateway.daimon.tool_gate import check_tool_call
-            _gate_session = session_id or task_id
-            if _gate_session:
-                _denial = check_tool_call(_gate_session, function_name)
-                if _denial:
-                    return json.dumps({"error": _denial})
-        except ImportError:
-            pass
-
         # Check plugin hooks for a block directive (unless caller already
         # checked — e.g. run_agent._invoke_tool passes skip=True to
         # avoid double-firing the hook).

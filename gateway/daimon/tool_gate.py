@@ -46,16 +46,14 @@ def check_tool_call(session_id: str, tool_name: str) -> Optional[str]:
     """
     with _lock:
         limiter = _session_limiters.get(session_id)
-    if limiter is None:
-        return None  # No limiter = no restrictions (admin or non-daimon)
+        if limiter is None:
+            return None  # No limiter = no restrictions (admin or non-daimon)
 
-    # Atomic check-and-record to prevent race with parallel tool calls
-    if not limiter.check(tool_name):
-        return limiter.denial_message(tool_name)
+        if not limiter.check(tool_name):
+            return limiter.denial_message(tool_name)
 
-    # Allowed — record the usage
-    limiter.record(tool_name)
-    return None
+        limiter.record(tool_name)
+        return None
 
 
 def active_session_count() -> int:
