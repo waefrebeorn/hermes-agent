@@ -4101,7 +4101,8 @@ class DiscordAdapter(BasePlatformAdapter):
             if self._daimon.is_banned(str(message.author.id)):
                 return
             if is_thread and thread_id:
-                if not self._daimon.should_process_in_thread(str(message.author.id), thread_id):
+                _author_role_ids = [str(r.id) for r in message.author.roles] if hasattr(message.author, 'roles') else None
+                if not self._daimon.should_process_in_thread(str(message.author.id), thread_id, role_ids=_author_role_ids):
                     return
 
         is_voice_linked_channel = False

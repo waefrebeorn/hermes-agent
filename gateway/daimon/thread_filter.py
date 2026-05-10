@@ -49,7 +49,7 @@ class ThreadOwnershipTracker:
         with self._lock:
             self._owners.pop(thread_id, None)
 
-    def should_process(self, author_id: str, thread_id: str, cfg: DaimonConfig) -> bool:
+    def should_process(self, author_id: str, thread_id: str, cfg: DaimonConfig, role_ids: Optional[list[str]] = None) -> bool:
         """Determine if a message from author_id in thread_id should be processed.
 
         Returns True if:
@@ -58,9 +58,13 @@ class ThreadOwnershipTracker:
         - The thread is unknown (not tracked — e.g., pre-existing thread, allow through)
         """
         # Admins always get through
-        tier = resolve_tier(author_id, cfg)
-        if tier.is_admin:
+        tier = resolve_tier(author_id, cfg, role_ids=role_ids)
+        if tier is not None and tier.is_admin:
             return True
+
+        # If tier is None (user should be ignored), don't process
+        if tier is None:
+            return False
 
         # Check thread ownership
         owner = self.get_owner(thread_id)

@@ -55,12 +55,12 @@ class DaimonSessionManager:
 
     @property
     def is_active(self) -> bool:
-        """Daimon is active only if admin_users are configured."""
-        return bool(self._cfg.admin_users)
+        """Daimon is active only if admin_users or admin_roles are configured."""
+        return bool(self._cfg.admin_users) or bool(self._cfg.admin_roles)
 
-    def should_process_message(self, author_id: str, thread_id: str) -> bool:
+    def should_process_message(self, author_id: str, thread_id: str, role_ids: Optional[list[str]] = None) -> bool:
         """Check if a message should be processed (thread ownership filter)."""
-        return self._threads.should_process(author_id, thread_id, self._cfg)
+        return self._threads.should_process(author_id, thread_id, self._cfg, role_ids=role_ids)
 
     def start_session(
         self, thread_id: str, user_id: str, raw_config: dict

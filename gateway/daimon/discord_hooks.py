@@ -50,7 +50,7 @@ class DaimonDiscordHooks:
         """Check if a user is banned."""
         return user_id in self._banned
 
-    def should_process_in_thread(self, author_id: str, thread_id: str) -> bool:
+    def should_process_in_thread(self, author_id: str, thread_id: str, role_ids: Optional[list[str]] = None) -> bool:
         """Check if a message should be processed (thread ownership filter).
 
         Returns True if:
@@ -60,7 +60,7 @@ class DaimonDiscordHooks:
         """
         if not self._manager:
             return True
-        return self._manager.should_process_message(author_id, thread_id)
+        return self._manager.should_process_message(author_id, thread_id, role_ids=role_ids)
 
     def on_thread_created(
         self, thread_id: str, creator_id: str, raw_config: dict
