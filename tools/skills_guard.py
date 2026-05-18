@@ -230,7 +230,7 @@ THREAT_PATTERNS = [
      "modifies cron jobs"),
 
     # ── Python file write operations (outside skill dir) ──
-    (r'open\s*\([^)]*["\']w["\']|open\s*\([^)]*["\']a["\']',
+    (r'open\s*\([^)]*["\'][wa]',
      "python_file_write", "medium", "persistence",
      "Python open() with write/append mode (may write files outside skill directory)"),
     (r'\.write_text\s*\(|\.write_bytes\s*\(',
@@ -356,7 +356,7 @@ THREAT_PATTERNS = [
     (r'Runtime\.getRuntime\(\)\.exec\(',
      "java_runtime_exec", "high", "execution",
      "Java Runtime.exec() — shell execution"),
-    (r'`[^`]*\\$\\([^)]+\\)[^`]*`',
+    (r'`[^`]*\$\([^)]+\)[^`]*`',
      "backtick_subshell", "medium", "execution",
      "backtick string with command substitution"),
 
