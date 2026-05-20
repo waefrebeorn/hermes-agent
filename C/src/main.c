@@ -25,5 +25,11 @@ int main(int argc, char **argv) {
         return hermes_gateway_main(argc - 1, argv + 1);
     }
 
+    if (argc > 1 && strcmp(argv[1], "cron") == 0) {
+        /* Forward declare — defined in scheduler.c */
+        extern int hermes_cron_main(int, char**);
+        return hermes_cron_main(argc - 1, argv + 1);
+    }
+
     return hermes_cli_main(argc, argv);
 }
