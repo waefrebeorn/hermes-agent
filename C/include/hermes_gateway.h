@@ -85,4 +85,16 @@ json_node_t *matrix_poll_messages(http_client_t *http);
 const char *matrix_get_chat_id(json_node_t *update);
 const char *matrix_get_text(json_node_t *update);
 
+/* ================================================================
+ *  Mattermost platform
+ * ================================================================ */
+
+void mattermost_set_url(const char *url);
+void mattermost_set_token(const char *token);
+void mattermost_set_channel(const char *id);
+bool mattermost_send_message(http_client_t *http, const char *text);
+json_node_t *mattermost_poll_messages(http_client_t *http);
+const char *mattermost_get_chat_id(json_node_t *update);
+const char *mattermost_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

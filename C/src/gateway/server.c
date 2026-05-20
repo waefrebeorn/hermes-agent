@@ -43,6 +43,8 @@ static void gateway_send(const char *target, const char *text) {
         }
     } else if (strcmp(g_gw.platform, "discord") == 0) {
         discord_send_message(g_gw.http, text);
+    } else if (strcmp(g_gw.platform, "mattermost") == 0) {
+        mattermost_send_message(g_gw.http, text);
     }
 }
 
@@ -52,6 +54,7 @@ static void gateway_send_typing(const char *target) {
     } else if (strcmp(g_gw.platform, "discord") == 0) {
         discord_send_typing(g_gw.http);
     }
+    /* Mattermost: no typing indicator API */
 }
 
 /* ================================================================
@@ -184,6 +187,32 @@ static void poll_matrix(void) {
 }
 
 /* ================================================================
+ *  Mattermost poll loop
+ * ================================================================ */
+
+static void poll_mattermost(void) {
+    printf("[gateway] Mattermost polling (interval: %ds)\n", g_gw.poll_interval);
+
+    while (g_gw.running) {
+        json_node_t *updates = mattermost_poll_messages(g_gw.http);
+
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update(mattermost_get_chat_id(update),
+                               mattermost_get_text(update));
+            }
+        }
+
+        json_free(updates);
+
+        if (g_gw.running)
+            sleep(g_gw.poll_interval);
+    }
+}
+
+/* ================================================================
  *  Signal handler
  * ================================================================ */
 
@@ -279,8 +308,20 @@ int hermes_gateway_main(int argc, char **argv) {
         matrix_set_token(token);
         if (room) matrix_set_room(room);
         ok = true;
+    } else if (strcmp(g_gw.platform, "mattermost") == 0) {
+        const char *url = getenv("MATTERMOST_URL");
+        const char *token = getenv("MATTERMOST_TOKEN");
+        const char *channel = getenv("MATTERMOST_CHANNEL_ID");
+        if (!token || !channel) {
+            fprintf(stderr, "Error: MATTERMOST_TOKEN and MATTERMOST_CHANNEL_ID must be set\n");
+            goto cleanup;
+        }
+        mattermost_set_url(url && url[0] ? url : "http://localhost:8065");
+        mattermost_set_token(token);
+        mattermost_set_channel(channel);
+        ok = true;
     } else {
-        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', 'slack', or 'matrix'.\n",
+        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', 'slack', 'matrix', or 'mattermost'.\n",
                 g_gw.platform);
         goto cleanup;
     }
@@ -305,6 +346,8 @@ int hermes_gateway_main(int argc, char **argv) {
         poll_slack();
     else if (strcmp(g_gw.platform, "matrix") == 0)
         poll_matrix();
+    else if (strcmp(g_gw.platform, "mattermost") == 0)
+        poll_mattermost();
 
 cleanup:
     agent_free(&g_gw.agent);
