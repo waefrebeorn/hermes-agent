@@ -8,13 +8,6 @@
 #include "hermes_display.h"
 #include <stdio.h>
 
-/* Gateway stub (Phase 4) */
-int hermes_gateway_main(int argc, char **argv) {
-    (void)argc; (void)argv;
-    fprintf(stderr, "Gateway mode not yet implemented (Phase 4)\n");
-    return 1;
-}
-
 /* CLI-specific initialization */
 void cli_init(void) {
     display_init();
