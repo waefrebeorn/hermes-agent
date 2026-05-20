@@ -12,6 +12,21 @@
 extern "C" {
 #endif
 
+/* === Tool Registry (tools/registry.c) === */
+bool registry_register(const char *name, const char *description,
+                        const char *schema_json,
+                        char *(*handler)(const char *args_json, const char *task_id));
+void registry_set_available(const char *name, bool available);
+tool_t *registry_find(const char *name);
+char *registry_dispatch(const char *name, const char *args_json,
+                        const char *task_id);
+tool_registry_t *registry_get(void);
+size_t registry_count(void);
+json_node_t *registry_to_json(void);
+
+/* Tool initialization */
+void tools_init_all(void);
+
 /* === Message lifecycle (context.c) === */
 message_t *message_new(message_role_t role, const char *content);
 message_t *message_new_tool(const char *tool_call_id, const char *content);

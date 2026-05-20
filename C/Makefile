@@ -7,7 +7,7 @@ LIBS = -lm
 DEPS_OBJ = src/deps/json.o src/deps/yaml.o src/deps/http.o src/deps/db.o src/deps/crypto.o src/deps/cli_display.o
 AGENT_OBJ = src/agent/agent_loop.o src/agent/llm_client.o src/agent/context.o src/agent/title.o
 CLI_OBJ = src/cli/main.o src/cli/cli.o src/cli/display.o src/cli/config.o src/cli/commands.o
-TOOLS_OBJ = src/tools/registry.o src/tools/terminal.o src/tools/file.o src/tools/web.o src/tools/skills.o
+TOOLS_OBJ = src/tools/registry.o src/tools/terminal.o src/tools/file.o src/tools/web.o src/tools/skills.o src/tools/tool_init.o
 GATEWAY_OBJ = src/gateway/server.o src/gateway/platforms/telegram.o
 CRON_OBJ = src/cron/scheduler.o src/cron/jobs.o
 

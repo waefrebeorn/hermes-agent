@@ -56,6 +56,10 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Initialize agent */
     agent_init(&g_cli.agent);
+    /* Initialize tools */
+    tools_init_all();
+    /* Copy tools registry to agent */
+    g_cli.agent.tools = *registry_get();
     /* Copy config fields to agent */
     memcpy(g_cli.agent.llm.base_url, g_cli.config.base_url, sizeof(g_cli.agent.llm.base_url));
     memcpy(g_cli.agent.llm.api_key, g_cli.config.api_key, sizeof(g_cli.agent.llm.api_key));
