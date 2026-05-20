@@ -132,6 +132,7 @@ typedef struct {
     char  provider[64];
     char  api_key[256];
     char  base_url[256];
+    char  skin_path[HERMES_PATH_MAX];
     int   max_turns;
     bool  quiet_mode;
 } hermes_config_t;

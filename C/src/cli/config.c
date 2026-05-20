@@ -135,6 +135,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int max_turns = yaml_get_int(doc, "agent.max_turns", 90);
     cfg->max_turns = max_turns > 0 ? max_turns : 90;
 
+    /* Display section */
+    const char *skin = yaml_get_string(doc, "display.skin");
+    if (skin) snprintf(cfg->skin_path, sizeof(cfg->skin_path), "%s", skin);
+
     yaml_free(doc);
 
     /* Parse .env (overrides config.yaml) */
@@ -161,6 +165,9 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_MAX_TURNS");
     if (v) { int t = atoi(v); if (t > 0) cfg->max_turns = t; }
+
+    v = getenv("HERMES_SKIN");
+    if (v) snprintf(cfg->skin_path, sizeof(cfg->skin_path), "%s", v);
 
     return true;
 }

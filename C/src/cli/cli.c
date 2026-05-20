@@ -63,6 +63,12 @@ int hermes_cli_main(int argc, char **argv) {
     hermes_config_load(&g_cli.config, NULL);
     hermes_config_load_env(&g_cli.config);
 
+    /* Load skin if configured (future: wire into display) */
+    if (g_cli.config.skin_path[0]) {
+        /* skin_load is available from libskin; for now just acknowledge */
+        g_cli.config.skin_path[0] = '\0'; /* reset until full skin integration */
+    }
+
     /* Initialize agent */
     agent_init(&g_cli.agent);
     /* Set streaming callback for interactive mode */
