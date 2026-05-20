@@ -4,6 +4,20 @@ CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
 LDFLAGS = -lssl -lcrypto -ldl
 LIBS = -lm
 
+# Optional ncurses full-screen TUI (enabled when ncurses is available)
+TUI_INC = -I lib/libncurses/include
+TUI_LIB = lib/libncurses/lib/libncursesw.a lib/libncurses/lib/libpanelw.a
+TUI_SRC = src/cli/tui_fullscreen.c
+TUI_OBJ = src/cli/tui_fullscreen.o
+
+# Auto-detect: check if local ncurses headers exist
+ifneq ("$(wildcard lib/libncurses/include/curses.h)","")
+    HAS_NCURSES = 1
+    CFLAGS += $(TUI_INC)
+else
+    HAS_NCURSES = 0
+endif
+
 # Standalone library directories
 LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin
 LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin)
@@ -29,7 +43,7 @@ PHASE4_OBJ = $(PHASE3_OBJ) $(GATEWAY_OBJ)
 PHASE5_OBJ = $(PHASE4_OBJ) $(CRON_OBJ)
 
 .PHONY: all clean phase1 phase2 phase3 phase4 phase5 test digest \
-        upstream-sync upstream-merge what-changed test-libs
+        upstream-sync upstream-merge what-changed test-libs tui
 
 all: phase5
 
@@ -51,6 +65,12 @@ phase5: hermes
 
 hermes: $(PHASE5_OBJ) src/main.o $(LIB_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+# ncurses full-screen TUI build (shared libs from system)
+tui: $(PHASE5_OBJ) $(TUI_OBJ) src/main.o $(LIB_OBJ)
+	$(CC) $(CFLAGS) -DHAS_NCURSES_TUI -o hermes-tui $^ $(LDFLAGS) $(LIBS) \
+		-L lib/libncurses/lib -lncursesw -ltinfo
+	@echo "hermes-tui built with ncurses TUI support"
 
 # Pattern rule for .c files
 src/%.o: src/%.c include/hermes.h

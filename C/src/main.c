@@ -31,5 +31,12 @@ int main(int argc, char **argv) {
         return hermes_cron_main(argc - 1, argv + 1);
     }
 
+#ifdef HAS_NCURSES_TUI
+    if (argc > 1 && (strcmp(argv[1], "--tui") == 0 || strcmp(argv[1], "tui") == 0)) {
+        extern int tui_fullscreen_run(void);
+        return tui_fullscreen_run();
+    }
+#endif
+
     return hermes_cli_main(argc, argv);
 }
