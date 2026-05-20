@@ -52,7 +52,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
 
     json_node_t *result = json_new_object();
     json_object_set(result, "url", json_new_string(url));
-    json_object_set(result, "status_code", json_new_number((double)resp->status_code));
+    json_object_set(result, "status_code", json_new_number((double)resp->status));
     json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
     json_object_set(result, "body_length", json_new_number((double)resp->body_len));
 

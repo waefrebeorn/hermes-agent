@@ -46,16 +46,18 @@ static json_node_t *build_messages_json(const message_t **msgs, size_t count) {
             json_object_set(msg, "tool_call_id", json_new_string(msgs[i]->tool_call_id));
 
         /* Tool calls from assistant */
-        if (msgs[i]->role == MSG_ASSISTANT && msgs[i]->tool_name) {
+        if (msgs[i]->role == MSG_ASSISTANT && msgs[i]->tool_calls_count > 0) {
             json_node_t *tc_arr = json_new_array();
-            json_node_t *tc = json_new_object();
-            json_object_set(tc, "id", json_new_string(msgs[i]->tool_call_id ? msgs[i]->tool_call_id : "call_1"));
-            json_object_set(tc, "type", json_new_string("function"));
-            json_node_t *fn = json_new_object();
-            json_object_set(fn, "name", json_new_string(msgs[i]->tool_name));
-            json_object_set(fn, "arguments", json_new_string(msgs[i]->content ? msgs[i]->content : "{}"));
-            json_object_set(tc, "function", fn);
-            json_array_append(tc_arr, tc);
+            for (int j = 0; j < msgs[i]->tool_calls_count; j++) {
+                json_node_t *tc = json_new_object();
+                json_object_set(tc, "id", json_new_string(msgs[i]->tool_calls[j].id));
+                json_object_set(tc, "type", json_new_string("function"));
+                json_node_t *fn = json_new_object();
+                json_object_set(fn, "name", json_new_string(msgs[i]->tool_calls[j].name));
+                json_object_set(fn, "arguments", json_new_string(msgs[i]->tool_calls[j].arguments));
+                json_object_set(tc, "function", fn);
+                json_array_append(tc_arr, tc);
+            }
             json_object_set(msg, "tool_calls", tc_arr);
         }
 
@@ -128,7 +130,7 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     json_free(req);
     free(body);
 
-    if (!http_resp || http_resp->status_code < 0) {
+    if (!http_resp ||        http_resp->status < 0) {
         resp->content = xstrdup("HTTP request failed");
         if (http_resp) http_response_free(http_resp);
         http_client_free(client);
@@ -173,6 +175,20 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
             json_node_t *tool_calls = json_object_get(message, "tool_calls");
             if (tool_calls && json_array_count(tool_calls) > 0) {
                 resp->tool_calls_count = (int)json_array_count(tool_calls);
+                if (resp->tool_calls_count > 64)
+                    resp->tool_calls_count = 64;
+                for (int i = 0; i < resp->tool_calls_count; i++) {
+                    json_node_t *tc = json_array_get(tool_calls, (size_t)i);
+                    const char *id = json_object_get_string(tc, "id", "");
+                    snprintf(resp->tool_calls[i].id, sizeof(resp->tool_calls[i].id), "%s", id);
+                    json_node_t *fn = json_object_get(tc, "function");
+                    if (fn) {
+                        const char *name = json_object_get_string(fn, "name", "");
+                        const char *args = json_object_get_string(fn, "arguments", "{}");
+                        snprintf(resp->tool_calls[i].name, sizeof(resp->tool_calls[i].name), "%s", name);
+                        snprintf(resp->tool_calls[i].arguments, sizeof(resp->tool_calls[i].arguments), "%s", args);
+                    }
+                }
             }
 
             /* Reasoning content field (some providers use this instead of "reasoning") */

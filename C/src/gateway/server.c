@@ -133,7 +133,7 @@ static void poll_loop(void) {
             continue;
         }
 
-        if (resp->status_code == 200 && resp->body) {
+        if (resp->status == 200 && resp->body) {
             char *err = NULL;
             json_node_t *root = json_parse(resp->body, &err);
 

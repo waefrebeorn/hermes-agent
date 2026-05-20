@@ -33,6 +33,14 @@
 /* ================================================================
  *  Message Types
  * ================================================================ */
+
+/* Tool call metadata (must be before message_t which uses it) */
+typedef struct {
+    char  id[64];
+    char  name[128];
+    char  arguments[4096]; /* JSON args string */
+} tool_call_t;
+
 typedef enum {
     MSG_SYSTEM,
     MSG_USER,
@@ -44,8 +52,10 @@ typedef struct {
     message_role_t  role;
     char           *content;     /* text content */
     char           *tool_call_id; /* for tool results */
-    char           *tool_name;    /* for tool calls */
+    char           *tool_name;    /* for tool calls (single) */
     char           *reasoning;   /* reasoning content if any */
+    int             tool_calls_count;
+    tool_call_t     tool_calls[64];
 } message_t;
 
 /* ================================================================
@@ -75,12 +85,14 @@ typedef struct {
     char  provider[64];
 } llm_config_t;
 
+/* LLM response */
 typedef struct {
-    char *content;
-    char *reasoning;
-    int   input_tokens;
-    int   output_tokens;
-    int   tool_calls_count;
+    char         *content;
+    char         *reasoning;
+    int           input_tokens;
+    int           output_tokens;
+    int           tool_calls_count;
+    tool_call_t   tool_calls[64]; /* Max 64 tool calls per turn */
 } llm_response_t;
 
 /* ================================================================
@@ -98,18 +110,6 @@ typedef struct {
     char              session_id[64];
     char              hermes_home[HERMES_PATH_MAX];
 } agent_state_t;
-
-/* ================================================================
- *  Session Store (SQLite-backed)
- * ================================================================ */
-typedef struct session_db_t session_db_t;
-
-session_db_t *session_db_open(const char *path);
-void          session_db_close(session_db_t *db);
-bool          session_db_save(session_db_t *db, const char *session_id, 
-                              const message_t *msgs, size_t count);
-message_t   **session_db_load(session_db_t *db, const char *session_id, 
-                              size_t *count);
 
 /* ================================================================
  *  Config

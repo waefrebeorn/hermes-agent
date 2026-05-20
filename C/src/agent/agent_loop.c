@@ -16,12 +16,6 @@
 #include <string.h>
 #include <time.h>
 
-/* Forward declaration of tool handler (from registry in Phase 3) */
-typedef struct {
-    char *(*handler_fn)(const char *args_json, const char *task_id);
-    json_node_t *schema;
-} tool_handler_t;
-
 /* ================================================================
  *  Agent initialization
  * ================================================================ */
@@ -48,34 +42,6 @@ void agent_free(agent_state_t *state) {
 /* ================================================================
  *  Core loop
  * ================================================================ */
-
-/* Run tool and return result string */
-static char *run_tool(agent_state_t *state, const char *tool_name,
-                      const char *args_json)
-{
-    /* Search tool registry */
-    for (size_t i = 0; i < state->tools.count; i++) {
-        if (strcmp(state->tools.tools[i].name, tool_name) == 0) {
-            if (state->tools.tools[i].handler) {
-                return state->tools.tools[i].handler(args_json, state->session_id);
-            }
-        }
-    }
-
-    /* Tool not found */
-    char buf[512];
-    snprintf(buf, sizeof(buf),
-             "{\"error\": \"tool '%s' not found\", \"available_tools\": [",
-             tool_name);
-    size_t pos = strlen(buf);
-    for (size_t i = 0; i < state->tools.count; i++) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                        "%s\"%s\"", i > 0 ? ", " : "",
-                        state->tools.tools[i].name);
-    }
-    snprintf(buf + pos, sizeof(buf) - pos, "]}");
-    return strdup(buf);
-}
 
 /* Convert tool registry to JSON for tool_choice */
 static json_node_t *tools_to_json(tool_registry_t *reg) {
@@ -146,7 +112,7 @@ char *agent_run_conversation(agent_state_t *state,
             return strdup("Error: LLM call returned NULL");
         }
 
-        /* No content + no tool calls → final response */
+        /* No content + no tool calls → error */
         if (!llm_resp->content && llm_resp->tool_calls_count == 0) {
             char *result = strdup("Error: Empty LLM response");
             llm_response_free(llm_resp);
@@ -154,15 +120,9 @@ char *agent_run_conversation(agent_state_t *state,
             return result;
         }
 
-        /* Add assistant message */
-        message_t *assistant_msg = message_new_assistant(
-            llm_resp->content,
-            NULL,   /* No single tool — tool_calls JSON is in content */
-            NULL,
-            llm_resp->reasoning);
-        context_push(state, assistant_msg);
+        iteration++;
 
-        /* If no tool calls, we're done */
+        /* If no tool calls, we're done — return final content */
         if (llm_resp->tool_calls_count == 0) {
             char *result = llm_resp->content ? strdup(llm_resp->content) : strdup("");
             llm_response_free(llm_resp);
@@ -170,40 +130,29 @@ char *agent_run_conversation(agent_state_t *state,
             return result;
         }
 
-        /* Parse tool calls from the LLM response content */
-        /* The content includes tool_calls JSON embedded by some providers */
-        /* For simplicity, we re-parse the LLM response JSON */
-        /* Actually, the tool_calls come from the structured JSON response,
-           but our simplified client puts them in the content as JSON.
-           
-           Real implementation: the llm_chat_completion should return
-           extracted tool calls. For now, try to parse tool calls from
-           the message content if it looks like tool call JSON. */
+        /* Has tool calls — create assistant message with tool_calls */
+        message_t *assistant_msg = message_new_assistant_with_toolcalls(
+            llm_resp->content, llm_resp->tool_calls, llm_resp->tool_calls_count,
+            llm_resp->reasoning);
+        context_push(state, assistant_msg);
 
-        /* Check if content contains tool calls (OpenAI format) */
-        const char *content = llm_resp->content;
-        if (content && strstr(content, "tool_calls") == NULL) {
-            /* No tool calls in content either — final response */
-            char *result = strdup(content ? content : "");
-            llm_response_free(llm_resp);
-            json_free(tools_json);
-            return result;
+        /* Execute each tool call */
+        for (int i = 0; i < llm_resp->tool_calls_count; i++) {
+            char *result = registry_dispatch(
+                llm_resp->tool_calls[i].name,
+                llm_resp->tool_calls[i].arguments,
+                state->session_id);
+
+            /* Create tool result message */
+            message_t *tool_msg = message_new_tool(
+                llm_resp->tool_calls[i].id,
+                result ? result : "{\"error\":\"Tool returned NULL\"}");
+            context_push(state, tool_msg);
+            free(result);
         }
 
-        /* Parse tool calls from content */
-        /* This is a simplified parsing — real implementation would
-           extract tool_calls from the structured response */
-        /* For now: return the content as-is (it includes tool calls JSON) */
-        char *result = strdup(content ? content : "");
         llm_response_free(llm_resp);
-        json_free(tools_json);
-        return result;
-
-        /* TODO: Full tool call execution loop:
-         * 1. Parse tool_calls array from response
-         * 2. For each: call run_tool()
-         * 3. Append tool result messages
-         * 4. Loop back to LLM */
+        /* Loop back to LLM with tool results appended */
     }
 
     json_free(tools_json);

@@ -2,65 +2,40 @@
 #define HERMES_HTTP_H
 
 /*
- * hermes_http.h — HTTP client for Hermes C.
- * Uses OpenSSL + POSIX sockets. No libcurl dependency.
- * Supports: GET, POST, streaming, headers, timeouts.
+ * hermes_http.h — Compatibility shim: maps old hermes HTTP API → libhttp.
+ *
+ * Old API used http_client_t / http_response_t / http_client_new() etc.
+ * New libhttp uses http_t / http_resp_t / http_new() etc.
+ * This header provides backward-compatible typedefs + wrappers.
  */
 
-#include <stdbool.h>
-#include <stddef.h>
+#include "../lib/libhttp/http.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* Type aliases */
+typedef http_t       http_client_t;
+typedef http_resp_t  http_response_t;
 
-/* HTTP methods */
-typedef enum {
-    HTTP_GET,
-    HTTP_POST,
-    HTTP_PUT,
-    HTTP_DELETE,
-} http_method_t;
-
-/* Response structure */
-typedef struct {
-    int     status_code;
-    char   *headers;       /* raw response headers */
-    char   *body;          /* response body */
-    size_t  body_len;
-} http_response_t;
-
-/* HTTP client handle (reusable connection pool) */
-typedef struct http_client_t http_client_t;
-
-/* Create HTTP client. timeout_sec = 0 means default (30s). */
-http_client_t *http_client_new(int timeout_sec);
-
-/* Free client */
-void http_client_free(http_client_t *client);
-
-/* Perform request with JSON body. JSON Content-Type set automatically. */
-http_response_t *http_request_json(http_client_t *client,
-                                   http_method_t method,
-                                   const char *url,
-                                   const char *json_body);
-
-/* Perform request with raw body and custom content-type. */
-http_response_t *http_request(http_client_t *client,
-                              http_method_t method,
-                              const char *url,
-                              const char *headers,
-                              const char *body,
-                              size_t body_len);
-
-/* Free response */
-void http_response_free(http_response_t *resp);
-
-/* URL encode a string. Caller must free result. */
-char *http_url_encode(const char *str);
-
-#ifdef __cplusplus
+/* Construction wrappers */
+static inline http_client_t *http_client_new(int timeout_sec) {
+    return http_new(timeout_sec);
 }
-#endif
+
+static inline void http_client_free(http_client_t *client) {
+    http_free(client);
+}
+
+static inline void http_response_free(http_response_t *resp) {
+    http_resp_free(resp);
+}
+
+/* Request with JSON body (old name, always POST in practice) */
+static inline http_response_t *http_request_json(http_client_t *client,
+                                                  http_method_t method,
+                                                  const char *url,
+                                                  const char *json_body)
+{
+    (void)method; /* Old API always used POST with this function */
+    return http_post_json(client, url, json_body);
+}
 
 #endif /* HERMES_HTTP_H */

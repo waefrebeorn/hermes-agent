@@ -45,7 +45,7 @@ bool telegram_send_message(http_client_t *http, const char *chat_id,
     http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
     free(payload);
 
-    bool ok = resp && resp->status_code == 200;
+    bool ok = resp && resp->status == 200;
     if (resp) http_response_free(resp);
     return ok;
 }
@@ -72,7 +72,7 @@ bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
     http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
     free(payload);
 
-    bool ok = resp && resp->status_code == 200;
+    bool ok = resp && resp->status == 200;
     if (resp) http_response_free(resp);
     return ok;
 }

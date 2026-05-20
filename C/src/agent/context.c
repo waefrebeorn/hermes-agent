@@ -39,6 +39,23 @@ message_t *message_new_assistant(const char *content, const char *tool_name,
         if (tool_name) msg->tool_name = strdup(tool_name);
         if (tool_call_id) msg->tool_call_id = strdup(tool_call_id);
         if (reasoning) msg->reasoning = strdup(reasoning);
+        msg->tool_calls_count = 0;
+    }
+    return msg;
+}
+
+/* Create assistant message with tool calls (from LLM response) */
+message_t *message_new_assistant_with_toolcalls(const char *content,
+                                                  const tool_call_t *tcalls,
+                                                  int tcalls_count,
+                                                  const char *reasoning)
+{
+    message_t *msg = message_new(MSG_ASSISTANT, content);
+    if (!msg) return NULL;
+    if (reasoning) msg->reasoning = strdup(reasoning);
+    msg->tool_calls_count = tcalls_count > 64 ? 64 : tcalls_count;
+    for (int i = 0; i < msg->tool_calls_count; i++) {
+        memcpy(&msg->tool_calls[i], &tcalls[i], sizeof(tool_call_t));
     }
     return msg;
 }
