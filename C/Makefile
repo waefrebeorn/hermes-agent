@@ -120,7 +120,7 @@ sync-all: upstream-merge phase5
 
 # Test
 test: hermes
-	@echo "Tests TBD"
+	bash test_runner.sh
 
 # Test all standalone libraries
 test-libs:
