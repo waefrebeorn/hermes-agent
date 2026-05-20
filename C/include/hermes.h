@@ -29,6 +29,7 @@
 #define HERMES_MAX_TOOLS         256
 #define HERMES_PATH_MAX          4096
 #define HERMES_LINE_MAX          65536
+#define HERMES_MAX_CTX_TOKENS    131072
 
 /* ================================================================
  *  Message Types
@@ -98,6 +99,10 @@ typedef struct {
 /* Forward declaration for session database (defined in hermes_db.h) */
 typedef struct db_t db_t;
 
+/* Streaming output callback. Called with each token content during LLM response.
+ * Return non-zero to abort. */
+typedef int (*llm_token_cb_t)(const char *token, void *userdata);
+
 /* ================================================================
  *  Agent State
  * ================================================================ */
@@ -113,6 +118,8 @@ typedef struct {
     char              session_id[64];
     char              hermes_home[HERMES_PATH_MAX];
     db_t             *db;           /* session database (optional) */
+    llm_token_cb_t    stream_cb;   /* streaming token callback (optional) */
+    void             *stream_data; /* userdata for stream callback */
 } agent_state_t;
 
 /* ================================================================

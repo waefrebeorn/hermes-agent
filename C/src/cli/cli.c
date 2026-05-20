@@ -41,6 +41,14 @@ static void print_banner(void) {
                    "  Type /help for commands, /exit to quit\n\n");
 }
 
+/* Streaming output callback — prints tokens directly to stdout */
+static int cli_stream_cb(const char *token, void *userdata) {
+    (void)userdata;
+    printf("%s", token);
+    fflush(stdout);
+    return 0;
+}
+
 /* ================================================================
  *  CLI main
  * ================================================================ */
@@ -57,6 +65,11 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Initialize agent */
     agent_init(&g_cli.agent);
+    /* Set streaming callback for interactive mode */
+    if (g_cli.interactive) {
+        g_cli.agent.stream_cb = cli_stream_cb;
+        g_cli.agent.stream_data = &g_cli;
+    }
     /* Initialize tools */
     tools_init_all();
     /* Copy tools registry to agent */
@@ -171,7 +184,15 @@ int hermes_cli_main(int argc, char **argv) {
             display_printf(DISPLAY_WHITE, DISPLAY_DIM, "\n");
         char *resp = agent_chat(&g_cli.agent, input);
         if (resp) {
-            printf("%s\n", resp);
+            /* In streaming mode, content was already printed by callback.
+             * Only print final newline and handle errors. */
+            if (g_cli.interactive && g_cli.agent.stream_cb) {
+                printf("\n");
+                if (strncmp(resp, "Error:", 6) == 0)
+                    printf("%s\n", resp);
+            } else {
+                printf("%s\n", resp);
+            }
             free(resp);
         } else {
             printf("Error: No response\n");

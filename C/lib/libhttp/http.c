@@ -548,6 +548,214 @@ void http_resp_free(http_resp_t *resp) {
     free(resp);
 }
 
+/* ================================================================
+ *  SSE Streaming
+ * ================================================================ */
+
+/* Read one line (up to newline) from socket/SSL into buf.
+ * Returns number of chars read (incl newline), 0 on closed, -1 on error. */
+static int read_line_buffered(int fd, SSL *ssl, char *buf, size_t cap,
+                               char *rbuf, size_t *rlen, size_t rcap, int timeout_sec) {
+    size_t out = 0;
+    while (out + 1 < cap) {
+        if (*rlen == 0) {
+            /* Refill read buffer */
+            fd_set rset;
+            FD_ZERO(&rset);
+            FD_SET(fd, &rset);
+            struct timeval tv;
+            tv.tv_sec = timeout_sec > 0 ? timeout_sec : 30;
+            tv.tv_usec = 0;
+            int rc = select(fd + 1, &rset, NULL, NULL, &tv);
+            if (rc <= 0) return -1;
+            int n = ssl ? SSL_read(ssl, rbuf, (int)rcap) : (int)read(fd, rbuf, rcap);
+            if (n <= 0) return (out > 0) ? (int)out : (n == 0 ? 0 : -1);
+            *rlen = (size_t)n;
+        }
+        /* Copy from rbuf to out until newline or out of data */
+        size_t i = 0;
+        while (i < *rlen && out + 1 < cap) {
+            buf[out++] = rbuf[i];
+            if (rbuf[i] == '\n') {
+                i++;
+                *rlen -= i;
+                memmove(rbuf, rbuf + i, *rlen);
+                buf[out] = '\0';
+                return (int)out;
+            }
+            i++;
+        }
+        *rlen -= i;
+        memmove(rbuf, rbuf + i, *rlen);
+    }
+    buf[out] = '\0';
+    return (int)out;
+}
+
+int http_stream_request(http_t *h, http_method_t method,
+                        const char *url,
+                        const char *extra_headers,
+                        const char *body, size_t body_len,
+                        http_stream_cb callback, void *userdata) {
+    parsed_url_t purl;
+    memset(&purl, 0, sizeof(purl));
+    if (!parse_url(url, &purl)) return -1;
+
+    bool use_ssl = strcmp(purl.scheme, "https") == 0;
+
+    int fd = socket_connect(purl.host, purl.port, h->timeout_sec);
+    if (fd < 0) return -1;
+
+    SSL *ssl = NULL;
+    if (use_ssl) {
+        if (!h->ssl_init) {
+            SSL_load_error_strings();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+            SSL_library_init();
+#else
+            OPENSSL_init_ssl(0, NULL);
+#endif
+            h->ssl_ctx = SSL_CTX_new(TLS_client_method());
+            if (h->ssl_ctx) SSL_CTX_set_default_verify_paths(h->ssl_ctx);
+            h->ssl_init = true;
+        }
+        ssl = ssl_connect_wrap(h->ssl_ctx, fd, purl.host);
+        if (!ssl) { close(fd); return -1; }
+    }
+
+    /* Build request */
+    char method_str[16] = "GET";
+    switch (method) {
+        case HTTP_GET:    strcpy(method_str, "GET"); break;
+        case HTTP_POST:   strcpy(method_str, "POST"); break;
+        case HTTP_PUT:    strcpy(method_str, "PUT"); break;
+        case HTTP_DELETE: strcpy(method_str, "DELETE"); break;
+    }
+
+    size_t req_cap = 4096;
+    char *req = (char *)malloc(req_cap);
+    if (!req) { if (ssl) SSL_free(ssl); close(fd); return -1; }
+    size_t req_len = 0;
+    int ss;
+
+    /* Build request string manually (avoid REQ_APPEND redefinition) */
+    {
+        /* extra_headers typically: "Authorization: Bearer ***\r\nContent-Type: application/json"
+         * The format below: add \r\n after extra_headers to terminate its last header,
+         * then Content-Length as another header, then \r\n blank-line = header terminator. */
+        char hdr[8192];
+        int n;
+        if (body && body_len > 0) {
+            n = snprintf(hdr, sizeof(hdr),
+                "%s %s HTTP/1.1\r\n"
+                "Host: %s\r\n"
+                "Accept: text/event-stream\r\n"
+                "Connection: close\r\n"
+                "%s\r\n"
+                "Content-Length: %zu\r\n"
+                "\r\n",
+                method_str, purl.path, purl.host,
+                extra_headers ? extra_headers : "",
+                body_len);
+        } else {
+            n = snprintf(hdr, sizeof(hdr),
+                "%s %s HTTP/1.1\r\n"
+                "Host: %s\r\n"
+                "Accept: text/event-stream\r\n"
+                "Connection: close\r\n"
+                "%s\r\n"
+                "\r\n",
+                method_str, purl.path, purl.host,
+                extra_headers ? extra_headers : "");
+        }
+        if (n < 0 || (size_t)n >= sizeof(hdr)) {
+            free(req); if (ssl) SSL_free(ssl); close(fd); return -1;
+        }
+        size_t hdr_len = (size_t)n;
+
+        /* Allocate: headers + body */
+        size_t req_total = hdr_len;
+        if (body && body_len > 0) req_total += body_len + 1;
+        if (req_total > req_cap) {
+            char *nr = (char *)realloc(req, req_total);
+            if (!nr) { free(req); if (ssl) SSL_free(ssl); close(fd); return -1; }
+            req = nr;
+            req_cap = req_total;
+        }
+        memcpy(req + req_len, hdr, hdr_len);
+        req_len += hdr_len;
+
+        if (body && body_len > 0) {
+            memcpy(req + req_len, body, body_len);
+            req_len += body_len;
+        }
+        req[req_len] = '\0';
+    }
+
+    /* Send */
+    bool ok;
+    if (ssl) ok = SSL_write(ssl, req, (int)req_len) > 0;
+    else ok = socket_send_all(fd, req, req_len, h->timeout_sec);
+    free(req);
+    if (!ok) { if (ssl) SSL_free(ssl); close(fd); return -1; }
+
+    /* Send body */
+    if (body && body_len > 0) {
+        if (ssl) ok = SSL_write(ssl, body, (int)body_len) > 0;
+        else ok = socket_send_all(fd, body, body_len, h->timeout_sec);
+        if (!ok) { if (ssl) SSL_free(ssl); close(fd); return -1; }
+    }
+
+    /* Read response header first */
+    size_t rcap = 4096;
+    char *rbuf = (char *)malloc(rcap);
+    size_t rlen = 0;
+    if (!rbuf) { if (ssl) SSL_free(ssl); close(fd); return -1; }
+
+    /* Read until blank line */
+    while (1) {
+        char line[4096];
+        ss = read_line_buffered(fd, ssl, line, sizeof(line), rbuf, &rlen, rcap, h->timeout_sec);
+        if (ss <= 0) { free(rbuf); if (ssl) SSL_free(ssl); close(fd); return -1; }
+        if (line[0] == '\r' || line[0] == '\n') break; /* end of headers */
+    }
+
+    /* Read SSE stream */
+    int result = 0;
+    while (1) {
+        char line[8192];
+        ss = read_line_buffered(fd, ssl, line, sizeof(line), rbuf, &rlen, rcap, h->timeout_sec);
+        if (ss <= 0) break; /* EOF or error */
+
+        /* Skip empty lines */
+        if (line[0] == '\r' || line[0] == '\n') continue;
+
+        /* Check for "[DONE]" */
+        if (strncmp(line, "data: [DONE]", 12) == 0) break;
+
+        /* Extract data: content */
+        if (strncmp(line, "data: ", 6) == 0) {
+            char *data = line + 6;
+            size_t dlen = strlen(data);
+            /* Strip trailing \r */
+            while (dlen > 0 && (data[dlen-1] == '\r' || data[dlen-1] == '\n')) dlen--;
+            data[dlen] = '\0';
+            if (dlen > 0 && callback) {
+                if (callback(data, dlen, userdata) != 0) {
+                    result = -2; /* aborted by callback */
+                    break;
+                }
+            }
+        }
+        /* Ignore other SSE fields (event:, id:, retry:) */
+    }
+
+    free(rbuf);
+    if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+    close(fd);
+    return result;
+}
+
 char *http_url_encode(const char *str) {
     if (!str) return NULL;
     size_t len = strlen(str);

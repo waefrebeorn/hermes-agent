@@ -196,14 +196,25 @@ char *agent_run_conversation(agent_state_t *state,
         state->iteration_count = iteration;
 
         /* Truncate context if too long (128K token budget) */
-        llm_truncate_context(state, 131072);
+        llm_truncate_context(state, HERMES_MAX_CTX_TOKENS);
 
-        /* Call LLM */
-        llm_response_t *llm_resp = llm_chat_completion(
-            &state->llm,
-            (const message_t **)state->messages,
-            state->message_count,
-            tools_json);
+        /* Call LLM — use streaming if callback set */
+        llm_response_t *llm_resp;
+        if (state->stream_cb) {
+            llm_resp = llm_chat_completion_stream(
+                &state->llm,
+                (const message_t **)state->messages,
+                state->message_count,
+                tools_json,
+                state->stream_cb,
+                state->stream_data);
+        } else {
+            llm_resp = llm_chat_completion(
+                &state->llm,
+                (const message_t **)state->messages,
+                state->message_count,
+                tools_json);
+        }
 
         if (!llm_resp) {
             json_free(tools_json);

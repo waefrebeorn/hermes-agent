@@ -52,6 +52,15 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                                      const message_t **messages,
                                      size_t message_count,
                                      json_node_t *tools_json);
+
+/* Streaming variant. Calls token_cb with each content delta as it arrives.
+ * Still returns full llm_response_t with accumulated content + tool_calls. */
+llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
+                                            const message_t **messages,
+                                            size_t message_count,
+                                            json_node_t *tools_json,
+                                            llm_token_cb_t token_cb,
+                                            void *userdata);
 void llm_response_free(llm_response_t *resp);
 
 /* Token estimation (approximate: 1 token ≈ 4 chars) */

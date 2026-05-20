@@ -259,6 +259,211 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     return resp;
 }
 
+/* ================================================================
+ *  Streaming: per-chunk callback context
+ * ================================================================ */
+
+typedef struct {
+    llm_response_t  *resp;      /* accumulated response */
+    llm_token_cb_t   token_cb;  /* token callback */
+    void            *userdata;  /* callback userdata */
+    /* Track tool_calls across chunks (streaming builds them incrementally) */
+    int              max_tc_idx; /* highest tool_call index seen */
+    char             tc_id[64][64];  /* id per index */
+    char             tc_name[64][128]; /* name per index */
+    char             tc_args[64][4096]; /* args buffer per index */
+} stream_ctx_t;
+
+static int on_stream_chunk(const char *data, size_t len, void *userdata) {
+    stream_ctx_t *ctx = (stream_ctx_t *)userdata;
+    (void)len;
+
+    /* Parse JSON */
+    char *err = NULL;
+    json_node_t *root = json_parse(data, &err);
+    if (!root) { free(err); return 0; } /* Skip non-JSON events */
+
+    json_node_t *choices = json_object_get(root, "choices");
+    if (!choices || json_array_count(choices) == 0) { json_free(root); return 0; }
+
+    json_node_t *choice = json_array_get(choices, 0);
+    json_node_t *delta = json_object_get(choice, "delta");
+    if (!delta) { json_free(root); return 0; }
+
+    /* Extract finish_reason */
+    const char *finish = json_object_get_string(choice, "finish_reason", NULL);
+
+    /* Extract delta content */
+    const char *content = json_object_get_string(delta, "content", NULL);
+    if (content && content[0]) {
+        /* Append to accumulated content */
+        size_t cur = ctx->resp->content ? strlen(ctx->resp->content) : 0;
+        size_t add = strlen(content);
+        char *newc = (char *)realloc(ctx->resp->content, cur + add + 1);
+        if (newc) {
+            ctx->resp->content = newc;
+            memcpy(ctx->resp->content + cur, content, add + 1);
+        }
+        /* Call token callback */
+        if (ctx->token_cb)
+            ctx->token_cb(content, ctx->userdata);
+    }
+
+    /* Extract delta tool_calls (streaming builds them across chunks) */
+    json_node_t *tc_delta = json_object_get(delta, "tool_calls");
+    if (tc_delta && json_array_count(tc_delta) > 0) {
+        for (size_t i = 0; i < json_array_count(tc_delta); i++) {
+            json_node_t *tc = json_array_get(tc_delta, i);
+            int idx = (int)json_object_get_number(tc, "index", 0);
+            if (idx >= 64) continue;
+
+            /* Track highest index */
+            if (idx >= ctx->max_tc_idx) ctx->max_tc_idx = idx + 1;
+
+            /* id (only present in first chunk for this tool_call) */
+            const char *id = json_object_get_string(tc, "id", NULL);
+            if (id && id[0]) snprintf(ctx->tc_id[idx], sizeof(ctx->tc_id[idx]), "%s", id);
+
+            /* function delta */
+            json_node_t *fn = json_object_get(tc, "function");
+            if (fn) {
+                const char *name = json_object_get_string(fn, "name", NULL);
+                if (name && name[0]) snprintf(ctx->tc_name[idx], sizeof(ctx->tc_name[idx]), "%s", name);
+
+                const char *args_chunk = json_object_get_string(fn, "arguments", NULL);
+                if (args_chunk && args_chunk[0]) {
+                    size_t cur = strlen(ctx->tc_args[idx]);
+                    size_t add = strlen(args_chunk);
+                    if (cur + add < sizeof(ctx->tc_args[idx]) - 1) {
+                        memcpy(ctx->tc_args[idx] + cur, args_chunk, add);
+                        ctx->tc_args[idx][cur + add] = '\0';
+                    }
+                }
+            }
+        }
+    }
+
+    /* Extract reasoning (some providers send it in chunks too) */
+    const char *reasoning = json_object_get_string(delta, "reasoning", NULL);
+    if (!reasoning) reasoning = json_object_get_string(delta, "reasoning_content", NULL);
+    if (reasoning && reasoning[0]) {
+        size_t cur = ctx->resp->reasoning ? strlen(ctx->resp->reasoning) : 0;
+        size_t add = strlen(reasoning);
+        char *newr = (char *)realloc(ctx->resp->reasoning, cur + add + 1);
+        if (newr) {
+            ctx->resp->reasoning = newr;
+            memcpy(ctx->resp->reasoning + cur, reasoning, add + 1);
+        }
+    }
+
+    /* Extract usage if present (final chunk with finish_reason) */
+    if (finish && finish[0]) {
+        json_node_t *usage = json_object_get(root, "usage");
+        if (usage) {
+            ctx->resp->input_tokens = (int)json_object_get_number(usage, "prompt_tokens", 0);
+            ctx->resp->output_tokens = (int)json_object_get_number(usage, "completion_tokens", 0);
+        }
+    }
+
+    json_free(root);
+    return 0;
+}
+
+/* Build tool_calls array from accumulated streaming data */
+static void finalize_stream_toolcalls(stream_ctx_t *ctx) {
+    ctx->resp->tool_calls_count = ctx->max_tc_idx;
+    for (int i = 0; i < ctx->max_tc_idx; i++) {
+        snprintf(ctx->resp->tool_calls[i].id, sizeof(ctx->resp->tool_calls[i].id), "%s", ctx->tc_id[i]);
+        snprintf(ctx->resp->tool_calls[i].name, sizeof(ctx->resp->tool_calls[i].name), "%s", ctx->tc_name[i]);
+        snprintf(ctx->resp->tool_calls[i].arguments, sizeof(ctx->resp->tool_calls[i].arguments), "%s", ctx->tc_args[i]);
+    }
+}
+
+llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
+                                            const message_t **messages,
+                                            size_t message_count,
+                                            json_node_t *tools_json,
+                                            llm_token_cb_t token_cb,
+                                            void *userdata) {
+    llm_response_t *resp = (llm_response_t *)calloc(1, sizeof(llm_response_t));
+    if (!resp) return NULL;
+    resp->content = NULL;
+    resp->reasoning = NULL;
+    resp->input_tokens = 0;
+    resp->output_tokens = 0;
+    resp->tool_calls_count = 0;
+
+    /* Build request JSON */
+    json_node_t *req = json_new_object();
+    json_object_set(req, "model", json_new_string(cfg->model));
+    json_object_set(req, "stream", json_new_bool(true));
+
+    /* Stream options: include usage in final chunk */
+    json_node_t *stream_opts = json_new_object();
+    json_object_set(stream_opts, "include_usage", json_new_bool(true));
+    json_object_set(req, "stream_options", stream_opts);
+
+    /* Messages */
+    json_node_t *msgs = build_messages_json(messages, message_count);
+    json_object_set(req, "messages", msgs);
+
+    /* Add tools if provided */
+    if (tools_json && json_array_count(tools_json) > 0)
+        json_object_set(req, "tools", json_copy(tools_json));
+
+    /* Serialize */
+    char *body = json_serialize(req);
+
+    /* Determine URL */
+    char url[512];
+    const char *base = cfg->base_url;
+    if (base && strlen(base) > 0) {
+        if (strstr(base, "/chat/completions"))
+            snprintf(url, sizeof(url), "%s", base);
+        else
+            snprintf(url, sizeof(url), "%s/chat/completions", base);
+    } else {
+        snprintf(url, sizeof(url), "https://api.openai.com/v1/chat/completions");
+    }
+
+    /* Build auth header */
+    char auth_header[512];
+    if (cfg->api_key[0]) {
+        snprintf(auth_header, sizeof(auth_header),
+                "Authorization: Bearer %s\r\nContent-Type: application/json",
+                 cfg->api_key);
+    } else {
+        snprintf(auth_header, sizeof(auth_header),
+                 "Content-Type: application/json");
+    }
+
+    /* Set up streaming context */
+    stream_ctx_t ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.resp = resp;
+    ctx.token_cb = token_cb;
+    ctx.userdata = userdata;
+
+    /* Make streaming request */
+    http_t *h = http_new(60);
+    int r = http_stream_request(h, HTTP_POST, url,
+                                auth_header, body, strlen(body),
+                                on_stream_chunk, &ctx);
+    json_free(req);
+    free(body);
+    http_free(h);
+
+    if (r != 0 && r != -2 /* aborted by callback OK */) {
+        resp->content = strdup("HTTP stream request failed");
+        return resp;
+    }
+
+    /* Finalize tool calls from accumulated chunks */
+    finalize_stream_toolcalls(&ctx);
+
+    return resp;
+}
+
 void llm_response_free(llm_response_t *resp) {
     if (!resp) return;
     free(resp->content);
