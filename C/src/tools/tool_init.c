@@ -23,6 +23,7 @@ void registry_init_session_search(void);
 void registry_init_tts(void);
 void registry_init_vision(void);
 void registry_init_delegate(void);
+void registry_init_x_search(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -43,4 +44,5 @@ void tools_init_all(void) {
     registry_init_tts();
     registry_init_vision();
     registry_init_delegate();
+    registry_init_x_search();
 }
