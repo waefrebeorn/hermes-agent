@@ -2,8 +2,7 @@
 # Hermes C Test Runner
 # Usage: ./test_runner.sh [--verbose]
 # Runs all tests: library unit tests + plugin tests + integration smoke tests.
-
-set -e
+# No set -e — explicit error handling throughout.
 
 CDIR="$(cd "$(dirname "$0")" && pwd)"
 PASS=0
@@ -108,43 +107,54 @@ fi
 
 # Gateway: dispatches correctly
 if "$HERMES" gateway 2>&1 | grep -qi "platform"; then
-    ok "gateway dispatches (shows platform info)"
+    ok "gateway dispatches"
 else
     fail "gateway dispatch"
 fi
 
-# Helper: webhook smoke tests
+# Helper: start webhook server, run test, kill
+# Uses a random port to avoid TIME_WAIT conflicts between runs.
 test_webhook() {
     local desc=$1 cmd=$2 expect=$3
-    "$HERMES" gateway --platform webhook & local pid=$!; sleep 1
-    local result; result=$(eval "$cmd" 2>/dev/null || echo "FAILED")
-    kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
-    if echo "$result" | grep -q "$expect"; then ok "webhook $desc"
-    else fail "webhook $desc"; fi
+    local port
+    port=$(( (RANDOM % 10000) + 20000 ))
+    HERMES_WEBHOOK_PORT=$port "$HERMES" gateway --platform webhook &
+    local pid=$!
+    sleep 1
+    local result
+    cmd="${cmd//\$PORT/$port}"
+    result=$(eval "$cmd" 2>/dev/null || echo "FAILED")
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    if echo "$result" | grep -q "$expect"; then
+        ok "webhook $desc"
+    else
+        fail "webhook $desc"
+    fi
 }
 
 test_webhook "health check" \
-    'curl -s http://localhost:8080/health' \
+    'curl -s http://localhost:$PORT/health' \
     '"status":"ok"'
 
 test_webhook "POST /webhook" \
-    'curl -s -X POST http://localhost:8080/webhook -H "Content-Type: application/json" -d '"'"'{"text":"ping","chat_id":"test"}'"'" \
+    'curl -s -X POST http://localhost:$PORT/webhook -H "Content-Type: application/json" -d '"'"'{"text":"ping","chat_id":"test"}'"'" \
     '"status":"ok"'
 
 test_webhook "error: invalid JSON" \
-    'curl -s -X POST http://localhost:8080/webhook -H "Content-Type: application/json" -d "not json"' \
+    'curl -s -X POST http://localhost:$PORT/webhook -H "Content-Type: application/json" -d "not json"' \
     "Invalid JSON"
 
 test_webhook "error: missing text" \
-    'curl -s -X POST http://localhost:8080/webhook -H "Content-Type: application/json" -d '"'"'{"chat_id":"x"}'"'" \
+    'curl -s -X POST http://localhost:$PORT/webhook -H "Content-Type: application/json" -d '"'"'{"chat_id":"x"}'"'" \
     "Missing"
 
 test_webhook "error: 404" \
-    'curl -s http://localhost:8080/nonexistent' \
+    'curl -s http://localhost:$PORT/nonexistent' \
     "Not Found"
 
 test_webhook "CORS preflight" \
-    'curl -s -X OPTIONS http://localhost:8080/webhook -I | head -1' \
+    'curl -s -X OPTIONS http://localhost:$PORT/webhook -I | head -1' \
     "204"
 
 summary
