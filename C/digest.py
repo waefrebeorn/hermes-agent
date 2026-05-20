@@ -3,13 +3,24 @@
 digest.py — WuBu Hermes C Translation Digestion Engine
 
 Analyzes Python code changes and maps them to C translation tasks.
-Run after every `git pull wubu main` to see what C work is needed.
+Supports upstream tracking for the Super Fork: automatically detect
+new Python changes from upstream and flag what C work is needed.
+
+Usage:
+  python3 digest.py                           # Diff last commit
+  python3 digest.py --diff HEAD~5..HEAD       # Custom range
+  python3 digest.py --modules tools/terminal.py tools/file_tools.py  # Manual
+
+  # Super Fork upstream tracking:
+  python3 digest.py --upstream                # Fetch origin/main, diff, report
+  python3 digest.py --upstream --merge        # Fetch + merge into wubu/main
 """
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 # File mapping: Python module → C file
@@ -17,7 +28,8 @@ FILE_MAP = {
     "run_agent.py":                          ("agent/agent_loop", "Core agent conversation loop"),
     "cli.py":                                ("cli/cli", "CLI orchestrator"),
     "model_tools.py":                        ("agent/tool_dispatch", "Tool orchestration"),
-    "hermes_state.py":                       ("deps/db", "SQLite session store"),
+    "toolsets.py":                           ("agent/tool_dispatch", "Toolset definitions"),
+    "hermes_state.py":                       ("deps/db", "File-based session store"),
     "hermes_constants.py":                   (".", "Constants (inline in hermes.h)"),
     "hermes_logging.py":                     (".", "Logging (inline or syslog)"),
     "tools/registry.py":                     ("tools/registry", "Tool registry"),
@@ -68,30 +80,34 @@ PHASE_MAP = {
 HERMES_HOME = Path(__file__).resolve().parent.parent  # C/.. = repo root
 C_DIR = HERMES_HOME / "C"
 DEP_MD = C_DIR / "DEPENDENCIES.md"
+DIGEST_STATE = C_DIR / ".digest_state.json"
 
 
-def get_changed_files_since(ref="HEAD~1"):
+def git(*args, cwd=HERMES_HOME, check=True, capture=True, timeout=15):
+    """Run git command, return stdout string or CompletedProcess."""
+    result = subprocess.run(
+        ["git"] + list(args), capture_output=capture, text=True,
+        cwd=cwd, timeout=timeout, check=check
+    )
+    if capture:
+        return result.stdout.strip()
+    return result
+
+
+def get_changed_files_since(ref="HEAD~1..HEAD"):
     """Get list of changed Python files since git ref."""
     try:
-        result = subprocess.run(
-            ["git", "diff", "--name-only", ref, "--", "*.py"],
-            capture_output=True, text=True, cwd=HERMES_HOME, timeout=10
-        )
-        return [f for f in result.stdout.strip().split("\n") if f]
-    except Exception as e:
-        print(f"  [warn] git diff failed: {e}", file=sys.stderr)
+        result = git("diff", "--name-only", ref, "--", "*.py")
+        return [f for f in result.split("\n") if f]
+    except Exception:
         return []
 
 
 def get_diff(ref="HEAD~1..HEAD"):
     """Get full diff text for analysis."""
     try:
-        result = subprocess.run(
-            ["git", "diff", ref, "--", "*.py"],
-            capture_output=True, text=True, cwd=HERMES_HOME, timeout=10
-        )
-        return result.stdout
-    except Exception as e:
+        return git("diff", ref, "--", "*.py")
+    except Exception:
         return ""
 
 
@@ -127,25 +143,22 @@ def extract_imports_from_diff(diff_text):
 
 def map_to_c_file(py_file):
     """Map a Python file path to its C translation path."""
-    # Normalize path
     py_file = py_file.replace("\\", "/")
-    
+
     for pattern, (c_path, desc) in FILE_MAP.items():
         if py_file == pattern or py_file.endswith("/" + pattern):
             return c_path, desc
-    
-    # Fallback: derive from path
+
     stem = Path(py_file).stem
     parent = Path(py_file).parent
-    
+
     if str(parent) == ".":
         return f"agent/{stem}", f"Module: {stem}"
-    
-    # Check if it's a tool or known subdir
+
     first_dir = str(parent).split("/")[0]
-    if first_dir in ("tools", "gateway", "cron", "agent", "hermes_cli"):
+    if first_dir in ("tools", "gateway", "cron", "agent", "hermes_cli", "plugins"):
         return f"{first_dir}/{stem}", f"Module: {stem}"
-    
+
     return f"unknown/{stem}", f"Unmapped: {py_file}"
 
 
@@ -161,43 +174,20 @@ def load_translation_status():
     """Load current translation status from DEPENDENCIES.md."""
     if not DEP_MD.exists():
         return {}
-    
     status = {}
     content = DEP_MD.read_text()
-    
-    # Parse table rows
     for line in content.split("\n"):
         parts = [p.strip() for p in line.split("|")]
         if len(parts) >= 5:
             name = parts[1].strip("`")
-            role = parts[2].strip("`")
             c_eq = parts[3].strip("`")
             stat = parts[4].strip()
             if name and stat in ("🔲", "🔄", "✅"):
-                status[name] = {"role": role, "c_equiv": c_eq, "status": stat}
-    
+                status[name] = {"c_equiv": c_eq, "status": stat}
     return status
 
 
-def mark_affected(translation_status, c_path, funcs, classes):
-    """Mark dependencies as affected by this change."""
-    affected = []
-    c_stem = Path(c_path).stem if c_path != "." else "hermes"
-    
-    for name, info in translation_status.items():
-        if c_stem.lower() in name.lower() or name.lower() in c_stem.lower():
-            affected.append({
-                "dep": name,
-                "c_file": info["c_equiv"],
-                "status": info["status"],
-                "new_funcs": funcs,
-                "new_classes": classes,
-            })
-    
-    return affected
-
-
-def generate_report(changed_files, affected_deps, funcs, classes, imports):
+def generate_report(changed_files, funcs, classes, imports):
     """Generate a structured report of what needs translation."""
     report = {
         "summary": {
@@ -205,16 +195,15 @@ def generate_report(changed_files, affected_deps, funcs, classes, imports):
             "functions_detected": len(funcs),
             "classes_detected": len(classes),
             "new_imports": len(imports),
-            "deps_affected": len(affected_deps),
         },
         "changed_files": [],
         "work_items": [],
     }
-    
+
     for py_file in changed_files:
         c_path, desc = map_to_c_file(py_file)
         phase = get_phase(c_path)
-        
+
         entry = {
             "python": py_file,
             "c_file": f"src/{c_path}.c",
@@ -224,54 +213,50 @@ def generate_report(changed_files, affected_deps, funcs, classes, imports):
             "phase_name": PHASES.get(phase, "Unknown"),
         }
         report["changed_files"].append(entry)
-        
-        # Determine status based on what exists
+
         c_exists = (C_DIR / "src" / f"{c_path}.c").exists()
-        h_exists = (C_DIR / "include" / f"{c_path}.h").exists() or (C_DIR / "include" / "hermes.h").exists()
-        
+
         item = {
             "c_file": entry["c_file"],
             "status": "✅ up to date" if (c_exists and not funcs) else "🔄 needs update" if c_exists else "🔲 not started",
             "phase": entry["phase_name"],
             "action": "Implement" if not c_exists else "Update for new functions",
-            "functions": funcs[:5],  # top 5
+            "functions": funcs[:5],
             "classes": [c["name"] for c in classes[:3]],
         }
         report["work_items"].append(item)
-    
-    # Sort by phase
-    report["work_items"].sort(key=lambda x: x.get("phase_num", 99) or 
+
+    report["work_items"].sort(key=lambda x: x.get("phase_num", 99) or
                               [k for k, v in PHASES.items() if v == x["phase"]][0])
-    
+
     return report
 
 
-def print_report(report):
+def print_report(report, title="Digestion Report"):
     """Print human-readable report."""
     s = report["summary"]
     print(f"\n{'═'*60}")
-    print(f"  Digestion Report — {s['python_files_changed']} Python files changed")
+    print(f"  {title}")
+    print(f"  {s['python_files_changed']} Python files changed")
+    print(f"  Functions: {s['functions_detected']}  Classes: {s['classes_detected']}  Imports: {s['new_imports']}")
     print(f"{'═'*60}")
-    print(f"  Functions: {s['functions_detected']}  Classes: {s['classes_detected']}")
-    print(f"  New imports: {s['new_imports']}  Deps affected: {s['deps_affected']}")
-    print()
-    
+
     if not report["changed_files"]:
-        print("  No Python files changed since last digest.")
-        print("  (Run with --diff to specify a different ref range)")
+        print("\n  No Python files changed since last digest.\n")
         return
-    
-    print(f"{'─'*60}")
+
+    print(f"\n{'─'*60}")
     print(f"  Translation Work Items (by phase):")
     print(f"{'─'*60}")
-    
+
     current_phase = None
     for item in report["work_items"]:
         if item["phase"] != current_phase:
             current_phase = item["phase"]
-            print(f"\n  ▸ Phase {[k for k,v in PHASES.items() if v==current_phase][0]}: {current_phase}")
+            pnum = [k for k, v in PHASES.items() if v == current_phase][0]
+            print(f"\n  ▸ Phase {pnum}: {current_phase}")
             print(f"    {'─'*50}")
-        
+
         status_icon = {"✅ up to date": "✅", "🔄 needs update": "🔄", "🔲 not started": "🔲"}
         icon = status_icon.get(item["status"], "❓")
         print(f"    {icon} {item['c_file']}")
@@ -280,67 +265,219 @@ def print_report(report):
             print(f"       fn: {', '.join(item['functions'][:3])}")
         if item.get("classes"):
             print(f"       cls: {', '.join(item['classes'][:3])}")
-    
+
     print()
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="WuBu Hermes C Translation Digestion Engine")
-    parser.add_argument("--diff", default="HEAD~1..HEAD", help="Git diff range to analyze")
-    parser.add_argument("--modules", nargs="+", help="Specific modules to digest")
-    parser.add_argument("--format", choices=["summary", "json", "detailed"], default="summary")
-    parser.add_argument("--generate-stubs", action="store_true", help="Generate C stub headers")
-    args = parser.parse_args()
-    
-    if args.modules:
-        changed_files = args.modules
-        diff_text = ""
+# ─── Super Fork: Upstream Tracking ─────────────────────────────────────
+
+def load_digest_state():
+    """Load last sync state."""
+    if DIGEST_STATE.exists():
+        return json.loads(DIGEST_STATE.read_text())
+    return {"last_sync_commit": None, "last_sync_time": None, "upstream_head": None}
+
+
+def save_digest_state(state):
+    """Save sync state."""
+    DIGEST_STATE.write_text(json.dumps(state, indent=2))
+    print(f"  [digest] state saved to {DIGEST_STATE}")
+
+
+def upstream_sync(do_merge=False):
+    """
+    Super Fork upstream sync.
+    1. Fetch origin/main (upstream)
+    2. Find Python files changed since last sync
+    3. Diff them, map to C work items
+    4. Optionally merge upstream into current branch
+    """
+    state = load_digest_state()
+    print(f"\n  [upstream] fetching origin/main...")
+    git("fetch", "origin", "main", "--no-tags")
+
+    # Get upstream head
+    up_head = git("rev-parse", "origin/main")
+    print(f"  [upstream] origin/main at {up_head[:12]}")
+
+    last_sync = state.get("last_sync_commit")
+    if last_sync:
+        print(f"  [upstream] last sync was {last_sync[:12]}")
     else:
-        changed_files = get_changed_files_since(args.diff)
-        diff_text = get_diff(args.diff)
-    
+        # First sync: track all Python files
+        print(f"  [upstream] first sync — full scan")
+        last_sync = git("merge-base", "origin/main", "HEAD")
+
+    # Diff Python files since last sync
+    diff_range = f"{last_sync}..origin/main"
+    print(f"  [upstream] diff range: {diff_range}")
+
+    try:
+        changed = get_changed_files_since(diff_range)
+    except Exception as e:
+        print(f"  [upstream] diff failed: {e}")
+        changed = []
+
+    # Check if there's any difference
+    ahead = git("rev-list", "--count", f"{last_sync}..origin/main")
+    print(f"  [upstream] {ahead.strip()} new commits on upstream")
+
+    if not changed:
+        print(f"  [upstream] no Python file changes since last sync\n")
+        # Still update state so we track position
+        state["last_sync_commit"] = up_head
+        state["last_sync_time"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        state["upstream_head"] = up_head
+        save_digest_state(state)
+        print(f"\n{'='*60}")
+        print(f"  ✅ Super Fork: No new C work needed — upstream Python unchanged")
+        print(f"{'='*60}\n")
+        return
+
+    # Analyze diff
+    diff_text = get_diff(diff_range)
     funcs = extract_functions_from_diff(diff_text)
     classes = extract_classes_from_diff(diff_text)
     imports = extract_imports_from_diff(diff_text)
-    
-    trans_status = load_translation_status()
-    
-    all_affected = []
-    for py_file in changed_files:
-        c_path, desc = map_to_c_file(py_file)
-        affected = mark_affected(trans_status, c_path, funcs, classes)
-        all_affected.extend(affected)
-    
-    report = generate_report(changed_files, all_affected, funcs, classes, imports)
-    
-    if args.format == "json":
-        print(json.dumps(report, indent=2))
-    else:
-        print_report(report)
-    
-    if args.generate_stubs:
-        stub_dir = C_DIR / "digest_output"
-        stub_dir.mkdir(exist_ok=True)
-        for item in report["work_items"]:
-            if item["status"].startswith("🔲"):
-                c_path = item["c_file"]
-                stub_file = stub_dir / Path(c_path).name
-                if not stub_file.exists():
-                    guard = Path(c_path).stem.upper().replace("-", "_")
-                    stub_file.write_text(f"""#ifndef {guard}_H
+
+    report = generate_report(changed, funcs, classes, imports)
+
+    # Also list changed Python files nicely
+    print(f"\n  [upstream] Changed Python files ({len(changed)}):")
+    for f in changed:
+        print(f"    • {f}")
+
+    print_report(report, title="Super Fork: Upstream Change Digest")
+
+    # Save sync state
+    state["last_sync_commit"] = up_head
+    state["last_sync_time"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    state["upstream_head"] = up_head
+    state["last_changed_python"] = changed
+    state["last_new_funcs"] = funcs
+    state["last_new_classes"] = [c["name"] for c in classes]
+    save_digest_state(state)
+
+    # Generate JSON report for programmatic use
+    report_path = C_DIR / "digest_output" / "upstream_report.json"
+    report_path.parent.mkdir(exist_ok=True)
+    report_path.write_text(json.dumps({
+        "timestamp": state["last_sync_time"],
+        "upstream_head": up_head,
+        "changed_files": changed,
+        "functions": funcs,
+        "classes": [c["name"] for c in classes],
+        "work_items": report["work_items"],
+    }, indent=2))
+    print(f"\n  [digest] JSON report saved to {report_path}")
+
+    # Optionally merge upstream into current branch
+    if do_merge:
+        print(f"\n  [upstream] merging origin/main into current branch...")
+        # Stash any local changes first
+        git("stash", check=False, capture=False)
+        try:
+            git("merge", "origin/main", "-m", "chore: sync with upstream (auto-merge via digest.py)")
+            print(f"  [upstream] merged successfully")
+        except Exception as e:
+            print(f"  [upstream] merge failed: {e}")
+            print(f"  [upstream] run manually: git merge origin/main")
+        git("stash", "pop", check=False, capture=False)
+
+    return changed, funcs, classes, report
+
+
+# ─── Stub Generation ────────────────────────────────────────────────────
+
+def generate_stubs(report):
+    """Generate C header stubs for unimplemented files."""
+    stub_dir = C_DIR / "digest_output"
+    stub_dir.mkdir(exist_ok=True)
+    count = 0
+    for item in report["work_items"]:
+        if item["status"].startswith("🔲"):
+            c_path = item["c_file"]
+            stub_name = Path(c_path).name
+            stub_file = stub_dir / stub_name
+            if not stub_file.exists():
+                guard = Path(c_path).stem.upper().replace("-", "_")
+                stub_file.write_text(f"""#ifndef {guard}_H
 #define {guard}_H
 
-/* Auto-generated stub from digestion.
- * Python: {item['python_file'] if 'python_file' in item else 'unknown'}
- * Phase: {item['phase']}
+/* Auto-generated stub from Super Fork digestion.
+ * Python: {item.get('python_file', 'unknown')}
+ * Phase: {item.get('phase', 'unknown')}
+ * Upstream trigger: origin/main
  */
 
 // TODO: implement
 
 #endif
 """)
-        print(f"  Stubs generated in {stub_dir}")
+                count += 1
+    print(f"  [digest] {count} stubs generated in {stub_dir}")
+    return count
+
+
+# ─── Main ───────────────────────────────────────────────────────────────
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="WuBu Hermes C Translation Digestion Engine — Super Fork",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 digest.py                              # Diff last commit
+  python3 digest.py --diff HEAD~5..HEAD          # Custom range
+  python3 digest.py --upstream                   # Fetch origin/main, diff, report
+  python3 digest.py --upstream --merge           # Fetch + merge upstream
+  python3 digest.py --upstream --generate-stubs  # Fetch + diff + stub new files
+        """)
+    parser.add_argument("--diff", default="HEAD~1..HEAD",
+                        help="Git diff range to analyze")
+    parser.add_argument("--modules", nargs="+",
+                        help="Specific modules to digest")
+    parser.add_argument("--format", choices=["summary", "json", "detailed"],
+                        default="summary")
+    parser.add_argument("--generate-stubs", action="store_true",
+                        help="Generate C stub headers for unimplemented files")
+    parser.add_argument("--upstream", action="store_true",
+                        help="Super Fork mode: fetch origin/main, diff since last sync, report C work needed")
+    parser.add_argument("--merge", action="store_true",
+                        help="With --upstream: also merge upstream into current branch")
+    args = parser.parse_args()
+
+    if args.upstream:
+        result = upstream_sync(do_merge=args.merge)
+        if result:
+            changed, funcs, classes, report = result
+            if args.generate_stubs and report.get("work_items"):
+                generate_stubs(report)
+            if args.format == "json":
+                print(json.dumps(report, indent=2))
+        return
+
+    if args.modules:
+        changed_files = args.modules
+        diff_text = ""
+    else:
+        changed_files = get_changed_files_since(args.diff)
+        diff_text = get_diff(args.diff)
+
+    funcs = extract_functions_from_diff(diff_text)
+    classes = extract_classes_from_diff(diff_text)
+    imports = extract_imports_from_diff(diff_text)
+
+    report = generate_report(changed_files, funcs, classes, imports)
+
+    if args.format == "json":
+        print(json.dumps(report, indent=2))
+    else:
+        print_report(report)
+
+    if args.generate_stubs:
+        generate_stubs(report)
 
 
 if __name__ == "__main__":

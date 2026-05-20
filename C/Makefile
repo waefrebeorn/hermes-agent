@@ -18,7 +18,8 @@ PHASE3_OBJ = $(PHASE2_OBJ) $(TOOLS_OBJ)
 PHASE4_OBJ = $(PHASE3_OBJ) $(GATEWAY_OBJ)
 PHASE5_OBJ = $(PHASE4_OBJ) $(CRON_OBJ)
 
-.PHONY: all clean phase1 phase2 phase3 phase4 phase5 test digest
+.PHONY: all clean phase1 phase2 phase3 phase4 phase5 test digest \
+        upstream-sync upstream-merge what-changed
 
 all: phase5
 
@@ -45,9 +46,22 @@ hermes: $(PHASE5_OBJ) src/main.o
 src/%.o: src/%.c include/hermes.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Digestion
+# Digestion — standard local diff
 digest:
 	python3 digest.py
+
+# ─── Super Fork: Upstream Tracking ─────────────────────────────────
+# Fetch origin/main (upstream), diff Python since last sync, report C work needed
+upstream-sync:
+	python3 digest.py --upstream
+
+# Fetch + merge upstream into current branch + generate stubs
+upstream-merge:
+	python3 digest.py --upstream --merge --generate-stubs
+
+# Full workflow: sync, build, report
+sync-all: upstream-merge phase5
+	@echo "Super Fork sync complete."
 
 # Test
 test: hermes
