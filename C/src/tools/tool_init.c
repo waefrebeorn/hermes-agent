@@ -19,6 +19,7 @@ void registry_init_process(void);
 void registry_init_send_message(void);
 void registry_init_cronjob(void);
 void registry_init_skill_view(void);
+void registry_init_session_search(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -35,4 +36,5 @@ void tools_init_all(void) {
     registry_init_send_message();
     registry_init_cronjob();
     registry_init_skill_view();
+    registry_init_session_search();
 }
