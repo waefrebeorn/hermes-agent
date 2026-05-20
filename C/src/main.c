@@ -2,10 +2,12 @@
  * main.c — WuBu Hermes C entry point.
  *
  * Phase 5 target: full hermes binary equivalent.
- * Currently: stub that prints version and exits.
+ * Current: dispatches to CLI or gateway based on argv.
  */
+
 #include "hermes.h"
 #include <stdio.h>
+#include <string.h>
 
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
@@ -24,17 +26,4 @@ int main(int argc, char **argv) {
     }
 
     return hermes_cli_main(argc, argv);
-}
-
-int hermes_cli_main(int argc, char **argv) {
-    print_banner();
-    printf("CLI mode — not yet implemented\n");
-    printf("Run: %s --version\n", argv[0] ? argv[0] : "hermes");
-    return 0;
-}
-
-int hermes_gateway_main(int argc, char **argv) {
-    print_banner();
-    printf("Gateway mode — not yet implemented\n");
-    return 0;
 }

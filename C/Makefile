@@ -13,7 +13,7 @@ CRON_OBJ = src/cron/scheduler.o src/cron/jobs.o
 
 # Progressively larger builds
 PHASE1_OBJ = $(DEPS_OBJ)
-PHASE2_OBJ = $(PHASE1_OBJ) $(AGENT_OBJ) $(CLI_OBJ)
+PHASE2_OBJ = $(PHASE1_OBJ) src/main.o $(AGENT_OBJ) $(CLI_OBJ)
 PHASE3_OBJ = $(PHASE2_OBJ) $(TOOLS_OBJ)
 PHASE4_OBJ = $(PHASE3_OBJ) $(GATEWAY_OBJ)
 PHASE5_OBJ = $(PHASE4_OBJ) $(CRON_OBJ)
