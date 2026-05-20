@@ -73,4 +73,16 @@ json_node_t *slack_poll_messages(http_client_t *http);
 const char *slack_get_chat_id(json_node_t *update);
 const char *slack_get_text(json_node_t *update);
 
+/* ================================================================
+ *  Matrix platform
+ * ================================================================ */
+
+void matrix_set_homeserver(const char *hs);
+void matrix_set_token(const char *token);
+void matrix_set_room(const char *id);
+bool matrix_send_message(http_client_t *http, const char *text);
+json_node_t *matrix_poll_messages(http_client_t *http);
+const char *matrix_get_chat_id(json_node_t *update);
+const char *matrix_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

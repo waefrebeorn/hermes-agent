@@ -6,6 +6,7 @@
 #include "hermes.h"
 #include "hermes_agent.h"
 #include "hermes_display.h"
+#include "hermes_skin.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,18 +27,60 @@ typedef struct {
 static cli_state_t g_cli;
 
 /* ================================================================
+ *  Skin integration
+ * ================================================================ */
+
+static skin_t *g_skin = NULL;
+
+/* Map a skin color name (e.g. "cyan", "red:bold") to display_color_t.
+ * Returns fallback on unknown name. */
+static display_color_t cli_skin_to_color(const char *name, display_color_t fallback) {
+    if (!name) return fallback;
+    if (strcmp(name, "black") == 0)   return DISPLAY_BLACK;
+    if (strcmp(name, "red") == 0)     return DISPLAY_RED;
+    if (strcmp(name, "green") == 0)   return DISPLAY_GREEN;
+    if (strcmp(name, "yellow") == 0)  return DISPLAY_YELLOW;
+    if (strcmp(name, "blue") == 0)    return DISPLAY_BLUE;
+    if (strcmp(name, "magenta") == 0) return DISPLAY_MAGENTA;
+    if (strcmp(name, "cyan") == 0)    return DISPLAY_CYAN;
+    if (strcmp(name, "white") == 0)   return DISPLAY_WHITE;
+    return fallback;
+}
+
+/* Get a skin color by dotted key, with hardcoded fallback. */
+static display_color_t cli_skin_color(const char *key, display_color_t fallback) {
+    if (!g_skin) return fallback;
+    const char *name = skin_get(g_skin, key, NULL);
+    return cli_skin_to_color(name, fallback);
+}
+
+/* Initialize skin from config. Falls back to skin_default() on error. */
+static void cli_skin_init(void) {
+    const char *path = g_cli.config.skin_path;
+    if (path && path[0]) {
+        g_skin = skin_load(path);
+        if (!g_skin) {
+            fprintf(stderr, "Warning: failed to load skin '%s': %s\n",
+                    path, skin_error());
+        }
+    }
+    if (!g_skin)
+        g_skin = skin_default();
+}
+
+/* ================================================================
  *  Display helpers
  * ================================================================ */
 
 static void print_banner(void) {
     if (!g_cli.interactive) return;
-    display_printf(DISPLAY_CYAN, DISPLAY_BOLD,
+    display_printf(cli_skin_color("colors.banner", DISPLAY_CYAN), DISPLAY_BOLD,
                    "WuBu Hermes v%s — C Translation\n", HERMES_VERSION);
-    display_printf(DISPLAY_WHITE, DISPLAY_DIM,
+    display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
                    "  Model: %s  Provider: %s\n",
                    g_cli.config.model[0] ? g_cli.config.model : "(default)",
                    g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
-    display_printf(DISPLAY_WHITE, DISPLAY_DIM,
+    display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
                    "  Type /help for commands, /exit to quit\n\n");
 }
 
@@ -63,11 +106,8 @@ int hermes_cli_main(int argc, char **argv) {
     hermes_config_load(&g_cli.config, NULL);
     hermes_config_load_env(&g_cli.config);
 
-    /* Load skin if configured (future: wire into display) */
-    if (g_cli.config.skin_path[0]) {
-        /* skin_load is available from libskin; for now just acknowledge */
-        g_cli.config.skin_path[0] = '\0'; /* reset until full skin integration */
-    }
+    /* Initialize skin (loads from config.skin_path, falls back to default) */
+    cli_skin_init();
 
     /* Initialize agent */
     agent_init(&g_cli.agent);
@@ -145,7 +185,8 @@ int hermes_cli_main(int argc, char **argv) {
     char input[65536];
     while (g_cli.running) {
         if (g_cli.interactive)
-            display_printf(DISPLAY_GREEN, DISPLAY_BOLD, "\nhermes> ");
+            display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
+                           "\nhermes> ");
         fflush(stdout);
 
         if (!fgets(input, sizeof(input), stdin)) break;
@@ -178,7 +219,7 @@ int hermes_cli_main(int argc, char **argv) {
             }
             if (strcmp(input, "/clear") == 0) {
                 context_clear(&g_cli.agent);
-                display_printf(DISPLAY_YELLOW, DISPLAY_NORMAL,
+                display_printf(cli_skin_color("colors.status", DISPLAY_YELLOW), DISPLAY_NORMAL,
                                "Context cleared.\n");
                 continue;
             }
@@ -267,7 +308,7 @@ int hermes_cli_main(int argc, char **argv) {
 
         /* Run agent */
         if (g_cli.interactive)
-            display_printf(DISPLAY_WHITE, DISPLAY_DIM, "\n");
+            display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM, "\n");
         char *resp = agent_chat(&g_cli.agent, input);
         if (resp) {
             /* In streaming mode, content was already printed by callback.

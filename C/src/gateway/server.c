@@ -158,6 +158,32 @@ static void poll_slack(void) {
 }
 
 /* ================================================================
+ *  Matrix poll loop
+ * ================================================================ */
+
+static void poll_matrix(void) {
+    printf("[gateway] Matrix polling (interval: %ds)\n", g_gw.poll_interval);
+
+    while (g_gw.running) {
+        json_node_t *updates = matrix_poll_messages(g_gw.http);
+
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update(matrix_get_chat_id(update),
+                               matrix_get_text(update));
+            }
+        }
+
+        json_free(updates);
+
+        if (g_gw.running)
+            sleep(g_gw.poll_interval);
+    }
+}
+
+/* ================================================================
  *  Signal handler
  * ================================================================ */
 
@@ -241,8 +267,20 @@ int hermes_gateway_main(int argc, char **argv) {
         slack_set_token(token);
         slack_set_channel(channel);
         ok = true;
+    } else if (strcmp(g_gw.platform, "matrix") == 0) {
+        const char *hs = getenv("MATRIX_HOMESERVER");
+        const char *token = getenv("MATRIX_ACCESS_TOKEN");
+        const char *room = getenv("MATRIX_ROOM_ID");
+        if (!token) {
+            fprintf(stderr, "Error: MATRIX_ACCESS_TOKEN must be set\n");
+            goto cleanup;
+        }
+        matrix_set_homeserver(hs && hs[0] ? hs : "https://matrix.org");
+        matrix_set_token(token);
+        if (room) matrix_set_room(room);
+        ok = true;
     } else {
-        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', or 'slack'.\n",
+        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', 'slack', or 'matrix'.\n",
                 g_gw.platform);
         goto cleanup;
     }
@@ -265,6 +303,8 @@ int hermes_gateway_main(int argc, char **argv) {
         webhook_server_run(port);
     } else if (strcmp(g_gw.platform, "slack") == 0)
         poll_slack();
+    else if (strcmp(g_gw.platform, "matrix") == 0)
+        poll_matrix();
 
 cleanup:
     agent_free(&g_gw.agent);

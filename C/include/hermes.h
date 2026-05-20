@@ -149,6 +149,7 @@ bool hermes_config_load_env(hermes_config_t *cfg);
 #include "hermes_crypto.h"
 #include "hermes_db.h"
 #include "hermes_display.h"
+#include "hermes_skin.h"
 #include "hermes_agent.h"
 
 /* ================================================================
