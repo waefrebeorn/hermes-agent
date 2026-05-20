@@ -5,10 +5,10 @@ LDFLAGS = -lssl -lcrypto
 LIBS = -lm
 
 # Standalone library directories
-LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate
-LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate)
-LIB_OBJ  = lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o
-LIB_A    = lib/libjson.a lib/libhttp.a lib/libtemplate.a
+LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv
+LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv)
+LIB_OBJ  = lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o
+LIB_A    = lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a
 
 # Phase targets (each adds its objects)
 DEPS_OBJ = src/deps/json.o src/deps/yaml.o src/deps/http.o src/deps/db.o src/deps/crypto.o src/deps/cli_display.o
@@ -65,6 +65,15 @@ lib/libhttp.a: lib/libhttp/http.o
 	$(AR) rcs $@ $^
 
 lib/libtemplate.a: lib/libtemplate/template.o
+	$(AR) rcs $@ $^
+
+lib/libyaml.a: lib/libyaml/yaml.o
+	$(AR) rcs $@ $^
+
+lib/libcrypto.a: lib/libcrypto/crypto.o
+	$(AR) rcs $@ $^
+
+lib/libdotenv.a: lib/libdotenv/dotenv.o
 	$(AR) rcs $@ $^
 
 # Build all standalone libs
