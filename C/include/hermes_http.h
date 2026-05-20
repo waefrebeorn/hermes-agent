@@ -38,4 +38,12 @@ static inline http_response_t *http_request_json(http_client_t *client,
     return http_post_json(client, url, json_body);
 }
 
+/* GET request with custom headers */
+static inline http_response_t *http_get_with_headers(http_client_t *client,
+                                                      const char *url,
+                                                      const char *headers)
+{
+    return http_get(client, url, headers);
+}
+
 #endif /* HERMES_HTTP_H */
