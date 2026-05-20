@@ -195,6 +195,9 @@ char *agent_run_conversation(agent_state_t *state,
     while (iteration < state->max_iterations && !state->interrupted) {
         state->iteration_count = iteration;
 
+        /* Truncate context if too long (128K token budget) */
+        llm_truncate_context(state, 131072);
+
         /* Call LLM */
         llm_response_t *llm_resp = llm_chat_completion(
             &state->llm,

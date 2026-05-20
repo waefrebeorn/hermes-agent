@@ -82,6 +82,19 @@ http_resp_t *http_post_json_auth(http_t *h, const char *url,
 /* === Response handling === */
 void http_resp_free(http_resp_t *resp);
 
+/* === Streaming (SSE) === */
+/* Callback receives each data chunk. Return non-zero to abort. */
+typedef int (*http_stream_cb)(const char *chunk, size_t len, void *userdata);
+
+/* Send request and stream SSE response line-by-line.
+ * Each "data: {...}" line is extracted and passed to callback.
+ * Returns 0 on success, -1 on error. */
+int http_stream_request(http_t *h, http_method_t method,
+                        const char *url,
+                        const char *extra_headers,
+                        const char *body, size_t body_len,
+                        http_stream_cb callback, void *userdata);
+
 /* === URL utilities === */
 /* URL-encode a string. Caller free()s result. */
 char *http_url_encode(const char *str);

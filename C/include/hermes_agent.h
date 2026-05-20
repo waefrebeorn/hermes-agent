@@ -54,6 +54,18 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                                      json_node_t *tools_json);
 void llm_response_free(llm_response_t *resp);
 
+/* Token estimation (approximate: 1 token ≈ 4 chars) */
+static inline size_t llm_estimate_tokens(const char *text) {
+    if (!text) return 0;
+    return (strlen(text) + 3) / 4; /* ceil division */
+}
+
+/* Count approximate tokens in a message list */
+size_t llm_count_context_tokens(const message_t **msgs, size_t count, size_t max_tokens);
+
+/* Truncate context to fit within token budget. Keeps first (system) and last N. */
+void llm_truncate_context(agent_state_t *state, size_t max_tokens);
+
 /* === Agent Loop (agent_loop.c) === */
 void agent_init(agent_state_t *state);
 void agent_free(agent_state_t *state);

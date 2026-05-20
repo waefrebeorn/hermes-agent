@@ -67,6 +67,62 @@ static json_node_t *build_messages_json(const message_t **msgs, size_t count) {
 }
 
 /* ================================================================
+ *  Token counting + context management
+ * ================================================================ */
+
+/* Count approximate tokens in a message list.
+ * Stops counting after max_tokens is exceeded. */
+size_t llm_count_context_tokens(const message_t **msgs, size_t count, size_t max_tokens) {
+    size_t total = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (!msgs || !msgs[i]) continue;
+        /* Role tokens (~1 token each) */
+        total += 1;
+        /* Content tokens */
+        total += llm_estimate_tokens(msgs[i]->content);
+        /* Tool call overhead */
+        if (msgs[i]->tool_calls_count > 0)
+            total += (size_t)msgs[i]->tool_calls_count * 10;
+        /* Tool result overhead */
+        if (msgs[i]->tool_call_id)
+            total += 2;
+        if (total > max_tokens) break;
+    }
+    return total;
+}
+
+/* Truncate context to fit within max_tokens while keeping
+ * system message (index 0) and most recent messages. */
+void llm_truncate_context(agent_state_t *state, size_t max_tokens) {
+    if (!state || state->message_count < 2) return;
+
+    size_t current = llm_count_context_tokens(
+        (const message_t **)state->messages, state->message_count, max_tokens);
+    if (current <= max_tokens) return;
+
+    /* Need to drop messages. Keep system + most recent. */
+    size_t keep = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
+    size_t target = keep + 4; /* Keep system + 4 most recent turns */
+    if (state->message_count <= target) return;
+
+    /* Remove from index keep to (message_count - target + keep) */
+    size_t remove_count = state->message_count - target;
+    for (size_t i = 0; i < remove_count; i++)
+        message_free(state->messages[keep + i]);
+    memmove(&state->messages[keep], &state->messages[keep + remove_count],
+            (state->message_count - keep - remove_count) * sizeof(message_t *));
+    state->message_count -= remove_count;
+
+    /* Re-check after truncation */
+    current = llm_count_context_tokens(
+        (const message_t **)state->messages, state->message_count, max_tokens);
+    if (current > max_tokens && state->message_count > keep + 2) {
+        /* Still over budget — drop more aggressively */
+        llm_truncate_context(state, max_tokens);
+    }
+}
+
+/* ================================================================
  *  LLM API call
  * ================================================================ */
 
