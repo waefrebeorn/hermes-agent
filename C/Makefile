@@ -1,7 +1,14 @@
 CC = gcc
+AR = ar
 CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
 LDFLAGS = -lssl -lcrypto
 LIBS = -lm
+
+# Standalone library directories
+LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate
+LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate)
+LIB_OBJ  = lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o
+LIB_A    = lib/libjson.a lib/libhttp.a lib/libtemplate.a
 
 # Phase targets (each adds its objects)
 DEPS_OBJ = src/deps/json.o src/deps/yaml.o src/deps/http.o src/deps/db.o src/deps/crypto.o src/deps/cli_display.o
@@ -46,6 +53,24 @@ hermes: $(PHASE5_OBJ) src/main.o
 src/%.o: src/%.c include/hermes.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+# Library pattern rule — standalone libs
+lib/%.o: lib/%.c
+	$(CC) $(CFLAGS) $(LIB_INCS) -c -o $@ $<
+
+# Static library archives
+lib/libjson.a: lib/libjson/json.o
+	$(AR) rcs $@ $^
+
+lib/libhttp.a: lib/libhttp/http.o
+	$(AR) rcs $@ $^
+
+lib/libtemplate.a: lib/libtemplate/template.o
+	$(AR) rcs $@ $^
+
+# Build all standalone libs
+libs: $(LIB_A)
+	@echo "Standalone libraries built: $(words $(LIB_A)) archives"
+
 # Digestion — standard local diff
 digest:
 	python3 digest.py
@@ -73,4 +98,5 @@ what-changed:
 
 clean:
 	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
+	rm -f $(LIB_OBJ) $(LIB_A)
 	rm -rf digest_output/
