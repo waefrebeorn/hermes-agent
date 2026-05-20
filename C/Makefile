@@ -1,14 +1,14 @@
 CC = gcc
 AR = ar
 CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
-LDFLAGS = -lssl -lcrypto
+LDFLAGS = -lssl -lcrypto -ldl
 LIBS = -lm
 
 # Standalone library directories
-LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb
-LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb)
-LIB_OBJ  = lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o
-LIB_A    = lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a
+LIB_DIRS = lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin
+LIB_INCS = $(addprefix -I, lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin)
+LIB_OBJ  = lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o lib/libplugin/plugin.o lib/libskin/skin.o
+LIB_A    = lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a lib/libplugin.a lib/libskin.a
 
 # Include standalone library headers in build
 CFLAGS += $(LIB_INCS)
@@ -89,6 +89,12 @@ lib/libtui.a: lib/libtui/tui.o
 	$(AR) rcs $@ $^
 
 lib/libdb.a: lib/libdb/db.o
+	$(AR) rcs $@ $^
+
+lib/libplugin.a: lib/libplugin/plugin.o
+	$(AR) rcs $@ $^
+
+lib/libskin.a: lib/libskin/skin.o
 	$(AR) rcs $@ $^
 
 # Build all standalone libs
