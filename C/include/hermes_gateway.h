@@ -97,4 +97,18 @@ json_node_t *mattermost_poll_messages(http_client_t *http);
 const char *mattermost_get_chat_id(json_node_t *update);
 const char *mattermost_get_text(json_node_t *update);
 
+/* ================================================================
+ *  WhatsApp Cloud API platform
+ * ================================================================ */
+
+void whatsapp_set_token(const char *token);
+void whatsapp_set_phone_id(const char *id);
+void whatsapp_set_verify_token(const char *token);
+bool whatsapp_send_message(http_client_t *http, const char *to,
+                            const char *text);
+const char *whatsapp_verify_webhook(const char *query_string);
+json_node_t *whatsapp_parse_webhook(const char *body);
+const char *whatsapp_get_chat_id(json_node_t *update);
+const char *whatsapp_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

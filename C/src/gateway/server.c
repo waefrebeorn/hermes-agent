@@ -45,6 +45,10 @@ static void gateway_send(const char *target, const char *text) {
         discord_send_message(g_gw.http, text);
     } else if (strcmp(g_gw.platform, "mattermost") == 0) {
         mattermost_send_message(g_gw.http, text);
+    } else if (strcmp(g_gw.platform, "whatsapp") == 0) {
+        /* WhatsApp sends via API from webhook handler, not gateway_send */
+        (void)target;
+        (void)text;
     }
 }
 
@@ -320,8 +324,20 @@ int hermes_gateway_main(int argc, char **argv) {
         mattermost_set_token(token);
         mattermost_set_channel(channel);
         ok = true;
+    } else if (strcmp(g_gw.platform, "whatsapp") == 0) {
+        const char *token = getenv("WHATSAPP_TOKEN");
+        const char *phone = getenv("WHATSAPP_PHONE_NUMBER_ID");
+        const char *verify = getenv("WHATSAPP_VERIFY_TOKEN");
+        if (!token || !phone) {
+            fprintf(stderr, "Error: WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID must be set\n");
+            goto cleanup;
+        }
+        whatsapp_set_token(token);
+        whatsapp_set_phone_id(phone);
+        if (verify) whatsapp_set_verify_token(verify);
+        ok = true;
     } else {
-        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', 'slack', 'matrix', or 'mattermost'.\n",
+        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', 'slack', 'matrix', 'mattermost', or 'whatsapp'.\n",
                 g_gw.platform);
         goto cleanup;
     }
@@ -348,6 +364,12 @@ int hermes_gateway_main(int argc, char **argv) {
         poll_matrix();
     else if (strcmp(g_gw.platform, "mattermost") == 0)
         poll_mattermost();
+    else if (strcmp(g_gw.platform, "whatsapp") == 0) {
+        const char *port_str = getenv("HERMES_WEBHOOK_PORT");
+        int port = port_str ? atoi(port_str) : 8080;
+        if (port <= 0 || port > 65535) port = 8080;
+        webhook_server_run(port);
+    }
 
 cleanup:
     agent_free(&g_gw.agent);

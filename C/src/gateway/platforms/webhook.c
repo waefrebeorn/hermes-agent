@@ -183,6 +183,56 @@ static void handle_webhook_request(int client_fd) {
 
     /* Only POST /webhook */
     if (strcmp(method, "POST") != 0 || strcmp(path, "/webhook") != 0) {
+        /* Check for WhatsApp webhook callback on GET /whatsapp-webhook */
+        if (strcmp(method, "GET") == 0 && strcmp(path, "/whatsapp-webhook") == 0) {
+            const char *qs = strchr(buf, '?');
+            if (qs) qs++; else qs = "";
+            const char *challenge = whatsapp_verify_webhook(qs);
+            if (challenge) {
+                char *r = build_http_response(200, "OK",
+                                               "text/plain", challenge);
+                if (r) { safe_write(client_fd, r, strlen(r)); free(r); }
+            } else {
+                char *r = build_http_response(403, "Forbidden",
+                                               "text/plain", "Verification failed");
+                if (r) { safe_write(client_fd, r, strlen(r)); free(r); }
+            }
+            close(client_fd);
+            return;
+        }
+
+        /* Check for WhatsApp POST callback */
+        if (strcmp(method, "POST") == 0 && strcmp(path, "/whatsapp-webhook") == 0) {
+            const char *body = extract_http_body(buf);
+            if (body) {
+                json_node_t *updates = whatsapp_parse_webhook(body);
+                if (updates && json_len(updates) > 0) {
+                    size_t n = json_len(updates);
+                    for (size_t i = 0; i < n; i++) {
+                        json_node_t *update = json_get(updates, i);
+                        const char *from = whatsapp_get_chat_id(update);
+                        const char *text = whatsapp_get_text(update);
+                        if (from && text) {
+                            printf("[gateway:whatsapp] Message from %s: %s\n",
+                                   from, text);
+                            char *resp = agent_chat(&g_gw.agent, text);
+                            if (resp) {
+                                whatsapp_send_message(g_gw.http, from, resp);
+                                free(resp);
+                            }
+                        }
+                    }
+                    json_free(updates);
+                }
+            }
+            char *r = build_http_response(200, "OK",
+                                           "application/json",
+                                           "{\"status\":\"ok\"}");
+            if (r) { safe_write(client_fd, r, strlen(r)); free(r); }
+            close(client_fd);
+            return;
+        }
+
         char *r = build_http_response(404, "Not Found",
                                        "application/json",
                                        "{\"error\":\"Not Found. Use POST /webhook\"}");
