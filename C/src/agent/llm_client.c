@@ -113,7 +113,7 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     char auth_header[512];
     if (cfg->api_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
-                 "Authorization: Bearer %s\r\nContent-Type: application/json",
+                "Authorization: Bearer %s\r\nContent-Type: application/json",
                  cfg->api_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
