@@ -62,4 +62,15 @@ const char *discord_get_text(json_node_t *update);
  * is set to false (SIGINT/SIGTERM). */
 void webhook_server_run(int port);
 
+/* ================================================================
+ *  Slack platform
+ * ================================================================ */
+
+void slack_set_token(const char *token);
+void slack_set_channel(const char *id);
+bool slack_send_message(http_client_t *http, const char *text);
+json_node_t *slack_poll_messages(http_client_t *http);
+const char *slack_get_chat_id(json_node_t *update);
+const char *slack_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

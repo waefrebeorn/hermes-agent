@@ -132,6 +132,32 @@ static void poll_discord(void) {
 }
 
 /* ================================================================
+ *  Slack poll loop
+ * ================================================================ */
+
+static void poll_slack(void) {
+    printf("[gateway] Slack polling (interval: %ds)\n", g_gw.poll_interval);
+
+    while (g_gw.running) {
+        json_node_t *updates = slack_poll_messages(g_gw.http);
+
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update(slack_get_chat_id(update),
+                               slack_get_text(update));
+            }
+        }
+
+        json_free(updates);
+
+        if (g_gw.running)
+            sleep(g_gw.poll_interval);
+    }
+}
+
+/* ================================================================
  *  Signal handler
  * ================================================================ */
 
@@ -205,8 +231,18 @@ int hermes_gateway_main(int argc, char **argv) {
     } else if (strcmp(g_gw.platform, "webhook") == 0) {
         /* Webhook API — no token needed */
         ok = true;
+    } else if (strcmp(g_gw.platform, "slack") == 0) {
+        const char *token = getenv("SLACK_BOT_TOKEN");
+        const char *channel = getenv("SLACK_CHANNEL_ID");
+        if (!token || !channel) {
+            fprintf(stderr, "Error: SLACK_BOT_TOKEN and SLACK_CHANNEL_ID must be set\n");
+            goto cleanup;
+        }
+        slack_set_token(token);
+        slack_set_channel(channel);
+        ok = true;
     } else {
-        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', or 'webhook'.\n",
+        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', 'webhook', or 'slack'.\n",
                 g_gw.platform);
         goto cleanup;
     }
@@ -227,7 +263,8 @@ int hermes_gateway_main(int argc, char **argv) {
         int port = port_str ? atoi(port_str) : 8080;
         if (port <= 0 || port > 65535) port = 8080;
         webhook_server_run(port);
-    }
+    } else if (strcmp(g_gw.platform, "slack") == 0)
+        poll_slack();
 
 cleanup:
     agent_free(&g_gw.agent);
