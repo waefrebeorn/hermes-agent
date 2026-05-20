@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -O2 -g -Wall -Wextra -I include $(shell pkg-config --cflags sqlite3 libcurl yaml-0.1 2>/dev/null || echo "-I include")
-LDFLAGS = $(shell pkg-config --libs sqlite3 libcurl yaml-0.1 2>/dev/null || echo "-lsqlite3 -lcurl -lyaml")
+CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
+LDFLAGS = -lssl -lcrypto
 LIBS = -lm
 
 # Phase targets (each adds its objects)
@@ -45,11 +45,11 @@ hermes: $(PHASE5_OBJ) src/main.o
 src/%.o: src/%.c include/hermes.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Digestion: analyze Python changes since last pull
+# Digestion
 digest:
 	python3 digest.py
 
-# Run tests (once we have test infrastructure)
+# Test
 test: hermes
 	@echo "Tests TBD"
 
@@ -58,5 +58,5 @@ what-changed:
 	@cd .. && git log --oneline @{u}..HEAD --name-only -- '*.py' 2>/dev/null | head -40
 
 clean:
-	rm -f hermes src/**/*.o src/**/**/*.o
+	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
 	rm -rf digest_output/

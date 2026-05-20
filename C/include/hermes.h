@@ -129,6 +129,16 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
 bool hermes_config_load_env(hermes_config_t *cfg);
 
 /* ================================================================
+ *  Include sub-headers for dependency wrappers
+ * ================================================================ */
+#include "hermes_json.h"
+#include "hermes_yaml.h"
+#include "hermes_http.h"
+#include "hermes_crypto.h"
+#include "hermes_db.h"
+#include "hermes_display.h"
+
+/* ================================================================
  *  Entry Points
  * ================================================================ */
 int  hermes_cli_main(int argc, char **argv);
