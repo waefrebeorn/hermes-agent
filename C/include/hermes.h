@@ -95,6 +95,9 @@ typedef struct {
     tool_call_t   tool_calls[64]; /* Max 64 tool calls per turn */
 } llm_response_t;
 
+/* Forward declaration for session database (defined in hermes_db.h) */
+typedef struct db_t db_t;
+
 /* ================================================================
  *  Agent State
  * ================================================================ */
@@ -109,6 +112,7 @@ typedef struct {
     bool              interrupted;
     char              session_id[64];
     char              hermes_home[HERMES_PATH_MAX];
+    db_t             *db;           /* session database (optional) */
 } agent_state_t;
 
 /* ================================================================

@@ -20,6 +20,7 @@ typedef struct {
     hermes_config_t config;
     bool interactive;
     bool running;
+    char session_arg[64];  /* --session id */
 } cli_state_t;
 
 static cli_state_t g_cli;
@@ -74,27 +75,53 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Check for one-shot mode */
     if (argc > 1) {
-        /* Concatenate args as message */
-        size_t total = 0;
-        for (int i = 1; i < argc; i++)
-            total += strlen(argv[i]) + 1;
-        char *msg = (char *)malloc(total + 1);
-        msg[0] = '\0';
-        for (int i = 1; i < argc; i++) {
-            if (i > 1) strcat(msg, " ");
-            strcat(msg, argv[i]);
+        /* Check for --session flag */
+        const char *session_id = NULL;
+        int arg_start = 1;
+        if (argc > 2 && strcmp(argv[1], "--session") == 0) {
+            session_id = argv[2];
+            snprintf(g_cli.session_arg, sizeof(g_cli.session_arg), "%s", session_id);
+            arg_start = 3;
         }
 
-        char *resp = agent_chat(&g_cli.agent, msg);
-        printf("%s\n", resp ? resp : "(no response)");
-        free(resp);
-        free(msg);
+        if (arg_start < argc) {
+            /* Open DB and load session if specified */
+            if (g_cli.agent.hermes_home[0]) {
+                agent_open_db(&g_cli.agent);
+                if (session_id) agent_load_session(&g_cli.agent, session_id);
+            }
+
+            /* Concatenate args as message */
+            size_t total = 0;
+            for (int i = arg_start; i < argc; i++)
+                total += strlen(argv[i]) + 1;
+            char *msg = (char *)malloc(total + 1);
+            msg[0] = '\0';
+            for (int i = arg_start; i < argc; i++) {
+                if (i > arg_start) strcat(msg, " ");
+                strcat(msg, argv[i]);
+            }
+
+            char *resp = agent_chat(&g_cli.agent, msg);
+            printf("%s\n", resp ? resp : "(no response)");
+            free(resp);
+            free(msg);
+        }
+
+        agent_close_db(&g_cli.agent);
         agent_free(&g_cli.agent);
         return 0;
     }
 
     /* Interactive mode */
     print_banner();
+
+    /* Open DB and optionally load session */
+    if (g_cli.agent.hermes_home[0]) {
+        agent_open_db(&g_cli.agent);
+        if (g_cli.session_arg[0])
+            agent_load_session(&g_cli.agent, g_cli.session_arg);
+    }
 
     char input[65536];
     while (g_cli.running) {
@@ -151,6 +178,7 @@ int hermes_cli_main(int argc, char **argv) {
         }
     }
 
+    agent_close_db(&g_cli.agent);
     agent_free(&g_cli.agent);
     return 0;
 }

@@ -62,6 +62,12 @@ char *agent_run_conversation(agent_state_t *state,
                               const char *system_message);
 char *agent_chat(agent_state_t *state, const char *message);
 
+/* === Session persistence (agent_loop.c) === */
+bool agent_open_db(agent_state_t *state);
+bool agent_save_session(agent_state_t *state);
+bool agent_load_session(agent_state_t *state, const char *session_id);
+void agent_close_db(agent_state_t *state);
+
 /* === Title (title.c) === */
 char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 

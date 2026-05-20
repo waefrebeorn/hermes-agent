@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 
 /* ================================================================
  *  Agent initialization
@@ -32,6 +33,100 @@ void agent_init(agent_state_t *state) {
              "%04d%02d%02d_%02d%02d%02d",
              tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
              tm->tm_hour, tm->tm_min, tm->tm_sec);
+}
+
+/* Open session database. Returns true on success. */
+bool agent_open_db(agent_state_t *state) {
+    if (state->db) return true;
+    char db_dir[4096];
+    snprintf(db_dir, sizeof(db_dir), "%s/sessions", state->hermes_home[0] ?
+             state->hermes_home : (getenv("HOME") ? getenv("HOME") : "/tmp"));
+    /* Ensure directory exists */
+    mkdir(db_dir, 0755);
+    state->db = db_open(db_dir, NULL);
+    return state->db != NULL;
+}
+
+/* Serialize all messages to JSON for DB storage */
+static char *serialize_messages(const agent_state_t *state) {
+    json_node_t *arr = json_new_array();
+    for (size_t i = 0; i < state->message_count; i++) {
+        json_node_t *msg = json_new_object();
+        const char *role_str;
+        switch (state->messages[i]->role) {
+            case MSG_SYSTEM:    role_str = "system";    break;
+            case MSG_USER:      role_str = "user";      break;
+            case MSG_ASSISTANT: role_str = "assistant"; break;
+            case MSG_TOOL:      role_str = "tool";      break;
+            default:            role_str = "user";      break;
+        }
+        json_object_set(msg, "role", json_new_string(role_str));
+        if (state->messages[i]->content)
+            json_object_set(msg, "content", json_new_string(state->messages[i]->content));
+        json_array_append(arr, msg);
+    }
+    char *json = json_serialize(arr);
+    json_free(arr);
+    return json;
+}
+
+/* Deserialize messages from JSON into state */
+static bool deserialize_messages(agent_state_t *state, const char *json_str) {
+    if (!json_str || !*json_str) return false;
+    char *err = NULL;
+    json_node_t *arr = json_parse(json_str, &err);
+    if (!arr || arr->type != JSON_ARRAY) { free(err); json_free(arr); return false; }
+    free(err);
+
+    size_t n = json_len(arr);
+    for (size_t i = 0; i < n; i++) {
+        json_node_t *item = json_get(arr, i);
+        const char *role = json_get_str(item, "role", "user");
+        const char *content = json_get_str(item, "content", "");
+
+        message_role_t r = MSG_USER;
+        if (strcmp(role, "system") == 0) r = MSG_SYSTEM;
+        else if (strcmp(role, "assistant") == 0) r = MSG_ASSISTANT;
+        else if (strcmp(role, "tool") == 0) r = MSG_TOOL;
+
+        message_t *msg = message_new(r, content);
+        if (msg) context_push(state, msg);
+    }
+    json_free(arr);
+    return state->message_count > 0;
+}
+
+/* Save current session to database */
+bool agent_save_session(agent_state_t *state) {
+    if (!state->db) return false;
+    char *json = serialize_messages(state);
+    if (!json) return false;
+    bool ok = db_save(state->db, state->session_id, json);
+    free(json);
+    return ok;
+}
+
+/* Load a session from database into state */
+bool agent_load_session(agent_state_t *state, const char *session_id) {
+    if (!state->db) return false;
+    context_clear(state);
+    if (session_id && *session_id)
+        snprintf(state->session_id, sizeof(state->session_id), "%s", session_id);
+
+    char *json = db_load(state->db, state->session_id, NULL);
+    if (!json) return false;
+    bool ok = deserialize_messages(state, json);
+    free(json);
+    return ok;
+}
+
+/* Close session database */
+void agent_close_db(agent_state_t *state) {
+    if (state->db) {
+        agent_save_session(state);
+        db_close(state->db);
+        state->db = NULL;
+    }
 }
 
 void agent_free(agent_state_t *state) {
@@ -127,6 +222,8 @@ char *agent_run_conversation(agent_state_t *state,
             char *result = llm_resp->content ? strdup(llm_resp->content) : strdup("");
             llm_response_free(llm_resp);
             json_free(tools_json);
+            /* Auto-save session */
+            if (state->db) agent_save_session(state);
             return result;
         }
 
