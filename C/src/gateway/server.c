@@ -16,22 +16,10 @@
 #include <signal.h>
 
 /* ================================================================
- *  Gateway config
+ *  Gateway state (non-static — shared with webhook.c)
  * ================================================================ */
 
-typedef struct {
-    agent_state_t agent;
-    hermes_config_t config;
-    http_client_t *http;
-    bool running;
-    int  poll_interval;  /* seconds between polls */
-    char platform[32];   /* "telegram" or "discord" */
-
-    /* Platform state */
-    int  tg_offset;      /* Telegram: last update_id + 1 */
-} gateway_state_t;
-
-static gateway_state_t g_gw;
+gateway_state_t g_gw;
 
 /* ================================================================
  *  Platform-aware message send
@@ -214,8 +202,11 @@ int hermes_gateway_main(int argc, char **argv) {
         discord_set_token(token);
         discord_set_channel(channel);
         ok = true;
+    } else if (strcmp(g_gw.platform, "webhook") == 0) {
+        /* Webhook API — no token needed */
+        ok = true;
     } else {
-        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram' or 'discord'.\n",
+        fprintf(stderr, "Error: Unknown platform '%s'. Choose 'telegram', 'discord', or 'webhook'.\n",
                 g_gw.platform);
         goto cleanup;
     }
@@ -231,6 +222,12 @@ int hermes_gateway_main(int argc, char **argv) {
         poll_telegram();
     else if (strcmp(g_gw.platform, "discord") == 0)
         poll_discord();
+    else if (strcmp(g_gw.platform, "webhook") == 0) {
+        const char *port_str = getenv("HERMES_WEBHOOK_PORT");
+        int port = port_str ? atoi(port_str) : 8080;
+        if (port <= 0 || port > 65535) port = 8080;
+        webhook_server_run(port);
+    }
 
 cleanup:
     agent_free(&g_gw.agent);

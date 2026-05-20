@@ -11,6 +11,25 @@
 #include "hermes_http.h"
 
 /* ================================================================
+ *  Gateway state (shared across platform modules)
+ * ================================================================ */
+
+typedef struct {
+    agent_state_t   agent;
+    hermes_config_t config;
+    http_client_t  *http;
+    bool            running;
+    int             poll_interval;  /* seconds between polls */
+    char            platform[32];   /* "telegram", "discord", "webhook" */
+
+    /* Platform-specific state */
+    int             tg_offset;      /* Telegram: last update_id + 1 */
+} gateway_state_t;
+
+/* Global gateway state — defined in server.c */
+extern gateway_state_t g_gw;
+
+/* ================================================================
  *  Telegram platform
  * ================================================================ */
 
@@ -34,5 +53,13 @@ void discord_send_typing(http_client_t *http);
 json_node_t *discord_poll_messages(http_client_t *http);
 const char *discord_get_chat_id(json_node_t *update);
 const char *discord_get_text(json_node_t *update);
+
+/* ================================================================
+ *  Webhook HTTP API platform
+ * ================================================================ */
+
+/* Start HTTP API server on the given port. Blocks until g_gw.running
+ * is set to false (SIGINT/SIGTERM). */
+void webhook_server_run(int port);
 
 #endif /* HERMES_GATEWAY_H */
