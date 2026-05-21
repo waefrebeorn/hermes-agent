@@ -222,9 +222,13 @@ const char *qqbot_get_text(json_node_t *update);
 void bluebubbles_set_url(const char *url);
 void bluebubbles_set_password(const char *password);
 bool bluebubbles_send_message(http_client_t *http, const char *to,
-                               const char *text);
+                              const char *text);
 json_node_t *bluebubbles_poll_messages(http_client_t *http);
 const char *bluebubbles_get_chat_id(json_node_t *update);
 const char *bluebubbles_get_text(json_node_t *update);
+
+/* msgraph_webhook — raw socket HTTP server for Microsoft Graph notifications */
+void msgraph_webhook_init(const char *webhook_path, const char *health_path, int port);
+void msgraph_webhook_run(void);
 
 #endif /* HERMES_GATEWAY_H */

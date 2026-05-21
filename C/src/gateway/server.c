@@ -542,6 +542,20 @@ static int get_webhook_port(void) {
  *  Gateway entry point
  * ================================================================ */
 
+static bool setup_msgraph_webhook(void) {
+    const char *port_str = getenv("MSGRAPH_WEBHOOK_PORT");
+    int port = port_str ? atoi(port_str) : 8646;
+    if (port <= 0 || port > 65535) port = 8646;
+    msgraph_webhook_init(NULL, NULL, port);
+    return true;
+}
+
+static void *thread_msgraph_webhook(void *arg) {
+    (void)arg;
+    msgraph_webhook_run();
+    return NULL;
+}
+
 int hermes_gateway_main(int argc, char **argv) {
     memset(&g_gw, 0, sizeof(g_gw));
     g_gw.running = true;
@@ -597,6 +611,7 @@ int hermes_gateway_main(int argc, char **argv) {
         {"dingtalk",   setup_dingtalk,   thread_poll_dingtalk,   0},
         {"qqbot",      setup_qqbot,      thread_poll_qqbot,      0},
         {"bluebubbles",setup_bluebubbles,thread_poll_bluebubbles,0},
+        {"msgraph_webhook", setup_msgraph_webhook, thread_msgraph_webhook, 0},
         {NULL, NULL, NULL, 0}
     };
 
