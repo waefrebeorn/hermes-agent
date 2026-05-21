@@ -177,5 +177,9 @@ else fail "browser_get_images not registered"; fi
 if [ "$BROWSER_PRESS" = true ]; then ok "browser_press registered"
 else fail "browser_press not registered"; fi
 
+# Check image_generate is registered
+if echo "$REG_TOOLS" | grep -qi "image_generate"; then ok "image_generate registered"
+else fail "image_generate not registered"; fi
+
 summary
 exit $FAIL
