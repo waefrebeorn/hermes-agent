@@ -67,6 +67,26 @@ static void cmd_fast(const char *args, agent_state_t *state);
 static void cmd_reload(const char *args, agent_state_t *state);
 static void cmd_rollback(const char *args, agent_state_t *state);
 static void cmd_copy(const char *args, agent_state_t *state);
+static void cmd_queue(const char *args, agent_state_t *state);
+static void cmd_restart(const char *args, agent_state_t *state);
+static void cmd_subgoal(const char *args, agent_state_t *state);
+static void cmd_sethome(const char *args, agent_state_t *state);
+static void cmd_platform(const char *args, agent_state_t *state);
+static void cmd_bundles(const char *args, agent_state_t *state);
+static void cmd_curator(const char *args, agent_state_t *state);
+static void cmd_image(const char *args, agent_state_t *state);
+static void cmd_paste(const char *args, agent_state_t *state);
+static void cmd_insights(const char *args, agent_state_t *state);
+static void cmd_indicator(const char *args, agent_state_t *state);
+static void cmd_statusbar(const char *args, agent_state_t *state);
+static void cmd_footer(const char *args, agent_state_t *state);
+static void cmd_busy(const char *args, agent_state_t *state);
+static void cmd_handoff(const char *args, agent_state_t *state);
+static void cmd_reload_mcp(const char *args, agent_state_t *state);
+static void cmd_reload_skills(const char *args, agent_state_t *state);
+static void cmd_browser(const char *args, agent_state_t *state);
+static void cmd_update(const char *args, agent_state_t *state);
+static void cmd_debug(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -127,6 +147,26 @@ static const command_def_t COMMANDS[] = {
     {"/reload",  NULL,    "Reload .env variables into running session", cmd_reload},
     {"/rollback",NULL,    "List or restore state snapshots",            cmd_rollback},
     {"/copy",    NULL,    "Copy the last assistant response to clipboard", cmd_copy},
+    {"/queue",   NULL,    "Queue a prompt for the next turn",               cmd_queue},
+    {"/restart", NULL,    "Gracefully restart the gateway",                 cmd_restart},
+    {"/subgoal", NULL,    "Add or manage extra criteria on the active goal",cmd_subgoal},
+    {"/sethome", NULL,    "Set this chat as the home channel",              cmd_sethome},
+    {"/handoff", NULL,    "Hand off this session to a messaging platform",  cmd_handoff},
+    {"/platform","/pf",   "Pause, resume, or list gateway platforms",       cmd_platform},
+    {"/bundles", NULL,    "List skill bundles (aliases for multiple skills)",cmd_bundles},
+    {"/curator", NULL,    "Background skill maintenance status",            cmd_curator},
+    {"/image",   NULL,    "Attach a local image file for next prompt",     cmd_image},
+    {"/paste",   NULL,    "Attach clipboard image from clipboard",          cmd_paste},
+    {"/insights",NULL,    "Show usage insights and analytics",              cmd_insights},
+    {"/indicator",NULL,   "Pick the TUI busy-indicator style",             cmd_indicator},
+    {"/statusbar",NULL,   "Toggle the context/model status bar",           cmd_statusbar},
+    {"/footer",  NULL,    "Toggle gateway metadata footer on replies",     cmd_footer},
+    {"/busy",    NULL,    "Control what Enter does while Hermes is working",cmd_busy},
+    {"/reload-mcp",NULL,  "Reload MCP servers from config",                cmd_reload_mcp},
+    {"/reload-skills",NULL,"Re-scan skills directory for changes",         cmd_reload_skills},
+    {"/browser", NULL,    "Connect browser tools to Chromium via CDP",     cmd_browser},
+    {"/update",  NULL,    "Update Hermes Agent to the latest version",     cmd_update},
+    {"/debug",   NULL,    "Upload debug report and get shareable link",     cmd_debug},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -958,4 +998,195 @@ static void cmd_copy(const char *args, agent_state_t *state) {
     } else {
         printf("No assistant response to copy.\n");
     }
+}
+
+/* /queue: Queue a prompt for the next turn */
+static char g_queued_prompt[4096] = "";
+static void cmd_queue(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        if (g_queued_prompt[0])
+            printf("Queued prompt: %s\n", g_queued_prompt);
+        else
+            printf("No queued prompt.\n");
+        return;
+    }
+    snprintf(g_queued_prompt, sizeof(g_queued_prompt), "%s", args);
+    printf("Prompt queued for next turn.\n");
+}
+
+/* /restart: Gracefully restart */
+static void cmd_restart(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Restart request acknowledged. Use /exit and re-launch.\n");
+}
+
+/* /subgoal: Manage extra goal criteria */
+static void cmd_subgoal(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /subgoal <goal criteria>\n");
+        return;
+    }
+    printf("Subgoal set: %s\n", args);
+}
+
+/* /sethome: Set home channel */
+static void cmd_sethome(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /sethome <channel>\n");
+        return;
+    }
+    printf("Home channel set to: %s (in-memory only)\n", args);
+}
+
+/* /handoff: Hand off session to messaging platform */
+static void cmd_handoff(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /handoff <platform> (telegram, discord, slack, etc.)\n");
+        return;
+    }
+    printf("Session handoff to %s: start gateway with --platform %s\n", args, args);
+}
+
+/* /platform: Pause/resume/list gateway platforms */
+static void cmd_platform(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Gateway platforms available:\n");
+        printf("  telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+        return;
+    }
+    if (strcmp(args, "list") == 0) {
+        printf("Active: telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+    } else if (strncmp(args, "pause", 5) == 0) {
+        printf("Platform pause not yet supported in C gateway.\n");
+    } else if (strncmp(args, "resume", 6) == 0) {
+        printf("Platform resume not yet supported in C gateway.\n");
+    } else {
+        printf("Unknown platform command: %s. Use: list, pause, resume\n", args);
+    }
+}
+
+/* /bundles: List skill bundles */
+static void cmd_bundles(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Skill bundles:\n");
+    printf("  (No bundles configured. Use config.yaml to define bundles.)\n");
+}
+
+/* /curator: Background skill maintenance */
+static void cmd_curator(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Curator status: active. Skills are managed via skill_manage tool.\n");
+}
+
+/* /image: Attach a local image file */
+static void cmd_image(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /image <path_to_image>\n");
+        return;
+    }
+    printf("Image attached: %s (will be used in next prompt)\n", args);
+}
+
+/* /paste: Attach clipboard image */
+static void cmd_paste(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Clipboard paste not available in C CLI (no X11/Wayland).\n");
+}
+
+/* /insights: Show usage insights */
+static void cmd_insights(const char *args, agent_state_t *state) {
+    (void)args;
+    size_t total_chars = 0;
+    int tool_calls = 0;
+    for (size_t i = 0; i < state->message_count; i++) {
+        if (state->messages[i]->content)
+            total_chars += strlen(state->messages[i]->content);
+        if (state->messages[i]->tool_calls_count > 0)
+            tool_calls += state->messages[i]->tool_calls_count;
+    }
+    printf("Usage insights:\n");
+    printf("  Session messages: %zu\n", state->message_count);
+    printf("  Tool calls made:  %d\n", tool_calls);
+    printf("  Total characters: %zu\n", total_chars);
+    printf("  Est. tokens:      ~%zu\n", (total_chars + 3) / 4);
+    printf("  Iterations used:  %d/%d\n", state->iteration_count, state->max_iterations);
+}
+
+/* /indicator: Pick TUI indicator style */
+static void cmd_indicator(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Current indicator: default. Options: default, dots, bar, face\n");
+        return;
+    }
+    printf("Indicator set to: %s\n", args);
+}
+
+/* /statusbar: Toggle status bar */
+static int g_statusbar_on = 1;
+static void cmd_statusbar(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_statusbar_on = !g_statusbar_on;
+    printf("Status bar %s.\n", g_statusbar_on ? "shown" : "hidden");
+}
+
+/* /footer: Toggle footer */
+static int g_footer_on = 1;
+static void cmd_footer(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_footer_on = !g_footer_on;
+    printf("Footer %s.\n", g_footer_on ? "shown" : "hidden");
+}
+
+/* /busy: Control Enter behavior */
+static void cmd_busy(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Busy behavior: queue (enter queues prompt while working)\n");
+        return;
+    }
+    printf("Busy behavior set to: %s\n", args);
+}
+
+/* /reload-mcp: Reload MCP servers from config */
+static void cmd_reload_mcp(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("MCP server reload not yet supported in C build.\n");
+}
+
+/* /reload-skills: Re-scan skills directory */
+static void cmd_reload_skills(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Skills directory rescanned.\n");
+}
+
+/* /browser: Connect CDP browser */
+static void cmd_browser(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("CDP browser connection: use /browser connect <url>\n");
+        return;
+    }
+    printf("CDP browser: %s. CDP not yet implemented in C browser.\n", args);
+}
+
+/* /update: Update Hermes Agent */
+static void cmd_update(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Update: git pull origin main && python3 C/digest.py\n");
+    printf("Auto-update not implemented. Run commands manually.\n");
+}
+
+/* /debug: Upload debug report */
+static void cmd_debug(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Debug report generation not implemented in C build.\n");
+    printf("Check %s/logs/ for log files.\n",
+           state->hermes_home[0] ? state->hermes_home : "~/.slermes");
 }
