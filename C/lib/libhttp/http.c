@@ -468,6 +468,32 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         resp->headers = xstrdup(resp_buf);
         resp->body = xstrdup(header_end + 4);
         resp->body_len = strlen(resp->body);
+
+        /* Handle chunked transfer encoding */
+        if (strstr(resp->headers, "Transfer-Encoding: chunked") ||
+            strstr(resp->headers, "transfer-encoding: chunked")) {
+            char *dechunked = NULL;
+            size_t dechunked_len = 0;
+            const char *src = resp->body;
+            while (*src) {
+                long chunk_sz = strtol(src, (char**)&src, 16);
+                if (chunk_sz == 0) break;
+                while (*src == '\r' || *src == '\n') src++;
+                char *newbuf = realloc(dechunked, dechunked_len + (size_t)chunk_sz + 1);
+                if (!newbuf) { free(dechunked); dechunked = NULL; break; }
+                dechunked = newbuf;
+                memcpy(dechunked + dechunked_len, src, (size_t)chunk_sz);
+                dechunked_len += (size_t)chunk_sz;
+                src += chunk_sz;
+                while (*src == '\r' || *src == '\n') src++;
+            }
+            if (dechunked) {
+                dechunked[dechunked_len] = '\0';
+                free(resp->body);
+                resp->body = dechunked;
+                resp->body_len = dechunked_len;
+            }
+        }
         free(resp_buf);
 
         /* Retry on server errors (5xx) if configured */

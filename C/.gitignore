@@ -1,9 +1,20 @@
 # Build artifacts
-hermes
-hermes_test
+slermes
+slermes_test
 *.o
 *.a
 *.so
+*.out
+
+# Config (user-specific)
+.env
+config.yaml
+
+# Temp
+/tmp/
+digest_output/
+__pycache__/
+*.pyc
 
 # Test binaries
 tests/test_json

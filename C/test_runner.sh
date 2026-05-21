@@ -157,5 +157,25 @@ test_webhook "CORS preflight" \
     'curl -s -X OPTIONS http://localhost:$PORT/webhook -I | head -1' \
     "204"
 
+# ==============================================
+# 4. Browser tool registration tests
+# ==============================================
+echo ""; echo "=== Browser Tool Registration Tests ==="
+
+# Check that browser_get_images and browser_press are registered
+REG_TOOLS=$(echo "/tools" | timeout 2 "$HERMES" 2>&1 || true)
+BROWSER_GET_IMAGES=false
+BROWSER_PRESS=false
+while IFS= read -r line; do
+    if echo "$line" | grep -qi "browser_get_images"; then BROWSER_GET_IMAGES=true; fi
+    if echo "$line" | grep -qi "browser_press"; then BROWSER_PRESS=true; fi
+done <<< "$REG_TOOLS"
+
+if [ "$BROWSER_GET_IMAGES" = true ]; then ok "browser_get_images registered"
+else fail "browser_get_images not registered"; fi
+
+if [ "$BROWSER_PRESS" = true ]; then ok "browser_press registered"
+else fail "browser_press not registered"; fi
+
 summary
 exit $FAIL

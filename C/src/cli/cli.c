@@ -198,112 +198,13 @@ int hermes_cli_main(int argc, char **argv) {
 
         if (len == 0) continue;
 
-        /* Check for slash commands */
+        /* Check for slash commands — dispatch via registry */
         if (input[0] == '/') {
-            if (strcmp(input, "/exit") == 0 || strcmp(input, "/quit") == 0) {
-                g_cli.running = false;
-                break;
-            }
-            if (strcmp(input, "/help") == 0) {
-                printf("Commands:\n");
-                printf("  /exit, /quit  — Exit\n");
-                printf("  /help         — This help\n");
-                printf("  /clear        — Clear context\n");
-                printf("  /model        — Show current model\n");
-                printf("  /sessions     — List saved sessions\n");
-                printf("  /save         — Save current session\n");
-                printf("  /load <id>    — Load a session\n");
-                printf("  /stats        — Show session stats\n");
-                printf("  /conv         — Show recent conversation\n");
+            if (commands_dispatch(input, &g_cli.agent))
                 continue;
-            }
-            if (strcmp(input, "/clear") == 0) {
-                context_clear(&g_cli.agent);
-                display_printf(cli_skin_color("colors.status", DISPLAY_YELLOW), DISPLAY_NORMAL,
-                               "Context cleared.\n");
-                continue;
-            }
-            if (strcmp(input, "/model") == 0) {
-                printf("Model: %s\n", g_cli.config.model);
-                printf("Provider: %s\n", g_cli.config.provider);
-                printf("Base URL: %s\n", g_cli.config.base_url);
-                continue;
-            }
-            if (strcmp(input, "/sessions") == 0) {
-                if (!g_cli.agent.db) {
-                    printf("No session database.\n");
-                } else {
-                    size_t count = 0;
-                    char **list = db_list(g_cli.agent.db, &count);
-                    if (list && count > 0) {
-                        printf("Sessions (%zu):\n", count);
-                        for (size_t i = 0; i < count; i++) {
-                            printf("  %s\n", list[i]);
-                            free(list[i]);
-                        }
-                        free(list);
-                    } else {
-                        printf("No saved sessions.\n");
-                    }
-                }
-                continue;
-            }
-            if (strcmp(input, "/save") == 0) {
-                if (agent_save_session(&g_cli.agent))
-                    printf("Session saved: %s\n", g_cli.agent.session_id);
-                else
-                    printf("Failed to save session.\n");
-                continue;
-            }
-            if (strncmp(input, "/load ", 6) == 0) {
-                const char *sid = input + 6;
-                if (agent_load_session(&g_cli.agent, sid)) {
-                    printf("Session loaded: %s (%zu messages)\n", sid, g_cli.agent.message_count);
-                } else {
-                    printf("Failed to load session: %s\n", sid);
-                }
-                continue;
-            }
-            if (strcmp(input, "/stats") == 0) {
-                printf("Messages: %zu\n", g_cli.agent.message_count);
-                printf("Iterations: %d\n", g_cli.agent.iteration_count);
-                printf("Session: %s\n", g_cli.agent.session_id);
-                printf("Tools registered: %zu\n", g_cli.agent.tools.count);
-                continue;
-            }
-            if (strcmp(input, "/conv") == 0) {
-                size_t n = g_cli.agent.message_count;
-                size_t start = (n > 10) ? n - 10 : 0;
-                printf("Recent conversation (%zu-%zu of %zu):\n", start + 1, n, n);
-                for (size_t i = start; i < n; i++) {
-                    const char *role_str;
-                    switch (g_cli.agent.messages[i]->role) {
-                        case MSG_SYSTEM:    role_str = "sys";  break;
-                        case MSG_USER:      role_str = "usr";  break;
-                        case MSG_ASSISTANT: role_str = "asm";  break;
-                        case MSG_TOOL:      role_str = "tool"; break;
-                        default:            role_str = "?";    break;
-                    }
-                    const char *content = g_cli.agent.messages[i]->content;
-                    if (content) {
-                        char preview[81];
-                        size_t clen = strlen(content);
-                        if (clen > 80) {
-                            memcpy(preview, content, 77);
-                            preview[77] = '.';
-                            preview[78] = '.';
-                            preview[79] = '.';
-                            preview[80] = '\0';
-                        } else {
-                            memcpy(preview, content, clen + 1);
-                        }
-                        printf("  [%s] %s\n", role_str, preview);
-                    } else {
-                        printf("  [%s] (no content)\n", role_str);
-                    }
-                }
-                continue;
-            }
+            /* Unknown command */
+            printf("Unknown command: %s. Try /help\n", input);
+            continue;
         }
 
         /* Run agent */

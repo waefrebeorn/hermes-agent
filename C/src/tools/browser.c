@@ -921,6 +921,249 @@ char *browser_scroll_handler(const char *args_json, const char *task_id) {
     json_free(args);
     return result;
 }
+
+/* ================================================================
+ *  Browser Get Images: Extract image info from cached HTML
+ * ================================================================ */
+
+/* browser_get_images: Extract all <img> tags from the cached HTML */
+char *browser_get_images_handler(const char *args_json, const char *task_id) {
+    (void)args_json; (void)task_id;
+
+    if (!g_tab.html) {
+        return strdup("{\"error\": \"No page loaded. Navigate to a URL first.\", \"images\": [], \"count\": 0}");
+    }
+
+    /* Count images first for allocation */
+    int img_count = 0;
+    const char *p = g_tab.html;
+    while ((p = strstr(p, "<img")) != NULL) {
+        img_count++;
+        p += 4;
+    }
+    if (img_count == 0) {
+        return strdup("{\"success\": true, \"images\": [], \"count\": 0}");
+    }
+
+    /* Allocate result buffer: ~256 bytes per image + header */
+    size_t buf_sz = 256 + (size_t)img_count * 512;
+    char *result = (char *)malloc(buf_sz);
+    if (!result) return strdup("{\"error\": \"OOM\"}");
+
+    size_t pos = 0;
+    pos += snprintf(result + pos, buf_sz - pos,
+        "{\"success\":true,\"images\":[");
+
+    p = g_tab.html;
+    int first = 1;
+    while ((p = strstr(p, "<img")) != NULL && pos < buf_sz - 100) {
+        /* Find the closing > of this img tag */
+        const char *gt = strchr(p, '>');
+        if (!gt) { p += 4; continue; }
+
+        size_t tag_len = (size_t)(gt - p);
+        char tag_buf[2048];
+        size_t copy_len = tag_len < sizeof(tag_buf) - 1 ? tag_len : sizeof(tag_buf) - 1;
+        memcpy(tag_buf, p, copy_len);
+        tag_buf[copy_len] = '\0';
+
+        /* Extract src */
+        char src[2048] = "";
+        const char *src_start = strstr(tag_buf, "src=\"");
+        if (src_start) {
+            src_start += 5;
+            const char *src_end = strchr(src_start, '"');
+            if (src_end) {
+                size_t sl = (size_t)(src_end - src_start);
+                if (sl >= sizeof(src)) sl = sizeof(src) - 1;
+                memcpy(src, src_start, sl);
+                src[sl] = '\0';
+            }
+        }
+
+        /* Extract alt */
+        char alt[512] = "";
+        const char *alt_start = strstr(tag_buf, "alt=\"");
+        if (alt_start) {
+            alt_start += 5;
+            const char *alt_end = strchr(alt_start, '"');
+            if (alt_end) {
+                size_t al = (size_t)(alt_end - alt_start);
+                if (al >= sizeof(alt)) al = sizeof(alt) - 1;
+                memcpy(alt, alt_start, al);
+                alt[al] = '\0';
+            }
+        }
+
+        /* Resolve relative src URL */
+        char full_src[2048] = "";
+        if (src[0]) {
+            if (strstr(src, "://") || src[0] == '/') {
+                snprintf(full_src, sizeof(full_src), "%s", src);
+                /* If starts with /, prepend base origin */
+                if (src[0] == '/') {
+                    /* Extract origin from current URL */
+                    char origin[1024] = "";
+                    const char *slash3 = NULL;
+                    int slash_count = 0;
+                    for (const char *up = g_tab.url; *up; up++) {
+                        if (*up == '/') {
+                            slash_count++;
+                            if (slash_count == 3) { slash3 = up; break; }
+                        }
+                    }
+                    if (slash3) {
+                        size_t ol = (size_t)(slash3 - g_tab.url);
+                        if (ol >= sizeof(origin)) ol = sizeof(origin) - 1;
+                        memcpy(origin, g_tab.url, ol);
+                        origin[ol] = '\0';
+                        snprintf(full_src, sizeof(full_src), "%s%s", origin, src);
+                    }
+                }
+            } else if (g_tab.url[0]) {
+                /* Relative path — resolve against current URL dir */
+                char base[2048];
+                snprintf(base, sizeof(base), "%s", g_tab.url);
+                char *last_slash = strrchr(base, '/');
+                if (last_slash && last_slash > base + 7) {
+                    *(last_slash + 1) = '\0';
+                    snprintf(full_src, sizeof(full_src), "%s%s", base, src);
+                } else {
+                    snprintf(full_src, sizeof(full_src), "%s/%s", g_tab.url, src);
+                }
+            }
+        }
+
+        /* Escape strings for JSON */
+        char esc_src[4096] = "";
+        char esc_alt[1024] = "";
+        {
+            size_t ei = 0;
+            for (const char *sp = full_src; *sp && ei < sizeof(esc_src) - 4; sp++) {
+                if (*sp == '"' || *sp == '\\') { esc_src[ei++] = '\\'; esc_src[ei++] = *sp; }
+                else if (*sp == '\n') { esc_src[ei++] = '\\'; esc_src[ei++] = 'n'; }
+                else esc_src[ei++] = *sp;
+            }
+            esc_src[ei] = '\0';
+        }
+        {
+            size_t ei = 0;
+            for (const char *ap = alt; *ap && ei < sizeof(esc_alt) - 4; ap++) {
+                if (*ap == '"' || *ap == '\\') { esc_alt[ei++] = '\\'; esc_alt[ei++] = *ap; }
+                else if (*ap == '\n') { esc_alt[ei++] = '\\'; esc_alt[ei++] = 'n'; }
+                else esc_alt[ei++] = *ap;
+            }
+            esc_alt[ei] = '\0';
+        }
+
+        if (!first) pos += snprintf(result + pos, buf_sz - pos, ",");
+        first = 0;
+        pos += snprintf(result + pos, buf_sz - pos,
+            "{\"src\":\"%s\",\"alt\":\"%s\"}", esc_src, esc_alt);
+
+        p += 4;
+    }
+
+    pos += snprintf(result + pos, buf_sz - pos,
+        "],\"count\":%d}", img_count);
+
+    return result;
+}
+
+/* ================================================================
+ *  Browser Press: Simulate keyboard key press
+ * ================================================================ */
+
+/* browser_press: Press a keyboard key (Enter, Tab, Escape, etc.) */
+char *browser_press_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\": \"Invalid JSON arguments\"}");
+
+    const char *key = json_get_str(args, "key", "");
+    if (!key || !*key) {
+        json_free(args);
+        return strdup("{\"error\": \"Missing 'key' parameter\"}");
+    }
+
+    if (!g_tab.html) {
+        json_free(args);
+        return strdup("{\"error\": \"No page loaded. Navigate to a URL first.\"}");
+    }
+
+    char result[2048];
+
+    if (strcasecmp(key, "Enter") == 0) {
+        /* Find the first <form> in the HTML and try to "submit" it */
+        const char *form_start = strstr(g_tab.html, "<form");
+        if (form_start) {
+            /* Extract form action */
+            const char *action_start = strstr(form_start, "action=\"");
+            char action[2048] = "";
+            if (action_start) {
+                action_start += 8;
+                const char *action_end = strchr(action_start, '"');
+                if (action_end) {
+                    size_t al = (size_t)(action_end - action_start);
+                    if (al >= sizeof(action)) al = sizeof(action) - 1;
+                    memcpy(action, action_start, al);
+                    action[al] = '\0';
+                }
+            }
+
+            /* Resolve action URL */
+            char full_url[2048] = "";
+            if (action[0]) {
+                if (strstr(action, "://") || action[0] == '/') {
+                    if (action[0] == '/') {
+                        char origin[1024] = "";
+                        int sc = 0;
+                        for (const char *up = g_tab.url; *up; up++) {
+                            if (*up == '/') { sc++; if (sc == 3) { size_t ol = (size_t)(up - g_tab.url);
+                                if (ol >= sizeof(origin)) ol = sizeof(origin) - 1;
+                                memcpy(origin, g_tab.url, ol); origin[ol] = '\0'; break; } }
+                        }
+                        snprintf(full_url, sizeof(full_url), "%s%s", origin, action);
+                    } else {
+                        snprintf(full_url, sizeof(full_url), "%s", action);
+                    }
+                } else {
+                    char base[2048];
+                    snprintf(base, sizeof(base), "%s", g_tab.url);
+                    char *ls = strrchr(base, '/');
+                    if (ls && ls > base + 7) *(ls + 1) = '\0';
+                    snprintf(full_url, sizeof(full_url), "%s%s", base, action);
+                }
+            } else {
+                snprintf(full_url, sizeof(full_url), "%s", g_tab.url);
+            }
+
+            snprintf(result, sizeof(result),
+                "{\"status\":\"submitted\",\"key\":\"Enter\",\"action\":\"%s\",\"form_fields\":%d}",
+                full_url, g_tab.form_count);
+        } else {
+            /* No form found — treat as general Enter press */
+            snprintf(result, sizeof(result),
+                "{\"status\":\"pressed\",\"key\":\"Enter\","\
+                "\"warning\":\"No form found on page\"}");
+        }
+    } else if (strcasecmp(key, "Tab") == 0) {
+        snprintf(result, sizeof(result),
+            "{\"status\":\"pressed\",\"key\":\"Tab\",\"elements_on_page\":%d}",
+            g_tab.element_count);
+    } else if (strcasecmp(key, "Escape") == 0) {
+        snprintf(result, sizeof(result),
+            "{\"status\":\"pressed\",\"key\":\"Escape\"}");
+    } else {
+        snprintf(result, sizeof(result),
+            "{\"status\":\"pressed\",\"key\":\"%s\",\"note\":\"Key press simulated. This is a text-based browser — actual key handling requires a real browser engine.\"}",
+            key);
+    }
+
+    json_free(args);
+    return strdup(result);
+}
+
 static const char *BROWSER_NAVIGATE_SCHEMA =
     "{\"type\":\"object\",\"properties\":{"
     "\"url\":{\"type\":\"string\",\"description\":\"The URL to navigate to\"}"
@@ -973,4 +1216,14 @@ void registry_init_browser(void) {
     registry_register("browser_scroll",
         "Scroll the page up or down to see more content.",
         BROWSER_SCROLL_SCHEMA, browser_scroll_handler);
+
+    registry_register("browser_get_images",
+        "Get a list of all images on the current page with their URLs and alt text. Finds <img> tags from cached HTML.",
+        "{\"type\":\"object\",\"properties\":{}}",
+        browser_get_images_handler);
+
+    registry_register("browser_press",
+        "Press a keyboard key. Useful for submitting forms (Enter), navigating (Tab), or keyboard shortcuts.",
+        "{\"type\":\"object\",\"properties\":{\"key\":{\"type\":\"string\",\"description\":\"Key to press (e.g., Enter, Tab, Escape)\"}},\"required\":[\"key\"]}",
+        browser_press_handler);
 }

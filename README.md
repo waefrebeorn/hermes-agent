@@ -2,10 +2,37 @@
 
 **Location:** `~/hermes-agent-dev/`  
 **Tracks:** `wubu/main` (waefrebeorn/hermes-agent fork)  
-**Purpose:** Development + C translation of Hermes Agent
+**Purpose:** Development + C translation of Hermes Agent → **slermes**
 
-This is the development workspace for WuBu Hermes — a fork of NousResearch/hermes-agent
-with the long-term goal of translating the entire agent into C for zero-dependency operation.
+---
+
+## Slermes C Translation Dashboard
+
+| Metric | Value |
+|--------|-------|
+| **Phase** | Phase 5 (Advanced) — 170-phase roadmap |
+| **Binary** | `./C/hermes` (alias `slermes`) — ~809KB |
+| **Build** | `make -C C` — 0 errors, ~8 pre-existing warnings |
+| **Tests** | 21/21 pass (10 lib + 2 plugin + 9 integration) |
+| **Tools** | 27 (18 core + 4 browser + security + provider framework) |
+| **CLI commands** | 16 (registry-dispatched, target: 50+) |
+| **Gateway** | 7 platforms (Telegram, Discord, Slack, Matrix, Mattermost, Webhook, WhatsApp) |
+| **Live API** | DeepSeek `deepseek-v4-flash` via `api.deepseek.com` — ~1.2s avg |
+| **Config** | `~/.slermes/` (SLERMES_HOME) — isolated from Python hermes |
+| **Bugs fixed** | 5 (Content-Type header, chunked TE, skin default, .env parser, WEBHOOK_PORT) |
+
+```bash
+# Quick start
+slermes "Say hello"           # Run C binary
+hermes -z "Say hello"         # Run Python prod side-by-side
+bash scripts/slermes-build.sh # Build + test + parity check
+```
+
+**Full roadmap:** `ROADMAP.md`  
+**Mind palace:** `C/.hermes/mind-palace/`  
+**170-phase plan:** `C/.hermes/mind-palace/plans/roadmap-100-phases.md`
+
+---
 
 ## Fork Structure
 
@@ -54,20 +81,33 @@ python3 C/digest.py                       # Run digestion on changes
 git push wubu HEAD                        # Push merged result
 ```
 
-### C Translation
+### C Translation (slermes)
 
-All C work lives in `C/`. See `C/README.md` for full details.
+All C work lives in `C/`. The binary is aliased as `slermes`.
 
 ```bash
-# Build current C phase
-make -C C phase3
+# Build + test + parity (recommended)
+bash scripts/slermes-build.sh
 
-# Full build
-make -C C
+# Or step by step:
+make -C C              # Build C translation
+bash C/test_runner.sh  # Run 21 tests
+slermes "Say hi"       # Quick smoke test
 
-# Run digestion after any git pull
-python3 C/digest.py
+# Sync from upstream:
+bash scripts/slermes-sync.sh --merge
 ```
+
+See `ROADMAP.md` for the full C translation status and 170-phase plan.
+
+## Workflow Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/slermes-sync.sh` | Fetch upstream + merge + run digest + report C gaps |
+| `scripts/slermes-build.sh` | Clean build + test + parity check + deploy to PATH |
+| `parity_loop.sh` | Verify C/ ↔ slermes/ 1:1 parity |
+| `triple_test.sh` | Compare hermes + hermes-dev + slermes side-by-side |
 
 ## Key Directories
 

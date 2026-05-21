@@ -77,6 +77,7 @@ void llm_truncate_context(agent_state_t *state, size_t max_tokens);
 
 /* === Agent Loop (agent_loop.c) === */
 void agent_init(agent_state_t *state);
+void agent_generate_session_id(agent_state_t *state);
 void agent_free(agent_state_t *state);
 char *agent_run_conversation(agent_state_t *state,
                               const char *user_message,

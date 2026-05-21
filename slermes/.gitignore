@@ -1,0 +1,17 @@
+# Build artifacts
+slermes
+slermes_test
+*.o
+*.a
+*.so
+
+# Test binaries
+tests/test_json
+
+# Digestion output
+digest_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp

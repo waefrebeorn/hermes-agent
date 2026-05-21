@@ -1,0 +1,125 @@
+/*
+ * provider.h — Abstract provider interface for Hermes C.
+ * Phase 101-110: Multi-provider support.
+ * 
+ * Each provider implements:
+ *  - build_url: construct the API endpoint URL
+ *  - build_headers: construct auth + content-type headers
+ *  - parse_response: extract content, reasoning, tool_calls from response JSON
+ *  - build_message_body: construct the JSON message body (provider-specific format)
+ */
+
+#ifndef PROVIDER_H
+#define PROVIDER_H
+
+#include "slermes.h"
+#include "slermes_json.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* ================================================================
+ *  Provider Interface
+ * ================================================================ */
+
+/* Provider identification */
+typedef enum {
+    PROVIDER_OPENAI,       /* OpenAI-compatible (OpenAI, DeepSeek, OpenRouter, etc.) */
+    PROVIDER_ANTHROPIC,    /* Anthropic API format */
+    PROVIDER_GOOGLE,       /* Google AI / Gemini */
+    PROVIDER_CUSTOM,       /* Custom provider */
+} provider_type_t;
+
+/* Opaque provider handle */
+typedef struct provider_t provider_t;
+
+/* Response parsed from provider-specific format */
+typedef struct {
+    char *content;
+    char *reasoning;
+    int   input_tokens;
+    int   output_tokens;
+    int   tool_calls_count;
+    tool_call_t tool_calls[64];
+} provider_response_t;
+
+/* Provider operations (function pointers) */
+typedef struct {
+    /* Build the API URL. Returns malloc'd string or NULL. */
+    char *(*build_url)(const provider_t *p, const char *base_url);
+
+    /* Build HTTP headers. Returns malloc'd string or NULL. */
+    char *(*build_headers)(const provider_t *p, const char *api_key);
+
+    /* Build the JSON request body. Returns malloc'd string or NULL. */
+    char *(*build_request_body)(const provider_t *p,
+                                const message_t **messages, size_t msg_count,
+                                json_node_t *tools_json,
+                                bool streaming);
+
+    /* Parse API response into common format. Returns provider_response. */
+    provider_response_t *(*parse_response)(const provider_t *p,
+                                            const char *response_body);
+
+    /* Parse streaming chunk. Returns provider_response with partial content. */
+    provider_response_t *(*parse_stream_chunk)(const provider_t *p,
+                                                const char *chunk);
+
+    /* Free a provider response */
+    void (*free_response)(provider_response_t *resp);
+
+    /* Provider name */
+    const char *name;
+} provider_ops_t;
+
+/* Provider instance */
+struct provider_t {
+    provider_type_t type;
+    const provider_ops_t *ops;
+    char name[64];
+    char model[128];
+    char api_key[512];
+    char base_url[512];
+    void *data; /* Provider-specific data */
+};
+
+/* ================================================================
+ *  Provider Registry
+ * ================================================================ */
+
+/* Register a provider implementation */
+void provider_register(provider_type_t type, const provider_ops_t *ops);
+
+/* Create a provider instance from config */
+provider_t *provider_create(const char *provider_name,
+                             const char *model,
+                             const char *api_key,
+                             const char *base_url);
+
+/* Free a provider instance */
+void provider_free(provider_t *p);
+
+/* Get provider operations (convenience) */
+static inline const provider_ops_t *provider_ops(const provider_t *p) {
+    return p ? p->ops : NULL;
+}
+
+/* ================================================================
+ *  Built-in Provider Implementations
+ * ================================================================ */
+
+/* OpenAI-compatible (covers OpenAI, DeepSeek, OpenRouter, Groq, etc.) */
+extern const provider_ops_t PROVIDER_OPS_OPENAI;
+
+/* Anthropic API format */
+extern const provider_ops_t PROVIDER_OPS_ANTHROPIC;
+
+/* Register all built-in providers */
+void provider_register_builtins(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PROVIDER_H */
