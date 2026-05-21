@@ -161,6 +161,10 @@ int hermes_cli_main(int argc, char **argv) {
     /* Apply compression config */
     g_cli.agent.compress_enabled = g_cli.config.compress_enabled;
 
+    /* Apply CDP URL for browser CDP tools */
+    if (g_cli.config.cdp_url[0])
+        cdp_set_url(g_cli.config.cdp_url);
+
     /* Trim /config.yaml suffix */
     char *slash = strrchr(g_cli.agent.hermes_home, '/');
     if (slash) *slash = '\0';

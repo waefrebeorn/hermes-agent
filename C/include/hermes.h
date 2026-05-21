@@ -136,6 +136,7 @@ typedef struct {
     char  base_url[256];
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
+    char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */
     int   max_turns;
     int   verbose;             /* agent.verbose: 0=off, 1=normal, 2=verbose */
     bool  quiet_mode;
@@ -187,6 +188,9 @@ void commands_set_fast(bool enabled);
 int  commands_get_verbose(void);
 bool commands_get_yolo(void);
 bool commands_get_fast(void);
+
+/* CDP browser URL config */
+void cdp_set_url(const char *url);
 
 /* Registry accessors */
 size_t registry_get_count(void);

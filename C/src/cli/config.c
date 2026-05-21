@@ -168,6 +168,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (personality && personality[0])
         snprintf(cfg->personality, sizeof(cfg->personality), "%s", personality);
 
+    /* Browser section */
+    const char *cdp_url = yaml_get_string(doc, "browser.cdp_url");
+    if (cdp_url) snprintf(cfg->cdp_url, sizeof(cfg->cdp_url), "%s", cdp_url);
+
     /* Agent section */
     cfg->verbose = yaml_get_int(doc, "agent.verbose", 0);
     if (cfg->verbose < 0) cfg->verbose = 0;

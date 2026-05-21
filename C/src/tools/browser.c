@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include <websocket.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1178,6 +1179,237 @@ static char *stub_cdp_handler(const char *args_json, const char *task_id) {
         "}");
 }
 
+/* ================================================================
+ *  CDP (Chrome DevTools Protocol) Client
+ * ================================================================
+ * Connects to a CDP WebSocket endpoint and sends JSON-RPC commands.
+ * CDP URL configured via browser.cdp_url in config.yaml or
+ * CAMOFOX_WS_URL / CHROME_WS_URL environment variable.
+ * ================================================================ */
+
+/* CDP state */
+static ws_t *g_cdp_ws = NULL;
+static char g_cdp_url[512] = {0};
+static int g_cdp_msg_id = 0;
+
+/* Get CDP URL from config or env */
+static const char *cdp_get_url(void) {
+    if (g_cdp_url[0]) return g_cdp_url;
+    const char *env = getenv("CAMOFOX_WS_URL");
+    if (env) { snprintf(g_cdp_url, sizeof(g_cdp_url), "%s", env); return g_cdp_url; }
+    env = getenv("CHROME_WS_URL");
+    if (env) { snprintf(g_cdp_url, sizeof(g_cdp_url), "%s", env); return g_cdp_url; }
+    return NULL;
+}
+
+/* Set CDP URL (from config) */
+void cdp_set_url(const char *url) {
+    if (url) snprintf(g_cdp_url, sizeof(g_cdp_url), "%s", url);
+}
+
+/* Send a CDP command and wait for response.
+ * Returns malloc'd JSON response string, or NULL on error.
+ * format: {"id":N,"method":"...","params":{...}} */
+static char *cdp_send_command(const char *method, const char *params_json) {
+    const char *url = cdp_get_url();
+    if (!url) return NULL;
+
+    /* Connect if not connected */
+    if (!g_cdp_ws) {
+        /* Normalize ws:// vs wss:// — CDP typically uses ws:// */
+        char ws_url[512];
+        if (strncmp(url, "ws://", 5) == 0 || strncmp(url, "wss://", 6) == 0) {
+            snprintf(ws_url, sizeof(ws_url), "%s", url);
+        } else {
+            /* Assume ws:// */
+            snprintf(ws_url, sizeof(ws_url), "ws://%s", url);
+        }
+        g_cdp_ws = ws_connect(ws_url, 10);
+        if (!g_cdp_ws) return NULL;
+    }
+
+    /* Build JSON-RPC message */
+    g_cdp_msg_id++;
+    char msg[65536];
+    int n;
+    if (params_json && params_json[0]) {
+        n = snprintf(msg, sizeof(msg),
+            "{\"id\":%d,\"method\":\"%s\",\"params\":%s}",
+            g_cdp_msg_id, method, params_json);
+    } else {
+        n = snprintf(msg, sizeof(msg),
+            "{\"id\":%d,\"method\":\"%s\",\"params\":{}}",
+            g_cdp_msg_id, method);
+    }
+    if (n < 0 || (size_t)n >= sizeof(msg)) return NULL;
+
+    /* Send */
+    if (ws_send(g_cdp_ws, WS_OP_TEXT, msg, (size_t)n) < 0) {
+        ws_close(g_cdp_ws); g_cdp_ws = NULL;
+        return NULL;
+    }
+
+    /* Receive response (reconnect on failure) */
+    for (int attempt = 0; attempt < 2; attempt++) {
+        ws_frame_t frame;
+        int r = ws_recv(g_cdp_ws, &frame, 15);
+        if (r > 0 && frame.opcode == WS_OP_TEXT) {
+            char *resp = strndup((const char *)frame.payload, frame.len);
+            ws_frame_free(&frame);
+            if (resp) return resp;
+        }
+        if (r > 0) ws_frame_free(&frame);
+
+        /* Try reconnecting */
+        ws_close(g_cdp_ws); g_cdp_ws = NULL;
+        g_cdp_ws = ws_connect(cdp_get_url(), 10);
+        if (!g_cdp_ws) break;
+    }
+
+    return NULL;
+}
+
+/* browser_cdp handler — sends an arbitrary CDP command */
+static char *browser_cdp_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse error\"}");
+
+    const char *cmd = json_object_get_string(args, "cmd", NULL);
+    json_node_t *params = json_object_get(args, "params");
+
+    if (!cmd) { json_free(args); return strdup("{\"error\":\"Missing cmd\"}"); }
+
+    char *params_str = NULL;
+    if (params) params_str = json_serialize(params);
+
+    char *resp = cdp_send_command(cmd, params_str ? params_str : "{}");
+    free(params_str);
+
+    if (!resp) {
+        json_free(args);
+        return strdup("{\"error\":\"CDP connection failed. Set CAMOFOX_WS_URL or CHROME_WS_URL env var, or configure browser.cdp_url in config.yaml.\"}");
+    }
+
+    json_free(args);
+    return resp;
+}
+
+/* browser_vision handler — take screenshot via CDP and analyze */
+static char *browser_vision_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse error\"}");
+
+    const char *question = json_object_get_string(args, "question", "Describe this page");
+
+    /* Take screenshot via CDP */
+    char *screenshot_resp = cdp_send_command("Page.captureScreenshot",
+        "{\"format\":\"png\",\"quality\":80,\"fromSurface\":true}");
+    if (!screenshot_resp) {
+        json_free(args);
+        return strdup("{\"error\":\"CDP screenshot failed. CDP server not available. Use vision_analyze tool directly with an image URL instead.\"}");
+    }
+
+    /* Parse screenshot response to get base64 data */
+    json_node_t *root = json_parse(screenshot_resp, NULL);
+    free(screenshot_resp);
+    if (!root) { json_free(args); return strdup("{\"error\":\"Failed to parse CDP response\"}"); }
+
+    json_node_t *result = json_object_get(root, "result");
+    const char *b64_data = result ? json_object_get_string(result, "data", NULL) : NULL;
+
+    json_node_t *out = json_new_object();
+    if (b64_data) {
+        json_object_set(out, "success", json_new_bool(true));
+        json_object_set(out, "screenshot", json_new_string("base64_data_available"));
+        json_object_set(out, "data_length", json_new_number((double)strlen(b64_data)));
+        json_object_set(out, "note", json_new_string(
+            "Screenshot captured via CDP. For actual vision analysis, use vision_analyze tool "
+            "with this screenshot data, or use the agent's built-in vision capabilities."));
+    } else {
+        json_object_set(out, "success", json_new_bool(false));
+        json_object_set(out, "error", json_new_string("No screenshot data in CDP response"));
+    }
+
+    json_free(root);
+    char *out_str = json_serialize(out);
+    json_free(out);
+    json_free(args);
+    return out_str ? out_str : strdup("{\"error\":\"OOM\"}");
+}
+
+/* browser_console handler — get console logs via CDP */
+static char *browser_console_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse error\"}");
+
+    const char *expression = json_object_get_string(args, "expression", NULL);
+
+    /* Enable console if not already */
+    char *enable_resp = cdp_send_command("Console.enable", "{}");
+    free(enable_resp);
+
+    /* If expression provided, evaluate it */
+    if (expression && expression[0]) {
+        char eval_params[16384];
+        snprintf(eval_params, sizeof(eval_params),
+            "{\"expression\":\"%s\",\"includeCommandLineAPI\":true}",
+            expression);
+        char *eval_resp = cdp_send_command("Runtime.evaluate", eval_params);
+        if (!eval_resp) {
+            json_free(args);
+            return strdup("{\"error\":\"CDP connection failed\"}");
+        }
+        json_free(args);
+        return eval_resp;
+    }
+
+    /* Get console messages */
+    char *resp = cdp_send_command("Runtime.evaluate",
+        "{\"expression\":\"console.messages || []\",\"includeCommandLineAPI\":true}");
+    json_free(args);
+    return resp ? resp : strdup("{\"error\":\"CDP connection failed\"}");
+}
+
+/* browser_dialog handler — handle JavaScript dialogs */
+static char *browser_dialog_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse error\"}");
+
+    const char *action = json_object_get_string(args, "action", "dismiss");
+    const char *prompt_text = json_object_get_string(args, "prompt_text", NULL);
+
+    char params[512];
+    bool accept = (strcmp(action, "accept") == 0);
+    if (accept && prompt_text) {
+        snprintf(params, sizeof(params),
+            "{\"accept\":true,\"promptText\":\"%s\"}", prompt_text);
+    } else {
+        snprintf(params, sizeof(params),
+            "{\"accept\":%s}", accept ? "true" : "false");
+    }
+
+    char *resp = cdp_send_command("Page.handleJavaScriptDialog", params);
+
+    /* Also enable dialog handling for future dialogs */
+    char *enable_resp = cdp_send_command("Page.enable", "{}");
+    free(enable_resp);
+
+    json_free(args);
+    return resp ? resp : strdup("{\"error\":\"CDP connection failed\"}");
+}
+
 static const char *BROWSER_NAVIGATE_SCHEMA =
     "{\"type\":\"object\",\"properties\":{"
     "\"url\":{\"type\":\"string\",\"description\":\"The URL to navigate to\"}"
@@ -1244,20 +1476,20 @@ void registry_init_browser(void) {
     registry_register("browser_vision",
         "Take a screenshot and analyze with vision AI. Requires Camofox or Playwright CDP server. Without one, use vision_analyze tool directly.",
         "{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"description\":\"What to analyze visually\"}},\"required\":[\"question\"]}",
-        stub_cdp_handler);
+        browser_vision_handler);
 
     registry_register("browser_console",
         "Get browser console messages and JavaScript errors. Requires Camofox or Playwright CDP server.",
         "{\"type\":\"object\",\"properties\":{\"expression\":{\"type\":\"string\",\"description\":\"Optional JS expression to evaluate\"}}}",
-        stub_cdp_handler);
+        browser_console_handler);
 
     registry_register("browser_dialog",
         "Handle JavaScript dialogs (alert, confirm, prompt). Requires Camofox or Playwright CDP server.",
         "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\",\"description\":\"Action: dismiss, accept, or get_text\"}}}",
-        stub_cdp_handler);
+        browser_dialog_handler);
 
     registry_register("browser_cdp",
         "Send a Chrome DevTools Protocol command. Requires Camofox or Playwright CDP server.",
         "{\"type\":\"object\",\"properties\":{\"cmd\":{\"type\":\"string\",\"description\":\"CDP command\"},\"params\":{\"type\":\"object\",\"description\":\"CDP command parameters\"}}}",
-        stub_cdp_handler);
+        browser_cdp_handler);
 }
