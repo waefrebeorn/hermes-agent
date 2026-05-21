@@ -32,9 +32,21 @@ typedef struct {
 
 static tui_state_t tui;
 
+/* Pointer to agent state for command dispatch */
+static agent_state_t *g_tui_agent = NULL;
+
 /* Forward declarations */
 void tui_fullscreen_print(const char *fmt, ...);
 void tui_fullscreen_error(const char *fmt, ...);
+void tui_fullscreen_stream_token(const char *token);
+void tui_fullscreen_stream_done(void);
+
+/* Streaming output callback for agent responses */
+static int tui_stream_cb(const char *token, void *userdata) {
+    (void)userdata;
+    tui_fullscreen_stream_token(token);
+    return 0;
+}
 
 /* ================================================================
  *  Signal handler — terminal resize
@@ -356,10 +368,13 @@ char *tui_fullscreen_read_line(void) {
 }
 
 /* ================================================================
- *  Main Loop
+ *  Main Loop — takes an initialized agent_state_t
  * ================================================================ */
 
-int tui_fullscreen_run(void) {
+int tui_fullscreen_run(agent_state_t *state) {
+    if (!state) return 1;
+    g_tui_agent = state;
+
     if (!tui_fullscreen_init())
         return 1;
 
@@ -367,15 +382,42 @@ int tui_fullscreen_run(void) {
         char *line = tui_fullscreen_read_line();
         if (!line) break;
 
-        /* Process the line — caller replaces this with actual dispatch */
-        /* For now, demonstrate the interface */
-        if (strcmp(line, "/quit") == 0 || strcmp(line, "/exit") == 0) {
-            free(line);
-            break;
+        /* Dispatch commands or send to agent */
+        if (line[0] == '/' || line[0] == '#') {
+            /* Slash command — dispatch via command system */
+            if (commands_dispatch(line, state))
+                goto next_line;
+
+            /* Check for /quit /exit breaks the loop */
+            if (strcmp(line, "/quit") == 0 || strcmp(line, "/exit") == 0) {
+                free(line);
+                break;
+            }
+
+            tui_fullscreen_error("Unknown command: %s", line);
+        } else {
+            /* Send message to agent with streaming */
+            state->stream_cb = tui_stream_cb;
+            state->stream_data = NULL;
+            char *resp = agent_chat(state, line);
+            if (resp) {
+                /* In streaming mode, content was already printed by callback */
+                if (state->stream_cb) {
+                    /* Ensure final newline */
+                    tui_fullscreen_stream_done();
+                    /* Only print error responses */
+                    if (strncmp(resp, "Error:", 6) == 0)
+                        tui_fullscreen_error("%s", resp + 7);
+                } else {
+                    tui_fullscreen_print("%s", resp);
+                }
+                free(resp);
+            } else {
+                tui_fullscreen_error("No response from agent");
+            }
         }
 
-        /* Placeholder: call CLI process_command here */
-        tui_fullscreen_print("(echo) %s", line);
+next_line:
         free(line);
     }
 
