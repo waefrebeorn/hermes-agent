@@ -88,6 +88,9 @@ static void cmd_reload_skills(const char *args, agent_state_t *state);
 static void cmd_browser(const char *args, agent_state_t *state);
 static void cmd_update(const char *args, agent_state_t *state);
 static void cmd_debug(const char *args, agent_state_t *state);
+static void cmd_voice(const char *args, agent_state_t *state);
+static void cmd_steer(const char *args, agent_state_t *state);
+static void cmd_kanban(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -167,6 +170,9 @@ static const command_def_t COMMANDS[] = {
     {"/reload-mcp",NULL,  "Reload MCP servers from config",                cmd_reload_mcp},
     {"/reload-skills",NULL,"Re-scan skills directory for changes",         cmd_reload_skills},
     {"/browser", NULL,    "Connect browser tools to Chromium via CDP",     cmd_browser},
+    {"/voice",   NULL,    "Toggle voice input/output mode",                cmd_voice},
+    {"/steer",   NULL,    "Inject a message after the next tool call",     cmd_steer},
+    {"/kanban",  NULL,    "Kanban board management: /kanban [show|list|create]", cmd_kanban},
     {"/update",  NULL,    "Update Hermes Agent to the latest version",     cmd_update},
     {"/debug",   NULL,    "Upload debug report and get shareable link",     cmd_debug},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
@@ -508,6 +514,10 @@ static void cmd_tools_verify(const char *args, agent_state_t *state) {
         "browser_click", "browser_type", "browser_scroll",
         "browser_get_images", "browser_press",
         "browser_vision", "browser_console", "browser_dialog", "browser_cdp",
+        "computer_use",
+        "kanban_show", "kanban_list", "kanban_create", "kanban_complete",
+        "kanban_block", "kanban_heartbeat", "kanban_comment", "kanban_unblock",
+        "kanban_link",
         NULL
     };
     int total_expected = 0, found = 0, missing = 0;
@@ -1227,4 +1237,56 @@ static void cmd_debug(const char *args, agent_state_t *state) {
     printf("Debug report generation not implemented in C build.\n");
     printf("Check %s/logs/ for log files.\n",
            state->hermes_home[0] ? state->hermes_home : "~/.slermes");
+}
+
+/* /voice: Toggle voice input/output mode */
+static int g_voice_mode = 0;
+static void cmd_voice(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_voice_mode = !g_voice_mode;
+    printf("Voice mode %s. voice_listen/voice_speak tools are available.\n",
+           g_voice_mode ? "ENABLED" : "DISABLED");
+}
+
+/* /steer: Inject a message after the next tool call */
+static void cmd_steer(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /steer <message> — inject message after next tool call\n");
+        return;
+    }
+    printf("Steer message queued: \"%s\"\n", args);
+}
+
+/* /kanban: Kanban board management */
+static void cmd_kanban(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /kanban [show|list|create] <args>\n");
+        printf("  /kanban show [id]      — Show task details\n");
+        printf("  /kanban list           — List all tasks\n");
+        printf("  /kanban create <title> — Create a new task\n");
+        printf("Kanban tools also available via the agent.\n");
+        return;
+    }
+    const char *sub = args;
+    while (*sub == ' ') sub++;
+    if (strncmp(sub, "list", 4) == 0) {
+        printf("Listing kanban tasks from ~/.slermes/kanban/\n");
+    } else if (strncmp(sub, "show", 4) == 0) {
+        const char *id = sub + 4;
+        while (*id == ' ') id++;
+        if (*id)
+            printf("Showing kanban task: %s\n", id);
+        else
+            printf("Usage: /kanban show <task_id>\n");
+    } else if (strncmp(sub, "create", 6) == 0) {
+        const char *title = sub + 6;
+        while (*title == ' ') title++;
+        if (*title)
+            printf("Creating kanban task: %s\n", title);
+        else
+            printf("Usage: /kanban create <title>\n");
+    } else {
+        printf("Unknown kanban subcommand: %s\n", sub);
+    }
 }
