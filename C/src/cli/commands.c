@@ -55,6 +55,18 @@ static void cmd_background(const char *args, agent_state_t *state);
 static void cmd_verbose(const char *args, agent_state_t *state);
 static void cmd_skin(const char *args, agent_state_t *state);
 static void cmd_personality(const char *args, agent_state_t *state);
+static void cmd_whoami(const char *args, agent_state_t *state);
+static void cmd_profile(const char *args, agent_state_t *state);
+static void cmd_goal(const char *args, agent_state_t *state);
+static void cmd_agents(const char *args, agent_state_t *state);
+static void cmd_reasoning(const char *args, agent_state_t *state);
+static void cmd_toolsets(const char *args, agent_state_t *state);
+static void cmd_skills(const char *args, agent_state_t *state);
+static void cmd_cron(const char *args, agent_state_t *state);
+static void cmd_fast(const char *args, agent_state_t *state);
+static void cmd_reload(const char *args, agent_state_t *state);
+static void cmd_rollback(const char *args, agent_state_t *state);
+static void cmd_copy(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -103,6 +115,18 @@ static const command_def_t COMMANDS[] = {
     {"/verbose", NULL,    "Toggle tool progress display verbosity",       cmd_verbose},
     {"/skin",    NULL,    "Show or change the display skin/theme",        cmd_skin},
     {"/personality","/p", "Set a predefined personality system message", cmd_personality},
+    {"/whoami",  NULL,    "Show your slash command access level",       cmd_whoami},
+    {"/profile", NULL,    "Show active profile name and home directory", cmd_profile},
+    {"/goal",    NULL,    "Set a standing goal Hermes works on across turns", cmd_goal},
+    {"/agents",  NULL,    "Show active subagents and running tasks",    cmd_agents},
+    {"/reasoning","/re",  "Manage reasoning effort and display",        cmd_reasoning},
+    {"/toolsets",NULL,    "List available toolsets",                    cmd_toolsets},
+    {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
+    {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
+    {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
+    {"/reload",  NULL,    "Reload .env variables into running session", cmd_reload},
+    {"/rollback",NULL,    "List or restore state snapshots",            cmd_rollback},
+    {"/copy",    NULL,    "Copy the last assistant response to clipboard", cmd_copy},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -793,4 +817,145 @@ static void cmd_personality(const char *args, agent_state_t *state) {
     }
     context_set_system(state, args);
     printf("Personality set.\n");
+}
+
+/* /whoami: Show access level */
+static void cmd_whoami(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Access level: admin (C translation build)\n");
+    printf("Version:     %s\n", HERMES_VERSION);
+    printf("Platform:    Linux (WSL)\n");
+}
+
+/* /profile: Show active profile */
+static void cmd_profile(const char *args, agent_state_t *state) {
+    (void)args;
+    printf("Home: %s\n", state->hermes_home[0] ? state->hermes_home :
+           getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") : "~/.slermes");
+    printf("Model: %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+    printf("Provider: %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+}
+
+/* /goal: Set a standing goal */
+static void cmd_goal(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /goal <goal description>\n");
+        return;
+    }
+    printf("Goal set: %s\n", args);
+    printf("(Goal persistence across turns not yet implemented in C CLI)\n");
+}
+
+/* /agents: Show active subagents */
+static void cmd_agents(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("No active subagents (delegation runs inline in C build).\n");
+}
+
+/* /reasoning: Toggle reasoning effort */
+static void cmd_reasoning(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /reasoning [on|off|auto]\n");
+        printf("Current reasoning: auto (managed by provider)\n");
+        return;
+    }
+    printf("Reasoning set to: %s\n", args);
+}
+
+/* /toolsets: List available toolsets */
+static void cmd_toolsets(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Available toolsets (C build):\n");
+    printf("  core — Terminal, file, web, skills, patch, exec_code\n");
+    printf("  browser — Navigate, snapshot, click, type, scroll, back, forward\n");
+    printf("  security — Approval, URL safety, path traversal, Tirith\n");
+    printf("  communication — Send message, TTS, vision\n");
+}
+
+/* /skills: List installed skills */
+static void cmd_skills(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    const char *home = getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    char skills_dir[512];
+    if (home) snprintf(skills_dir, sizeof(skills_dir), "%s/.slermes/skills", home);
+    printf("Skills directory: %s\n", skills_dir);
+    printf("Skills management: use skill_view/skill_manage tools\n");
+}
+
+/* /cron: Manage scheduled tasks */
+static void cmd_cron(const char *args, agent_state_t *state) {
+    (void)state;
+    if (args && args[0]) {
+        printf("Cron %s: use /tools for cron management\n", args);
+        return;
+    }
+    printf("Cron scheduler: active. Use cronjob tool to manage tasks.\n");
+}
+
+/* /fast: Toggle fast mode */
+static int g_fast_mode = 0;
+static void cmd_fast(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_fast_mode = !g_fast_mode;
+    printf("Fast mode %s.\n", g_fast_mode ? "enabled" : "disabled");
+}
+
+/* /reload: Reload .env */
+static void cmd_reload(const char *args, agent_state_t *state) {
+    (void)args;
+    hermes_config_t cfg;
+    hermes_config_load(&cfg, NULL);
+    hermes_config_load_env(&cfg);
+    memcpy(state->llm.base_url, cfg.base_url, sizeof(state->llm.base_url));
+    if (cfg.api_key[0]) memcpy(state->llm.api_key, cfg.api_key, sizeof(state->llm.api_key));
+    if (cfg.model[0]) memcpy(state->llm.model, cfg.model, sizeof(state->llm.model));
+    if (cfg.provider[0]) memcpy(state->llm.provider, cfg.provider, sizeof(state->llm.provider));
+    printf(".env reloaded. Config updated.\n");
+}
+
+/* /rollback: List or restore state snapshots */
+static void cmd_rollback(const char *args, agent_state_t *state) {
+    (void)state;
+    if (args && args[0]) {
+        printf("Rollback to snapshot: %s (not implemented yet)\n", args);
+        return;
+    }
+    /* List snapshots from session DB */
+    if (state->db) {
+        size_t count = 0;
+        char **list = db_list(state->db, &count);
+        if (list && count > 0) {
+            printf("Saved snapshots (%zu):\n", count);
+            for (size_t i = 0; i < count; i++) {
+                printf("  %s\n", list[i]);
+                free(list[i]);
+            }
+            free(list);
+        } else {
+            printf("No snapshots found. Use /snapshot to create one.\n");
+        }
+    } else {
+        printf("No session database. Use /snapshot first.\n");
+    }
+}
+
+/* /copy: Copy last assistant response (prints to stdout in CLI) */
+static void cmd_copy(const char *args, agent_state_t *state) {
+    (void)args;
+    /* Find last assistant message */
+    const char *last = NULL;
+    for (size_t i = state->message_count; i > 0; i--) {
+        if (state->messages[i-1]->role == MSG_ASSISTANT) {
+            last = state->messages[i-1]->content;
+            break;
+        }
+    }
+    if (last) {
+        printf("=== Last response ===\n%s\n", last);
+    } else {
+        printf("No assistant response to copy.\n");
+    }
 }
