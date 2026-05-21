@@ -181,5 +181,11 @@ else fail "browser_press not registered"; fi
 if echo "$REG_TOOLS" | grep -qi "image_generate"; then ok "image_generate registered"
 else fail "image_generate not registered"; fi
 
+# Check HomeAssistant tools are registered
+for ha_tool in ha_list_entities ha_get_state ha_list_services ha_call_service; do
+    if echo "$REG_TOOLS" | grep -qi "$ha_tool"; then ok "$ha_tool registered"
+    else fail "$ha_tool not registered"; fi
+done
+
 summary
 exit $FAIL

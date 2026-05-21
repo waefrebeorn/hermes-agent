@@ -28,6 +28,7 @@ void registry_init_browser(void);
 void registry_init_approval(void);
 void registry_init_voice(void);
 void registry_init_image_gen(void);
+void registry_init_homeassistant(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -53,4 +54,5 @@ void tools_init_all(void) {
     registry_init_approval();
     registry_init_voice();
     registry_init_image_gen();
+    registry_init_homeassistant();
 }
