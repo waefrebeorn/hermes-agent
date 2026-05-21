@@ -1164,6 +1164,20 @@ char *browser_press_handler(const char *args_json, const char *task_id) {
     return strdup(result);
 }
 
+/* ================================================================
+ *  CDP-dependent browser stubs
+ * ================================================================ */
+
+/* stub_cdp_handler: Placeholder for tools that need CDP server */
+static char *stub_cdp_handler(const char *args_json, const char *task_id) {
+    (void)args_json; (void)task_id;
+    return strdup(
+        "{"
+        "\"success\":false,"
+        "\"error\":\"Requires Camofox or Playwright CDP server. This text-based browser cannot execute JavaScript or take screenshots without an external browser engine.\""
+        "}");
+}
+
 static const char *BROWSER_NAVIGATE_SCHEMA =
     "{\"type\":\"object\",\"properties\":{"
     "\"url\":{\"type\":\"string\",\"description\":\"The URL to navigate to\"}"
@@ -1226,4 +1240,24 @@ void registry_init_browser(void) {
         "Press a keyboard key. Useful for submitting forms (Enter), navigating (Tab), or keyboard shortcuts.",
         "{\"type\":\"object\",\"properties\":{\"key\":{\"type\":\"string\",\"description\":\"Key to press (e.g., Enter, Tab, Escape)\"}},\"required\":[\"key\"]}",
         browser_press_handler);
+
+    registry_register("browser_vision",
+        "Take a screenshot and analyze with vision AI. Requires Camofox or Playwright CDP server. Without one, use vision_analyze tool directly.",
+        "{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"description\":\"What to analyze visually\"}},\"required\":[\"question\"]}",
+        stub_cdp_handler);
+
+    registry_register("browser_console",
+        "Get browser console messages and JavaScript errors. Requires Camofox or Playwright CDP server.",
+        "{\"type\":\"object\",\"properties\":{\"expression\":{\"type\":\"string\",\"description\":\"Optional JS expression to evaluate\"}}}",
+        stub_cdp_handler);
+
+    registry_register("browser_dialog",
+        "Handle JavaScript dialogs (alert, confirm, prompt). Requires Camofox or Playwright CDP server.",
+        "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\",\"description\":\"Action: dismiss, accept, or get_text\"}}}",
+        stub_cdp_handler);
+
+    registry_register("browser_cdp",
+        "Send a Chrome DevTools Protocol command. Requires Camofox or Playwright CDP server.",
+        "{\"type\":\"object\",\"properties\":{\"cmd\":{\"type\":\"string\",\"description\":\"CDP command\"},\"params\":{\"type\":\"object\",\"description\":\"CDP command parameters\"}}}",
+        stub_cdp_handler);
 }

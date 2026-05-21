@@ -71,4 +71,7 @@ void registry_init_web(void) {
     registry_register("web_search",
         "Search the web (calls web_get internally). Uses a search URL.",
         SCHEMA_GET, web_get_handler);
+    registry_register("web_extract",
+        "Extract content from a web page URL. Returns the full page content as text.",
+        SCHEMA_GET, web_get_handler);
 }

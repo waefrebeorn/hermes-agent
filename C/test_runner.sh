@@ -187,5 +187,11 @@ for ha_tool in ha_list_entities ha_get_state ha_list_services ha_call_service; d
     else fail "$ha_tool not registered"; fi
 done
 
+# Check CDP stub tools are registered
+for cdp_tool in browser_vision browser_console browser_dialog browser_cdp; do
+    if echo "$REG_TOOLS" | grep -qi "$cdp_tool"; then ok "$cdp_tool registered"
+    else fail "$cdp_tool not registered"; fi
+done
+
 summary
 exit $FAIL
