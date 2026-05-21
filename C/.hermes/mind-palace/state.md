@@ -1,34 +1,46 @@
-# Slermes C — State (May 21 DA-v2 HONEST)
+# Slermes C — State (May 21 DA-v3 HONEST)
 
 ## HONEST Assessment
 
-**C slermes is ~8-12% complete relative to Python hermes.** Previous parity claims were count-only, not depth.
+**C slermes = ~8% complete.** 57K LOC vs 433K+ Python. 72 CLI names exist but most are printf stubs. 53 tools but 30 minimal. 16 config keys vs 424+. 0 MCP. 0 plugins. 43 tests vs ~17,000.
+
+User was right. Not ready for daily use.
 
 ## Module Reality
 
-| Module | Previous Claim | Reality | Detail |
-|--------|---------------|---------|--------|
-| CLI | ✅ 69/69 | ⚠️ 69 names, many stubs | `/load`, `/branch`, `/agents`, `/queue`, `/restart`, `/subgoal`, `/insights`, `/indicator`, `/statusbar`, `/footer`, `/busy`, `/browser`, `/steer`, `/kanban` are `printf` stubs |
-| Tools | ✅ 54 reg | ⚠️ 24 real, 30 stubs | 37 of 61 Python tools missing entirely. C tools average 20-50% of Python capability |
-| Config | ⚠️ subset | ❌ 16/424 keys | **408 keys missing (96.2%)** |
-| Gateway | ✅ 20/20 | ✅ 19/31 platforms | Core platforms present, sub-modules missing |
-| Providers | ✅ 3/3 | ⚠️ 3/29 | 26+ providers missing. No credential pool |
-| Agent loop | ✅ live | ⚠️ bare | No budget, fallback, credential pool, checkpoints |
-| Security | ✅ 4/4 | ⚠️ 4 features, bare | No redaction, blocklist, allowlist |
-| TUI | ✅ wired | ❌ bare ncurses | 3% of Python's 41K LOC TUI |
-| Plugin | ✅ wired | ❌ skeletal | 1% of Python's 39K LOC plugin system |
-| MCP | (not mentioned) | ❌ 0% | **5,620 LOC of MCP = 0 lines in C** |
-| Session DB | ⚠️ grep | ❌ grep only | 12% — no FTS5, no metadata |
-| Streaming | ✅ true | ⚠️ basic | Token callback only |
-| Tests | ✅ 43/43 | ✅ 43 basic tests | No comparison to Python's ~17,000 tests |
+| Module | Completeness | Detail |
+|--------|------------|--------|
+| Config keys | **3.8%** — 16/424 | Biggest blocker. No provider config, display, agent, tools, browser, delegation, memory, compression, cron, notification, security, session, plugin, MCP config |
+| Tools | ⚠️ 75% name count | 15 static missing: discord(2), feishu(5), MoA(1), video(2), yuanbao(6). MCP=0%. 30/53 C tools are stubs |
+| CLI | ⚠️ 72 names, 45% impl | Most are printf stubs. /save /load /sessions /stats /conv /history /help /reset /branch /compress /plugins /cron /platform all stub |
+| Providers | **10%** — 3/29 | Missing 26 providers + credential pool + budget tracking |
+| Gateway | ⚠️ 40% — 19 platforms | Count close, but Telegram/Discord/Slack/WuXin/WuCom features shallow |
+| MCP | **0%** — 0/5,620 LOC | No dynamic tools at all. Agent can't use MCP. |
+| Plugins | **0%** — 0/17 types | No memory providers, no kanban, no image_gen, no observability |
+| Session DB | **5%** — grep | No SQLite, no FTS5, no metadata, no auto-prune, no branch |
+| Memory | **8%** — file-store only | No TTL, no prioritization, no dedup, no provider plugins |
+| Delegation | **5%** — basic subprocess | No concurrency, no orchestrator, no child isolation |
+| Security | 20% — basic | No redaction, no blocklist, no allowlist, no audit log, no timeout |
+| Cron | 10% — basic loop | No persistence, no cron parser, no retry, no chaining |
+| Skills | **8%** — basic | No hub/sync/provenance/bundles/curator/usage tracking |
+| TUI | **2%** — 926/41K LOC | No split panes, no streaming render, no theme/skin, no session browser, no config editor |
+| Agent loop | **3%** — 332/12K LOC | No budget, no fallback, no credential pool, no interrupt, no checkpoint |
+| Tests | **0.25%** — 43/~17,000 | No integration, E2E, or fuzz tests |
+| ACP adapter | **0%** | No VS Code/Zed/JetBrains integration |
+| LSP integration | **0%** | No language server protocol |
+| Web search | 15% — 1 backend | No Tavily/Brave/Google |
+| Voice/TTS | **8%** — 1 provider | No STT, no transcription, no provider selection |
+| Browser | 20% — text-only | No headed browser, no JS, no screenshots |
 
-## What Blocks Daily Use (P0)
+## Previous False Claims (Now Corrected)
 
-1. **Config (96% missing)** — can't configure anything
-2. **MCP (0%)** — no dynamic tools
-3. **Delegation (5%)** — subagents broken
-4. **Agent loop (15%)** — no budget, fallback, or credential pool
-5. **Terminal (local only)** — no Docker/SSH
-6. **Browser (text-only)** — no JavaScript/CDP
-7. **Web search (1 backend)** — no Tavily/Brave/Google
-8. **Security (20%)** — no redaction, blocklist, allowlist
+- "P0 complete" → P0 foundation only, 8% overall ✅ corrected
+- "1:1 parity verified" → count parity only, not depth ✅ corrected
+- "Config: critical keys OK" → 16/424 keys ✅ corrected
+- "DA audit passed" → previous DA missed config depth, MCP, plugins ✅ corrected
+
+## Path Forward
+
+200-phase roadmap at `plans/200-phase-roadmap.md`. Start with P1-P25 (config system).
+
+Realistic 1:1 parity: Q3/Q4 2026 at current velocity.

@@ -1,138 +1,99 @@
-# WuBu Hermes — Development Workspace
+# WuBu Slermes — C Translation of Hermes Agent
 
-**Location:** `~/hermes-agent-dev/`  
-**Tracks:** `wubu/main` (waefrebeorn/hermes-agent fork)  
-**Purpose:** Development + C translation of Hermes Agent → **slermes**
+**HONEST STATUS: ~8% complete.** C/ translates NousResearch/hermes-agent from Python→C for zero-dependency, single-binary operation.
+
+Built for speed. Built for portability. Built by rewriting everything.
 
 ---
 
-## Slermes C Translation Dashboard
+## Dashboard (what you see on GitHub at a gas station)
 
 | Metric | Value |
 |--------|-------|
-| **Phase** | Phase 5 (Advanced) — 170-phase roadmap |
-| **Binary** | `./C/hermes` (alias `slermes`) — ~809KB |
-| **Build** | `make -C C` — 0 errors, ~8 pre-existing warnings |
-| **Tests** | 21/21 pass (10 lib + 2 plugin + 9 integration) |
-| **Tools** | 27 (18 core + 4 browser + security + provider framework) |
-| **CLI commands** | 16 (registry-dispatched, target: 50+) |
-| **Gateway** | 7 platforms (Telegram, Discord, Slack, Matrix, Mattermost, Webhook, WhatsApp) |
-| **Live API** | DeepSeek `deepseek-v4-flash` via `api.deepseek.com` — ~1.2s avg |
-| **Config** | `~/.slermes/` (SLERMES_HOME) — isolated from Python hermes |
-| **Bugs fixed** | 5 (Content-Type header, chunked TE, skin default, .env parser, WEBHOOK_PORT) |
+| **C LOC** | ~57,000 (Python: ~433,000+ = **8%**) |
+| **Binary** | `C/hermes` alias `slermes` — ~1.4MB ELF |
+| **Tools** | 53 registered (30 stubs, 15 still missing from Python) |
+| **CLI commands** | 72 names (most printf stubs — ~45% real impl) |
+| **Config keys** | 16 of 424+ (**3.8%** — biggest gap) |
+| **Providers** | 3 of 29+ (OpenAI/Anthropic/Google) |
+| **Gateway platforms** | 19 (feature depth still shallow) |
+| **MCP** | **0%** — no dynamic tools |
+| **Plugins** | **0%** — 17 plugin types, zero |
+| **Agent loop** | 332 LOC vs Python's 12,000 (**3%**) |
+| **TUI** | 926 LOC ncurses vs Python's 41K React/Ink (**2%**) |
+| **Tests** | 43 basic unit tests vs Python's ~17,000 |
+| **Session DB** | grep-based (no SQLite FTS5) |
+| **Delegation** | basic subprocess only (no concurrency/orchestrator) |
+| **Bugs fixed** | 5 (Content-Type, chunked TE, skin default, .env, WEBHOOK_PORT) |
+| **Git commits** | 51+ on wubu/main |
 
-```bash
-# Quick start
-slermes "Say hello"           # Run C binary
-hermes -z "Say hello"         # Run Python prod side-by-side
-bash scripts/slermes-build.sh # Build + test + parity check
-```
-
-**Full roadmap:** `ROADMAP.md`  
-**Mind palace:** `C/.hermes/mind-palace/`  
-**170-phase plan:** `C/.hermes/mind-palace/plans/roadmap-100-phases.md`
+**Can you use this as your daily driver? No.** Not even close. That's the honest answer.
 
 ---
 
-## Fork Structure
+## What's Done (the 8%)
 
-```
-waefrebeorn/hermes-agent  (GitHub)
-  ├── wubu main                  ← All our commits + upstream. Default branch.
-  ├── feat/c-translation         ← C/ directory translation work
-  ├── feat/some-feature          ← Individual feature branches (for PRs)
-  └── fix/some-bug               ← Individual fix branches (for PRs)
+- **Foundation libs:** JSON, HTTP, YAML, crypto, dotenv, cron, proc, template, ncurses, SQLite wrappers
+- **Agent loop:** Basic loop (332 LOC) — no budget, no fallback, no credential pool
+- **CLI shell:** Works. 72 commands exist, most need real implementation
+- **53 tools:** Many work, 30 are minimal/stubs. Missing: discord, feishu, MoA, video, yuanbao
+- **19 gateway platforms:** Telegram, Discord, Slack, Signal, Matrix, Mattermost, Email, SMS, Webhook, HomeAssistant, DingTalk, WeCom, Weixin, Feishu, QQBot, BlueBubbles, WhatsApp, MSGraph, Yuanbao
+- **Security:** Basic URL safety + path traversal + Tirith policy + approval system
+- **3 providers:** OpenAI, Anthropic, Google — no credential pool
+- **Scheduler:** Basic cron loop (no SQLite persistence)
+
+## What's LEFT (the 92% — 200-phase roadmap)
+
+1. **Config keys (P1-P25):** 408 missing. **#1 blocker.** Nothing configurable without config.
+2. **CLI commands (P26-P40):** Full implementations for all 69+ commands.
+3. **Tools (P41-P55):** Port 15 missing tools, deepen 30 stubs.
+4. **MCP (P56-P70):** Dynamic tool system. **#2 blocker.** 
+5. **Providers (P71-P85):** 26 provider ports + credential pool + budget tracking.
+6. **Agent loop (P86-P100):** Budget, fallback models, checkpoints, streaming.
+7. **Gateway depth (P101-P115):** Full platform feature parity.
+8. **Delegation (P116-P125):** Concurrent children, orchestrator mode.
+9. **Plugin system (P126-P140):** 17 plugin types (memory, kanban, image_gen, etc.)
+10. **Session DB (P141-P150):** SQLite FTS5 session search.
+11. **Memory (P151-P158):** Provider-backed memory with TTL/dedup/search.
+12. **Security (P159-P168):** Redaction, blocklist, allowlist, audit log.
+13. **Cron (P169-P178):** SQLite-backed scheduler with retry/chaining.
+14. **Skills (P179-P188):** Hub/sync/provenance/bundles.
+15. **TUI (P189-P200):** React/Ink parity with split panes, streaming, theme engine.
+16. **Testing:** 43 → ~17,000 tests.
+17. **Infrastructure:** CI pipeline, docs site, ACP adapter, LSP integration.
+
+Full 200-phase detail: `C/.hermes/mind-palace/plans/200-phase-roadmap.md`
+
+---
+
+## Quick Start
+
+```bash
+# Build
+make -j$(nproc) -C C
+
+# Run
+./C/hermes "Hello world"
+slermes "Hello world"   # same thing, aliased
+
+# Build + test + parity
+bash scripts/slermes-build.sh
 ```
 
 ## Remotes
 
 | Remote | URL | Direction |
 |--------|-----|-----------|
-| `origin` | `https://github.com/NousResearch/hermes-agent.git` | Pull upstream updates |
+| `origin` | `https://github.com/NousResearch/hermes-agent.git` | Pull upstream |
 | `wubu` | `git@github.com:waefrebeorn/hermes-agent.git` | Push our work |
 
-## Workflow
+## Why C?
 
-### Daily Pull (both Python + C updates)
+- No Python runtime. No pip. No venv. No dependency hell.
+- Single binary. SCP to any Linux box and run.
+- No GIL, no interpreter overhead, no GC pauses.
+- ~1.4MB executable with everything built in.
 
-```bash
-git pull wubu main          # Get latest from our fork
-python3 C/digest.py          # Check what C work is needed
-```
+## Fork-only. No upstream PRs until full translation done.
 
-### Making Changes
-
-```bash
-git checkout -b feat/my-thing wubu/main   # Branch from our main
-# ... make changes (Python + C/ together) ...
-git add -A
-git commit -m "feat(x): description"
-git push wubu feat/my-thing               # Push to our fork
-# Open PR on GitHub: feat/my-thing → wubu/main
-```
-
-### Upstream Sync
-
-```bash
-git fetch origin main                     # Get latest upstream
-git merge origin/main                     # Merge into current branch
-python3 C/digest.py                       # Run digestion on changes
-# Fix any C translation gaps from new upstream code
-git push wubu HEAD                        # Push merged result
-```
-
-### C Translation (slermes)
-
-All C work lives in `C/`. The binary is aliased as `slermes`.
-
-```bash
-# Build + test + parity (recommended)
-bash scripts/slermes-build.sh
-
-# Or step by step:
-make -C C              # Build C translation
-bash C/test_runner.sh  # Run 21 tests
-slermes "Say hi"       # Quick smoke test
-
-# Sync from upstream:
-bash scripts/slermes-sync.sh --merge
-```
-
-See `ROADMAP.md` for the full C translation status and 170-phase plan.
-
-## Workflow Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/slermes-sync.sh` | Fetch upstream + merge + run digest + report C gaps |
-| `scripts/slermes-build.sh` | Clean build + test + parity check + deploy to PATH |
-| `parity_loop.sh` | Verify C/ ↔ slermes/ 1:1 parity |
-| `triple_test.sh` | Compare hermes + hermes-dev + slermes side-by-side |
-
-## Key Directories
-
-| Path | Purpose |
-|------|---------|
-| `C/` | C translation (parallel implementation) |
-| `skills/` | Custom WuBu Hermes skills (mind-palace, session-goal-paste, etc.) |
-| `tools/` | Tool implementations (security-hardened) |
-| `tests/tools/test_path_security.py` | Security test suite (49 tests) |
-
-## Unique Commits (14 on wubu/main)
-
-```
-60a91505f  fix(test_openclaw): add pathlib to KNOWN_FALSE_POSITIVES
-fed55c6c9  fix(tests): align drain resume_pending tests
-9895657ce  test: add path_security test suite (49 tests)
-d316ea08a  fix: V4A traversal bypass, regex gaps, search_tool guard
-e3ec8a1a1  fix(security): remove leading space in setuid/setgid
-7720f7df6  fix(security): fix backtick_subshell regex
-4b14fd684  fix(security): add path traversal guards
-cbc065880  fix(ci): guard nix-lockfile-fix workflow for upstream
-01ad48b0c  fix: resolve npm vulnerabilities
-1eb529ce4  Add session-goal-paste skill: templates
-b06ae4ed3  Add optimizer-research-2026 skill
-71557b4e3  Add session-goal-paste skill
-e5171ff4c  Add mind-palace skill
-d9fab3636  fix: skip auto-title for local endpoints
-```
+Then triple Devil's Advocate audit with mind-palace structure before any merge request.
