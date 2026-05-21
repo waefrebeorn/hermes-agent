@@ -30,6 +30,7 @@ void registry_init_voice(void);
 void registry_init_image_gen(void);
 void registry_init_homeassistant(void);
 void registry_init_kanban(void);
+void registry_init_computer_use(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -57,4 +58,5 @@ void tools_init_all(void) {
     registry_init_image_gen();
     registry_init_homeassistant();
     registry_init_kanban();
+    registry_init_computer_use();
 }
