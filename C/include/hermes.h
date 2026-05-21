@@ -169,4 +169,8 @@ const command_def_t *commands_get_all(void);
 int approval_check(const char *tool_name, const char *args_json);
 void approval_reset_session(void);
 
+/* Registry accessors */
+size_t registry_get_count(void);
+const char *registry_get_name(size_t i);
+
 #endif /* HERMES_H */

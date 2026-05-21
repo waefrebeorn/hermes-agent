@@ -193,5 +193,17 @@ for cdp_tool in browser_vision browser_console browser_dialog browser_cdp; do
     else fail "$cdp_tool not registered"; fi
 done
 
+# ==============================================
+# 5. Tool registry completeness test
+# ==============================================
+echo ""; echo "=== Tool Registry Completeness Test ==="
+# Use /tools-verify CLI command (built into hermes binary)
+VERIFY_OUT=$(echo "/tools-verify" | timeout 3 "$HERMES" 2>&1 || true)
+if echo "$VERIFY_OUT" | grep -q "ALL EXPECTED TOOLS PRESENT"; then ok "tool registry completeness"
+else
+    echo "$VERIFY_OUT" | grep "MISSING" || true
+    fail "tool registry completeness (missing tools)"
+fi
+
 summary
 exit $FAIL

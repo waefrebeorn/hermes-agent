@@ -35,6 +35,7 @@ static void cmd_topic(const char *args, agent_state_t *state);
 static void cmd_config(const char *args, agent_state_t *state);
 static void cmd_commands(const char *args, agent_state_t *state);
 static void cmd_tools(const char *args, agent_state_t *state);
+static void cmd_tools_verify(const char *args, agent_state_t *state);
 static void cmd_reset(const char *args, agent_state_t *state);
 static void cmd_retry(const char *args, agent_state_t *state);
 static void cmd_compress(const char *args, agent_state_t *state);
@@ -108,7 +109,8 @@ static const command_def_t COMMANDS[] = {
 
     /* Tool and info */
     {"/tools",  NULL,     "List available tools and their status",         cmd_tools},
-    {"/commands","/cmds", "List all available slash commands",             cmd_commands},
+    {"/tools-verify", NULL, "Verify all expected tools are registered",     cmd_tools_verify},
+    {"/commands","/cmds", "List all available slash commands",              cmd_commands},
 
     /* Help and exit */
     {"/help",    "/h",    "Show help for commands: /help [command]",       cmd_help},
@@ -487,6 +489,42 @@ static void cmd_tools(const char *args, agent_state_t *state) {
             printf(" [UNAVAILABLE]");
         printf(" \u2014 %s\n", state->tools.tools[i].description);
     }
+}
+
+/* /tools-verify: Verify all expected tools are registered */
+static void cmd_tools_verify(const char *args, agent_state_t *state) {
+    (void)args;
+    const char *expected[] = {
+        "terminal", "read_file", "write_file", "search_files", "patch",
+        "web_get", "web_search", "web_extract",
+        "skills_list", "skill_view", "skill_manage",
+        "execute_code", "clarify", "memory", "todo", "process",
+        "send_message", "cronjob", "session_search",
+        "text_to_speech", "vision_analyze", "delegate_task",
+        "x_search", "approval_status",
+        "voice_listen", "voice_speak", "image_generate",
+        "ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service",
+        "browser_navigate", "browser_snapshot", "browser_back", "browser_forward",
+        "browser_click", "browser_type", "browser_scroll",
+        "browser_get_images", "browser_press",
+        "browser_vision", "browser_console", "browser_dialog", "browser_cdp",
+        NULL
+    };
+    int total_expected = 0, found = 0, missing = 0;
+    for (int i = 0; expected[i]; i++) {
+        total_expected++;
+        bool ok = false;
+        for (size_t j = 0; j < state->tools.count; j++) {
+            if (strcmp(state->tools.tools[j].name, expected[i]) == 0) {
+                ok = true; break;
+            }
+        }
+        if (ok) found++;
+        else { printf("  MISSING: %s\n", expected[i]); missing++; }
+    }
+    printf("Tools: %zu registered, %d expected, %d missing, %d found\n",
+           state->tools.count, total_expected, missing, found);
+    if (missing == 0) printf("ALL EXPECTED TOOLS PRESENT\n");
 }
 
 /* ================================================================

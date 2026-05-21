@@ -134,3 +134,13 @@ json_node_t *registry_to_json(void) {
     }
     return tools;
 }
+
+/* Accessors for testing */
+size_t registry_get_count(void) {
+    return g_registry.count;
+}
+
+const char *registry_get_name(size_t i) {
+    if (i >= g_registry.count) return NULL;
+    return g_registry.tools[i].name;
+}
