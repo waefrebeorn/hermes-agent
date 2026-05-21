@@ -149,4 +149,34 @@ json_node_t *signal_poll_messages(http_client_t *http);
 const char *signal_get_chat_id(json_node_t *update);
 const char *signal_get_text(json_node_t *update);
 
+/* ================================================================
+ *  HomeAssistant platform
+ * ================================================================ */
+
+void ha_set_url(const char *url);
+void ha_set_token(const char *token);
+void ha_set_notify_entity(const char *entity);
+bool ha_send_notification(const char *title, const char *message);
+json_node_t *ha_poll_messages(http_client_t *http);
+const char *ha_get_chat_id(json_node_t *update);
+const char *ha_get_text(json_node_t *update);
+
+/* ================================================================
+ *  SMS platform (Twilio)
+ * ================================================================ */
+
+void sms_set_twilio(const char *sid, const char *token, const char *from);
+bool sms_send_message(http_client_t *http, const char *to, const char *text);
+json_node_t *sms_poll_messages(http_client_t *http);
+const char *sms_get_chat_id(json_node_t *update);
+const char *sms_get_text(json_node_t *update);
+
+/* ================================================================
+ *  API Server platform (aliased as webhook)
+ * ================================================================ */
+
+/* API server uses the same webhook_server_run function but configured
+ * with different endpoint paths. Declared as separate type for
+ * config clarity. */
+
 #endif /* HERMES_GATEWAY_H */

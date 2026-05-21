@@ -376,6 +376,61 @@ static void *thread_poll_signal(void *arg) {
     return NULL;
 }
 
+/* HomeAssistant setup + thread */
+static bool setup_ha(void) {
+    const char *url = getenv("HA_URL");
+    const char *token = getenv("HA_TOKEN");
+    if (!url || !token) {
+        fprintf(stderr, "Warning: HA_URL and HA_TOKEN must be set\n");
+        return false;
+    }
+    ha_set_url(url);
+    ha_set_token(token);
+    const char *entity = getenv("HA_NOTIFY_ENTITY");
+    if (entity) ha_set_notify_entity(entity);
+    return true;
+}
+
+static void *thread_poll_ha(void *arg) {
+    (void)arg;
+    printf("[gateway] HomeAssistant polling (interval: %ds)\n", g_gw.poll_interval * 5);
+    while (g_gw.running) {
+        json_node_t *updates = ha_poll_messages(g_gw.http);
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update("homeassistant",
+                               ha_get_chat_id(update),
+                               ha_get_text(update));
+            }
+        }
+        json_free(updates);
+        if (g_gw.running) sleep(g_gw.poll_interval * 5);
+    }
+    return NULL;
+}
+
+/* SMS setup + thread (outbound only via Twilio) */
+static bool setup_sms(void) {
+    const char *sid = getenv("TWILIO_ACCOUNT_SID");
+    const char *token = getenv("TWILIO_AUTH_TOKEN");
+    const char *from = getenv("TWILIO_FROM_NUMBER");
+    if (!sid || !from) {
+        fprintf(stderr, "Warning: TWILIO_ACCOUNT_SID and TWILIO_FROM_NUMBER must be set\n");
+        return false;
+    }
+    sms_set_twilio(sid, token, from);
+    return true;
+}
+
+static void *thread_poll_sms(void *arg) {
+    (void)arg;
+    printf("[gateway] SMS platform (outbound only via Twilio). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
 /* ================================================================
  *  Get port from env with HERMES_ or SLERMES_ prefix
  * ================================================================ */
@@ -440,6 +495,9 @@ int hermes_gateway_main(int argc, char **argv) {
         {"whatsapp",   setup_whatsapp,   thread_webhook,         0},
         {"email",      setup_email,      thread_poll_email,      0},
         {"signal",     setup_signal,     thread_poll_signal,     0},
+        {"homeassistant", setup_ha,      thread_poll_ha,         0},
+        {"sms",        setup_sms,        thread_poll_sms,        0},
+        {"api_server", setup_webhook,    thread_webhook,         0},
         {NULL, NULL, NULL, 0}
     };
 
