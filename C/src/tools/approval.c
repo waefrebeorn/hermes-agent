@@ -71,15 +71,75 @@ static struct {
     char command[512];
     char tool[64];
     bool approved;   /* true=approved, false=denied */
-    bool permanent;  /* remember for this session */
+    bool permanent;  /* saved to allowlist file */
 } g_approval_cache[MAX_APPROVED];
 static int g_approval_count = 0;
 
 /* YOLO mode: when true, skip all approval prompts */
 static bool g_yolo_approval = false;
 
+/* Allowlist file path (set at init) */
+static char g_allowlist_path[HERMES_PATH_MAX] = {0};
+
 void approval_set_yolo(bool enabled) {
     g_yolo_approval = enabled;
+}
+
+/* Set allowlist file path (called during init) */
+void approval_set_allowlist_path(const char *path) {
+    if (path) snprintf(g_allowlist_path, sizeof(g_allowlist_path), "%s", path);
+}
+
+/* Load persistent allowlist from file */
+void approval_load_allowlist(void) {
+    if (!g_allowlist_path[0]) return;
+    char *err = NULL;
+    json_t *root = json_parse_file(g_allowlist_path, &err);
+    if (!root) { free(err); return; }
+    if (json_len(root) == 0) { json_free(root); return; }
+
+    for (size_t i = 0; i < json_len(root) && g_approval_count < MAX_APPROVED; i++) {
+        json_t *entry = json_get(root, i);
+        if (!entry) continue;
+        const char *tool = json_get_str(entry, "tool", "");
+        const char *cmd = json_get_str(entry, "command", "");
+        bool approved = json_get_bool(entry, "approved", true);
+        if (tool[0] && cmd[0]) {
+            snprintf(g_approval_cache[g_approval_count].tool, sizeof(g_approval_cache[0].tool), "%s", tool);
+            snprintf(g_approval_cache[g_approval_count].command, sizeof(g_approval_cache[0].command), "%s", cmd);
+            g_approval_cache[g_approval_count].approved = approved;
+            g_approval_cache[g_approval_count].permanent = true;
+            g_approval_count++;
+        }
+    }
+    json_free(root);
+}
+
+/* Save persistent allowlist to file */
+void approval_save_allowlist(void) {
+    if (!g_allowlist_path[0]) return;
+    json_t *arr = json_array();
+    if (!arr) return;
+
+    for (int i = 0; i < g_approval_count; i++) {
+        if (!g_approval_cache[i].permanent) continue;
+        json_t *entry = json_object();
+        json_set(entry, "tool", json_string(g_approval_cache[i].tool));
+        json_set(entry, "command", json_string(g_approval_cache[i].command));
+        json_set(entry, "approved", json_bool(g_approval_cache[i].approved));
+        json_append(arr, entry);
+    }
+
+    char *ser = json_serialize_pretty(arr, 2);
+    json_free(arr);
+    if (!ser) return;
+
+    FILE *f = fopen(g_allowlist_path, "w");
+    if (f) {
+        fputs(ser, f);
+        fclose(f);
+    }
+    free(ser);
 }
 
 /* Reset approval cache for new session */
@@ -179,7 +239,8 @@ static bool approval_prompt_user(const char *tool, const char *reason,
     }
     if (response[0] == 'a') {
         approval_cache_add(tool, detail, true, true);
-        fprintf(stderr, "  → Approved for this session.\n");
+        approval_save_allowlist();
+        fprintf(stderr, "  → Approved permanently (saved to allowlist).\n");
         return true;
     }
     approval_cache_add(tool, detail, false, true);

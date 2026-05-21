@@ -157,9 +157,23 @@ int hermes_cli_main(int argc, char **argv) {
     commands_set_verbose(g_cli.config.verbose);
     approval_set_yolo(g_cli.config.yolo_mode);
     commands_set_fast(g_cli.config.fast_mode);
+
     /* Trim /config.yaml suffix */
     char *slash = strrchr(g_cli.agent.hermes_home, '/');
     if (slash) *slash = '\0';
+
+    /* Set up persistent allowlist path and load saved approvals */
+    {
+        const char *home = g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : NULL;
+        if (!home) home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (home) {
+            char allowlist_path[HERMES_PATH_MAX];
+            snprintf(allowlist_path, sizeof(allowlist_path), "%s/allowlist.json", home);
+            approval_set_allowlist_path(allowlist_path);
+            approval_load_allowlist();
+        }
+    }
 
     /* Check for one-shot mode */
     if (argc > 1) {

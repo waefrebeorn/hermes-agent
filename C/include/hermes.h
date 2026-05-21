@@ -174,6 +174,9 @@ const command_def_t *commands_get_all(void);
 int approval_check(const char *tool_name, const char *args_json);
 void approval_reset_session(void);
 void approval_set_yolo(bool enabled);  /* When true, skip all approval prompts */
+void approval_set_allowlist_path(const char *path);
+void approval_load_allowlist(void);
+void approval_save_allowlist(void);
 
 /* Config runtime toggles (wired from config.yaml or /commands) */
 void commands_set_verbose(int level);   /* 0=off, 1=normal, 2=verbose */
