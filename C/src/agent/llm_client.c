@@ -525,7 +525,7 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                  "Content-Type: application/json");
     }
 
-    /* Set up streaming context */
+    /* Make HTTP request */
     stream_ctx_t ctx;
     memset(&ctx, 0, sizeof(ctx));
     ctx.resp = resp;

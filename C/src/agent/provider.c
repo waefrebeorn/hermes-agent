@@ -30,8 +30,8 @@ void provider_register(provider_type_t type, const provider_ops_t *ops) {
 
 void provider_register_builtins(void) {
     provider_register(PROVIDER_OPENAI, &PROVIDER_OPS_OPENAI);
+    provider_register(PROVIDER_ANTHROPIC, &PROVIDER_OPS_ANTHROPIC);
     /* Add more as implemented:
-       provider_register(PROVIDER_ANTHROPIC, &PROVIDER_OPS_ANTHROPIC);
        provider_register(PROVIDER_GOOGLE, &PROVIDER_OPS_GOOGLE);
     */
 }
