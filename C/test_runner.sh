@@ -193,6 +193,13 @@ for cdp_tool in browser_vision browser_console browser_dialog browser_cdp; do
     else fail "$cdp_tool not registered"; fi
 done
 
+# Check kanban tools are registered
+echo ""; echo "=== Kanban Tool Registration Tests ==="
+for kanban_tool in kanban_show kanban_list kanban_complete kanban_block kanban_heartbeat kanban_comment kanban_create kanban_link kanban_unblock; do
+    if echo "$REG_TOOLS" | grep -qi "$kanban_tool"; then ok "$kanban_tool registered"
+    else fail "$kanban_tool not registered"; fi
+done
+
 # ==============================================
 # 5. Tool registry completeness test
 # ==============================================
