@@ -120,6 +120,7 @@ typedef struct {
     db_t             *db;           /* session database (optional) */
     llm_token_cb_t    stream_cb;   /* streaming token callback (optional) */
     void             *stream_data; /* userdata for stream callback */
+    void             *plugin_reg;  /* plugin registry (optional, opaque) */
 } agent_state_t;
 
 /* ================================================================

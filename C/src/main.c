@@ -6,6 +6,7 @@
  */
 
 #include "hermes.h"
+#include "plugin.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -43,6 +44,25 @@ int main(int argc, char **argv) {
         agent_init(&agent_state);
         tools_init_all();
         agent_state.tools = *registry_get();
+
+        /* Discover and load plugins */
+        const char *hermes_home = getenv("SLERMES_HOME");
+        if (!hermes_home) hermes_home = getenv("HOME");
+        if (hermes_home) {
+            char pdir[4096];
+            snprintf(pdir, sizeof(pdir), "%s/.slermes/plugins", hermes_home);
+            plugin_registry_t *plugs = plugin_registry_new();
+            if (plugs) {
+                int n = plugin_registry_discover(plugs, pdir);
+                if (n > 0) {
+                    plugin_registry_init_all(plugs);
+                    agent_state.plugin_reg = plugs;
+                } else {
+                    plugin_registry_free(plugs);
+                }
+            }
+        }
+
         memcpy(agent_state.llm.base_url, cfg.base_url, sizeof(agent_state.llm.base_url));
         memcpy(agent_state.llm.api_key, cfg.api_key, sizeof(agent_state.llm.api_key));
         memcpy(agent_state.llm.model, cfg.model, sizeof(agent_state.llm.model));

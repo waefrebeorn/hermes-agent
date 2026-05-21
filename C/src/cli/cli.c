@@ -7,6 +7,7 @@
 #include "hermes_agent.h"
 #include "hermes_display.h"
 #include "hermes_skin.h"
+#include "plugin.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -118,6 +119,27 @@ int hermes_cli_main(int argc, char **argv) {
     }
     /* Initialize tools */
     tools_init_all();
+
+    /* Discover and load plugins from ~/.slermes/plugins/ */
+    char plugin_dir[4096] = "";
+    const char *hermes_home = getenv("SLERMES_HOME");
+    if (!hermes_home) hermes_home = getenv("HOME");
+    if (hermes_home)
+        snprintf(plugin_dir, sizeof(plugin_dir), "%s/.slermes/plugins", hermes_home);
+    if (plugin_dir[0]) {
+        plugin_registry_t *plugins = plugin_registry_new();
+        if (plugins) {
+            int n = plugin_registry_discover(plugins, plugin_dir);
+            if (n > 0) {
+                plugin_registry_init_all(plugins);
+                /* Store on agent for lifecycle management */
+                g_cli.agent.plugin_reg = plugins;
+            } else {
+                plugin_registry_free(plugins);
+            }
+        }
+    }
+
     /* Copy tools registry to agent */
     g_cli.agent.tools = *registry_get();
     /* Copy config fields to agent */

@@ -12,6 +12,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "provider.h"
+#include "plugin.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -137,7 +138,11 @@ void agent_close_db(agent_state_t *state) {
 
 void agent_free(agent_state_t *state) {
     context_clear(state);
-    /* Tool registry cleanup will be in Phase 3 */
+    /* Free plugin registry if loaded */
+    if (state->plugin_reg) {
+        plugin_registry_free((plugin_registry_t *)state->plugin_reg);
+        state->plugin_reg = NULL;
+    }
 }
 
 /* ================================================================
