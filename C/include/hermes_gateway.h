@@ -236,4 +236,11 @@ bool weixin_init(const char *token, const char *account_id);
 void weixin_start(void);
 void weixin_stop(void);
 
+/* yuanbao — Yuanbao WebSocket gateway */
+bool yuanbao_init(const char *app_id, const char *app_secret,
+                  const char *bot_id, const char *ws_url,
+                  const char *api_domain);
+void yuanbao_start(void);
+void yuanbao_stop(void);
+
 #endif /* HERMES_GATEWAY_H */

@@ -578,6 +578,32 @@ static void *thread_weixin(void *arg) {
     return NULL;
 }
 
+/* yuanbao setup + thread */
+extern bool yuanbao_init(const char *app_id, const char *app_secret,
+                         const char *bot_id, const char *ws_url,
+                         const char *api_domain);
+extern void yuanbao_start(void);
+extern void yuanbao_stop(void);
+
+static bool setup_yuanbao(void) {
+    const char *app_id = getenv("YUANBAO_APP_ID");
+    const char *app_secret = getenv("YUANBAO_APP_SECRET");
+    const char *bot_id = getenv("YUANBAO_BOT_ID");
+    const char *ws_url = getenv("YUANBAO_WS_URL");
+    const char *api_domain = getenv("YUANBAO_API_DOMAIN");
+    if (!app_id || !app_secret) {
+        fprintf(stderr, "Warning: YUANBAO_APP_ID and YUANBAO_APP_SECRET must be set\n");
+        return false;
+    }
+    return yuanbao_init(app_id, app_secret, bot_id, ws_url, api_domain);
+}
+
+static void *thread_yuanbao(void *arg) {
+    (void)arg;
+    yuanbao_start();
+    return NULL;
+}
+
 int hermes_gateway_main(int argc, char **argv) {
     memset(&g_gw, 0, sizeof(g_gw));
     g_gw.running = true;
@@ -635,6 +661,7 @@ int hermes_gateway_main(int argc, char **argv) {
         {"bluebubbles",setup_bluebubbles,thread_poll_bluebubbles,0},
         {"msgraph_webhook", setup_msgraph_webhook, thread_msgraph_webhook, 0},
         {"weixin", setup_weixin, thread_weixin, 0},
+        {"yuanbao", setup_yuanbao, thread_yuanbao, 0},
         {NULL, NULL, NULL, 0}
     };
 
