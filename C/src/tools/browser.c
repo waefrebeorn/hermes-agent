@@ -30,6 +30,9 @@ typedef struct {
     char form_refs[32][64];
     char form_vals[32][256];
     int  form_count;
+    /* Element index cache */
+    char elements[128][512];  /* @eN → text/type/url description */
+    int   element_count;
 } browser_tab_t;
 
 static browser_tab_t g_tab;
@@ -134,6 +137,160 @@ static char *html_to_text(const char *html) {
 }
 
 /* ================================================================
+ *  Element Indexing — number interactive HTML elements as @e1..@eN
+ * ================================================================ */
+
+/* Scan HTML for interactive elements (a, button, input, textarea, select).
+ * Populates g_tab.elements[] with descriptions like "[@e1] Link: text".
+ * Returns element count. */
+static int index_elements(const char *html) {
+    g_tab.element_count = 0;
+    if (!html) return 0;
+
+    const char *p = html;
+    while (*p && g_tab.element_count < 128) {
+        const char *tag_start = NULL;
+
+        /* Check for <a */
+        if ((tag_start = strstr(p, "<a ")) != NULL || (tag_start = strstr(p, "<a>")) != NULL) {
+            p = tag_start + 2;
+            /* Find href */
+            const char *href = strstr(tag_start, "href=\"");
+            char href_val[256] = "";
+            if (href) {
+                href += 6;
+                const char *href_end = strchr(href, '"');
+                if (href_end) {
+                    size_t hl = (size_t)(href_end - href);
+                    if (hl >= sizeof(href_val)) hl = sizeof(href_val) - 1;
+                    memcpy(href_val, href, hl);
+                    href_val[hl] = '\0';
+                }
+            }
+            /* Find inner text */
+            const char *gt = strchr(tag_start, '>');
+            if (!gt) continue;
+            const char *text_start = gt + 1;
+            const char *text_end = strstr(text_start, "</a>");
+            if (!text_end) continue;
+            size_t tl = (size_t)(text_end - text_start);
+            char text[256];
+            if (tl >= sizeof(text)) tl = sizeof(text) - 1;
+            memcpy(text, text_start, tl);
+            text[tl] = '\0';
+            /* Trim whitespace */
+            char *s = text;
+            while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
+            char *e = text + strlen(text) - 1;
+            while (e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) e--;
+            *(e+1) = '\0';
+            if (strlen(s) > 0)
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", g_tab.element_count + 1, s);
+            else if (href_val[0])
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", g_tab.element_count + 1, href_val);
+            p = text_end + 4;
+            continue;
+        }
+
+        /* Check for <button */
+        if ((tag_start = strstr(p, "<button")) != NULL) {
+            p = tag_start + 7;
+            const char *gt = strchr(tag_start, '>');
+            if (!gt) continue;
+            const char *text_start = gt + 1;
+            const char *text_end = strstr(text_start, "</button>");
+            if (!text_end) continue;
+            size_t tl = (size_t)(text_end - text_start);
+            char text[256];
+            if (tl >= sizeof(text)) tl = sizeof(text) - 1;
+            memcpy(text, text_start, tl);
+            text[tl] = '\0';
+            char *s = text;
+            while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
+            char *e = text + strlen(text) - 1;
+            while (e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) e--;
+            *(e+1) = '\0';
+            if (strlen(s) > 0)
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Button: %s", g_tab.element_count + 1, s);
+            else
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Button", g_tab.element_count + 1);
+            p = text_end + 8;
+            continue;
+        }
+
+        /* Check for <input */
+        if ((tag_start = strstr(p, "<input")) != NULL) {
+            p = tag_start + 6;
+            const char *gt = strchr(tag_start, '>');
+            if (!gt) continue;
+            /* Get type */
+            const char *type_p = strstr(tag_start, "type=\"");
+            char type_val[32] = "text";
+            if (type_p) {
+                type_p += 6;
+                const char *type_end = strchr(type_p, '"');
+                if (type_end) {
+                    size_t tl = (size_t)(type_end - type_p);
+                    if (tl >= sizeof(type_val)) tl = sizeof(type_val) - 1;
+                    memcpy(type_val, type_p, tl);
+                    type_val[tl] = '\0';
+                }
+            }
+            /* Get placeholder/name */
+            const char *placeholder = strstr(tag_start, "placeholder=\"");
+            char pval[128] = "";
+            if (placeholder) {
+                placeholder += 12;
+                const char *pl_end = strchr(placeholder, '"');
+                if (pl_end) {
+                    size_t pl = (size_t)(pl_end - placeholder);
+                    if (pl >= sizeof(pval)) pl = sizeof(pval) - 1;
+                    memcpy(pval, placeholder, pl);
+                    pval[pl] = '\0';
+                }
+            }
+            if (pval[0])
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]: %s", g_tab.element_count + 1, type_val, pval);
+            else
+                snprintf(g_tab.elements[g_tab.element_count++],
+                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]", g_tab.element_count + 1, type_val);
+            p = gt + 1;
+            continue;
+        }
+
+        /* Check for <textarea */
+        if ((tag_start = strstr(p, "<textarea")) != NULL) {
+            p = tag_start + 9;
+            const char *gt = strchr(tag_start, '>');
+            if (!gt) continue;
+            snprintf(g_tab.elements[g_tab.element_count++],
+                sizeof(g_tab.elements[0]), "[@e%d] Textarea", g_tab.element_count + 1);
+            p = gt + 1;
+            continue;
+        }
+
+        /* Check for <select */
+        if ((tag_start = strstr(p, "<select")) != NULL) {
+            p = tag_start + 7;
+            snprintf(g_tab.elements[g_tab.element_count++],
+                sizeof(g_tab.elements[0]), "[@e%d] Select dropdown", g_tab.element_count + 1);
+            /* Skip to end of select */
+            const char *close = strstr(p, "</select>");
+            if (close) p = close + 9;
+            continue;
+        }
+
+        p++;
+    }
+    return g_tab.element_count;
+}
+
+/* ================================================================
  *  Navigation
  * ================================================================ */
 
@@ -224,6 +381,10 @@ static const char *browser_navigate_to(const char *url) {
         g_tab.history[g_tab.history_count] = strdup(current_url);
         g_tab.history_count++;
         g_tab.history_pos = g_tab.history_count - 1;
+
+        /* Refresh element index */
+        g_tab.element_count = 0;
+        index_elements(g_tab.html);
 
         http_response_free(resp);
         http_client_free(http);
@@ -319,14 +480,40 @@ char *browser_snapshot_handler(const char *args_json, const char *task_id) {
         preview[preview_sz] = '\0';
     }
 
-    char *result = (char *)malloc(8192);
+    char *result = (char *)malloc(16384);
     if (!result) { free(full_text); return strdup("{\"error\": \"OOM\"}"); }
-    snprintf(result, 8192,
+
+    /* Build element list string */
+    char elements_str[4096] = "";
+    size_t es_offset = 0;
+    for (int i = 0; i < g_tab.element_count && es_offset < 4000; i++) {
+        size_t elen = strlen(g_tab.elements[i]);
+        if (es_offset + elen + 2 < sizeof(elements_str)) {
+            if (es_offset > 0) elements_str[es_offset++] = ',';
+            memcpy(elements_str + es_offset, g_tab.elements[i], elen + 1);
+            es_offset += elen;
+        }
+    }
+
+    /* JSON-escape the elements string */
+    char elements_json[4096];
+    size_t ej = 0;
+    for (size_t i = 0; elements_str[i] && ej < sizeof(elements_json) - 2; i++) {
+        if (elements_str[i] == '"') { elements_json[ej++] = '\\'; elements_json[ej++] = '"'; }
+        else if (elements_str[i] == '\\') { elements_json[ej++] = '\\'; elements_json[ej++] = '\\'; }
+        else if (elements_str[i] == '\n') { elements_json[ej++] = '\\'; elements_json[ej++] = 'n'; }
+        else elements_json[ej++] = elements_str[i];
+    }
+    elements_json[ej] = '\0';
+
+    snprintf(result, 16384,
         "{"
         "  \"url\": \"%s\","
         "  \"title\": \"%s\","
         "  \"content_length\": %zu,"
         "  \"text\": %s,"
+        "  \"elements\": \"%s\","
+        "  \"element_count\": %d,"
         "  \"history_size\": %zu,"
         "  \"can_go_back\": %s,"
         "  \"can_go_forward\": %s,"
@@ -334,6 +521,7 @@ char *browser_snapshot_handler(const char *args_json, const char *task_id) {
         "  \"total_text_length\": %zu"
         "}",
         g_tab.url, g_tab.title, g_tab.html_len, preview,
+        elements_json, g_tab.element_count,
         g_tab.history_count,
         g_tab.history_pos > 0 ? "true" : "false",
         g_tab.history_pos < g_tab.history_count - 1 ? "true" : "false",
@@ -531,8 +719,41 @@ char *browser_click_handler(const char *args_json, const char *task_id) {
         return strdup("{\"error\": \"No page loaded. Navigate to a URL first.\"}");
     }
 
-    /* Find link by text */
-    char *href = find_link_by_text(g_tab.html, target);
+    /* Find link by text or @eN reference */
+    char *href = NULL;
+
+    if (target[0] == '@' && target[1] == 'e') {
+        /* @eN reference: find Nth link in HTML */
+        int idx = atoi(target + 2) - 1;
+        if (idx < 0) { json_free(args); return strdup("{\"error\": \"Invalid element index\"}"); }
+
+        int count = 0;
+        const char *p = g_tab.html;
+        while (p && (p = strstr(p, "<a ")) != NULL) {
+            if (count == idx) {
+                const char *hs = strstr(p, "href=\"");
+                if (hs) {
+                    hs += 6;
+                    const char *he = strchr(hs, '"');
+                    if (he) {
+                        size_t hl = (size_t)(he - hs);
+                        if (hl >= 2048) hl = 2047;
+                        href = (char *)malloc(hl + 1);
+                        if (href) { memcpy(href, hs, hl); href[hl] = '\0'; }
+                    }
+                }
+                break;
+            }
+            count++;
+            p += 3;
+        }
+        if (!href) {
+            json_free(args);
+            return strdup("{\"error\": \"Element not found or not a clickable link\"}");
+        }
+    } else {
+        href = find_link_by_text(g_tab.html, target);
+    }
     if (!href) {
         json_free(args);
         char result[1024];
