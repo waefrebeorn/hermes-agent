@@ -125,4 +125,28 @@ json_node_t *whatsapp_parse_webhook(const char *body);
 const char *whatsapp_get_chat_id(json_node_t *update);
 const char *whatsapp_get_text(json_node_t *update);
 
+/* ================================================================
+ *  Email platform
+ * ================================================================ */
+
+void email_set_from(const char *from);
+bool email_send_message(http_client_t *http, const char *to,
+                        const char *subject, const char *body);
+json_node_t *email_poll_messages(http_client_t *http);
+const char *email_get_chat_id(json_node_t *update);
+const char *email_get_text(json_node_t *update);
+
+/* ================================================================
+ *  Signal platform
+ * ================================================================ */
+
+void signal_set_number(const char *number);
+void signal_set_cli_path(const char *path);
+bool signal_check_available(void);
+bool signal_send_message(http_client_t *http, const char *to,
+                          const char *text);
+json_node_t *signal_poll_messages(http_client_t *http);
+const char *signal_get_chat_id(json_node_t *update);
+const char *signal_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

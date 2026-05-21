@@ -310,6 +310,72 @@ static bool setup_whatsapp(void) {
     return true;
 }
 
+static bool setup_email(void) {
+    const char *from = getenv("EMAIL_FROM");
+    if (from) email_set_from(from);
+    return true;
+}
+
+static bool setup_signal(void) {
+    const char *number = getenv("SIGNAL_NUMBER");
+    const char *cli_path = getenv("SIGNAL_CLI_PATH");
+    if (!number) {
+        fprintf(stderr, "Warning: SIGNAL_NUMBER not set\n");
+        return false;
+    }
+    signal_set_number(number);
+    if (cli_path) signal_set_cli_path(cli_path);
+    return true;
+}
+
+/* Email poll thread */
+static void *thread_poll_email(void *arg) {
+    (void)arg;
+    int poll_int = g_gw.poll_interval * 3; /* Email polls less frequently */
+    printf("[gateway] Email polling (interval: %ds)\n", poll_int);
+    while (g_gw.running) {
+        json_node_t *updates = email_poll_messages(g_gw.http);
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update("email",
+                               email_get_chat_id(update),
+                               email_get_text(update));
+            }
+        }
+        json_free(updates);
+        if (g_gw.running) sleep(poll_int);
+    }
+    return NULL;
+}
+
+/* Signal poll thread */
+static void *thread_poll_signal(void *arg) {
+    (void)arg;
+    /* Check if signal-cli is available */
+    if (!signal_check_available()) {
+        printf("[gateway] signal-cli not found. Signal platform disabled.\n");
+        return NULL;
+    }
+    printf("[gateway] Signal polling (interval: %ds)\n", g_gw.poll_interval);
+    while (g_gw.running) {
+        json_node_t *updates = signal_poll_messages(g_gw.http);
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update("signal",
+                               signal_get_chat_id(update),
+                               signal_get_text(update));
+            }
+        }
+        json_free(updates);
+        if (g_gw.running) sleep(g_gw.poll_interval);
+    }
+    return NULL;
+}
+
 /* ================================================================
  *  Get port from env with HERMES_ or SLERMES_ prefix
  * ================================================================ */
@@ -372,6 +438,8 @@ int hermes_gateway_main(int argc, char **argv) {
         {"mattermost", setup_mattermost, thread_poll_mattermost, 0},
         {"webhook",    setup_webhook,    thread_webhook,         0},
         {"whatsapp",   setup_whatsapp,   thread_webhook,         0},
+        {"email",      setup_email,      thread_poll_email,      0},
+        {"signal",     setup_signal,     thread_poll_signal,     0},
         {NULL, NULL, NULL, 0}
     };
 
