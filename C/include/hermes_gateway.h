@@ -179,4 +179,31 @@ const char *sms_get_text(json_node_t *update);
  * with different endpoint paths. Declared as separate type for
  * config clarity. */
 
+/* ================================================================
+ *  Feishu (Lark) platform
+ * ================================================================ */
+void feishu_set_webhook(const char *url);
+bool feishu_send_message(http_client_t *http, const char *text);
+json_node_t *feishu_poll_messages(http_client_t *http);
+const char *feishu_get_chat_id(json_node_t *update);
+const char *feishu_get_text(json_node_t *update);
+
+/* ================================================================
+ *  WeCom (WeChat Work) platform
+ * ================================================================ */
+void wecom_set_webhook(const char *url);
+bool wecom_send_message(http_client_t *http, const char *text);
+json_node_t *wecom_poll_messages(http_client_t *http);
+const char *wecom_get_chat_id(json_node_t *update);
+const char *wecom_get_text(json_node_t *update);
+
+/* ================================================================
+ *  DingTalk platform
+ * ================================================================ */
+void dingtalk_set_webhook(const char *url);
+bool dingtalk_send_message(http_client_t *http, const char *text);
+json_node_t *dingtalk_poll_messages(http_client_t *http);
+const char *dingtalk_get_chat_id(json_node_t *update);
+const char *dingtalk_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

@@ -411,7 +411,7 @@ static void *thread_poll_ha(void *arg) {
     return NULL;
 }
 
-/* SMS setup + thread (outbound only via Twilio) */
+/* SMS setup + thread */
 static bool setup_sms(void) {
     const char *sid = getenv("TWILIO_ACCOUNT_SID");
     const char *token = getenv("TWILIO_AUTH_TOKEN");
@@ -427,6 +427,60 @@ static bool setup_sms(void) {
 static void *thread_poll_sms(void *arg) {
     (void)arg;
     printf("[gateway] SMS platform (outbound only via Twilio). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
+/* Feishu setup */
+static bool setup_feishu(void) {
+    const char *url = getenv("FEISHU_WEBHOOK_URL");
+    if (!url) {
+        fprintf(stderr, "Warning: FEISHU_WEBHOOK_URL not set\n");
+        return false;
+    }
+    feishu_set_webhook(url);
+    return true;
+}
+
+static void *thread_poll_feishu(void *arg) {
+    (void)arg;
+    printf("[gateway] Feishu platform (webhook-based). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
+/* WeCom setup */
+static bool setup_wecom(void) {
+    const char *url = getenv("WECOM_WEBHOOK_URL");
+    if (!url) {
+        fprintf(stderr, "Warning: WECOM_WEBHOOK_URL not set\n");
+        return false;
+    }
+    wecom_set_webhook(url);
+    return true;
+}
+
+static void *thread_poll_wecom(void *arg) {
+    (void)arg;
+    printf("[gateway] WeCom platform (webhook-based). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
+/* DingTalk setup */
+static bool setup_dingtalk(void) {
+    const char *url = getenv("DINGTALK_WEBHOOK_URL");
+    if (!url) {
+        fprintf(stderr, "Warning: DINGTALK_WEBHOOK_URL not set\n");
+        return false;
+    }
+    dingtalk_set_webhook(url);
+    return true;
+}
+
+static void *thread_poll_dingtalk(void *arg) {
+    (void)arg;
+    printf("[gateway] DingTalk platform (webhook-based). Idle.\n");
     while (g_gw.running) sleep(g_gw.poll_interval * 10);
     return NULL;
 }
@@ -498,6 +552,9 @@ int hermes_gateway_main(int argc, char **argv) {
         {"homeassistant", setup_ha,      thread_poll_ha,         0},
         {"sms",        setup_sms,        thread_poll_sms,        0},
         {"api_server", setup_webhook,    thread_webhook,         0},
+        {"feishu",     setup_feishu,     thread_poll_feishu,     0},
+        {"wecom",      setup_wecom,      thread_poll_wecom,      0},
+        {"dingtalk",   setup_dingtalk,   thread_poll_dingtalk,   0},
         {NULL, NULL, NULL, 0}
     };
 
