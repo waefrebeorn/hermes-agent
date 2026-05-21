@@ -308,12 +308,137 @@ typedef struct {
     llm_response_t  *resp;      /* accumulated response */
     llm_token_cb_t   token_cb;  /* token callback */
     void            *userdata;  /* callback userdata */
+    const provider_ops_t *prov_ops;  /* provider ops for per-chunk parsing (optional) */
+    provider_t      *prov;      /* provider instance (optional) */
     /* Track tool_calls across chunks (streaming builds them incrementally) */
     int              max_tc_idx; /* highest tool_call index seen */
     char             tc_id[64][64];  /* id per index */
     char             tc_name[64][128]; /* name per index */
     char             tc_args[64][4096]; /* args buffer per index */
+    bool             streaming_done; /* set when streaming is complete */
 } stream_ctx_t;
+
+/* Provider-aware stream chunk handler.
+ * Uses provider's parse_stream_chunk for text deltas, falls back
+ * to OpenAI-style delta parsing for tool calls. */
+static int on_provider_stream_chunk(const char *data, size_t len, void *userdata) {
+    stream_ctx_t *ctx = (stream_ctx_t *)userdata;
+    (void)len;
+
+    if (!ctx->prov_ops || !ctx->prov) {
+        /* No provider — skip */
+        return 0;
+    }
+
+    /* Try provider's parse_stream_chunk first */
+    provider_response_t *delta = ctx->prov_ops->parse_stream_chunk(ctx->prov, data);
+    if (delta) {
+        /* Text content from provider */
+        if (delta->content && delta->content[0]) {
+            size_t cur = ctx->resp->content ? strlen(ctx->resp->content) : 0;
+            size_t add = strlen(delta->content);
+            char *newc = (char *)realloc(ctx->resp->content, cur + add + 1);
+            if (newc) {
+                ctx->resp->content = newc;
+                memcpy(ctx->resp->content + cur, delta->content, add + 1);
+            }
+            if (ctx->token_cb)
+                ctx->token_cb(delta->content, ctx->userdata);
+        }
+
+        /* Token counts from delta (Anthropic sends in message_delta) */
+        if (delta->input_tokens > 0)
+            ctx->resp->input_tokens = delta->input_tokens;
+        if (delta->output_tokens > 0)
+            ctx->resp->output_tokens = delta->output_tokens;
+
+        /* Tool calls from provider (Anthropic sends complete tool_use blocks,
+         * OpenAI sends deltas — handled below) */
+        if (delta->tool_calls_count > 0) {
+            for (int i = 0; i < delta->tool_calls_count && i < 64; i++) {
+                int idx = ctx->max_tc_idx;
+                if (idx < 64) {
+                    snprintf(ctx->tc_id[idx], sizeof(ctx->tc_id[idx]), "%s",
+                             delta->tool_calls[i].id);
+                    snprintf(ctx->tc_name[idx], sizeof(ctx->tc_name[idx]), "%s",
+                             delta->tool_calls[i].name);
+                    snprintf(ctx->tc_args[idx], sizeof(ctx->tc_args[idx]), "%s",
+                             delta->tool_calls[i].arguments);
+                    ctx->max_tc_idx = idx + 1;
+                }
+            }
+        }
+
+        ctx->prov_ops->free_response(delta);
+    }
+
+    /* Fallback: also try OpenAI-style delta parsing for tool calls.
+     * This handles the case where parse_stream_chunk returns empty
+     * but the chunk has tool_call deltas (OpenAI format). */
+    if (strncmp(data, "data: ", 6) == 0) {
+        const char *json_str = data + 6;
+        if (strncmp(json_str, "[DONE]", 6) == 0) {
+            ctx->streaming_done = true;
+            return 0;
+        }
+
+        char *err = NULL;
+        json_node_t *root = json_parse(json_str, &err);
+        if (!root) { free(err); return 0; }
+
+        json_node_t *choices = json_object_get(root, "choices");
+        if (choices && json_array_count(choices) > 0) {
+            json_node_t *choice = json_array_get(choices, 0);
+            json_node_t *delta = json_object_get(choice, "delta");
+
+            /* OpenAI tool call deltas */
+            if (delta) {
+                json_node_t *tc_delta = json_object_get(delta, "tool_calls");
+                if (tc_delta && json_array_count(tc_delta) > 0) {
+                    for (size_t i = 0; i < json_array_count(tc_delta); i++) {
+                        json_node_t *tc = json_array_get(tc_delta, i);
+                        int idx = (int)json_object_get_number(tc, "index", 0);
+                        if (idx >= 64) continue;
+                        if (idx >= ctx->max_tc_idx) ctx->max_tc_idx = idx + 1;
+                        const char *id = json_object_get_string(tc, "id", NULL);
+                        if (id && id[0])
+                            snprintf(ctx->tc_id[idx], sizeof(ctx->tc_id[idx]), "%s", id);
+                        json_node_t *fn = json_object_get(tc, "function");
+                        if (fn) {
+                            const char *name = json_object_get_string(fn, "name", NULL);
+                            if (name && name[0])
+                                snprintf(ctx->tc_name[idx], sizeof(ctx->tc_name[idx]), "%s", name);
+                            const char *args_chunk = json_object_get_string(fn, "arguments", NULL);
+                            if (args_chunk && args_chunk[0]) {
+                                size_t cur = strlen(ctx->tc_args[idx]);
+                                size_t add = strlen(args_chunk);
+                                if (cur + add < sizeof(ctx->tc_args[idx]) - 1) {
+                                    memcpy(ctx->tc_args[idx] + cur, args_chunk, add);
+                                    ctx->tc_args[idx][cur + add] = '\0';
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /* OpenAI finish reason */
+                const char *finish = json_object_get_string(choice, "finish_reason", NULL);
+                if (finish && finish[0]) {
+                    ctx->streaming_done = true;
+                    json_node_t *usage = json_object_get(root, "usage");
+                    if (usage) {
+                        ctx->resp->input_tokens = (int)json_object_get_number(usage, "prompt_tokens", 0);
+                        ctx->resp->output_tokens = (int)json_object_get_number(usage, "completion_tokens", 0);
+                    }
+                }
+            }
+        }
+
+        json_free(root);
+    }
+
+    return 0;
+}
 
 static int on_stream_chunk(const char *data, size_t len, void *userdata) {
     stream_ctx_t *ctx = (stream_ctx_t *)userdata;
@@ -448,35 +573,32 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
             free(url); free(headers); free(body);
             provider_free(prov); free(resp); return NULL;
         }
-        /* For streaming, we accumulate chunks and parse at the end.
-           A production streaming path would parse per-chunk with ops->parse_stream_chunk.
-           For now, use non-streaming provider path with streaming body flag. */
-        http_client_t *client = http_client_new(30);
-        http_response_t *http_resp = http_request(client, HTTP_POST, url,
-                                                   headers, body, strlen(body));
+        /* Use true streaming via http_stream_request with provider-aware callback */
+        stream_ctx_t ctx;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.resp = resp;
+        ctx.token_cb = token_cb;
+        ctx.userdata = userdata;
+        ctx.prov_ops = ops;
+        ctx.prov = prov;
+
+        http_t *h = http_new(60);
+        int r = http_stream_request(h, HTTP_POST, url,
+                                    headers, body, strlen(body),
+                                    on_provider_stream_chunk, &ctx);
         free(url); free(headers); free(body);
-        if (!http_resp || http_resp->status < 0) {
-            resp->content = strdup("HTTP request failed");
-            if (http_resp) http_response_free(http_resp);
-            http_client_free(client); provider_free(prov);
+        http_free(h);
+
+        if (r != 0 && r != -2) {
+            if (!resp->content)
+                resp->content = strdup("HTTP stream request failed");
+            provider_free(prov);
             return resp;
         }
-        /* Parse the full response (non-streaming fallback for streaming body) */
-        provider_response_t *presp = ops->parse_response(prov, http_resp->body);
-        http_response_free(http_resp); http_client_free(client); provider_free(prov);
-        if (presp) {
-            resp->content = presp->content; presp->content = NULL;
-            resp->reasoning = presp->reasoning; presp->reasoning = NULL;
-            resp->input_tokens = presp->input_tokens;
-            resp->output_tokens = presp->output_tokens;
-            resp->tool_calls_count = presp->tool_calls_count;
-            for (int i = 0; i < presp->tool_calls_count && i < 64; i++)
-                resp->tool_calls[i] = presp->tool_calls[i];
-            /* Call token callback for full content */
-            if (resp->content && token_cb)
-                token_cb(resp->content, userdata);
-            ops->free_response(presp);
-        }
+
+        /* Finalize tool calls from accumulated chunks */
+        finalize_stream_toolcalls(&ctx);
+        provider_free(prov);
         return resp;
     }
     provider_free(prov);
