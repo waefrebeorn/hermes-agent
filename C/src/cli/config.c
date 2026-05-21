@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -101,6 +102,9 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     memset(cfg, 0, sizeof(*cfg));
     cfg->max_turns = 90;
     cfg->quiet_mode = false;
+    cfg->verbose = 0;
+    cfg->yolo_mode = false;
+    cfg->fast_mode = false;
 
     char hermes_home[HERMES_PATH_MAX];
     if (config_dir && config_dir[0])
@@ -158,6 +162,24 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (gw_platforms)
         snprintf(cfg->gateway_platforms, sizeof(cfg->gateway_platforms), "%s", gw_platforms);
 
+    /* Display section — personality */
+    const char *personality = yaml_get_string(doc, "display.personality");
+    if (personality && personality[0])
+        snprintf(cfg->personality, sizeof(cfg->personality), "%s", personality);
+
+    /* Agent section */
+    cfg->verbose = yaml_get_int(doc, "agent.verbose", 0);
+    if (cfg->verbose < 0) cfg->verbose = 0;
+    if (cfg->verbose > 2) cfg->verbose = 2;
+
+    /* Approvals section — yolo mode from approvals.mode=off */
+    const char *approval_mode = yaml_get_string(doc, "approvals.mode");
+    if (approval_mode && strcmp(approval_mode, "off") == 0)
+        cfg->yolo_mode = true;
+
+    /* Fast mode */
+    cfg->fast_mode = yaml_get_bool(doc, "agent.fast", false);
+
     yaml_free(doc);
 
     /* Parse .env (overrides config.yaml) */
@@ -187,6 +209,20 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_SKIN");
     if (v) snprintf(cfg->skin_path, sizeof(cfg->skin_path), "%s", v);
+
+    v = getenv("HERMES_PERSONALITY");
+    if (v) snprintf(cfg->personality, sizeof(cfg->personality), "%s", v);
+
+    v = getenv("HERMES_VERBOSE");
+    if (v) { int t = atoi(v); if (t >= 0 && t <= 2) cfg->verbose = t; }
+
+    v = getenv("HERMES_YOLO");
+    if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
+        cfg->yolo_mode = true;
+
+    v = getenv("HERMES_FAST");
+    if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
+        cfg->fast_mode = true;
 
     return true;
 }

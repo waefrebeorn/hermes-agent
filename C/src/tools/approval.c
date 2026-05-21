@@ -75,6 +75,13 @@ static struct {
 } g_approval_cache[MAX_APPROVED];
 static int g_approval_count = 0;
 
+/* YOLO mode: when true, skip all approval prompts */
+static bool g_yolo_approval = false;
+
+void approval_set_yolo(bool enabled) {
+    g_yolo_approval = enabled;
+}
+
 /* Reset approval cache for new session */
 void approval_reset_session(void) {
     g_approval_count = 0;
@@ -249,6 +256,9 @@ int approval_check(const char *tool_name, const char *args_json) {
     json_free(args);
 
     if (!danger_reason) return -1; /* Not dangerous */
+
+    /* YOLO mode: skip all approval prompts */
+    if (g_yolo_approval) return 1;
 
     /* Check cache */
     int cached = approval_cache_lookup(tool_name, danger_detail);

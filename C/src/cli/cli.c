@@ -150,6 +150,13 @@ int hermes_cli_main(int argc, char **argv) {
     g_cli.agent.max_iterations = g_cli.config.max_turns;
     memcpy(g_cli.agent.hermes_home, g_cli.config.config_path,
            sizeof(g_cli.agent.hermes_home));
+
+    /* Apply config values to runtime state */
+    if (g_cli.config.personality[0])
+        context_set_system(&g_cli.agent, g_cli.config.personality);
+    commands_set_verbose(g_cli.config.verbose);
+    approval_set_yolo(g_cli.config.yolo_mode);
+    commands_set_fast(g_cli.config.fast_mode);
     /* Trim /config.yaml suffix */
     char *slash = strrchr(g_cli.agent.hermes_home, '/');
     if (slash) *slash = '\0';

@@ -803,6 +803,9 @@ static void cmd_yolo(const char *args, agent_state_t *state) {
            g_yolo_mode ? "skipped" : "enforced");
 }
 
+void commands_set_yolo(bool enabled) { g_yolo_mode = enabled ? 1 : 0; }
+bool commands_get_yolo(void) { return g_yolo_mode != 0; }
+
 /* /usage: Show token usage and session statistics */
 static void cmd_usage(const char *args, agent_state_t *state) {
     (void)args;
@@ -884,6 +887,9 @@ static void cmd_verbose(const char *args, agent_state_t *state) {
     const char *modes[] = {"off", "normal", "verbose"};
     printf("Verbosity set to: %s\n", modes[g_verbose]);
 }
+
+void commands_set_verbose(int level) { g_verbose = level; }
+int commands_get_verbose(void) { return g_verbose; }
 
 /* /skin: Show or change the display skin/theme */
 static void cmd_skin(const char *args, agent_state_t *state) {
@@ -990,6 +996,9 @@ static void cmd_fast(const char *args, agent_state_t *state) {
     g_fast_mode = !g_fast_mode;
     printf("Fast mode %s.\n", g_fast_mode ? "enabled" : "disabled");
 }
+
+void commands_set_fast(bool enabled) { g_fast_mode = enabled ? 1 : 0; }
+bool commands_get_fast(void) { return g_fast_mode != 0; }
 
 /* /reload: Reload .env */
 static void cmd_reload(const char *args, agent_state_t *state) {

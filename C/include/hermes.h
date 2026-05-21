@@ -134,8 +134,12 @@ typedef struct {
     char  api_key[256];
     char  base_url[256];
     char  skin_path[HERMES_PATH_MAX];
+    char  personality[1024];   /* display.personality: system prompt override */
     int   max_turns;
+    int   verbose;             /* agent.verbose: 0=off, 1=normal, 2=verbose */
     bool  quiet_mode;
+    bool  yolo_mode;           /* approvals.mode=off or --yolo flag */
+    bool  fast_mode;           /* agent.fast: skip system prompt for speed */
     char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
 } hermes_config_t;
 
@@ -169,6 +173,15 @@ const command_def_t *commands_get_all(void);
 /* Security approval */
 int approval_check(const char *tool_name, const char *args_json);
 void approval_reset_session(void);
+void approval_set_yolo(bool enabled);  /* When true, skip all approval prompts */
+
+/* Config runtime toggles (wired from config.yaml or /commands) */
+void commands_set_verbose(int level);   /* 0=off, 1=normal, 2=verbose */
+void commands_set_yolo(bool enabled);
+void commands_set_fast(bool enabled);
+int  commands_get_verbose(void);
+bool commands_get_yolo(void);
+bool commands_get_fast(void);
 
 /* Registry accessors */
 size_t registry_get_count(void);
