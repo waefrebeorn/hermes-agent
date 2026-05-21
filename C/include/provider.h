@@ -115,6 +115,9 @@ extern const provider_ops_t PROVIDER_OPS_OPENAI;
 /* Anthropic API format */
 extern const provider_ops_t PROVIDER_OPS_ANTHROPIC;
 
+/* Google Gemini API format */
+extern const provider_ops_t PROVIDER_OPS_GOOGLE;
+
 /* Register all built-in providers */
 void provider_register_builtins(void);
 
