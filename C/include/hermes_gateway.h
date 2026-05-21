@@ -206,4 +206,25 @@ json_node_t *dingtalk_poll_messages(http_client_t *http);
 const char *dingtalk_get_chat_id(json_node_t *update);
 const char *dingtalk_get_text(json_node_t *update);
 
+/* ================================================================
+ *  QQ Bot platform
+ * ================================================================ */
+void qqbot_set_webhook(const char *url);
+void qqbot_set_token(const char *token);
+bool qqbot_send_message(http_client_t *http, const char *text);
+json_node_t *qqbot_poll_messages(http_client_t *http);
+const char *qqbot_get_chat_id(json_node_t *update);
+const char *qqbot_get_text(json_node_t *update);
+
+/* ================================================================
+ *  BlueBubbles (iMessage) platform
+ * ================================================================ */
+void bluebubbles_set_url(const char *url);
+void bluebubbles_set_password(const char *password);
+bool bluebubbles_send_message(http_client_t *http, const char *to,
+                               const char *text);
+json_node_t *bluebubbles_poll_messages(http_client_t *http);
+const char *bluebubbles_get_chat_id(json_node_t *update);
+const char *bluebubbles_get_text(json_node_t *update);
+
 #endif /* HERMES_GATEWAY_H */

@@ -485,6 +485,46 @@ static void *thread_poll_dingtalk(void *arg) {
     return NULL;
 }
 
+/* QQ Bot setup */
+static bool setup_qqbot(void) {
+    const char *url = getenv("QQ_BOT_WEBHOOK_URL");
+    const char *token = getenv("QQ_BOT_TOKEN");
+    if (!url) {
+        fprintf(stderr, "Warning: QQ_BOT_WEBHOOK_URL not set\n");
+        return false;
+    }
+    qqbot_set_webhook(url);
+    if (token) qqbot_set_token(token);
+    return true;
+}
+
+static void *thread_poll_qqbot(void *arg) {
+    (void)arg;
+    printf("[gateway] QQ Bot platform (webhook-based). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
+/* BlueBubbles setup */
+static bool setup_bluebubbles(void) {
+    const char *url = getenv("BLUEBUBBLES_URL");
+    const char *pwd = getenv("BLUEBUBBLES_PASSWORD");
+    if (!url || !pwd) {
+        fprintf(stderr, "Warning: BLUEBUBBLES_URL and BLUEBUBBLES_PASSWORD must be set\n");
+        return false;
+    }
+    bluebubbles_set_url(url);
+    bluebubbles_set_password(pwd);
+    return true;
+}
+
+static void *thread_poll_bluebubbles(void *arg) {
+    (void)arg;
+    printf("[gateway] BlueBubbles platform (iMessage). Idle.\n");
+    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    return NULL;
+}
+
 /* ================================================================
  *  Get port from env with HERMES_ or SLERMES_ prefix
  * ================================================================ */
@@ -555,6 +595,8 @@ int hermes_gateway_main(int argc, char **argv) {
         {"feishu",     setup_feishu,     thread_poll_feishu,     0},
         {"wecom",      setup_wecom,      thread_poll_wecom,      0},
         {"dingtalk",   setup_dingtalk,   thread_poll_dingtalk,   0},
+        {"qqbot",      setup_qqbot,      thread_poll_qqbot,      0},
+        {"bluebubbles",setup_bluebubbles,thread_poll_bluebubbles,0},
         {NULL, NULL, NULL, 0}
     };
 
