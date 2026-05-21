@@ -231,4 +231,9 @@ const char *bluebubbles_get_text(json_node_t *update);
 void msgraph_webhook_init(const char *webhook_path, const char *health_path, int port);
 void msgraph_webhook_run(void);
 
+/* weixin — iLink Bot API for WeChat */
+bool weixin_init(const char *token, const char *account_id);
+void weixin_start(void);
+void weixin_stop(void);
+
 #endif /* HERMES_GATEWAY_H */

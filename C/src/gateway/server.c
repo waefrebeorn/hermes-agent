@@ -556,6 +556,28 @@ static void *thread_msgraph_webhook(void *arg) {
     return NULL;
 }
 
+/* weixin setup + thread */
+extern bool weixin_init(const char *token, const char *account_id);
+extern void weixin_start(void);
+extern void weixin_stop(void);
+
+static bool setup_weixin(void) {
+    const char *token = getenv("WEIXIN_TOKEN");
+    const char *account_id = getenv("WEIXIN_ACCOUNT_ID");
+    if (!token || !account_id) {
+        fprintf(stderr, "Warning: WEIXIN_TOKEN and WEIXIN_ACCOUNT_ID must be set\n");
+        return false;
+    }
+    weixin_init(token, account_id);
+    return true;
+}
+
+static void *thread_weixin(void *arg) {
+    (void)arg;
+    weixin_start();
+    return NULL;
+}
+
 int hermes_gateway_main(int argc, char **argv) {
     memset(&g_gw, 0, sizeof(g_gw));
     g_gw.running = true;
@@ -612,6 +634,7 @@ int hermes_gateway_main(int argc, char **argv) {
         {"qqbot",      setup_qqbot,      thread_poll_qqbot,      0},
         {"bluebubbles",setup_bluebubbles,thread_poll_bluebubbles,0},
         {"msgraph_webhook", setup_msgraph_webhook, thread_msgraph_webhook, 0},
+        {"weixin", setup_weixin, thread_weixin, 0},
         {NULL, NULL, NULL, 0}
     };
 
