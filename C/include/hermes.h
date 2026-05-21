@@ -135,6 +135,7 @@ typedef struct {
     char  skin_path[HERMES_PATH_MAX];
     int   max_turns;
     bool  quiet_mode;
+    char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
 } hermes_config_t;
 
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
@@ -157,5 +158,15 @@ bool hermes_config_load_env(hermes_config_t *cfg);
  * ================================================================ */
 int  hermes_cli_main(int argc, char **argv);
 int  hermes_gateway_main(int argc, char **argv);
+
+/* Command system */
+typedef struct command_def_t command_def_t;
+bool commands_dispatch(const char *input, agent_state_t *state);
+const command_def_t *commands_resolve(const char *input);
+const command_def_t *commands_get_all(void);
+
+/* Security approval */
+int approval_check(const char *tool_name, const char *args_json);
+void approval_reset_session(void);
 
 #endif /* HERMES_H */

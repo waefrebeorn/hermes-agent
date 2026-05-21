@@ -1,7 +1,7 @@
 CC = gcc
 AR = ar
 CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
-LDFLAGS = -lssl -lcrypto -ldl
+LDFLAGS = -lssl -lcrypto -ldl -lpthread
 LIBS = -lm
 
 # Optional ncurses full-screen TUI (enabled when ncurses is available)

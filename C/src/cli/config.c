@@ -26,18 +26,18 @@ static char *xstrdup(const char *s) {
     return d;
 }
 
-/* Resolve HERMES_HOME. Default: ~/.hermes */
-static void get_hermes_home(char *buf, size_t sz) {
-    const char *env = getenv("HERMES_HOME");
+/* Resolve SLERMES_HOME. Default: ~/.slermes */
+static void get_slermes_home(char *buf, size_t sz) {
+    const char *env = getenv("SLERMES_HOME");
     if (env) {
         snprintf(buf, sz, "%s", env);
         return;
     }
     const char *home = getenv("HOME");
     if (home)
-        snprintf(buf, sz, "%s/.hermes", home);
+        snprintf(buf, sz, "%s/.slermes", home);
     else
-        snprintf(buf, sz, "/tmp/.hermes");
+        snprintf(buf, sz, "/tmp/.slermes");
 }
 
 /* ================================================================
@@ -95,7 +95,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (config_dir && config_dir[0])
         snprintf(hermes_home, sizeof(hermes_home), "%s", config_dir);
     else
-        get_hermes_home(hermes_home, sizeof(hermes_home));
+        get_slermes_home(hermes_home, sizeof(hermes_home));
 
     snprintf(cfg->config_path, sizeof(cfg->config_path), "%s/config.yaml", hermes_home);
     snprintf(cfg->env_path, sizeof(cfg->env_path), "%s/.env", hermes_home);
@@ -137,7 +137,15 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
 
     /* Display section */
     const char *skin = yaml_get_string(doc, "display.skin");
-    if (skin) snprintf(cfg->skin_path, sizeof(cfg->skin_path), "%s", skin);
+    if (skin && strcmp(skin, "default") != 0 && skin[0] != '\0')
+        snprintf(cfg->skin_path, sizeof(cfg->skin_path), "%s", skin);
+    else
+        cfg->skin_path[0] = '\0';
+
+    /* Gateway section */
+    const char *gw_platforms = yaml_get_string(doc, "gateway.platforms");
+    if (gw_platforms)
+        snprintf(cfg->gateway_platforms, sizeof(cfg->gateway_platforms), "%s", gw_platforms);
 
     yaml_free(doc);
 
