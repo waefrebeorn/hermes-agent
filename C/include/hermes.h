@@ -121,6 +121,7 @@ typedef struct {
     llm_token_cb_t    stream_cb;   /* streaming token callback (optional) */
     void             *stream_data; /* userdata for stream callback */
     void             *plugin_reg;  /* plugin registry (optional, opaque) */
+    bool              compress_enabled; /* smart context compression via LLM */
 } agent_state_t;
 
 /* ================================================================
@@ -140,6 +141,7 @@ typedef struct {
     bool  quiet_mode;
     bool  yolo_mode;           /* approvals.mode=off or --yolo flag */
     bool  fast_mode;           /* agent.fast: skip system prompt for speed */
+    bool  compress_enabled;    /* compression.enabled: smart context compression */
     char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
 } hermes_config_t;
 

@@ -124,6 +124,108 @@ void llm_truncate_context(agent_state_t *state, size_t max_tokens) {
 }
 
 /* ================================================================
+ *  Smart Context Compression
+ * ================================================================ */
+
+/* Summarization prompt for context compression */
+#define COMPRESS_PROMPT \
+    "Summarize the following conversation segment, preserving key " \
+    "information: what was discussed, what tools/files were used, " \
+    "what decisions were made, and any important findings. " \
+    "Be concise but complete. Output only the summary:\n\n"
+
+/* Compress middle messages by summarizing them via LLM.
+ * Returns a malloc'd summary string, or NULL on failure.
+ * Does NOT modify state. */
+static char *llm_compress_messages(const message_t **msgs, size_t count,
+                                    llm_config_t *llm_cfg) {
+    if (!msgs || count == 0 || !llm_cfg) return NULL;
+
+    /* Build conversation segment text */
+    size_t total = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (!msgs[i]) continue;
+        const char *role_str;
+        switch (msgs[i]->role) {
+            case MSG_SYSTEM:    role_str = "system"; break;
+            case MSG_USER:      role_str = "user"; break;
+            case MSG_ASSISTANT: role_str = "assistant"; break;
+            case MSG_TOOL:      role_str = "tool result"; break;
+            default:            role_str = "unknown"; break;
+        }
+        total += strlen(role_str) + 3;
+        if (msgs[i]->content) total += strlen(msgs[i]->content) + 1;
+    }
+    total += strlen(COMPRESS_PROMPT) + 1;
+
+    char *text = (char *)malloc(total);
+    if (!text) return NULL;
+    text[0] = '\0';
+
+    strcat(text, COMPRESS_PROMPT);
+    for (size_t i = 0; i < count; i++) {
+        if (!msgs[i]) continue;
+        const char *role_str;
+        switch (msgs[i]->role) {
+            case MSG_SYSTEM:    role_str = "system"; break;
+            case MSG_USER:      role_str = "user"; break;
+            case MSG_ASSISTANT: role_str = "assistant"; break;
+            case MSG_TOOL:      role_str = "tool result"; break;
+            default:            role_str = "unknown"; break;
+        }
+        size_t cur = strlen(text);
+        snprintf(text + cur, total - cur, "%s: %s\n",
+                 role_str, msgs[i]->content ? msgs[i]->content : "");
+    }
+
+    /* Create a temporary config for the summarization call */
+    llm_config_t compress_cfg;
+    memcpy(&compress_cfg, llm_cfg, sizeof(compress_cfg));
+    compress_cfg.base_url[0] = '\0';
+    compress_cfg.api_key[0] = '\0';
+
+    /* Build summarization messages */
+    message_t *sys = message_new(MSG_SYSTEM,
+        "You are a conversation summarizer. Condense the following "
+        "conversation into a brief summary preserving key facts, "
+        "decisions, and tool usage.");
+    message_t *user = message_new(MSG_USER, text);
+    const message_t *compress_msgs[2] = {sys, user};
+
+    llm_response_t *resp = llm_chat_completion(&compress_cfg,
+                                                compress_msgs, 2, NULL);
+    char *summary = NULL;
+    if (resp && resp->content) {
+        summary = strdup(resp->content);
+    }
+    llm_response_free(resp);
+    message_free(sys);
+    message_free(user);
+    free(text);
+    return summary;
+}
+
+/* Smart context compression: before dropping old messages, summarize them.
+ * Returns summary string on success (caller must insert), NULL if compression
+ * is disabled or fails (caller should fall back to dropping). */
+char *llm_compress_context(agent_state_t *state, size_t max_tokens,
+                            bool enabled) {
+    if (!state || !enabled || state->message_count < 3) return NULL;
+
+    size_t current = llm_count_context_tokens(
+        (const message_t **)state->messages, state->message_count, max_tokens);
+    if (current <= max_tokens) return NULL;
+
+    size_t keep = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
+    size_t compress_count = state->message_count - keep - 2;
+    if (compress_count < 2 || compress_count > 20) return NULL;
+
+    return llm_compress_messages(
+        (const message_t **)&state->messages[keep],
+        compress_count, &state->llm);
+}
+
+/* ================================================================
  *  LLM API call
  * ================================================================ */
 

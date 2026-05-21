@@ -105,6 +105,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->verbose = 0;
     cfg->yolo_mode = false;
     cfg->fast_mode = false;
+    cfg->compress_enabled = false;
 
     char hermes_home[HERMES_PATH_MAX];
     if (config_dir && config_dir[0])
@@ -180,6 +181,9 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* Fast mode */
     cfg->fast_mode = yaml_get_bool(doc, "agent.fast", false);
 
+    /* Compression section */
+    cfg->compress_enabled = yaml_get_bool(doc, "compression.enabled", false);
+
     yaml_free(doc);
 
     /* Parse .env (overrides config.yaml) */
@@ -223,6 +227,10 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     v = getenv("HERMES_FAST");
     if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
         cfg->fast_mode = true;
+
+    v = getenv("HERMES_COMPRESS");
+    if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
+        cfg->compress_enabled = true;
 
     return true;
 }

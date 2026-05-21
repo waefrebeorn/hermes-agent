@@ -158,6 +158,9 @@ int hermes_cli_main(int argc, char **argv) {
     approval_set_yolo(g_cli.config.yolo_mode);
     commands_set_fast(g_cli.config.fast_mode);
 
+    /* Apply compression config */
+    g_cli.agent.compress_enabled = g_cli.config.compress_enabled;
+
     /* Trim /config.yaml suffix */
     char *slash = strrchr(g_cli.agent.hermes_home, '/');
     if (slash) *slash = '\0';

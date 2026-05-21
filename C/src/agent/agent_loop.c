@@ -206,6 +206,30 @@ char *agent_run_conversation(agent_state_t *state,
     while (iteration < state->max_iterations && !state->interrupted) {
         state->iteration_count = iteration;
 
+        /* Smart context compression: summarize old messages before dropping */
+        char *summary = llm_compress_context(state, HERMES_MAX_CTX_TOKENS,
+                                              state->compress_enabled);
+        if (summary) {
+            /* Insert summary as a user message and truncate */
+            message_t *summary_msg = message_new(MSG_USER, summary);
+            if (summary_msg) {
+                /* Insert after system message */
+                size_t idx = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
+                /* Remove old messages up to last 2 */
+                size_t keep = idx;
+                size_t remove_count = state->message_count - keep - 2;
+                for (size_t i = 0; i < remove_count; i++)
+                    message_free(state->messages[keep + i]);
+                memmove(&state->messages[keep], &state->messages[keep + remove_count],
+                        (state->message_count - keep - remove_count) * sizeof(message_t *));
+                state->message_count -= remove_count;
+
+                /* Insert summary message */
+                context_push(state, summary_msg);
+            }
+            free(summary);
+        }
+
         /* Truncate context if too long (128K token budget) */
         llm_truncate_context(state, HERMES_MAX_CTX_TOKENS);
 

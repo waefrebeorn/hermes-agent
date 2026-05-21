@@ -637,6 +637,9 @@ int hermes_gateway_main(int argc, char **argv) {
     memcpy(g_gw.agent.llm.model, g_gw.config.model, sizeof(g_gw.agent.llm.model));
     memcpy(g_gw.agent.llm.provider, g_gw.config.provider, sizeof(g_gw.agent.llm.provider));
     g_gw.agent.max_iterations = g_gw.config.max_turns;
+    g_gw.agent.compress_enabled = g_gw.config.compress_enabled;
+    /* Also copy yolo/fast/verbose for gateway runtime */
+    approval_set_yolo(g_gw.config.yolo_mode);
 
     printf("[gateway] WuBu Hermes Gateway v%s\n", HERMES_VERSION);
 

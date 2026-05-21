@@ -75,6 +75,11 @@ size_t llm_count_context_tokens(const message_t **msgs, size_t count, size_t max
 /* Truncate context to fit within token budget. Keeps first (system) and last N. */
 void llm_truncate_context(agent_state_t *state, size_t max_tokens);
 
+/* Smart context compression: summarize old messages before dropping.
+ * Returns summary string (caller inserts) or NULL (fall back to dropping).
+ * Pass compression.enabled flag from config. */
+char *llm_compress_context(agent_state_t *state, size_t max_tokens, bool enabled);
+
 /* === Agent Loop (agent_loop.c) === */
 void agent_init(agent_state_t *state);
 void agent_generate_session_id(agent_state_t *state);
