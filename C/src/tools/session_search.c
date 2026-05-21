@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -109,31 +108,56 @@ char *session_search_handler(const char *args_json, const char *task_id) {
             json_object_set(result, "error", json_new_string("Session dir not found"));
             json_object_set(result, "sessions_dir", json_new_string(sdir));
         } else {
-            /* Use grep to search session files */
+            /* Use grep with match counts and context for ranking + snippets */
             char escaped[4096];
             shell_escape(query, escaped, sizeof(escaped));
 
+            json_node_t *sessions = json_new_array();
+
+            /* Collect matching files with match counts, ranked by match frequency */
+#define MAX_MATCH_FILES 256
+            char match_files[MAX_MATCH_FILES][4096];
+            int  match_counts[MAX_MATCH_FILES];
+            int  match_file_count = 0;
+
             char cmd[16384];
             snprintf(cmd, sizeof(cmd),
-                     "grep -rli -- '%s' '%s' 2>/dev/null | head -%d",
-                     escaped, sdir, limit);
+                     "grep -rlc -- '%s' '%s' 2>/dev/null | while IFS= read -r f; do "
+                     "  c=$(grep -oc -- '%s' \"$f\" 2>/dev/null || echo 0); "
+                     "  echo \"$c $f\"; "
+                     "done | sort -rn | head -%d",
+                     escaped, sdir, escaped, limit);
 
             FILE *fp = popen(cmd, "r");
             if (!fp) {
                 json_object_set(result, "error", json_new_string("grep failed"));
             } else {
-                json_node_t *sessions = json_new_array();
-                char line[4096];
-                while (fgets(line, sizeof(line), fp)) {
+                char line[16384];
+                while (fgets(line, sizeof(line), fp) && match_file_count < MAX_MATCH_FILES) {
                     size_t len = strlen(line);
                     while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
                         line[--len] = '\0';
 
-                    /* Extract just the filename (session ID) from path */
-                    const char *sname = line;
-                    char *slash = strrchr(line, '/');
-                    if (slash) sname = slash + 1;
-                    /* Strip .json extension */
+                    /* Parse "count path" */
+                    char *space = strchr(line, ' ');
+                    if (!space) continue;
+                    *space = '\0';
+                    int count = atoi(line);
+                    const char *path = space + 1;
+
+                    snprintf(match_files[match_file_count], sizeof(match_files[0]), "%s", path);
+                    match_counts[match_file_count] = count;
+                    match_file_count++;
+                }
+                pclose(fp);
+
+                /* Build results with ranked, snippet-rich output */
+                for (int i = 0; i < match_file_count; i++) {
+                    /* Extract session ID from path */
+                    const char *sname = match_files[i];
+                    const char *last_slash = strrchr(match_files[i], '/');
+                    if (last_slash) sname = last_slash + 1;
+
                     char sname_clean[256];
                     snprintf(sname_clean, sizeof(sname_clean), "%s", sname);
                     char *dot = strrchr(sname_clean, '.');
@@ -141,30 +165,63 @@ char *session_search_handler(const char *args_json, const char *task_id) {
 
                     json_node_t *s = json_new_object();
                     json_object_set(s, "session_id", json_new_string(sname_clean));
-                    json_object_set(s, "path", json_new_string(line));
+                    json_object_set(s, "path", json_new_string(match_files[i]));
+                    json_object_set(s, "score", json_new_number((double)match_counts[i]));
 
-                    /* Get preview (first 200 chars) */
-                    char *content = read_file_str(line);
+                    /* Get snippet with match context */
+                    char *content = read_file_str(match_files[i]);
                     if (content) {
-                        /* Extract first meaningful content (skip JSON wrapping) */
-                        const char *preview = content;
-                        if (strlen(content) > 200) {
-                            char preview_buf[256];
-                            snprintf(preview_buf, sizeof(preview_buf), "%.200s...", content);
-                            json_object_set(s, "preview", json_new_string(preview_buf));
+                        /* Find first match position in content (case-insensitive) */
+                        char *match_pos = NULL;
+                        size_t qlen = strlen(query);
+                        for (char *p = content; *p && !match_pos; p++) {
+                            if (strncasecmp(p, query, qlen) == 0)
+                                match_pos = p;
+                        }
+
+                        if (match_pos) {
+                            /* Extract context window: 60 chars before, 120 chars after */
+                            size_t offset = (size_t)(match_pos - content);
+                            size_t ctx_start = offset > 60 ? offset - 60 : 0;
+                            size_t ctx_end = offset + qlen + 120;
+                            if (ctx_end > strlen(content)) ctx_end = strlen(content);
+
+                            char snippet[512];
+                            size_t snippet_len = ctx_end - ctx_start;
+                            if (snippet_len > 480) snippet_len = 480;
+
+                            size_t pos = 0;
+                            if (ctx_start > 0)
+                                pos += snprintf(snippet + pos, sizeof(snippet) - pos, "...");
+                            size_t copy_len = snippet_len;
+                            if (copy_len > sizeof(snippet) - pos - 4)
+                                copy_len = sizeof(snippet) - pos - 4;
+                            memcpy(snippet + pos, content + ctx_start, copy_len);
+                            pos += copy_len;
+                            if (ctx_start + copy_len < strlen(content))
+                                pos += snprintf(snippet + pos, sizeof(snippet) - pos, "...");
+                            snippet[pos] = '\0';
+
+                            json_object_set(s, "snippet", json_new_string(snippet));
                         } else {
-                            json_object_set(s, "preview", json_new_string(content));
+                            /* Fallback: first 200 chars */
+                            char preview[256];
+                            snprintf(preview, sizeof(preview), "%.200s",
+                                     strlen(content) > 200 ? content : content);
+                            json_object_set(s, "snippet", json_new_string(preview));
                         }
                         free(content);
                     }
+
                     json_array_append(sessions, s);
                 }
-                pclose(fp);
-                json_object_set(result, "query", json_new_string(query));
-                json_object_set(result, "count", json_new_number((double)json_array_count(sessions)));
-                json_object_set(result, "sessions_dir", json_new_string(sdir));
-                json_object_set(result, "results", sessions);
             }
+
+            json_object_set(result, "query", json_new_string(query));
+            json_object_set(result, "count", json_new_number((double)json_array_count(sessions)));
+            json_object_set(result, "sessions_dir", json_new_string(sdir));
+            json_object_set(result, "ranked_by", json_new_string("match_count"));
+            json_object_set(result, "results", sessions);
         }
     }
 
