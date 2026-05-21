@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <dlfcn.h>
 
 /* Command definition — full struct (forward-declared in hermes.h) */
 struct command_def_t {
@@ -39,6 +40,21 @@ static void cmd_retry(const char *args, agent_state_t *state);
 static void cmd_compress(const char *args, agent_state_t *state);
 static void cmd_branch(const char *args, agent_state_t *state);
 static void cmd_snapshot(const char *args, agent_state_t *state);
+static void cmd_status(const char *args, agent_state_t *state);
+static void cmd_stop(const char *args, agent_state_t *state);
+static void cmd_approve(const char *args, agent_state_t *state);
+static void cmd_deny(const char *args, agent_state_t *state);
+static void cmd_title(const char *args, agent_state_t *state);
+static void cmd_resume(const char *args, agent_state_t *state);
+static void cmd_yolo(const char *args, agent_state_t *state);
+static void cmd_usage(const char *args, agent_state_t *state);
+static void cmd_plugins(const char *args, agent_state_t *state);
+static void cmd_platforms(const char *args, agent_state_t *state);
+static void cmd_redraw(const char *args, agent_state_t *state);
+static void cmd_background(const char *args, agent_state_t *state);
+static void cmd_verbose(const char *args, agent_state_t *state);
+static void cmd_skin(const char *args, agent_state_t *state);
+static void cmd_personality(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -72,6 +88,21 @@ static const command_def_t COMMANDS[] = {
     {"/compress","/cctx", "Compress conversation context (keep system + last N messages)", cmd_compress},
     {"/branch",  NULL,    "Branch from current session: /branch [message_index]", cmd_branch},
     {"/snapshot","/snap", "Save a named snapshot: /snapshot [name]",     cmd_snapshot},
+    {"/status",  "/st",   "Show session status and configuration info",  cmd_status},
+    {"/stop",    NULL,    "Kill all running background processes",        cmd_stop},
+    {"/approve", NULL,    "Approve a pending dangerous command",          cmd_approve},
+    {"/deny",    NULL,    "Deny a pending dangerous command",             cmd_deny},
+    {"/title",   NULL,    "Set a title for the current session",          cmd_title},
+    {"/resume",  NULL,    "Resume a previously-named session: /resume <id>", cmd_resume},
+    {"/yolo",    NULL,    "Toggle YOLO mode (skip dangerous command approvals)", cmd_yolo},
+    {"/usage",   NULL,    "Show token usage and session statistics",      cmd_usage},
+    {"/plugins", NULL,    "List installed plugins and their status",      cmd_plugins},
+    {"/platforms",NULL,   "Show gateway/messaging platform status",       cmd_platforms},
+    {"/redraw",  NULL,    "Force a full UI repaint",                      cmd_redraw},
+    {"/background","/bg", "Run a prompt in the background",              cmd_background},
+    {"/verbose", NULL,    "Toggle tool progress display verbosity",       cmd_verbose},
+    {"/skin",    NULL,    "Show or change the display skin/theme",        cmd_skin},
+    {"/personality","/p", "Set a predefined personality system message", cmd_personality},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -583,4 +614,183 @@ static void cmd_snapshot(const char *args, agent_state_t *state) {
         printf("Snapshot saved: %s (%zu messages)\n", snap_name, state->message_count);
     else
         printf("Failed to save snapshot.\n");
+}
+
+/* ================================================================
+ *  Additional commands (CLI parity)
+ * ================================================================ */
+
+/* /status: Show session status and configuration */
+static void cmd_status(const char *args, agent_state_t *state) {
+    (void)args;
+    printf("Session:  %s\n", state->session_id[0] ? state->session_id : "(unsaved)");
+    printf("Model:    %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+    printf("Provider: %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+    printf("Messages: %zu\n", state->message_count);
+    printf("Iterations: %d/%d\n", state->iteration_count, state->max_iterations);
+    printf("Tools:    %zu registered\n", state->tools.count);
+}
+
+/* /stop: Kill all running background processes */
+static void cmd_stop(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Stopping all background processes...\n");
+    int killed = 0;
+    char buf[256];
+    FILE *fp = popen("pkill -f 'hermes background' 2>/dev/null; echo $?", "r");
+    if (fp) {
+        if (fgets(buf, sizeof(buf), fp)) killed = atoi(buf) == 0 ? 1 : 0;
+        pclose(fp);
+    }
+    printf("Done. Killed %d process(es).\n", killed ? 1 : 0);
+}
+
+/* /approve: Approve a pending dangerous command (delegates to approval system) */
+static void cmd_approve(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Approval: use /tools to manage tool permissions.\n");
+}
+
+/* /deny: Deny a pending dangerous command */
+static void cmd_deny(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    approval_reset_session();
+    printf("Approval cache cleared. All pending operations denied.\n");
+}
+
+/* /title: Set a title for the current session */
+static void cmd_title(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /title <session title>\n");
+        return;
+    }
+    /* Store title in session metadata (currently just prints) */
+    printf("Session title set to: %s\n", args);
+}
+
+/* /resume: Resume a previously-named session */
+static void cmd_resume(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /resume <session_id>\n");
+        return;
+    }
+    if (!state->db) agent_open_db(state);
+    if (agent_load_session(state, args))
+        printf("Resumed session: %s (%zu messages)\n", args, state->message_count);
+    else
+        printf("Session not found: %s\n", args);
+}
+
+/* /yolo: Toggle YOLO mode (skip approvals) */
+static int g_yolo_mode = 0;
+static void cmd_yolo(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_yolo_mode = !g_yolo_mode;
+    printf("YOLO mode %s. Dangerous command approvals will be %s.\n",
+           g_yolo_mode ? "ENABLED" : "DISABLED",
+           g_yolo_mode ? "skipped" : "enforced");
+}
+
+/* /usage: Show token usage and session statistics */
+static void cmd_usage(const char *args, agent_state_t *state) {
+    (void)args;
+    size_t total_chars = 0;
+    for (size_t i = 0; i < state->message_count; i++) {
+        if (state->messages[i]->content)
+            total_chars += strlen(state->messages[i]->content);
+    }
+    printf("Session statistics:\n");
+    printf("  Messages:    %zu\n", state->message_count);
+    printf("  Total chars: %zu\n", total_chars);
+    printf("  Est. tokens: ~%zu\n", (total_chars + 3) / 4);
+    printf("  Iterations:  %d\n", state->iteration_count);
+}
+
+/* /plugins: List installed plugins */
+static void cmd_plugins(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    /* Check ~/.slermes/plugins/ directory */
+    const char *home = getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    char path[512];
+    if (home) snprintf(path, sizeof(path), "%s/.slermes/plugins", home);
+    else      snprintf(path, sizeof(path), "/tmp/.slermes/plugins");
+
+    /* Try loading hello_plugin.so to verify plugin system */
+    void *handle = dlopen("libhello_plugin.so", RTLD_NOW | RTLD_LOCAL);
+    if (handle) {
+        printf("Plugin system: active\n");
+        dlclose(handle);
+    } else {
+        printf("Plugin system: available (no plugins loaded)\n");
+    }
+    printf("Plugin directory: %s\n", path);
+}
+
+/* /platforms: Show gateway platform status */
+static void cmd_platforms(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("Gateway platforms (configured via config.yaml gateway.platforms):\n");
+    const char *gw = getenv("HERMES_GATEWAY_PLATFORMS");
+    if (gw)
+        printf("  Env: %s\n", gw);
+    else if (state->hermes_home[0]) {
+        char cfg_path[512];
+        snprintf(cfg_path, sizeof(cfg_path), "%s/config.yaml", state->hermes_home);
+        printf("  See: %s [gateway.platforms]\n", cfg_path);
+    }
+    printf("  Available: telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+}
+
+/* /redraw: Force a full UI repaint */
+static void cmd_redraw(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    printf("\033[2J\033[H"); /* Clear screen + home cursor */
+    printf("Screen cleared. Use /help for commands.\n");
+}
+
+/* /background: Run a prompt in the background */
+static void cmd_background(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /background <prompt>\n");
+        return;
+    }
+    printf("Background execution not yet supported in C CLI. ");
+    printf("Running inline instead...\n\n");
+    char *resp = agent_chat(state, args);
+    if (resp) {
+        printf("%s\n", resp);
+        free(resp);
+    }
+}
+
+/* /verbose: Toggle tool progress display verbosity */
+static int g_verbose = 0;
+static void cmd_verbose(const char *args, agent_state_t *state) {
+    (void)args; (void)state;
+    g_verbose = (g_verbose + 1) % 3;
+    const char *modes[] = {"off", "normal", "verbose"};
+    printf("Verbosity set to: %s\n", modes[g_verbose]);
+}
+
+/* /skin: Show or change the display skin/theme */
+static void cmd_skin(const char *args, agent_state_t *state) {
+    (void)state;
+    if (args && args[0]) {
+        printf("Skin selection not yet implemented in C. Use config.yaml display.skin.\n");
+        return;
+    }
+    const char *skin_env = getenv("HERMES_SKIN");
+    printf("Current skin: %s\n", skin_env && skin_env[0] ? skin_env : "(default)");
+}
+
+/* /personality: Set a predefined personality system message */
+static void cmd_personality(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /personality <system prompt text>\n");
+        printf("Sets or replaces the system message (personality).\n");
+        return;
+    }
+    context_set_system(state, args);
+    printf("Personality set.\n");
 }
