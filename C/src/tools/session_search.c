@@ -35,6 +35,21 @@ static char *get_sessions_dir(void) {
 
     /* Try flat sessions directory */
     snprintf(buf, sizeof(buf), "%s/sessions", home);
+    if (stat(buf, &st) == 0 && S_ISDIR(st.st_mode))
+        return buf;
+
+    /* Try SLERMES_HOME sessions */
+    const char *shome = getenv("SLERMES_HOME");
+    if (!shome) {
+        snprintf(buf, sizeof(buf), "%s/.slermes/sessions", home);
+    } else {
+        snprintf(buf, sizeof(buf), "%s/sessions", shome);
+    }
+    if (stat(buf, &st) == 0 && S_ISDIR(st.st_mode))
+        return buf;
+
+    /* Return hermes dir as default */
+    snprintf(buf, sizeof(buf), "%s/.hermes/sessions", home);
     return buf;
 }
 

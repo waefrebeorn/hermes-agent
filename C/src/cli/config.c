@@ -76,7 +76,18 @@ static void parse_env_file(const char *path, hermes_config_t *cfg) {
             if (cfg->api_key[0] == '\0')
                 snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", val);
         }
-        /* Add more as needed */
+        else if (strncmp(p, "ANTHROPIC_API_KEY", key_len) == 0 && key_len == 17) {
+            /* Store for anthropic provider; also keep as generic fallback */
+            if (cfg->api_key[0] == '\0')
+                snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", val);
+        }
+        else if (strncmp(p, "GOOGLE_API_KEY", key_len) == 0 && key_len == 14) {
+            if (cfg->api_key[0] == '\0')
+                snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", val);
+        }
+        else if (strncmp(p, "SLERMES_HOME", key_len) == 0 && key_len == 12) {
+            /* Handled by get_slermes_home() */
+        }
     }
     fclose(f);
 }
