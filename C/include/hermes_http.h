@@ -28,6 +28,13 @@ static inline void http_response_free(http_response_t *resp) {
     http_resp_free(resp);
 }
 
+/* Create client with retry support. max_retries=3, backoff_ms=1000 recommended. */
+static inline http_client_t *http_client_new_with_retry(int timeout_sec,
+                                                         int max_retries,
+                                                         int backoff_ms) {
+    return http_new_with_retry(timeout_sec, max_retries, backoff_ms);
+}
+
 /* Request with JSON body (old name, always POST in practice) */
 static inline http_response_t *http_request_json(http_client_t *client,
                                                   http_method_t method,

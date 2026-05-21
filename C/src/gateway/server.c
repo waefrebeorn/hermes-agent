@@ -624,7 +624,7 @@ int hermes_gateway_main(int argc, char **argv) {
     hermes_config_load_env(&g_gw.config);
 
     /* Create default HTTP client */
-    g_gw.http = http_client_new(30);
+    g_gw.http = http_client_new_with_retry(30, 3, 1000);
 
     /* Initialize agent */
     agent_init(&g_gw.agent);

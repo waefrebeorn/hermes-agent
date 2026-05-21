@@ -154,7 +154,7 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
             free(url); free(headers); free(body);
             provider_free(prov); free(resp); return NULL;
         }
-        http_client_t *client = http_client_new(30);
+        http_client_t *client = http_client_new_with_retry(30, 3, 1000);
         http_response_t *http_resp = http_request(client, HTTP_POST, url,
                                                    headers, body, strlen(body));
         free(url); free(headers); free(body);
@@ -220,7 +220,7 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     }
 
     /* Make HTTP request */
-    http_client_t *client = http_client_new(30);
+    http_client_t *client = http_client_new_with_retry(30, 3, 1000);
     http_response_t *http_resp = http_request(client, HTTP_POST, url,
                                                auth_header, body, strlen(body));
 
