@@ -288,14 +288,21 @@ typedef struct {
 } browser_config_t;
 
 /* ================================================================
- *  Memory Config (P7)
+ *  Memory Config (P7) — extended for P151-P158
  * ================================================================ */
 typedef struct {
     char  provider[64];           /* memory.provider: memory provider backend */
     int   char_limit;             /* memory.memory_char_limit */
     int   user_char_limit;        /* memory.user_char_limit */
-    int   ttl_days;               /* memory TTL */
-    bool  auto_save;              /* memory auto-save */
+    int   ttl_days;               /* memory TTL (P152) */
+    bool  auto_save;              /* memory auto-save (P156) */
+    int   auto_save_interval;     /* memory auto-save interval in seconds (P156) */
+    bool  dedup_enabled;          /* memory dedup (P154) */
+    int   search_limit;           /* max search results (P155) */
+    bool  compression_enabled;    /* memory compression (P158) */
+    int   compression_min_entries;/* min entries before compression triggers (P158) */
+    int   storage_type;           /* 0=inmem, 1=file, 2=sqlite, 3=plugin (P151) */
+    char  storage_path[512];      /* path for file/sqlite storage (P151) */
 } memory_config_t;
 
 /* ================================================================
@@ -525,6 +532,7 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src);
 #include "hermes_skin.h"
 #include "hermes_agent.h"
 #include "hermes_plugin.h"
+#include "hermes_memory.h"
 
 /* ================================================================
  *  Entry Points
