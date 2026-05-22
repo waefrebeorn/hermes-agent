@@ -260,8 +260,14 @@ typedef struct {
     int   approval_timeout;        /* approvals.timeout: seconds */
     int   max_result_size;         /* tool_output.max_bytes: max bytes per tool result */
     int   terminal_timeout;        /* terminal.timeout: max seconds for terminal commands */
+    char  terminal_backend[32];    /* terminal.backend: local/ssh/docker/modal */
+    bool  persistent_shell;        /* terminal.persistent_shell: keep shell across commands */
     char  vision_model[128];       /* auxiliary.vision.model: vision model name */
     int   vision_timeout;          /* auxiliary.vision.timeout: seconds */
+    int   web_search_timeout;      /* web search timeout in seconds */
+    char  web_backend[32];         /* web.backend: shared fallback for search/extract */
+    char  web_search_backend[32];  /* web.search_backend: searxng, google, etc. */
+    char  web_extract_backend[32]; /* web.extract_backend: native, jina, etc. */
 } tools_config_t;
 
 /* ================================================================

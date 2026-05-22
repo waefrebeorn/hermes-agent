@@ -162,6 +162,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->tools.max_result_size = 50000;
     cfg->tools.terminal_timeout = 1800;
     cfg->tools.vision_timeout = 300;
+    cfg->tools.persistent_shell = true;
+    cfg->tools.web_search_timeout = 30;
 
     /* P5-P14 config defaults */
     cfg->delegation.max_concurrent_children = 3;
@@ -613,6 +615,21 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int vis_timeout = yaml_get_int(doc, "auxiliary.vision.timeout", 0);
     if (vis_timeout > 0) cfg->tools.vision_timeout = vis_timeout;
 
+    /* Terminal backend */
+    const char *term_backend = yaml_get_string(doc, "terminal.backend");
+    if (term_backend) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", term_backend);
+    cfg->tools.persistent_shell = yaml_get_bool(doc, "terminal.persistent_shell", cfg->tools.persistent_shell);
+
+    /* Web config */
+    const char *web_backend = yaml_get_string(doc, "web.backend");
+    if (web_backend) snprintf(cfg->tools.web_backend, sizeof(cfg->tools.web_backend), "%s", web_backend);
+    const char *web_search = yaml_get_string(doc, "web.search_backend");
+    if (web_search) snprintf(cfg->tools.web_search_backend, sizeof(cfg->tools.web_search_backend), "%s", web_search);
+    const char *web_extract = yaml_get_string(doc, "web.extract_backend");
+    if (web_extract) snprintf(cfg->tools.web_extract_backend, sizeof(cfg->tools.web_extract_backend), "%s", web_extract);
+    int web_search_to = yaml_get_int(doc, "web.search_timeout", 0);
+    if (web_search_to > 0) cfg->tools.web_search_timeout = web_search_to;
+
     /* Fast mode */
     cfg->fast_mode = yaml_get_bool(doc, "agent.fast", false);
     cfg->agent.fast_mode = cfg->fast_mode;
@@ -811,6 +828,27 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_VISION_TIMEOUT");
     if (v) { int t = atoi(v); if (t > 0) cfg->tools.vision_timeout = t; }
+
+    v = getenv("HERMES_TERMINAL_BACKEND");
+    if (v) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", v);
+
+    v = getenv("HERMES_PERSISTENT_SHELL");
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0))
+        cfg->tools.persistent_shell = false;
+    else if (v)
+        cfg->tools.persistent_shell = true;
+
+    v = getenv("HERMES_WEB_BACKEND");
+    if (v) snprintf(cfg->tools.web_backend, sizeof(cfg->tools.web_backend), "%s", v);
+
+    v = getenv("HERMES_WEB_SEARCH_BACKEND");
+    if (v) snprintf(cfg->tools.web_search_backend, sizeof(cfg->tools.web_search_backend), "%s", v);
+
+    v = getenv("HERMES_WEB_EXTRACT_BACKEND");
+    if (v) snprintf(cfg->tools.web_extract_backend, sizeof(cfg->tools.web_extract_backend), "%s", v);
+
+    v = getenv("HERMES_WEB_SEARCH_TIMEOUT");
+    if (v) { int t = atoi(v); if (t > 0) cfg->tools.web_search_timeout = t; }
 
     /* P5-P14 env overrides */
     v = getenv("HERMES_DELEGATION_MAX_CONCURRENT");
@@ -1156,6 +1194,13 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "tool_output.max_bytes", def.tools.max_result_size, active->tools.max_result_size);
     diff_int(diff, "terminal.timeout", def.tools.terminal_timeout, active->tools.terminal_timeout);
     diff_str(diff, "auxiliary.vision.model", def.tools.vision_model, active->tools.vision_model);
+    diff_int(diff, "auxiliary.vision.timeout", def.tools.vision_timeout, active->tools.vision_timeout);
+    diff_str(diff, "terminal.backend", def.tools.terminal_backend, active->tools.terminal_backend);
+    diff_bool(diff, "terminal.persistent_shell", def.tools.persistent_shell, active->tools.persistent_shell);
+    diff_str(diff, "web.backend", def.tools.web_backend, active->tools.web_backend);
+    diff_str(diff, "web.search_backend", def.tools.web_search_backend, active->tools.web_search_backend);
+    diff_str(diff, "web.extract_backend", def.tools.web_extract_backend, active->tools.web_extract_backend);
+    diff_int(diff, "web.search_timeout", def.tools.web_search_timeout, active->tools.web_search_timeout);
 
     /* Delegation */
     diff_int(diff, "delegation.max_concurrent_children",
@@ -1243,6 +1288,14 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
 
     fprintf(f, "\nterminal:\n");
     exp_int(f, "  timeout", cfg->tools.terminal_timeout);
+    exp_str(f, "  backend", cfg->tools.terminal_backend);
+    exp_bool(f, "  persistent_shell", cfg->tools.persistent_shell);
+
+    fprintf(f, "\nweb:\n");
+    exp_str(f, "  backend", cfg->tools.web_backend);
+    exp_str(f, "  search_backend", cfg->tools.web_search_backend);
+    exp_str(f, "  extract_backend", cfg->tools.web_extract_backend);
+    exp_int(f, "  search_timeout", cfg->tools.web_search_timeout);
 
     fprintf(f, "\napprovals:\n");
     exp_str(f, "  mode", cfg->tools.approval_mode);
@@ -1415,6 +1468,16 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
         dst->tools.terminal_timeout = src->tools.terminal_timeout;
     if (is_set_str(src->tools.vision_model))
         snprintf(dst->tools.vision_model, sizeof(dst->tools.vision_model), "%s", src->tools.vision_model);
+    if (is_set_str(src->tools.terminal_backend))
+        snprintf(dst->tools.terminal_backend, sizeof(dst->tools.terminal_backend), "%s", src->tools.terminal_backend);
+    if (is_set_int(src->tools.web_search_timeout))
+        dst->tools.web_search_timeout = src->tools.web_search_timeout;
+    if (is_set_str(src->tools.web_backend))
+        snprintf(dst->tools.web_backend, sizeof(dst->tools.web_backend), "%s", src->tools.web_backend);
+    if (is_set_str(src->tools.web_search_backend))
+        snprintf(dst->tools.web_search_backend, sizeof(dst->tools.web_search_backend), "%s", src->tools.web_search_backend);
+    if (is_set_str(src->tools.web_extract_backend))
+        snprintf(dst->tools.web_extract_backend, sizeof(dst->tools.web_extract_backend), "%s", src->tools.web_extract_backend);
 
     /* Delegation */
     if (is_set_int(src->delegation.max_concurrent_children))
@@ -1674,6 +1737,12 @@ char *hermes_config_schema(void) {
         json_set(tprops, "terminal_timeout", schema_prop_int("Terminal timeout seconds", 1800, 1, 86400));
         json_set(tprops, "vision_timeout", schema_prop_int("Vision timeout seconds", 300, 1, 3600));
         json_set(tprops, "vision_model", schema_prop("string", "Vision model name", ""));
+        json_set(tprops, "terminal_backend", schema_prop("string", "Terminal backend", "local"));
+        json_set(tprops, "persistent_shell", schema_prop_bool("Persistent shell across commands", true));
+        json_set(tprops, "web_backend", schema_prop("string", "Web search backend (shared fallback)", ""));
+        json_set(tprops, "web_search_backend", schema_prop("string", "Web search backend override", ""));
+        json_set(tprops, "web_extract_backend", schema_prop("string", "Web extract backend override", ""));
+        json_set(tprops, "web_search_timeout", schema_prop_int("Web search timeout seconds", 30, 1, 300));
         json_set(tools, "properties", tprops);
         json_set(properties, "tools", tools);
     }

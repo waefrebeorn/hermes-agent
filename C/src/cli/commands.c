@@ -700,6 +700,12 @@ static void show_section_tools(const hermes_config_t *cfg) {
     show_cfg_val_int("max_result_size", cfg->tools.max_result_size);
     show_cfg_val_int("vision_timeout", cfg->tools.vision_timeout);
     show_cfg_val("vision_model", "str", cfg->tools.vision_model);
+    show_cfg_val("terminal_backend", "str", cfg->tools.terminal_backend);
+    show_cfg_val_bool("persistent_shell", cfg->tools.persistent_shell);
+    show_cfg_val("web_backend", "str", cfg->tools.web_backend);
+    show_cfg_val("web_search_backend", "str", cfg->tools.web_search_backend);
+    show_cfg_val("web_extract_backend", "str", cfg->tools.web_extract_backend);
+    show_cfg_val_int("web_search_timeout", cfg->tools.web_search_timeout);
     show_cfg_val_bool("allow_background", cfg->tools.allow_background);
     show_cfg_val_bool("local_process_cleanup", cfg->tools.local_process_cleanup);
 }
