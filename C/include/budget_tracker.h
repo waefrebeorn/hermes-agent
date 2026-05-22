@@ -38,6 +38,10 @@ typedef struct budget_tracker_t {
     bool      warned_output;
     bool      warned_cost;
     bool      warned_turns;
+    bool      reported_input;      /* warning already emitted for this dimension */
+    bool      reported_output;
+    bool      reported_cost;
+    bool      reported_turns;
 
     /* ---- Last-turn breakdown ---- */
     long long last_input_tokens;

@@ -154,6 +154,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "credential_pool (compilation failed)"
 fi
 
+# Budget tracker test (needs budget_tracker.c + provider_metadata + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_budget_tracker.c" \
+    "$CDIR/src/agent/budget_tracker.c" "$CDIR/src/agent/provider_metadata.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_budget -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_budget > /dev/null 2>&1; then ok "budget_tracker (104 tests)"
+    else fail "budget_tracker (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_budget
+else skip "budget_tracker (compilation failed)"
+fi
+
 # Gateway subsystem test (needs server.c + http + json + cron + plugin libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_gateway.c" \

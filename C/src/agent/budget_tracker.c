@@ -18,6 +18,7 @@
  * ================================================================ */
 
 void budget_tracker_init(budget_tracker_t *bt) {
+    if (!bt) return;
     memset(bt, 0, sizeof(*bt));
     bt->warn_at_pct = 0.8;
     /* All limits default to 0 = unlimited */
@@ -55,22 +56,22 @@ void budget_tracker_report_turn(budget_tracker_t *bt,
 
     /* Check warnings */
     if (bt->max_input_tokens > 0 &&
-        !bt->warned_input &&
+        !bt->warned_input && !bt->reported_input &&
         bt->total_input_tokens >= (long long)(bt->max_input_tokens * bt->warn_at_pct)) {
         bt->warned_input = true;
     }
     if (bt->max_output_tokens > 0 &&
-        !bt->warned_output &&
+        !bt->warned_output && !bt->reported_output &&
         bt->total_output_tokens >= (long long)(bt->max_output_tokens * bt->warn_at_pct)) {
         bt->warned_output = true;
     }
     if (bt->max_cost_usd > 0.0 &&
-        !bt->warned_cost &&
+        !bt->warned_cost && !bt->reported_cost &&
         bt->total_cost_usd >= bt->max_cost_usd * bt->warn_at_pct) {
         bt->warned_cost = true;
     }
     if (bt->max_turns > 0 &&
-        !bt->warned_turns &&
+        !bt->warned_turns && !bt->reported_turns &&
         bt->turn_count >= (int)(bt->max_turns * bt->warn_at_pct)) {
         bt->warned_turns = true;
     }
@@ -96,7 +97,8 @@ const char *budget_tracker_get_warning(budget_tracker_t *bt) {
     static char warn_buf[256];
 
     if (bt->warned_input) {
-        bt->warned_input = false; /* Clear so we only emit once */
+        bt->warned_input = false;
+        bt->reported_input = true; /* Prevent re-trigger */
         long long remaining = budget_tracker_remaining_input(bt);
         snprintf(warn_buf, sizeof(warn_buf),
                  "Input token budget at %lld%% — %lld remaining",
@@ -106,6 +108,7 @@ const char *budget_tracker_get_warning(budget_tracker_t *bt) {
     }
     if (bt->warned_output) {
         bt->warned_output = false;
+        bt->reported_output = true;
         long long remaining = budget_tracker_remaining_output(bt);
         snprintf(warn_buf, sizeof(warn_buf),
                  "Output token budget at %lld%% — %lld remaining",
@@ -115,6 +118,7 @@ const char *budget_tracker_get_warning(budget_tracker_t *bt) {
     }
     if (bt->warned_cost) {
         bt->warned_cost = false;
+        bt->reported_cost = true;
         double remaining = budget_tracker_remaining_cost(bt);
         snprintf(warn_buf, sizeof(warn_buf),
                  "Cost budget at %lld%% — $%.4f remaining",
@@ -124,6 +128,7 @@ const char *budget_tracker_get_warning(budget_tracker_t *bt) {
     }
     if (bt->warned_turns) {
         bt->warned_turns = false;
+        bt->reported_turns = true;
         int remaining = budget_tracker_remaining_turns(bt);
         snprintf(warn_buf, sizeof(warn_buf),
                  "Turn budget at %d%% — %d remaining",
@@ -220,4 +225,5 @@ void budget_tracker_reset(budget_tracker_t *bt) {
     bt->max_cost_usd = max_cost;
     bt->max_turns = max_turns;
     bt->warn_at_pct = warn_at;
+    /* reported_* flags intentionally NOT preserved — reset clears warning history */
 }
