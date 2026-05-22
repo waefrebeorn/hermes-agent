@@ -95,6 +95,17 @@ run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$C
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I$CDIR/lib/libjson $CDIR/lib/libskin/skin.c $CDIR/lib/libjson/json.c -lm"
 
+echo ""; echo "=== Redact Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    "$CDIR/tests/test_redact.c" \
+    "$CDIR/src/agent/redact.c" \
+    -o /tmp/hermes_test_redact -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_redact > /dev/null 2>&1; then ok "redact (17 tests)"
+    else fail "redact (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_redact
+else skip "redact (compilation failed)"
+fi
+
 # Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \

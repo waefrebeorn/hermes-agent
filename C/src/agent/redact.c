@@ -229,11 +229,14 @@ static size_t redact_jwts(char *text) {
 char *hermes_redact(const char *input) {
     if (!input) return NULL;
 
-    /* Make a writable copy */
+    /* Make a writable copy with extra space for redaction expansion */
     size_t len = strlen(input);
-    if (len > 65536) len = 65536; /* Safety limit */
-    char *result = strndup(input, len);
+    if (len > 65536) len = 65536;
+    size_t alloc_len = len + 512; /* Extra space for ***REDACTED*** expansion */
+    char *result = (char *)malloc(alloc_len);
     if (!result) return NULL;
+    memcpy(result, input, len);
+    result[len] = '\0';
 
     /* Redact JWT tokens */
     redact_jwts(result);
@@ -252,10 +255,8 @@ char *hermes_redact(const char *input) {
 
             if (val_start && val_len >= pat->min_len) {
                 size_t offset = (size_t)(val_start - result);
-                size_t adj = redact_value(result, val_start, val_len, pat->max_show);
-                /* Adjust pointer for potential shift */
+                redact_value(result, val_start, val_len, pat->max_show);
                 p = result + offset + sizeof("***REDACTED***") - 1;
-                if (adj > 0) p += adj;
             } else {
                 break;
             }
