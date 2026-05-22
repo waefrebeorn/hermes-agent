@@ -47,7 +47,7 @@ Scanned all 57 commits in C history for:
 | P24 | Config schema generation | ✅ | compiled | Generate JSON Schema from struct |
 | P25 | Config migration | ✅ | compiled | v0→v1 migration, version field |
 
-**Config gap:** 154/318 leaf keys = 48%. Missing: toolset arrays, platform-specific keys (telegram.*, discord.*), credential_pool, fallback_providers, web.*, stt/tts/vision/auxiliary sub-dicts, kanban.*, checkpoints.*, backup.*, guardrail.*, orchestator.*, goals.*, logging.*, personality profiles.
+**Config gap:** 206/322 leaf keys = 64%. Missing: toolset arrays, platform-specific keys (telegram.*, discord.*), stt/tts/vision/auxiliary sub-dicts, kanban.*, goals.*, onboarding.*, personalities.
 
 ---
 
@@ -123,7 +123,7 @@ Scanned all 57 commits in C history for:
 
 ---
 
-### PROVIDER SYSTEM (P71-P85) — Current: ~10%
+### PROVIDER SYSTEM (P71-P85) — Current: ~31%
 
 | Phase | Description | Status | Verif | Note |
 |-------|-------------|--------|-------|------|
@@ -143,7 +143,7 @@ Scanned all 57 commits in C history for:
 | P84 | Budget tracking | ✅ | compiled | budget_tracker.c: per-session tracking |
 | P85 | Provider metadata | ✅ | compiled | provider_metadata.c: model capabilities table |
 
-**Gap:** 3/29 providers. 26 missing. Most critical: OpenRouter, Groq, Together (most commonly used). Provider plugin .so interface not implemented.
+**Gap:** 9/29 providers. 20 missing. Most critical: Nous, Alibaba, StepFun, Novita, Minimax. Provider plugin .so interface not implemented.
 
 ---
 
@@ -373,6 +373,6 @@ Scanned all 57 commits in C history for:
 | P189-P200 TUI | 50% | Basic ncurses, 6/12 phases missing |
 
 **Weighted score: ~45%** (up from 8% at DA v3)
-**Critical gaps:** Providers (10%), Plugins (25%), Config (48%), Tests (0%)
+**Critical gaps:** Providers (31%), Plugins (25%), Config (64%), Tests (0%)
 **Runtime-verified:** Config, CLI, tools, session DB, LLM (DeepSeek)
 **NOT runtime-verified:** Gateway, MCP, delegation, plugin, TUI, security features, cron

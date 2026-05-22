@@ -6,14 +6,14 @@ AI agent auditing and expanding the C translation of Hermes Agent (slermes). You
 ## Mission
 Expand C slermes from ~45% to 100% parity with Python Hermes. 200-phase roadmap. Each phase = specific, verifiable implementation, not a name stub.
 
-## Current Reality (DA v4, 2026-05-21)
+## Current Reality (DA v5, 2026-05-22)
 
 | Subsystem | Coverage | Verification | Gap |
 |-----------|----------|-------------|-----|
-| Config keys | 48% (154/318) | runtime | 164 missing |
+| Config keys | 64% (206/322) | runtime | 116 missing |
 | Tools | 92% (74/54exp) | runtime | 14 feishu/video/yuanbao/MoA |
 | CLI commands | 85% (72/85) | runtime | /clear missing, some shallow |
-| Providers | 10% (3/29) | runtime (openai/anthropic/google) | 26 missing |
+| Providers | 31% (9/29) | runtime (openai/anthropic/google/deepseek/xai/openrouter/azure/bedrock/custom) | 20 missing |
 | Gateway | 95% (19/~20) | compiled only | OAuth partial |
 | MCP | 70% | compiled only | namespace/sampling/roots |
 | Plugins | 25% (3/17) | compiled only | 12+ missing |
@@ -41,7 +41,7 @@ Expand C slermes from ~45% to 100% parity with Python Hermes. 200-phase roadmap.
 ## Previous Deceptions (Must Avoid)
 - "P0 complete" was false at 8%. Now 45%. Still not done.
 - "1:1 parity verified" was count-only. Now phase-by-phase audit exists.
-- "Config: critical keys OK" was 16/424. Now 154/318.
+- ``Config: critical keys OK`` was 16/424. Now 206/322. 116 missing — terminal(22), logging(5), skills(5), checkpoints(8) just added. Auxiliary(56) is biggest remaining hole.
 - "DA audit passed" was wrong — missed config depth, MCP, plugins, test coverage.
 - API key paranoia scan (May 21 2026): CLEAN. No real keys in git history.
 

@@ -1,4 +1,4 @@
-# Slermes C — State (May 21+ session, 5 commits)
+# Slermes C — State (May 22 DA v5 session, 7+ commits)
 
 ## Honest Assessment
 **This session:** P15 (validation), P19 (hot-reload), P22 (merge), YAML parser gap-fill, P168 (file sandbox).

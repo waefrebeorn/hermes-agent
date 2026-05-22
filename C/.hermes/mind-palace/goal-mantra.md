@@ -14,7 +14,7 @@ When you think something is complete, it is not complete until:
 3. Output is verified against Python ground truth
 4. Triple Devil's Advocate audit with mind-palace structure
 
-Any ✅ claimed without runtime verification is a lie. Any "P0 complete" claim that skips config, MCP, and plugins is survivorship bias. DA v4 (2026-05-21) shows 45% — up from 8% at DA v3, but still half-baked.
+Any ✅ claimed without runtime verification is a lie. Any "P0 complete" claim that skips config, MCP, and plugins is survivorship bias. DA v4 (2026-05-21) shows 45% — up from 8% at DA v3, but DA v5 (May 22) pushes to ~57%.
 
 ── WHAT EXISTS ──
 
@@ -25,12 +25,12 @@ Any ✅ claimed without runtime verification is a lie. Any "P0 complete" claim t
 /home/wubu/.slermes/ — config (SLERMES_HOME) with .env + config.yaml
 Remote: wubu=waefrebeorn/hermes-agent
 
-── CURRENT REALITY (DA v4, 2026-05-21) ──
+── CURRENT REALITY (DA v5, 2026-05-22) ──
 
-Config:      48% (154/318 leaf keys from Python DEFAULT_CONFIG)
+Config:      64% (206/322 leaf keys from Python DEFAULT_CONFIG)
 Tools:       92% (74 registered, 54 expected all found, 14 missing)
 Commands:    85% (72/85, all dispatch, most feature-complete)
-Providers:   10% (3/29: OpenAI/Anthropic/Google + OpenAI-compat for DeepSeek)
+Providers:   31% (9/29: OpenAI/Anthropic/Google/OpenRouter/DeepSeek/xAI/Azure/Bedrock/Custom + OpenAI-compat)
 Gateway:     95% (19 platforms, OAuth partial)
 MCP:         70% (core client + 6 tools, namespace/sampling/roots missing)
 Plugins:     25% (core .so loader + 3 examples, 12+ types missing)
@@ -42,7 +42,7 @@ TUI:         50% (ncurses split-pane, 6/12 phases missing)
 Memory:      90% (TTL, dedup, compression, search, auto-save, import/export)
 Cron:        90% (SQLite store, retry, chaining, script jobs, watchdog)
 Skills:      90% (scan, validate, sync, bundles, curator, dependencies)
-Tests:       <1% (12 files, 1.3K LOC vs ~17K Python tests) — CRITICAL GAP
+Tests:       ~1% (15 files, 1.8K LOC vs ~17K Python tests) — CRITICAL GAP
 LLM runtime: WORKING — DeepSeek v4 Flash via OpenAI-compat, tested and verified
 
 ── THE LOOP ──
@@ -61,9 +61,9 @@ NO questions. NO choices. NO status summaries. No "should I continue?" The work 
 
 - No delegation for DA audits — delegation loses receipts
 - Every status claim carries verification level tag
-- DA v3 at 8% was wrong — DA v4 at 45% is current. Keep improving measurement.
-- Config coverage: 154/318 keys. Still 164 missing. Profile, merge, hot-reload gaps.
-- Providers: 3/29 — BIGGEST GAP BY COUNT. 26 provider ports needed.
+- DA v3 at 8% was wrong — DA v5 at 57% is current. Keep improving measurement.
+- Config coverage: 206/322 keys. Still 116 missing. Terminal/logging/skills/checkpoints groups added in DA v5.
+- Providers: 9/29 — BIGGEST GAP BY COUNT. 20 provider ports needed.
 - Tests: <1% — NOTHING is truly verified without tests.
 - No API keys leaked in git history (paranoia scan 2026-05-21 confirmed clean)
 - The binary now works end-to-end: config → .env → LLM call → response

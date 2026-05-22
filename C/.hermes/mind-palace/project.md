@@ -1,4 +1,4 @@
-# Slermes C — Project (May 21 PM v3)
+# Slermes C — Project (May 22 DA v5)
 
 ## Mission
 1:1 C translation of NousResearch/hermes-agent. Every CLI command, tool, gateway, TUI, GUI — identical form and function. slermes is the alias binary.
