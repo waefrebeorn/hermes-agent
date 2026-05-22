@@ -65,6 +65,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_kanban (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin Spotify Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
+    -DSPOTIFY_PLUGIN_VERSION='"1.0.0"' \
+    "$CDIR/tests/test_plugin_spotify.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_spotify -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_spotify > /dev/null 2>&1; then ok "plugin_spotify (real Web API plugin)"
+    else fail "plugin_spotify (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_spotify
+else skip "plugin_spotify (compilation failed)"
+fi
+
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"

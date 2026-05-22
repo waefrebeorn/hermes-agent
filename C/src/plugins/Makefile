@@ -27,7 +27,7 @@ plugin_kanban.so: plugin_kanban.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 plugin_spotify.so: plugin_spotify.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) -DSPOTIFY_PLUGIN_VERSION=\"1.0.0\" -o $@ $<
 
 install: all
 	@mkdir -p ~/.hermes/plugins
