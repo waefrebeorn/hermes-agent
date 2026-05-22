@@ -545,7 +545,7 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | M02 | Provider: Anthropic unit tests | Response parsing, error handling, thinking blocks ✅ |
 | M03 | Provider: Google unit tests | Gemini format, safety settings, generation config ✅ |
 | M04 | Provider: Bedrock unit tests | Converse API, guardrails, trace ✅ |
-| M05 | Provider: Azure unit tests | Deployment routing, API version handling |
+| M05 | Provider: Azure unit tests | Deployment routing, API version handling ✅ |
 | M06 | Provider: error handling edge cases | Rate limits, timeouts, malformed JSON, retries |
 | M07 | Gateway: Telegram escape modes | HTML vs MarkdownV2 escaping edge cases |
 | M08 | Gateway: Discord interaction tests | Slash command, modal, component parsing |

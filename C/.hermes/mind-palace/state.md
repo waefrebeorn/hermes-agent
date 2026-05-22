@@ -16,13 +16,23 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 38 | 59% | **59 files, 2,529+ assertions** (95 pass, 0 fail, 0 skip) |
+| **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 | **Build/doc** | 10 | 55% | Dockerfile, CI, cross-compile, .dockerignore, man page |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-26 — Azure provider full tests + 3 bugfixes
+
+- ✅ **test_azure_full.c** — 45 assertions covering URL (deployment_id, api_version, trailing slash), headers, 12 LLM params, response_format/json_mode/strict, metadata, tool_choice, parallel_tool_calls, max_tool_calls, n, extra_body, messages (system/user/assistant/tool), tools JSON, response parsing (text/tool_calls/error), streaming (text delta/[DONE]/finish_reason/non-data prefix), null safety
+- ✅ **Bugfix: 2x UAF (metadata + tool_choice)** — json_object_set then json_free
+- ✅ **Bugfix: Error object not parsed** — added Azure API error handling in parse_response
+- ✅ **Bugfix: NULL crash in azure_parse_stream_chunk** — strncmp on NULL
+- ◀ **Suite: 96/0/0** (+1 test, 45 assertions; M05 closed)
+- ◀ **Tests: 60%** (was 59%, 1/37 gaps closed)
+- ◀ Committed: `d38e20f4e`
 
 ### Session 2026-05-26 — Bedrock provider full tests + 3 bugfixes
 

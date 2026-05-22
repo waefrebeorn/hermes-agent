@@ -1,8 +1,16 @@
 # Overnight Map (v8) — 2026-05-26
 
 ```
-~58% complete  •  ~365 gaps remaining  •  125 commits behind upstream
+~60% complete  •  ~360 gaps remaining  •  125 commits behind upstream
 ```
+
+### Session 2026-05-26 — Azure provider full tests + 3 bugfixes
+
+- ✅ **test_azure_full.c** — 45 assertions: URL, headers, 12 LLM params, response_format/json_mode, metadata, tool_choice, messages, tools, response parsing, streaming, null safety
+- ✅ **3 bugfixes in provider_azure.c** — 2x UAF (metadata + tool_choice), error object parsing, NULL stream crash
+- ◀ **Suite: 96/0/0** (+1 test, 45 assertions; M05 closed)
+- ◀ **Tests: 60%**
+- ◀ Committed: `d38e20f4e`
 
 ### Session 2026-05-26 — Bedrock provider full tests + 3 bugfixes
 
