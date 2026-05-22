@@ -532,6 +532,11 @@ const char *matrix_get_text(json_node_t *update);
 json_node_t *matrix_list_rooms(http_client_t *http);
 bool matrix_mark_read(http_client_t *http, const char *room_id, const char *event_id);
 bool matrix_send_typing(http_client_t *http, const char *room_id, int timeout_ms);
+/* E55: Room management */
+const char *matrix_create_room(http_client_t *http, const char *name,
+                                const char *alias, bool is_public);
+bool matrix_join_room(http_client_t *http, const char *room_id_or_alias);
+bool matrix_leave_room(http_client_t *http, const char *r_id);
 
 /* ================================================================
  *  Mattermost platform

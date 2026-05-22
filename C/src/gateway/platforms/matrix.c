@@ -374,4 +374,112 @@ const char *matrix_get_text(json_node_t *update) {
     return json_get_str(msg, "text", NULL);
 }
 
+/* ================================================================
+ *  E55: Matrix room management — create/join/leave rooms
+ * ================================================================ */
+
+/* Create a private room. Returns room_id string (static buf, valid until next call)
+ * or NULL on failure. */
+const char *matrix_create_room(http_client_t *http, const char *name,
+                                const char *alias, bool is_public) {
+    if (!http || !access_token[0]) return NULL;
+
+    char url[2048];
+    snprintf(url, sizeof(url), "%s/_matrix/client/v3/createRoom", homeserver);
+
+    json_node_t *body = json_new_object();
+    json_set(body, "visibility", json_string(is_public ? "public" : "private"));
+    json_set(body, "preset", json_string(is_public ? "public_chat" : "private_chat"));
+    if (name && name[0])
+        json_set(body, "name", json_string(name));
+    if (alias && alias[0])
+        json_set(body, "room_alias_name", json_string(alias));
+
+    char *payload = json_serialize(body);
+    json_free(body);
+
+    char headers[2048];
+    matrix_headers(headers, sizeof(headers));
+
+    http_response_t *resp = http_request(http, HTTP_POST, url,
+                                          headers, payload, strlen(payload));
+    free(payload);
+
+    if (!resp || resp->status != 200) {
+        if (resp) {
+            fprintf(stderr, "[matrix] create_room error: %d\n", resp->status);
+            http_response_free(resp);
+        }
+        return NULL;
+    }
+
+    char *err = NULL;
+    json_node_t *root = json_parse(resp->body, &err);
+    http_response_free(resp);
+    free(err);
+
+    if (!root) return NULL;
+    static char room_id_buf[256];
+    const char *rid = json_get_str(root, "room_id", "");
+    snprintf(room_id_buf, sizeof(room_id_buf), "%s", rid);
+    json_free(root);
+    return room_id_buf[0] ? room_id_buf : NULL;
+}
+
+/* Join a room by room_id or alias. Returns true on success. */
+bool matrix_join_room(http_client_t *http, const char *room_id_or_alias) {
+    if (!http || !room_id_or_alias || !access_token[0]) return false;
+
+    char url[2048];
+    snprintf(url, sizeof(url), "%s/_matrix/client/v3/join/%s",
+             homeserver, room_id_or_alias);
+
+    json_node_t *body = json_new_object();
+    char *payload = json_serialize(body);
+    json_free(body);
+
+    char headers[2048];
+    matrix_headers(headers, sizeof(headers));
+
+    http_response_t *resp = http_request(http, HTTP_POST, url,
+                                          headers, payload, strlen(payload));
+    free(payload);
+
+    bool ok = resp && resp->status == 200;
+    if (resp) {
+        if (resp->status != 200)
+            fprintf(stderr, "[matrix] join_room error: %d\n", resp->status);
+        http_response_free(resp);
+    }
+    return ok;
+}
+
+/* Leave a room by room_id. Returns true on success. */
+bool matrix_leave_room(http_client_t *http, const char *r_id) {
+    if (!http || !r_id || !access_token[0]) return false;
+
+    char url[2048];
+    snprintf(url, sizeof(url), "%s/_matrix/client/v3/rooms/%s/leave",
+             homeserver, r_id);
+
+    json_node_t *body = json_new_object();
+    char *payload = json_serialize(body);
+    json_free(body);
+
+    char headers[2048];
+    matrix_headers(headers, sizeof(headers));
+
+    http_response_t *resp = http_request(http, HTTP_POST, url,
+                                          headers, payload, strlen(payload));
+    free(payload);
+
+    bool ok = resp && resp->status == 200;
+    if (resp) {
+        if (resp->status != 200)
+            fprintf(stderr, "[matrix] leave_room error: %d\n", resp->status);
+        http_response_free(resp);
+    }
+    return ok;
+}
+
 #pragma GCC diagnostic pop
