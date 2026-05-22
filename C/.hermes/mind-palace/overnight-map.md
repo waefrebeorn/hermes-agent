@@ -1,8 +1,17 @@
-# Overnight Map (v6) — 2026-05-22
+# Overnight Map (v7) — 2026-05-26
 
 ```
-~50% complete  •  ~400 gaps remaining  •  125 commits behind upstream
+~55% complete  •  ~370 gaps remaining  •  125 commits behind upstream
 ```
+
+### Session 2026-05-26 — Anthropic provider depth test (B26-B28)
+
+- ✅ **test_anthropic_depth.c** — 80 assertions covering URL/headers/request body/response/streaming
+- ✅ **Bugfix: NULL crash in anthropic_parse_stream_chunk** — null safety fix in provider_anthropic.c
+- ◀ **Suite: 93/0/0** (+1 test, 80 assertions)
+- ◀ **Tests: 57%** (was 56%, 1/40 gaps closed)
+- ◀ **Providers: 87%** (B26-B28 verified, ~35 provider gaps remain)
+- ◀ Committed: `b0a6c38b5`
 
 ## Active Workstreams
 

@@ -1,33 +1,48 @@
-# State — Hermes C Translation (2026-05-22)
+# State — Hermes C Translation (2026-05-26)
 
-## ~53% toward 1:1 Python parity (~390 gaps remaining)
+## ~55% toward 1:1 Python parity (~370 gaps remaining)
 
 ### Milestone Dashboard
 
 | Category | Gaps | Done% | Key Stats |
 |----------|------|-------|-----------|
 | **Config** | 2 depth | 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` |
-| **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
-| **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve. **G55: SSE transport added** |
-| **Plugins** | 48 | 14% | 3 .so plugins: kanban (real) + honcho (real) + spotify (real: Web API via curl) — **45+27+18 test verified** |
-| **Gateway** | 63 | **100% ✅** | E01-E55, E57-E63 ✅. E56 (Matrix read receipts) would require deeper event tracking |
+| **Providers** | 35 | 87% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
+| **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
+| **Plugins** | 48 | 14% | 3 .so plugins: kanban + honcho + spotify (all real, 90 tests) |
+| **Gateway** | 63 | **100% ✅** | All 63 gaps closed |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
-| **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled. **Phase 113: LLM retry (api_max_retries=3) + fallback_model + fallback_providers** |
-| **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added. **H01: `hermes completions {bash|zsh}`** |
+| **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
+| **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 40 | 56% | **50 files, 2,374 assertions** (88 pass, 0 fail, 0 skip) |
+| **Tests** | 39 | 57% | **57 files, 2,454+ assertions** (93 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
-| **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
-| **Build/doc** | 10 | 55% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), .dockerignore, man page (hermes.1) |
+| **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
+| **Build/doc** | 10 | 55% | Dockerfile, CI, cross-compile, .dockerignore, man page |
+| **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
-### Session 2026-05-24 — CLI: H14 --json output mode
+### Session 2026-05-26 — Anthropic provider depth tests (B26-B28)
 
-- ✅ **H14: `--json` flag** — structured JSON output for scripting. `{"response":"...", "session_id":"..."}` with proper JSON escaping. Order-independent with --help.
-- ◀ **CLI: 87% → 88%** (H14 closed, 32 CLI gaps remain)
-- ◀ Committed: `ea869fb29`
+- ✅ **test_anthropic_depth.c** — 80 assertions covering:
+  - URL building (default, custom, trailing slash, /messages suffix)
+  - Headers (with/without API key, x-api-key format vs Bearer)
+  - Request body: model, max_tokens, temperature, top_p, stop sequences
+  - **B26: Thinking blocks** — reasoning_effort low/medium/high/direct number, budget_tokens mapping
+  - **B27: Cache control** — last user message content block + system prompt on first call, plain string on cached
+  - System message extraction to top-level "system" field, concatenation of multiple system messages
+  - Tool format conversion: OpenAI's `{\\"type\\":\\"function\\",\\"function\\":{...}}` → Anthropic's `{\\"name\\":\\"...\\",\\"input_schema\\":{...}}`
+  - Response parsing: text, thinking/reasoning, tool_use, error objects, usage tracking
+  - Streaming: message_start, content_block_delta (text_delta + thinking_delta), content_block_start, message_delta (stop_reason), direct data: format
+  - response_format, json_mode, tool_choice, parallel_tool_calls, extra_body merging
+  - Null safety: NULL chunk, NULL response body, empty content blocks
+- ✅ **Bugfix: NULL crash in anthropic_parse_stream_chunk** — added null safety before strncmp dereference
+- ◀ **Suite: 93/0/0** (+1 test, 80 assertions; was 92/0/0)
+- ◀ **Tests: 57%** (was 56%, 1/40 test gaps closed)
+- ◀ **Providers: 87%** (B26-B28 coverage verified)
+- ◀ Committed: `b0a6c38b5`
 
 ### Session 2026-05-26 — B22: finish_reason tracking
 

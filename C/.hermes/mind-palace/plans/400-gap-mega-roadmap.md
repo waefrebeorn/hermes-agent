@@ -542,7 +542,7 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | # | Gap | Notes |
 |---|-----|-------|
 | M01 | Agent context: eviction edge cases | Smart eviction with strategy selection tests |
-| M02 | Provider: Anthropic unit tests | Response parsing, error handling, thinking blocks |
+| M02 | Provider: Anthropic unit tests | Response parsing, error handling, thinking blocks ✅ |
 | M03 | Provider: Google unit tests | Gemini format, safety settings, generation config |
 | M04 | Provider: Bedrock unit tests | Converse API, guardrails, trace |
 | M05 | Provider: Azure unit tests | Deployment routing, API version handling |
@@ -647,7 +647,7 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | Category | Gaps | Weight |
 |----------|------|--------|
 | A. Config depth | 4 | ✅ 97% |
-| B. Providers | 40 | ✅ 85% (9 ops + 18/18 params, 25 provider-specific + 12 depth) |
+| B. Providers | 35 | ✅ 87% (9 ops + 18/18 params, 25 provider-specific + 12 depth) |
 | C. MCP | 16 | ✅ 100% |
 | D. Plugins | 48 | ⚠️ 14% (3 real .so plugins vs 45 Python backends) |
 | E. Gateway | 63 | ✅ 100% |
@@ -658,11 +658,11 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | J. Stdlib | 5 | ⚠️ 30% |
 | K. Error handling | 0 | ✅ 100% (K01-K05 all implemented) |
 | L. Upstream drift | 12 | 🔵 New (125 commits behind) |
-| M. Tests | 40 | ⚠️ 56% (50 test files, 88/0/0) |
+| M. Tests | 39 | ⚠️ 57% (57 test files, 93/0/0) |
 | N. Cross-cutting | 4 | ✅ 100% |
 | O. Build/doc/security | 10 | ⚠️ 55% |
 
-| **Total** | **~380** | **~55% 1:1 parity** |
+| **Total** | **~370** | **~55% 1:1 parity** |
 
 ### Priority by effort
 | Tier | What | Count | Est. sessions |

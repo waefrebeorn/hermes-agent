@@ -39,10 +39,11 @@ static char *google_build_url(const provider_t *p, const char *base_url) {
     char *url = (char *)malloc(base_len + model_len + 40);
     if (!url) return NULL;
 
-    if (base_url[base_len-1] == '/')
-        snprintf(url, base_len + model_len + 40, "%s/models/%s:generateContent", base_url, model);
-    else
-        snprintf(url, base_len + model_len + 40, "%s/models/%s:generateContent", base_url, model);
+    /* Strip trailing slash to avoid //models */
+    while (base_len > 0 && base_url[base_len-1] == '/') base_len--;
+
+    snprintf(url, base_len + model_len + 40, "%.*s/models/%s:generateContent",
+             (int)base_len, base_url, model);
 
     return url;
 }
@@ -189,7 +190,10 @@ static char *google_build_request_body(const provider_t *p,
 
                 json_append(decls, fd);
             }
-            json_set(tools_arr, "functionDeclarations", decls);
+            /* tools: [{"functionDeclarations": [...]}] — array of objects with functionDeclarations key */
+            json_t *fd_obj = json_object();
+            json_set(fd_obj, "functionDeclarations", decls);
+            json_append(tools_arr, fd_obj);
             json_set(root, "tools", tools_arr);
         }
     }
@@ -552,6 +556,12 @@ static provider_response_t *google_parse_stream_chunk(const provider_t *p,
     (void)p;
     provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
     if (!resp) return NULL;
+
+    /* Null-safe */
+    if (!chunk) {
+        resp->content = strdup("");
+        return resp;
+    }
 
     /* Strip "data: " prefix if present (Google SSE) */
     const char *json_str = chunk;
