@@ -24,6 +24,15 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — SECURITY.md (O09)
+
+- ✅ **SECURITY.md** — Full disclosure policy, supported versions, 72h acknowledgment commitment
+- ✅ Documents: API key protection (`hermes_redact`, `url_safety.c`, `secure_parent_dir`), command sandboxing (bwrap, file sandbox, env isolation), config hardening (0700 on HOME, .env strict parsing), credential rotation (pool, weighted selection)
+- ✅ Known security gaps tracked: O11-O15 (encryption at rest, audit rotation, sandbox escape detection, permission hardening)
+- ✅ Dependency audit (libjson/libhttp/libyaml/libcrypto/OpenSSL/libcurl/sqlite3) + supply chain practices
+- ◀ **Build/doc: 70%** (was 65%, 1/8 gaps closed: O09)
+- ◀ Committed: `b58b7e88a`
+
 ### Session 2026-05-26 — M06: Provider error handling edge cases
 
 - ✅ **test_provider_error.c** — 225 assertions across 9 providers covering:

@@ -1,8 +1,23 @@
-# Overnight Map (v9) — 2026-05-26
+# Overnight Map (v10) — 2026-05-26
 
 ```
 ~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
+
+### Session 2026-05-26 — SECURITY.md (O09)
+
+- ✅ **SECURITY.md** — Full disclosure policy, dependency audit, security features doc
+- ◀ **Build/doc: 70%** (was 65%, 1/8 gaps closed: O09)
+- ◀ Committed: `b58b7e88a`
+
+### Session 2026-05-26 — M06: Provider error handling edge cases
+
+- ✅ **test_provider_error.c** — 225 assertions across 9 providers
+- ✅ **Bugfix: NULL SIGSEGV in 6 parse_stream_chunk** — all providers null-safe now
+- ✅ **Bugfix: API error JSON silently dropped in 6 parse_response** — all providers return descriptive errors
+- ◀ **Tests: 61%** (1/37 gaps closed: M06)
+- ◀ **Providers: 88%** (error handling bugs fixed)
+- ◀ Committed: `c51391dc3`
 
 ### Session 2026-05-26 — Doxygen API docs infrastructure (O07)
 
