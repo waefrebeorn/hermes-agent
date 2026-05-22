@@ -91,6 +91,10 @@ struct mcp_server {
     int     max_retries;         /* max reconnect attempts */
     int     reconnect_count;     /* total reconnection attempts */
     int     reconnect_delay_ms;  /* current backoff delay */
+
+    /* P70: Workspace roots (server-to-client capability) */
+    mcp_root_t roots[MAX_MCP_ROOTS];
+    int        root_count;
 };
 
 /* ================================================================
@@ -414,6 +418,39 @@ void mcp_server_set_headers(mcp_server_t *srv, const char *headers) {
     if (srv && headers) snprintf(srv->sse.headers, sizeof(srv->sse.headers), "%s", headers);
 }
 
+/* P70: Set workspace roots for a server */
+void mcp_server_set_roots(mcp_server_t *srv, const mcp_root_t *roots, int count) {
+    if (!srv || !roots) return;
+    int n = count < MAX_MCP_ROOTS ? count : MAX_MCP_ROOTS;
+    for (int i = 0; i < n; i++) {
+        snprintf(srv->roots[i].uri, sizeof(srv->roots[i].uri), "%s", roots[i].uri);
+        snprintf(srv->roots[i].name, sizeof(srv->roots[i].name), "%s", roots[i].name);
+    }
+    srv->root_count = n;
+}
+
+/* Handle a roots/list request from a connected MCP server.
+ * Builds a JSON-RPC response with the configured root URIs. */
+char *mcp_server_handle_roots_request(mcp_server_t *srv) {
+    if (!srv) return NULL;
+
+    json_t *result = json_object();
+    json_t *roots_arr = json_array();
+
+    for (int i = 0; i < srv->root_count; i++) {
+        json_t *r = json_object();
+        json_set(r, "uri", json_string(srv->roots[i].uri));
+        if (srv->roots[i].name[0])
+            json_set(r, "name", json_string(srv->roots[i].name));
+        json_append(roots_arr, r);
+    }
+
+    json_set(result, "roots", roots_arr);
+    char *s = json_serialize(result);
+    json_free(result);
+    return s;
+}
+
 bool mcp_server_connect(mcp_server_t *srv) {
     if (!srv) return false;
 
@@ -437,7 +474,15 @@ bool mcp_server_connect(mcp_server_t *srv) {
         json_set(client_info, "name", json_string("hermes-c"));
         json_set(client_info, "version", json_string("0.14.1"));
         json_set(params, "protocolVersion", json_string(MCP_PROTOCOL_VERSION));
-        json_set(params, "capabilities", json_object());
+
+        /* Client capabilities — include roots if configured (P70) */
+        json_t *caps = json_object();
+        if (srv->root_count > 0) {
+            json_t *roots_cap = json_object();
+            json_set(roots_cap, "listChanged", json_bool(false));
+            json_set(caps, "roots", roots_cap);
+        }
+        json_set(params, "capabilities", caps);
         json_set(params, "clientInfo", client_info);
 
         json_t *resp = send_request(srv, "initialize", params,
@@ -498,7 +543,17 @@ bool mcp_server_connect(mcp_server_t *srv) {
         json_set(client_info, "name", json_string("hermes-c"));
         json_set(client_info, "version", json_string("0.14.1"));
         json_set(init_params, "protocolVersion", json_string(MCP_PROTOCOL_VERSION));
-        json_set(init_params, "capabilities", json_object());
+
+        /* Client capabilities — include roots if configured (P70) */
+        {
+            json_t *sse_caps = json_object();
+            if (srv->root_count > 0) {
+                json_t *roots_cap = json_object();
+                json_set(roots_cap, "listChanged", json_bool(false));
+                json_set(sse_caps, "roots", roots_cap);
+            }
+            json_set(init_params, "capabilities", sse_caps);
+        }
         json_set(init_params, "clientInfo", client_info);
 
         char *init_req = build_request("init-1", "initialize", init_params);

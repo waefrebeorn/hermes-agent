@@ -75,7 +75,8 @@ static char *mcp_dynamic_handler(const char *args_json, const char *task_id) {
  * ================================================================ */
 
 static bool connect_stdio_server(const char *name, const char *command,
-                                  char **args, int timeout) {
+                                  char **args, int timeout,
+                                  const mcp_root_t *roots, int root_count) {
     if (g_server_count >= MAX_MCP_SERVERS) return false;
 
     mcp_server_t *srv = mcp_server_new(name);
@@ -132,6 +133,12 @@ static bool connect_stdio_server(const char *name, const char *command,
                 mcp_server_set_env(srv, new_env);
             }
         }
+    }
+
+    /* P70: Set workspace roots before connect */
+    if (roots && root_count > 0) {
+        mcp_server_set_roots(srv, roots, root_count);
+        fprintf(stderr, "MCP:   Roots set for '%s' (%d roots)\n", name, root_count);
     }
 
     if (!mcp_server_connect(srv)) {
@@ -481,7 +488,36 @@ void mcp_init_all(void) {
                         known_servers[si], g_server_filters[aidx].block_count);
             }
 
-            connect_stdio_server(known_servers[si], cmd, args, timeout);
+            /* P70: Parse root directories config */
+            char root_key[256];
+            mcp_root_t roots[MAX_MCP_ROOTS];
+            int root_count = 0;
+
+            snprintf(root_key, sizeof(root_key), "mcp_servers.%s.roots",
+                     known_servers[si]);
+            size_t roots_in_yaml = yaml_list_count(doc, root_key);
+            if (roots_in_yaml > 0) {
+                for (size_t ri = 0; ri < roots_in_yaml && root_count < MAX_MCP_ROOTS; ri++) {
+                    const char *root_path = yaml_list_get(doc, root_key, ri);
+                    if (root_path && root_path[0]) {
+                        if (strncmp(root_path, "file://", 7) == 0) {
+                            snprintf(roots[root_count].uri, sizeof(roots[0].uri),
+                                     "%s", root_path);
+                        } else {
+                            snprintf(roots[root_count].uri, sizeof(roots[0].uri),
+                                     "file://%s", root_path);
+                        }
+                        snprintf(roots[root_count].name, sizeof(roots[0].name),
+                                 "%s-root", known_servers[si]);
+                        root_count++;
+                    }
+                }
+                fprintf(stderr, "MCP: Roots for '%s' — %d directories\n",
+                        known_servers[si], root_count);
+            }
+
+            connect_stdio_server(known_servers[si], cmd, args, timeout,
+                                 root_count > 0 ? roots : NULL, root_count);
         }
     }
 

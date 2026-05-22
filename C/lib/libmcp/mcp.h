@@ -193,6 +193,27 @@ void mcp_server_disconnect(mcp_server_t *srv);
 void mcp_server_free(mcp_server_t *srv);
 
 /* ================================================================
+ *  Root types (P70)
+ * ================================================================ */
+
+#define MAX_MCP_ROOTS 32
+
+/* A root URI (workspace directory) to expose to MCP servers */
+typedef struct {
+    char                uri[512];     /* file:///path/to/dir */
+    char                name[256];    /* optional display name */
+} mcp_root_t;
+
+/* Set workspace roots for a server (server-to-client capability).
+ * roots: array of mcp_root_t, count: number of roots.
+ * Call before mcp_server_connect(). */
+void mcp_server_set_roots(mcp_server_t *srv, const mcp_root_t *roots, int count);
+
+/* Handle a roots/list request from the server.
+ * Returns JSON-RPC response with root URIs. */
+char *mcp_server_handle_roots_request(mcp_server_t *srv);
+
+/* ================================================================
  *  MCP Protocol calls
  * ================================================================ */
 
