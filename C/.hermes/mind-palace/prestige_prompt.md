@@ -1,67 +1,77 @@
-# Slermes C — Prestige Prompt (May 22 PM v3)
+# WuBu Hermes C — Prestige Prompt (v6)
 
-## Mission
-Translate NousResearch/hermes-agent from Python to C. Zero-dependency, single-binary AI agent that mirrors every Python feature across ~200 phases of implementation.
+## Identity
+1:1 reimplementation of Python hermes-agent in C. Python maintainers try C — can't tell the difference. Every feature, every handler, every API quirk has a C equivalent.
 
-## Architecture Stack
-- **Language:** C99, no runtime deps, static ELF (~3.4MB)
-- **Build:** GNU make, 5 phase targets (phase1=libraries→phase5=full binary)
-- **Libs:** 14 standalone libraries (json, http, yaml, crypto, dotenv, cron, proc, template, tui, db, plugin, skin, websocket, protobuf, mcp)
-- **Providers:** 26/29 — 9 native (OpenAI, Anthropic, Google, OpenRouter, DeepSeek, xAI, Azure, Bedrock, Custom) + 17 OpenAI-compat aliases
-- **Gateway:** 19 platforms via adapter pattern + JSON-RPC server
-- **Config:** YAML → struct → env override → validation/diff/export/schema (322 keys)
-- **Tests:** 58 runner items, ~1422 assertions, 27 test files
+## Core Principles
+- Count capability surface, not function count
+- Internal Python helpers ≠ features
+- Cleaner C approach that handles same behavior = parity
+- Triple-check own counts. Delegation is lazy. ~WuBu~ strives for more.
 
-## Current State (DA v6, May 22 v3)
-
-| Area | Progress | Remaining |
-|------|----------|-----------|
-| Config keys | **99%** | ~0-2 leaf keys |
-| Providers | **90%** (26/29) | 3 ACP providers |
-| LLM params | **83%** (10/12) | G336 response_format, G339 metadata |
-| CLI commands | **85%** (72/85) | 13 advanced commands |
-| Tools | **82%** (74/88) | 14 tools (feishu, video, MoA, yuanbao) + 7 stubs + 3 shallow |
-| Gateway | **95%** (19 platforms) | Depth features, Telegram 11x |
-| Security | **85%** | 2 phases (vault encryption, session isolation) |
-| Tests | **~1422 assertions** | MCP, integration, benchmarks, CI |
-| Agent loop | **75%** | Grace call, prefill, stream diag, background review |
-| MCP | **70%** | 4 phases |
-| Plugin system | **50%** | Provider plugins, memory plugins |
-| TUI | **50%** | 6 phases |
-| Overall | **~57%** | 430-gap weighted effort |
-
-## Sessions 12+12b Summary (11 LLM param gaps closed)
-**Session 12:** G330-G333, G340 — wired temperature, top_p, stop_sequences, max_tokens, service_tier through all 9 providers. Structural: provider_config_t embedded in provider_t, llm_config_t extended. Config pipeline: defaults, YAML parse, env override, validation, diff. 20 files, +413/-281.
-
-**Session 12b:** G334-G335, G337-G338 — wired presence_penalty, frequency_penalty, seed, logprobs/top_logprobs, user through 6 OpenAI-compat providers. 6 new HERMES_ env vars. 12 files, +176. 58/59 tests pass.
+---
 
 ## Priority Queue
-P0: Fix stubs (7) — CDP browser(4), computer_use, memory_sqlite, memory_plugin, vision_analyze LLM
-P0: ACP providers (3) — Copilot, OpenCode Zen, OpenAI Codex
-P1: Telegram depth — 16 send methods, 10 message types (11x gap vs Python)
-P1: LLM params (2 remaining) — G336 response_format, G339 metadata
-P2: Tool depth — kanban(9→25), browser(18→158), memory(3→22)
-P2: Session tracking fields (10)
-P2: CLI features — autocomplete, table output, wizard, batch mode
-P3: Test porting — MCP suite, integrations, benchmarks
-P3: 14 Python libs (Jinja2, prompt_toolkit, httpx, rich, pydantic, etc.)
 
-## Known Bugs (DA finds)
-- `temperature=0.0` (greedy decode) silently dropped by `> 0.0f` guard in all 9 providers. Fix: change to `>= 0.0f`.
+### P0 — Bugs + Immediate (0.5-4 sessions)
+| # | Gap | Est. |
+|---|-----|------|
+| 1 | Fix temperature=0.0 bug (s/>0.0f/>=0.0f/ × 9 providers) | 10 min |
+| 2 | B04-B05: response_format + metadata LLM params | 1 session |
+| 3 | F01-F08: 8 tool stubs → real (CDP×4, computer_use, memory×2, vision) | 3 sessions |
+| 4 | B01-B03: 3 ACP providers (Copilot, OpenCode, Codex) | 4 sessions |
 
-## Key Paths
-- Source: `/home/wubu/hermes-agent-dev/C/`
-- Config: `~/.slermes/config.yaml` + `~/.slermes/.env`
-- Mind palace: `.hermes/mind-palace/`
-- Test runner: `test_runner.sh`
-- Git remote: `wubu=waefrebeorn/hermes-agent` (SSH)
-- Binary: `C/hermes` (~3.4MB)
-- 430-gap roadmap: `.hermes/mind-palace/plans/400-gap-mega-roadmap.md`
+### P1 — Feature Depth (2-8 sessions)
+| # | Area | Gaps |
+|---|------|------|
+| 5 | E01-E34: Gateway depth (Telegram sends, msg types, observe groups, infra) | 34 |
+| 6 | G01-G36: Agent state + session tracking | 32 |
+| 7 | H01-H34: CLI features + command handler depth | 34 |
+| 8 | F09-F44: Tool sub-features (terminal, web, delegate, cron, process, tts, etc.) | 36 |
 
-## Key Commands
-```bash
-make -C . -j$(nproc)    # Build full binary
-bash test_runner.sh       # Run all 58 test suites
-echo "/status" | ./hermes  # Quick session status
-git push wubu HEAD        # Push to fork
+### P2 — Platform Depth (3-15 sessions)
+| # | Area | Gaps |
+|---|------|------|
+| 9 | D01-D43: Plugin depth (stubs→real + 42 missing backends) | 51 |
+| 10 | C01-C17: MCP depth (sub/sampling/roots/serve/multi/auth) | 17 |
+| 11 | B22-B46: Provider-specific API features (25 per-provider quirks) | 25 |
+| 12 | B10-B21: Provider infrastructure (pool rotation, catalog, metadata) | 12 |
+
+### P3 — Upstream + Quality (5-10 sessions)
+| # | Area | Gaps |
+|---|------|------|
+| 13 | L01-L12: Upstream catch-up (125 commits behind origin/main) | 12 |
+| 14 | E40-E63: Gateway formatting + platform depth | 24 |
+| 15 | M01-M53: Test coverage | 53 |
+
+### P4 — Porting + Infra (2-10 sessions)
+| # | Area | Gaps |
+|---|------|------|
+| 16 | I01-I14: Python lib ports (Jinja2, rich, httpx, etc.) | 14 |
+| 17 | J01-J05: Stdlib ports (asyncio, logging, subprocess, pathlib, dataclasses) | 5 |
+| 18 | K01-K05: Error handling (typed error hierarchy) | 5 |
+| 19 | N01-N05: Cross-cutting (token counting, security) | 5 |
+| 20 | O01-O15: Build/doc/security depth | 15 |
+
+---
+
+## Assessment
+
+| Metric | Value |
+|--------|-------|
+| Total gaps | ~400 |
+| Complete | ~50% |
+| Largest structural gap | Plugins (8% — 3/45 backends) |
+| Most overestimated in old DA | Browser "shallow" — actually 1:1 (C has browser_forward Python doesn't) |
+| Most underestimated in old DA | Provider-specific APIs — 25 entirely missed |
+| Known bugs | temperature=0.0 dropped by > vs >= guard |
+
+## Repository
+
+```yaml
+path: /home/wubu/hermes-agent-dev/C/
+remote: wubu=waefrebeorn/hermes-agent (main)
+upstream: origin=NousResearch/hermes-agent (1264fab15, 125 commits ahead)
+build: make -j$(nproc)
+test: bash test_runner.sh (58/59 pass)
 ```

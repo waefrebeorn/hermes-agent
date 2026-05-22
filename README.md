@@ -1,89 +1,142 @@
-# WuBu Slermes — C Translation of Hermes Agent
+# C/ — Hermes Agent in C
 
-**HONEST STATUS: ~63% complete (329-gap scope).** C/ translates NousResearch/hermes-agent from Python→C for zero-dependency, single-binary operation.
+**HONEST STATUS: ~50% toward 1:1 Python parity (~400 gaps).**
+One-binary replacement for the Python hermes-agent. Zero runtime dependencies.
 
-LLM calls work (DeepSeek v4 Flash via OpenAI-compat). 19 gateway platforms. 74 tools. 72 CLI commands. All 200 original phases compile. **~1,422 test assertions pass across 58 test suites.**
-
-**May 22: Re-baselined from 200-gap (94%) → 329-gap (63%).** Systematic walkthrough of Python codebase found 100+ new gaps across agent features, CLI, plugins, gateway depth, TUI, ACP adapter, batch serving, and i18n/web.
-
----
-
-## Current Reality (DA v6, 2026-05-22)
-
-| Subsystem | Completeness | Note |
-|-----------|-------------|------|
-| Config keys | **~99%** | All 322 leaf keys done |
-| Providers | **90%** (26/29) | 3 ACP providers missing |
-| CLI commands | **70%** | 72 done, 33 remain |
-| Tools | **82%** (74/86) | 12 missing (feishu, video, MoA, yuanbao) |
-| Gateway platforms | **80%** | 19 platforms + 10 depth features remain |
-| MCP | **70%** | 4 phases remain |
-| Plugin system | **30%** | 19 plugin types, only core loader done |
-| Security | **85%** | All 5 subsystems tested |
-| Agent loop | **55%** | 5 original + 15 new gaps |
-| TUI | **35%** | 6 original + 10 new features |
-| ACP Adapter | **0%** | 5 phases, 5K LOC to port |
-| Batch/Serving | **0%** | 5 phases |
-| I18N/Web | **0%** | 4 phases |
-| Tests | **~2%** | 58 runner items vs 1,179 Python files |
-
-**Binary:** `hermes` — ~3.4MB static ELF, zero runtime deps.
-**C LOC:** ~47,700 (.c + .h) | **Source files:** 99 (.c) + 21 (.h)
-**Test suites:** 58 runner items, ~1,422 assertions across 27 test files
-
----
-
-## What's Done
-
-- **Foundation libs:** JSON, HTTP, YAML, crypto, dotenv, cron, proc, template, ncurses TUI, SQLite, MCP, WebSocket, Protobuf, skin engine, plugin loader
-- **All config keys:** 322/322 leaf keys. Full YAML parsing, env var override, validation, diff/show, export, schema, v0→v1 migration
-- **26 providers:** OpenAI, Anthropic, Google, OpenRouter, DeepSeek, xAI, Azure, Bedrock, Custom + 17 OpenAI-compat aliases
-- **Agent loop:** Budget (104 tests), interrupt, context compression (161 tests), checkpoints (44 tests), streaming, snapshot/undo
-- **CLI shell:** 72 commands — /help, /tools, /commands, /config, /model, /sessions, /stats, /status, /profile, /plugins, /cron, /platform, /tools-verify, etc.
-- **74 tools:** terminal, file, web, skills, patch, exec_code, clarify, memory, todo, process, send_message, cronjob, session_search, session_crud, tts, vision, delegate, x_search, browser suite (14), approval, voice, image_gen, homeassistant, kanban (10), computer_use, discord (2), MCP suite (6)
-- **19 gateway platforms:** Telegram, Discord, Slack, Signal, Matrix, Mattermost, Email, SMS, Webhook, HomeAssistant, DingTalk, WeCom, Weixin, Feishu, QQBot, BlueBubbles, WhatsApp, MSGraph, Yuanbao
-- **Security:** Redaction, credential pool, audit log (20 tests), rate limiting (168), URL safety (55), approvals (52), allowlist (34), file sandbox
-- **Session DB:** SQLite FTS5, 410 sessions, tags, starred, JSON/MD export, branch, migrate
-- **Memory, Cron, Skills:** Full suite with TTL, dedup, schedules, validation, curation
-
----
-
-## What's LEFT
-
-Full list: `C/.hermes/mind-palace/plans/300-gap-mega-roadmap.md`
-
-**10 largest gaps:**
-1. ACP adapter (server, session, tools, permissions) — 5K LOC
-2. Agent features (error classifer, tool executor, prompt builder, context compressor, shell hooks, etc.)
-3. TUI depth (16 phases — streaming markdown, model/session picker, agents overlay)
-4. CLI commands (33 — auth, backup, doctor, undo, save, load, stats, model, etc.)
-5. Plugins (19 types — memory providers, model providers, browser, Spotify, etc.)
-6. Gateway depth (feishu comment, yuanbao proto/media/sticker, WeCom crypto)
-7. Missing tools (feishu, video, MoA, yuanbao — 12 total)
-8. Batch/serving (batch runner, MCP serve mode, trajectory compressor)
-9. I18N/web (16 locales, 86-file web dashboard)
-10. 3 ACP providers (Copilot, OpenCode Zen, Codex)
+```
+Binary:     hermes (~3.4MB static ELF)
+C LOC:      ~44K source + ~7.8K lib + ~4.9K tests = ~57K total
+Source:     99 .c + 21 .h
+Tests:      26 .c files, ~1,422 assertions, 58/59 pass
+Gateway:    19 platform adapters
+Tools:      28 registered capabilities
+Commands:   70 slash commands
+```
 
 ---
 
 ## Quick Start
 
 ```bash
-make -j$(nproc)          # Build
-./hermes --help           # Usage
-./hermes --version        # Version string
-./test_runner.sh          # 58 suites, ~1,422 assertions
-echo "/tools" | ./hermes # 74 tools
-./hermes "Hello"          # LLM call (needs API key)
+cd C/
+make -j$(nproc)          # Build hermes binary
+./hermes --version       # "WuBu Hermes v0.14.1"
+./test_runner.sh         # 58 suites, ~1,422 assertions
+echo "/tools" | ./hermes # List 28 tools
 ```
+
+### Config
+
+```bash
+export SLERMES_HOME=~/.slermes
+# Config:   $SLERMES_HOME/config.yaml
+# Env vars: $SLERMES_HOME/.env
+```
+
+---
 
 ## Build Targets
 
 ```bash
-make phase1    # Libraries only
-make phase2    # + Agent + CLI
-make phase3    # + Tools
-make phase4    # + Gateway
-make phase5    # + Cron (full binary)
-make tui       # + ncurses TUI (hermes-tui binary)
+make phase1        # 15 standalone libraries (.a archives)
+make phase2        # Agent + CLI + LLM providers
+make phase3        # All 28 tools
+make phase4        # 19 gateway platforms
+make phase5        # Cron scheduler (full hermes)
+make hermes        # Same as phase5
+make tui           # ncurses TUI build → hermes-tui
+make libs          # Standalone library archives only
+make install-plugins  # Build + install .so plugins to ~/.hermes/plugins/
 ```
+
+---
+
+## Test
+
+```bash
+./test_runner.sh            # Full suite: libs → plugins → integration → tools
+./test_runner.sh --verbose  # PASS/FAIL per test with output
+make test-libs              # 11 standalone library tests (no binary needed)
+```
+
+---
+
+## Gateway
+
+```bash
+# Single platform:
+./hermes gateway --platform telegram
+
+# Multiple platforms (comma-separated):
+./hermes gateway --platform telegram,discord,slack
+
+# Platforms: telegram, discord, slack, signal, matrix, mattermost,
+# email, sms, webhook, whatsapp, homeassistant, feishu, wecom,
+# weixin, dingtalk, qqbot, bluebubbles, msgraph_webhook, yuanbao
+```
+
+---
+
+## CLI Commands
+
+```
+Session:   /new, /clear, /undo, /save, /load, /sessions, /stats, /conv, /history
+Config:    /model, /config, /topic, /profile, /skin, /personality, /whoami
+Info:      /tools, /tools-verify, /commands, /help, /version
+Agent:     /status, /goal, /subgoal, /steer, /agents, /reasoning, /fast, /verbose
+Gateway:   /platform, /sethome, /handoff, /restart, /plugins, /browser
+Edit:      /reset, /retry, /compress, /branch, /snapshot, /rollback
+Process:   /stop, /approve, /deny, /yolo, /background, /queue
+Utils:     /cron, /skills, /toolsets, /voice, /reload, /copy, /update, /debug
+Display:   /redraw, /indicator, /statusbar, /footer, /busy, /insights
+```
+
+---
+
+## Mind Palace (Project Intelligence)
+
+```
+.hermes/mind-palace/
+├── goal-mantra.md          # Current goal + P0 gaps
+├── prestige_prompt.md      # Priority queue + DA assessment
+├── state.md                # Milestone tracker
+├── overnight-map.md        # Active workstreams
+└── plans/
+    └── 400-gap-mega-roadmap.md  # Full 1:1 parity gap list (~400 items)
+```
+
+---
+
+## 1:1 Parity Summary (~400 gaps, ~50% complete)
+
+| Category | Gaps | Complete |
+|----------|------|----------|
+| Config depth | 6 | ✅ 95% |
+| Providers | 46 | ✅ 80% |
+| MCP | 17 | ⚠️ 50% |
+| Plugins | 51 | ⚠️ 8% |
+| Gateway | 63 | ⚠️ 35% |
+| Tools | 44 | ✅ 80% |
+| Agent loop | 32 | ⚠️ 55% |
+| CLI | 34 | ✅ 80% |
+| Python libs | 14 | ⚠️ 20% |
+| Stdlib | 5 | ⚠️ 30% |
+| Error handling | 5 | ❌ 0% |
+| Upstream drift | 12 | 🔵 new |
+| Tests | 53 | ⚠️ 40% |
+| Cross-cutting | 5 | ⚠️ 40% |
+| Build/doc/security | 15 | ⚠️ 30% |
+
+---
+
+## Known Bug
+
+```c
+// temperature=0.0 silently dropped by guard conditions
+// Fix in 9 provider files:
+//   if (p->config.temperature > 0.0f)  →  if (p->config.temperature >= 0.0f)
+```
+
+---
+
+*~WuBu~ strives for more.*

@@ -1,39 +1,36 @@
-# Slermes C — State (May 22 v4, Sessions 12+12b: 11 LLM param gaps closed)
+# State — Hermes C Translation (2026-05-22)
 
-## Honest Assessment
-- **Session 12:** G330-G333 + G340 — wired temperature, top_p, stop_sequences, max_tokens, service_tier through all 9 providers. Structural fix: added `provider_config_t` embedded in `provider_t`, extended `llm_config_t` with LLM params.
-- **Session 12b:** G334-G335 + G337-G338 — wired presence_penalty, frequency_penalty, seed, logprobs/top_logprobs, user through 6 OpenAI-compat providers. Config pipeline: defaults, YAML, env (6 new HERMES_ vars), validation, diff.
+## ~50% toward 1:1 Python parity (~400 gaps)
 
-## Current Milestones
+### Milestone Dashboard
 
-| Area | Progress | Remaining |
-|------|----------|-----------|
-| Config keys | **~99%** (322/322) | 6 depth features (profiles, schema, watch, migration) |
-| Providers | **90%** (26/29) | 3 ACP (Copilot, OpenCode, Codex) |
-| LLM params | **83%** (10/12) | G336 response_format, G339 metadata |
-| CLI | **85%** (72/85) | 13 advanced commands |
-| Tools | **82%** (74/88) | 14 missing + 7 stubs + 3 shallow |
-| Gateway | **95%** (19 platforms) | Depth (Telegram 11x, send methods, msg types) |
-| Security | **85%** | 2 phases (vault encryption, session isolation) |
-| Tests | **~1,422 assertions** (58 suites) | MCP, integration, benchmarks, CI |
-| Agent loop | **75%** | Grace call, prefill, stream diag, background |
-| MCP | **70%** | 4 phases (subscriptions, sampling, prompts, roots) |
-| Plugin system | **50%** | Provider plugins, memory plugins |
-| TUI | **50%** | 6 phases |
-| **Overall (430-gap)** | **~57%** | Weighted effort across 430 gaps |
+| Category | Gaps | Done% | Key Stats |
+|----------|------|-------|-----------|
+| **Config** | 6 depth | 95% | 322/322 YAML keys parsed, validated, env-overridden |
+| **Providers** | 46 | 80% | 9 ops + 31 aliases + 10/12 LLM params wired through config |
+| **MCP** | 17 | 50% | stdio/SSE transport, tools/list/call, resources, prompts |
+| **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
+| **Gateway** | 63 | 35% | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |
+| **Tools** | 44 | 80% | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python |
+| **Agent** | 32 | 55% | 23 state fields, 18 session DB functions, checkpoint/budget/compression |
+| **CLI** | 34 | 80% | 70 slash commands, skin/theme engine, display system |
+| **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported. Jinja2/rich/httpx/pydantic/etc. missing |
+| **Stdlib** | 5 | 30% | libproc/libcrypto basics. No event loop, logging, dataclasses |
+| **Errors** | 5 | 0% | No typed error hierarchy at all |
+| **Upstream** | 12 | new | 125 commits behind origin/main (52 Python) |
+| **Tests** | 53 | 40% | 26 files, 1422 assertions. Python: 17K across 900+ files |
+| **Cross-cut** | 5 | 40% | Token counting, secure parent dir, key leakage prevention |
+| **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI, man pages, API docs |
 
-## Key Remaining Gaps (top by impact)
+### Key Corrections from Old DA
+- **Browser:** C 13 handlers = 1:1 with Python 12 (C ahead: has browser_forward)
+- **Memory:** 1 handler = parity
+- **Kanban:** 9 handlers = parity  
+- **Plugins:** 45 individual backends, not 19 categories
+- **Provider APIs:** 25 per-provider quirks entirely missed before
 
-- **7 C stubs (P0):** CDP browser tool stubs (4), computer_use returns unsupported, memory_sqlite falls back to file, memory_plugin falls back to in-mem
-- **Telegram 11x depth gap (P1):** C 479 lines vs Python 5,465 — 16 send methods, 10 message types missing
-- **LLM params (P1):** 2 remain — G336 (response_format needs JSON schema struct), G339 (metadata needs key-value map)
-- **3 shallow tools (P2):** kanban 9 C handlers vs 25 Py functions, browser 18 vs 158 Py, memory 3 vs 22 Py
-- **14 Python libs unported (P3):** Jinja2, prompt_toolkit, httpx, rich, pydantic, etc.
-- **10 session tracking fields (P2):** per-direction tokens, cost tracking, interrupt propagation
-- **5 CLI features (P2):** autocomplete, table output, wizard, batch mode, color depth
-
-## Known Bug (DA find)
-- `temperature=0.0` (greedy decode) silently dropped by `> 0.0f` guard in all 9 providers. User's explicit greedy request ignored. Fix: change to `>= 0.0f`.
-
-## 430-gap roadmap
-`.hermes/mind-palace/plans/400-gap-mega-roadmap.md`
+### Known Bug
+```c
+// temperature=0.0 silently dropped
+// Fix: if (p->config.temperature >= 0.0f)  // was >
+```

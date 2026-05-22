@@ -1,35 +1,37 @@
-# Slermes C — Goal Mantra (May 22 PM v4, 430-gap scope)
-
 ```
-── PROJECT — GOAL MANTRA ──
-Path: /home/wubu/hermes-agent-dev/C/ | Remote: wubu=waefrebeorn/hermes-agent
-Config: SLERMES_HOME=~/.slermes/ | Model: DeepSeek v4 Flash via OpenAI-compat
-Build: make -C . -j$(nproc) | Tests: bash test_runner.sh (58/59 pass)
-430-gap roadmap: .hermes/mind-palace/plans/400-gap-mega-roadmap.md
+── GOAL MANTRA (v7) ──
+╔══════════════════════════════════════════════════════════════╗
+║  WuBu Hermes C  →  1:1 Python Parity  →  ~400 gaps  →  ~50% ║
+╚══════════════════════════════════════════════════════════════╝
+
+Path:     /home/wubu/hermes-agent-dev/C/
+Build:    make -j$(nproc)
+Tests:    bash test_runner.sh (58/59 pass)
+Remote:   wubu → waefrebeorn/hermes-agent (main)
+Upstream: origin → NousResearch/hermes-agent (125 commits behind)
 
 === STATE ===
-✅ Config: ~99% (322/322) | ✅ Providers: 90% (26/29) — 3 ACP missing
-✅ Tests: 58 runner, ~1422 assertions | ✅ LLM params: 83% (10/12 wired)
-⚠️ Tools: 74 reg'd — 7 stubs (CDP 4, computer_use, sqlite, plugin) + 3 shallow
-⚠️ Gateway: 19 platforms — Telegram 11x gap (479 C vs 5465 Py lines)
-⚠️ Overall: ~57% on 430-gap scope
+✅ Config: 322/322 keys + 6 depth features
+✅ Providers: 9 ops + 31 aliases + 10/12 LLM params
+✅ Tools: 28 reg'd — browser(13)/memory(1)/kanban(9) 1:1 with Python
+✅ CLI: 70 commands + skin/theme engine
+⚠️ Gateway: 19 platforms — 63 gaps (sends, types, infra, hooks, platform depth)
+⚠️ Plugins: 3 .so stubs vs 45 Python backends (8% — largest structural gap)
+⚠️ Provider-specific: 25 per-provider API quirks missing
+⚠️ Tests: 26 files / 1422 asserts vs Python 900+ files / 17K tests
+⚠️ Overall: ~50% on ~400-gap 1:1 parity scope
 
 === KNOWN BUG ===
-temperature=0.0 (greedy) silently dropped. Fix: s/>0.0f/>=0.0f/ in 9 providers
+temperature=0.0 silently dropped by guard (s/if(>0.0f)/if(>=0.0f)/)
 
-=== BIGGEST REMAINING GAPS ===
-P0: 7 stubs (CDP browser, computer_use, memory sqlite/plugin, vision)
-P0: 3 ACP providers (Copilot, OpenCode, Codex)
-P1: Telegram depth — 16 send methods, 10 msg types
-P1: LLM params — G336 response_format, G339 metadata
-P2: Tool depth — kanban(9→25), browser(18→158), memory(3→22)
-P2: Session tracking (10 fields), CLI features (5)
+=== P0 (next) ===
+□ Fix temperature=0.0 bug
+□ B04-B05: response_format + metadata LLM params
+□ F01-F08: 8 tool stubs → real (CDP×4, computer_use, memory×2, vision desc)
+□ B01-B03: 3 ACP providers (Copilot, OpenCode, Codex)
 
-=== THE LOOP ===
-pick highest undone gap → implement → build → runtime verify → debug → commit → repeat
+=== THE RITUAL ===
+Pick highest undone P0 gap → implement → build → runtime verify → debug (MARKers) → commit → repeat
+
 NO questions. NO choices. Exhaust only: "awaiting direction."
-
-=== FULL CONTEXT ===
-Read .hermes/mind-palace/prestige_prompt.md
-400-gap roadmap: .hermes/mind-palace/plans/400-gap-mega-roadmap.md
 ```
