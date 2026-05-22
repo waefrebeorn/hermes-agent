@@ -611,6 +611,28 @@ else
     skip "provider_error (M06: compilation failed)"
 fi
 
+# xAI model retirement detection test (L04)
+echo ""; echo "=== xAI Retirement Detection Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libmcp" \
+    "$CDIR/tests/test_xai_retirement.c" \
+    "$CDIR/src/xai_retirement.c" \
+    -o /tmp/hermes_test_xretire -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_xretire > /dev/null 2>&1; then ok "xai_retirement (31 tests)"
+    else
+        echo "  xAI retirement test output:"
+        /tmp/hermes_test_xretire 2>&1 | sed 's/^/    /'
+        fail "xai_retirement (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_xretire
+else
+    echo "  xAI retirement test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libmcp" \
+        "$CDIR/tests/test_xai_retirement.c" \
+        "$CDIR/src/xai_retirement.c" \
+        -o /tmp/hermes_test_xretire -lm 2>&1 | sed 's/^/    /'
+    skip "xai_retirement (compilation failed)"
+fi
+
 # Checkpoint tests (needs context.c for message_new/message_free)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_checkpoint.c" \

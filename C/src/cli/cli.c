@@ -7,6 +7,7 @@
 #include "hermes_agent.h"
 #include "hermes_display.h"
 #include "hermes_skin.h"
+#include "hermes_xai_retirement.h"
 #include "plugin.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,6 +174,18 @@ int hermes_cli_main(int argc, char **argv) {
     hermes_config_load_env(&g_cli.config);
     /* P19: Enable SIGHUP-based config reload */
     hermes_config_setup_reload();
+
+    /* L04: Check for retired xAI models and warn */
+    {
+        xai_retirement_result_t ret = hermes_xai_find_retired(&g_cli.config);
+        for (int i = 0; i < ret.count; i++) {
+            char *msg = hermes_xai_format_issue(&ret.issues[i]);
+            if (msg) {
+                fprintf(stderr, "\033[33mWarning:\033[0m %s\n", msg);
+                free(msg);
+            }
+        }
+    }
 
     /* O13: Initialize TIRITH policy engine with defaults + custom config */
     tirith_policy_global_init(&g_cli.config.security);
