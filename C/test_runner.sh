@@ -293,6 +293,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "vision_tool (compilation failed)"
 fi
 
+# Todo tool test (M43 — needs todo.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_todo.c" \
+    "$CDIR/src/tools/todo.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_todo -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    HERMES_HOME=/tmp/hermes_test_todo_home /tmp/hermes_test_todo > /dev/null 2>&1
+    if [ $? -eq 0 ]; then ok "todo_tool (14 tests)"
+    else fail "todo_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_todo
+    rm -rf /tmp/hermes_test_todo_home
+else skip "todo_tool (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \
