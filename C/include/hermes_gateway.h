@@ -239,6 +239,12 @@ bool telegram_forward_message(http_client_t *http, const char *chat_id,
                                const char *from_chat_id,
                                const char *message_id);
 
+/* E15: Pin/unpin message */
+bool telegram_pin_chat_message(http_client_t *http, const char *chat_id,
+                                const char *message_id);
+bool telegram_unpin_chat_message(http_client_t *http, const char *chat_id,
+                                  const char *message_id);
+
 /* Forum topics */
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name);

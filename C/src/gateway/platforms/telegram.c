@@ -354,6 +354,36 @@ bool telegram_forward_message(http_client_t *http, const char *chat_id,
     return ok;
 }
 
+/* ================================================================
+ *  E15: Pin/unpin message
+ * ================================================================ */
+
+bool telegram_pin_chat_message(http_client_t *http, const char *chat_id,
+                                const char *message_id)
+{
+    if (!http || !chat_id || !message_id) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+    http_response_t *resp = tg_post(http, "pinChatMessage", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_unpin_chat_message(http_client_t *http, const char *chat_id,
+                                  const char *message_id)
+{
+    if (!http || !chat_id || !message_id) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+    http_response_t *resp = tg_post(http, "unpinChatMessage", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name)
 {
