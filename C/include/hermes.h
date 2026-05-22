@@ -16,6 +16,9 @@
 /* Forward declarations for agent subsystem types */
 typedef struct budget_tracker_t budget_tracker_t;
 
+/* Typed error system (K01-K05) */
+#include "hermes_error.h"
+
 /* ================================================================
  *  Version
  * ================================================================ */

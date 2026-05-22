@@ -246,6 +246,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "audit_log (compilation failed)"
 fi
 
+# Error system test (K01-K05: standalone — only needs hermes_error.c + pthread)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_hermes_error.c" \
+    "$CDIR/src/hermes_error.c" \
+    -o /tmp/hermes_test_error -lm -lpthread > /dev/null 2>&1; then
+    if /tmp/hermes_test_error > /dev/null 2>&1; then ok "error_system (11 tests)"
+    else fail "error_system (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_error
+else skip "error_system (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \
