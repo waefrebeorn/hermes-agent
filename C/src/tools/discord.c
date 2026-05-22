@@ -230,6 +230,155 @@ static char *fetch_messages(const char *channel_id, int limit) {
 }
 
 /* ================================================================
+ *  Additional regular actions (P42)
+ * ================================================================ */
+
+static char *channel_info(const char *channel_id) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/channels/%s", DISCORD_API_BASE, channel_id);
+    tool_api_result_t *r = tool_api_call(url, NULL, "GET", NULL, 15, 2);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Channel info failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    if (r->json) {
+        const char *keys[] = {"id","name","type","guild_id","topic","nsfw",
+            "position","parent_id","rate_limit_per_user","last_message_id",NULL};
+        for (int i = 0; keys[i]; i++) {
+            json_t *v = json_obj_get(r->json, keys[i]);
+            if (v) json_set(result, keys[i], json_copy(v));
+        }
+    }
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+static char *list_roles(const char *guild_id) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/guilds/%s/roles", DISCORD_API_BASE, guild_id);
+    tool_api_result_t *r = tool_api_call(url, NULL, "GET", NULL, 15, 2);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("List roles failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    json_t *roles = json_array();
+    if (r->json) {
+        size_t len = json_len(r->json);
+        for (size_t i = 0; i < len; i++) {
+            json_t *rl = json_get(r->json, i);
+            if (!rl) continue;
+            json_t *e = json_object();
+            json_set(e, "id", json_copy(json_obj_get(rl, "id")));
+            json_set(e, "name", json_copy(json_obj_get(rl, "name")));
+            json_set(e, "color", json_copy(json_obj_get(rl, "color")));
+            json_set(e, "position", json_copy(json_obj_get(rl, "position")));
+            json_set(e, "mentionable", json_copy(json_obj_get(rl, "mentionable")));
+            json_append(roles, e);
+        }
+    }
+    json_set(result, "roles", roles);
+    json_set(result, "count", json_number((double)json_len(roles)));
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+static char *member_info(const char *guild_id, const char *user_id) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/guilds/%s/members/%s", DISCORD_API_BASE, guild_id, user_id);
+    tool_api_result_t *r = tool_api_call(url, NULL, "GET", NULL, 15, 2);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Member info failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    if (r->json) {
+        json_set(result, "user_id", json_copy(json_obj_get(json_obj_get(r->json, "user"), "id")));
+        json_set(result, "username", json_copy(json_obj_get(json_obj_get(r->json, "user"), "username")));
+        json_set(result, "nick", json_copy(json_obj_get(r->json, "nick")));
+        json_set(result, "roles", json_copy(json_obj_get(r->json, "roles")));
+        json_set(result, "joined_at", json_copy(json_obj_get(r->json, "joined_at")));
+    }
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+static char *delete_message(const char *channel_id, const char *message_id) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/channels/%s/messages/%s", DISCORD_API_BASE, channel_id, message_id);
+    tool_api_result_t *r = tool_api_call(url, NULL, "DELETE", NULL, 15, 2);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Delete failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    json_set(result, "success", json_bool(true));
+    char msg[128];
+    snprintf(msg, sizeof(msg), "Message %s deleted", message_id);
+    json_set(result, "message", json_string(msg));
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+/* ================================================================
+ *  Admin actions (P42)
+ * ================================================================ */
+
+static char *create_channel(const char *guild_id, const char *name, int type) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/guilds/%s/channels", DISCORD_API_BASE, guild_id);
+    json_t *body = json_object();
+    json_set(body, "name", json_string(name));
+    json_set(body, "type", json_number((double)type));
+    char *body_str = json_serialize(body); json_free(body);
+    tool_api_result_t *r = tool_api_call(url, NULL, "POST", body_str, 15, 2);
+    free(body_str);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Create channel failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    if (r->json) {
+        json_set(result, "id", json_copy(json_obj_get(r->json, "id")));
+        json_set(result, "name", json_copy(json_obj_get(r->json, "name")));
+    }
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+static char *kick_member(const char *guild_id, const char *user_id) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/guilds/%s/members/%s", DISCORD_API_BASE, guild_id, user_id);
+    tool_api_result_t *r = tool_api_call(url, NULL, "DELETE", NULL, 15, 2);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Kick failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    json_set(result, "success", json_bool(true));
+    char msg1[128];
+    snprintf(msg1, sizeof(msg1), "User %s kicked from guild %s", user_id, guild_id);
+    json_set(result, "message", json_string(msg1));
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+static char *ban_member(const char *guild_id, const char *user_id, const char *reason) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/guilds/%s/bans/%s", DISCORD_API_BASE, guild_id, user_id);
+    json_t *body = json_object();
+    if (reason) json_set(body, "reason", json_string(reason));
+    char *body_str = json_serialize(body); json_free(body);
+    tool_api_result_t *r = tool_api_call(url, NULL, "PUT", body_str, 15, 2);
+    free(body_str);
+    if (!tool_api_success(r)) {
+        char *err = json_errorf("Ban failed: %s", r->error ? r->error : "unknown");
+        tool_api_result_free(r); return err; }
+    json_t *result = json_object();
+    json_set(result, "success", json_bool(true));
+    char msg2[128];
+    snprintf(msg2, sizeof(msg2), "User %s banned from guild %s", user_id, guild_id);
+    json_set(result, "message", json_string(msg2));
+    char *s = json_serialize(result); json_free(result); tool_api_result_free(r);
+    return s;
+}
+
+/* ================================================================
  *  Main handler — action dispatch
  * ================================================================ */
 
@@ -256,10 +405,15 @@ char *discord_handler(const char *args_json, const char *task_id) {
         return json_error("Missing 'action' field");
     }
 
-    const char *guild_id  = json_get_str(args, "guild_id", NULL);
+    const char *guild_id   = json_get_str(args, "guild_id", NULL);
     const char *channel_id = json_get_str(args, "channel_id", NULL);
-    const char *content   = json_get_str(args, "content", NULL);
-    int limit = (int)json_get_num(args, "limit", 50);
+    const char *content    = json_get_str(args, "content", NULL);
+    const char *user_id    = json_get_str(args, "user_id", NULL);
+    const char *reason     = json_get_str(args, "reason", NULL);
+    const char *message_id = json_get_str(args, "message_id", NULL);
+    const char *name       = json_get_str(args, "name", NULL);
+    int    limit           = (int)json_get_num(args, "limit", 50);
+    int    channel_type    = (int)json_get_num(args, "type", 0); /* 0=text */
 
     char *result = NULL;
 
@@ -274,6 +428,18 @@ char *discord_handler(const char *args_json, const char *task_id) {
         if (!guild_id) result = json_error("guild_id required");
         else result = list_channels(guild_id);
     }
+    else if (strcmp(action, "channel_info") == 0) {
+        if (!channel_id) result = json_error("channel_id required");
+        else result = channel_info(channel_id);
+    }
+    else if (strcmp(action, "list_roles") == 0) {
+        if (!guild_id) result = json_error("guild_id required");
+        else result = list_roles(guild_id);
+    }
+    else if (strcmp(action, "member_info") == 0) {
+        if (!guild_id || !user_id) result = json_error("guild_id and user_id required");
+        else result = member_info(guild_id, user_id);
+    }
     else if (strcmp(action, "send_message") == 0) {
         if (!channel_id) result = json_error("channel_id required");
         else if (!content) result = json_error("content required for send_message");
@@ -282,6 +448,23 @@ char *discord_handler(const char *args_json, const char *task_id) {
     else if (strcmp(action, "fetch_messages") == 0) {
         if (!channel_id) result = json_error("channel_id required");
         else result = fetch_messages(channel_id, limit);
+    }
+    else if (strcmp(action, "delete_message") == 0) {
+        if (!channel_id || !message_id) result = json_error("channel_id and message_id required");
+        else result = delete_message(channel_id, message_id);
+    }
+    /* Admin actions */
+    else if (strcmp(action, "create_channel") == 0) {
+        if (!guild_id || !name) result = json_error("guild_id and name required");
+        else result = create_channel(guild_id, name, channel_type);
+    }
+    else if (strcmp(action, "kick_member") == 0) {
+        if (!guild_id || !user_id) result = json_error("guild_id and user_id required");
+        else result = kick_member(guild_id, user_id);
+    }
+    else if (strcmp(action, "ban_member") == 0) {
+        if (!guild_id || !user_id) result = json_error("guild_id and user_id required");
+        else result = ban_member(guild_id, user_id, reason);
     }
     else {
         result = json_errorf("Unknown discord action: %s", action);
@@ -299,26 +482,35 @@ void registry_init_discord(void) {
     registry_register(
         "discord",
         "Interact with Discord servers via the REST API. "
-        "Actions: list_guilds, guild_info, list_channels, "
-        "send_message, fetch_messages. "
+        "Actions: list_guilds, guild_info, list_channels, channel_info, "
+        "list_roles, member_info, send_message, fetch_messages, "
+        "delete_message, create_channel, kick_member, ban_member. "
         "Requires DISCORD_BOT_TOKEN env var.",
         "{\"type\":\"object\",\"properties\":{"
           "\"action\":{\"type\":\"string\",\"description\":\"Action to execute\","
             "\"enum\":[\"list_guilds\",\"guild_info\",\"list_channels\","
-                     "\"send_message\",\"fetch_messages\"]},"
+                     "\"channel_info\",\"list_roles\",\"member_info\","
+                     "\"send_message\",\"fetch_messages\",\"delete_message\","
+                     "\"create_channel\",\"kick_member\",\"ban_member\"]},"
           "\"guild_id\":{\"type\":\"string\",\"description\":\"Discord guild/server ID\"},"
           "\"channel_id\":{\"type\":\"string\",\"description\":\"Discord channel ID\"},"
-          "\"content\":{\"type\":\"string\",\"description\":\"Message content (for send_message)\"},"
-          "\"limit\":{\"type\":\"integer\",\"description\":\"Max messages (fetch_messages, max 100)\",\"default\":50}"
+          "\"user_id\":{\"type\":\"string\",\"description\":\"Discord user ID\"},"
+          "\"content\":{\"type\":\"string\",\"description\":\"Message content\"},"
+          "\"message_id\":{\"type\":\"string\",\"description\":\"Message ID for delete_message\"},"
+          "\"name\":{\"type\":\"string\",\"description\":\"Channel name (create_channel)\"},"
+          "\"reason\":{\"type\":\"string\",\"description\":\"Ban reason\"},"
+          "\"limit\":{\"type\":\"integer\",\"description\":\"Max messages\",\"default\":50},"
+          "\"type\":{\"type\":\"integer\",\"description\":\"Channel type 0=text 2=voice 4=category\",\"default\":0}"
         "},\"required\":[\"action\"]}",
         discord_handler
     );
     registry_set_timeout("discord", 30);
 
-    /* Also register under discord_tool name for backward compat */
+    /* Also register discord_admin for admin-specific actions */
     registry_register(
-        "discord_send",
-        "Send a message to a Discord channel. Action=send_message.",
+        "discord_admin",
+        "Manage a Discord server: create_channel, kick_member, ban_member. "
+        "Requires DISCORD_BOT_TOKEN and appropriate permissions.",
         NULL,
         discord_handler
     );
