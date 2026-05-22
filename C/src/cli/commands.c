@@ -10,6 +10,10 @@
 #include <time.h>
 #include <dlfcn.h>
 
+/* Tool handler declarations (used by session commands) */
+extern char *session_search_handler(const char *args_json, const char *task_id);
+extern char *session_crud_handler(const char *args_json, const char *task_id);
+
 /* Forward declarations of handlers */
 static void cmd_help(const char *args, agent_state_t *state);
 static void cmd_exit(const char *args, agent_state_t *state);
@@ -83,6 +87,8 @@ static void cmd_debug(const char *args, agent_state_t *state);
 static void cmd_voice(const char *args, agent_state_t *state);
 static void cmd_steer(const char *args, agent_state_t *state);
 static void cmd_kanban(const char *args, agent_state_t *state);
+static void cmd_session_search(const char *args, agent_state_t *state);
+static void cmd_session_export(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -167,6 +173,8 @@ static const command_def_t COMMANDS[] = {
     {"/kanban",  NULL,    "Kanban board management: /kanban [show|list|create]", cmd_kanban},
     {"/update",  NULL,    "Update Hermes Agent to the latest version",     cmd_update},
     {"/debug",   NULL,    "Upload debug report and get shareable link",     cmd_debug},
+    {"/session-search", NULL, "Search sessions: /session-search <query> [--limit N]", cmd_session_search},
+    {"/session-export", NULL, "Export session: /session-export <session_id> [json|markdown]", cmd_session_export},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -2143,4 +2151,178 @@ static void cmd_kanban(const char *args, agent_state_t *state) {
     } else {
         printf("Unknown kanban subcommand: %s\n", sub);
     }
+}
+
+/* ================================================================
+ *  H31: /session-search — search past sessions
+ * ================================================================ */
+static void cmd_session_search(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !*args) {
+        printf("Usage: /session-search <query> [--limit N]\n");
+        printf("Search past conversation sessions for matching content.\n");
+        return;
+    }
+
+    /* Build search args JSON */
+    char query[512];
+    int limit = 10;
+    const char *p = args;
+    while (*p == ' ') p++;
+
+    /* Check for --limit option */
+    const char *limit_marker = strstr(p, "--limit");
+    if (limit_marker) {
+        limit = atoi(limit_marker + 7);
+        if (limit < 1) limit = 1;
+        if (limit > 100) limit = 100;
+        /* Truncate query at limit marker */
+        size_t qlen = (size_t)(limit_marker - p);
+        if (qlen > sizeof(query) - 1) qlen = sizeof(query) - 1;
+        memcpy(query, p, qlen);
+        query[qlen] = '\0';
+        /* Trim trailing space */
+        while (qlen > 0 && query[qlen - 1] == ' ') query[--qlen] = '\0';
+    } else {
+        snprintf(query, sizeof(query), "%s", p);
+    }
+
+    if (!query[0]) {
+        printf("Usage: /session-search <query> [--limit N]\n");
+        return;
+    }
+
+    /* Build JSON args */
+    char args_json[1024];
+    snprintf(args_json, sizeof(args_json),
+             "{\"query\":\"%s\",\"limit\":%d}", query, limit);
+
+    /* Call session search handler */
+    char *result = session_search_handler(args_json, NULL);
+    if (!result) {
+        printf("Search failed.\n");
+        return;
+    }
+
+    /* Parse and display */
+    char *err = NULL;
+    json_node_t *root = json_parse(result, &err);
+    free(result);
+    if (!root) {
+        printf("Error parsing search results: %s\n", err ? err : "unknown");
+        free(err);
+        return;
+    }
+
+    const char *err_str = json_object_get_string(root, "error", NULL);
+    if (err_str) {
+        printf("Search error: %s\n", err_str);
+        json_free(root);
+        return;
+    }
+
+    int count = (int)json_object_get_number(root, "count", 0);
+    int total = (int)json_object_get_number(root, "total_matches", 0);
+
+    printf("Session search results (%d shown, %d total matches):\n", count, total);
+
+    json_node_t *results = json_object_get(root, "results");
+    if (results) {
+        size_t n = json_array_count(results);
+        for (size_t i = 0; i < n; i++) {
+            json_node_t *s = json_array_get(results, i);
+            if (!s) continue;
+            const char *sid = json_object_get_string(s, "session_id", "?");
+            double score = json_object_get_number(s, "score", 0.0);
+            const char *snippet = json_object_get_string(s, "snippet", "");
+            printf("\n  #%zu: %s (score %.1f)\n", i + 1, sid, score);
+            printf("       %.*s\n", 120, snippet);
+        }
+    }
+
+    json_free(root);
+}
+
+/* ================================================================
+ *  H32: /session-export — export a session to JSON or Markdown
+ * ================================================================ */
+static void cmd_session_export(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !*args) {
+        printf("Usage: /session-export <session_id> [json|markdown]\n");
+        printf("Export a saved session. Default format: markdown\n");
+        return;
+    }
+
+    /* Parse: session_id [format] */
+    char session_id[256] = "";
+    char format[32] = "markdown";
+    const char *p = args;
+    while (*p == ' ') p++;
+
+    /* Read first word (session_id) */
+    const char *space = strchr(p, ' ');
+    if (space) {
+        size_t id_len = (size_t)(space - p);
+        if (id_len > sizeof(session_id) - 1) id_len = sizeof(session_id) - 1;
+        memcpy(session_id, p, id_len);
+        session_id[id_len] = '\0';
+        /* Read format */
+        const char *fmt = space + 1;
+        while (*fmt == ' ') fmt++;
+        if (*fmt)
+            snprintf(format, sizeof(format), "%s", fmt);
+    } else {
+        snprintf(session_id, sizeof(session_id), "%s", p);
+    }
+
+    if (!session_id[0]) {
+        printf("Usage: /session-export <session_id> [json|markdown]\n");
+        return;
+    }
+
+    /* Determine export operation */
+    const char *op = (strcmp(format, "json") == 0) ? "export_json" : "export_markdown";
+
+    /* Build args JSON */
+    char args_json[1024];
+    snprintf(args_json, sizeof(args_json),
+             "{\"operation\":\"%s\",\"session_id\":\"%s\"}", op, session_id);
+
+    /* Call session CRUD handler */
+    char *result = session_crud_handler(args_json, NULL);
+    if (!result) {
+        printf("Export failed.\n");
+        return;
+    }
+
+    /* Parse result */
+    char *err = NULL;
+    json_node_t *root = json_parse(result, &err);
+    free(result);
+    if (!root) {
+        printf("Error parsing export result: %s\n", err ? err : "unknown");
+        free(err);
+        return;
+    }
+
+    const char *err_str = json_object_get_string(root, "error", NULL);
+    if (err_str) {
+        printf("Export error: %s\n", err_str);
+        json_free(root);
+        return;
+    }
+
+    const char *content = json_object_get_string(root, "content", NULL);
+    if (!content) {
+        content = json_object_get_string(root, "data", NULL);
+    }
+
+    if (content) {
+        printf("%s\n", content);
+    } else {
+        printf("Session '%s' not found or empty.\n", session_id);
+    }
+
+    json_free(root);
 }
