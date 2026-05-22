@@ -1726,9 +1726,14 @@ static void cmd_reload(const char *args, agent_state_t *state) {
 
 /* /rollback: List or restore state snapshots */
 static void cmd_rollback(const char *args, agent_state_t *state) {
-    (void)state;
     if (args && args[0]) {
-        printf("Rollback to snapshot: %s (not implemented yet)\n", args);
+        /* Restore to named checkpoint */
+        if (checkpoint_restore(&state->checkpoints, state, args)) {
+            printf("Rolled back to snapshot: %s (%zu messages).\n",
+                   args, state->message_count);
+        } else {
+            printf("Snapshot not found: %s. Use /rollback to list available snapshots.\n", args);
+        }
         return;
     }
     /* List snapshots from session DB */
