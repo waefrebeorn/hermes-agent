@@ -1778,13 +1778,59 @@ static void cmd_toolsets(const char *args, agent_state_t *state) {
 
 /* /skills: List installed skills */
 static void cmd_skills(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
+    (void)state;
     const char *home = getenv("SLERMES_HOME");
     if (!home) home = getenv("HOME");
     char skills_dir[512];
     if (home) snprintf(skills_dir, sizeof(skills_dir), "%s/.slermes/skills", home);
     printf("Skills directory: %s\n", skills_dir);
-    printf("Skills management: use skill_view/skill_manage tools\n");
+
+    if (args && args[0]) {
+        /* Parse subcommand */
+        char cmd[128], arg[256];
+        cmd[0] = arg[0] = '\0';
+        if (sscanf(args, "%127s %255[^\n]", cmd, arg) < 1) {
+            printf("Usage: /skills [search-hub <query> | install <slug>]\n");
+            return;
+        }
+
+        if (strcmp(cmd, "search-hub") == 0 || strcmp(cmd, "search") == 0) {
+            size_t count = 0;
+            skill_search_result_t *sr = skill_search_hub(arg, &count, 20);
+            if (!sr || count == 0) {
+                printf("No results from browse.sh hub.\n");
+                if (sr) skill_search_hub_free(sr, count);
+                return;
+            }
+            printf("Browse.sh hub results (%zu):\n", count);
+            for (size_t i = 0; i < count; i++)
+                printf("  %s  (slug: %s, score: %.2f)\n",
+                       sr[i].name, sr[i].path + 10, sr[i].score);
+            skill_search_hub_free(sr, count);
+
+        } else if (strcmp(cmd, "install") == 0) {
+            if (!arg[0]) {
+                printf("Usage: /skills install <slug>\n");
+                return;
+            }
+            char error[512] = "";
+            bool ok = skill_install_from_hub(arg, error, sizeof(error));
+            if (ok)
+                printf("Installed '%s' from browse.sh hub.\n", arg);
+            else
+                printf("Failed: %s\n", error);
+
+        } else {
+            printf("Unknown subcommand '%s'. Use: search-hub <query> | install <slug>\n", cmd);
+        }
+        return;
+    }
+
+    printf("Skills management:\n");
+    printf("  /skills search-hub <query>   — Search browse.sh skills hub\n");
+    printf("  /skills install <slug>       — Install skill from browse.sh hub\n");
+    printf("  /skills list                 — List local skills\n");
+    printf("  Use skill_view/skill_manage tools for detailed management.\n");
 }
 
 /* /cron: Manage scheduled tasks */

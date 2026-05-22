@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_yaml.h"
+#include "hermes_http.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1957,7 +1958,8 @@ static const char *SCHEMA_SEARCH = "{"
     "\"properties\":{"
       "\"query\":{\"type\":\"string\",\"description\":\"Text search query\"},"
       "\"tags\":{\"type\":\"string\",\"description\":\"Tag filter (comma-separated, AND logic)\"},"
-      "\"max_results\":{\"type\":\"number\",\"description\":\"Max results (default 20)\"}"
+      "\"max_results\":{\"type\":\"number\",\"description\":\"Max results (default 20)\"},"
+      "\"hub\":{\"type\":\"boolean\",\"description\":\"Also search browse.sh skills hub\"}"
     "},"
     "\"required\":[]"
 "}";
@@ -1968,6 +1970,7 @@ char *skills_search_handler(const char *args_json, const char *task_id) {
     const char *query = NULL;
     const char *tags = NULL;
     size_t max_results = 20;
+    bool search_hub = false;
 
     if (args_json && *args_json) {
         char *err = NULL;
@@ -1976,30 +1979,52 @@ char *skills_search_handler(const char *args_json, const char *task_id) {
             query = json_get_str(args, "query", NULL);
             tags = json_get_str(args, "tags", NULL);
             max_results = (size_t)json_get_num(args, "max_results", 20);
+            search_hub = json_get_num(args, "hub", 0) > 0.0;
             json_free(args);
         }
         free(err);
     }
 
     json_node_t *result = json_new_object();
-    size_t count = 0;
-    skill_search_result_t *sr = skill_search(query, tags, &count, max_results);
+
+    /* Local search */
+    size_t local_count = 0;
+    skill_search_result_t *sr = skill_search(query, tags, &local_count, max_results);
 
     json_set(result, "query", json_new_string(query ? query : ""));
     json_set(result, "tag_filter", json_new_string(tags ? tags : ""));
-    json_set(result, "count", json_new_number((double)count));
+    json_set(result, "count", json_new_number((double)local_count));
 
     json_node_t *arr = json_new_array();
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < local_count; i++) {
         json_node_t *s = json_new_object();
         json_set(s, "name", json_new_string(sr[i].name));
         json_set(s, "path", json_new_string(sr[i].path));
         json_set(s, "score", json_new_number((double)sr[i].score));
+        json_set(s, "source", json_new_string("local"));
         json_append(arr, s);
     }
-    json_set(result, "results", arr);
+    skill_search_free(sr, local_count);
 
-    skill_search_free(sr, count);
+    /* Hub search */
+    size_t hub_count = 0;
+    skill_search_result_t *hub_results = NULL;
+    if (search_hub) {
+        hub_results = skill_search_hub(query, &hub_count, max_results);
+        for (size_t i = 0; i < hub_count; i++) {
+            json_node_t *s = json_new_object();
+            json_set(s, "name", json_new_string(hub_results[i].name));
+            json_set(s, "path", json_new_string(hub_results[i].path));
+            json_set(s, "score", json_new_number((double)hub_results[i].score));
+            json_set(s, "source", json_new_string("browse-sh"));
+            json_append(arr, s);
+        }
+        skill_search_hub_free(hub_results, hub_count);
+    }
+
+    json_set(result, "results", arr);
+    json_set(result, "hub_count", json_new_number((double)hub_count));
+
     char *out = json_serialize(result);
     json_free(result);
     return out;
@@ -2176,6 +2201,239 @@ static const char *SCHEMA_LIST = "{"
     "\"required\":[]"
 "}";
 
+/* L12: Hub handler — search + install browse.sh skills */
+static char *skills_hub_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_node_t *result = json_new_object();
+    if (!result) return strdup("{\"error\":\"OOM\"}");
+
+    const char *action = "";
+    const char *query = "";
+    const char *slug = "";
+    size_t limit = 20;
+
+    if (args_json && *args_json) {
+        char *err = NULL;
+        json_node_t *args = json_parse(args_json, &err);
+        if (args) {
+            action  = json_get_str(args, "action", "");
+            query   = json_get_str(args, "query", "");
+            slug    = json_get_str(args, "slug", "");
+            limit   = (size_t)json_get_num(args, "limit", 20);
+            json_free(args);
+        }
+        free(err);
+    }
+
+    if (strcmp(action, "search") == 0 || strcmp(action, "list") == 0) {
+        size_t count = 0;
+        skill_search_result_t *sr = skill_search_hub(
+            strcmp(action, "list") == 0 ? "" : query, &count, limit);
+        json_set(result, "count", json_new_number((double)count));
+        json_set(result, "action", json_new_string(action));
+        json_node_t *arr = json_new_array();
+        for (size_t i = 0; i < count; i++) {
+            json_node_t *s = json_new_object();
+            json_set(s, "name", json_new_string(sr[i].name));
+            json_set(s, "path", json_new_string(sr[i].path));
+            json_set(s, "score", json_new_number((double)sr[i].score));
+            json_append(arr, s);
+        }
+        json_set(result, "results", arr);
+        skill_search_hub_free(sr, count);
+
+    } else if (strcmp(action, "install") == 0) {
+        char error[512] = "";
+        bool ok = skill_install_from_hub(slug, error, sizeof(error));
+        json_set(result, "success", json_new_bool(ok));
+        json_set(result, "slug", json_new_string(slug));
+        if (!ok && error[0])
+            json_set(result, "error", json_new_string(error));
+
+    } else {
+        json_set(result, "error", json_new_string(
+            "Unknown action. Use: search <query>, install <slug>, list"));
+    }
+
+    char *out = json_serialize(result);
+    json_free(result);
+    return out;
+}
+
+/* ================================================================
+ *  L12: Browse.sh skills hub — search and install
+ * ================================================================ */
+
+#define BROWSE_SH_CATALOG_URL "https://browse.sh/api/skills"
+#define BROWSE_SH_TIMEOUT     15
+
+static json_node_t *hub_fetch(const char *url) {
+    http_client_t *h = http_client_new(BROWSE_SH_TIMEOUT);
+    if (!h) return NULL;
+    http_response_t *resp = http_get(h, url,
+        "Accept: application/json\r\n"
+        "User-Agent: Hermes-C/1.0");
+    if (!resp || resp->status != 200) {
+        if (resp) http_response_free(resp);
+        http_client_free(h);
+        return NULL;
+    }
+    char *err = NULL;
+    json_node_t *root = json_parse(resp->body, &err);
+    http_response_free(resp);
+    http_client_free(h);
+    free(err);
+    return root;
+}
+
+static char *hub_fetch_raw(const char *url) {
+    http_client_t *h = http_client_new(BROWSE_SH_TIMEOUT);
+    if (!h) return NULL;
+    http_response_t *resp = http_get(h, url, "User-Agent: Hermes-C/1.0");
+    if (!resp || resp->status != 200) {
+        if (resp) http_response_free(resp);
+        http_client_free(h);
+        return NULL;
+    }
+    char *body = strdup(resp->body ? resp->body : "");
+    http_response_free(resp);
+    http_client_free(h);
+    return body;
+}
+
+skill_search_result_t *skill_search_hub(const char *query,
+                                         size_t *result_count, size_t max_results) {
+    *result_count = 0;
+    if (!query) query = "";
+    if (max_results == 0) max_results = 20;
+
+    json_node_t *root = hub_fetch(BROWSE_SH_CATALOG_URL);
+    if (!root) return NULL;
+
+    json_node_t *skills_arr = json_object_get(root, "skills");
+    if (!skills_arr || json_len(skills_arr) == 0) {
+        json_free(root); return NULL;
+    }
+
+    skill_search_result_t *results = (skill_search_result_t *)
+        calloc(max_results, sizeof(skill_search_result_t));
+    if (!results) { json_free(root); return NULL; }
+
+    size_t count = 0;
+    size_t total = (size_t)json_len(skills_arr);
+    int qlen = (int)strlen(query);
+
+    for (size_t i = 0; i < total && count < max_results; i++) {
+        json_node_t *item = json_get(skills_arr, (int)i);
+        if (!item) continue;
+
+        const char *slug    = json_get_str(item, "slug", "");
+        const char *name    = json_get_str(item, "name", "");
+        const char *title   = json_get_str(item, "title", "");
+        const char *desc    = json_get_str(item, "description", "");
+        const char *host    = json_get_str(item, "hostname", "");
+        const char *cat     = json_get_str(item, "category", "");
+
+        if (!slug[0] || !name[0]) continue;
+
+        float score = 0.0f;
+        if (qlen == 0) {
+            score = 0.5f;
+        } else {
+            if      (strcasecmp(name, query) == 0) score = 1.0f;
+            else if (strstr(name, query))          score = 0.9f;
+            else if (strstr(title, query))         score = 0.8f;
+            else if (strstr(host, query))          score = 0.6f;
+            else if (strstr(cat, query))           score = 0.5f;
+            else if (strstr(desc, query))          score = 0.4f;
+            else {
+                json_node_t *tags = json_object_get(item, "tags");
+                if (tags && json_len(tags) > 0) {
+                    for (size_t t = 0; t < json_len(tags); t++) {
+                        json_t *tag_node = json_get(tags, t);
+                        const char *tag = (tag_node && tag_node->type == JSON_STRING) ? tag_node->str_val : "";
+                        if (tag[0] && strstr(tag, query)) { score = 0.7f; break; }
+                    }
+                }
+            }
+        }
+
+        if (score > 0.0f) {
+            snprintf(results[count].name, sizeof(results[count].name), "%s", name);
+            snprintf(results[count].path, sizeof(results[count].path), "browse.sh/%s", slug);
+            results[count].score = score;
+            count++;
+        }
+    }
+
+    json_free(root);
+    *result_count = count;
+    return results;
+}
+
+void skill_search_hub_free(skill_search_result_t *results, size_t count) {
+    (void)count;
+    free(results);
+}
+
+bool skill_install_from_hub(const char *slug, char *error_out, size_t err_sz) {
+    if (!slug || !slug[0]) {
+        if (error_out) snprintf(error_out, err_sz, "No slug provided");
+        return false;
+    }
+
+    char detail_url[1024];
+    snprintf(detail_url, sizeof(detail_url),
+             "https://browse.sh/api/skills/%s", slug);
+    json_node_t *detail = hub_fetch(detail_url);
+    if (!detail) {
+        if (error_out) snprintf(error_out, err_sz, "Failed to fetch '%s'", slug);
+        return false;
+    }
+
+    const char *skill_md_url = json_get_str(detail, "skillMdUrl", "");
+    const char *name = json_get_str(detail, "name", slug);
+    if (!skill_md_url[0]) {
+        if (error_out) snprintf(error_out, err_sz, "No skillMdUrl for '%s'", slug);
+        json_free(detail);
+        return false;
+    }
+    json_free(detail);
+
+    char *content = hub_fetch_raw(skill_md_url);
+    if (!content) {
+        if (error_out) snprintf(error_out, err_sz, "Failed to fetch SKILL.md");
+        return false;
+    }
+
+    const char *home = getenv("HERMES_HOME");
+    if (!home) home = getenv("HOME");
+    if (!home) home = "/tmp";
+
+    char skills_dir[HERMES_PATH_MAX];
+    snprintf(skills_dir, sizeof(skills_dir), "%s/.hermes/skills/%s", home, name);
+    ensure_dir(skills_dir);
+
+    char skillmd_path[HERMES_PATH_MAX];
+    snprintf(skillmd_path, sizeof(skillmd_path), "%s/SKILL.md", skills_dir);
+    FILE *f = fopen(skillmd_path, "w");
+    if (!f) {
+        if (error_out) snprintf(error_out, err_sz, "Cannot write %s", skillmd_path);
+        free(content);
+        return false;
+    }
+    fputs(content, f);
+    fclose(f);
+    free(content);
+
+    char prov_path[HERMES_PATH_MAX];
+    snprintf(prov_path, sizeof(prov_path), "%s/.provenance", skills_dir);
+    FILE *pf = fopen(prov_path, "w");
+    if (pf) { fprintf(pf, "hub\n"); fclose(pf); }
+
+    return true;
+}
+
 /* ================================================================
  *  Auto-registration
  * ================================================================ */
@@ -2234,4 +2492,20 @@ void registry_init_skills(void) {
     registry_register("skills_list",
         "List available Hermes skills. Returns array of skill names from the skills directory.",
         SCHEMA_LIST, skills_list_handler);
+
+    /* L12: Browse.sh skills hub */
+    registry_register("skill_hub",
+        "Search and install skills from the browse.sh skills hub. "
+        "Actions: search <query>, install <slug>, or list all.",
+        "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"action\":{\"type\":\"string\",\"description\":\"search | install\"},"
+          "\"query\":{\"type\":\"string\",\"description\":\"Search query (for search action)\"},"
+          "\"slug\":{\"type\":\"string\",\"description\":\"Skill slug (for install action)\"},"
+          "\"limit\":{\"type\":\"number\",\"description\":\"Max results (default 20)\"}"
+        "},"
+        "\"required\":[\"action\"]"
+        "}",
+        skills_hub_handler);
 }

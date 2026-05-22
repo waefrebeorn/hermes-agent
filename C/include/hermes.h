@@ -1326,8 +1326,14 @@ size_t skill_cache_count(void);
 
 /* P186: Search skills */
 skill_search_result_t *skill_search(const char *query, const char *tag_filter,
-                                      size_t *result_count, size_t max_results);
+                                     size_t *result_count, size_t max_results);
 void skill_search_free(skill_search_result_t *results, size_t count);
+
+/* L12: Browse.sh skills hub — search and install */
+skill_search_result_t *skill_search_hub(const char *query,
+                                         size_t *result_count, size_t max_results);
+void skill_search_hub_free(skill_search_result_t *results, size_t count);
+bool skill_install_from_hub(const char *slug, char *error_out, size_t err_sz);
 
 /* P187: Curator — stale detection and auto-update */
 bool skill_curator_run(char *report_out, size_t report_sz);
