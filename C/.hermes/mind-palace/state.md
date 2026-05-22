@@ -16,7 +16,7 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
+|| **Tests** | 36 | 61% | **61 files, 2,000+ assertions** (102 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 || **Build/doc** | 3 | **86%** | Docker, CI, cross-compile, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file perms, O11 vault, O05 release, **O12 audit rotation** |
@@ -64,6 +64,13 @@
 - ✅ Fix: added missing `#include <unistd.h>` for `unlink()`
 - ◀ **Build/doc: 83%→86%** (1 gap closed: O12)
 - ◀ **Suite: 101/0/0** (+1 test, 11 assertions; was 100/0/0)
+
+### Session 2026-05-26 — exec_code tool test (M41)
+
+- ✅ **test_exec_code.c** — 16 assertions: stdout capture, NULL/empty code, multi-line, stderr redirect, exit code 0
+- ✅ Self-contained test (no library deps), exercises Python subprocess invocation like real exec_code_handler
+- ◀ **Tests: 60%→61%** (1 gap closed: M41)
+- ◀ **Suite: 102/0/0** (+1 test, 16 assertions; was 101/0/0)
 
 ### Session 2026-05-26 — Release automation (O05)
 

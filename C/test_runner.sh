@@ -213,6 +213,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "audit_rotate (compilation failed)"
 fi
 
+# exec_code tool test (M41 — self-contained, no deps)
+echo ""; echo "=== exec_code Tool Tests (M41) ==="
+run_lib_test "exec_code" "tests/test_exec_code.c" "." ""
+
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \
