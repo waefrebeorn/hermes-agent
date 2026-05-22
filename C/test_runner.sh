@@ -387,6 +387,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "terminal_tool (compilation failed)"
 fi
 
+# Clarify tool test (M40 — needs clarify.c + json, stdin for response)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_clarify.c" \
+    "$CDIR/src/tools/clarify.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_clarify -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if echo "answer" | /tmp/hermes_test_clarify > /dev/null 2>&1; then ok "clarify_tool (9 tests)"
+    else fail "clarify_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_clarify
+else skip "clarify_tool (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
