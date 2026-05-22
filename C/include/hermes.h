@@ -127,6 +127,8 @@ typedef struct {
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
+    char  azure_deployment_id[128]; /* B37: Azure deployment name override */
+    char  azure_api_version[32];   /* B38: Azure API version override */
     int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
     char  fallback_model[128];     /* model to fallback to on error */
     char  fallback_providers[1024]; /* comma-separated fallback providers */
@@ -338,6 +340,8 @@ typedef struct {
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
+    char  azure_deployment_id[128]; /* B37: Azure deployment name override (default: model name) */
+    char  azure_api_version[32];   /* B38: Azure API version override (default: 2024-10-01-preview) */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */
 } provider_config_t;

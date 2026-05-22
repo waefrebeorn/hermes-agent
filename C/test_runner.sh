@@ -143,6 +143,40 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "provider_metadata (compilation failed)"
 fi
 
+# Azure provider depth test (B37-B38: deployment_id + api_version)
+echo ""; echo "=== Azure Provider Depth Tests (B37-B38) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_azure_depth.c" \
+    "$CDIR/src/agent/provider_azure.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_azure_depth > /dev/null 2>&1; then ok "azure_depth (9 tests)"
+    else
+        echo "  Azure depth test output:"
+        /tmp/hermes_test_azure_depth 2>&1 | sed 's/^/    /'
+        fail "azure_depth (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_azure_depth
+else
+    echo "  Azure depth test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_azure_depth.c" \
+        "$CDIR/src/agent/provider_azure.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "azure_depth (compilation failed)"
+fi
+
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_smoke.c" \

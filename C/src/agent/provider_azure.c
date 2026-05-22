@@ -22,17 +22,25 @@ static char *azure_build_url(const provider_t *p, const char *base_url) {
     if (!base_url || !*base_url)
         base_url = "https://your-resource.openai.azure.com";
 
-    const char *deploy = p->model[0] ? p->model : "gpt-4o";
+    /* B37: Azure deployment_id — config override, else model name, else default */
+    const char *deploy = p->config.azure_deployment_id[0]
+        ? p->config.azure_deployment_id
+        : (p->model[0] ? p->model : "gpt-4o");
+
+    /* B38: Azure api_version — config override, else default */
+    const char *api_ver = p->config.azure_api_version[0]
+        ? p->config.azure_api_version
+        : AZURE_DEFAULT_API_VERSION;
 
     size_t base_len = strlen(base_url);
     while (base_len > 0 && base_url[base_len-1] == '/') base_len--;
 
-    size_t url_len = base_len + strlen(deploy) + 64;
+    size_t url_len = base_len + strlen(deploy) + 96;
     char *url = (char *)malloc(url_len);
     if (!url) return NULL;
 
     snprintf(url, url_len, "%.*s/openai/deployments/%s/chat/completions?api-version=%s",
-             (int)base_len, base_url, deploy, AZURE_DEFAULT_API_VERSION);
+             (int)base_len, base_url, deploy, api_ver);
     return url;
 }
 

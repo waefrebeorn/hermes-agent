@@ -366,6 +366,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.n = 1;
     cfg->provider_cfg.top_k = 0;
     cfg->provider_cfg.candidate_count = 0;
+    cfg->provider_cfg.azure_deployment_id[0] = '\0';
+    cfg->provider_cfg.azure_api_version[0] = '\0';
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -845,6 +847,14 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* L05: extra_body — arbitrary JSON to merge into request body */
     const char *extra = yaml_get_string(doc, "agent.extra_body");
     if (extra) snprintf(cfg->provider_cfg.extra_body, sizeof(cfg->provider_cfg.extra_body), "%s", extra);
+
+    /* B37-B38: Azure provider depth — deployment_id + api_version */
+    const char *az_deploy = yaml_get_string(doc, "azure.deployment_id");
+    if (az_deploy) snprintf(cfg->provider_cfg.azure_deployment_id,
+                             sizeof(cfg->provider_cfg.azure_deployment_id), "%s", az_deploy);
+    const char *az_ver = yaml_get_string(doc, "azure.api_version");
+    if (az_ver) snprintf(cfg->provider_cfg.azure_api_version,
+                          sizeof(cfg->provider_cfg.azure_api_version), "%s", az_ver);
 
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
@@ -1571,6 +1581,12 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_EXTRA_BODY");
     if (v) snprintf(cfg->provider_cfg.extra_body, sizeof(cfg->provider_cfg.extra_body), "%s", v);
+
+    /* B37: Azure deployment_id env var */
+    v = getenv("HERMES_AZURE_DEPLOYMENT_ID");
+    if (v) snprintf(cfg->provider_cfg.azure_deployment_id, sizeof(cfg->provider_cfg.azure_deployment_id), "%s", v);
+    v = getenv("HERMES_AZURE_API_VERSION");
+    if (v) snprintf(cfg->provider_cfg.azure_api_version, sizeof(cfg->provider_cfg.azure_api_version), "%s", v);
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
@@ -2322,6 +2338,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "model.candidate_count", def.provider_cfg.candidate_count, active->provider_cfg.candidate_count);
     diff_bool(diff, "model.json_mode", def.provider_cfg.json_mode, active->provider_cfg.json_mode);
     diff_str(diff, "model.safety_settings", def.provider_cfg.safety_settings, active->provider_cfg.safety_settings);
+    diff_str(diff, "azure.deployment_id", def.provider_cfg.azure_deployment_id, active->provider_cfg.azure_deployment_id);
+    diff_str(diff, "azure.api_version", def.provider_cfg.azure_api_version, active->provider_cfg.azure_api_version);
     diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
 
     /* Display group */
@@ -2498,6 +2516,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_bool(f, "  parallel_tool_calls", cfg->provider_cfg.parallel_tool_calls);
     exp_int(f, "  max_tool_calls", cfg->provider_cfg.max_tool_calls);
     exp_int(f, "  n", cfg->provider_cfg.n);
+    exp_str(f, "  azure_deployment_id", cfg->provider_cfg.azure_deployment_id);
+    exp_str(f, "  azure_api_version", cfg->provider_cfg.azure_api_version);
     exp_bool(f, "  supports_vision", cfg->provider_cfg.supports_vision);
 
     fprintf(f, "\ndisplay:\n");
