@@ -364,6 +364,7 @@ typedef struct {
     bool  bedrock_trace_enabled;         /* B41: Bedrock trace header */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */
+    int   deepseek_cache_ttl;      /* B33: DeepSeek context cache TTL in seconds (-1=disabled, 0=default 300) */
 } provider_config_t;
 
 /* ================================================================

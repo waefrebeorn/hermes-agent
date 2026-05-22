@@ -229,6 +229,87 @@ int main(void) {
              provider_fim(&p, NULL, NULL, 50) == NULL);
     }
 
+    /* ──────────── B33: Context Caching ──────────── */
+
+    printf("\n--- Context Caching (B33) ---\n");
+
+    {
+        /* Default TTL = 300 (from provider config default 0) */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = 0;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "sk-test-key");
+        TEST("B33: default TTL includes x-ds-cache-ttl header",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl") != NULL);
+        TEST("B33: default TTL value is 300",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl: 300") != NULL);
+        TEST("B33: default TTL includes Authorization Bearer",
+             hdrs && strstr(hdrs, "Authorization: Bearer sk-test-key") != NULL);
+        free(hdrs);
+    }
+
+    {
+        /* Custom TTL = 600 */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = 600;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "sk-test-key");
+        TEST("B33: custom TTL 600 is reflected",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl: 600") != NULL);
+        free(hdrs);
+    }
+
+    {
+        /* Custom TTL = 60 (short cache) */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = 60;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "sk-test-key");
+        TEST("B33: custom TTL 60 is reflected",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl: 60") != NULL);
+        free(hdrs);
+    }
+
+    {
+        /* TTL = -1 disables caching (no header) */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = -1;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "sk-test-key");
+        TEST("B33: TTL = -1 omits cache header",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl") == NULL);
+        TEST("B33: no-cache still has Authorization",
+             hdrs && strstr(hdrs, "Authorization:") != NULL);
+        free(hdrs);
+    }
+
+    {
+        /* Empty API key — still includes cache header */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = 0;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "");
+        TEST("B33: no API key still has cache header",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl: 300") != NULL);
+        TEST("B33: no API key has no Authorization",
+             hdrs && strstr(hdrs, "Authorization:") == NULL);
+        free(hdrs);
+    }
+
+    {
+        /* NULL provider — falls back to default TTL=300 */
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(NULL, "sk-test-key");
+        TEST("B33: NULL provider uses default TTL=300",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl: 300") != NULL);
+        free(hdrs);
+    }
+
+    {
+        /* Empty API key with TTL = -1 — no cache header, no auth */
+        provider_t p = {0};
+        p.config.deepseek_cache_ttl = -1;
+        char *hdrs = PROVIDER_OPS_DEEPSEEK.build_headers(&p, "");
+        TEST("B33: no key + disabled cache = no headers",
+             hdrs && strstr(hdrs, "x-ds-cache-ttl") == NULL &&
+             strstr(hdrs, "Authorization:") == NULL);
+        free(hdrs);
+    }
+
     /* ──────────── Summary ──────────── */
 
     printf("\n========================================\n");

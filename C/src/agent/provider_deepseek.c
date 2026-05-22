@@ -42,23 +42,43 @@ static char *deepseek_build_url(const provider_t *p, const char *base_url) {
  * ================================================================ */
 
 static char *deepseek_build_headers(const provider_t *p, const char *api_key) {
-    (void)p;
     char *headers = (char *)malloc(1024);
     if (!headers) return NULL;
 
+    /* B33: Context caching TTL \xe2\x80\x94 configurable via deepseek_cache_ttl */
+    int ttl = 300;
+    if (p && p->config.deepseek_cache_ttl > 0) {
+        ttl = p->config.deepseek_cache_ttl;
+    } else if (p && p->config.deepseek_cache_ttl == -1) {
+        ttl = -1;
+    }
+
     if (api_key && *api_key) {
-        snprintf(headers, 1024,
-            "Authorization: Bearer %s\r\n"
-            "Content-Type: application/json\r\n"
-            "Accept: application/json\r\n"
-            /* P79: Context caching — cache prompt for 5 minutes */
-            "x-ds-cache-ttl: 300",
-            api_key);
+        if (ttl > 0) {
+            snprintf(headers, 1024,
+                "Authorization: Bearer %s\r\n"
+                "Content-Type: application/json; charset=utf-8\r\n"
+                "Accept: application/json\r\n"
+                "x-ds-cache-ttl: %d",
+                api_key, ttl);
+        } else {
+            snprintf(headers, 1024,
+                "Authorization: Bearer %s\r\n"
+                "Content-Type: application/json; charset=utf-8\r\n"
+                "Accept: application/json",
+                api_key);
+        }
     } else {
-        snprintf(headers, 1024,
-            "Content-Type: application/json\r\n"
-            "Accept: application/json\r\n"
-            "x-ds-cache-ttl: 300");
+        if (ttl > 0) {
+            snprintf(headers, 1024,
+                "Content-Type: application/json; charset=utf-8\r\n"
+                "Accept: application/json\r\n"
+                "x-ds-cache-ttl: %d", ttl);
+        } else {
+            snprintf(headers, 1024,
+                "Content-Type: application/json; charset=utf-8\r\n"
+                "Accept: application/json");
+        }
     }
     return headers;
 }

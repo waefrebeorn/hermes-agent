@@ -373,6 +373,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.bedrock_inference_profile[0] = '\0';
     cfg->provider_cfg.bedrock_guardrail_config[0] = '\0';
     cfg->provider_cfg.bedrock_trace_enabled = false;
+    cfg->provider_cfg.deepseek_cache_ttl = 0;  /* 0 = default 300s */
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -674,6 +675,16 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
                     snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", env_val);
                 }
             free(derived_name);
+        }
+    }
+    /* B33: DeepSeek cache TTL from env */
+    {
+        const char *ttl_env = getenv("HERMES_DEEPSEEK_CACHE_TTL");
+        if (ttl_env && ttl_env[0]) {
+            int ttl = atoi(ttl_env);
+            if (ttl > 0) cfg->provider_cfg.deepseek_cache_ttl = ttl;
+            else if (strcmp(ttl_env, "-1") == 0) cfg->provider_cfg.deepseek_cache_ttl = -1;
+            else if (strcmp(ttl_env, "0") == 0) cfg->provider_cfg.deepseek_cache_ttl = 0;
         }
     }
     /* L06: supports_vision from env in env-only path */
