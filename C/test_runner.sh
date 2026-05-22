@@ -217,6 +217,25 @@ fi
 echo ""; echo "=== exec_code Tool Tests (M41) ==="
 run_lib_test "exec_code" "tests/test_exec_code.c" "." ""
 
+# TIRITH policy engine test (O13 — standalone, only needs tirith.c + fnmatch)
+echo ""; echo "=== TIRITH Policy Depth Tests (O13) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" \
+    -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
+    -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    "$CDIR/tests/test_tirith_policy.c" \
+    "$CDIR/src/tools/tirith.c" \
+    -o /tmp/hermes_test_tirith_policy -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tirith_policy > /dev/null 2>&1; then ok "tirith_policy (57 tests)"
+    else
+        echo "  TIRITH policy test output:"
+        /tmp/hermes_test_tirith_policy 2>&1 | sed 's/^/    /'
+        fail "tirith_policy (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tirith_policy
+else skip "tirith_policy (compilation failed)"
+fi
+
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \

@@ -515,6 +515,7 @@ typedef struct {
     bool  tirith_enabled;         /* security.tirith_enabled */
     bool  allow_private_urls;     /* security.allow_private_urls */
     bool  website_blocklist_enabled; /* security.website_blocklist.enabled */
+    char  tirith_policy_text[4096]; /* O13: YAML policy definitions */
 } security_config_t;
 
 /* ================================================================
@@ -1021,6 +1022,7 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src);
 #include "hermes_agent.h"
 #include "hermes_plugin.h"
 #include "hermes_memory.h"
+#include "hermes_tirith.h"
 
 /* ================================================================
  *  Entry Points

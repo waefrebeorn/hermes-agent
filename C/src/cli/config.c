@@ -1132,6 +1132,13 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     bool wbe = yaml_get_bool(doc, "security.website_blocklist.enabled", false);
     cfg->security.website_blocklist_enabled = wbe;
 
+    /* O13: Load TIRITH policy text (YAML list of policy rules) */
+    cfg->security.tirith_policy_text[0] = '\0';
+    const char *tpt = yaml_get_string(doc, "security.tirith_policy_text");
+    if (tpt) {
+        snprintf(cfg->security.tirith_policy_text, sizeof(cfg->security.tirith_policy_text), "%s", tpt);
+    }
+
     /* P12: Session section */
     const char *sdb = yaml_get_string(doc, "sessions.retention_days");
     /* sessions.retention_days already handled as int above via different path */

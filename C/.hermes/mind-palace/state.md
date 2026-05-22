@@ -16,10 +16,10 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 36 | 61% | **61 files, 2,000+ assertions** (102 pass, 0 fail, 0 skip) |
+|| **Tests** | 36 | 62% | **62 files, 2,050+ assertions** (103 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-|| **Build/doc** | 3 | **86%** | Docker, CI, cross-compile, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file perms, O11 vault, O05 release, **O12 audit rotation** |
+|| **Build/doc** | 2 | **90%** | Docker, CI, cross-compile, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file perms, O11 vault, O05 release, O12 audit rotation, **O13 TIRITH policy depth** |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
@@ -383,3 +383,16 @@
 - ◀ **Tests: 36 files, 6,920 lines, 69 passed, 0 failed, 0 skipped**
 - ◀ Committed: `46b284ac1`
 - ◀ **~315 gaps remaining** (2 closed this session)
+
+### Session 2026-05-26 — TIRITH policy depth (O13)
+
+- ✅ **Policy rule engine** — 4 rule types (file_path, network, command, env_var), 3 actions (deny/allow/warn), glob matching via fnmatch, ALLOW-overrides-DENY semantics, structured results with rule name + reason
+- ✅ **YAML config loading** — `tirith_policy_load_yaml()` parses YAML rule definitions without external YAML dep, `tirith_policy_load_defaults()` loads 15 sensible built-in rules
+- ✅ **Global policy instance** — `tirith_policy_global_init()` called at CLI startup from config, `tirith_policy_global()` runtime accessor
+- ✅ **Config integration** — `security.tirith_policy_text` field (4096 chars) in security_config_t, parsed from YAML config, env var `HERMES_TIRITH_POLICY_TEXT`
+- ✅ **Type-specific eval** — `eval_paths()` extracts path tokens, `eval_network()` extracts URLs, `eval_command()` full command match, `eval_env()` extracts env var refs
+- ✅ **Full pipeline** — `eval_all()` runs all 4 type checks, returns worst verdict (DENY > WARN > allow)
+- ✅ **test_tirith_policy.c** — 57 assertions covering: lifecycle, rule matching, ALLOW-over-DENY, all 4 type evaluations, full pipeline, YAML loading (single/multiple rules), defaults (15 rules), edge cases (max rules 64, glob ?, null safety, reason strings)
+- ◀ **Build/doc: 86%→90%** (1/3 remaining O-section gaps closed: O13)
+- ◀ **Suite: 103/0/0** (+1 test, 57 assertions; was 102/0/0)
+- ◀ **Remaining O gaps:** O14 (sandbox escape detection), O02 (Windows build)

@@ -135,8 +135,18 @@ int hermes_cli_main(int argc, char **argv) {
     /* P19: Enable SIGHUP-based config reload */
     hermes_config_setup_reload();
 
-    /* L01: Initialize Bitwarden Secrets Manager */
-    hermes_secrets_init(&g_cli.config);
+    /* O13: Initialize TIRITH policy engine with defaults + custom config */
+    tirith_policy_global_init(&g_cli.config.security);
+
+    /* Wire TIRITH scan settings from config */
+    if (g_cli.config.security.tirith_path[0])
+        tirith_set_path(g_cli.config.security.tirith_path);
+    tirith_set_enabled(g_cli.config.security.tirith_enabled);
+
+    /* Init audit logging */
+    char log_dir[512];
+    hermes_log_dir(log_dir, sizeof(log_dir));
+    audit_init(log_dir);
 
     /* Initialize skin (loads from config.skin_path, falls back to default) */
     cli_skin_init();
