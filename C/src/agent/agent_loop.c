@@ -329,6 +329,11 @@ char *agent_run_conversation(agent_state_t *state,
             return result;
         }
 
+        /* P91: Mark system prompt as cached after first successful call */
+        if (!state->llm.system_cached) {
+            state->llm.system_cached = true;
+        }
+
         iteration++;
 
         /* P86: Report turn to budget tracker */

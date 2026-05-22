@@ -93,6 +93,7 @@ typedef struct {
     char  api_key[256];
     char  model[128];
     char  provider[64];
+    bool  system_cached; /* P91: system prompt cache primed */
 } llm_config_t;
 
 /* LLM response */

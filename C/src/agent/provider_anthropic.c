@@ -261,8 +261,24 @@ static char *anthropic_build_request_body(const provider_t *p,
     json_set(root, "messages", msgs);
 
     /* Set system field if we extracted any */
-    if (has_system && system_text[0])
-        json_set(root, "system", json_string(system_text));
+    if (has_system && system_text[0]) {
+        /* P91: Prompt caching — first turn uses cache_control */
+        if (p->system_cached) {
+            /* Already cached — plain system string */
+            json_set(root, "system", json_string(system_text));
+        } else {
+            /* First request — wrap with cache_control */
+            json_t *sys_blocks = json_array();
+            json_t *block = json_object();
+            json_set(block, "type", json_string("text"));
+            json_set(block, "text", json_string(system_text));
+            json_t *cc = json_object();
+            json_set(cc, "type", json_string("ephemeral"));
+            json_set(block, "cache_control", cc);
+            json_append(sys_blocks, block);
+            json_set(root, "system", sys_blocks);
+        }
+    }
 
     /* Serialize */
     char *body = json_serialize(root);

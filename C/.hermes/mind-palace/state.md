@@ -26,10 +26,8 @@ Remaining: P71-P85 (providers), P86-P100 (agent loop), P101+ (gateway depth, del
 | Tests | 0.25% — 43/~17,000 | Barely started |
 
 ## Active Phase
-**P87: Tool call parallelism** — done. Independent tools execute via pthreads with fallback to sequential on Windows.
+**P90 done.** Smart eviction, parallel dispatch, interrupts, budget integration all in agent loop.
 
 ## Path Forward
-1. P89: Interrupt handling — SIGINT handler, clean shutdown
-2. P90: Conversation history management — message eviction
-3. P91-P100: Agent loop depth (caching, prefill, checkpoints, compression)
-4. P101+: Gateway depth
+1. P91-P100: Agent loop depth (caching, prefill, classification, checkpoints, streaming diag)
+2. P101+: Gateway depth, delegation, plugins, session DB, memory, security, cron, skills, TUI

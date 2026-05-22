@@ -247,6 +247,9 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
         cfg->provider[0] ? cfg->provider : "openai",
         cfg->model, cfg->api_key, cfg->base_url);
 
+    /* P91: Pass system cache state to provider */
+    if (prov) prov->system_cached = cfg->system_cached;
+
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;
         char *url = ops->build_url(prov, cfg->base_url);
@@ -665,6 +668,9 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
     provider_t *prov = provider_create(
         cfg->provider[0] ? cfg->provider : "openai",
         cfg->model, cfg->api_key, cfg->base_url);
+
+    /* P91: Pass system cache state to provider */
+    if (prov) prov->system_cached = cfg->system_cached;
 
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;

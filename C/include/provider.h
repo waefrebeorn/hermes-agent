@@ -85,6 +85,7 @@ struct provider_t {
     char base_url[512];
     void *data; /* Provider-specific data */
     credential_pool_t *pool; /* P82: optional credential pool for multi-key rotation */
+    bool  system_cached; /* P91: system prompt cache primed flag */
 };
 
 /* ================================================================
@@ -114,6 +115,16 @@ credential_pool_t *provider_get_credential_pool(const provider_t *p);
 /* Get provider operations (convenience) */
 static inline const provider_ops_t *provider_ops(const provider_t *p) {
     return p ? p->ops : NULL;
+}
+
+/* P91: System prompt caching — set whether cache has been primed */
+static inline void provider_set_system_cached(provider_t *p, bool cached) {
+    if (p) p->system_cached = cached;
+}
+
+/* P91: Check if system prompt cache is primed */
+static inline bool provider_get_system_cached(const provider_t *p) {
+    return p ? p->system_cached : false;
 }
 
 /* ================================================================
