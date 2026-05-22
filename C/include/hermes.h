@@ -117,6 +117,7 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
@@ -283,6 +284,7 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
 } provider_config_t;
 
 /* ================================================================

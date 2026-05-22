@@ -96,6 +96,19 @@ static char *custom_build_request_body(const provider_t *p,
         if (md) { json_object_set(root, "metadata", md); json_free(md); }
     }
 
+    /* L05: extra_body — merge arbitrary JSON fields into request body */
+    if (p->config.extra_body[0]) {
+        json_t *extra = json_parse(p->config.extra_body, NULL);
+        if (extra && extra->type == JSON_OBJECT) {
+            /* Iterate object keys */
+            for (size_t i = 0; i < extra->c.count; i++) {
+                if (extra->c.keys && extra->c.keys[i] && extra->c.items[i])
+                    json_set(root, extra->c.keys[i], json_copy(extra->c.items[i]));
+            }
+        }
+        json_free(extra);
+    }
+
     /* tool_choice + parallel_tool_calls */
     if (p->config.tool_choice[0]) {
         json_t *tc = json_parse(p->config.tool_choice, NULL);

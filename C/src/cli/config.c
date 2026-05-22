@@ -539,6 +539,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int n_val = yaml_get_int(doc, "agent.n", 0);
     if (n_val > 0) cfg->provider_cfg.n = n_val;
 
+    /* L05: extra_body — arbitrary JSON to merge into request body */
+    const char *extra = yaml_get_string(doc, "agent.extra_body");
+    if (extra) snprintf(cfg->provider_cfg.extra_body, sizeof(cfg->provider_cfg.extra_body), "%s", extra);
+
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
     snprintf(cfg->provider, sizeof(cfg->provider), "%s", cfg->provider_cfg.provider);
@@ -1198,6 +1202,9 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_N");
     if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.n = t; }
+
+    v = getenv("HERMES_EXTRA_BODY");
+    if (v) snprintf(cfg->provider_cfg.extra_body, sizeof(cfg->provider_cfg.extra_body), "%s", v);
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
