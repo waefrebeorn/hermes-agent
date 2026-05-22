@@ -62,7 +62,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/li
     "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
     "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_config -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_config > /dev/null 2>&1; then ok "config (54 tests)"
+    if /tmp/hermes_test_config > /dev/null 2>&1; then ok "config (70 tests)"
     else
         echo "  Config test output:"
         /tmp/hermes_test_config 2>&1 | sed 's/^/    /'
@@ -101,7 +101,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_provsmoke -lm -lssl -lcrypto > /dev/null 2>&1; then
-    if /tmp/hermes_test_provsmoke > /dev/null 2>&1; then ok "provider_smoke (131 tests)"
+    if /tmp/hermes_test_provsmoke > /dev/null 2>&1; then ok "provider_smoke (439 tests)"
     else fail "provider_smoke (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provsmoke
 else skip "provider_smoke (compilation failed)"

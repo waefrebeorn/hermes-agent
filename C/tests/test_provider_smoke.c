@@ -45,9 +45,18 @@ int main(void) {
     provider_register_builtins();
 
     /* Test each provider creates without crash */
+    /* 9 registered providers + 17 OpenAI-compat aliases = 26 total */
     const char *providers[] = {
         "openai", "anthropic", "google", "openrouter",
         "deepseek", "xai", "azure", "bedrock", "custom",
+        /* G35-G40: OpenAI-compat aliases */
+        "nous", "alibaba", "stepfun", "minimax", "novita", "zai",
+        /* G41-G51: More OpenAI-compat aliases */
+        "huggingface", "arcee", "ollama_cloud", "nvidia",
+        "gmi", "kilocode", "kimi", "ai_gateway",
+        "azure_foundry", "xiaomi", "qwen_oauth",
+        /* Well-known aliases */
+        "groq", "together", "claude", "gemini", "aws",
         NULL
     };
 
