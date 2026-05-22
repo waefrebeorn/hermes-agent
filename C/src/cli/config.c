@@ -214,6 +214,48 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->mcp.max_tools = 50;
     cfg->mcp.auth_enabled = false;
 
+    /* Terminal config defaults */
+    snprintf(cfg->terminal.backend, sizeof(cfg->terminal.backend), "local");
+    cfg->terminal.timeout = 180;
+    cfg->terminal.persistent_shell = true;
+    snprintf(cfg->terminal.cwd, sizeof(cfg->terminal.cwd), ".");
+    cfg->terminal.auto_source_bashrc = true;
+    cfg->terminal.container_cpu = 1;
+    cfg->terminal.container_memory = 5120;
+    cfg->terminal.container_disk = 51200;
+    cfg->terminal.container_persistent = true;
+    cfg->terminal.docker_mount_cwd = false;
+    cfg->terminal.docker_run_as_host_user = false;
+    snprintf(cfg->terminal.docker_image, sizeof(cfg->terminal.docker_image),
+             "nikolaik/python-nodejs:python3.11-nodejs20");
+    snprintf(cfg->terminal.singularity_image, sizeof(cfg->terminal.singularity_image),
+             "docker://nikolaik/python-nodejs:python3.11-nodejs20");
+    snprintf(cfg->terminal.modal_image, sizeof(cfg->terminal.modal_image),
+             "nikolaik/python-nodejs:python3.11-nodejs20");
+    snprintf(cfg->terminal.daytona_image, sizeof(cfg->terminal.daytona_image),
+             "nikolaik/python-nodejs:python3.11-nodejs20");
+    snprintf(cfg->terminal.vercel_runtime, sizeof(cfg->terminal.vercel_runtime), "node24");
+
+    /* Logging config defaults */
+    snprintf(cfg->logging.level, sizeof(cfg->logging.level), "info");
+    snprintf(cfg->logging.format, sizeof(cfg->logging.format), "text");
+    cfg->logging.max_files = 10;
+    cfg->logging.max_size_mb = 50;
+
+    /* Skills config defaults */
+    cfg->skills.auto_discover = true;
+    cfg->skills.bundle_size_limit = 1024;
+    cfg->skills.validate_on_load = 1;
+
+    /* Checkpoints config defaults */
+    cfg->checkpoints.enabled = true;
+    cfg->checkpoints.interval = 10;
+    cfg->checkpoints.max_checkpoints = 5;
+    cfg->checkpoints.auto_rollback = true;
+    cfg->checkpoints.save_on_interrupt = true;
+    cfg->checkpoints.compression_level = 1;
+    cfg->checkpoints.include_tool_results = false;
+
     /* Display config defaults */
     cfg->display.stream = false;
     cfg->display.show_reasoning = true;
@@ -645,6 +687,101 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->compression.hygiene_hard_message_limit = yaml_get_int(doc, "compression.hygiene_hard_message_limit", cfg->compression.hygiene_hard_message_limit);
     cfg->compression.abort_on_summary_failure = yaml_get_bool(doc, "compression.abort_on_summary_failure", cfg->compression.abort_on_summary_failure);
 
+    /* Terminal config (expanded) */
+    {
+        const char *tb = yaml_get_string(doc, "terminal.backend");
+        if (tb) {
+            snprintf(cfg->terminal.backend, sizeof(cfg->terminal.backend), "%s", tb);
+            snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", tb);
+        }
+        int tto = yaml_get_int(doc, "terminal.timeout", 0);
+        if (tto > 0) {
+            cfg->terminal.timeout = tto;
+            cfg->tools.terminal_timeout = tto;
+        }
+        cfg->terminal.persistent_shell = yaml_get_bool(doc, "terminal.persistent_shell", cfg->terminal.persistent_shell);
+        cfg->tools.persistent_shell = cfg->terminal.persistent_shell;
+    }
+    {
+        const char *tcwd = yaml_get_string(doc, "terminal.cwd");
+        if (tcwd) snprintf(cfg->terminal.cwd, sizeof(cfg->terminal.cwd), "%s", tcwd);
+        const char *tpassthru = yaml_get_string(doc, "terminal.env_passthrough");
+        if (tpassthru) snprintf(cfg->terminal.env_passthrough, sizeof(cfg->terminal.env_passthrough), "%s", tpassthru);
+        const char *tsif = yaml_get_string(doc, "terminal.shell_init_files");
+        if (tsif) snprintf(cfg->terminal.shell_init_files, sizeof(cfg->terminal.shell_init_files), "%s", tsif);
+        cfg->terminal.auto_source_bashrc = yaml_get_bool(doc, "terminal.auto_source_bashrc", cfg->terminal.auto_source_bashrc);
+        const char *tdi = yaml_get_string(doc, "terminal.docker_image");
+        if (tdi) snprintf(cfg->terminal.docker_image, sizeof(cfg->terminal.docker_image), "%s", tdi);
+        const char *tdfe = yaml_get_string(doc, "terminal.docker_forward_env");
+        if (tdfe) snprintf(cfg->terminal.docker_forward_env, sizeof(cfg->terminal.docker_forward_env), "%s", tdfe);
+        const char *tde = yaml_get_string(doc, "terminal.docker_env");
+        if (tde) snprintf(cfg->terminal.docker_env, sizeof(cfg->terminal.docker_env), "%s", tde);
+        const char *tsi = yaml_get_string(doc, "terminal.singularity_image");
+        if (tsi) snprintf(cfg->terminal.singularity_image, sizeof(cfg->terminal.singularity_image), "%s", tsi);
+        const char *tmi = yaml_get_string(doc, "terminal.modal_image");
+        if (tmi) snprintf(cfg->terminal.modal_image, sizeof(cfg->terminal.modal_image), "%s", tmi);
+        const char *tdai = yaml_get_string(doc, "terminal.daytona_image");
+        if (tdai) snprintf(cfg->terminal.daytona_image, sizeof(cfg->terminal.daytona_image), "%s", tdai);
+        const char *tvr = yaml_get_string(doc, "terminal.vercel_runtime");
+        if (tvr) snprintf(cfg->terminal.vercel_runtime, sizeof(cfg->terminal.vercel_runtime), "%s", tvr);
+        int tcc = yaml_get_int(doc, "terminal.container_cpu", 0);
+        if (tcc > 0) cfg->terminal.container_cpu = tcc;
+        int tcm = yaml_get_int(doc, "terminal.container_memory", 0);
+        if (tcm > 0) cfg->terminal.container_memory = tcm;
+        int tcd = yaml_get_int(doc, "terminal.container_disk", 0);
+        if (tcd > 0) cfg->terminal.container_disk = tcd;
+        cfg->terminal.container_persistent = yaml_get_bool(doc, "terminal.container_persistent", cfg->terminal.container_persistent);
+        const char *tdv = yaml_get_string(doc, "terminal.docker_volumes");
+        if (tdv) snprintf(cfg->terminal.docker_volumes, sizeof(cfg->terminal.docker_volumes), "%s", tdv);
+        cfg->terminal.docker_mount_cwd = yaml_get_bool(doc, "terminal.docker_mount_cwd_to_workspace", cfg->terminal.docker_mount_cwd);
+        const char *tdea = yaml_get_string(doc, "terminal.docker_extra_args");
+        if (tdea) snprintf(cfg->terminal.docker_extra_args, sizeof(cfg->terminal.docker_extra_args), "%s", tdea);
+        cfg->terminal.docker_run_as_host_user = yaml_get_bool(doc, "terminal.docker_run_as_host_user", cfg->terminal.docker_run_as_host_user);
+    }
+
+    /* Logging config */
+    {
+        const char *ll = yaml_get_string(doc, "logging.level");
+        if (ll) snprintf(cfg->logging.level, sizeof(cfg->logging.level), "%s", ll);
+        const char *lf = yaml_get_string(doc, "logging.format");
+        if (lf) snprintf(cfg->logging.format, sizeof(cfg->logging.format), "%s", lf);
+        const char *ld = yaml_get_string(doc, "logging.dir");
+        if (ld) snprintf(cfg->logging.dir, sizeof(cfg->logging.dir), "%s", ld);
+        int lmf = yaml_get_int(doc, "logging.max_files", 0);
+        if (lmf > 0) cfg->logging.max_files = lmf;
+        int lms = yaml_get_int(doc, "logging.max_size_mb", 0);
+        if (lms > 0) cfg->logging.max_size_mb = lms;
+    }
+
+    /* Skills config */
+    {
+        const char *sd = yaml_get_string(doc, "skills.dir");
+        if (sd) snprintf(cfg->skills.dir, sizeof(cfg->skills.dir), "%s", sd);
+        const char *se = yaml_get_string(doc, "skills.enabled");
+        if (se) snprintf(cfg->skills.enabled, sizeof(cfg->skills.enabled), "%s", se);
+        cfg->skills.auto_discover = yaml_get_bool(doc, "skills.auto_discover", cfg->skills.auto_discover);
+        int sbs = yaml_get_int(doc, "skills.bundle_size_limit", 0);
+        if (sbs > 0) cfg->skills.bundle_size_limit = sbs;
+        int sv = yaml_get_int(doc, "skills.validate", 1);
+        if (sv >= 0 && sv <= 2) cfg->skills.validate_on_load = sv;
+    }
+
+    /* Checkpoints config */
+    {
+        cfg->checkpoints.enabled = yaml_get_bool(doc, "checkpoints.enabled", cfg->checkpoints.enabled);
+        int ci = yaml_get_int(doc, "checkpoints.interval", 0);
+        if (ci > 0) cfg->checkpoints.interval = ci;
+        int cm = yaml_get_int(doc, "checkpoints.max", 0);
+        if (cm > 0) cfg->checkpoints.max_checkpoints = cm;
+        const char *cd = yaml_get_string(doc, "checkpoints.dir");
+        if (cd) snprintf(cfg->checkpoints.dir, sizeof(cfg->checkpoints.dir), "%s", cd);
+        cfg->checkpoints.auto_rollback = yaml_get_bool(doc, "checkpoints.auto_rollback", cfg->checkpoints.auto_rollback);
+        cfg->checkpoints.save_on_interrupt = yaml_get_bool(doc, "checkpoints.save_on_interrupt", cfg->checkpoints.save_on_interrupt);
+        int ccl = yaml_get_int(doc, "checkpoints.compression", 1);
+        if (ccl >= 0 && ccl <= 9) cfg->checkpoints.compression_level = ccl;
+        cfg->checkpoints.include_tool_results = yaml_get_bool(doc, "checkpoints.include_tool_results", cfg->checkpoints.include_tool_results);
+    }
+
     /* Quiet mode */
     cfg->agent.quiet_mode = cfg->quiet_mode;
 
@@ -922,6 +1059,68 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
         cfg->mcp.auth_enabled = true;
 
+    /* Terminal env overrides */
+    v = getenv("HERMES_TERMINAL_BACKEND");
+    if (v) {
+        snprintf(cfg->terminal.backend, sizeof(cfg->terminal.backend), "%s", v);
+        snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", v);
+    }
+    v = getenv("HERMES_TERMINAL_TIMEOUT");
+    if (v) { int t = atoi(v); if (t > 0) {
+        cfg->terminal.timeout = t;
+        cfg->tools.terminal_timeout = t;
+    }}
+    v = getenv("HERMES_TERMINAL_PERSISTENT_SHELL");
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0)) {
+        cfg->terminal.persistent_shell = false;
+        cfg->tools.persistent_shell = false;
+    }
+    v = getenv("HERMES_TERMINAL_CWD");
+    if (v) snprintf(cfg->terminal.cwd, sizeof(cfg->terminal.cwd), "%s", v);
+    v = getenv("HERMES_TERMINAL_DOCKER_IMAGE");
+    if (v) snprintf(cfg->terminal.docker_image, sizeof(cfg->terminal.docker_image), "%s", v);
+    v = getenv("HERMES_TERMINAL_CONTAINER_CPU");
+    if (v) { int t = atoi(v); if (t > 0) cfg->terminal.container_cpu = t; }
+    v = getenv("HERMES_TERMINAL_CONTAINER_MEMORY");
+    if (v) { int t = atoi(v); if (t > 0) cfg->terminal.container_memory = t; }
+    v = getenv("HERMES_TERMINAL_CONTAINER_DISK");
+    if (v) { int t = atoi(v); if (t > 0) cfg->terminal.container_disk = t; }
+    v = getenv("HERMES_TERMINAL_CONTAINER_PERSISTENT");
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0))
+        cfg->terminal.container_persistent = false;
+
+    /* Logging env overrides */
+    v = getenv("HERMES_LOG_LEVEL");
+    if (v) snprintf(cfg->logging.level, sizeof(cfg->logging.level), "%s", v);
+    v = getenv("HERMES_LOG_FORMAT");
+    if (v) snprintf(cfg->logging.format, sizeof(cfg->logging.format), "%s", v);
+    v = getenv("HERMES_LOG_DIR");
+    if (v) snprintf(cfg->logging.dir, sizeof(cfg->logging.dir), "%s", v);
+    v = getenv("HERMES_LOG_MAX_FILES");
+    if (v) { int t = atoi(v); if (t > 0) cfg->logging.max_files = t; }
+    v = getenv("HERMES_LOG_MAX_SIZE_MB");
+    if (v) { int t = atoi(v); if (t > 0) cfg->logging.max_size_mb = t; }
+
+    /* Skills env overrides */
+    v = getenv("HERMES_SKILLS_DIR");
+    if (v) snprintf(cfg->skills.dir, sizeof(cfg->skills.dir), "%s", v);
+    v = getenv("HERMES_SKILLS_ENABLED");
+    if (v) snprintf(cfg->skills.enabled, sizeof(cfg->skills.enabled), "%s", v);
+    v = getenv("HERMES_SKILLS_AUTO_DISCOVER");
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0))
+        cfg->skills.auto_discover = false;
+
+    /* Checkpoints env overrides */
+    v = getenv("HERMES_CHECKPOINTS_ENABLED");
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0))
+        cfg->checkpoints.enabled = false;
+    v = getenv("HERMES_CHECKPOINTS_INTERVAL");
+    if (v) { int t = atoi(v); if (t > 0) cfg->checkpoints.interval = t; }
+    v = getenv("HERMES_CHECKPOINTS_MAX");
+    if (v) { int t = atoi(v); if (t > 0) cfg->checkpoints.max_checkpoints = t; }
+    v = getenv("HERMES_CHECKPOINTS_DIR");
+    if (v) snprintf(cfg->checkpoints.dir, sizeof(cfg->checkpoints.dir), "%s", v);
+
     return true;
 }
 
@@ -1062,6 +1261,52 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
         add_issue(result, "mcp.timeout", "unreasonable %d", cfg->mcp.timeout);
     if (cfg->mcp.max_tools < 1 || cfg->mcp.max_tools > 256)
         add_issue(result, "mcp.max_tools", "unreasonable %d", cfg->mcp.max_tools);
+
+    /* --- Terminal --- */
+    if (cfg->terminal.timeout < 1 || cfg->terminal.timeout > 86400)
+        add_issue(result, "terminal.timeout", "unreasonable %d", cfg->terminal.timeout);
+    if (cfg->terminal.backend[0] && 
+        strcmp(cfg->terminal.backend, "local") != 0 &&
+        strcmp(cfg->terminal.backend, "ssh") != 0 &&
+        strcmp(cfg->terminal.backend, "docker") != 0 &&
+        strcmp(cfg->terminal.backend, "modal") != 0 &&
+        strcmp(cfg->terminal.backend, "daytona") != 0 &&
+        strcmp(cfg->terminal.backend, "singularity") != 0)
+        add_issue(result, "terminal.backend", "unknown '%s' (local/ssh/docker/modal/daytona/singularity)", cfg->terminal.backend);
+    if (cfg->terminal.container_cpu < 1 || cfg->terminal.container_cpu > 128)
+        add_issue(result, "terminal.container_cpu", "unreasonable %d", cfg->terminal.container_cpu);
+    if (cfg->terminal.container_memory < 128 || cfg->terminal.container_memory > 1048576)
+        add_issue(result, "terminal.container_memory", "unreasonable %d MB", cfg->terminal.container_memory);
+
+    /* --- Logging --- */
+    if (cfg->logging.level[0] &&
+        strcmp(cfg->logging.level, "debug") != 0 &&
+        strcmp(cfg->logging.level, "info") != 0 &&
+        strcmp(cfg->logging.level, "warning") != 0 &&
+        strcmp(cfg->logging.level, "error") != 0)
+        add_issue(result, "logging.level", "unknown '%s' (debug/info/warning/error)", cfg->logging.level);
+    if (cfg->logging.format[0] &&
+        strcmp(cfg->logging.format, "text") != 0 &&
+        strcmp(cfg->logging.format, "json") != 0)
+        add_issue(result, "logging.format", "unknown '%s' (text/json)", cfg->logging.format);
+    if (cfg->logging.max_files < 1 || cfg->logging.max_files > 1000)
+        add_issue(result, "logging.max_files", "unreasonable %d", cfg->logging.max_files);
+    if (cfg->logging.max_size_mb < 1 || cfg->logging.max_size_mb > 10240)
+        add_issue(result, "logging.max_size_mb", "unreasonable %d MB", cfg->logging.max_size_mb);
+
+    /* --- Skills --- */
+    if (cfg->skills.validate_on_load < 0 || cfg->skills.validate_on_load > 2)
+        add_issue(result, "skills.validate", "must be 0-2 (0=no,1=warn,2=strict), got %d", cfg->skills.validate_on_load);
+    if (cfg->skills.bundle_size_limit < 1 || cfg->skills.bundle_size_limit > 65536)
+        add_issue(result, "skills.bundle_size_limit", "unreasonable %d KB", cfg->skills.bundle_size_limit);
+
+    /* --- Checkpoints --- */
+    if (cfg->checkpoints.interval < 1 || cfg->checkpoints.interval > 1000)
+        add_issue(result, "checkpoints.interval", "unreasonable %d turns", cfg->checkpoints.interval);
+    if (cfg->checkpoints.max_checkpoints < 1 || cfg->checkpoints.max_checkpoints > 1000)
+        add_issue(result, "checkpoints.max", "unreasonable %d", cfg->checkpoints.max_checkpoints);
+    if (cfg->checkpoints.compression_level < 0 || cfg->checkpoints.compression_level > 9)
+        add_issue(result, "checkpoints.compression", "must be 0-9, got %d", cfg->checkpoints.compression_level);
 
     return result->count == 0;
 }
@@ -1235,6 +1480,29 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     /* Session */
     diff_int(diff, "sessions.retention_days", def.session.retention_days, active->session.retention_days);
 
+    /* Terminal (expanded) */
+    diff_str(diff, "terminal.backend", def.terminal.backend, active->terminal.backend);
+    diff_int(diff, "terminal.timeout", def.terminal.timeout, active->terminal.timeout);
+    diff_str(diff, "terminal.cwd", def.terminal.cwd, active->terminal.cwd);
+    diff_str(diff, "terminal.env_passthrough", def.terminal.env_passthrough, active->terminal.env_passthrough);
+    diff_bool(diff, "terminal.auto_source_bashrc", def.terminal.auto_source_bashrc, active->terminal.auto_source_bashrc);
+    diff_str(diff, "terminal.docker_image", def.terminal.docker_image, active->terminal.docker_image);
+
+    /* Logging */
+    diff_str(diff, "logging.level", def.logging.level, active->logging.level);
+    diff_str(diff, "logging.format", def.logging.format, active->logging.format);
+    diff_int(diff, "logging.max_files", def.logging.max_files, active->logging.max_files);
+    diff_int(diff, "logging.max_size_mb", def.logging.max_size_mb, active->logging.max_size_mb);
+
+    /* Skills */
+    diff_bool(diff, "skills.auto_discover", def.skills.auto_discover, active->skills.auto_discover);
+    diff_int(diff, "skills.validate", def.skills.validate_on_load, active->skills.validate_on_load);
+
+    /* Checkpoints */
+    diff_bool(diff, "checkpoints.enabled", def.checkpoints.enabled, active->checkpoints.enabled);
+    diff_int(diff, "checkpoints.interval", def.checkpoints.interval, active->checkpoints.interval);
+    diff_int(diff, "checkpoints.max", def.checkpoints.max_checkpoints, active->checkpoints.max_checkpoints);
+
     return diff->count > 0;
 }
 
@@ -1367,6 +1635,41 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     fprintf(f, "\nmcp:\n");
     exp_int(f, "  timeout", cfg->mcp.timeout);
     exp_bool(f, "  auth_enabled", cfg->mcp.auth_enabled);
+
+    fprintf(f, "\nterminal:\n");
+    exp_str(f, "  backend", cfg->terminal.backend);
+    exp_int(f, "  timeout", cfg->terminal.timeout);
+    exp_bool(f, "  persistent_shell", cfg->terminal.persistent_shell);
+    exp_str(f, "  cwd", cfg->terminal.cwd);
+    exp_str(f, "  env_passthrough", cfg->terminal.env_passthrough);
+    exp_str(f, "  docker_image", cfg->terminal.docker_image);
+    exp_str(f, "  docker_forward_env", cfg->terminal.docker_forward_env);
+    exp_str(f, "  singularity_image", cfg->terminal.singularity_image);
+    exp_str(f, "  modal_image", cfg->terminal.modal_image);
+    exp_int(f, "  container_cpu", cfg->terminal.container_cpu);
+    exp_int(f, "  container_memory", cfg->terminal.container_memory);
+    exp_int(f, "  container_disk", cfg->terminal.container_disk);
+    exp_bool(f, "  container_persistent", cfg->terminal.container_persistent);
+
+    fprintf(f, "\nlogging:\n");
+    exp_str(f, "  level", cfg->logging.level);
+    exp_str(f, "  format", cfg->logging.format);
+    exp_str(f, "  dir", cfg->logging.dir);
+    exp_int(f, "  max_files", cfg->logging.max_files);
+    exp_int(f, "  max_size_mb", cfg->logging.max_size_mb);
+
+    fprintf(f, "\nskills:\n");
+    exp_str(f, "  dir", cfg->skills.dir);
+    exp_str(f, "  enabled", cfg->skills.enabled);
+    exp_bool(f, "  auto_discover", cfg->skills.auto_discover);
+    exp_int(f, "  bundle_size_limit", cfg->skills.bundle_size_limit);
+    exp_int(f, "  validate", cfg->skills.validate_on_load);
+
+    fprintf(f, "\ncheckpoints:\n");
+    exp_bool(f, "  enabled", cfg->checkpoints.enabled);
+    exp_int(f, "  interval", cfg->checkpoints.interval);
+    exp_int(f, "  max", cfg->checkpoints.max_checkpoints);
+    exp_str(f, "  dir", cfg->checkpoints.dir);
 
     if (close_file) fclose(f);
     return true;

@@ -408,6 +408,70 @@ typedef struct {
 } mcp_config_t;
 
 /* ================================================================
+ *  Terminal Config (P2, expanded from Python terminal group, 22 keys)
+ * ================================================================ */
+typedef struct {
+    char  backend[32];             /* terminal.backend: local/ssh/docker/modal */
+    int   timeout;                 /* terminal.timeout: max seconds per command */
+    bool  persistent_shell;        /* terminal.persistent_shell */
+    char  cwd[HERMES_PATH_MAX];   /* terminal.cwd: working directory */
+    char  env_passthrough[1024];    /* terminal.env_passthrough (comma-sep) */
+    char  shell_init_files[1024];  /* terminal.shell_init_files (comma-sep) */
+    bool  auto_source_bashrc;      /* terminal.auto_source_bashrc */
+    char  docker_image[256];       /* terminal.docker_image */
+    char  docker_forward_env[1024];/* terminal.docker_forward_env (comma-sep) */
+    char  docker_env[1024];        /* terminal.docker_env: JSON string */
+    char  singularity_image[256];  /* terminal.singularity_image */
+    char  modal_image[256];        /* terminal.modal_image */
+    char  daytona_image[256];      /* terminal.daytona_image */
+    char  vercel_runtime[32];      /* terminal.vercel_runtime */
+    int   container_cpu;           /* terminal.container_cpu */
+    int   container_memory;        /* terminal.container_memory (MB) */
+    int   container_disk;          /* terminal.container_disk (MB) */
+    bool  container_persistent;    /* terminal.container_persistent */
+    char  docker_volumes[1024];    /* terminal.docker_volumes (comma-sep) */
+    bool  docker_mount_cwd;        /* terminal.docker_mount_cwd_to_workspace */
+    char  docker_extra_args[1024]; /* terminal.docker_extra_args (comma-sep) */
+    bool  docker_run_as_host_user; /* terminal.docker_run_as_host_user */
+} terminal_config_t;
+
+/* ================================================================
+ *  Logging Config (Python logging group, 5 keys)
+ * ================================================================ */
+typedef struct {
+    char  level[16];               /* logging.level: debug/info/warning/error */
+    char  format[32];              /* logging.format: text/json */
+    char  dir[HERMES_PATH_MAX];   /* logging.dir: log directory */
+    int   max_files;               /* logging.max_files: retention count */
+    int   max_size_mb;             /* logging.max_size_mb: per-file max */
+} logging_config_t;
+
+/* ================================================================
+ *  Skills Config (Python skills group, 5 keys)
+ * ================================================================ */
+typedef struct {
+    char  dir[HERMES_PATH_MAX];   /* skills.dir: skill search directory */
+    char  enabled[1024];           /* skills.enabled: comma-sep skill names */
+    bool  auto_discover;           /* skills.auto_discover: scan on startup */
+    int   bundle_size_limit;       /* skills.bundle_size_limit: max KB per bundle */
+    int   validate_on_load;        /* skills.validate: 0=no, 1=warn, 2=strict */
+} skills_config_t;
+
+/* ================================================================
+ *  Checkpoints Config (Python checkpoints group, 8 keys)
+ * ================================================================ */
+typedef struct {
+    bool  enabled;                 /* checkpoints.enabled */
+    int   interval;                /* checkpoints.interval: auto-save every N turns */
+    int   max_checkpoints;         /* checkpoints.max: retention limit */
+    char  dir[HERMES_PATH_MAX];   /* checkpoints.dir: storage directory */
+    bool  auto_rollback;           /* checkpoints.auto_rollback: revert on crash */
+    bool  save_on_interrupt;       /* checkpoints.save_on_interrupt */
+    int   compression_level;       /* checkpoints.compression: 0-9, 0=off */
+    bool  include_tool_results;    /* checkpoints.include_tool_results */
+} checkpoints_config_t;
+
+/* ================================================================
  *  Config
  * ================================================================ */
 typedef struct {
@@ -447,6 +511,14 @@ typedef struct {
     plugin_config_t plugin;
     /* MCP config */
     mcp_config_t mcp;
+    /* Terminal config */
+    terminal_config_t terminal;
+    /* Logging config */
+    logging_config_t logging;
+    /* Skills config */
+    skills_config_t skills;
+    /* Checkpoints config */
+    checkpoints_config_t checkpoints;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */
