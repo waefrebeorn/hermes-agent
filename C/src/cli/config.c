@@ -2013,7 +2013,7 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
  * ================================================================ */
 
 static void add_issue(config_validation_t *r, const char *key, const char *fmt, ...) {
-    if (r->count >= 64) return;
+    if (!r || r->count >= 64) return;
     snprintf(r->issues[r->count].key, sizeof(r->issues[r->count].key), "%s", key);
     va_list ap;
     va_start(ap, fmt);
@@ -2023,7 +2023,8 @@ static void add_issue(config_validation_t *r, const char *key, const char *fmt, 
 }
 
 bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *result) {
-    memset(result, 0, sizeof(*result));
+    if (!cfg) return false;
+    if (result) memset(result, 0, sizeof(*result));
 
     /* --- Provider group --- */
     if (cfg->provider_cfg.model[0] == '\0')
@@ -2239,7 +2240,7 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->voice.silence_threshold < 0 || cfg->voice.silence_threshold > 32767)
         add_issue(result, "voice.silence_threshold", "unreasonable %d", cfg->voice.silence_threshold);
 
-    return result->count == 0;
+    return result ? result->count == 0 : true;
 }
 
 /* ================================================================

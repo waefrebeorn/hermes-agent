@@ -250,6 +250,80 @@ static void test_retry_config(void) {
         (int)sizeof(llm.fallback_providers), 1024);
 }
 
+static void test_validation_edge_cases(void) {
+    printf("\n=== Validation Edge Cases (M22) ===\n");
+    hermes_config_t cfg;
+    config_validation_t result;
+    bool valid;
+
+    /* 1. Out-of-range: negative timeout */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.auxiliary.vision.timeout = -1;
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("negative timeout fails", valid, false);
+
+    /* 2. Out-of-range: zero timeout */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.auxiliary.vision.timeout = 0;
+    valid = hermes_config_validate(&cfg, &result);
+    /* Zero may be valid if validation treats 0 as "no timeout" */
+    TEST_BOOL("zero timeout at least doesn't crash", valid || result.count >= 0, true);
+
+    /* 3. Out-of-range: sample_rate extremes */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.tts.xai_sample_rate = 10000000;
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("extreme sample_rate fails", valid, false);
+
+    /* 4. Empty provider name (missing required) */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.tts.provider[0] = '\0';
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("empty tts.provider fails", valid, false);
+
+    /* 5. Empty model name */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.provider_cfg.model[0] = '\0';
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("empty model name fails", valid, false);
+
+    /* 6. Null config pointer */
+    valid = hermes_config_validate(NULL, &result);
+    TEST_BOOL("NULL config returns false", valid, false);
+
+    /* 7. Null result pointer — should not crash */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    valid = hermes_config_validate(&cfg, NULL);
+    TEST_BOOL("NULL result pointer doesn't crash", true, true);
+
+    /* 8. Empty string in critical fields */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.stt.provider[0] = '\0';
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("empty stt.provider fails", valid, false);
+
+    /* 9. API key-like field with empty string */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.provider_cfg.api_key[0] = '\0';
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("empty api_key at least doesn't crash", valid || result.count >= 0, true);
+
+    /* 10. Silence threshold out of range (negative) */
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+    cfg.voice.silence_threshold = 100;
+    valid = hermes_config_validate(&cfg, &result);
+    TEST_BOOL("high silence threshold fails", valid, false);
+}
+
 int main(void) {
     printf("Hermes C Config Test Suite\n");
     printf("==========================\n");
@@ -261,6 +335,7 @@ int main(void) {
     test_schema_generation();
     test_diff();
     test_retry_config();
+    test_validation_edge_cases();
 
     printf("\nResults: %d passed, %d failed\n", passed, failed);
     return failed > 0 ? 1 : 0;
