@@ -147,3 +147,15 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Config: 96% (5 depth gaps remaining)**
 - ◀ **Tests: 77 pass, 0 fail, 1 skip (+2 profile tests)**
 - ◀ **Config depth gaps: 5/322 remaining**
+
+## Session continuation (N01: Token counting)
+- ✅ **N01: Token counting** — `hermes_tokenizer.h/c`: model-aware heuristic token counter
+  - `token_family_t` enum (9 families) + `hermes_token_family_from_model()`
+  - `hermes_token_count()` with configurable chars-per-token ratio (3.5-4.2)
+  - `hermes_token_context_size()` — context windows for 20+ known models (128K-1M)
+  - `hermes_token_cost_rates()` — approximate $/1M costs per family
+  - `hermes_token_count_messages()` — conversation token estimation
+  - Wired into CLI `/status` — shows `Context: N/128000 (X%)` utilization
+  - Wired into agent loop — pre-request context limit warning at >90%
+  - Test: test_tokenizer.c — 39 assertions, all model families + edge cases
+- ◀ **Suite: 78 pass, 0 fail, 1 skip (+1 tokenizer, 39 assertions)**

@@ -1521,6 +1521,11 @@ static void cmd_status(const char *args, agent_state_t *state) {
     printf("Tokens in:     %d\n", state->session_input_tokens);
     printf("Tokens out:    %d\n", state->session_output_tokens);
     printf("Tokens total:  %d\n", state->session_total_tokens);
+    size_t ctx_max = hermes_token_context_size(state->llm.model);
+    if (ctx_max > 0) {
+        int pct = (int)((double)state->session_total_tokens / ctx_max * 100.0);
+        printf("Context:       %d/%zu tokens (%d%%)\n", state->session_total_tokens, ctx_max, pct);
+    }
     if (state->session_reasoning_tokens > 0)
         printf("Reasoning:     %d tokens\n", state->session_reasoning_tokens);
     if (state->session_estimated_cost_usd > 0.0)

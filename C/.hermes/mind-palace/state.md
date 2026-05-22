@@ -16,9 +16,9 @@
 | **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 46 | 50% | **36 files, 2,087 assertions** (77 pass, 0 fail, 0 skip) |
+| **Tests** | 46 | 50% | **36 files, 2,126 assertions** (78 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
-| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Cross-cut 5/5 |
+| **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**

@@ -827,6 +827,24 @@ char *agent_run_conversation(agent_state_t *state,
             context_evict_smart(state, 20, state->compression_strategy);
         }
 
+        /* N01: Pre-request context window check — warn if approaching limit */
+        {
+            size_t ctx_max = hermes_token_context_size(state->llm.model);
+            if (ctx_max > 0) {
+                size_t est_msg_tok = 0;
+                for (size_t i = 0; i < state->message_count && est_msg_tok < ctx_max; i++) {
+                    if (state->messages[i])
+                        est_msg_tok += hermes_token_count(state->messages[i]->content,
+                            hermes_token_family_from_model(state->llm.model));
+                    est_msg_tok += 5; /* overhead per message */
+                }
+                if (est_msg_tok > ctx_max * 0.9) {
+                    fprintf(stderr, "[context] ~%zu/%zu tokens (%zu%%) — approaching model limit\n",
+                            est_msg_tok, ctx_max, est_msg_tok * 100 / ctx_max);
+                }
+            }
+        }
+
         /* Call LLM — use streaming if callback set */
         llm_response_t *llm_resp;
         if (state->stream_cb) {
