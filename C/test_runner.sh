@@ -154,6 +154,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "credential_pool (compilation failed)"
 fi
 
+# Gateway subsystem test (needs server.c + http + json + cron + plugin libs)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_gateway.c" \
+    "$CDIR/src/gateway/server.c" \
+    "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libcron/cron.c" \
+    -o /tmp/hermes_test_gw -lm -lssl -lcrypto -lpthread \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_gw > /dev/null 2>&1; then ok "gateway_subsystem (49 tests)"
+    else fail "gateway_subsystem (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_gw
+else skip "gateway_subsystem (compilation failed)"
+fi
+
 # ==============================================
 # ==============================================
 # 2. Plugin tests
