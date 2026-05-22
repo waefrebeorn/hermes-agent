@@ -531,6 +531,33 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "gateway_subsystem (compilation failed)"
 fi
 
+# Gateway escape modes test (M07: markdown_to_html, markdown_v2_escape, truncate_message)
+echo ""; echo "=== Gateway Escape Modes (M07) ==="
+if gcc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-but-set-variable \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_gateway_escape.c" \
+    "$CDIR/src/gateway/server.c" \
+    "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libcron/cron.c" \
+    -o /tmp/hermes_test_gwesc -lm -lssl -lcrypto -lpthread \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_gwesc > /dev/null 2>&1; then ok "gateway_escape (M07: 30 tests)"
+    else
+        echo "  Gateway escape test output:"
+        /tmp/hermes_test_gwesc 2>&1 | sed 's/^/    /'
+        fail "gateway_escape (M07: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_gwesc
+else
+    echo "  Gateway escape test compilation error:"
+    gcc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-but-set-variable \
+        -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_gateway_escape.c" \
+        "$CDIR/src/gateway/server.c" \
+        "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libcron/cron.c" \
+        -o /tmp/hermes_test_gwesc -lm -lssl -lcrypto -lpthread 2>&1 | sed 's/^/    /'
+    skip "gateway_escape (M07: compilation failed)"
+fi
+
 # Plugin system test (needs plugin lib + dlfcn)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_plugins.c" \

@@ -24,6 +24,15 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — Gateway escape mode tests (M07)
+
+- ✅ **test_gateway_escape.c** — 30 assertions covering:
+  - `gw_markdown_to_html`: bold/italic/code/HTML entity escaping/mixed/nested
+  - `gw_markdown_v2_escape`: all 18 reserved chars, underscore, asterisk, bracket, backtick
+  - `gw_truncate_message`: NULL/empty/short/truncation with word boundary/ellipsis/unicode/preserves markdown
+- ◀ **Tests: 62%** (1/36 gaps closed: M07)
+- ◀ Committed: `TBD`
+
 ### Session 2026-05-26 — SECURITY.md (O09)
 
 - ✅ **SECURITY.md** — Full disclosure policy, supported versions, 72h acknowledgment commitment

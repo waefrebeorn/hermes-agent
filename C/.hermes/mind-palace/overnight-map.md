@@ -4,6 +4,12 @@
 ~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
 
+### Session 2026-05-26 — Gateway escape mode tests (M07)
+
+- ✅ **test_gateway_escape.c** — 30 assertions across 3 gateway formatting functions
+- ◀ **Tests: 62%** (1/36 gaps closed: M07)
+- ◀ Committed: `TBD`
+
 ### Session 2026-05-26 — SECURITY.md (O09)
 
 - ✅ **SECURITY.md** — Full disclosure policy, dependency audit, security features doc
