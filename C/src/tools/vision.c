@@ -78,6 +78,23 @@ static char *run_cmd_firstline(const char *fmt, ...) {
     return strdup(buf);
 }
 
+/* Maximum image file size for processing (50 MB) */
+#define VISION_MAX_FILE_BYTES (50LL * 1024 * 1024)
+
+/* F41: Validate image URL path has a known image extension */
+static bool has_image_extension(const char *path) {
+    const char *ext = strrchr(path, '.');
+    if (!ext) return false;
+    ext++; /* skip '.' */
+    const char *exts[] = {"jpg","jpeg","png","gif","webp","bmp","svg","tiff","tif","ico","heic","heif","avif", NULL};
+    for (int i = 0; exts[i]; i++) {
+        size_t elen = strlen(exts[i]);
+        if (strncasecmp(ext, exts[i], elen) == 0 && strlen(ext) == elen)
+            return true;
+    }
+    return false;
+}
+
 char *vision_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -102,6 +119,12 @@ char *vision_handler(const char *args_json, const char *task_id) {
 
         if (is_local && stat(image_url, &st) != 0) {
             json_object_set(result, "error", json_new_string("File not found"));
+        } else if (is_local && !has_image_extension(image_url)) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "Not a recognized image format (extensions: jpg/png/gif/webp/bmp/svg/ico/heic/avif)");
+            json_object_set(result, "error", json_new_string(buf));
+        } else if (is_local && st.st_size > VISION_MAX_FILE_BYTES) {
+            json_object_set(result, "error", json_new_string("File too large (>50 MB)"));
         } else {
             json_object_set(result, "image_url", json_new_string(image_url));
 

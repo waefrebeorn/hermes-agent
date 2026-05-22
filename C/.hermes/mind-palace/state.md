@@ -39,7 +39,10 @@
 - **P0 #2:** B04-B05 response_format + metadata ✅ — 2 new JSON fields, full wiring
 - **P0 #3:** F01-F04 CDP tools already real ✅
 - **P0 #3:** F06 SQLite memory storage ✅ — real 16-function vtable, sqlite3 amalgamation embedded
-- **P0 #3:** F08 vision description partial 🔄 — Python delegation attempted
+- **P0 #3:** F08 vision description ✅ — real Python Hermes CLI delegation (vision_delegate.py)
 - **P0 #5:** B06-B09 tool_choice + parallel_tool_calls + max_tool_calls + n ✅ — 4 LLM params
+- **E01-E05:** Telegram sendPhoto/sendDocument/sendVoice/sendVideo/sendAnimation ✅
+- **E14:** Telegram forwardMessage ✅
 - **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely — fixed ✅
 - **18/18 LLM params now fully wired** (was 10/12 at session start)
+- **@@ commits this session:** e57746cdd (F08 + Telegram send methods)
