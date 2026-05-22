@@ -588,18 +588,26 @@ static json_node_t *tools_to_json(tool_registry_t *reg) {
         json_object_set(fn, "name", json_new_string(reg->tools[i].name));
         json_object_set(fn, "description", json_new_string(reg->tools[i].description));
 
-        /* Parse schema */
+        /* Parse schema — ensure valid JSON Schema even when none provided */
         if (reg->tools[i].schema_json[0]) {
             char *err = NULL;
             json_node_t *schema = json_parse(reg->tools[i].schema_json, &err);
             if (schema) {
+                /* Ensure schema has "type": "object" — required by strict providers */
+                json_object_set(schema, "type", json_new_string("object"));
                 json_object_set(fn, "parameters", schema);
             } else {
-                json_object_set(fn, "parameters", json_new_object());
+                json_node_t *params = json_new_object();
+                json_object_set(params, "type", json_new_string("object"));
+                json_object_set(params, "properties", json_new_object());
+                json_object_set(fn, "parameters", params);
                 free(err);
             }
         } else {
-            json_object_set(fn, "parameters", json_new_object());
+            json_node_t *params = json_new_object();
+            json_object_set(params, "type", json_new_string("object"));
+            json_object_set(params, "properties", json_new_object());
+            json_object_set(fn, "parameters", params);
         }
 
         json_object_set(tool, "function", fn);

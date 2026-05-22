@@ -182,6 +182,21 @@ int hermes_cli_main(int argc, char **argv) {
         }
     }
 
+    /* Check for help flag */
+    if (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+        printf("Usage: hermes [options] [message...]\n");
+        printf("Options:\n");
+        printf("  --help, -h         Show this help message\n");
+        printf("  --version, -v      Show version information\n");
+        printf("  --session <id>     Attach to a specific session\n");
+        printf("  gateway            Start the multi-platform gateway\n");
+        printf("  cron               Run the cron scheduler\n");
+        printf("  --tui              Start the terminal UI (requires ncurses)\n");
+        printf("\nSlash commands (interactive mode): /help for full list\n");
+        agent_free(&g_cli.agent);
+        return 0;
+    }
+
     /* Check for one-shot mode */
     if (argc > 1) {
         /* Check for --session flag */

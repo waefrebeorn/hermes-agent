@@ -200,6 +200,7 @@ typedef struct {
     char  provider[64];
     char  base_url[256];
     char  api_key[256];
+    char  deepseek_api_key[256];   /* deepseek-specific API key from DEEPSEEK_API_KEY env */
     char  api_mode[32];            /* chat_completions, codex_responses, etc. */
     int   max_tokens;              /* max output tokens per response */
     float temperature;             /* sampling temperature (0.0-2.0) */

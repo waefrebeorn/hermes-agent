@@ -86,6 +86,31 @@ static void parse_env_file(const char *path, hermes_config_t *cfg) {
                 snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", val);
             }
         }
+        else if (strncmp(p, "DEEPSEEK_API_KEY", key_len) == 0 && key_len == 16) {
+            if (cfg->api_key[0] == '\0') {
+                snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", val);
+                snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", val);
+            }
+            snprintf(cfg->provider_cfg.deepseek_api_key, sizeof(cfg->provider_cfg.deepseek_api_key), "%s", val);
+        }
+        else if (strncmp(p, "SLERMES_API_KEY", key_len) == 0 && key_len == 15) {
+            if (cfg->api_key[0] == '\0') {
+                snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", val);
+                snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", val);
+            }
+        }
+        else if (strncmp(p, "HERMES_MODEL", key_len) == 0 && key_len == 12) {
+            snprintf(cfg->model, sizeof(cfg->model), "%s", val);
+            snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", val);
+        }
+        else if (strncmp(p, "HERMES_PROVIDER", key_len) == 0 && key_len == 15) {
+            snprintf(cfg->provider, sizeof(cfg->provider), "%s", val);
+            snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", val);
+        }
+        else if (strncmp(p, "HERMES_BASE_URL", key_len) == 0 && key_len == 15) {
+            snprintf(cfg->base_url, sizeof(cfg->base_url), "%s", val);
+            snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", val);
+        }
         else if (strncmp(p, "SLERMES_HOME", key_len) == 0 && key_len == 12) {
             /* Handled by get_slermes_home() */
         }
@@ -310,6 +335,42 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->provider, sizeof(cfg->provider), "%s", cfg->provider_cfg.provider);
     snprintf(cfg->base_url, sizeof(cfg->base_url), "%s", cfg->provider_cfg.base_url);
     snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", cfg->provider_cfg.api_key);
+
+    /* Also try flat top-level keys (backward compat with v0 format) */
+    if (cfg->model[0] == '\0') {
+        const char *flat_model = yaml_get_string(doc, "model");
+        if (flat_model) snprintf(cfg->model, sizeof(cfg->model), "%s", flat_model);
+    }
+    if (cfg->provider[0] == '\0') {
+        const char *flat_prov = yaml_get_string(doc, "provider");
+        if (flat_prov) snprintf(cfg->provider, sizeof(cfg->provider), "%s", flat_prov);
+    }
+    if (cfg->base_url[0] == '\0') {
+        const char *flat_url = yaml_get_string(doc, "base_url");
+        if (flat_url) snprintf(cfg->base_url, sizeof(cfg->base_url), "%s", flat_url);
+    }
+
+    /* Env var overrides — always checked, even when config file exists */
+    const char *model_env = getenv("HERMES_MODEL");
+    if (model_env && model_env[0]) {
+        snprintf(cfg->model, sizeof(cfg->model), "%s", model_env);
+        snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", model_env);
+    }
+    const char *prov_env = getenv("HERMES_PROVIDER");
+    if (prov_env && prov_env[0]) {
+        snprintf(cfg->provider, sizeof(cfg->provider), "%s", prov_env);
+        snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", prov_env);
+    }
+    const char *url_env = getenv("HERMES_BASE_URL");
+    if (url_env && url_env[0]) {
+        snprintf(cfg->base_url, sizeof(cfg->base_url), "%s", url_env);
+        snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", url_env);
+    }
+    const char *key_env = getenv("HERMES_API_KEY");
+    if (key_env && key_env[0]) {
+        snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", key_env);
+        snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", key_env);
+    }
 
     /* Agent section */
     int max_turns = yaml_get_int(doc, "agent.max_turns", 90);
