@@ -123,3 +123,10 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **L04: xAI model retirement detection** — `xai_is_model_retired()` with official May 15, 2026 retirement list. Config validation checks principal.model, tools.vision_model, delegation.model, compression.model. Reports replacement + reasoning_effort hints.
 - ◀ **Upstream drift: 4/12 remain** (L01-L03, L07)
 - ◀ Committed: `4ea1bbadc`
+
+### Session 2026-05-22 (After — L03 + M30)
+- ✅ **L03: xAI Web Search** — search_xai() via Responses API + web_search tool dispatch
+- ✅ **M30: Web tool test** — test_web.c, 22 assertions for all 3 handlers + 6 backend dispatch
+- ✅ **Bugfix: use-after-free in web_search_handler** — backend arg read after json_free(args), all backends silently fell through to searxng
+- ◀ **Tests: 36 files, 6,920 lines, 69 passed, 0 failed, 0 skipped**
+- ◀ **~315 gaps remaining** (2 closed this session)

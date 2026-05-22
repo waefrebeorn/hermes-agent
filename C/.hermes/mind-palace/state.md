@@ -17,7 +17,7 @@
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
 | **Tests** | 46 | 50% | **36 files, 2,057 assertions** (67 pass, 0 fail, 0 skip) |
-| **Upstream** | 2 | new | L02-L03 remain (125 commits behind) |
+| **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
@@ -47,3 +47,12 @@
   - Full message lifecycle: new, clone, free all handle encrypted_content
   - Wire through agent_loop assistant message creation
 - ◀ Committed: `17a88748f`
+
+## Session 2026-05-22 (L03 + M30)
+
+- ✅ **L03: xAI Web Search** — search_xai() via Responses API + web_search tool dispatch
+- ✅ **M30: Web tool test** — test_web.c, 22 assertions for all 3 web handlers + 6 backend dispatch
+- ✅ **Bugfix: use-after-free in web_search_handler** — backend arg read after json_free(args) caused all backends to silently fall through to default searxng
+- ◀ **Tests: 36 files, 6,920 lines, 69 passed, 0 failed, 0 skipped**
+- ◀ Committed: `46b284ac1`
+- ◀ **~315 gaps remaining** (2 closed this session)

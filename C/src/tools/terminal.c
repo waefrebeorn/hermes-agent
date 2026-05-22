@@ -434,7 +434,10 @@ char *terminal_handler(const char *args_json, const char *task_id) {
         return strdup(buf);
     }
 
-    const char *command = json_object_get_string(args, "command", NULL);
+    /* Copy strings from JSON tree before freeing */
+    const char *command_raw = json_object_get_string(args, "command", NULL);
+    char command_buf[16384] = "";
+    if (command_raw) snprintf(command_buf, sizeof(command_buf), "%s", command_raw);
 
     /* F12: Timeout propagation — read from args, fallback to tool config, then default */
     int timeout = (int)json_object_get_number(args, "timeout", 0);
@@ -446,10 +449,14 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     bool use_pty = json_object_get_bool(args, "pty", false);
 
     /* F10: Environment isolation — read optional env string (KEY=VALUE KEY2=VALUE2) */
-    const char *env_str = json_object_get_string(args, "env", NULL);
+    const char *env_raw = json_object_get_string(args, "env", NULL);
+    char env_buf[4096] = "";
+    if (env_raw) snprintf(env_buf, sizeof(env_buf), "%s", env_raw);
 
     /* Workdir */
-    const char *workdir = json_object_get_string(args, "workdir", NULL);
+    const char *workdir_raw = json_object_get_string(args, "workdir", NULL);
+    char workdir_buf[4096] = "";
+    if (workdir_raw) snprintf(workdir_buf, sizeof(workdir_buf), "%s", workdir_raw);
 
     /* F11: Docker backend — read backend arg, fallback to config */
     const char *backend_arg = json_object_get_string(args, "backend", NULL);
@@ -458,9 +465,16 @@ char *terminal_handler(const char *args_json, const char *task_id) {
         backend = tool_config_get("terminal", "backend");
     
     /* F11: Docker image override */
-    const char *docker_image = json_object_get_string(args, "docker_image", NULL);
+    const char *docker_raw = json_object_get_string(args, "docker_image", NULL);
+    char docker_buf[1024] = "";
+    if (docker_raw) snprintf(docker_buf, sizeof(docker_buf), "%s", docker_raw);
 
     json_free(args);
+
+    const char *command = command_buf[0] ? command_buf : NULL;
+    const char *env_str = env_buf[0] ? env_buf : NULL;
+    const char *workdir = workdir_buf[0] ? workdir_buf : NULL;
+    const char *docker_image = docker_buf[0] ? docker_buf : NULL;
 
     if (!command)
         return strdup("{\"error\": \"Missing required 'command' argument\"}");
