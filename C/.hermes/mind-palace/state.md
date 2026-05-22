@@ -6,7 +6,7 @@
 
 | Category | Gaps | Done% | Key Stats |
 |----------|------|-------|-----------|
-| **Config** | 4 depth | 97% | 322/322 YAML keys parsed, **profiles auto-load**, **`${VAR:-default}` env expansion** |
+| **Config** | 2 depth | 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` |
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve. **G55: SSE transport added** |
 | **Plugins** | 48 | 14% | 3 .so plugins: kanban (real) + honcho (real) + spotify (real: Web API via curl) — **45+27+18 test verified** |
@@ -22,6 +22,18 @@
 | **Build/doc** | 10 | 55% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), .dockerignore, man page (hermes.1) |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-24 — CLI: H14 --json output mode
+
+- ✅ **H14: `--json` flag** — structured JSON output for scripting. `{"response":"...", "session_id":"..."}` with proper JSON escaping. Order-independent with --help.
+- ◀ **CLI: 87% → 88%** (H14 closed, 32 CLI gaps remain)
+- ◀ Committed: `ea869fb29`
+
+### Session 2026-05-24 — Config depth: A04 !include directive
+
+- ✅ **A04: `!include path.yaml` directive** — `config_resolve_includes()` preprocesses YAML files before parsing, inlining referenced files with correct indentation. Relative path resolution. Fallback to yaml_parse_file() if no includes found.
+- ◀ **Config: 97% → 98%** (A04 closed, 2 depth gaps remain: A05 watching, A06 migration)
+- ◀ Committed: `610e94a05`
 
 ### Session 2026-05-24 — Docs overhaul: 400-gap-roadmap synced to reality
 

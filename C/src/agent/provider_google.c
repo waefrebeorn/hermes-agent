@@ -117,7 +117,11 @@ static char *google_build_request_body(const provider_t *p,
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);
-        if (rf) { json_set(root, "response_format", rf); json_free(rf); }
+        if (rf) { json_set(root, "response_format", json_copy(rf)); json_free(rf); }
+    } else if (p->config.json_mode) {
+        json_t *rf = json_new_object();
+        json_object_set(rf, "type", json_new_string("json_object"));
+        json_set(root, "response_format", rf);
     }
     if (p->config.metadata[0]) {
         json_t *md = json_parse(p->config.metadata, NULL);

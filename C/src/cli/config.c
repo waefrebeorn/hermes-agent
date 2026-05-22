@@ -360,6 +360,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.metadata[0] = '\0';
     cfg->provider_cfg.tool_choice[0] = '\0';
     cfg->provider_cfg.parallel_tool_calls = true;
+    cfg->provider_cfg.json_mode = false;
     cfg->provider_cfg.max_tool_calls = 0;
     cfg->provider_cfg.n = 1;
 
@@ -827,6 +828,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* n: number of choices (default 1) */
     int n_val = yaml_get_int(doc, "agent.n", 0);
     if (n_val > 0) cfg->provider_cfg.n = n_val;
+    /* B23: json_mode — auto-set response_format to json_object */
+    cfg->provider_cfg.json_mode = yaml_get_bool(doc, "agent.json_mode", false);
 
     /* L05: extra_body — arbitrary JSON to merge into request body */
     const char *extra = yaml_get_string(doc, "agent.extra_body");
@@ -1540,6 +1543,10 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_N");
     if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.n = t; }
+
+    /* B23: json_mode env var */
+    v = getenv("HERMES_JSON_MODE");
+    if (v) cfg->provider_cfg.json_mode = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
 
     v = getenv("HERMES_EXTRA_BODY");
     if (v) snprintf(cfg->provider_cfg.extra_body, sizeof(cfg->provider_cfg.extra_body), "%s", v);
@@ -2290,6 +2297,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_bool(diff, "model.parallel_tool_calls", def.provider_cfg.parallel_tool_calls, active->provider_cfg.parallel_tool_calls);
     diff_int(diff, "model.max_tool_calls", def.provider_cfg.max_tool_calls, active->provider_cfg.max_tool_calls);
     diff_int(diff, "model.n", def.provider_cfg.n, active->provider_cfg.n);
+    diff_bool(diff, "model.json_mode", def.provider_cfg.json_mode, active->provider_cfg.json_mode);
     diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
 
     /* Display group */

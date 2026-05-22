@@ -206,3 +206,18 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Suite: 85/0/1** (+1 test, 24 assertions)
 - ◀ **Tests: 54%** (was 52%, 1/44 gaps closed)
 - ◀ Committed: `589f75b81`
+
+### Session 2026-05-24 — Config depth: A03 env var expansion
+
+- ✅ **A03: ${VAR:-default} expansion** — 4 critical keys, 100 lines, 11/12 standalone tests pass
+- ✅ **Suite: 88/0/0** (no regression)
+- ✅ **Config: 97%** (4 depth gaps remain: schema, includes, watching, migration)
+- ◀ Committed: `856ab9722`
+
+### Session 2026-05-24 — Test Coverage: Cron + Protobuf
+
+- ✅ **test_cron_lib.c** — 51 assertions: parse/match/next/describe/null safety; found cron_next stale tm_wday bug
+- ✅ **test_protobuf.c** — 63 assertions: varint encode/decode/tag/skip/find/round-trip/null safety
+- ◀ **Suite: 88/0/0** (+2 tests, 114 assertions; was 86/0/1)
+- ◀ **Tests: 56%** (was 54%, 2/42 gaps closed)
+- ◀ Commits: `4de4fec5b`, `c2c471e78`

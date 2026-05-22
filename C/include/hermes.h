@@ -122,6 +122,7 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
     char  fallback_model[128];     /* model to fallback to on error */
@@ -328,6 +329,7 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */

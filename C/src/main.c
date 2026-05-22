@@ -151,6 +151,7 @@ int main(int argc, char **argv) {
         agent_state.llm.parallel_tool_calls = cfg.provider_cfg.parallel_tool_calls;
         agent_state.llm.max_tool_calls = cfg.provider_cfg.max_tool_calls;
         agent_state.llm.n = cfg.provider_cfg.n;
+        agent_state.llm.json_mode = cfg.provider_cfg.json_mode;
         memcpy(agent_state.llm.extra_body, cfg.provider_cfg.extra_body,
                sizeof(agent_state.llm.extra_body));
         agent_state.max_iterations = cfg.max_turns;
