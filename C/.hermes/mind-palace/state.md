@@ -6,7 +6,7 @@
 
 | Category | Gaps | Done% | Key Stats |
 |----------|------|-------|-----------|
-| **Config** | 6 depth | 95% | 322/322 YAML keys parsed, validated, env-overridden |
+| **Config** | 5 depth | 96% | 322/322 YAML keys parsed, **profiles auto-load from `~/.slermes/profiles/<name>.yaml`** |
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 17 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
@@ -16,7 +16,7 @@
 | **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 46 | 50% | **36 files, 2,057 assertions** (67 pass, 0 fail, 0 skip) |
+| **Tests** | 46 | 50% | **36 files, 2,087 assertions** (77 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Cross-cut 5/5 |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |

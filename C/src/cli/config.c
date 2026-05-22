@@ -1172,6 +1172,14 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* Parse .env (overrides config.yaml) */
     parse_env_file(cfg->env_path, cfg);
 
+    /* Auto-load profile if configured */
+    if (cfg->agent.profile[0]) {
+        if (!hermes_config_load_profile(cfg, cfg->agent.profile, config_dir)) {
+            fprintf(stderr, "Warning: profile '%s' not found in profiles/\\n", cfg->agent.profile);
+        }
+        hermes_set_profile(cfg->agent.profile);
+    }
+
     return true;
 }
 

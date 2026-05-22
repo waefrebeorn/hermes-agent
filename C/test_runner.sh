@@ -619,5 +619,35 @@ else
     fail "tool registry completeness (missing tools)"
 fi
 
+# ==============================================
+# 6. Profile loading test
+# ==============================================
+echo ""; echo "=== Config Profile Tests ==="
+
+# Create a test profile in the slermes profiles dir
+PROFILE_DIR="$HOME/.slermes/profiles"
+mkdir -p "$PROFILE_DIR"
+cat > "$PROFILE_DIR/test-profile.yaml" << 'EOF'
+model:
+  default: gpt-4o
+  temperature: 0.7
+agent:
+  verbose: 1
+  max_turns: 50
+EOF
+
+# Test profile list via /config profile list
+PROFILE_LIST=$(echo "/config profile list" | timeout 3 "$HERMES" 2>&1 || true)
+if echo "$PROFILE_LIST" | grep -q "test-profile"; then ok "config profile list shows test-profile"
+else fail "config profile list missing test-profile"; fi
+
+# Test profile activation
+PROFILE_ACTIVATE=$(echo "/config profile test-profile" | timeout 3 "$HERMES" 2>&1 || true)
+if echo "$PROFILE_ACTIVATE" | grep -q "activated"; then ok "config profile activates test-profile"
+else fail "config profile activation failed"; fi
+
+# Cleanup test profile only (don't remove slermes dir)
+rm -f "$PROFILE_DIR/test-profile.yaml"
+
 summary
 exit $FAIL

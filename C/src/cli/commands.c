@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <dlfcn.h>
+#include <dirent.h>
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -1155,6 +1156,43 @@ static void cmd_config(const char *args, agent_state_t *state) {
         return;
     }
 
+    if (strncmp(args, "profile ", 8) == 0) {
+        const char *profile_name = args + 8;
+        if (strcmp(profile_name, "list") == 0) {
+            /* List available profiles */
+            char profiles_dir[HERMES_PATH_MAX];
+            hermes_resolve_path("profiles", profiles_dir, sizeof(profiles_dir));
+            DIR *d = opendir(profiles_dir);
+            if (!d) {
+                printf("No profiles directory found at %s\n", profiles_dir);
+                return;
+            }
+            printf("Available profiles:\n");
+            struct dirent *de;
+            int count = 0;
+            while ((de = readdir(d)) != NULL) {
+                size_t len = strlen(de->d_name);
+                if (len > 5 && strcmp(de->d_name + len - 5, ".yaml") == 0) {
+                    de->d_name[len - 5] = '\0';
+                    printf("  %s\n", de->d_name);
+                    count++;
+                }
+            }
+            closedir(d);
+            if (count == 0) printf("  (none)\n");
+            return;
+        }
+        /* Load named profile */
+        hermes_config_t pcfg;
+        if (!hermes_config_load_profile(&pcfg, profile_name, state->hermes_home)) {
+            printf("Profile '%s' not found. Use /config profile list to see available profiles.\n", profile_name);
+            return;
+        }
+        hermes_set_profile(profile_name);
+        printf("Profile '%s' activated (takes effect on next run).\n", profile_name);
+        return;
+    }
+
     /* Show specific section */
     if (strncmp(args, "show ", 5) == 0) {
         const char *section = args + 5;
@@ -1206,7 +1244,7 @@ static void cmd_config(const char *args, agent_state_t *state) {
         return;
     }
 
-    printf("Usage: /config [validate|diff|export|migrate|groups|schema|show <group>|get <key>|set <key>=<value>]\n");
+    printf("Usage: /config [validate|diff|export|migrate|groups|schema|profile <name>|profile list|show <group>|get <key>|set <key>=<value>]\n");
 }
 
 static void cmd_commands(const char *args, agent_state_t *state) {

@@ -138,3 +138,12 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **All per-tool tests complete** — M29-M44 all done (17 tests)
 - ◀ **Tests: 42 files, 75 pass, 0 fail, 1 skip**
 - ◀ Committed: `ce094d8dc`, `cfb63915e`, `3f69bd4fa`
+
+## Session continuation (B26-B28 + A01)
+- ✅ **B26: Anthropic thinking blocks** — extended_reasoning + budget_tokens in Anthropic provider
+- ✅ **B27: Anthropic cache control** — cache_control on user messages + tools array
+- ✅ **B28: extra_body on Google + Anthropic** — JSON key merge for safetySettings, metadata, etc.
+- ✅ **A01: Config profiles complete** — profile auto-load on startup in hermes_config_load, `/config profile <name>` and `/config profile list` CLI commands, /config profile list scans `~/.slermes/profiles/*.yaml`, test_runner.sh has 2 new profile tests
+- ◀ **Config: 96% (5 depth gaps remaining)**
+- ◀ **Tests: 77 pass, 0 fail, 1 skip (+2 profile tests)**
+- ◀ **Config depth gaps: 5/322 remaining**
