@@ -145,3 +145,27 @@ void tool_config_clear(void) {
     }
     g_overrides = NULL;
 }
+
+/* Get a tool config as integer */
+int tool_config_get_int(const char *tool_name, const char *key, int default_val) {
+    const char *v = tool_config_get(tool_name, key);
+    if (!v) return default_val;
+    char *end = NULL;
+    long result = strtol(v, &end, 10);
+    if (end == v || *end != '\0') return default_val;
+    return (int)result;
+}
+
+/* Get a tool config as boolean */
+bool tool_config_get_bool(const char *tool_name, const char *key, bool default_val) {
+    const char *v = tool_config_get(tool_name, key);
+    if (!v) return default_val;
+    /* Case-insensitive comparison */
+    size_t len = strlen(v);
+    if (len == 0) return default_val;
+    if (strcasecmp(v, "true") == 0 || strcmp(v, "1") == 0 ||
+        strcasecmp(v, "yes") == 0) return true;
+    if (strcasecmp(v, "false") == 0 || strcmp(v, "0") == 0 ||
+        strcasecmp(v, "no") == 0) return false;
+    return default_val;
+}

@@ -15,6 +15,8 @@
  *   4. Default value (if provided)
  */
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,6 +46,13 @@ void tool_config_set(const char *tool_name, const char *key, const char *value);
 
 /* Clear all runtime overrides. */
 void tool_config_clear(void);
+
+/* Get a tool config as integer. Returns default_val if not found or invalid. */
+int tool_config_get_int(const char *tool_name, const char *key, int default_val);
+
+/* Get a tool config as boolean. Returns default_val if not found.
+ * Accepts: \"true\"/\"false\", \"1\"/\"0\", \"yes\"/\"no\" (case-insensitive). */
+bool tool_config_get_bool(const char *tool_name, const char *key, bool default_val);
 
 #ifdef __cplusplus
 }
