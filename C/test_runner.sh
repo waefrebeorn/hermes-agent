@@ -282,6 +282,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "file_tool (compilation failed)"
 fi
 
+# Vision tool test (M33 — needs vision.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_vision.c" \
+    "$CDIR/src/tools/vision.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_vision -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_vision > /dev/null 2>&1; then ok "vision_tool (19 tests)"
+    else fail "vision_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_vision
+else skip "vision_tool (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \

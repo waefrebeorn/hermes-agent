@@ -16,18 +16,17 @@
 | **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Errors** | 5 | **100% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
-| **Upstream** | 12 | new | 125 commits behind origin/main |
-| **Tests** | 53 | 40% | 26 files, 1422 assertions |
-|| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
-|| **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
+| **Tests** | 53 | 41% | 28 files, 1,473 assertions |
+| **Upstream** | 4 | new | L01-L03, L07 remain (125 commits behind) |
+| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
+| **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
+
+**Known bug:** temperature=0.0 is silently dropped — `s/> 0.0f/>= 0.0f/` in 9 providers. **FIXED ✅**
 
 ### Session 2026-05-22 (This Continuation)
 
-- ✅ **L12: Browse.sh skills hub** — `skill_search_hub()` + `skill_install_from_hub()` with HTTP fetch, JSON parse, query filtering, detail+CDN install, provenance tracking
-- ✅ **skill_hub tool registered** — search/install/list actions via skill_hub_handler
-- ✅ **skill_search hub:true param** — merges browse.sh results with local, adds `source` field
-- ✅ **CLI /skills search-hub <query> / install <slug>** — subcommands in cmd_skills
-- ◀ **Upstream drift: 5/12 remain** (L01-L04, L07)
-- ◀ **Build/doc: skills hub feature added** — 3 files, +335 lines, 58/58 tests pass
-- ◀ Committed: `dbe604c64`
+- ✅ **M31: File tool test** — test_file.c, 35 assertions for file CRUD (read/write/search) + sandbox enforcement. Covers: create, overwrite, parent dirs, empty file, missing path, offset/limit read, non-existent file, null args, pattern/glob search, path traversal /etc blocking, 500B content, special path chars
+- ✅ **-Werror fixes in file.c** — `/*` within comment, unused `fread` return
+- ✅ **test_runner.sh updated** — file_tool (35 tests) added
+- ◀ **Tests now 28 files, 1,473 assertions. Suite: 59/59 pass, 0 fail, 3 skip**
+- ◀ Committed: `2ebd96df5`
