@@ -15,6 +15,8 @@
 #include "hermes.h"
 #include "hermes_json.h"
 
+#include "credential_pool.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,6 +84,7 @@ struct provider_t {
     char api_key[512];
     char base_url[512];
     void *data; /* Provider-specific data */
+    credential_pool_t *pool; /* P82: optional credential pool for multi-key rotation */
 };
 
 /* ================================================================
@@ -99,6 +102,14 @@ provider_t *provider_create(const char *provider_name,
 
 /* Free a provider instance */
 void provider_free(provider_t *p);
+
+/* Attach a credential pool to a provider instance.
+ * The pool is NOT owned by the provider — caller must free it separately
+ * after provider_free(). Use NULL to detach. */
+void provider_set_credential_pool(provider_t *p, credential_pool_t *pool);
+
+/* Get the credential pool attached to this provider (may be NULL). */
+credential_pool_t *provider_get_credential_pool(const provider_t *p);
 
 /* Get provider operations (convenience) */
 static inline const provider_ops_t *provider_ops(const provider_t *p) {

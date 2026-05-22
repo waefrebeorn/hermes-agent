@@ -107,5 +107,14 @@ provider_t *provider_create(const char *provider_name,
 void provider_free(provider_t *p) {
     if (!p) return;
     free(p->data);
+    /* Note: pool is NOT owned — caller frees it */
     free(p);
+}
+
+void provider_set_credential_pool(provider_t *p, credential_pool_t *pool) {
+    if (p) p->pool = pool;
+}
+
+credential_pool_t *provider_get_credential_pool(const provider_t *p) {
+    return p ? p->pool : NULL;
 }

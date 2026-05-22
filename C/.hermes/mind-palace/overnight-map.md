@@ -1,16 +1,22 @@
-# Slermes C — Overnight Map (May 23 session)
+# Slermes C — Overnight Map (May 21 session)
 
 ## Wake-up Instructions
 Read state.md → goal-mantra.md → plan.md → prestige_prompt.md → plans/200-phase-roadmap.md.
 DO NOT re-read overnight-map.md — it's stale by design.
 
 ## What Changed This Session
-- **P21: hermes_constants port** — new src/cli/paths.c with hermes_get_home(), XDG dirs, hermes_display_home(), hermes_resolve_path(), hermes_set/get_profile()
-- **P22: deep merge** — hermes_config_merge() for config layering
-- Config module now ~30% (130/424 keys)
-- Commits: a4036dbd9 (P21), d5ef19294 (P22)
+- **P82: Credential pool** — new include/credential_pool.h + src/agent/credential_pool.c
+  - Multi-key round-robin rotation
+  - Rate-limit tracking (429 → CRED_RATE_LIMITED, auto-resurrect on timeout)
+  - Consecutive-failure backoff (3x 5xx → CRED_FAILED, cooloff 300s)
+  - Auth failure detection (401/403 → CRED_EXHAUSTED)
+  - Quota tracking (per-key tokens + requests)
+  - Stats JSON export
+  - integrated into provider.h/provider_t via set/get pool
+- Commits: P82 commit pending
 
 ## What's Next
-- P19: inotify config watch (Linux-specific, deferred)
-- P23-P25: categories, schema, migration (deferred)
-- **P26+: CLI commands** — /new, /clear, /save/load, /stats, /config, /model, etc.
+- **P83: Fallback model routing** — ordered fallback list, health-check before fallback
+- **P84: Budget tracking** — per-session token budget, per-turn cost tracking
+- **P85: Provider metadata** — model capabilities, context window, pricing
+- **P86+: Agent loop** — budget, parallel dispatch, interrupts, checkpoints
