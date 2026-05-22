@@ -306,6 +306,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "todo_tool (compilation failed)"
 fi
 
+# Patch tool test (M42 — needs patch.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_patch.c" \
+    "$CDIR/src/tools/patch.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_patch -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_patch > /dev/null 2>&1; then ok "patch_tool (17 tests)"
+    else fail "patch_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_patch
+else skip "patch_tool (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \

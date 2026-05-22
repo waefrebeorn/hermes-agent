@@ -159,10 +159,15 @@ char *patch_handler(const char *args_json, const char *task_id) {
     char *err = NULL;
     json_node_t *args = json_parse(args_json, &err);
     if (!args) {
-        char buf[512];
-        snprintf(buf, sizeof(buf), "{\"error\":\"JSON parse: %s\"}", err ? err : "unknown");
+        /* Return valid JSON even if error message contains special chars */
+        json_node_t *e = json_new_object();
+        json_object_set(e, "error", json_new_string("JSON parse error"));
+        if (err) json_object_set(e, "detail", json_new_string(err));
         free(err);
-        return strdup(buf);
+        char *out = json_serialize(e);
+        json_free(e);
+        if (!out) out = strdup("{\"error\":\"JSON parse error\"}");
+        return out;
     }
 
     const char *path = json_object_get_string(args, "path", NULL);
@@ -170,9 +175,17 @@ char *patch_handler(const char *args_json, const char *task_id) {
     const char *new_string = json_object_get_string(args, "new_string", "");
     bool replace_all = json_object_get_bool(args, "replace_all", false);
 
+    /* strdup BEFORE json_free — values point into JSON tree */
+    char *path_dup = path ? strdup(path) : NULL;
+    char *old_str_dup = old_string ? strdup(old_string) : NULL;
+    char *new_str_dup = new_string ? strdup(new_string) : NULL;
+
     json_free(args);
 
-    char *result = apply_patch(path, old_string, new_string, replace_all);
+    char *result = apply_patch(path_dup, old_str_dup, new_str_dup, replace_all);
+    free(path_dup);
+    free(old_str_dup);
+    free(new_str_dup);
     return result;
 }
 
