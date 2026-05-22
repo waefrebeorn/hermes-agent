@@ -31,6 +31,11 @@
 
 ### Known Bug
 ```c
-// temperature=0.0 silently dropped
-// Fix: if (p->config.temperature >= 0.0f)  // was >
+// Fix applied: temperature=0.0 now correctly sent to API (>= 0.0f)
 ```
+
+### Session 2026-05-22 Progress
+- **P0 #1:** temperature=0.0 fix ✅ — s/>0.0f/>=0.0f/ × 9 providers
+- **P0 #2:** B04-B05 response_format + metadata ✅ — new fields wired through all 3 forwarding layers + config pipeline + all 9 providers
+- **P0 #3 partial:** F08 vision description — TODO replaced with Python delegation helper
+- **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely (all params dropped) — now fixed with full forwarding block

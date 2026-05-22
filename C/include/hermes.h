@@ -112,6 +112,8 @@ typedef struct {
     char  reasoning_effort[32];
     char  response_format[256];    /* JSON: "json_object" or {"type":"json_schema","json_schema":{...}} */
     char  metadata[256];           /* key-value map JSON string */
+    char  tool_choice[32];         /* "auto", "none", "required", or JSON for specific function */
+    bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
@@ -237,6 +239,8 @@ typedef struct {
     char  reasoning_effort[32];    /* low, medium, high */
     char  response_format[256];    /* "json_object" or JSON schema string */
     char  metadata[256];           /* key-value map JSON string */
+    char  tool_choice[32];         /* "auto", "none", "required", or JSON for specific function */
+    bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
 } provider_config_t;
 
 /* ================================================================

@@ -107,6 +107,9 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
            sizeof(state->llm.response_format));
     memcpy(state->llm.metadata, cfg->provider_cfg.metadata,
            sizeof(state->llm.metadata));
+    memcpy(state->llm.tool_choice, cfg->provider_cfg.tool_choice,
+           sizeof(state->llm.tool_choice));
+    state->llm.parallel_tool_calls = cfg->provider_cfg.parallel_tool_calls;
 
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)

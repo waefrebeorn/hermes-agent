@@ -284,6 +284,9 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                sizeof(prov->config.response_format));
         memcpy(prov->config.metadata, cfg->metadata,
                sizeof(prov->config.metadata));
+        memcpy(prov->config.tool_choice, cfg->tool_choice,
+               sizeof(prov->config.tool_choice));
+        prov->config.parallel_tool_calls = cfg->parallel_tool_calls;
     }
 
     if (prov && prov->ops) {
@@ -765,6 +768,9 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                sizeof(prov->config.response_format));
         memcpy(prov->config.metadata, cfg->metadata,
                sizeof(prov->config.metadata));
+        memcpy(prov->config.tool_choice, cfg->tool_choice,
+               sizeof(prov->config.tool_choice));
+        prov->config.parallel_tool_calls = cfg->parallel_tool_calls;
     }
 
     if (prov && prov->ops) {

@@ -111,6 +111,15 @@ static char *google_build_request_body(const provider_t *p,
         if (md) { json_set(root, "metadata", md); json_free(md); }
     }
 
+    /* tool_choice + parallel_tool_calls */
+    if (p->config.tool_choice[0]) {
+        json_t *tc = json_parse(p->config.tool_choice, NULL);
+        if (tc) { json_set(root, "tool_choice", tc); json_free(tc); }
+        else { json_set(root, "tool_choice", json_string(p->config.tool_choice)); }
+    }
+    if (!p->config.parallel_tool_calls)
+        json_set(root, "parallel_tool_calls", json_bool(false));
+
     /* System instruction (separate from contents) */
     char system_text[4096] = "";
     bool has_system = false;

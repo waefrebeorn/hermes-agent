@@ -25,10 +25,19 @@ make -j$(nproc) && bash test_runner.sh --verbose
 ```
 
 ## Known Issues
-- temperature=0.0 silently dropped — fix first
 - Plugins at 8% is the biggest structural gap (45 backends to port)
 - 25 provider-specific API quirks entirely missed before this audit
+- F05-F07: computer_use (WSL), memory_sqlite (needs libsqlite3), memory_plugin (needs plugin system) still stubs
 - Browser/memory/kanban tool handlers verified 1:1 ✅
+- **Fixed:** temperature=0.0 dropped (s/> 0.0f/>= 0.0f/ × 9 providers)
+- **Fixed:** streaming path missing config forwarding (16 params now forwarded)
+
+### Session 2026-05-22
+- ✅ P0 #1: temp=0.0 fix
+- ✅ P0 #2: response_format + metadata 
+- ✅ Fixed streaming config forwarding gap
+- 🔄 P0 #3: F08 vision description → Python delegation (partial)
+- Next: P0 #3 remaining (F05-F07) or P0 #4 (B01-B03: 3 ACP providers)
 
 ## Upstream
 - 125 commits since last sync, 52 Python

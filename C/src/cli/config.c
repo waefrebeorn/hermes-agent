@@ -149,6 +149,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->provider_cfg.reasoning_effort, sizeof(cfg->provider_cfg.reasoning_effort), "medium");
     cfg->provider_cfg.response_format[0] = '\0';
     cfg->provider_cfg.metadata[0] = '\0';
+    cfg->provider_cfg.tool_choice[0] = '\0';
+    cfg->provider_cfg.parallel_tool_calls = true;
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -521,6 +523,13 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *metadata = yaml_get_string(doc, "agent.metadata");
     if (metadata) snprintf(cfg->provider_cfg.metadata,
                             sizeof(cfg->provider_cfg.metadata), "%s", metadata);
+
+    const char *tool_choice = yaml_get_string(doc, "agent.tool_choice");
+    if (tool_choice) snprintf(cfg->provider_cfg.tool_choice,
+                               sizeof(cfg->provider_cfg.tool_choice), "%s", tool_choice);
+    /* parallel_tool_calls: default true */
+    cfg->provider_cfg.parallel_tool_calls =
+        yaml_get_bool(doc, "agent.parallel_tool_calls", true);
 
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
@@ -1163,6 +1172,12 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_METADATA");
     if (v) snprintf(cfg->provider_cfg.metadata, sizeof(cfg->provider_cfg.metadata), "%s", v);
+
+    v = getenv("HERMES_TOOL_CHOICE");
+    if (v) snprintf(cfg->provider_cfg.tool_choice, sizeof(cfg->provider_cfg.tool_choice), "%s", v);
+
+    v = getenv("HERMES_PARALLEL_TOOL_CALLS");
+    if (v) cfg->provider_cfg.parallel_tool_calls = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
@@ -1866,6 +1881,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "model.user", def.provider_cfg.user, active->provider_cfg.user);
     diff_str(diff, "model.response_format", def.provider_cfg.response_format, active->provider_cfg.response_format);
     diff_str(diff, "model.metadata", def.provider_cfg.metadata, active->provider_cfg.metadata);
+    diff_str(diff, "model.tool_choice", def.provider_cfg.tool_choice, active->provider_cfg.tool_choice);
+    diff_bool(diff, "model.parallel_tool_calls", def.provider_cfg.parallel_tool_calls, active->provider_cfg.parallel_tool_calls);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
@@ -2029,6 +2046,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_float(f, "  top_p", cfg->provider_cfg.top_p);
     exp_str(f, "  response_format", cfg->provider_cfg.response_format);
     exp_str(f, "  metadata", cfg->provider_cfg.metadata);
+    exp_str(f, "  tool_choice", cfg->provider_cfg.tool_choice);
+    exp_bool(f, "  parallel_tool_calls", cfg->provider_cfg.parallel_tool_calls);
 
     fprintf(f, "\ndisplay:\n");
     exp_str(f, "  skin", cfg->display.skin);

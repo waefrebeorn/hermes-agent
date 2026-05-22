@@ -148,6 +148,15 @@ static char *anthropic_build_request_body(const provider_t *p,
         if (md) { json_set(root, "metadata", md); json_free(md); }
     }
 
+    /* tool_choice + parallel_tool_calls */
+    if (p->config.tool_choice[0]) {
+        json_t *tc = json_parse(p->config.tool_choice, NULL);
+        if (tc) { json_set(root, "tool_choice", tc); json_free(tc); }
+        else { json_set(root, "tool_choice", json_string(p->config.tool_choice)); }
+    }
+    if (!p->config.parallel_tool_calls)
+        json_set(root, "disable_parallel_tool_use", json_bool(true));
+
     /* Stream flag */
     if (streaming)
         json_set(root, "stream", json_bool(true));

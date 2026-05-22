@@ -87,6 +87,9 @@ int main(int argc, char **argv) {
                sizeof(agent_state.llm.response_format));
         memcpy(agent_state.llm.metadata, cfg.provider_cfg.metadata,
                sizeof(agent_state.llm.metadata));
+        memcpy(agent_state.llm.tool_choice, cfg.provider_cfg.tool_choice,
+               sizeof(agent_state.llm.tool_choice));
+        agent_state.llm.parallel_tool_calls = cfg.provider_cfg.parallel_tool_calls;
         agent_state.max_iterations = cfg.max_turns;
         if (cfg.config_path[0])
             snprintf(agent_state.hermes_home, sizeof(agent_state.hermes_home), "%s", cfg.config_path);

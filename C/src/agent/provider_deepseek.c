@@ -124,6 +124,15 @@ static char *deepseek_build_request_body(const provider_t *p,
         if (md) { json_object_set(root, "metadata", md); json_free(md); }
     }
 
+    /* tool_choice + parallel_tool_calls */
+    if (p->config.tool_choice[0]) {
+        json_t *tc = json_parse(p->config.tool_choice, NULL);
+        if (tc) { json_object_set(root, "tool_choice", tc); json_free(tc); }
+        else { json_object_set(root, "tool_choice", json_new_string(p->config.tool_choice)); }
+    }
+    if (!p->config.parallel_tool_calls)
+        json_object_set(root, "parallel_tool_calls", json_new_bool(false));
+
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }
 
