@@ -74,7 +74,7 @@ tui: $(PHASE5_OBJ) $(TUI_OBJ) src/main.o $(LIB_OBJ)
 
 # Pattern rule for .c files
 src/%.o: src/%.c include/hermes.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(TUI_INC) -c -o $@ $<
 
 # Library pattern rule — standalone libs
 lib/%.o: lib/%.c
