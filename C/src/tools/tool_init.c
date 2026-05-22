@@ -5,6 +5,9 @@
 
 #include "hermes.h"
 
+/* P168: File sandbox init */
+void sandbox_init(void);
+
 /* Tool init declarations (defined in each tool's .c file) */
 void registry_init_terminal(void);
 void registry_init_file(void);
@@ -37,6 +40,9 @@ void registry_init_mcp(void);
 
 /* Register all tools */
 void tools_init_all(void) {
+    /* P168: Initialize file sandbox before any tool registration */
+    sandbox_init();
+
     registry_init_terminal();
     registry_init_file();
     registry_init_web();
