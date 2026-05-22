@@ -271,6 +271,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "memory_tool (compilation failed)"
 fi
 
+# File tool test (M31 — needs file.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" \
+    "$CDIR/tests/test_file.c" \
+    "$CDIR/src/tools/file.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_file -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_file > /dev/null 2>&1; then ok "file_tool (35 tests)"
+    else fail "file_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_file
+else skip "file_tool (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \

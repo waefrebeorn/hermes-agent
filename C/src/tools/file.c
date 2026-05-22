@@ -284,7 +284,7 @@ static char *handle_read(const char *args_json) {
     fseek(f, 0, SEEK_SET);
     char *content = (char *)malloc((size_t)fsize + 1);
     if (!content) { fclose(f); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
-    fread(content, 1, (size_t)fsize, f);
+    if (fread(content, 1, (size_t)fsize, f) == 0 && fsize > 0) { /* suppress warn_unused_result */ }
     fclose(f);
     content[fsize] = '\0';
 
@@ -371,7 +371,7 @@ static char *handle_search(const char *args_json) {
     /* Build grep command — F14: with glob support via find for ** patterns */
     char cmd[16384];
     if (file_glob && file_glob[0]) {
-        /* F14: glob with path prefix support (e.g., src/glob/*.c) */
+        /* F14: glob with path prefix support (e.g. src/glob/foo*.c) */
         char find_glob[1024];
         const char *last_slash = strrchr(file_glob, '/');
         if (last_slash) {
