@@ -460,6 +460,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (browser_type) snprintf(cfg->browser_cfg.browser_type, sizeof(cfg->browser_cfg.browser_type), "%s", browser_type);
 
     cfg->browser_cfg.headless = yaml_get_bool(doc, "browser.headless", true);
+    cfg->browser_cfg.enable_javascript = yaml_get_bool(doc, "browser.javascript", true);
 
     int bw = yaml_get_int(doc, "browser.viewport_width", 0);
     if (bw > 0) cfg->browser_cfg.viewport_width = bw;
@@ -490,6 +491,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (mcl > 0) cfg->memory.char_limit = mcl;
     int ucl = yaml_get_int(doc, "memory.user_char_limit", 0);
     if (ucl > 0) cfg->memory.user_char_limit = ucl;
+    int mtd = yaml_get_int(doc, "memory.ttl_days", 0);
+    if (mtd > 0) cfg->memory.ttl_days = mtd;
+    cfg->memory.auto_save = yaml_get_bool(doc, "memory.auto_save", true);
+    cfg->memory.compression_enabled = yaml_get_bool(doc, "memory.compression_enabled", false);
+    int msl = yaml_get_int(doc, "memory.search_limit", 0);
+    if (msl > 0) cfg->memory.search_limit = msl;
 
     /* P8: Compression section */
     const char *cm = yaml_get_string(doc, "compression.model");
@@ -513,10 +520,13 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (jto > 0) cfg->cron.job_timeout = jto;
     int crd = yaml_get_int(doc, "cron.retention_days", 0);
     if (crd > 0) cfg->cron.retention_days = crd;
+    cfg->cron.notify_on_failure = yaml_get_bool(doc, "cron.notify_on_failure", true);
 
     /* P10: Notification section */
     const char *np = yaml_get_string(doc, "notification.provider");
     if (np) snprintf(cfg->notification.provider, sizeof(cfg->notification.provider), "%s", np);
+    const char *ns = yaml_get_string(doc, "notification.sound");
+    if (ns) snprintf(cfg->notification.sound, sizeof(cfg->notification.sound), "%s", ns);
     cfg->notification.on_complete = yaml_get_bool(doc, "notification.on_complete", true);
     cfg->notification.on_error = yaml_get_bool(doc, "notification.on_error", true);
     cfg->notification.on_approval = yaml_get_bool(doc, "notification.on_approval", false);
@@ -538,11 +548,25 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* sessions.retention_days already handled as int above via different path */
     int srd = yaml_get_int(doc, "sessions.retention_days", 0);
     if (srd > 0) cfg->session.retention_days = srd;
+    int sai = yaml_get_int(doc, "sessions.auto_save_interval", 0);
+    if (sai > 0) cfg->session.auto_save_interval = sai;
+    cfg->session.compress = yaml_get_bool(doc, "sessions.compress", false);
+    cfg->session.store_trajectories = yaml_get_bool(doc, "sessions.store_trajectories", false);
+
+    /* P13: Plugin section */
+    const char *pdirs = yaml_get_string(doc, "plugin.dirs");
+    if (pdirs) snprintf(cfg->plugin.dirs, sizeof(cfg->plugin.dirs), "%s", pdirs);
+    const char *pen = yaml_get_string(doc, "plugin.enabled");
+    if (pen) snprintf(cfg->plugin.enabled, sizeof(cfg->plugin.enabled), "%s", pen);
 
     /* P14: MCP section */
     int mto = yaml_get_int(doc, "mcp_servers.timeout", 0);
     if (mto > 0) cfg->mcp.timeout = mto;
     cfg->mcp.auth_enabled = yaml_get_bool(doc, "mcp.auth_enabled", false);
+    int mmt = yaml_get_int(doc, "mcp.max_tools", 0);
+    if (mmt > 0) cfg->mcp.max_tools = mmt;
+    const char *mcs = yaml_get_string(doc, "mcp.credential_store");
+    if (mcs) snprintf(cfg->mcp.credential_store, sizeof(cfg->mcp.credential_store), "%s", mcs);
 
     /* Agent section */
     cfg->verbose = yaml_get_int(doc, "agent.verbose", 0);

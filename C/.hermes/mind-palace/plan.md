@@ -12,8 +12,12 @@
 - LLM runtime: WORKING (DeepSeek v4 Flash tested)
 
 ## Active Phase
-**P1-P25 gap: Config expansion.** Still 164 keys missing from C struct vs Python DEFAULT_CONFIG.
+**P1-P25 gap: Config expansion (P15+P22 done this session).** Still 164 keys missing from C struct vs Python DEFAULT_CONFIG.
 Missing categories: credential_pool_contexts, fallback_providers, toolset arrays, web.* (search_backend, extract_backend), approval subkeys, logging.*, kanban.*, stt/tts/vision/auxiliary sub-dicts, gateway timeouts, guardrail.*, orchestator.*, goals.*, checkpoints.*, backup.*, personality profiles.
+
+### Just Completed
+- **P15: Config validation** — all 14 groups now validated (type/range/enum): provider, display, agent, tools, delegation, browser, memory, compression, cron, notification, plugin, MCP, security, session
+- **P22: Config merge logic** — full field-level merge for all config groups (browser viewport/js, memory sub-fields, cron, notification, plugin, security/session/mcp expanded)
 
 ## Next Phases In Queue
 1. **Config gap (164 keys)** — credential_pool, fallback_providers, toolset arrays, web.*, etc.
