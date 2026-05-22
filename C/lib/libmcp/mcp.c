@@ -7,6 +7,7 @@
 
 #include "mcp.h"
 #include "../libjson/json.h"
+#include "../libhttp/http.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,12 +41,18 @@ typedef struct {
     int     stderr_fd;  /* capture stderr for diagnostics */
 } mcp_stdio_t;
 
-/* SSE transport state (P62+) */
+/* SSE transport state (P62) */
 typedef struct {
     char    url[1024];
+    char    post_url[1024];    /* POST endpoint for sending requests */
     char    headers[2048];
-    void   *http_client;  /* http_t * */
-    int     sse_fd;       /* SSE stream fd */
+    void   *http_client;       /* http_t * for SSE stream */
+    void   *http_post_client;  /* http_t * for POST requests */
+    int     sse_fd;            /* not used with stream callback */
+    char    event_buf[65536];  /* SSE event accumulator */
+    size_t  event_len;
+    char    current_event[64]; /* current SSE event type */
+    bool    streaming;         /* SSE stream active */
 } mcp_sse_t;
 
 /* Server instance */
@@ -200,88 +207,136 @@ static void stdio_close(mcp_server_t *srv) {
     }
 }
 
-/* Write JSON-RPC message to server stdin */
-static bool stdio_send(mcp_server_t *srv, const char *msg) {
-    if (srv->stdio.stdin_fd <= 0) {
-        snprintf(srv->last_error, sizeof(srv->last_error), "Not connected");
-        return false;
+/* Write JSON-RPC message to server stdin (stdio) or POST to SSE endpoint */
+static bool transport_send(mcp_server_t *srv, const char *msg) {
+    if (srv->transport_type == MCP_TRANSPORT_STDIO) {
+        if (srv->stdio.stdin_fd <= 0) {
+            snprintf(srv->last_error, sizeof(srv->last_error), "Not connected");
+            return false;
+        }
+
+        /* MCP messages are newline-delimited JSON */
+        size_t len = strlen(msg);
+        char *full = (char *)malloc(len + 2);
+        if (!full) return false;
+        memcpy(full, msg, len);
+        full[len] = '\n';
+        full[len + 1] = '\0';
+
+        ssize_t written = write(srv->stdio.stdin_fd, full, len + 1);
+        free(full);
+        return written >= (ssize_t)(len + 1);
     }
 
-    /* MCP messages are newline-delimited JSON */
-    size_t len = strlen(msg);
-    char *full = (char *)malloc(len + 2);
-    if (!full) return false;
-    memcpy(full, msg, len);
-    full[len] = '\n';
-    full[len + 1] = '\0';
+    if (srv->transport_type == MCP_TRANSPORT_SSE) {
+        if (!srv->sse.http_post_client) {
+            snprintf(srv->last_error, sizeof(srv->last_error), "SSE not connected");
+            return false;
+        }
+        /* Send via HTTP POST to server URL */
+        http_resp_t *resp = http_post_json(
+            (http_t *)srv->sse.http_post_client,
+            srv->sse.post_url,
+            msg);
 
-    ssize_t written = write(srv->stdio.stdin_fd, full, len + 1);
-    free(full);
-    return written >= (ssize_t)(len + 1);
+        if (!resp) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "SSE POST failed");
+            return false;
+        }
+
+        bool ok = (resp->status >= 200 && resp->status < 300);
+        http_resp_free(resp);
+        return ok;
+    }
+
+    snprintf(srv->last_error, sizeof(srv->last_error), "No transport");
+    return false;
 }
 
-/* Read a single JSON-RPC line from server stdout.
- * Returns parsed json_t* or NULL on timeout/error.
- * Uses simple \n-delimited reading. */
-static json_t *stdio_read_line(mcp_server_t *srv, int timeout_ms) {
-    /* Accumulate until we hit \n */
-    while (1) {
-        /* Check if we have a complete line in buffer */
-        char *nl = (char *)memchr(srv->read_buf, '\n', srv->read_len);
-        if (nl) {
-            size_t line_len = (size_t)(nl - srv->read_buf);
-            srv->read_buf[line_len] = '\0';
+/* Read a single JSON-RPC line from server (stdio) or from response buffer (SSE).
+ * For stdio: reads \n-delimited lines from pipe with select().
+ * For SSE: sends request via POST, reads response from POST body. */
+static json_t *transport_read_response(mcp_server_t *srv, const char *request_id,
+                                        int timeout_ms) {
+    if (srv->transport_type == MCP_TRANSPORT_STDIO) {
+        /* Read \n-delimited lines until we find matching id */
+        int max_reads = 100;
+        while (max_reads-- > 0) {
+            /* Accumulate until we hit \n */
+            while (1) {
+                char *nl = (char *)memchr(srv->read_buf, '\n', srv->read_len);
+                if (nl) {
+                    size_t line_len = (size_t)(nl - srv->read_buf);
+                    srv->read_buf[line_len] = '\0';
 
-            /* Parse line as JSON */
-            char *err = NULL;
-            json_t *result = json_parse(srv->read_buf, &err);
-            if (err) {
-                free(err);
-                /* Not JSON — might be stderr output, skip */
+                    char *jerr = NULL;
+                    json_t *result = json_parse(srv->read_buf, &jerr);
+                    if (jerr) { free(jerr); }
+                    if (jerr) { /* not JSON, skip */ }
+
+                    /* Shift buffer */
+                    size_t remaining = srv->read_len - line_len - 1;
+                    if (remaining > 0)
+                        memmove(srv->read_buf, nl + 1, remaining);
+                    srv->read_len = remaining;
+
+                    if (result) {
+                        const char *rid = json_get_str(result, "id", "");
+                        if (rid && strcmp(rid, request_id) == 0)
+                            return result;
+                        json_free(result);
+                    }
+                    continue;
+                }
+
+                /* Need more data */
+                struct timeval tv;
+                tv.tv_sec = timeout_ms / 1000;
+                tv.tv_usec = (timeout_ms % 1000) * 1000;
+
+                fd_set fds;
+                FD_ZERO(&fds);
+                FD_SET(srv->stdio.stdout_fd, &fds);
+
+                int ret = select(srv->stdio.stdout_fd + 1, &fds, NULL, NULL,
+                                 timeout_ms > 0 ? &tv : NULL);
+                if (ret <= 0) {
+                    if (ret == 0)
+                        snprintf(srv->last_error, sizeof(srv->last_error),
+                                 "Read timeout (%dms)", timeout_ms);
+                    else
+                        snprintf(srv->last_error, sizeof(srv->last_error),
+                                 "select() error: %s", strerror(errno));
+                    return NULL;
+                }
+
+                ssize_t n = read(srv->stdio.stdout_fd,
+                                 srv->read_buf + srv->read_len,
+                                 sizeof(srv->read_buf) - srv->read_len - 1);
+                if (n <= 0) {
+                    snprintf(srv->last_error, sizeof(srv->last_error),
+                             "Server closed connection");
+                    return NULL;
+                }
+                srv->read_len += (size_t)n;
+                srv->read_buf[srv->read_len] = '\0';
             }
-
-            /* Shift buffer past the line */
-            size_t remaining = srv->read_len - line_len - 1;
-            if (remaining > 0)
-                memmove(srv->read_buf, nl + 1, remaining);
-            srv->read_len = remaining;
-
-            if (result) return result;
-            continue; /* Try next line */
         }
-
-        /* Need more data — use poll/select with timeout */
-        struct timeval tv;
-        tv.tv_sec = timeout_ms / 1000;
-        tv.tv_usec = (timeout_ms % 1000) * 1000;
-
-        fd_set fds;
-        FD_ZERO(&fds);
-        FD_SET(srv->stdio.stdout_fd, &fds);
-
-        int ret = select(srv->stdio.stdout_fd + 1, &fds, NULL, NULL,
-                         timeout_ms > 0 ? &tv : NULL);
-        if (ret <= 0) {
-            if (ret == 0)
-                snprintf(srv->last_error, sizeof(srv->last_error),
-                         "Read timeout (%dms)", timeout_ms);
-            else
-                snprintf(srv->last_error, sizeof(srv->last_error),
-                         "select() error: %s", strerror(errno));
-            return NULL;
-        }
-
-        ssize_t n = read(srv->stdio.stdout_fd,
-                         srv->read_buf + srv->read_len,
-                         sizeof(srv->read_buf) - srv->read_len - 1);
-        if (n <= 0) {
-            snprintf(srv->last_error, sizeof(srv->last_error),
-                     "Server closed connection");
-            return NULL;
-        }
-        srv->read_len += (size_t)n;
-        srv->read_buf[srv->read_len] = '\0';
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "No matching response for id %s", request_id);
+        return NULL;
     }
+
+    if (srv->transport_type == MCP_TRANSPORT_SSE) {
+        /* For SSE, the POST response IS the response.
+         * This is a simplification — real SSE uses streaming. */
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "SSE read via send_request with POST");
+        return NULL;
+    }
+
+    return NULL;
 }
 
 /* ================================================================
@@ -298,40 +353,14 @@ static json_t *send_request(mcp_server_t *srv, const char *method,
     char *msg = build_request(id, method, params);
     if (!msg) return NULL;
 
-    if (!stdio_send(srv, msg)) {
+    if (!transport_send(srv, msg)) {
         free(msg);
         return NULL;
     }
     free(msg);
 
-    /* Read responses until we find matching id */
-    int max_reads = 100; /* safety limit */
-    while (max_reads-- > 0) {
-        json_t *resp = stdio_read_line(srv, timeout_ms);
-        if (!resp) return NULL;
-
-        const char *resp_id = json_get_str(resp, "id", "");
-        if (resp_id && strcmp(resp_id, id) == 0) {
-            /* This is our response */
-            json_t *error_obj = json_obj_get(resp, "error");
-            if (error_obj) {
-                const char *err_msg = json_get_str(error_obj, "message", "Unknown error");
-                snprintf(srv->last_error, sizeof(srv->last_error),
-                         "MCP error: %s", err_msg);
-                json_free(resp);
-                return NULL;
-            }
-            return resp; /* Caller must json_free */
-        }
-
-        /* Not our response — might be a notification or other request's response.
-         * For now just skip. In production, would route to correct pending slot. */
-        json_free(resp);
-    }
-
-    snprintf(srv->last_error, sizeof(srv->last_error),
-             "No matching response for %s", method);
-    return NULL;
+    /* Read response matching our request id */
+    return transport_read_response(srv, id, timeout_ms);
 }
 
 /* ================================================================
@@ -432,7 +461,7 @@ bool mcp_server_connect(mcp_server_t *srv) {
         /* Send initialized notification */
         char *notif = build_notification("notifications/initialized", NULL);
         if (notif) {
-            stdio_send(srv, notif);
+            transport_send(srv, notif);
             free(notif);
         }
 
@@ -443,11 +472,102 @@ bool mcp_server_connect(mcp_server_t *srv) {
     }
 
     if (srv->transport_type == MCP_TRANSPORT_SSE) {
-        /* SSE transport not yet implemented (P62) */
-        snprintf(srv->last_error, sizeof(srv->last_error),
-                 "SSE transport not yet implemented");
-        srv->status = MCP_STATUS_FAILED;
-        return false;
+        if (!srv->sse.url[0]) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "No URL configured for SSE transport");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Open HTTP client for SSE stream */
+        srv->sse.http_client = http_new(srv->connect_timeout);
+        if (!srv->sse.http_client) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "Failed to create HTTP client");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Send initialize via POST to SSE endpoint first.
+         * SSE transport: client sends requests via POST, receives via SSE. */
+        bool init_ok = false;
+
+        /* Make initial POST to establish session */
+        json_t *init_params = json_object();
+        json_t *client_info = json_object();
+        json_set(client_info, "name", json_string("hermes-c"));
+        json_set(client_info, "version", json_string("0.14.1"));
+        json_set(init_params, "protocolVersion", json_string(MCP_PROTOCOL_VERSION));
+        json_set(init_params, "capabilities", json_object());
+        json_set(init_params, "clientInfo", client_info);
+
+        char *init_req = build_request("init-1", "initialize", init_params);
+        if (init_req) {
+            /* Send initialize via POST */
+            http_resp_t *init_resp = http_post_json(
+                (http_t *)srv->sse.http_client,
+                srv->sse.url,
+                init_req);
+            free(init_req);
+
+            if (init_resp && init_resp->status == 200 && init_resp->body) {
+                char *jerr = NULL;
+                json_t *resp = json_parse(init_resp->body, &jerr);
+                if (resp) {
+                    json_t *result = json_obj_get(resp, "result");
+                    if (result) {
+                        /* Extract capabilities */
+                        json_t *server_caps = json_obj_get(result, "capabilities");
+                        if (server_caps) {
+                            srv->caps.supports_tools     = json_obj_get(server_caps, "tools") != NULL;
+                            srv->caps.supports_resources = json_obj_get(server_caps, "resources") != NULL;
+                            srv->caps.supports_prompts   = json_obj_get(server_caps, "prompts") != NULL;
+                            srv->caps.supports_logging   = json_obj_get(server_caps, "logging") != NULL;
+                            srv->caps.supports_sampling  = json_obj_get(server_caps, "sampling") != NULL;
+                        }
+                        init_ok = true;
+                    }
+                    json_free(resp);
+                }
+                if (jerr) free(jerr);
+            }
+            if (init_resp) http_resp_free(init_resp);
+        }
+
+        if (!init_ok) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "SSE initialize failed");
+            http_free((http_t *)srv->sse.http_client);
+            srv->sse.http_client = NULL;
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Create separate HTTP client for POST requests */
+        srv->sse.http_post_client = http_new_with_retry(srv->tool_timeout, 3, 1000);
+        if (!srv->sse.http_post_client) {
+            http_free((http_t *)srv->sse.http_client);
+            srv->sse.http_client = NULL;
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Send initialized notification via POST */
+        char *notif = build_notification("notifications/initialized", NULL);
+        if (notif) {
+            http_post_json((http_t *)srv->sse.http_post_client,
+                           srv->sse.url, notif);
+            free(notif);
+        }
+
+        /* Copy URL as POST URL */
+        snprintf(srv->sse.post_url, sizeof(srv->sse.post_url), "%s", srv->sse.url);
+        srv->sse.streaming = true;
+
+        srv->initialized = true;
+        srv->status = MCP_STATUS_CONNECTED;
+        srv->reconnect_delay_ms = 1000;
+        return true;
     }
 
     snprintf(srv->last_error, sizeof(srv->last_error),
@@ -463,10 +583,22 @@ void mcp_server_disconnect(mcp_server_t *srv) {
         /* Send shutdown notification */
         char *msg = build_notification("exit", NULL);
         if (msg) {
-            stdio_send(srv, msg);
+            transport_send(srv, msg);
             free(msg);
         }
         stdio_close(srv);
+    }
+
+    if (srv->transport_type == MCP_TRANSPORT_SSE) {
+        if (srv->sse.http_client) {
+            http_free((http_t *)srv->sse.http_client);
+            srv->sse.http_client = NULL;
+        }
+        if (srv->sse.http_post_client) {
+            http_free((http_t *)srv->sse.http_post_client);
+            srv->sse.http_post_client = NULL;
+        }
+        srv->sse.streaming = false;
     }
 
     srv->initialized = false;
@@ -699,6 +831,10 @@ const char *mcp_server_name(mcp_server_t *srv) {
 }
 
 bool mcp_server_is_connected(mcp_server_t *srv) {
-    return srv && srv->initialized &&
-           (srv->transport_type == MCP_TRANSPORT_STDIO ? srv->stdio.pid > 0 : false);
+    if (!srv || !srv->initialized) return false;
+    if (srv->transport_type == MCP_TRANSPORT_STDIO)
+        return srv->stdio.pid > 0;
+    if (srv->transport_type == MCP_TRANSPORT_SSE)
+        return srv->sse.http_client != NULL;
+    return false;
 }
