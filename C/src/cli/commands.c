@@ -10,14 +10,6 @@
 #include <time.h>
 #include <dlfcn.h>
 
-/* Command definition — full struct (forward-declared in hermes.h) */
-struct command_def_t {
-    const char *name;
-    const char *alias;
-    const char *description;
-    void (*handler)(const char *args, agent_state_t *state);
-};
-
 /* Forward declarations of handlers */
 static void cmd_help(const char *args, agent_state_t *state);
 static void cmd_exit(const char *args, agent_state_t *state);
@@ -202,6 +194,33 @@ const command_def_t *commands_resolve(const char *input) {
     }
     return NULL;
 }
+
+int commands_count(void) {
+    int count = 0;
+    for (int i = 0; COMMANDS[i].name; i++) count++;
+    return count;
+}
+
+const char *commands_list_json(void) {
+    int count = commands_count();
+    size_t bufsz = 256 + (size_t)count * 64;
+    char *buf = malloc(bufsz);
+    if (!buf) return NULL;
+    buf[0] = '\0';
+    strcat(buf, "[");
+    for (int i = 0; COMMANDS[i].name; i++) {
+        if (i > 0) strcat(buf, ",");
+        strcat(buf, "\"");
+        strcat(buf, COMMANDS[i].name);
+        strcat(buf, "\"");
+    }
+    strcat(buf, "]");
+    return buf;
+}
+
+/* ================================================================
+ *  Command execution
+ * ================================================================ */
 
 bool commands_dispatch(const char *input, agent_state_t *state) {
     const command_def_t *cmd = commands_resolve(input);

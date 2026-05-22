@@ -118,6 +118,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "checkpoint (compilation failed)"
 fi
 
+# CLI command dispatch test (needs commands.c + json + plugin + http libs)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_cli_commands.c" \
+    "$CDIR/src/cli/commands.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cli -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_cli > /dev/null 2>&1; then ok "cli_commands (111 tests)"
+    else fail "cli_commands (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_cli
+else skip "cli_commands (compilation failed)"
+fi
+
+# ==============================================
 # ==============================================
 # 2. Plugin tests
 # ==============================================

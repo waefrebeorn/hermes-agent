@@ -853,10 +853,17 @@ int  hermes_cli_main(int argc, char **argv);
 int  hermes_gateway_main(int argc, char **argv);
 
 /* Command system */
-typedef struct command_def_t command_def_t;
+typedef struct command_def_t {
+    const char *name;
+    const char *alias;
+    const char *description;
+    void (*handler)(const char *args, agent_state_t *state);
+} command_def_t;
 bool commands_dispatch(const char *input, agent_state_t *state);
 const command_def_t *commands_resolve(const char *input);
 const command_def_t *commands_get_all(void);
+int commands_count(void);
+const char *commands_list_json(void);
 
 /* Security approval */
 int approval_check(const char *tool_name, const char *args_json);

@@ -31,15 +31,15 @@
 
 ## Git Log
 ```
+05c9614f2 test(providers): G162 — expand provider smoke test to all 26 providers
+12eec8398 feat(config): G13-G34 — add remaining config structs (discord, kanban, guardrails, approvals + 10 small groups)
+83d2301de feat(providers): G41-G51 — add 11 OpenAI-compat provider aliases
 0965bae99 feat(tests): G161 — config test suite (54 tests)
 c686dea98 feat(config): G13 — STT (6 keys) + voice (6 keys)
-fca49ef29 feat(config): G12 — TTS config struct (17 keys)
-0abd90230 feat(providers): G35-G40 — 6 OpenAI-compat providers (Nous, Alibaba, StepFun, Minimax, Novita, ZAI)
-27ef08f50 feat(config): G1-G11 — auxiliary config struct with 11 sub-tasks (67 keys)
 ```
 
-## Progress: ~76% (config 99%, providers 90%, tests baseline)
+## Progress: ~85% (config ~99%, providers 90%, tests baseline, agent loop)
 - Config: ~320/322 keys ~99% ✅
-- Providers: 26/29 (90%)
-- Tests: config test 70/70 pass
-- Next: Provider depth (credentials, budget), test expansion, tools (feishu/video/MoA/yuanbao)
+- Providers: 26/29 (90%) ✅ runtime verified (439 tests)
+- Tests: 3 suites (config 70, provider 439, provider_metadata 52) — still <3% overall
+- Next: CLI test suite (G163), tools (G83-G95), or provider depth (G157-G160)
