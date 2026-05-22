@@ -1022,6 +1022,19 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
 else skip "skills_tool (compilation failed)"
 fi
 
+# Skill management tool test (skill_view + skill_manage — needs skill_mgmt.c + json)
+echo ""; echo "=== Skill Management Tests ==="
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_skill_mgmt.c" \
+    "$CDIR/src/tools/skill_mgmt.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_skill_mgmt -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_skill_mgmt > /dev/null 2>&1; then ok "skill_mgmt_tool (9 tests)"
+    else fail "skill_mgmt_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_skill_mgmt
+else skip "skill_mgmt_tool (compilation failed)"
+fi
+
 # MCP tool test (M44 — needs mcp_tool.c + libmcp + registry + json)
 if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libmcp" \
     "$CDIR/tests/test_mcp.c" \
