@@ -22,6 +22,7 @@ typedef struct {
     hermes_config_t config;
     bool interactive;
     bool running;
+    bool json_output;        /* H14: --json flag for JSON output mode */
     char session_arg[64];  /* --session id */
 } cli_state_t;
 
@@ -212,13 +213,34 @@ int hermes_cli_main(int argc, char **argv) {
         }
     }
 
+    /* Check for -h/--help early for fast exit */
+    bool arg_has_help = false;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            arg_has_help = true;
+            break;
+        }
+    }
+
+    /* Parse --json flag (order-independent) */
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--json") == 0) {
+            g_cli.json_output = true;
+            for (int j = i; j < argc - 1; j++)
+                argv[j] = argv[j + 1];
+            argc--;
+            i--;
+        }
+    }
+
     /* Check for help flag */
-    if (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+    if (arg_has_help || (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))) {
         printf("Usage: hermes [options] [message...]\n");
         printf("Options:\n");
         printf("  --help, -h         Show this help message\n");
         printf("  --version, -v      Show version information\n");
         printf("  --session <id>     Attach to a specific session\n");
+        printf("  --json             JSON output mode (for scripting)\n");
         printf("  gateway            Start the multi-platform gateway\n");
         printf("  cron               Run the cron scheduler\n");
         printf("  --tui              Start the terminal UI (requires ncurses)\n");
@@ -229,7 +251,6 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Check for one-shot mode */
     if (argc > 1) {
-        /* Check for --session flag */
         const char *session_id = NULL;
         int arg_start = 1;
         if (argc > 2 && strcmp(argv[1], "--session") == 0) {
@@ -262,7 +283,33 @@ int hermes_cli_main(int argc, char **argv) {
             }
 
             char *resp = agent_chat(&g_cli.agent, msg);
-            printf("%s\n", resp ? resp : "(no response)");
+            if (g_cli.json_output) {
+                /* JSON output: wrap in {response, session_id} */
+                char *json_esc = NULL;
+                if (resp) {
+                    /* Escape for JSON string */
+                    size_t rlen = strlen(resp);
+                    json_esc = (char *)malloc(rlen * 2 + 2);
+                    if (json_esc) {
+                        size_t j = 0;
+                        json_esc[j++] = '"';
+                        for (size_t i = 0; i < rlen && j < rlen * 2; i++) {
+                            if (resp[i] == '\\' || resp[i] == '"') { json_esc[j++] = '\\'; json_esc[j++] = resp[i]; }
+                            else if (resp[i] == '\n') { json_esc[j++] = '\\'; json_esc[j++] = 'n'; }
+                            else if (resp[i] == '\t') { json_esc[j++] = '\\'; json_esc[j++] = 't'; }
+                            else json_esc[j++] = resp[i];
+                        }
+                        json_esc[j++] = '"';
+                        json_esc[j] = '\0';
+                    }
+                }
+                printf("{\"response\":%s,\"session_id\":\"%s\"}\n",
+                       json_esc ? json_esc : "null",
+                       g_cli.agent.session_id[0] ? g_cli.agent.session_id : "");
+                free(json_esc);
+            } else {
+                printf("%s\n", resp ? resp : "(no response)");
+            }
             free(resp);
             free(msg);
 
