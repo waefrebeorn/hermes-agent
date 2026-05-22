@@ -285,7 +285,14 @@ void webhook_server_run(int port);
 
 void slack_set_token(const char *token);
 void slack_set_channel(const char *id);
+void slack_set_signing_secret(const char *secret);
 bool slack_send_message(http_client_t *http, const char *text);
+bool slack_send_blocks(http_client_t *http, const char *channel,
+                        const char *text, json_node_t *blocks);
+bool slack_update_message(http_client_t *http, const char *channel,
+                           const char *ts, const char *text);
+bool slack_join_channel(http_client_t *http, const char *channel);
+bool slack_leave_channel(http_client_t *http, const char *channel);
 json_node_t *slack_poll_messages(http_client_t *http);
 const char *slack_get_chat_id(json_node_t *update);
 const char *slack_get_text(json_node_t *update);
