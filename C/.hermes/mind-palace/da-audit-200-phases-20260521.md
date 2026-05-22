@@ -112,8 +112,8 @@ Scanned all 57 commits in C history for:
 | P62 | MCP SSE transport | ✅ | compiled | HTTP SSE, reconnection |
 | P63 | MCP auth | ✅ | compiled | OAuth token, API key injection |
 | P64 | MCP OAuth manager | ❓ | compiled | Credential storage exists, refresh partial |
-| P65 | MCP tool namespace | ❌ | — | No server-name prefixing |
-| P66 | MCP tool filtering | ❌ | — | No allow/blocklist per server |
+| P65 | MCP tool namespace | ✅ | compiled | Server-name prefixing via mcp_<server>_<tool> naming |
+| P66 | MCP tool filtering | ✅ | compiled | Per-server allow/blocklist with pattern matching |
 | P67 | MCP resource access | ✅ | compiled | mcp_resource_list + mcp_resource_read tools |
 | P68 | MCP sampling | ❌ | — | No server-initiated sampling handler |
 | P69 | MCP prompt templates | ✅ | compiled | mcp_prompt_list + mcp_prompt_get tools |
@@ -359,7 +359,7 @@ Scanned all 57 commits in C history for:
 | P1-P25 Config | ~85% | All 25 phases implemented. P15/P19/P22 gap-filled this session. |
 | P26-P40 CLI | 85% | /clear missing, some shallow handlers |
 | P41-P55 Tools | 92% | 14 feishu/MoA/video/yuanbao tools missing |
-| P56-P70 MCP | 70% | Core works, namespace/filter/sampling missing |
+| P56-P70 MCP | ~85% | Core works, namespace/filtering implemented. Sampling (P68) remaining. |
 | P71-P85 Providers | ~15% | 4/29 (OpenAI, Anthropic, Google, OpenRouter native). OpenRouter native added this session. |
 | P86-P100 Agent Loop | 75% | Functional, edge cases need testing |
 | P101-P115 Gateway | 95% | 19/20 platforms, OAuth partial |
