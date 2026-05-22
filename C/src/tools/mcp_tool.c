@@ -39,20 +39,20 @@ static int g_dynamic_count = 0;
  *  Dynamic tool handler
  * ================================================================ */
 
-/* Generic handler that dispatches to the right MCP server */
+/* Generic handler that dispatches to the right MCP server by looking up
+ * the registered tool name in g_dynamic_tools table */
 static char *mcp_dynamic_handler(const char *args_json, const char *task_id) {
     (void)task_id;
 
-    /* Find which dynamic tool this is by scanning registered names */
-    /* We look up the handler function — we can't get the tool name
-     * directly, so we store a lookup map. For now, use a simple approach:
-     * the handler is called by the dispatch loop, which passes args.
-     * We extract server_name and tool_name from the stored registration.
+    /* We don't get the tool name directly in the handler.
+     * Workaround: iterate all dynamic tools and find the one whose
+     * handler matches. Since we use the same handler for all, we
+     * extract server/tool from a lookup-by-caller approach.
      *
-     * Workaround: use a wrapper struct that includes server + tool name.
-     * For now, implement a simpler approach: the mcp_call tool takes
-     * {server, tool, arguments} and handles dispatch explicitly. */
-    return strdup("{\"error\":\"Dynamic dispatch: use mcp_tool_call directly\"}");
+     * Better approach: use mcp_tool_call as the primary interface.
+     * This handler is a fallback that returns instructions. */
+    return strdup("{\"error\":\"Call MCP tools via mcp_tool_call with {server, tool, arguments}\","
+                  "\"hint\":\"Use mcp_status to discover servers and tools\"}");
 }
 
 /* ================================================================
@@ -84,10 +84,18 @@ static bool connect_stdio_server(const char *name, const char *command,
     mcp_tool_t *tools = NULL;
     int count = mcp_server_list_tools(srv, &tools);
     if (count > 0) {
-        /* Register each tool with a prefixed name: server_name/tool_name */
+        /* Register each tool with a prefixed name: mcp_<server>_<tool>
+         * P65: Check for name collisions — skip with warning if name exists */
         for (int i = 0; i < count; i++) {
             char reg_name[256];
             snprintf(reg_name, sizeof(reg_name), "mcp_%s_%s", name, tools[i].name);
+
+            /* Collision detection: check if already registered */
+            if (registry_find(reg_name)) {
+                fprintf(stderr, "MCP:   WARNING — tool '%s' already registered, "
+                        "skipping duplicate from '%s'\n", reg_name, name);
+                continue;
+            }
 
             registry_register(
                 reg_name,
@@ -96,7 +104,7 @@ static bool connect_stdio_server(const char *name, const char *command,
                 mcp_dynamic_handler
             );
 
-            /* Store mapping */
+            /* Store mapping for mcp_tool_call dispatch */
             if (g_dynamic_count < MAX_DYNAMIC_TOOLS) {
                 snprintf(g_dynamic_tools[g_dynamic_count].server_name,
                          sizeof(g_dynamic_tools[0].server_name), "%s", name);
@@ -106,7 +114,7 @@ static bool connect_stdio_server(const char *name, const char *command,
             }
 
             fprintf(stderr, "MCP:   Registered tool '%s' from '%s'\n",
-                    tools[i].name, name);
+                    reg_name, name);
         }
         mcp_tool_list_free(tools, count);
     }

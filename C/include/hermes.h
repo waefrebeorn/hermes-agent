@@ -493,6 +493,9 @@ void cdp_set_url(const char *url);
 size_t registry_get_count(void);
 const char *registry_get_name(size_t i);
 
+/* Find tool by name in registry. Returns NULL if not found. */
+tool_t *registry_find(const char *name);
+
 /* P52: Per-tool timeout. Set seconds, 0 = default, -1 = no timeout. */
 void registry_set_timeout(const char *name, int seconds);
 int  registry_get_timeout(const char *name);
