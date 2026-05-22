@@ -497,6 +497,13 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->memory.compression_enabled = yaml_get_bool(doc, "memory.compression_enabled", false);
     int msl = yaml_get_int(doc, "memory.search_limit", 0);
     if (msl > 0) cfg->memory.search_limit = msl;
+    int masi = yaml_get_int(doc, "memory.auto_save_interval", 0);
+    if (masi > 0) cfg->memory.auto_save_interval = masi;
+    cfg->memory.dedup_enabled = yaml_get_bool(doc, "memory.dedup", true);
+    int mst = yaml_get_int(doc, "memory.storage_type", 0);
+    if (mst >= 0 && mst <= 3) cfg->memory.storage_type = mst;
+    const char *msp = yaml_get_string(doc, "memory.storage_path");
+    if (msp) snprintf(cfg->memory.storage_path, sizeof(cfg->memory.storage_path), "%s", msp);
 
     /* P8: Compression section */
     const char *cm = yaml_get_string(doc, "compression.model");

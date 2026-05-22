@@ -1,10 +1,10 @@
-# Slermes C — State (May 21+ session)
+# Slermes C — State (May 21+ session, 2 commits)
 
 ## Honest Assessment
-**P1-P106 committed.** P15 (validation) + P22 (merge) gap-filled this session.
-- P15: Validation extended to all 14 config groups (browser, memory, compression, cron, notification, plugin, MCP + existing 7 groups). ✅ compiled+runtime
-- P22: Merge logic covers ALL config groups with full field-level merging (browser viewport/js, memory sub-fields, cron, notification, plugin, security, session, MCP expanded). ✅ compiled
-Remaining config gap phases: P19 (hot-reload/inotify), 164 leaf keys.
+**P1-P106+ committed.** This session: P15 (validation), P22 (merge), YAML parser gap-fill.
+- P15: Validation extended to all 14 config groups ✅ compiled+runtime
+- P22: Merge logic covers ALL config groups with full field-level merging ✅ compiled
+- YAML parser: 12 missing struct fields now populated from config.yaml (plugin.dirs/enabled, sessions auto_save/compress/store, mcp max_tools/credential_store, memory ttl_days/auto_save/compression/search_limit, browser.javascript, cron.notify_on_failure, notification.sound) ✅ compiled+runtime
 
 ## This Session (10 phases)
 | Phase | Feature | Files |

@@ -16,8 +16,10 @@
 Missing categories: credential_pool_contexts, fallback_providers, toolset arrays, web.* (search_backend, extract_backend), approval subkeys, logging.*, kanban.*, stt/tts/vision/auxiliary sub-dicts, gateway timeouts, guardrail.*, orchestator.*, goals.*, checkpoints.*, backup.*, personality profiles.
 
 ### Just Completed
-- **P15: Config validation** — all 14 groups now validated (type/range/enum): provider, display, agent, tools, delegation, browser, memory, compression, cron, notification, plugin, MCP, security, session
-- **P22: Config merge logic** — full field-level merge for all config groups (browser viewport/js, memory sub-fields, cron, notification, plugin, security/session/mcp expanded)
+- **P15: Config validation** — all 14 groups now validated (type/range/enum)
+- **P22: Config merge logic** — full field-level merge for all config groups
+- **YAML parser gap-fill** — 12 struct fields now populated from config.yaml (plugin.dirs/enabled, sessions auto_save_interval/compress/store_trajectories, mcp max_tools/credential_store, memory ttl_days/auto_save/compression_enabled/search_limit, browser.enable_javascript, cron.notify_on_failure, notification.sound)
+- Commits: aafcc0e44 (P15+P22), edf1d764d (YAML gap-fill)
 
 ## Next Phases In Queue
 1. **Config gap (164 keys)** — credential_pool, fallback_providers, toolset arrays, web.*, etc.
