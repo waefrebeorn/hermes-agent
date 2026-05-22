@@ -13,6 +13,7 @@
 #include "hermes_json.h"
 #include "provider.h"
 #include "plugin.h"
+#include "budget_tracker.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,10 +29,25 @@ void agent_init(agent_state_t *state) {
     state->messages = (message_t **)calloc(state->message_capacity, sizeof(message_t *));
     state->max_iterations = HERMES_MAX_TOOL_CALLS;
     state->snapshot_capacity = 0;  /* lazy init on first snapshot_take */
+    /* P86: Create budget tracker */
+    state->budget = (budget_tracker_t *)calloc(1, sizeof(budget_tracker_t));
+    if (state->budget) budget_tracker_init(state->budget);
     context_init(state);
     agent_generate_session_id(state);
     /* Register built-in LLM providers */
     provider_register_builtins();
+}
+
+void agent_free(agent_state_t *state) {
+    context_clear(state);
+    /* Free plugin registry if loaded */
+    if (state->plugin_reg) {
+        plugin_registry_free((plugin_registry_t *)state->plugin_reg);
+        state->plugin_reg = NULL;
+    }
+    /* Free budget tracker */
+    free(state->budget);
+    state->budget = NULL;
 }
 
 void agent_generate_session_id(agent_state_t *state) {
@@ -137,15 +153,6 @@ void agent_close_db(agent_state_t *state) {
     }
 }
 
-void agent_free(agent_state_t *state) {
-    context_clear(state);
-    /* Free plugin registry if loaded */
-    if (state->plugin_reg) {
-        plugin_registry_free((plugin_registry_t *)state->plugin_reg);
-        state->plugin_reg = NULL;
-    }
-}
-
 /* ================================================================
  *  Core loop
  * ================================================================ */
@@ -203,9 +210,18 @@ char *agent_run_conversation(agent_state_t *state,
         tools_json = tools_to_json(&state->tools);
 
     int iteration = 0;
+    bool grace_call = false; /* P88: one extra LLM call without tools after budget */
 
-    while (iteration < state->max_iterations && !state->interrupted) {
+    while (iteration < state->max_iterations && !state->interrupted &&
+           !(iteration > 0 && grace_call)) {
         state->iteration_count = iteration;
+
+        /* P86: Check budget exceeded — trigger grace call */
+        if (state->budget && budget_tracker_is_exceeded(state->budget) && !grace_call) {
+            grace_call = true;
+            /* Remove tools for grace call so LLM just summarizes */
+            if (tools_json) { json_free(tools_json); tools_json = NULL; }
+        }
 
         /* Smart context compression: summarize old messages before dropping */
         char *summary = llm_compress_context(state, HERMES_MAX_CTX_TOKENS,
@@ -266,6 +282,19 @@ char *agent_run_conversation(agent_state_t *state,
         }
 
         iteration++;
+
+        /* P86: Report turn to budget tracker */
+        if (state->budget) {
+            double cost = budget_tracker_estimate_cost(
+                state->llm.model,
+                llm_resp->input_tokens,
+                llm_resp->output_tokens);
+            budget_tracker_report_turn(state->budget,
+                                        llm_resp->input_tokens,
+                                        llm_resp->output_tokens,
+                                        cost,
+                                        state->llm.model);
+        }
 
         /* If no tool calls, we're done — return final content */
         if (llm_resp->tool_calls_count == 0) {
@@ -328,6 +357,8 @@ char *agent_run_conversation(agent_state_t *state,
     json_free(tools_json);
     if (state->interrupted)
         return strdup("Error: Interrupted");
+    if (state->budget && budget_tracker_is_exceeded(state->budget))
+        return strdup("Error: Budget exceeded (token/cost/turn limit reached)");
     return strdup("Error: Max iterations reached");
 }
 

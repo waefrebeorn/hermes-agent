@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Forward declarations for agent subsystem types */
+typedef struct budget_tracker_t budget_tracker_t;
+
 /* ================================================================
  *  Version
  * ================================================================ */
@@ -133,6 +136,8 @@ typedef struct {
     size_t            snapshot_count;
     size_t            snapshot_capacity;
     char              snapshot_id[64];  /* session ID at snapshot time */
+    /* P86: Budget tracker — token/cost/turn budgets and limits */
+    budget_tracker_t *budget;
 } agent_state_t;
 
 /* ================================================================

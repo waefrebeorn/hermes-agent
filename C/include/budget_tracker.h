@@ -19,7 +19,7 @@ extern "C" {
  *  Budget Tracker
  * ================================================================ */
 
-typedef struct {
+typedef struct budget_tracker_t {
     /* ---- Limits (0 = unlimited) ---- */
     long long max_input_tokens;    /* session-wide input token limit */
     long long max_output_tokens;   /* session-wide output token limit */
