@@ -308,12 +308,29 @@ typedef struct {
 } plugin_config_t;
 
 /* ================================================================
+ *  MCP Auth per-server config (P63-P64)
+ * ================================================================ */
+typedef struct {
+    char  type[16];               /* "none", "header", "env", "oauth" */
+    char  header_name[128];       /* HTTP header name (default: Authorization) */
+    char  token[1024];            /* static token value (API key, Bearer token) */
+    char  env_var[128];           /* env var name for stdio transport */
+    /* OAuth-specific (P64) */
+    char  client_id[256];         /* OAuth client ID */
+    char  client_secret[512];     /* OAuth client secret */
+    char  token_url[1024];        /* OAuth token endpoint */
+    char  scopes[1024];           /* space-separated scopes */
+    int   refresh_before_sec;     /* refresh if < N seconds left on expiry */
+} mcp_auth_t;
+
+/* ================================================================
  *  MCP Config (P14)
  * ================================================================ */
 typedef struct {
     int   timeout;                /* mcp_timeout */
     int   max_tools;              /* mcp_max_tools */
-    bool  auth_enabled;           /* mcp_auth_enabled */
+    bool  auth_enabled;           /* mcp_auth_enabled (global toggle) */
+    char  credential_store[HERMES_PATH_MAX]; /* path to credential store JSON */
 } mcp_config_t;
 
 /* ================================================================

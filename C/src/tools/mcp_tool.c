@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /* ================================================================
  *  State
@@ -25,6 +26,10 @@
 
 static mcp_server_t *g_servers[MAX_MCP_SERVERS];
 static int g_server_count = 0;
+
+/* P63-P64: Per-server auth config (parallel to g_servers array) */
+static mcp_auth_t g_server_auth[MAX_MCP_SERVERS];
+static char g_credential_store_path[HERMES_PATH_MAX] = "";
 
 /* Dynamically registered tool handlers */
 typedef struct {
@@ -69,6 +74,55 @@ static bool connect_stdio_server(const char *name, const char *command,
     mcp_server_set_stdio(srv, command, args);
     mcp_server_set_timeout(srv, timeout > 0 ? timeout : 120);
     mcp_server_set_connect_timeout(srv, 60);
+
+    /* P63: Inject auth for stdio — set env vars from auth config */
+    if (g_credential_store_path[0] == 0) {
+        hermes_get_home(g_credential_store_path, sizeof(g_credential_store_path));
+        strncat(g_credential_store_path, "/mcp_auth.json",
+                sizeof(g_credential_store_path) - strlen(g_credential_store_path) - 1);
+    }
+
+    int aidx = g_server_count; /* index in g_server_auth */
+    if (g_server_auth[aidx].type[0]) {
+        if (strcmp(g_server_auth[aidx].type, "env") == 0 &&
+            g_server_auth[aidx].env_var[0] &&
+            g_server_auth[aidx].token[0]) {
+            /* Build env array: pass existing env + add API key */
+            extern char **environ;
+            int env_count = 0;
+            while (environ[env_count]) env_count++;
+            char **new_env = (char **)calloc(env_count + 2, sizeof(char *));
+            for (int ei = 0; ei < env_count; ei++)
+                new_env[ei] = environ[ei];
+
+            char env_buf[640];
+            snprintf(env_buf, sizeof(env_buf), "%s=%s",
+                     g_server_auth[aidx].env_var, g_server_auth[aidx].token);
+            new_env[env_count] = strdup(env_buf);
+            new_env[env_count + 1] = NULL;
+            mcp_server_set_env(srv, new_env);
+        }
+        /* "header" type for stdio: inject as HTTP_AUTHORIZATION env var */
+        if (strcmp(g_server_auth[aidx].type, "header") == 0 &&
+            g_server_auth[aidx].token[0]) {
+            extern char **environ;
+            int env_count = 0;
+            while (environ[env_count]) env_count++;
+            char **new_env = (char **)calloc(env_count + 2, sizeof(char *));
+            for (int ei = 0; ei < env_count; ei++)
+                new_env[ei] = environ[ei];
+
+            /* MCP stdio servers commonly read from env. Example: OPENAI_API_KEY */
+            if (g_server_auth[aidx].env_var[0]) {
+                char env_buf[640];
+                snprintf(env_buf, sizeof(env_buf), "%s=%s",
+                         g_server_auth[aidx].env_var, g_server_auth[aidx].token);
+                new_env[env_count] = strdup(env_buf);
+                new_env[env_count + 1] = NULL;
+                mcp_server_set_env(srv, new_env);
+            }
+        }
+    }
 
     if (!mcp_server_connect(srv)) {
         fprintf(stderr, "MCP: Failed to connect server '%s': %s\n",
@@ -280,11 +334,383 @@ void mcp_init_all(void) {
             snprintf(key, sizeof(key), "mcp_servers.%s.timeout", known_servers[si]);
             int timeout = yaml_get_int(doc, key, 120);
 
+            /* P63-P64: Parse auth config for this server */
+            char auth_key[256];
+            snprintf(auth_key, sizeof(auth_key), "mcp_servers.%s.auth", known_servers[si]);
+            int aidx = g_server_count; /* parallel to g_servers */
+            memset(&g_server_auth[aidx], 0, sizeof(mcp_auth_t));
+
+            /* Check for auth.type in YAML */
+            char auth_type_key[256];
+            snprintf(auth_type_key, sizeof(auth_type_key), "%s.type", auth_key);
+            const char *auth_type = yaml_get_string(doc, auth_type_key);
+            if (auth_type && auth_type[0]) {
+                snprintf(g_server_auth[aidx].type, sizeof(g_server_auth[aidx].type),
+                         "%s", auth_type);
+
+                /* Read auth.header_name and auth.token */
+                char ah_key[256];
+                snprintf(ah_key, sizeof(ah_key), "%s.header_name", auth_key);
+                const char *hname = yaml_get_string(doc, ah_key);
+                if (hname) snprintf(g_server_auth[aidx].header_name,
+                                     sizeof(g_server_auth[aidx].header_name), "%s", hname);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.token", auth_key);
+                const char *tok = yaml_get_string(doc, ah_key);
+                if (tok) snprintf(g_server_auth[aidx].token,
+                                   sizeof(g_server_auth[aidx].token), "%s", tok);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.env_var", auth_key);
+                const char *ev = yaml_get_string(doc, ah_key);
+                if (ev) snprintf(g_server_auth[aidx].env_var,
+                                  sizeof(g_server_auth[aidx].env_var), "%s", ev);
+
+                /* OAuth fields */
+                snprintf(ah_key, sizeof(ah_key), "%s.client_id", auth_key);
+                const char *cid = yaml_get_string(doc, ah_key);
+                if (cid) snprintf(g_server_auth[aidx].client_id,
+                                   sizeof(g_server_auth[aidx].client_id), "%s", cid);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.client_secret", auth_key);
+                const char *csec = yaml_get_string(doc, ah_key);
+                if (csec) snprintf(g_server_auth[aidx].client_secret,
+                                    sizeof(g_server_auth[aidx].client_secret), "%s", csec);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.token_url", auth_key);
+                const char *turl = yaml_get_string(doc, ah_key);
+                if (turl) snprintf(g_server_auth[aidx].token_url,
+                                    sizeof(g_server_auth[aidx].token_url), "%s", turl);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.scopes", auth_key);
+                const char *sc = yaml_get_string(doc, ah_key);
+                if (sc) snprintf(g_server_auth[aidx].scopes,
+                                  sizeof(g_server_auth[aidx].scopes), "%s", sc);
+
+                /* OAuth refresh_before_sec */
+                {
+                    char rbk[256];
+                    snprintf(rbk, sizeof(rbk), "%s.refresh_before_sec", auth_key);
+                    g_server_auth[aidx].refresh_before_sec = yaml_get_int(doc, rbk, 60);
+                }
+
+                fprintf(stderr, "MCP: Auth enabled for '%s' (type=%s)\\n",
+                        known_servers[si], auth_type);
+            }
+
             connect_stdio_server(known_servers[si], cmd, args, timeout);
         }
     }
 
     yaml_free(doc);
+}
+
+/* ================================================================
+ *  P64: Credential store — load/save MCP auth tokens
+ * ================================================================ */
+
+/* Load stored credentials from mcp_auth.json.
+ * Format: { "server_name": { "access_token": "...", "expires_at": 1234567890 } }
+ * Returns true if file loaded successfully (may be empty). */
+static bool credential_store_load(const char *server_name, char *token_out,
+                                   size_t token_sz, long long *expires_at) {
+    if (!g_credential_store_path[0]) return false;
+
+    FILE *f = fopen(g_credential_store_path, "r");
+    if (!f) return false;
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    rewind(f);
+    if (fsize <= 0) { fclose(f); return false; }
+
+    char *buf = (char *)malloc((size_t)fsize + 1);
+    if (!buf) { fclose(f); return false; }
+
+    size_t nread = fread(buf, 1, (size_t)fsize, f);
+    buf[nread] = '\0';
+    fclose(f);
+
+    char *jerr = NULL;
+    json_t *root = json_parse(buf, &jerr);
+    free(buf);
+    if (jerr) { free(jerr); return false; }
+
+    json_t *srv_entry = json_obj_get(root, server_name);
+    if (!srv_entry) { json_free(root); return false; }
+
+    const char *tok = json_get_str(srv_entry, "access_token", "");
+    if (tok[0]) {
+        snprintf(token_out, token_sz, "%s", tok);
+    }
+    if (expires_at) {
+        *expires_at = (long long)json_get_num(srv_entry, "expires_at", 0.0);
+    }
+
+    json_free(root);
+    return tok[0] != '\0';
+}
+
+/* Save credentials for a server to mcp_auth.json */
+static bool credential_store_save(const char *server_name,
+                                   const char *access_token,
+                                   long long expires_at) {
+    if (!g_credential_store_path[0]) return false;
+
+    /* Load existing store, update entry, save */
+    json_t *root = NULL;
+
+    FILE *f = fopen(g_credential_store_path, "r");
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        long fsize = ftell(f);
+        rewind(f);
+        if (fsize > 0) {
+            char *buf = (char *)malloc((size_t)fsize + 1);
+            if (buf) {
+                size_t nread = fread(buf, 1, (size_t)fsize, f);
+                buf[nread] = '\0';
+                char *jerr = NULL;
+                root = json_parse(buf, &jerr);
+                free(buf);
+                if (jerr) free(jerr);
+            }
+        }
+        fclose(f);
+    }
+
+    if (!root) root = json_object();
+
+    /* Update or create entry for this server */
+    json_t *entry = json_obj_get(root, server_name);
+    if (!entry) {
+        entry = json_object();
+        json_set(root, server_name, entry);
+    }
+
+    json_set(entry, "access_token", json_string(access_token));
+    json_set(entry, "expires_at", json_number((double)expires_at));
+
+    char *serialized = json_serialize(root);
+    json_free(root);
+
+    if (!serialized) return false;
+
+    /* Write atomically */
+    char tmp_path[HERMES_PATH_MAX + 8];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", g_credential_store_path);
+    FILE *out = fopen(tmp_path, "w");
+    if (!out) { free(serialized); return false; }
+    fwrite(serialized, 1, strlen(serialized), out);
+    fclose(out);
+    free(serialized);
+
+    rename(tmp_path, g_credential_store_path);
+    return true;
+}
+
+/* ================================================================
+ *  P64: OAuth token refresh
+ * ================================================================ */
+
+/* Perform OAuth client_credentials grant to get a new token.
+ * Returns malloc'd access_token on success, NULL on error. */
+static char *oauth_refresh_token(mcp_auth_t *auth) {
+    if (!auth || !auth->token_url[0] || !auth->client_id[0]) {
+        fprintf(stderr, "MCP OAuth: missing token_url or client_id\n");
+        return NULL;
+    }
+
+    /* Build POST body: client_id=...&client_secret=...&grant_type=client_credentials */
+    char body[2048];
+    int n = snprintf(body, sizeof(body),
+                     "grant_type=client_credentials&client_id=%s",
+                     auth->client_id);
+    if (auth->client_secret[0]) {
+        n += snprintf(body + n, sizeof(body) - (size_t)n,
+                      "&client_secret=%s", auth->client_secret);
+    }
+    if (auth->scopes[0]) {
+        n += snprintf(body + n, sizeof(body) - (size_t)n,
+                      "&scope=%s", auth->scopes);
+    }
+
+    http_t *h = http_new(30);
+    if (!h) return NULL;
+
+    http_resp_t *resp = http_post_json(h, auth->token_url, body);
+    if (!resp) {
+        fprintf(stderr, "MCP OAuth: HTTP request failed\n");
+        http_free(h);
+        return NULL;
+    }
+
+    if (resp->status < 200 || resp->status >= 300) {
+        fprintf(stderr, "MCP OAuth: HTTP %d from token endpoint\n", resp->status);
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    char *jerr = NULL;
+    json_t *json = json_parse(resp->body ? resp->body : "", &jerr);
+    http_resp_free(resp);
+    http_free(h);
+    if (jerr) { free(jerr); return NULL; }
+
+    const char *access_token = json_get_str(json, "access_token", "");
+    char *result = NULL;
+    if (access_token[0]) {
+        result = strdup(access_token);
+        /* Save to credential store */
+        long long expires_in = (long long)json_get_num(json, "expires_in", 3600.0);
+        long long expires_at = (long long)time(NULL) + expires_in;
+        credential_store_save(auth->client_id, access_token, expires_at);
+    }
+
+    json_free(json);
+    return result;
+}
+
+/* Refresh token for a specific server if it's near expiry */
+static bool mcp_auth_refresh_if_needed(int server_idx) {
+    if (server_idx < 0 || server_idx >= g_server_count) return false;
+    if (strcmp(g_server_auth[server_idx].type, "oauth") != 0) return false;
+
+    /* Check stored token expiry */
+    char stored_token[1024] = "";
+    long long expires_at = 0;
+    const char *srv_name = mcp_server_name(g_servers[server_idx]);
+
+    if (credential_store_load(srv_name, stored_token, sizeof(stored_token), &expires_at)) {
+        long long now = (long long)time(NULL);
+        int refresh_before = g_server_auth[server_idx].refresh_before_sec;
+        if (refresh_before <= 0) refresh_before = 60;
+        if (expires_at > 0 && (now + refresh_before) < expires_at) {
+            /* Token still valid — use stored token */
+            snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
+                     "%s", stored_token);
+            return true;
+        }
+    }
+
+    /* Need to refresh */
+    char *new_token = oauth_refresh_token(&g_server_auth[server_idx]);
+    if (new_token) {
+        snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
+                 "%s", new_token);
+        free(new_token);
+        return true;
+    }
+
+    return false;
+}
+
+/* ================================================================
+ *  P64: mcp_auth_reconfigure tool handler
+ * ================================================================ */
+
+static char *mcp_auth_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) {
+        return strdup("{\"error\":\"Invalid JSON arguments\"}");
+    }
+
+    const char *action = json_get_str(args, "action", "status");
+    const char *server = json_get_str(args, "server", "");
+    const char *token  = json_get_str(args, "token", "");
+
+    json_t *result = json_object();
+
+    if (strcmp(action, "status") == 0) {
+        json_t *servers_arr = json_array();
+        for (int i = 0; i < g_server_count; i++) {
+            json_t *srv = json_object();
+            json_set(srv, "name", json_string(mcp_server_name(g_servers[i])));
+            json_set(srv, "auth_type", json_string(g_server_auth[i].type[0]
+                        ? g_server_auth[i].type : "none"));
+            json_set(srv, "connected",
+                     json_bool(mcp_server_is_connected(g_servers[i])));
+            json_append(servers_arr, srv);
+        }
+        json_set(result, "servers", servers_arr);
+        json_set(result, "credential_store",
+                 json_string(g_credential_store_path[0]
+                             ? g_credential_store_path : "not initialized"));
+
+    } else if (strcmp(action, "refresh") == 0) {
+        if (!server[0]) {
+            /* Refresh all oauth servers */
+            int refreshed = 0;
+            for (int i = 0; i < g_server_count; i++) {
+                if (strcmp(g_server_auth[i].type, "oauth") == 0) {
+                    if (mcp_auth_refresh_if_needed(i)) refreshed++;
+                }
+            }
+            json_set(result, "refreshed", json_number((double)refreshed));
+        } else {
+            /* Find server by name */
+            int idx = -1;
+            for (int i = 0; i < g_server_count; i++) {
+                if (strcmp(mcp_server_name(g_servers[i]), server) == 0) {
+                    idx = i; break;
+                }
+            }
+            if (idx < 0) {
+                json_set(result, "error", json_string("Server not found"));
+            } else if (strcmp(g_server_auth[idx].type, "oauth") != 0) {
+                json_set(result, "error", json_string("Server does not use OAuth"));
+            } else {
+                bool ok = mcp_auth_refresh_if_needed(idx);
+                json_set(result, "refreshed", json_bool(ok));
+            }
+        }
+    } else if (strcmp(action, "set_token") == 0) {
+        if (!server[0] || !token[0]) {
+            json_set(result, "error",
+                     json_string("server and token fields required"));
+        } else {
+            /* Store token and optionally inject into a running server */
+            int idx = -1;
+            for (int i = 0; i < g_server_count; i++) {
+                if (strcmp(mcp_server_name(g_servers[i]), server) == 0) {
+                    idx = i; break;
+                }
+            }
+            if (idx >= 0) {
+                snprintf(g_server_auth[idx].token, sizeof(g_server_auth[0].token),
+                         "%s", token);
+                /* Also save to credential store */
+                credential_store_save(server, token, 0);
+            } else {
+                /* Save for future server connections */
+                credential_store_save(server, token, 0);
+                /* Also set a placeholder auth entry */
+                for (int i = 0; i < MAX_MCP_SERVERS; i++) {
+                    if (!g_server_auth[i].type[0]) {
+                        snprintf(g_server_auth[i].type, sizeof(g_server_auth[i].type),
+                                 "header");
+                        snprintf(g_server_auth[i].token, sizeof(g_server_auth[0].token),
+                                 "%s", token);
+                        if (!g_server_auth[i].header_name[0])
+                            snprintf(g_server_auth[i].header_name,
+                                     sizeof(g_server_auth[i].header_name),
+                                     "Authorization");
+                        break;
+                    }
+                }
+            }
+            json_set(result, "stored", json_bool(true));
+        }
+    } else {
+        json_set(result, "error", json_string("Unknown action (use: status, refresh, set_token)"));
+    }
+
+    char *s = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return s;
 }
 
 /* ================================================================
@@ -322,4 +748,26 @@ void registry_init_mcp(void) {
     );
 
     registry_set_timeout("mcp_tool_call", 180);
+
+    /* P64: MCP auth management tool */
+    registry_register(
+        "mcp_auth",
+        "Manage MCP server authentication. "
+        "Actions: status (show auth state), "
+        "refresh [server] (renew OAuth tokens), "
+        "set_token server=<name> token=<value> (store API key or Bearer token).",
+        "{"
+          "\"type\":\"object\",\"properties\":{"
+            "\"action\":{\"type\":\"string\","
+              "\"enum\":[\"status\",\"refresh\",\"set_token\"],"
+              "\"description\":\"Action to perform\"},"
+            "\"server\":{\"type\":\"string\","
+              "\"description\":\"MCP server name\"},"
+            "\"token\":{\"type\":\"string\","
+              "\"description\":\"Token value (for set_token action)\"}"
+          "},"
+          "\"required\":[\"action\"]"
+        "}",
+        mcp_auth_handler
+    );
 }
