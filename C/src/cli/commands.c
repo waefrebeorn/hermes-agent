@@ -619,6 +619,7 @@ static const cfg_category_t CFG_CATEGORIES[] = {
     {"sessions",    "DB path, retention, auto-save",              "session.",     0},
     {"plugin",      "Plugin directories and enabled plugins",      "plugin.",      0},
     {"mcp",         "MCP server timeout, auth, tool limit",       "mcp.",         0},
+    {"auxiliary",   "Auxiliary LLM routing (vision, web_extract, etc.)","auxiliary.",  0},
     {NULL, NULL, NULL, 0}
 };
 
@@ -708,6 +709,24 @@ static void show_section_tools(const hermes_config_t *cfg) {
     show_cfg_val_int("web_search_timeout", cfg->tools.web_search_timeout);
     show_cfg_val_bool("allow_background", cfg->tools.allow_background);
     show_cfg_val_bool("local_process_cleanup", cfg->tools.local_process_cleanup);
+}
+
+static void show_section_auxiliary(const hermes_config_t *cfg) {
+    printf("auxiliary:  Auxiliary LLM routing\n");
+    #define SH_AUX_TASK(task, nm) do {         printf("  " nm ":\n");         show_cfg_val("provider", "str", cfg->auxiliary.task.provider);         show_cfg_val("model", "str", cfg->auxiliary.task.model);         show_cfg_val("base_url", "str", cfg->auxiliary.task.base_url);         show_cfg_val_int("timeout", cfg->auxiliary.task.timeout);     } while(0)
+    SH_AUX_TASK(vision, "vision");
+    show_cfg_val_int("download_timeout", cfg->auxiliary.vision_download_timeout);
+    SH_AUX_TASK(web_extract, "web_extract");
+    SH_AUX_TASK(compression, "compression");
+    SH_AUX_TASK(skills_hub, "skills_hub");
+    SH_AUX_TASK(approval, "approval");
+    SH_AUX_TASK(mcp, "mcp");
+    SH_AUX_TASK(title_generation, "title_generation");
+    SH_AUX_TASK(triage_specifier, "triage_specifier");
+    SH_AUX_TASK(kanban_decomposer, "kanban_decomposer");
+    SH_AUX_TASK(profile_describer, "profile_describer");
+    SH_AUX_TASK(curator, "curator");
+    #undef SH_AUX_TASK
 }
 
 static void show_section_delegation(const hermes_config_t *cfg) {
@@ -833,12 +852,14 @@ static bool show_config_section(const hermes_config_t *cfg, const char *section)
         { show_section_plugin(cfg); return true; }
     if (strcmp(section, "mcp") == 0)
         { show_section_mcp(cfg); return true; }
+    if (strcmp(section, "auxiliary") == 0)
+        { show_section_auxiliary(cfg); return true; }
     return false;
 }
 
 /* List all config groups */
 static void list_config_groups(void) {
-    printf("Config groups (14):\n");
+    printf("Config groups (15):\n");
     for (int i = 0; CFG_CATEGORIES[i].name; i++)
         printf("  %-15s  %s\n", CFG_CATEGORIES[i].name, CFG_CATEGORIES[i].desc);
     printf("\nUse /config show <group> to view keys in a group.\n");

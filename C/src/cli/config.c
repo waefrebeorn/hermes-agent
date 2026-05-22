@@ -256,8 +256,29 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->checkpoints.compression_level = 1;
     cfg->checkpoints.include_tool_results = false;
 
+    /* Auxiliary config defaults (11 sub-tasks, Python defaults) */
+    snprintf(cfg->auxiliary.vision.provider, sizeof(cfg->auxiliary.vision.provider), "auto");
+    cfg->auxiliary.vision.timeout = 120;
+    cfg->auxiliary.vision_download_timeout = 30;
+    snprintf(cfg->auxiliary.web_extract.provider, sizeof(cfg->auxiliary.web_extract.provider), "auto");
+    cfg->auxiliary.web_extract.timeout = 360;
+    snprintf(cfg->auxiliary.compression.provider, sizeof(cfg->auxiliary.compression.provider), "auto");
+    cfg->auxiliary.compression.timeout = 120;
+    snprintf(cfg->auxiliary.skills_hub.provider, sizeof(cfg->auxiliary.skills_hub.provider), "auto");
+    snprintf(cfg->auxiliary.approval.provider, sizeof(cfg->auxiliary.approval.provider), "auto");
+    snprintf(cfg->auxiliary.mcp.provider, sizeof(cfg->auxiliary.mcp.provider), "auto");
+    snprintf(cfg->auxiliary.title_generation.provider, sizeof(cfg->auxiliary.title_generation.provider), "auto");
+    snprintf(cfg->auxiliary.triage_specifier.provider, sizeof(cfg->auxiliary.triage_specifier.provider), "auto");
+    cfg->auxiliary.triage_specifier.timeout = 120;
+    snprintf(cfg->auxiliary.kanban_decomposer.provider, sizeof(cfg->auxiliary.kanban_decomposer.provider), "auto");
+    cfg->auxiliary.kanban_decomposer.timeout = 180;
+    snprintf(cfg->auxiliary.profile_describer.provider, sizeof(cfg->auxiliary.profile_describer.provider), "auto");
+    cfg->auxiliary.profile_describer.timeout = 60;
+    snprintf(cfg->auxiliary.curator.provider, sizeof(cfg->auxiliary.curator.provider), "auto");
+    cfg->auxiliary.curator.timeout = 600;
+
     /* Display config defaults */
-    cfg->display.stream = false;
+    snprintf(cfg->display.skin, sizeof(cfg->display.skin), "default");
     cfg->display.show_reasoning = true;
     cfg->display.compact = false;
     cfg->display.statusbar = true;
@@ -654,12 +675,98 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int max_result = yaml_get_int(doc, "tool_output.max_bytes", 0);
     if (max_result > 0) cfg->tools.max_result_size = max_result;
 
-    /* Auxiliary vision section */
-    const char *vis_model = yaml_get_string(doc, "auxiliary.vision.model");
-    if (vis_model) snprintf(cfg->tools.vision_model, sizeof(cfg->tools.vision_model), "%s", vis_model);
+    /* Auxiliary config section — 11 sub-tasks, each with provider/model/base_url/api_key/timeout/extra_body */
+    /* Vision */
+    { const char *v = yaml_get_string(doc, "auxiliary.vision.provider"); if (v) snprintf(cfg->auxiliary.vision.provider, sizeof(cfg->auxiliary.vision.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.vision.model"); if (v) snprintf(cfg->auxiliary.vision.model, sizeof(cfg->auxiliary.vision.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.vision.base_url"); if (v) snprintf(cfg->auxiliary.vision.base_url, sizeof(cfg->auxiliary.vision.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.vision.api_key"); if (v) snprintf(cfg->auxiliary.vision.api_key, sizeof(cfg->auxiliary.vision.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.vision.timeout", 0); if (v > 0) cfg->auxiliary.vision.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.vision.extra_body"); if (v) snprintf(cfg->auxiliary.vision.extra_body, sizeof(cfg->auxiliary.vision.extra_body), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.vision.download_timeout", 0); if (v > 0) cfg->auxiliary.vision_download_timeout = v; }
+    /* Backward compat: sync to tools.vision_model/timeout */
+    if (cfg->auxiliary.vision.model[0]) snprintf(cfg->tools.vision_model, sizeof(cfg->tools.vision_model), "%s", cfg->auxiliary.vision.model);
+    if (cfg->auxiliary.vision.timeout > 0) cfg->tools.vision_timeout = cfg->auxiliary.vision.timeout;
 
-    int vis_timeout = yaml_get_int(doc, "auxiliary.vision.timeout", 0);
-    if (vis_timeout > 0) cfg->tools.vision_timeout = vis_timeout;
+    /* Web Extract */
+    { const char *v = yaml_get_string(doc, "auxiliary.web_extract.provider"); if (v) snprintf(cfg->auxiliary.web_extract.provider, sizeof(cfg->auxiliary.web_extract.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.web_extract.model"); if (v) snprintf(cfg->auxiliary.web_extract.model, sizeof(cfg->auxiliary.web_extract.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.web_extract.base_url"); if (v) snprintf(cfg->auxiliary.web_extract.base_url, sizeof(cfg->auxiliary.web_extract.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.web_extract.api_key"); if (v) snprintf(cfg->auxiliary.web_extract.api_key, sizeof(cfg->auxiliary.web_extract.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.web_extract.timeout", 0); if (v > 0) cfg->auxiliary.web_extract.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.web_extract.extra_body"); if (v) snprintf(cfg->auxiliary.web_extract.extra_body, sizeof(cfg->auxiliary.web_extract.extra_body), "%s", v); }
+
+    /* Compression */
+    { const char *v = yaml_get_string(doc, "auxiliary.compression.provider"); if (v) snprintf(cfg->auxiliary.compression.provider, sizeof(cfg->auxiliary.compression.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.compression.model"); if (v) snprintf(cfg->auxiliary.compression.model, sizeof(cfg->auxiliary.compression.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.compression.base_url"); if (v) snprintf(cfg->auxiliary.compression.base_url, sizeof(cfg->auxiliary.compression.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.compression.api_key"); if (v) snprintf(cfg->auxiliary.compression.api_key, sizeof(cfg->auxiliary.compression.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.compression.timeout", 0); if (v > 0) cfg->auxiliary.compression.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.compression.extra_body"); if (v) snprintf(cfg->auxiliary.compression.extra_body, sizeof(cfg->auxiliary.compression.extra_body), "%s", v); }
+
+    /* Skills Hub */
+    { const char *v = yaml_get_string(doc, "auxiliary.skills_hub.provider"); if (v) snprintf(cfg->auxiliary.skills_hub.provider, sizeof(cfg->auxiliary.skills_hub.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.skills_hub.model"); if (v) snprintf(cfg->auxiliary.skills_hub.model, sizeof(cfg->auxiliary.skills_hub.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.skills_hub.base_url"); if (v) snprintf(cfg->auxiliary.skills_hub.base_url, sizeof(cfg->auxiliary.skills_hub.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.skills_hub.api_key"); if (v) snprintf(cfg->auxiliary.skills_hub.api_key, sizeof(cfg->auxiliary.skills_hub.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.skills_hub.timeout", 0); if (v > 0) cfg->auxiliary.skills_hub.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.skills_hub.extra_body"); if (v) snprintf(cfg->auxiliary.skills_hub.extra_body, sizeof(cfg->auxiliary.skills_hub.extra_body), "%s", v); }
+
+    /* Approval */
+    { const char *v = yaml_get_string(doc, "auxiliary.approval.provider"); if (v) snprintf(cfg->auxiliary.approval.provider, sizeof(cfg->auxiliary.approval.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.approval.model"); if (v) snprintf(cfg->auxiliary.approval.model, sizeof(cfg->auxiliary.approval.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.approval.base_url"); if (v) snprintf(cfg->auxiliary.approval.base_url, sizeof(cfg->auxiliary.approval.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.approval.api_key"); if (v) snprintf(cfg->auxiliary.approval.api_key, sizeof(cfg->auxiliary.approval.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.approval.timeout", 0); if (v > 0) cfg->auxiliary.approval.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.approval.extra_body"); if (v) snprintf(cfg->auxiliary.approval.extra_body, sizeof(cfg->auxiliary.approval.extra_body), "%s", v); }
+
+    /* MCP */
+    { const char *v = yaml_get_string(doc, "auxiliary.mcp.provider"); if (v) snprintf(cfg->auxiliary.mcp.provider, sizeof(cfg->auxiliary.mcp.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.mcp.model"); if (v) snprintf(cfg->auxiliary.mcp.model, sizeof(cfg->auxiliary.mcp.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.mcp.base_url"); if (v) snprintf(cfg->auxiliary.mcp.base_url, sizeof(cfg->auxiliary.mcp.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.mcp.api_key"); if (v) snprintf(cfg->auxiliary.mcp.api_key, sizeof(cfg->auxiliary.mcp.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.mcp.timeout", 0); if (v > 0) cfg->auxiliary.mcp.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.mcp.extra_body"); if (v) snprintf(cfg->auxiliary.mcp.extra_body, sizeof(cfg->auxiliary.mcp.extra_body), "%s", v); }
+
+    /* Title Generation */
+    { const char *v = yaml_get_string(doc, "auxiliary.title_generation.provider"); if (v) snprintf(cfg->auxiliary.title_generation.provider, sizeof(cfg->auxiliary.title_generation.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.title_generation.model"); if (v) snprintf(cfg->auxiliary.title_generation.model, sizeof(cfg->auxiliary.title_generation.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.title_generation.base_url"); if (v) snprintf(cfg->auxiliary.title_generation.base_url, sizeof(cfg->auxiliary.title_generation.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.title_generation.api_key"); if (v) snprintf(cfg->auxiliary.title_generation.api_key, sizeof(cfg->auxiliary.title_generation.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.title_generation.timeout", 0); if (v > 0) cfg->auxiliary.title_generation.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.title_generation.extra_body"); if (v) snprintf(cfg->auxiliary.title_generation.extra_body, sizeof(cfg->auxiliary.title_generation.extra_body), "%s", v); }
+
+    /* Triage Specifier */
+    { const char *v = yaml_get_string(doc, "auxiliary.triage_specifier.provider"); if (v) snprintf(cfg->auxiliary.triage_specifier.provider, sizeof(cfg->auxiliary.triage_specifier.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.triage_specifier.model"); if (v) snprintf(cfg->auxiliary.triage_specifier.model, sizeof(cfg->auxiliary.triage_specifier.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.triage_specifier.base_url"); if (v) snprintf(cfg->auxiliary.triage_specifier.base_url, sizeof(cfg->auxiliary.triage_specifier.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.triage_specifier.api_key"); if (v) snprintf(cfg->auxiliary.triage_specifier.api_key, sizeof(cfg->auxiliary.triage_specifier.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.triage_specifier.timeout", 0); if (v > 0) cfg->auxiliary.triage_specifier.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.triage_specifier.extra_body"); if (v) snprintf(cfg->auxiliary.triage_specifier.extra_body, sizeof(cfg->auxiliary.triage_specifier.extra_body), "%s", v); }
+
+    /* Kanban Decomposer */
+    { const char *v = yaml_get_string(doc, "auxiliary.kanban_decomposer.provider"); if (v) snprintf(cfg->auxiliary.kanban_decomposer.provider, sizeof(cfg->auxiliary.kanban_decomposer.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.kanban_decomposer.model"); if (v) snprintf(cfg->auxiliary.kanban_decomposer.model, sizeof(cfg->auxiliary.kanban_decomposer.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.kanban_decomposer.base_url"); if (v) snprintf(cfg->auxiliary.kanban_decomposer.base_url, sizeof(cfg->auxiliary.kanban_decomposer.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.kanban_decomposer.api_key"); if (v) snprintf(cfg->auxiliary.kanban_decomposer.api_key, sizeof(cfg->auxiliary.kanban_decomposer.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.kanban_decomposer.timeout", 0); if (v > 0) cfg->auxiliary.kanban_decomposer.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.kanban_decomposer.extra_body"); if (v) snprintf(cfg->auxiliary.kanban_decomposer.extra_body, sizeof(cfg->auxiliary.kanban_decomposer.extra_body), "%s", v); }
+
+    /* Profile Describer */
+    { const char *v = yaml_get_string(doc, "auxiliary.profile_describer.provider"); if (v) snprintf(cfg->auxiliary.profile_describer.provider, sizeof(cfg->auxiliary.profile_describer.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.profile_describer.model"); if (v) snprintf(cfg->auxiliary.profile_describer.model, sizeof(cfg->auxiliary.profile_describer.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.profile_describer.base_url"); if (v) snprintf(cfg->auxiliary.profile_describer.base_url, sizeof(cfg->auxiliary.profile_describer.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.profile_describer.api_key"); if (v) snprintf(cfg->auxiliary.profile_describer.api_key, sizeof(cfg->auxiliary.profile_describer.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.profile_describer.timeout", 0); if (v > 0) cfg->auxiliary.profile_describer.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.profile_describer.extra_body"); if (v) snprintf(cfg->auxiliary.profile_describer.extra_body, sizeof(cfg->auxiliary.profile_describer.extra_body), "%s", v); }
+
+    /* Curator */
+    { const char *v = yaml_get_string(doc, "auxiliary.curator.provider"); if (v) snprintf(cfg->auxiliary.curator.provider, sizeof(cfg->auxiliary.curator.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.curator.model"); if (v) snprintf(cfg->auxiliary.curator.model, sizeof(cfg->auxiliary.curator.model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.curator.base_url"); if (v) snprintf(cfg->auxiliary.curator.base_url, sizeof(cfg->auxiliary.curator.base_url), "%s", v); }
+    { const char *v = yaml_get_string(doc, "auxiliary.curator.api_key"); if (v) snprintf(cfg->auxiliary.curator.api_key, sizeof(cfg->auxiliary.curator.api_key), "%s", v); }
+    { int v = yaml_get_int(doc, "auxiliary.curator.timeout", 0); if (v > 0) cfg->auxiliary.curator.timeout = v; }
+    { const char *v = yaml_get_string(doc, "auxiliary.curator.extra_body"); if (v) snprintf(cfg->auxiliary.curator.extra_body, sizeof(cfg->auxiliary.curator.extra_body), "%s", v); }
 
     /* Terminal backend */
     const char *term_backend = yaml_get_string(doc, "terminal.backend");
@@ -969,10 +1076,108 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     if (v) { int t = atoi(v); if (t > 0) cfg->tools.terminal_timeout = t; }
 
     v = getenv("HERMES_VISION_MODEL");
-    if (v) snprintf(cfg->tools.vision_model, sizeof(cfg->tools.vision_model), "%s", v);
+    if (v) {
+        snprintf(cfg->tools.vision_model, sizeof(cfg->tools.vision_model), "%s", v);
+        snprintf(cfg->auxiliary.vision.model, sizeof(cfg->auxiliary.vision.model), "%s", v);
+    }
 
     v = getenv("HERMES_VISION_TIMEOUT");
-    if (v) { int t = atoi(v); if (t > 0) cfg->tools.vision_timeout = t; }
+    if (v) {
+        int t = atoi(v); if (t > 0) cfg->tools.vision_timeout = t;
+        if (t > 0) cfg->auxiliary.vision.timeout = t;
+    }
+
+    /* Auxiliary env overrides — HERMES_AUX_<TASK>_<FIELD> */
+    #define LOAD_AUX_ENV_STR(task, field) do { \
+        char en[128]; snprintf(en, sizeof(en), "HERMES_AUX_" #task "_" #field); \
+        const char *e = getenv(en); if (e) snprintf(cfg->auxiliary.task.field, sizeof(cfg->auxiliary.task.field), "%s", e); \
+    } while(0)
+    #define LOAD_AUX_ENV_INT(task, field) do { \
+        char en[128]; snprintf(en, sizeof(en), "HERMES_AUX_" #task "_" #field); \
+        const char *e = getenv(en); if (e) { int tv = atoi(e); if (tv > 0) cfg->auxiliary.task.field = tv; } \
+    } while(0)
+
+    LOAD_AUX_ENV_STR(vision, provider);
+    LOAD_AUX_ENV_STR(vision, base_url);
+    LOAD_AUX_ENV_STR(vision, api_key);
+    {
+        char en[128]; snprintf(en, sizeof(en), "HERMES_AUX_VISION_DOWNLOAD_TIMEOUT");
+        const char *e = getenv(en); if (e) { int tv = atoi(e); if (tv > 0) cfg->auxiliary.vision_download_timeout = tv; }
+    }
+    LOAD_AUX_ENV_STR(vision, extra_body);
+
+    LOAD_AUX_ENV_STR(web_extract, provider);
+    LOAD_AUX_ENV_STR(web_extract, model);
+    LOAD_AUX_ENV_STR(web_extract, base_url);
+    LOAD_AUX_ENV_STR(web_extract, api_key);
+    LOAD_AUX_ENV_INT(web_extract, timeout);
+    LOAD_AUX_ENV_STR(web_extract, extra_body);
+
+    LOAD_AUX_ENV_STR(compression, provider);
+    LOAD_AUX_ENV_STR(compression, model);
+    LOAD_AUX_ENV_STR(compression, base_url);
+    LOAD_AUX_ENV_STR(compression, api_key);
+    LOAD_AUX_ENV_INT(compression, timeout);
+    LOAD_AUX_ENV_STR(compression, extra_body);
+
+    LOAD_AUX_ENV_STR(skills_hub, provider);
+    LOAD_AUX_ENV_STR(skills_hub, model);
+    LOAD_AUX_ENV_STR(skills_hub, base_url);
+    LOAD_AUX_ENV_STR(skills_hub, api_key);
+    LOAD_AUX_ENV_INT(skills_hub, timeout);
+    LOAD_AUX_ENV_STR(skills_hub, extra_body);
+
+    LOAD_AUX_ENV_STR(approval, provider);
+    LOAD_AUX_ENV_STR(approval, model);
+    LOAD_AUX_ENV_STR(approval, base_url);
+    LOAD_AUX_ENV_STR(approval, api_key);
+    LOAD_AUX_ENV_INT(approval, timeout);
+    LOAD_AUX_ENV_STR(approval, extra_body);
+
+    LOAD_AUX_ENV_STR(mcp, provider);
+    LOAD_AUX_ENV_STR(mcp, model);
+    LOAD_AUX_ENV_STR(mcp, base_url);
+    LOAD_AUX_ENV_STR(mcp, api_key);
+    LOAD_AUX_ENV_INT(mcp, timeout);
+    LOAD_AUX_ENV_STR(mcp, extra_body);
+
+    LOAD_AUX_ENV_STR(title_generation, provider);
+    LOAD_AUX_ENV_STR(title_generation, model);
+    LOAD_AUX_ENV_STR(title_generation, base_url);
+    LOAD_AUX_ENV_STR(title_generation, api_key);
+    LOAD_AUX_ENV_INT(title_generation, timeout);
+    LOAD_AUX_ENV_STR(title_generation, extra_body);
+
+    LOAD_AUX_ENV_STR(triage_specifier, provider);
+    LOAD_AUX_ENV_STR(triage_specifier, model);
+    LOAD_AUX_ENV_STR(triage_specifier, base_url);
+    LOAD_AUX_ENV_STR(triage_specifier, api_key);
+    LOAD_AUX_ENV_INT(triage_specifier, timeout);
+    LOAD_AUX_ENV_STR(triage_specifier, extra_body);
+
+    LOAD_AUX_ENV_STR(kanban_decomposer, provider);
+    LOAD_AUX_ENV_STR(kanban_decomposer, model);
+    LOAD_AUX_ENV_STR(kanban_decomposer, base_url);
+    LOAD_AUX_ENV_STR(kanban_decomposer, api_key);
+    LOAD_AUX_ENV_INT(kanban_decomposer, timeout);
+    LOAD_AUX_ENV_STR(kanban_decomposer, extra_body);
+
+    LOAD_AUX_ENV_STR(profile_describer, provider);
+    LOAD_AUX_ENV_STR(profile_describer, model);
+    LOAD_AUX_ENV_STR(profile_describer, base_url);
+    LOAD_AUX_ENV_STR(profile_describer, api_key);
+    LOAD_AUX_ENV_INT(profile_describer, timeout);
+    LOAD_AUX_ENV_STR(profile_describer, extra_body);
+
+    LOAD_AUX_ENV_STR(curator, provider);
+    LOAD_AUX_ENV_STR(curator, model);
+    LOAD_AUX_ENV_STR(curator, base_url);
+    LOAD_AUX_ENV_STR(curator, api_key);
+    LOAD_AUX_ENV_INT(curator, timeout);
+    LOAD_AUX_ENV_STR(curator, extra_body);
+
+    #undef LOAD_AUX_ENV_STR
+    #undef LOAD_AUX_ENV_INT
 
     v = getenv("HERMES_TERMINAL_BACKEND");
     if (v) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", v);
@@ -1308,6 +1513,14 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->checkpoints.compression_level < 0 || cfg->checkpoints.compression_level > 9)
         add_issue(result, "checkpoints.compression", "must be 0-9, got %d", cfg->checkpoints.compression_level);
 
+    /* --- Auxiliary --- */
+    if (cfg->auxiliary.vision.timeout < 1 || cfg->auxiliary.vision.timeout > 3600)
+        add_issue(result, "auxiliary.vision.timeout", "unreasonable %d", cfg->auxiliary.vision.timeout);
+    if (cfg->auxiliary.vision_download_timeout < 1 || cfg->auxiliary.vision_download_timeout > 300)
+        add_issue(result, "auxiliary.vision.download_timeout", "unreasonable %d", cfg->auxiliary.vision_download_timeout);
+    if (cfg->auxiliary.web_extract.timeout < 1 || cfg->auxiliary.web_extract.timeout > 3600)
+        add_issue(result, "auxiliary.web_extract.timeout", "unreasonable %d", cfg->auxiliary.web_extract.timeout);
+
     return result->count == 0;
 }
 
@@ -1458,8 +1671,34 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "approvals.timeout", def.tools.approval_timeout, active->tools.approval_timeout);
     diff_int(diff, "tool_output.max_bytes", def.tools.max_result_size, active->tools.max_result_size);
     diff_int(diff, "terminal.timeout", def.tools.terminal_timeout, active->tools.terminal_timeout);
-    diff_str(diff, "auxiliary.vision.model", def.tools.vision_model, active->tools.vision_model);
-    diff_int(diff, "auxiliary.vision.timeout", def.tools.vision_timeout, active->tools.vision_timeout);
+    /* Auxiliary group — diff all 11 sub-tasks */
+    #define D_AUX_STR(task, field) diff_str(diff, "auxiliary." #task "." #field, def.auxiliary.task.field, active->auxiliary.task.field)
+    #define D_AUX_INT(task, field) diff_int(diff, "auxiliary." #task "." #field, def.auxiliary.task.field, active->auxiliary.task.field)
+    D_AUX_STR(vision, provider); D_AUX_STR(vision, model); D_AUX_STR(vision, base_url);
+    D_AUX_STR(vision, api_key); D_AUX_INT(vision, timeout); D_AUX_STR(vision, extra_body);
+    diff_int(diff, "auxiliary.vision.download_timeout", def.auxiliary.vision_download_timeout, active->auxiliary.vision_download_timeout);
+    D_AUX_STR(web_extract, provider); D_AUX_STR(web_extract, model); D_AUX_STR(web_extract, base_url);
+    D_AUX_STR(web_extract, api_key); D_AUX_INT(web_extract, timeout); D_AUX_STR(web_extract, extra_body);
+    D_AUX_STR(compression, provider); D_AUX_STR(compression, model); D_AUX_STR(compression, base_url);
+    D_AUX_STR(compression, api_key); D_AUX_INT(compression, timeout); D_AUX_STR(compression, extra_body);
+    D_AUX_STR(skills_hub, provider); D_AUX_STR(skills_hub, model); D_AUX_STR(skills_hub, base_url);
+    D_AUX_STR(skills_hub, api_key); D_AUX_INT(skills_hub, timeout); D_AUX_STR(skills_hub, extra_body);
+    D_AUX_STR(approval, provider); D_AUX_STR(approval, model); D_AUX_STR(approval, base_url);
+    D_AUX_STR(approval, api_key); D_AUX_INT(approval, timeout); D_AUX_STR(approval, extra_body);
+    D_AUX_STR(mcp, provider); D_AUX_STR(mcp, model); D_AUX_STR(mcp, base_url);
+    D_AUX_STR(mcp, api_key); D_AUX_INT(mcp, timeout); D_AUX_STR(mcp, extra_body);
+    D_AUX_STR(title_generation, provider); D_AUX_STR(title_generation, model); D_AUX_STR(title_generation, base_url);
+    D_AUX_STR(title_generation, api_key); D_AUX_INT(title_generation, timeout); D_AUX_STR(title_generation, extra_body);
+    D_AUX_STR(triage_specifier, provider); D_AUX_STR(triage_specifier, model); D_AUX_STR(triage_specifier, base_url);
+    D_AUX_STR(triage_specifier, api_key); D_AUX_INT(triage_specifier, timeout); D_AUX_STR(triage_specifier, extra_body);
+    D_AUX_STR(kanban_decomposer, provider); D_AUX_STR(kanban_decomposer, model); D_AUX_STR(kanban_decomposer, base_url);
+    D_AUX_STR(kanban_decomposer, api_key); D_AUX_INT(kanban_decomposer, timeout); D_AUX_STR(kanban_decomposer, extra_body);
+    D_AUX_STR(profile_describer, provider); D_AUX_STR(profile_describer, model); D_AUX_STR(profile_describer, base_url);
+    D_AUX_STR(profile_describer, api_key); D_AUX_INT(profile_describer, timeout); D_AUX_STR(profile_describer, extra_body);
+    D_AUX_STR(curator, provider); D_AUX_STR(curator, model); D_AUX_STR(curator, base_url);
+    D_AUX_STR(curator, api_key); D_AUX_INT(curator, timeout); D_AUX_STR(curator, extra_body);
+    #undef D_AUX_STR
+    #undef D_AUX_INT
     diff_str(diff, "terminal.backend", def.tools.terminal_backend, active->tools.terminal_backend);
     diff_bool(diff, "terminal.persistent_shell", def.tools.persistent_shell, active->tools.persistent_shell);
     diff_str(diff, "web.backend", def.tools.web_backend, active->tools.web_backend);
@@ -1671,6 +1910,22 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_int(f, "  max", cfg->checkpoints.max_checkpoints);
     exp_str(f, "  dir", cfg->checkpoints.dir);
 
+    /* Auxiliary export */
+    #define E_AUX_TASK(f, task, nm) do {         fprintf(f, "\nauxiliary." #task ":\n");         exp_str(f, "  provider", cfg->auxiliary.task.provider);         exp_str(f, "  model", cfg->auxiliary.task.model);         exp_str(f, "  base_url", cfg->auxiliary.task.base_url);         exp_str(f, "  api_key", cfg->auxiliary.task.api_key);         exp_int(f, "  timeout", cfg->auxiliary.task.timeout);         exp_str(f, "  extra_body", cfg->auxiliary.task.extra_body);     } while(0)
+    E_AUX_TASK(f, vision, "vision");
+    exp_int(f, "  download_timeout", cfg->auxiliary.vision_download_timeout);
+    E_AUX_TASK(f, web_extract, "web_extract");
+    E_AUX_TASK(f, compression, "compression");
+    E_AUX_TASK(f, skills_hub, "skills_hub");
+    E_AUX_TASK(f, approval, "approval");
+    E_AUX_TASK(f, mcp, "mcp");
+    E_AUX_TASK(f, title_generation, "title_generation");
+    E_AUX_TASK(f, triage_specifier, "triage_specifier");
+    E_AUX_TASK(f, kanban_decomposer, "kanban_decomposer");
+    E_AUX_TASK(f, profile_describer, "profile_describer");
+    E_AUX_TASK(f, curator, "curator");
+    #undef E_AUX_TASK
+
     if (close_file) fclose(f);
     return true;
 }
@@ -1793,8 +2048,10 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
         dst->tools.max_result_size = src->tools.max_result_size;
     if (is_set_int(src->tools.terminal_timeout))
         dst->tools.terminal_timeout = src->tools.terminal_timeout;
-    if (is_set_str(src->tools.vision_model))
+    if (is_set_str(src->tools.vision_model)) {
         snprintf(dst->tools.vision_model, sizeof(dst->tools.vision_model), "%s", src->tools.vision_model);
+        snprintf(dst->auxiliary.vision.model, sizeof(dst->auxiliary.vision.model), "%s", src->tools.vision_model);
+    }
     if (is_set_str(src->tools.terminal_backend))
         snprintf(dst->tools.terminal_backend, sizeof(dst->tools.terminal_backend), "%s", src->tools.terminal_backend);
     if (is_set_int(src->tools.web_search_timeout))
@@ -1914,6 +2171,35 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     if (is_set_str(src->mcp.credential_store))
         snprintf(dst->mcp.credential_store, sizeof(dst->mcp.credential_store), "%s", src->mcp.credential_store);
     dst->mcp.auth_enabled = src->mcp.auth_enabled;
+
+    /* Auxiliary merge */
+    #define M_AUX_STR(task, field) if (is_set_str(src->auxiliary.task.field)) snprintf(dst->auxiliary.task.field, sizeof(dst->auxiliary.task.field), "%s", src->auxiliary.task.field)
+    #define M_AUX_INT(task, field) if (is_set_int(src->auxiliary.task.field)) dst->auxiliary.task.field = src->auxiliary.task.field
+    M_AUX_STR(vision, provider); M_AUX_STR(vision, model); M_AUX_STR(vision, base_url);
+    M_AUX_STR(vision, api_key); M_AUX_INT(vision, timeout); M_AUX_STR(vision, extra_body);
+    if (is_set_int(src->auxiliary.vision_download_timeout)) dst->auxiliary.vision_download_timeout = src->auxiliary.vision_download_timeout;
+    M_AUX_STR(web_extract, provider); M_AUX_STR(web_extract, model); M_AUX_STR(web_extract, base_url);
+    M_AUX_STR(web_extract, api_key); M_AUX_INT(web_extract, timeout); M_AUX_STR(web_extract, extra_body);
+    M_AUX_STR(compression, provider); M_AUX_STR(compression, model); M_AUX_STR(compression, base_url);
+    M_AUX_STR(compression, api_key); M_AUX_INT(compression, timeout); M_AUX_STR(compression, extra_body);
+    M_AUX_STR(skills_hub, provider); M_AUX_STR(skills_hub, model); M_AUX_STR(skills_hub, base_url);
+    M_AUX_STR(skills_hub, api_key); M_AUX_INT(skills_hub, timeout); M_AUX_STR(skills_hub, extra_body);
+    M_AUX_STR(approval, provider); M_AUX_STR(approval, model); M_AUX_STR(approval, base_url);
+    M_AUX_STR(approval, api_key); M_AUX_INT(approval, timeout); M_AUX_STR(approval, extra_body);
+    M_AUX_STR(mcp, provider); M_AUX_STR(mcp, model); M_AUX_STR(mcp, base_url);
+    M_AUX_STR(mcp, api_key); M_AUX_INT(mcp, timeout); M_AUX_STR(mcp, extra_body);
+    M_AUX_STR(title_generation, provider); M_AUX_STR(title_generation, model); M_AUX_STR(title_generation, base_url);
+    M_AUX_STR(title_generation, api_key); M_AUX_INT(title_generation, timeout); M_AUX_STR(title_generation, extra_body);
+    M_AUX_STR(triage_specifier, provider); M_AUX_STR(triage_specifier, model); M_AUX_STR(triage_specifier, base_url);
+    M_AUX_STR(triage_specifier, api_key); M_AUX_INT(triage_specifier, timeout); M_AUX_STR(triage_specifier, extra_body);
+    M_AUX_STR(kanban_decomposer, provider); M_AUX_STR(kanban_decomposer, model); M_AUX_STR(kanban_decomposer, base_url);
+    M_AUX_STR(kanban_decomposer, api_key); M_AUX_INT(kanban_decomposer, timeout); M_AUX_STR(kanban_decomposer, extra_body);
+    M_AUX_STR(profile_describer, provider); M_AUX_STR(profile_describer, model); M_AUX_STR(profile_describer, base_url);
+    M_AUX_STR(profile_describer, api_key); M_AUX_INT(profile_describer, timeout); M_AUX_STR(profile_describer, extra_body);
+    M_AUX_STR(curator, provider); M_AUX_STR(curator, model); M_AUX_STR(curator, base_url);
+    M_AUX_STR(curator, api_key); M_AUX_INT(curator, timeout); M_AUX_STR(curator, extra_body);
+    #undef M_AUX_STR
+    #undef M_AUX_INT
 
     /* Sync flat fields for backward compat */
     snprintf(dst->model, sizeof(dst->model), "%s", dst->provider_cfg.model);
@@ -2233,6 +2519,21 @@ char *hermes_config_schema(void) {
         json_set(mcp, "properties", mprops);
         json_set(properties, "mcp", mcp);
     }
+
+    /* --- auxiliary --- */
+    #define S_AUX_TASK(task, nm, desc, to) do {         json_t *obj = json_object();         json_set(obj, "type", json_string("object"));         json_set(obj, "description", json_string("Auxiliary " desc " LLM routing"));         json_t *oprops = json_object();         json_set(oprops, "provider", schema_prop("string", "Provider for " desc, "auto"));         json_set(oprops, "model", schema_prop("string", "Model for " desc, ""));         json_set(oprops, "base_url", schema_prop("string", "Base URL for " desc, ""));         json_set(oprops, "api_key", schema_prop("string", "API key for " desc, ""));         json_set(oprops, "timeout", schema_prop_int("Timeout for " desc, to, 1, 3600));         json_set(oprops, "extra_body", schema_prop("string", "Extra request body fields", ""));         json_set(obj, "properties", oprops);         json_set(properties, "auxiliary." #task, obj);     } while(0)
+    S_AUX_TASK(vision, "vision", "vision analysis", 120);
+    S_AUX_TASK(web_extract, "web_extract", "web page extraction", 360);
+    S_AUX_TASK(compression, "compression", "context compression", 120);
+    S_AUX_TASK(skills_hub, "skills_hub", "skill hub", 30);
+    S_AUX_TASK(approval, "approval", "approval review", 30);
+    S_AUX_TASK(mcp, "mcp", "MCP routing", 30);
+    S_AUX_TASK(title_generation, "title_generation", "title generation", 30);
+    S_AUX_TASK(triage_specifier, "triage_specifier", "Kanban triage specification", 120);
+    S_AUX_TASK(kanban_decomposer, "kanban_decomposer", "Kanban decomposition", 180);
+    S_AUX_TASK(profile_describer, "profile_describer", "profile description", 60);
+    S_AUX_TASK(curator, "curator", "skill-usage review", 600);
+    #undef S_AUX_TASK
 
     json_set(root, "properties", properties);
     json_set(root, "definitions", defs);

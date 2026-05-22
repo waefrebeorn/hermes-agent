@@ -408,6 +408,37 @@ typedef struct {
 } mcp_config_t;
 
 /* ================================================================
+ *  Auxiliary Config (Python auxiliary group — 11 sub-tasks, ~66 keys)
+ *  Each sub-task specifies provider/model/timeout for a specific
+ *  auxiliary LLM call (vision, web_extract, compression, etc.).
+ * ================================================================ */
+typedef struct {
+    char  provider[64];            /* auto | openrouter | nous | codex | custom */
+    char  model[128];              /* e.g. "google/gemini-2.5-flash" */
+    char  base_url[256];           /* direct OpenAI-compatible endpoint */
+    char  api_key[256];            /* API key for base_url */
+    int   timeout;                 /* seconds — LLM API call timeout */
+    char  extra_body[1024];        /* JSON: extra provider-specific fields */
+} auxiliary_task_config_t;
+
+#define AUX_TASK_CONFIG_DEFAULT_TIMEOUT 30
+
+typedef struct {
+    auxiliary_task_config_t vision;          /* auxiliary.vision.* — +download_timeout below */
+    int                     vision_download_timeout; /* auxiliary.vision.download_timeout: seconds */
+    auxiliary_task_config_t web_extract;      /* auxiliary.web_extract.* */
+    auxiliary_task_config_t compression;      /* auxiliary.compression.* */
+    auxiliary_task_config_t skills_hub;       /* auxiliary.skills_hub.* */
+    auxiliary_task_config_t approval;         /* auxiliary.approval.* */
+    auxiliary_task_config_t mcp;              /* auxiliary.mcp.* */
+    auxiliary_task_config_t title_generation; /* auxiliary.title_generation.* */
+    auxiliary_task_config_t triage_specifier; /* auxiliary.triage_specifier.* */
+    auxiliary_task_config_t kanban_decomposer;/* auxiliary.kanban_decomposer.* */
+    auxiliary_task_config_t profile_describer;/* auxiliary.profile_describer.* */
+    auxiliary_task_config_t curator;          /* auxiliary.curator.* */
+} auxiliary_config_t;
+
+/* ================================================================
  *  Terminal Config (P2, expanded from Python terminal group, 22 keys)
  * ================================================================ */
 typedef struct {
@@ -519,6 +550,8 @@ typedef struct {
     skills_config_t skills;
     /* Checkpoints config */
     checkpoints_config_t checkpoints;
+    /* Auxiliary config */
+    auxiliary_config_t auxiliary;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */
