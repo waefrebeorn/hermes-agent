@@ -780,12 +780,25 @@ static bool setup_sms(void) {
         return false;
     }
     sms_set_twilio(sid, token, from);
+
+    /* P111: Optional status callback URL for delivery status */
+    const char *cb = getenv("TWILIO_STATUS_CALLBACK");
+    if (cb) {
+        sms_set_status_callback(cb);
+        printf("[gateway] SMS status callbacks configured\n");
+    }
+
+    /* P111: Optional webhook path (default /sms-webhook on the webhook server) */
+    const char *wh = getenv("TWILIO_WEBHOOK_PATH");
+    if (wh) {
+        sms_set_webhook_url(wh);
+    }
     return true;
 }
 
 static void *thread_poll_sms(void *arg) {
     (void)arg;
-    printf("[gateway] SMS platform (outbound only via Twilio). Idle.\n");
+    printf("[gateway] SMS/Twilio platform (outbound + webhook-driven inbound). Idle.\n");
     while (g_gw.running) sleep(g_gw.poll_interval * 10);
     return NULL;
 }
@@ -879,8 +892,34 @@ static bool setup_bluebubbles(void) {
 
 static void *thread_poll_bluebubbles(void *arg) {
     (void)arg;
-    printf("[gateway] BlueBubbles platform (iMessage). Idle.\n");
-    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    printf("[gateway] BlueBubbles platform (iMessage). Polling every %ds.\\n", g_gw.poll_interval);
+
+    /* Check for optional poll GUID env var */
+    const char *poll_guid = getenv("BLUEBUBBLES_POLL_GUID");
+    if (poll_guid) {
+        bluebubbles_set_poll_guid(poll_guid);
+        printf("[gateway] BlueBubbles polling chat GUID: %s\\n", poll_guid);
+    } else {
+        bluebubbles_set_poll_guid(NULL);
+        printf("[gateway] BlueBubbles is webhook-driven. Set BLUEBUBBLES_POLL_GUID for polling.\\n");
+    }
+
+    while (g_gw.running) {
+        json_node_t *updates = bluebubbles_poll_messages(g_gw.http);
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                const char *chat_id = bluebubbles_get_chat_id(update);
+                const char *text = bluebubbles_get_text(update);
+                if (chat_id && text && text[0]) {
+                    process_update("bluebubbles", chat_id, text);
+                }
+            }
+        }
+        json_free(updates);
+        if (g_gw.running) sleep(g_gw.poll_interval);
+    }
     return NULL;
 }
 

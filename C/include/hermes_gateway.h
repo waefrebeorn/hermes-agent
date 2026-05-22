@@ -280,6 +280,74 @@ const char *discord_get_text(json_node_t *update);
 void webhook_server_run(int port);
 
 /* ================================================================
+ *  P112: Webhook subscription + HMAC verification + retry + rate limit
+ * ================================================================ */
+
+/* Max webhook subscriptions */
+#define WEBHOOK_SUBS_MAX 32
+
+/* Max custom headers per subscription */
+#define WEBHOOK_HEADERS_MAX 16
+
+/* Custom header entry */
+typedef struct {
+    char key[128];
+    char value[512];
+} webhook_header_t;
+
+/* Webhook subscription entry */
+typedef struct {
+    char             endpoint[512];        /* Outbound URL */
+    char             hmac_secret[128];     /* HMAC secret for signature verification */
+    int              max_retries;          /* Max retry attempts (0 = no retry) */
+    int              backoff_ms;           /* Initial backoff in ms (doubles each retry) */
+    webhook_header_t headers[WEBHOOK_HEADERS_MAX]; /* Custom headers for outgoing calls */
+    int              header_count;         /* Number of custom headers */
+    gw_rate_limiter_t rate_limiter;        /* Per-subscription rate limiter */
+    bool             in_use;              /* Slot occupied */
+} webhook_subscription_t;
+
+/* Set HMAC secret for verifying incoming webhook request signatures.
+ * Calls with NULL or empty string disable verification. */
+void webhook_set_verify_secret(const char *secret);
+
+/* Verify an HMAC-SHA256 signature in "sha256=<hex>" format against body.
+ * The signature value typically comes from X-Hub-Signature-256 header.
+ * Returns true if signature matches, false otherwise. */
+bool webhook_verify_hmac(const char *signature, const unsigned char *body, size_t body_len);
+
+/* Register an outbound webhook subscription.
+ * Returns subscription index on success, -1 on failure (table full or NULL args).
+ * max_retries=3 and backoff_ms=1000 are reasonable defaults. */
+int webhook_subscription_add(const char *endpoint, const char *secret,
+                              int max_retries, int backoff_ms);
+
+/* Remove a subscription by index. Returns true if removed. */
+bool webhook_subscription_remove(int idx);
+
+/* Add a custom header to an existing subscription.
+ * Returns true on success. */
+bool webhook_subscription_add_header(int idx, const char *key, const char *value);
+
+/* Deliver a JSON payload to a subscription endpoint.
+ * Uses exponential backoff retry with jitter, subject to per-endpoint
+ * rate limiting. Returns true if at least one attempt succeeded. */
+bool webhook_subscription_deliver(int idx, const char *payload);
+
+/* Deliver payload to endpoint (one-shot, no subscription needed).
+ * Useful for simple outgoing webhooks without registering a subscription.
+ * No rate limiting or HMAC signing is applied in this mode. */
+bool webhook_send_payload(const char *endpoint, const char *payload,
+                           const char *custom_headers, int timeout_sec,
+                           int max_retries, int backoff_ms);
+
+/* Get count of active subscriptions */
+int webhook_subscription_count(void);
+
+/* List active subscriptions into provided array; returns count written. */
+int webhook_subscription_list(webhook_subscription_t *out, int max_out);
+
+/* ================================================================
  *  Slack platform
  * ================================================================ */
 
@@ -304,10 +372,15 @@ const char *slack_get_text(json_node_t *update);
 void matrix_set_homeserver(const char *hs);
 void matrix_set_token(const char *token);
 void matrix_set_room(const char *id);
+void matrix_set_user_id(const char *uid);
+void matrix_set_event_filter(const char *types);
 bool matrix_send_message(http_client_t *http, const char *text);
 json_node_t *matrix_poll_messages(http_client_t *http);
 const char *matrix_get_chat_id(json_node_t *update);
 const char *matrix_get_text(json_node_t *update);
+json_node_t *matrix_list_rooms(http_client_t *http);
+bool matrix_mark_read(http_client_t *http, const char *room_id, const char *event_id);
+bool matrix_send_typing(http_client_t *http, const char *room_id, int timeout_ms);
 
 /* ================================================================
  *  Mattermost platform
@@ -330,21 +403,65 @@ void whatsapp_set_phone_id(const char *id);
 void whatsapp_set_verify_token(const char *token);
 bool whatsapp_send_message(http_client_t *http, const char *to,
                             const char *text);
+bool whatsapp_send_template(http_client_t *http, const char *to,
+                             const char *template_name,
+                             const char *language_code,
+                             json_node_t *components);
+bool whatsapp_send_interactive_buttons(http_client_t *http, const char *to,
+                                        const char *header_text,
+                                        const char *body_text,
+                                        const char *footer_text,
+                                        json_node_t *buttons);
+bool whatsapp_send_interactive_list(http_client_t *http, const char *to,
+                                     const char *body_text,
+                                     const char *button_text,
+                                     const char *section_title,
+                                     json_node_t *rows);
+bool whatsapp_mark_read(http_client_t *http, const char *message_id);
 const char *whatsapp_verify_webhook(const char *query_string);
 json_node_t *whatsapp_parse_webhook(const char *body);
 const char *whatsapp_get_chat_id(json_node_t *update);
 const char *whatsapp_get_text(json_node_t *update);
 
 /* ================================================================
- *  Email platform
+ *  P110: Email platform — IMAP IDLE, attachments, HTML, threading
  * ================================================================ */
 
 void email_set_from(const char *from);
+
+/* Basic send (backward compat) */
 bool email_send_message(http_client_t *http, const char *to,
                         const char *subject, const char *body);
+
+/* Extended send with HTML, attachments, and threading.
+ * attachments: json array of {path, filename, mime_type} or NULL.
+ * in_reply_to: Message-ID this email replies to, for threading (or NULL). */
+bool email_send_message_ext(const char *to, const char *subject,
+                             const char *text_body, const char *html_body,
+                             json_node_t *attachments,
+                             const char *in_reply_to);
+
+/* IMAP IDLE push-based inbox monitoring.
+ * Configure via env vars: EMAIL_IMAP_SERVER, EMAIL_IMAP_PORT,
+ * EMAIL_IMAP_USER, EMAIL_IMAP_PASS, EMAIL_IMAP_MAILBOX. */
+bool email_imap_init(void);    /* Load config from env vars */
+void email_imap_start(void);   /* Start IDLE loop (blocks in thread) */
+void email_imap_stop(void);    /* Signal IDLE loop to stop */
+
+/* Legacy maildir polling (optional) */
 json_node_t *email_poll_messages(http_client_t *http);
+
+/* Update extractors */
 const char *email_get_chat_id(json_node_t *update);
 const char *email_get_text(json_node_t *update);
+
+/* P110: Extended update extractors */
+const char *email_get_html(json_node_t *update);        /* HTML body if present */
+const char *email_get_subject(json_node_t *update);     /* Email subject */
+json_node_t *email_get_attachments(json_node_t *update); /* Array of {filename, mime_type, path, size} */
+const char *email_get_thread_id(json_node_t *update);   /* In-Reply-To (thread parent) */
+const char *email_get_message_id(json_node_t *update);  /* This email's Message-ID */
+const char *email_get_references(json_node_t *update);  /* References header for threading */
 
 /* ================================================================
  *  Signal platform
@@ -360,6 +477,46 @@ const char *signal_get_chat_id(json_node_t *update);
 const char *signal_get_text(json_node_t *update);
 
 /* ================================================================
+ *  P108: Extended Signal API — groups, reactions, quotes, attachments
+ * ================================================================ */
+
+/* Send a message to a Signal group (uses -g group_id flag) */
+bool signal_send_group_message(http_client_t *http,
+                                const char *group_id,
+                                const char *text);
+
+/* Send an emoji reaction to a specific message.
+ * target_author: the phone number of the original message sender.
+ * target_timestamp: the server timestamp of the original message (string). */
+bool signal_send_reaction(http_client_t *http,
+                           const char *recipient,
+                           const char *target_author,
+                           const char *target_timestamp,
+                           const char *emoji);
+
+/* Send a quoted reply to a specific message.
+ * quote_author: the phone number of the original message sender.
+ * quote_timestamp: the server timestamp of the original message (string). */
+bool signal_send_quote_reply(http_client_t *http,
+                              const char *recipient,
+                              const char *text,
+                              const char *quote_author,
+                              const char *quote_timestamp);
+
+/* Send a message with a file/image attachment.
+ * file_path: absolute path to the file on disk. */
+bool signal_send_attachment(http_client_t *http,
+                             const char *recipient,
+                             const char *text,
+                             const char *file_path);
+
+/* Extended poll: also populates "group_id" on group messages,
+ * "reaction" on reaction updates, and "attachment" paths. */
+const char *signal_get_group_id(json_node_t *update);
+const char *signal_get_reaction(json_node_t *update);
+const char *signal_get_attachment(json_node_t *update);
+
+/* ================================================================
  *  HomeAssistant platform
  * ================================================================ */
 
@@ -372,14 +529,49 @@ const char *ha_get_chat_id(json_node_t *update);
 const char *ha_get_text(json_node_t *update);
 
 /* ================================================================
- *  SMS platform (Twilio)
+ *  P111: SMS/MMS platform (Twilio) — carrier lookup, MMS, webhooks
  * ================================================================ */
 
+/* Setup */
 void sms_set_twilio(const char *sid, const char *token, const char *from);
+void sms_set_status_callback(const char *url);
+void sms_set_webhook_url(const char *url);
+
+/* Send SMS (basic) */
 bool sms_send_message(http_client_t *http, const char *to, const char *text);
+
+/* Send MMS with media URL (image, video, audio) */
+bool sms_send_mms(http_client_t *http, const char *to, const char *text,
+                  const char *media_url);
+
+/* Carrier lookup via Twilio Lookup API v2.
+ * Returns JSON node with carrier info, or NULL on error.
+ * Caller must json_free() the result. */
+json_node_t *sms_lookup_carrier(http_client_t *http, const char *phone_number);
+
+/* Webhook verification — called from the webhook server on GET /sms-webhook.
+ * Twilio uses a simple GET request for number confirmation.
+ * Returns the challenge response string, or NULL on failure. */
+const char *sms_verify_webhook(const char *query_string);
+
+/* Parse Twilio webhook POST body (form-urlencoded) into json_node_t updates.
+ * Handles inbound SMS, MMS, and delivery status callbacks.
+ * Returns a JSON array of update objects, or NULL.
+ * Each update has: "from", "to", "text", "message_sid", "num_media",
+ * "media_urls" (array of strings for MMS), "status" (delivery status),
+ * "error_code", "error_message". */
+json_node_t *sms_parse_webhook(const char *body);
+
+/* Poll (no-op for SMS — inbound is webhook-driven) */
 json_node_t *sms_poll_messages(http_client_t *http);
+
+/* Update extractors */
 const char *sms_get_chat_id(json_node_t *update);
 const char *sms_get_text(json_node_t *update);
+const char *sms_get_message_sid(json_node_t *update);
+const char *sms_get_status(json_node_t *update);
+const char *sms_get_media_url(json_node_t *update, size_t index);
+size_t      sms_get_num_media(json_node_t *update);
 
 /* ================================================================
  *  API Server platform (aliased as webhook)
@@ -390,38 +582,137 @@ const char *sms_get_text(json_node_t *update);
  * config clarity. */
 
 /* ================================================================
- *  Feishu (Lark) platform
+ *  P114: Feishu (Lark) platform — card messages, buttons, docs, media
  * ================================================================ */
+
+/* ---- Basic config ---- */
 void feishu_set_webhook(const char *url);
 bool feishu_send_message(http_client_t *http, const char *text);
+
+/* ---- App API mode (Open API with tenant access token) ---- */
+void feishu_set_app_credentials(const char *app_id, const char *app_secret);
+void feishu_set_default_receive_id(const char *receive_id);
+
+/* ---- Card messages ---- */
+
+/* Send interactive card via webhook (no app credentials needed).
+ * card: JSON node with Feishu card structure (config/header/elements). */
+bool feishu_send_interactive(http_client_t *http, json_node_t *card);
+
+/* Send interactive card to a specific receive_id via Open API.
+ * card: JSON node with Feishu card structure. receive_id is auto-escaped as JSON string. */
+bool feishu_send_card(http_client_t *http, const char *receive_id,
+                       json_node_t *card);
+
+/* Convenience: send a card with interactive buttons.
+ * buttons: JSON array of {"text":{...},"type":"default","value":{...}} elements.
+ * template: card header color template ("blue","green","red","purple","yellow", etc.) */
+bool feishu_send_card_with_buttons(http_client_t *http,
+                                    const char *receive_id,
+                                    const char *title,
+                                    const char *body_text,
+                                    json_node_t *buttons,
+                                    const char *template);
+
+/* ---- Doc integration (Open API) ---- */
+
+/* Create a new doc in the given folder (pass NULL for root).
+ * Returns malloc'd JSON string with document info (caller free()s), or NULL on error.
+ * Result JSON contains: document_id, title, url. */
+char *feishu_doc_create(http_client_t *http, const char *folder_token,
+                         const char *title);
+
+/* Get doc raw content as plain text / markdown.
+ * Returns malloc'd string (caller free()s), or NULL on error. */
+char *feishu_doc_get_raw_content(http_client_t *http, const char *doc_id);
+
+/* ---- Image/File messages (Open API) ---- */
+
+/* Upload an image. Returns malloc'd image_key string (caller free()s), or NULL.
+ * image_path: absolute path to the image file on disk. */
+char *feishu_upload_image(http_client_t *http, const char *image_path);
+
+/* Send an image by image_key to a specific receive_id. */
+bool feishu_send_image(http_client_t *http, const char *receive_id,
+                        const char *image_key);
+
+/* Upload a file. Returns malloc'd file_key string (caller free()s), or NULL.
+ * file_path: absolute path to the file. file_name: display name in chat. */
+char *feishu_upload_file(http_client_t *http, const char *file_path,
+                          const char *file_name);
+
+/* Send a file by file_key to a specific receive_id. */
+bool feishu_send_file(http_client_t *http, const char *receive_id,
+                       const char *file_key);
+
+/* ---- Poll / update extractors (unchanged) ---- */
 json_node_t *feishu_poll_messages(http_client_t *http);
 const char *feishu_get_chat_id(json_node_t *update);
 const char *feishu_get_text(json_node_t *update);
 
 /* ================================================================
- *  WeCom (WeChat Work) platform
+ *  P113: WeCom (WeChat Work) platform — full feature parity
  * ================================================================ */
 void wecom_set_webhook(const char *url);
+void wecom_set_app_credentials(const char *corp_id, const char *corp_secret,
+                                const char *agent_id);
 bool wecom_send_message(http_client_t *http, const char *text);
+bool wecom_send_markdown(http_client_t *http, const char *text);
+bool wecom_send_text_with_at(http_client_t *http, const char *text,
+                              const char *mentioned_list_json,
+                              const char *mentioned_mobile_list_json);
+bool wecom_send_image(http_client_t *http, const char *base64_data,
+                       const char *md5_hex);
+bool wecom_send_file(http_client_t *http, const char *media_id);
+bool wecom_send_news(http_client_t *http, const char *articles_json);
+bool wecom_send_taskcard(http_client_t *http,
+                          const char *title, const char *description,
+                          const char *url, const char *task_id,
+                          const char *btns_json);
 json_node_t *wecom_poll_messages(http_client_t *http);
 const char *wecom_get_chat_id(json_node_t *update);
 const char *wecom_get_text(json_node_t *update);
 
 /* ================================================================
- *  DingTalk platform
+ *  P113: DingTalk platform — full feature parity
  * ================================================================ */
 void dingtalk_set_webhook(const char *url);
+void dingtalk_set_app_credentials(const char *app_id, const char *app_secret);
 bool dingtalk_send_message(http_client_t *http, const char *text);
+bool dingtalk_send_markdown(http_client_t *http, const char *title, const char *text);
+bool dingtalk_send_text_with_at(http_client_t *http, const char *text,
+                                 const char *at_mobiles_json,
+                                 const char *at_user_ids_json,
+                                 bool is_at_all);
+bool dingtalk_send_markdown_with_at(http_client_t *http, const char *title,
+                                     const char *text,
+                                     const char *at_mobiles_json,
+                                     const char *at_user_ids_json,
+                                     bool is_at_all);
+bool dingtalk_send_action_card(http_client_t *http,
+                                const char *title, const char *text,
+                                const char *btns_json,
+                                const char *btn_orientation);
+bool dingtalk_send_link(http_client_t *http,
+                         const char *title, const char *text,
+                         const char *message_url, const char *pic_url);
+bool dingtalk_send_image_by_url(http_client_t *http, const char *image_url);
 json_node_t *dingtalk_poll_messages(http_client_t *http);
 const char *dingtalk_get_chat_id(json_node_t *update);
 const char *dingtalk_get_text(json_node_t *update);
 
 /* ================================================================
- *  QQ Bot platform
+ *  P113: QQ Bot platform — full feature parity
  * ================================================================ */
 void qqbot_set_webhook(const char *url);
 void qqbot_set_token(const char *token);
 bool qqbot_send_message(http_client_t *http, const char *text);
+bool qqbot_send_markdown(http_client_t *http, const char *text);
+bool qqbot_send_image(http_client_t *http, const char *image_url);
+bool qqbot_send_with_keyboard(http_client_t *http, const char *text,
+                               const char *keyboard_json);
+bool qqbot_send_with_at(http_client_t *http, const char *text,
+                         const char *at_user_id);
 json_node_t *qqbot_poll_messages(http_client_t *http);
 const char *qqbot_get_chat_id(json_node_t *update);
 const char *qqbot_get_text(json_node_t *update);
@@ -437,6 +728,53 @@ json_node_t *bluebubbles_poll_messages(http_client_t *http);
 const char *bluebubbles_get_chat_id(json_node_t *update);
 const char *bluebubbles_get_text(json_node_t *update);
 
+/* ================================================================
+ *  P115: Extended BlueBubbles API — tapbacks, attachments, group chat
+ * ================================================================ */
+
+/* Tapback reaction codes (associatedMessageType values) */
+#define BLUEBUBBLES_TAPBACK_LOVE      2000
+#define BLUEBUBBLES_TAPBACK_LIKE      2001
+#define BLUEBUBBLES_TAPBACK_DISLIKE   2002
+#define BLUEBUBBLES_TAPBACK_LAUGH     2003
+#define BLUEBUBBLES_TAPBACK_EMPHASIZE 2004
+#define BLUEBUBBLES_TAPBACK_QUESTION  2005
+
+/* Send a tapback reaction to a specific message.
+ * chat_id: BlueBubbles chat GUID.
+ * message_guid: the GUID of the message to react to.
+ * tapback_type: one of the BLUEBUBBLES_TAPBACK_* constants. */
+bool bluebubbles_send_tapback(http_client_t *http,
+                               const char *chat_id,
+                               const char *message_guid,
+                               int tapback_type);
+
+/* Send a file attachment (image, video, document) to a chat.
+ * Uses curl subprocess (libhttp does not support multipart).
+ * file_path: absolute path to the file on disk.
+ * filename: display name for the attachment (or NULL to use basename). */
+bool bluebubbles_send_attachment(http_client_t *http,
+                                  const char *chat_id,
+                                  const char *file_path,
+                                  const char *filename);
+
+/* Group chat detection */
+bool bluebubbles_is_group(json_node_t *update);
+const char *bluebubbles_get_group_id(json_node_t *update);
+
+/* Typing indicator */
+bool bluebubbles_send_typing(http_client_t *http, const char *chat_id);
+bool bluebubbles_stop_typing(http_client_t *http, const char *chat_id);
+
+/* P115: Extended update parsers */
+const char *bluebubbles_get_attachment_path(json_node_t *update);
+int bluebubbles_get_tapback_type(json_node_t *update);
+const char *bluebubbles_get_message_guid(json_node_t *update);
+
+/* Set a specific chat GUID to poll for recent messages.
+ * Without this, bluebubbles_poll_messages() returns NULL (webhook-driven). */
+void bluebubbles_set_poll_guid(const char *guid);
+
 /* msgraph_webhook — raw socket HTTP server for Microsoft Graph notifications */
 void msgraph_webhook_init(const char *webhook_path, const char *health_path, int port);
 void msgraph_webhook_run(void);
@@ -445,6 +783,14 @@ void msgraph_webhook_run(void);
 bool weixin_init(const char *token, const char *account_id);
 void weixin_start(void);
 void weixin_stop(void);
+
+/* P113: Weixin extended send API */
+void weixin_send_text(const char *chat_id, const char *text,
+                       const char *context_token);
+void weixin_send_markdown(const char *chat_id, const char *text,
+                           const char *context_token);
+void weixin_send_image(const char *chat_id, const char *image_data,
+                        int image_type, const char *context_token);
 
 /* yuanbao — Yuanbao WebSocket gateway */
 bool yuanbao_init(const char *app_id, const char *app_secret,

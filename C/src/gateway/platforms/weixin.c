@@ -55,7 +55,7 @@ static weixin_state_t g_wx;
  * ================================================================ */
 
 /* Build iLink headers as a single newline-separated string */
-static void build_headers(const char *body, char *hdr_buf, size_t hdr_sz) {
+static void __attribute__((unused)) build_headers(const char *body, char *hdr_buf, size_t hdr_sz) {
     snprintf(hdr_buf, hdr_sz,
         "Content-Type: application/json\n"
         "AuthorizationType: ilink_bot_token\n"
@@ -291,6 +291,72 @@ static int send_message(const char *to_user_id, const char *text,
     return 0;
 }
 
+/* sendMarkdown */
+static int send_markdown(const char *to_user_id, const char *text,
+                          const char *context_token) {
+    char payload[MAX_BODY];
+    if (context_token && *context_token) {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":2,\"content\":\"%s\","
+                 "\"context_token\":\"%s\"",
+                 to_user_id, text, context_token);
+    } else {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":2,\"content\":\"%s\"",
+                 to_user_id, text);
+    }
+
+    char *resp = wx_api_post(EP_SEND_MESSAGE, payload, API_TIMEOUT_MS, NULL);
+    if (!resp) return -1;
+
+    json_t *j = json_parse(resp, NULL);
+    free(resp);
+    if (!j) return -1;
+
+    int ret = (int)json_get_num(j, "ret", 0);
+    int errcode = (int)json_get_num(j, "errcode", 0);
+    json_free(j);
+
+    if (ret != 0 || errcode != 0) return errcode ? errcode : ret;
+    return 0;
+}
+
+/* sendImage — msg_type 3 for image messages */
+static int send_image_msg(const char *to_user_id, const char *image_data,
+                           int image_type, const char *context_token) {
+    char payload[MAX_BODY];
+    if (context_token && *context_token) {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":3,\"content\":\"%s\","
+                 "\"image_type\":%d,"
+                 "\"context_token\":\"%s\"",
+                 to_user_id, image_data, image_type, context_token);
+    } else {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":3,\"content\":\"%s\","
+                 "\"image_type\":%d",
+                 to_user_id, image_data, image_type);
+    }
+
+    char *resp = wx_api_post(EP_SEND_MESSAGE, payload, API_TIMEOUT_MS, NULL);
+    if (!resp) return -1;
+
+    json_t *j = json_parse(resp, NULL);
+    free(resp);
+    if (!j) return -1;
+
+    int ret = (int)json_get_num(j, "ret", 0);
+    int errcode = (int)json_get_num(j, "errcode", 0);
+    json_free(j);
+
+    if (ret != 0 || errcode != 0) return errcode ? errcode : ret;
+    return 0;
+}
+
 /* ================================================================
  *  Process inbound message
  * ================================================================ */
@@ -446,4 +512,26 @@ void weixin_start(void) {
 
 void weixin_stop(void) {
     g_wx.running = false;
+}
+
+/* ================================================================
+ *  P113: Public send APIs
+ * ================================================================ */
+
+void weixin_send_text(const char *chat_id, const char *text,
+                       const char *context_token) {
+    if (!chat_id || !text) return;
+    send_message(chat_id, text, context_token);
+}
+
+void weixin_send_markdown(const char *chat_id, const char *text,
+                           const char *context_token) {
+    if (!chat_id || !text) return;
+    send_markdown(chat_id, text, context_token);
+}
+
+void weixin_send_image(const char *chat_id, const char *image_data,
+                        int image_type, const char *context_token) {
+    if (!chat_id || !image_data) return;
+    send_image_msg(chat_id, image_data, image_type, context_token);
 }

@@ -1,23 +1,40 @@
-# Slermes C — State (may 21 session)
+# Slermes C — State (May 21 session complete)
 
 ## Honest Assessment
-**P1-P104 committed.** Config, CLI, tools, MCP, providers, agent loop, gateway depth (P101-P104) all committed.
-Remaining: P105-P200 (gateway feature depth, delegation, plugins, session DB, memory, security, cron, skills, TUI).
+**P1-P106 committed.** Config, CLI, tools, MCP, providers, agent loop, gateway depth all structurally complete.
+Remaining: P107-P200 (minor platforms, delegation, plugins, session DB, memory, security, cron, skills, TUI).
 
-## Committed This Session
-| Phase | Feature | Status |
-|-------|---------|--------|
-| P95 | Stream diagnostic — TTFB, tokens/s, latency breakdown | ✅ compiled+linked |
-| P97 | Compression feedback — quality_score, adaptive threshold | ✅ compiled+linked |
-| P98 | Checkpoint manager — save/restore/list/auto-save | ✅ compiled+linked |
-| P100 | Background review — LLM-based tool result review | ✅ compiled+linked |
-| P101 | Gateway server — connection pool, message queue, per-platform rate limiting | ✅ compiled+linked |
-| P102 | Gateway session management — per-chat session binding, persistence | ✅ compiled+linked |
-| P103 | Platform base class — gw_platform_t vtable interface (init/send/poll/start/stop) | ✅ compiled+linked |
-| P104 | Telegram full parity — inline/callback queries, polls, forum topics, media groups, edit/delete | ✅ compiled+linked |
+## This Session (10 phases)
+| Phase | Feature | Files |
+|-------|---------|-------|
+| P95 | Stream diagnostic — TTFB, tokens/s, latency breakdown | llm_client.c, hermes.h |
+| P97 | Compression feedback — quality_score EMA, adaptive threshold | context.c, hermes.h, hermes_agent.h |
+| P98 | Checkpoint manager — save/restore/list/auto-save | checkpoint.c (NEW), hermes.h, Makefile |
+| P100 | Background review — LLM review of tool results | llm_client.c, hermes_agent.h |
+| P101 | Gateway server — connection pool, message queue, rate limiting | server.c, hermes_gateway.h |
+| P102 | Gateway session mgmt — per-chat sessions, persistence | server.c, hermes_gateway.h |
+| P103 | Platform base class — gw_platform_t vtable | server.c, hermes_gateway.h |
+| P104 | Telegram full parity — inline/callback/polls/forum/media | telegram.c, hermes_gateway.h |
+| P105 | Discord full parity — threads/slash commands/interactions | discord.c, hermes_gateway.h |
+| P106 | Slack full parity — Block Kit/join-leave/update | slack.c, hermes_gateway.h |
 
-## Next Block
-- P105-P115: Platform feature depth (Discord, Slack, WhatsApp, Signal, Matrix, Email, SMS, webhooks, Chinese platforms, Feishu, BlueBubbles)
-- P116-P125: Delegation — concurrent children, orchestrator, isolation
-- P126-P140: Plugin system
-- P141-P200: Session DB, memory, security, cron, skills, TUI
+## Git Log
+```
+5360524a0 feat(gateway): P106 — Slack Block Kit, message actions, channel join/leave
+7db6e302e feat(gateway): P105 — Discord full feature parity
+85ad2cb8f feat(gateway): P104 — Telegram full feature parity
+52d453d96 feat(gateway): P103 — unified platform interface
+797e9e7bb feat(gateway): P102 — per-chat session management with persistence
+89ed78c4a feat(gateway): P101 — connection pool, message queue, per-platform rate limiting
+a95e797b3 feat(agent-loop): P95+P97+P98+P100 — stream diagnostic, compression feedback, checkpoint, review
+```
+
+## Progress: ~55% (106/200 phases)
+- P1-P25: Config ✅
+- P26-P40: CLI ✅
+- P41-P55: Tools ✅
+- P56-P70: MCP ✅
+- P71-P85: Providers ✅
+- P86-P100: Agent loop ✅
+- P101-P106: Gateway depth ✅
+- P107+: Minor platforms, delegation, plugins, session DB, memory, security, cron, skills, TUI
