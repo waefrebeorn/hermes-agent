@@ -247,6 +247,12 @@ char *agent_run_conversation(agent_state_t *state,
     if (system_message && system_message[0])
         context_set_system(state, system_message);
 
+    /* P92: Inject prefill assistant message (before user message) */
+    if (state->prefill[0]) {
+        message_t *prefill_msg = message_new(MSG_ASSISTANT, state->prefill);
+        if (prefill_msg) context_push(state, prefill_msg);
+    }
+
     /* Add user message */
     message_t *user_msg = message_new(MSG_USER, user_message);
     if (!user_msg) return strdup("Error: OOM");

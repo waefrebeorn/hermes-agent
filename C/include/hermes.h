@@ -139,6 +139,8 @@ typedef struct {
     char              snapshot_id[64];  /* session ID at snapshot time */
     /* P86: Budget tracker — token/cost/turn budgets and limits */
     budget_tracker_t *budget;
+    /* P92: Prefill message — assistant message injected before first user turn */
+    char  prefill[4096];
 } agent_state_t;
 
 /* ================================================================
