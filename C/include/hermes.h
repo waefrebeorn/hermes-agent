@@ -18,8 +18,13 @@
  * ================================================================ */
 #define HERMES_VERSION_MAJOR 0
 #define HERMES_VERSION_MINOR 14
-#define HERMES_VERSION_PATCH 0
-#define HERMES_VERSION "0.14.0-wubu"
+#define HERMES_VERSION_PATCH 1
+#define HERMES_VERSION "0.14.1-wubu"
+
+/* Config file format version — incremented when struct layout changes
+ * and migration is required. Stored as "config_version" in YAML. */
+#define HERMES_CONFIG_VERSION      1
+#define HERMES_CONFIG_VERSION_KEY  "config_version"
 
 /* ================================================================
  *  Core Constants
@@ -316,6 +321,7 @@ typedef struct {
 typedef struct {
     char  config_path[HERMES_PATH_MAX];
     char  env_path[HERMES_PATH_MAX];
+    int   config_version;          /* P25: config file format version for migration */
     /* Provider settings (flat fields for backward compat) */
     char  model[128];
     char  provider[64];
@@ -401,6 +407,9 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff);
 /* P20: Config import/export */
 bool hermes_config_export(const hermes_config_t *cfg, const char *path);
 bool hermes_config_import(hermes_config_t *cfg, const char *path);
+
+/* P25: Config migration — upgrade config version, returns true if migration ran */
+bool hermes_config_migrate(hermes_config_t *cfg, const char *config_dir);
 
 /* ================================================================
  *  P21: Path resolution (hermes_constants port)

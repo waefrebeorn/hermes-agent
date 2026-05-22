@@ -10,9 +10,9 @@ User was right. Not ready for daily use.
 
 | Module | Completeness | Detail |
 |--------|------------|--------|
-| Config keys | **3.8%** — 16/424 | Biggest blocker. No provider config, display, agent, tools, browser, delegation, memory, compression, cron, notification, security, session, plugin, MCP config |
+| Config keys | **~30%** — ~130/424 | P1-P22 done. Added 14 config groups, validation, profiles, diff, export/import, deep merge, hermes_constants port. |
 | Tools | ⚠️ 75% name count | 15 static missing: discord(2), feishu(5), MoA(1), video(2), yuanbao(6). MCP=0%. 30/53 C tools are stubs |
-| CLI | ⚠️ 72 names, 45% impl | Most are printf stubs. /save /load /sessions /stats /conv /history /help /reset /branch /compress /plugins /cron /platform all stub |
+| CLI | ⚠️ 55% impl | P31-P36: /conv /history role/search filter, /model enhanced, /config validate|diff|export|show, /topic /personality /help already solid. Most still printf: /reset /branch /compress /plugins /cron /platform |
 | Providers | **10%** — 3/29 | Missing 26 providers + credential pool + budget tracking |
 | Gateway | ⚠️ 40% — 19 platforms | Count close, but Telegram/Discord/Slack/WuXin/WuCom features shallow |
 | MCP | **0%** — 0/5,620 LOC | No dynamic tools at all. Agent can't use MCP. |
