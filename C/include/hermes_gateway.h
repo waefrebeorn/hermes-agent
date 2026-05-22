@@ -245,6 +245,10 @@ bool telegram_pin_chat_message(http_client_t *http, const char *chat_id,
 bool telegram_unpin_chat_message(http_client_t *http, const char *chat_id,
                                   const char *message_id);
 
+/* E16: Message reactions */
+bool telegram_set_message_reaction(http_client_t *http, const char *chat_id,
+                                    const char *message_id, const char *emoji);
+
 /* Forum topics */
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name);

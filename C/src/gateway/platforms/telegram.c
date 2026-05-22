@@ -384,6 +384,33 @@ bool telegram_unpin_chat_message(http_client_t *http, const char *chat_id,
     return ok;
 }
 
+/* ================================================================
+ *  E16: Message reactions
+ * ================================================================ */
+
+bool telegram_set_message_reaction(http_client_t *http, const char *chat_id,
+                                    const char *message_id, const char *emoji)
+{
+    if (!http || !chat_id || !message_id) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+
+    if (emoji && *emoji) {
+        json_node_t *reaction = json_new_array();
+        json_node_t *r = json_new_object();
+        json_object_set(r, "type", json_new_string("emoji"));
+        json_object_set(r, "emoji", json_new_string(emoji));
+        json_array_append(reaction, r);
+        json_object_set(body, "reaction", reaction);
+    }
+
+    http_response_t *resp = tg_post(http, "setMessageReaction", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name)
 {

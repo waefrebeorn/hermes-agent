@@ -45,5 +45,6 @@
 - **E14:** Telegram forwardMessage ✅
 - **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely — fixed ✅
 - **F41:** Image format validation (extension check + 50MB limit)
-- **B01:** ACP server foundation (Session 1/4) — stdio JSON-RPC, init handshake, session manager, available_commands
-- **@@ commits this session:** e57746cdd (F08+Telegram sends), f9deca6cb (F41), eb83701fb (E15 pin), 6e091d8c (B01 ACP foundation)
+- **B01:** ACP server Sessions 2-4 ✅ — full session CRUD, tool dispatch, user_message + streaming, auth
+- **B02-B03:** Covered by B01 ACP server infrastructure ✅
+- **Commits:** e57746cdd (F08+Telegram), f9deca6cb (F41), eb83701fb (E15 pin), 6e091d8c-e149c172e-aa6dd5cf8-b6195e0f0 (B01 S1-S4)
