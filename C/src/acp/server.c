@@ -209,7 +209,7 @@ static json_node_t *handle_initialize(const char *id, json_node_t *params, acp_s
     json_object_set(server_info, "name", json_new_string(srv->server_name));
     json_object_set(server_info, "version", json_new_string(srv->server_version));
     json_object_set(result, "serverInfo", server_info);
-
+    /* Capabilities */
     json_node_t *caps = json_new_object();
     json_object_set(caps, "prompts", json_new_object());
     json_node_t *session_caps = json_new_object();
@@ -217,6 +217,21 @@ static json_node_t *handle_initialize(const char *id, json_node_t *params, acp_s
     json_object_set(session_caps, "resume", json_new_object());
     json_object_set(session_caps, "fork", json_new_object());
     json_object_set(caps, "sessions", session_caps);
+
+    /* Auth methods */
+    json_node_t *auth_methods = json_new_array();
+    json_node_t *agent_auth = json_new_object();
+    json_object_set(agent_auth, "id", json_new_string("acp-bearer"));
+    json_object_set(agent_auth, "name", json_new_string("ACP Bearer Token"));
+    json_object_set(agent_auth, "description", json_new_string("Authenticate using a bearer token"));
+    json_array_append(auth_methods, agent_auth);
+    json_node_t *setup_auth = json_new_object();
+    json_object_set(setup_auth, "id", json_new_string("hermes-setup"));
+    json_object_set(setup_auth, "name", json_new_string("Configure Hermes provider"));
+    json_object_set(setup_auth, "description", json_new_string("Open Hermes interactive provider setup"));
+    json_object_set(setup_auth, "type", json_new_string("terminal"));
+    json_array_append(auth_methods, setup_auth);
+    json_object_set(caps, "authentication", auth_methods);
     json_object_set(result, "capabilities", caps);
 
     return acp_make_response(id, result);
@@ -468,6 +483,27 @@ static json_node_t *handle_execute_command(const char *id, json_node_t *params, 
 
 /* --- User message (core agent execution) --- */
 
+/* --- Authenticate --- */
+
+static json_node_t *handle_authenticate(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *method_id = json_object_get_string(params, "method_id", NULL);
+    (void)srv;
+
+    if (!method_id)
+        return acp_make_error(id, -32602, "Missing method_id", NULL);
+
+    json_node_t *result = json_new_object();
+    if (strcmp(method_id, "acp-bearer") == 0) {
+        json_object_set(result, "authenticated", json_new_bool(true));
+    } else if (strcmp(method_id, "hermes-setup") == 0) {
+        json_object_set(result, "authenticated", json_new_bool(true));
+        json_object_set(result, "note", json_new_string("Setup via hermes model command"));
+    } else {
+        return acp_make_error(id, -32000, "Unknown auth method", NULL);
+    }
+    return acp_make_response(id, result);
+}
+
 /* ACP notification sender — writes a JSON-RPC notification (no id) to stdout */
 static bool send_notification(const char *method, json_node_t *params) {
     json_node_t *notif = json_new_object();
@@ -577,6 +613,8 @@ static json_node_t *dispatch_request(const char *method, const char *id,
         return handle_execute_command(id, params, srv);
     if (strcmp(method, "user_message") == 0)
         return handle_user_message(id, params, srv);
+    if (strcmp(method, "authenticate") == 0)
+        return handle_authenticate(id, params, srv);
 
     return acp_make_error(id, -32601, "Method not found", NULL);
 }
