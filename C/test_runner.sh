@@ -201,6 +201,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "rate_limit (compilation failed)"
 fi
 
+# Agent loop/context test suite (G166 — needs context.c, checkpoint.c, json, plugin)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_agent.c" \
+    "$CDIR/src/agent/context.c" "$CDIR/src/agent/checkpoint.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_agent -lm -lpthread > /dev/null 2>&1; then
+    if /tmp/hermes_test_agent > /dev/null 2>&1; then ok "agent_loop_context (161 tests)"
+    else fail "agent_loop_context (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_agent
+else skip "agent_loop_context (compilation failed)"
+fi
+
 # URL safety test (needs url_safety.c — scheme/blocklist tests, no DNS)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_url_safety.c" \
