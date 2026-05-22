@@ -112,6 +112,10 @@ run_lib_test "whatsapp_msg" "tests/test_whatsapp_msg.c" "lib/libjson" "$CDIR/lib
 echo ""; echo "=== Vision Tool Tests (M33) ==="
 run_lib_test "vision_tool" "tests/test_vision_tool.c" "." ""
 
+# TTS tool test (M34 — self-contained, no deps)
+echo ""; echo "=== TTS Tool Tests (M34) ==="
+run_lib_test "tts_tool" "tests/test_tts_tool.c" "." ""
+
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
