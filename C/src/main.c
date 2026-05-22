@@ -67,6 +67,16 @@ int main(int argc, char **argv) {
         memcpy(agent_state.llm.api_key, cfg.api_key, sizeof(agent_state.llm.api_key));
         memcpy(agent_state.llm.model, cfg.model, sizeof(agent_state.llm.model));
         memcpy(agent_state.llm.provider, cfg.provider, sizeof(agent_state.llm.provider));
+        agent_state.llm.max_tokens = cfg.provider_cfg.max_tokens;
+        agent_state.llm.temperature = cfg.provider_cfg.temperature;
+        agent_state.llm.top_p = cfg.provider_cfg.top_p;
+        agent_state.llm.stop_count = cfg.provider_cfg.stop_count;
+        memcpy(agent_state.llm.stop_sequences, cfg.provider_cfg.stop_sequences,
+               sizeof(agent_state.llm.stop_sequences));
+        memcpy(agent_state.llm.service_tier, cfg.provider_cfg.service_tier,
+               sizeof(agent_state.llm.service_tier));
+        memcpy(agent_state.llm.reasoning_effort, cfg.provider_cfg.reasoning_effort,
+               sizeof(agent_state.llm.reasoning_effort));
         agent_state.max_iterations = cfg.max_turns;
         if (cfg.config_path[0])
             snprintf(agent_state.hermes_home, sizeof(agent_state.hermes_home), "%s", cfg.config_path);

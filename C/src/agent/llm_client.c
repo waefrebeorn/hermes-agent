@@ -262,6 +262,20 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     /* P91: Pass system cache state to provider */
     if (prov) prov->system_cached = cfg->system_cached;
 
+    /* Copy LLM request params from config to provider */
+    if (prov) {
+        prov->config.max_tokens = cfg->max_tokens;
+        prov->config.temperature = cfg->temperature;
+        prov->config.top_p = cfg->top_p;
+        prov->config.stop_count = cfg->stop_count;
+        memcpy(prov->config.stop_sequences, cfg->stop_sequences,
+               sizeof(prov->config.stop_sequences));
+        memcpy(prov->config.service_tier, cfg->service_tier,
+               sizeof(prov->config.service_tier));
+        memcpy(prov->config.reasoning_effort, cfg->reasoning_effort,
+               sizeof(prov->config.reasoning_effort));
+    }
+
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;
         char *url = ops->build_url(prov, cfg->base_url);

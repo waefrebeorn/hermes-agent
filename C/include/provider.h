@@ -91,6 +91,8 @@ struct provider_t {
     void *data; /* Provider-specific data */
     credential_pool_t *pool; /* P82: optional credential pool for multi-key rotation */
     bool  system_cached; /* P91: system prompt cache primed flag */
+    /* LLM request params wired from config */
+    provider_config_t config;
 };
 
 /* ================================================================

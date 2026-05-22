@@ -86,6 +86,18 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     if (cfg->provider_cfg.api_key[0])
         snprintf(state->llm.api_key, sizeof(state->llm.api_key), "%s", cfg->provider_cfg.api_key);
 
+    /* Forward LLM request params from config */
+    state->llm.max_tokens = cfg->provider_cfg.max_tokens;
+    state->llm.temperature = cfg->provider_cfg.temperature;
+    state->llm.top_p = cfg->provider_cfg.top_p;
+    state->llm.stop_count = cfg->provider_cfg.stop_count;
+    memcpy(state->llm.stop_sequences, cfg->provider_cfg.stop_sequences,
+           sizeof(state->llm.stop_sequences));
+    memcpy(state->llm.service_tier, cfg->provider_cfg.service_tier,
+           sizeof(state->llm.service_tier));
+    memcpy(state->llm.reasoning_effort, cfg->provider_cfg.reasoning_effort,
+           sizeof(state->llm.reasoning_effort));
+
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)
         state->max_iterations = cfg->agent.max_iterations;

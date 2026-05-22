@@ -401,8 +401,20 @@ static char *bedrock_build_request_body(const provider_t *p,
 
     /* Inference config */
     json_t *inf_config = json_new_object();
-    json_object_set(inf_config, "maxTokens", json_new_number(4096));
-    json_object_set(inf_config, "temperature", json_new_number(0.7));
+    int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
+    json_object_set(inf_config, "maxTokens", json_new_number(max_tok));
+    float temp = p->config.temperature > 0.0f ? p->config.temperature : 0.7f;
+    json_object_set(inf_config, "temperature", json_new_number(temp));
+    if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
+        json_object_set(inf_config, "topP", json_new_number(p->config.top_p));
+    if (p->config.stop_count > 0) {
+        json_t *stop_arr = json_new_array();
+        for (int i = 0; i < p->config.stop_count && i < HERMES_STOP_SEQUENCES_MAX; i++)
+            if (p->config.stop_sequences[i][0])
+                json_array_append(stop_arr, json_new_string(p->config.stop_sequences[i]));
+        if (json_array_count(stop_arr) > 0) json_object_set(inf_config, "stopSequences", stop_arr);
+        else json_free(stop_arr);
+    }
     json_object_set(root, "inferenceConfig", inf_config);
 
     /* Tool config */

@@ -1,4 +1,4 @@
-# Slermes C — State (May 22, Sessions 6-11: 11 gaps closed)
+# Slermes C — State (May 22, Sessions 6-11: 11 gaps closed, now 430-gap scope)
 
 ## Honest Assessment
 **Session 6:** G164 (tool registry test, 46 tests + bugfix)
@@ -6,40 +6,26 @@
 **Session 8:** G125 (URL safety test, 55 + header fix)
 **Session 9:** G126 (allowlist test, 34), G130 (audit log test, 20)
 **Session 10:** G128/G169 (approval system test, 18)
-**Session 11:** G166 (agent loop context test, 161 tests)
+**Session 11:** G166 (agent loop context test, 161 tests), DA v6, 300-gap→400-gap expansion
 
 - Config: ~322/322 keys (~99%) ✅
-- Providers: 26/29 (90%) ✅ runtime verified
-- CLI: 72 commands, dispatch verified (111 tests)
-- Tools: 28 registered, registry API verified (46 tests)
-- Tests: **~1422 individual assertions** (58 runner items pass, 1 pre-existing fail)
-  - Library: json, http, yaml, crypto, dotenv, cron, proc, template, tui, db
-  - Full suites: config(70), provider(439), CLI(111), credpool(65), budget(104), gateway(49), plugins(38), rate_limit(168), url_safety(55), allowlist(34), audit(20), approval(18), agent_loop(161), metadata, checkpoint(44)
-  - Integration: webhook, browser, kanban, msgraph, tools-verify
-  - Only pre-existing failure: plugin load test (non-zero exit)
+- Providers: 26/29 (90%) ✅ — 3 ACP missing
+- CLI: 72 commands (111 tests)
+- Tools: 74 registered — 12 missing + 7 stubs (CDP 4, computer_use, sqlite, plugin) + 3 shallow
+- Gateway: 19 platforms — but Telegram Python 5,465L vs C 479L (11x)
+- Tests: **~1,422 assertions** (58 runner items)
+- **Expanded scope: 200-gap → 329-gap → 430-gap**
+- **Overall: ~55%** on 430-gap scope
 
-## Git Log (last 7)
-```
-629d3f1 test(agent): G166 — agent loop/context test suite (161 tests)
-199ed621c test(security): G128/G169 — approval system test suite (18 tests)
-976087bc1 test(security): G130 — audit log test suite (20 tests)
-ba25b8d7c test(security): G126 — command allowlist test suite (34 tests)
-20e5c5367 test(security): G125 — URL safety test suite (55 tests) + header fix
-e8fe14779 test(rate-limit): G127 — per-tool rate limiter test suite (168 tests)
-9249aadcd test(plugins): G168 — wire plugin system test suite into runner (38 tests)
-```
+## Key Gaps Found This Pass
+- **7 C stubs:** CDP browser (4), computer_use, memory_sqlite, memory_plugin, vision LLM
+- **3 shallow tools:** kanban 9 handlers vs 25 Py, browser 18 vs 158 Py, memory 3 vs 22 Py
+- **11 LLM params missing:** temperature ✅, top_p ✅, stop ✅, max_tokens ✅, penalties, seed, response_format, logprobs, user, metadata, service_tier ✅
+- **16 Telegram send methods:** voice, video, animation, document, images, clarifications, etc.
+- **10 message types:** sticker, animation, voice, video, audio, photo, location, venue, contact, poll
+- **14 Python libs:** Jinja2, prompt_toolkit, httpx, rich, pydantic, psutil, tenacity, PyJWT, croniter, dateutil, tqdm, certifi, requests, cryptography
+- **10 session state fields:** per-direction token tracking, cost tracking, interrupt propagation
+- **5 CLI features:** autocomplete, table output, wizard, batch mode, color depth
 
-## Progress: ~94%
-- Config: ≈99% ✅
-- Providers: 90% (26/29) — 3 ACP providers missing
-- Security: G125 (URL safety), G126 (allowlist), G127 (rate limit), G128 (approval), G130 (audit) — all tested
-- Plugins: G168 tested (38)
-- Tests: ~1261 assertions, 57 runner items
-
-## Next Priorities (by size)
-1. G52-G54: 3 ACP providers (Copilot, OpenCode Zen, OpenAI Codex) — large
-2. G83-G95: 14 tools (feishu 5, video 2, MoA 1, yuanbao 6) — medium-large
-3. G159: Provider plugin system (.so loading) — large
-4. G160: Model catalog auto-update — medium
-5. G166-G175: More test suites (agent loop, MCP, integration, perf) — medium
-6. G132-G137: TUI depth — large
+## 430-gap roadmap
+`.hermes/mind-palace/plans/400-gap-mega-roadmap.md`

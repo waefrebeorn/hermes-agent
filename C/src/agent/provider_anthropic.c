@@ -122,8 +122,21 @@ static char *anthropic_build_request_body(const provider_t *p,
     json_set(root, "model", json_string(
         p->model[0] ? p->model : "claude-sonnet-4-20250514"));
 
-    /* Max tokens */
-    json_set(root, "max_tokens", json_number(4096));
+    /* LLM params from config */
+    int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
+    json_set(root, "max_tokens", json_number(max_tok));
+    if (p->config.temperature > 0.0f)
+        json_set(root, "temperature", json_number(p->config.temperature));
+    if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
+        json_set(root, "top_p", json_number(p->config.top_p));
+    if (p->config.stop_count > 0) {
+        json_t *stop_arr = json_array();
+        for (int i = 0; i < p->config.stop_count && i < HERMES_STOP_SEQUENCES_MAX; i++)
+            if (p->config.stop_sequences[i][0])
+                json_append(stop_arr, json_string(p->config.stop_sequences[i]));
+        if (json_len(stop_arr) > 0) json_set(root, "stop_sequences", stop_arr);
+        else json_free(stop_arr);
+    }
 
     /* Stream flag */
     if (streaming)

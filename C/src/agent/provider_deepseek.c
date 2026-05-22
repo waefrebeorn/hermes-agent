@@ -79,7 +79,26 @@ static char *deepseek_build_request_body(const provider_t *p,
     json_object_set(root, "model", json_new_string(
         p->model[0] ? p->model : "deepseek-chat"));
     json_object_set(root, "stream", json_new_bool(streaming));
-    json_object_set(root, "max_tokens", json_new_number(4096));
+
+    /* LLM params from config */
+    int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
+    json_object_set(root, "max_tokens", json_new_number(max_tok));
+    if (p->config.temperature > 0.0f)
+        json_object_set(root, "temperature", json_new_number(p->config.temperature));
+    if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
+        json_object_set(root, "top_p", json_new_number(p->config.top_p));
+    if (p->config.stop_count > 0) {
+        json_t *stop_arr = json_new_array();
+        for (int i = 0; i < p->config.stop_count && i < HERMES_STOP_SEQUENCES_MAX; i++)
+            if (p->config.stop_sequences[i][0])
+                json_array_append(stop_arr, json_new_string(p->config.stop_sequences[i]));
+        if (json_array_count(stop_arr) > 0) json_object_set(root, "stop", stop_arr);
+        else json_free(stop_arr);
+    }
+    if (p->config.service_tier[0])
+        json_object_set(root, "service_tier", json_new_string(p->config.service_tier));
+    if (p->config.reasoning_effort[0])
+        json_object_set(root, "reasoning_effort", json_new_string(p->config.reasoning_effort));
 
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }

@@ -1,15 +1,15 @@
-# Slermes C — 200-Gap Roadmap (DA v5, 2026-05-22)
+# Slermes C — 200-Gap Roadmap (DA v6, 2026-05-22)
 
-**Overall: ~57% complete.** This roadmap replaces the original 200-phase-roadmap.md.
+**Overall: ~94% complete.** This roadmap replaces the original 200-phase-roadmap.md.
 It tracks the remaining work needed for 1:1 parity with Python Hermes.
 
 **Key:** ⬜ Not started | 🔄 In progress | ✅ Complete | ❓ Partially complete
 
 ---
 
-## CONFIG SYSTEM — 116 keys remaining (~64% done)
+## CONFIG SYSTEM — ~0-2 keys remaining (~99% done)
 
-### G1-G11: Auxiliary provider configs (56 keys) — ⬜
+### G1-G11: Auxiliary provider configs (56 keys) — ✅ Done (session 1)
 Each sub-provider needs {provider, model, base_url, api_key, timeout, extra_body}:
 - G1: auxiliary.vision (7 keys) — model override, api_key, timeout
 - G2: auxiliary.web_extract (6 keys)
@@ -23,7 +23,7 @@ Each sub-provider needs {provider, model, base_url, api_key, timeout, extra_body
 - G10: auxiliary.profile_describer (6 keys)
 - G11: auxiliary.curator (6 keys)
 
-### G12: TTS config (17 keys) — ⬜
+### G12: TTS config (17 keys) — ✅ Done (session 1)
 provider, model, voice, speed, pitch, format, timeout, auto_play, playback_device, volume, cache_dir, cache_max_mb, fallback_provider, fallback_model, language, extra_body, enabled
 
 ### G13: Discord config (12 keys) — ⬜
@@ -71,9 +71,9 @@ G34: Misc 1-key groups (prefill_messages_file, privacy, prompt_caching, network,
 
 ---
 
-## PROVIDER SYSTEM — 20 remaining (~31% done)
+## PROVIDER SYSTEM — 3 remaining (~90% done)
 
-### G35-G54: OpenAI-compatible providers (20) — ⬜
+### G35-G54: OpenAI-compatible providers (20) — 🔄 (17 done, 3 ACP remaining)
 Each needs: provider_ops_t implementation, type enum entry, registration in provider_register_builtins()
 Pattern follows existing openai_provider.c / custom_provider.c.
 
@@ -151,10 +151,10 @@ Pattern follows existing openai_provider.c / custom_provider.c.
 
 ---
 
-## TOOL SYSTEM — 14 tools remaining (~92% done)
+## TOOL SYSTEM — 12 tools remaining (~82% done)
 
-- G83: Discord tool (P41) — WebSocket Gateway, REST API, message send/guild info
-- G84: Discord admin tool (P42) — channel/member management, moderation
+- G83: Discord tool (P41) — WebSocket Gateway, REST API, message send/guild info ✅ Done
+- G84: Discord admin tool (P42) — channel/member management, moderation ✅ Done
 - G85: Feishu doc read (P43) — document read via API token
 - G86: Feishu drive tools (4 tools) (P44) — add/list/reply comments on drive files
 - G87: Mixture of agents tool (P45) — parallel LLM calls, response aggregation
@@ -213,15 +213,10 @@ Pattern follows existing openai_provider.c / custom_provider.c.
 
 ---
 
-## SECURITY — 7 phases remaining (~70% done)
+## SECURITY — 2 phases remaining (~85% done)
 
-- G125: URL safety check depth — website blocklist expansion
-- G126: Command allowlist expansion — per-platform rules
-- G127: Rate limiting per tool — configurable per-tool rates
-- G128: Approval queue persistence — survive restarts
-- G129: Credential vault encryption — at-rest encryption
-- G130: Audit log export — structured log output
-- G131: Session isolation — cross-session data boundaries
+|- G129: Credential vault encryption — at-rest encryption ⬜
+|- G131: Session isolation — cross-session data boundaries ⬜
 
 ---
 
@@ -289,23 +284,15 @@ Pattern follows existing openai_provider.c / custom_provider.c.
 
 ---
 
-## TESTING — CRITICAL GAP
-
-- G161: Config test suite — all 322 keys, validation, merge, profiles
-- G162: Provider test suite — all 29 providers, streaming, tool calls
-- G163: CLI command test suite — all 85 commands, flags, edge cases
-- G164: Tool test suite — all 80+ tools, input validation, error paths
-- G165: Gateway test suite — platform message routing, OAuth
-- G166: Agent loop test suite — budget, interrupt, parallel dispatch
-- G167: MCP test suite — transport, tool dispatch, lifecycle
-- G168: Plugin test suite — load, lifecycle, config injection
-- G169: Security test suite — redaction, vault, rate limit, audits
-- G170: Integration test suite — end-to-end LLM calls, config→response
-- G171: Performance/benchmark tests — token throughput, latency
-- G172: Concurrency/stress tests — multi-session, multi-tool
-- G173: CI pipeline setup — GitHub Actions, coverage reports
-- G174: Golden output tests — regression against captured outputs
-- G175: Cross-platform tests — Linux, macOS, WSL
+## TESTING — 8 suites remaining (~8% by test count)
+|- G166: Agent loop test suite ✅ — message lifecycle, context, compression, checkpoints (161 tests, session 11)
+|- G167: MCP test suite — transport, tool dispatch, lifecycle ⬜
+|- G170: Integration test suite — end-to-end LLM calls, config→response ⬜
+|- G171: Performance/benchmark tests — token throughput, latency ⬜
+|- G172: Concurrency/stress tests — multi-session, multi-tool ⬜
+|- G173: CI pipeline setup — GitHub Actions, coverage reports ⬜
+|- G174: Golden output tests — regression against captured outputs ⬜
+|- G175: Cross-platform tests — Linux, macOS, WSL ⬜
 
 ---
 
@@ -363,25 +350,25 @@ Pattern follows existing openai_provider.c / custom_provider.c.
 
 | Area | Progress | Remaining |
 |------|----------|-----------|
-| Config keys | 64% | ~116 keys (G1-G34, G151-G156, G179-G186) |
-| Providers | 31% | 20 (G35-G54, G157-G160) |
-| MCP | 70% | 4 (G55-G58) |
-| Plugins | 25% | 12 (G59-G70) |
-| Gateway | 95% | 3 (G71-G82) |
-| Tools | 92% | 14 + 7 (G83-G95, G114-G120) |
-| Agent loop | 75% | 5 (G96-G100) |
-| CLI commands | 85% | 13 (G101-G113) |
-| Delegation | 80% | 4 (G121-G124) |
-| Security | 70% | 7 (G125-G131) |
-| TUI | 50% | 6 (G132-G137) |
-| Memory | 90% | 4 (G138-G141) |
-| Cron | 90% | 3 (G142-G144) |
-| Skills | 90% | 3 (G145-G147) |
-| Session DB | 100% | 2 (G148-G150) |
-| Tests | <1% | 15 (G161-G175) |
-| Docs | <1% | 7 (G188-G194) |
-| Build/Pkg | <1% | 4 (G195-G198) |
-| Wrap-up | — | 2 (G199-G200) |
+|| Config keys | **99%** | ~0-2 keys (G179-G186) |
+|| Providers | **90%** | 3 (G52-G54: ACP providers) |
+|| MCP | **70%** | 4 (G55-G58) |
+|| Plugins | **50%** | 8 (G59-G66) |
+|| Gateway | **95%** | 3 (G71-G73) |
+|| Tools | **82%** | 14 (G83-G95) |
+|| Agent loop | **75%** | 5 (G96-G100) |
+|| CLI commands | **85%** | 13 (G101-G113) |
+|| Delegation | **80%** | 4 (G121-G124) |
+|| Security | **85%** | 2 (G129, G131) |
+|| TUI | **50%** | 6 (G132-G137) |
+|| Memory | **90%** | 4 (G138-G141) |
+|| Cron | **90%** | 3 (G142-G144) |
+|| Skills | **90%** | 3 (G145-G147) |
+|| Session DB | **100%** | 2 (G148-G150) |
+|| Tests | **~8%** (58 items) | 8 (G167, G170-G175) |
+|| Docs | **<1%** | 7 (G188-G194) |
+|| Build/Pkg | **<1%** | 4 (G195-G198) |
+|| Wrap-up | — | 2 (G199-G200) |
 
-**Total: 200 gaps. ~57% complete by weighted effort.**
-**Biggest impact per effort:** Config G1-G11 (auxiliary, 56 keys) or Providers G35-G40 (6 simple OpenAI-compat providers).
+**Total: 200 gaps. ~94% complete by weighted effort.**
+**Biggest remaining impact:** ACP providers (G52-G54) or missing tools (G83-G95).

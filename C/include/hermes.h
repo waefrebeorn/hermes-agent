@@ -88,12 +88,22 @@ typedef struct {
 /* ================================================================
  *  LLM Provider
  * ================================================================ */
+#define HERMES_STOP_SEQUENCES_MAX 8
+
 typedef struct {
     char  base_url[256];
     char  api_key[256];
     char  model[128];
     char  provider[64];
     bool  system_cached; /* P91: system prompt cache primed */
+    /* LLM request params forwarded from config */
+    int   max_tokens;
+    float temperature;
+    float top_p;
+    char  stop_sequences[HERMES_STOP_SEQUENCES_MAX][128];
+    int   stop_count;
+    char  service_tier[32];
+    char  reasoning_effort[32];
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
