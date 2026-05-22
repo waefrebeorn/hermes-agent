@@ -24,6 +24,9 @@
 /* Max HTTP clients in pool */
 #define GW_POOL_MAX 16
 
+/* P102: Max gateway sessions (one per unique chat_id) */
+#define GW_SESSIONS_MAX 64
+
 /* ================================================================
  *  P101: Gateway message queue entry
  * ================================================================ */
@@ -59,6 +62,21 @@ typedef struct {
 } gw_http_pool_entry_t;
 
 /* ================================================================
+ *  P102: Gateway session entry
+ * ================================================================ */
+
+/* Each unique platform:chat_id pair gets its own agent session.
+ * Sessions are auto-saved to DB and persisted across restarts. */
+typedef struct {
+    char            key[192];       /* "platform:chat_id" */
+    agent_state_t   agent;
+    db_t           *db;             /* session DB handle */
+    double          last_active;    /* monotonic time */
+    bool            in_use;
+    char            session_id[64]; /* current session ID */
+} gw_session_entry_t;
+
+/* ================================================================
  *  Gateway state (shared across platform modules)
  * ================================================================ */
 
@@ -90,6 +108,12 @@ typedef struct {
     gw_http_pool_entry_t http_pool[GW_POOL_MAX];
     int                  pool_count;
     pthread_mutex_t      pool_mutex;
+
+    /* P102: Per-chat session pool */
+    gw_session_entry_t   sessions[GW_SESSIONS_MAX];
+    int                  session_count;
+    pthread_mutex_t      session_mutex;
+    char                 session_db_path[GW_PATH_MAX];  /* where sessions are stored */
 
     /* Per-platform HTTP clients (owned by thread functions) */
     http_client_t  *platform_http[GW_MAX_PLATFORMS];

@@ -213,6 +213,117 @@ char *gateway_agent_chat(const char *message) {
 }
 
 /* ================================================================
+ *  P102: Per-chat session management
+ * ================================================================ */
+
+/* Build session key: "platform:chat_id" */
+static void session_build_key(char *buf, size_t sz,
+                               const char *platform, const char *chat_id) {
+    snprintf(buf, sz, "%s:%s", platform ? platform : "?", chat_id ? chat_id : "?");
+}
+
+/* Find existing session entry by platform+chat_id. Returns index or -1. */
+static int session_find(const char *platform, const char *chat_id) {
+    char key[192];
+    session_build_key(key, sizeof(key), platform, chat_id);
+    for (int i = 0; i < g_gw.session_count; i++) {
+        if (strcmp(g_gw.sessions[i].key, key) == 0 && g_gw.sessions[i].in_use)
+            return i;
+    }
+    return -1;
+}
+
+/* Create a new session for a platform:chat_id pair. Returns index or -1. */
+static int session_create(const char *platform, const char *chat_id) {
+    if (g_gw.session_count >= GW_SESSIONS_MAX) {
+        /* Evict oldest inactive session */
+        int oldest = -1;
+        double oldest_time = 1e18;
+        for (int i = 0; i < g_gw.session_count; i++) {
+            if (g_gw.sessions[i].last_active < oldest_time) {
+                oldest_time = g_gw.sessions[i].last_active;
+                oldest = i;
+            }
+        }
+        if (oldest < 0) return -1;
+        /* Save and free */
+        if (g_gw.sessions[oldest].db)
+            agent_save_session(&g_gw.sessions[oldest].agent);
+        agent_free(&g_gw.sessions[oldest].agent);
+        g_gw.sessions[oldest].in_use = false;
+    }
+
+    int idx = -1;
+    for (int i = 0; i < GW_SESSIONS_MAX; i++) {
+        if (!g_gw.sessions[i].in_use) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0) idx = g_gw.session_count; /* fallback: use next slot */
+
+    gw_session_entry_t *se = &g_gw.sessions[idx];
+    memset(se, 0, sizeof(*se));
+    session_build_key(se->key, sizeof(se->key), platform, chat_id);
+    se->in_use = true;
+    se->last_active = gw_mono_time();
+
+    /* Initialize agent */
+    agent_init(&se->agent);
+
+    /* Copy config from main agent */
+    memcpy(&se->agent.llm, &g_gw.agent.llm, sizeof(se->agent.llm));
+    se->agent.max_iterations = g_gw.agent.max_iterations;
+    se->agent.compress_enabled = g_gw.agent.compress_enabled;
+
+    /* Open session DB (persistent) */
+    if (g_gw.session_db_path[0]) {
+        se->db = db_open(g_gw.session_db_path, NULL);
+    }
+
+    if (idx >= g_gw.session_count)
+        g_gw.session_count = idx + 1;
+
+    return idx;
+}
+
+/* Get or create a session for platform:chat_id. Returns index or -1. */
+static int session_get_or_create(const char *platform, const char *chat_id) {
+    int idx = session_find(platform, chat_id);
+    if (idx >= 0) {
+        g_gw.sessions[idx].last_active = gw_mono_time();
+        return idx;
+    }
+    return session_create(platform, chat_id);
+}
+
+/* Auto-save all active sessions */
+static void session_save_all(void) {
+    for (int i = 0; i < g_gw.session_count; i++) {
+        if (g_gw.sessions[i].in_use && g_gw.sessions[i].db) {
+            agent_save_session(&g_gw.sessions[i].agent);
+        }
+    }
+}
+
+/* Clean up idle sessions (last used > 30 min) */
+static void session_cleanup_idle(void) {
+    double now = gw_mono_time();
+    for (int i = 0; i < g_gw.session_count; i++) {
+        if (g_gw.sessions[i].in_use &&
+            (now - g_gw.sessions[i].last_active) > 1800.0) {
+            /* Save and free */
+            if (g_gw.sessions[i].db) {
+                db_save(g_gw.sessions[i].db, g_gw.sessions[i].session_id, NULL);
+                db_close(g_gw.sessions[i].db);
+            }
+            agent_free(&g_gw.sessions[i].agent);
+            memset(&g_gw.sessions[i], 0, sizeof(g_gw.sessions[i]));
+        }
+    }
+}
+
+/* ================================================================
  *  Platform-aware message send
  * ================================================================ */
 
@@ -271,11 +382,23 @@ static void process_update(const char *platform, const char *chat_id, const char
         return;
     }
 
+    /* P102: Get or create per-chat session */
+    pthread_mutex_lock(&g_gw.session_mutex);
+    int sess_idx = session_get_or_create(platform, chat_id);
+    if (sess_idx < 0) {
+        pthread_mutex_unlock(&g_gw.session_mutex);
+        gateway_send(platform, chat_id,
+                     "Error: Could not create session (max sessions reached)");
+        return;
+    }
+    agent_state_t *session_agent = &g_gw.sessions[sess_idx].agent;
+    pthread_mutex_unlock(&g_gw.session_mutex);
+
     /* Send typing indicator */
     gateway_send_typing(platform, chat_id);
 
-    /* Run agent (thread-safe via mutex) */
-    char *resp = gateway_agent_chat(text);
+    /* Run agent on per-chat session */
+    char *resp = agent_chat(session_agent, text);
     if (resp) {
         gateway_send(platform, chat_id, resp);
         free(resp);
@@ -808,6 +931,16 @@ int hermes_gateway_main(int argc, char **argv) {
     /* P101: Initialize message queue and HTTP pool */
     gw_queue_init();
     pthread_mutex_init(&g_gw.pool_mutex, NULL);
+    /* P102: Initialize session pool */
+    pthread_mutex_init(&g_gw.session_mutex, NULL);
+    {
+        char db_path[GW_PATH_MAX];
+        const char *home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HERMES_HOME");
+        if (!home) home = getenv("HOME");
+        snprintf(db_path, sizeof(db_path), "%s/.slermes/sessions", home ? home : "/tmp");
+        snprintf(g_gw.session_db_path, sizeof(g_gw.session_db_path), "%s", db_path);
+    }
 
     /* Parse --platform flag for backwards compat (single-platform mode) */
     char cli_platform[32] = {0};
@@ -953,6 +1086,15 @@ int hermes_gateway_main(int argc, char **argv) {
         pthread_join(g_gw.threads[i], NULL);
 
 cleanup:
+    /* P102: Save and free all sessions */
+    session_save_all();
+    pthread_mutex_destroy(&g_gw.session_mutex);
+    for (int i = 0; i < g_gw.session_count; i++) {
+        if (g_gw.sessions[i].in_use) {
+            if (g_gw.sessions[i].db) db_close(g_gw.sessions[i].db);
+            agent_free(&g_gw.sessions[i].agent);
+        }
+    }
     pthread_mutex_destroy(&g_gw.agent_mutex);
     /* P101: Cleanup HTTP pool and queue */
     gw_pool_cleanup();
