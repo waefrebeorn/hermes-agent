@@ -398,6 +398,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "clarify_tool (compilation failed)"
 fi
 
+# TTS tool test (M34 — needs tts.c + tool_config + json)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_tts.c" \
+    "$CDIR/src/tools/tts.c" "$CDIR/src/tools/tool_config.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tts -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_tts > /dev/null 2>&1; then ok "tts_tool (20 tests)"
+    else fail "tts_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tts
+else skip "tts_tool (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
