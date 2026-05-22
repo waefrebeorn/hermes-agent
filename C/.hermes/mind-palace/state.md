@@ -19,9 +19,17 @@
 | **Tests** | 44 | 52% | **38 files, 2,219 assertions** (84 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
-| **Build/doc** | 12 | 50% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), man page |
+| **Build/doc** | 10 | 55% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), .dockerignore, man page (hermes.1) |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-24 — Build/doc infrastructure (cont)
+
+- ✅ **.dockerignore** — Exclude Python/node/website artifacts from Docker context.
+- ✅ **Man page** — `hermes.1`: full man page with 14 CLI options, 12 slash commands, config/plugin/gateway docs, env vars, exit codes.
+- ✅ **Build/doc: 55%** (was 30%, 5/15 gaps closed: Dockerfile + CI + cross-compile + .dockerignore + man page)
+- ◀ 5 build gaps closed this session
+- ◀ Committed: `20edb4d35`
 
 ### Session 2026-05-24 — Build/doc infrastructure
 

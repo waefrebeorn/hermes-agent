@@ -178,3 +178,22 @@ make -j$(nproc) && bash test_runner.sh --verbose
   - contrib/completions/ directory with standalone files
   - Test: test_runner section 7 — 3 assertions (bash, zsh, usage)
 - ◀ **Suite: 82 pass, 0 fail, 1 skip (+3 completions tests)**
+
+### Session 2026-05-24 — Plugins All Real
+
+- ✅ **Kanban plugin real** — full in-memory board: 8 boards × 256 tasks, columns, priority, assignee, sticky, JSON output with escaping. 45 tests.
+- ✅ **Spotify plugin real** — Spotify Web API via curl popen(): OAuth token flow, play/pause/next/current/search endpoints. 18 tests.
+- ✅ **Plugins: 14%** — all 3 .so plugins now real (0 remaining stubs). Gone from biggest structural gap to manageable depth gap.
+- ◀ **Suite: 84/0/1** (+2 tests, 90 new assertions)
+- ◀ **Next P0 gaps: provider-specific APIs (25), tests (44), build/doc (15)**
+- ◀ Commits: `ddede70b9`, `2198e92dd`, `0e773bfda`
+
+### Session 2026-05-24 — Build/doc Infrastructure
+
+- ✅ **Dockerfile** — Multi-stage, ~20MB runtime, libssl3+curl for plugin HTTP
+- ✅ **CI workflow** — GitHub Actions: build+test+TUI+plugins+Docker
+- ✅ **Cross-compile** — scripts/cross-compile.sh (4 targets: x86_64, aarch64, armv7, windows)
+- ✅ **.dockerignore** — Exclude Python/node/website from Docker context
+- ✅ **Man page** — hermes.1: 14 options, 12 commands, config/plugin/gateway docs
+- ◀ **Build/doc: 55%** (was 30%, 5/15 gaps closed)
+- ◀ Commits: `a61cac0fd`, `20edb4d35`
