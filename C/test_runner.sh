@@ -41,7 +41,7 @@ run_lib_test "http"     "tests/test_http.c"         "lib/libhttp"            "$C
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
-run_lib_test "cron"     "tests/test_cron.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
+run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \
@@ -408,6 +408,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "tts_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tts
 else skip "tts_tool (compilation failed)"
+fi
+
+# Cron tool test (M36 — needs cronjob.c + libcron + json, uses stubs for scheduler)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libcron" \
+    "$CDIR/tests/test_cron_tool.c" \
+    "$CDIR/src/tools/cronjob.c" "$CDIR/lib/libcron/cron.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cron -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron > /dev/null 2>&1; then ok "cron_tool (25 tests)"
+    else fail "cron_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_cron
+else skip "cron_tool (compilation failed)"
 fi
 
 # ==============================================
