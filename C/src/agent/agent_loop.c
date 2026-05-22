@@ -126,6 +126,17 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     if (cfg->tools.disabled_toolsets[0])
         snprintf(state->disabled_toolsets, sizeof(state->disabled_toolsets), "%s", cfg->tools.disabled_toolsets);
 
+    /* G20: Derive model family from model name */
+    if (cfg->provider_cfg.model[0]) {
+        const char *m = cfg->provider_cfg.model;
+        if (strstr(m, "claude"))      snprintf(state->model_family, sizeof(state->model_family), "claude");
+        else if (strstr(m, "gpt"))    snprintf(state->model_family, sizeof(state->model_family), "gpt");
+        else if (strstr(m, "gemini")) snprintf(state->model_family, sizeof(state->model_family), "gemini");
+        else if (strstr(m, "deepseek")) snprintf(state->model_family, sizeof(state->model_family), "deepseek");
+        else if (strstr(m, "grok"))   snprintf(state->model_family, sizeof(state->model_family), "grok");
+        else                          snprintf(state->model_family, sizeof(state->model_family), "unknown");
+    }
+
     /* Budget tracker limits from config */
     if (state->budget) {
         budget_tracker_set_limits(state->budget,
@@ -704,6 +715,12 @@ char *agent_run_conversation(agent_state_t *state,
         context_set_system(state, state->system_message);
     }
 
+    /* G13-G14: Apply runtime tool_choice/parallel_tool_calls overrides */
+    if (state->tool_choice[0])
+        snprintf(state->llm.tool_choice, sizeof(state->llm.tool_choice), "%s", state->tool_choice);
+    if (state->parallel_tool_calls)
+        state->llm.parallel_tool_calls = true;
+
     int iteration = 0;
     bool grace_call = false; /* P88: one extra LLM call without tools after budget */
 
@@ -1031,4 +1048,32 @@ bool agent_snapshot_restore(agent_state_t *state) {
 /* Simple chat interface */
 char *agent_chat(agent_state_t *state, const char *message) {
     return agent_run_conversation(state, message, NULL);
+}
+
+/* G18: Inject conversation history — preload messages from JSON array.
+ * Each element: {"role":"user|assistant|tool","content":"..."}
+ * Existing messages are preserved; new ones appended. */
+bool agent_inject_history(agent_state_t *state, const char *history_json) {
+    if (!state || !history_json || !*history_json) return false;
+    char *err = NULL;
+    json_node_t *arr = json_parse(history_json, &err);
+    if (!arr || arr->type != JSON_ARRAY) { free(err); json_free(arr); return false; }
+    free(err);
+
+    size_t n = json_len(arr);
+    for (size_t i = 0; i < n; i++) {
+        json_node_t *item = json_get(arr, i);
+        const char *role = json_get_str(item, "role", "user");
+        const char *content = json_get_str(item, "content", "");
+
+        message_role_t r = MSG_USER;
+        if (strcmp(role, "system") == 0) r = MSG_SYSTEM;
+        else if (strcmp(role, "assistant") == 0) r = MSG_ASSISTANT;
+        else if (strcmp(role, "tool") == 0) r = MSG_TOOL;
+
+        message_t *msg = message_new(r, content);
+        if (msg) context_push(state, msg);
+    }
+    json_free(arr);
+    return n > 0;
 }

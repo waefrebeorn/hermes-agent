@@ -133,6 +133,9 @@ char *agent_run_conversation(agent_state_t *state,
                               const char *system_message);
 char *agent_chat(agent_state_t *state, const char *message);
 
+/* G18: Inject conversation history — preload messages from JSON array */
+bool agent_inject_history(agent_state_t *state, const char *history_json);
+
 /* === Session persistence (agent_loop.c) === */
 bool agent_open_db(agent_state_t *state);
 bool agent_save_session(agent_state_t *state);

@@ -243,6 +243,11 @@ typedef struct {
     char pending_steer[4096];
     /* G12: Structured interrupt message */
     char interrupt_message[1024];
+    /* G13-G14: Runtime overrides for tool_choice and parallel_tool_calls */
+    char tool_choice[32];      /* overrides llm.tool_choice per conversation */
+    bool parallel_tool_calls;  /* overrides llm.parallel_tool_calls */
+    /* G20: Model family tracking for accurate pricing */
+    char model_family[32];     /* e.g. "gpt-4", "claude-3", "deepseek-chat" */
 } agent_state_t;
 
 /* ================================================================

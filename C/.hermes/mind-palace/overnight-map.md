@@ -51,7 +51,8 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **G17: system_message override** — per-conversation override field in agent_state_t, wired in agent_run_conversation before each LLM call
 - ✅ **G19: thread/user/chat IDs** — routing metadata fields in agent_state_t
 - ✅ **G01-G03: session token tracking** — session_total/input/output_tokens counters, updated after each LLM response
-- Next: remaining agent loop gaps (G04-G12 deep token tracking, G13-G14 tool_choice/parallel_tool_calls state, G18 conversation_history injection, G20 model_family), or gateway E06-E12 interactive sends, or CLI H08-H09 batch/pipe
+- ✅ **G04-G12: deep token tracking** — reasoning/cache/cost counters, user/tool turn counts, last_activity_ts, pending_steer, interrupt_message on fatal tool errors; /status shows all fields
+- Next: G13-G14 tool_choice/parallel_tool_calls state, G18 conversation_history injection, G20 model_family, or gateway E06-E12 interactive sends (media_group, draft, clarify, approval, confirm, model_picker)
 
 ## Upstream
 - 125 commits since last sync, 52 Python
