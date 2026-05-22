@@ -27,6 +27,7 @@ void agent_init(agent_state_t *state) {
     state->message_capacity = 64;
     state->messages = (message_t **)calloc(state->message_capacity, sizeof(message_t *));
     state->max_iterations = HERMES_MAX_TOOL_CALLS;
+    state->snapshot_capacity = 0;  /* lazy init on first snapshot_take */
     context_init(state);
     agent_generate_session_id(state);
     /* Register built-in LLM providers */
@@ -268,6 +269,8 @@ char *agent_run_conversation(agent_state_t *state,
 
         /* If no tool calls, we're done — return final content */
         if (llm_resp->tool_calls_count == 0) {
+            /* Take snapshot for undo before finalizing */
+            agent_snapshot_take(state);
             char *result = llm_resp->content ? strdup(llm_resp->content) : strdup("");
             llm_response_free(llm_resp);
             json_free(tools_json);
@@ -277,6 +280,8 @@ char *agent_run_conversation(agent_state_t *state,
         }
 
         /* Has tool calls — create assistant message with tool_calls */
+        /* Snapshot before tool execution for undo */
+        agent_snapshot_take(state);
         message_t *assistant_msg = message_new_assistant_with_toolcalls(
             llm_resp->content, llm_resp->tool_calls, llm_resp->tool_calls_count,
             llm_resp->reasoning);
@@ -324,6 +329,82 @@ char *agent_run_conversation(agent_state_t *state,
     if (state->interrupted)
         return strdup("Error: Interrupted");
     return strdup("Error: Max iterations reached");
+}
+
+/* ================================================================
+ *  P28: Undo snapshot
+ * ================================================================ */
+
+static message_t *message_clone(const message_t *src) {
+    message_t *dst = (message_t *)calloc(1, sizeof(message_t));
+    if (!dst) return NULL;
+    dst->role = src->role;
+    if (src->content) dst->content = strdup(src->content);
+    if (src->tool_call_id) dst->tool_call_id = strdup(src->tool_call_id);
+    if (src->tool_name) dst->tool_name = strdup(src->tool_name);
+    if (src->reasoning) dst->reasoning = strdup(src->reasoning);
+    dst->tool_calls_count = src->tool_calls_count;
+    for (int i = 0; i < src->tool_calls_count && i < 64; i++) {
+        snprintf(dst->tool_calls[i].id, sizeof(dst->tool_calls[i].id), "%s", src->tool_calls[i].id);
+        snprintf(dst->tool_calls[i].name, sizeof(dst->tool_calls[i].name), "%s", src->tool_calls[i].name);
+        snprintf(dst->tool_calls[i].arguments, sizeof(dst->tool_calls[i].arguments), "%s", src->tool_calls[i].arguments);
+    }
+    return dst;
+}
+
+void agent_snapshot_take(agent_state_t *state) {
+    /* Free old snapshot if any */
+    if (state->snapshot) {
+        for (size_t i = 0; i < state->snapshot_count; i++)
+            message_free(state->snapshot[i]);
+        free(state->snapshot);
+        state->snapshot = NULL;
+        state->snapshot_count = 0;
+    }
+
+    /* Allocate snapshot array */
+    state->snapshot_capacity = state->message_count + 16;
+    state->snapshot = (message_t **)calloc(state->snapshot_capacity, sizeof(message_t *));
+    if (!state->snapshot) return;
+
+    /* Clone all messages */
+    for (size_t i = 0; i < state->message_count; i++) {
+        state->snapshot[i] = message_clone(state->messages[i]);
+        if (state->snapshot[i])
+            state->snapshot_count++;
+    }
+
+    snprintf(state->snapshot_id, sizeof(state->snapshot_id), "%s", state->session_id);
+}
+
+bool agent_snapshot_restore(agent_state_t *state) {
+    if (!state->snapshot || state->snapshot_count == 0) return false;
+
+    /* Free current messages */
+    context_clear(state);
+
+    /* Allocate space */
+    if (state->message_capacity < state->snapshot_count + 16) {
+        state->message_capacity = state->snapshot_count + 16;
+        message_t **new_msgs = (message_t **)realloc(state->messages,
+                                                      state->message_capacity * sizeof(message_t *));
+        if (!new_msgs) return false;
+        state->messages = new_msgs;
+    }
+
+    /* Clone snapshot back */
+    for (size_t i = 0; i < state->snapshot_count; i++) {
+        if (state->snapshot[i]) {
+            state->messages[i] = message_clone(state->snapshot[i]);
+            state->message_count++;
+        }
+    }
+
+    /* Restore session ID from snapshot */
+    if (state->snapshot_id[0])
+        snprintf(state->session_id, sizeof(state->session_id), "%s", state->snapshot_id);
+
+    return true;
 }
 
 /* Simple chat interface */

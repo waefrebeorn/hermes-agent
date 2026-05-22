@@ -122,6 +122,11 @@ typedef struct {
     void             *stream_data; /* userdata for stream callback */
     void             *plugin_reg;  /* plugin registry (optional, opaque) */
     bool              compress_enabled; /* smart context compression via LLM */
+    /* P28: Undo snapshot — copy of messages before last modification */
+    message_t       **snapshot;
+    size_t            snapshot_count;
+    size_t            snapshot_capacity;
+    char              snapshot_id[64];  /* session ID at snapshot time */
 } agent_state_t;
 
 /* ================================================================

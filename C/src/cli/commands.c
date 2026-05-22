@@ -273,8 +273,19 @@ static void cmd_exit(const char *args, agent_state_t *state) {
 
 static void cmd_clear(const char *args, agent_state_t *state) {
     (void)args;
+    /* Preserve session metadata, wipe messages */
+    char keep_id[64];
+    snprintf(keep_id, sizeof(keep_id), "%s", state->session_id);
+    int keep_iterations = state->iteration_count;
+
     context_clear(state);
-    printf("Context cleared.\n");
+
+    /* Restore session metadata */
+    snprintf(state->session_id, sizeof(state->session_id), "%s", keep_id);
+    state->iteration_count = keep_iterations;
+    state->interrupted = false;
+
+    printf("Context cleared. Session: %s\n", state->session_id);
 }
 
 static void cmd_model(const char *args, agent_state_t *state) {
@@ -374,6 +385,11 @@ static void cmd_conv(const char *args, agent_state_t *state) {
 
 static void cmd_new(const char *args, agent_state_t *state) {
     (void)args;
+    /* Persist old session if DB available */
+    if (state->db && state->message_count > 0) {
+        agent_save_session(state);
+        printf("Previous session saved: %s\n", state->session_id);
+    }
     /* Reset session: clear messages, generate new ID */
     context_clear(state);
     agent_generate_session_id(state);
@@ -382,12 +398,19 @@ static void cmd_new(const char *args, agent_state_t *state) {
 
 static void cmd_undo(const char *args, agent_state_t *state) {
     (void)args;
-    /* Remove last assistant message (and any tool messages after it) */
     if (state->message_count == 0) {
         printf("No messages to undo.\n");
         return;
     }
-    /* Remove from the end backwards until we find a user or system message */
+
+    /* Take snapshot before modifying (so we can redo) */
+    /* Then restore previous snapshot if available */
+    if (agent_snapshot_restore(state)) {
+        printf("Restored previous state. %zu messages.\n", state->message_count);
+        return;
+    }
+
+    /* No snapshot — fall back to simple undo: remove last turn */
     size_t removed = 0;
     while (state->message_count > 0) {
         message_role_t role = state->messages[state->message_count - 1]->role;

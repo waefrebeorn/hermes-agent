@@ -95,6 +95,10 @@ bool agent_save_session(agent_state_t *state);
 bool agent_load_session(agent_state_t *state, const char *session_id);
 void agent_close_db(agent_state_t *state);
 
+/* P28: Undo snapshot — capture/restore message state */
+void agent_snapshot_take(agent_state_t *state);
+bool agent_snapshot_restore(agent_state_t *state);
+
 /* === Title (title.c) === */
 char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 
