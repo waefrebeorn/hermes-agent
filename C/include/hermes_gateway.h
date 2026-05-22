@@ -15,6 +15,49 @@
 /* Max platforms running simultaneously */
 #define GW_MAX_PLATFORMS 8
 
+/* Max pending messages in queue */
+#define GW_QUEUE_MAX 256
+
+/* Max path length */
+#define GW_PATH_MAX 4096
+
+/* Max HTTP clients in pool */
+#define GW_POOL_MAX 16
+
+/* ================================================================
+ *  P101: Gateway message queue entry
+ * ================================================================ */
+
+typedef struct {
+    char platform[32];
+    char chat_id[128];
+    char text[4096];
+    char thread_id[64];     /* Telegram topic / Discord thread */
+    double timestamp;        /* monotonic time when queued */
+} gateway_msg_t;
+
+/* ================================================================
+ *  P101: Per-platform rate limiter (token bucket)
+ * ================================================================ */
+
+typedef struct {
+    double tokens_per_sec;  /* refill rate */
+    double max_tokens;      /* burst capacity */
+    double tokens;          /* current tokens */
+    double last_refill;     /* monotonic time of last refill */
+} gw_rate_limiter_t;
+
+/* ================================================================
+ *  P101: HTTP connection pool entry
+ * ================================================================ */
+
+typedef struct {
+    http_client_t *client;
+    bool           in_use;
+    double         last_used;  /* monotonic time */
+    char           endpoint[256]; /* API base URL this client is configured for */
+} gw_http_pool_entry_t;
+
 /* ================================================================
  *  Gateway state (shared across platform modules)
  * ================================================================ */
@@ -32,6 +75,21 @@ typedef struct {
 
     /* Platform-specific state */
     int             tg_offset;      /* Telegram: last update_id + 1 */
+
+    /* P101: Message queue (circular buffer) */
+    gateway_msg_t   msg_queue[GW_QUEUE_MAX];
+    volatile int    msg_queue_head; /* producer writes here */
+    volatile int    msg_queue_tail; /* consumer reads from here */
+    pthread_mutex_t queue_mutex;
+    pthread_cond_t  queue_cond;     /* signal when new message queued */
+
+    /* P101: Per-platform rate limiters */
+    gw_rate_limiter_t rate_limiters[GW_MAX_PLATFORMS];
+
+    /* P101: HTTP connection pool */
+    gw_http_pool_entry_t http_pool[GW_POOL_MAX];
+    int                  pool_count;
+    pthread_mutex_t      pool_mutex;
 
     /* Per-platform HTTP clients (owned by thread functions) */
     http_client_t  *platform_http[GW_MAX_PLATFORMS];
@@ -243,4 +301,50 @@ bool yuanbao_init(const char *app_id, const char *app_secret,
 void yuanbao_start(void);
 void yuanbao_stop(void);
 
+/* ================================================================
+ *  P101: Gateway queue API
+ * ================================================================ */
+
+/* Initialize message queue */
+void gw_queue_init(void);
+
+/* Push a message onto the queue. Blocks if full (up to 1s). Returns true on success. */
+bool gw_queue_push(const char *platform, const char *chat_id,
+                    const char *text, const char *thread_id);
+
+/* Pop next message from queue. Non-blocking — returns false if empty. */
+bool gw_queue_pop(gateway_msg_t *msg);
+
+/* Get current queue depth */
+int gw_queue_depth(void);
+
+/* ================================================================
+ *  P101: Rate limiter API
+ * ================================================================ */
+
+/* Initialize rate limiter for platform index.
+ * tokens_per_sec: messages allowed per second (defaults)
+ * max_burst: maximum burst size (default ~3x rate) */
+void gw_rate_limit_init(int idx, double tokens_per_sec, double max_burst);
+
+/* Check and consume a token. Returns true if allowed, false if rate-limited. */
+bool gw_rate_limit_check(int idx);
+
+/* ================================================================
+ *  P101: HTTP connection pool API
+ * ================================================================ */
+
+/* Get an HTTP client from the pool (or create one).
+ * endpoint: the API base URL for connection affinity.
+ * Returns NULL on failure. */
+http_client_t *gw_pool_get_client(const char *endpoint);
+
+/* Return an HTTP client to the pool for reuse.
+ * Pass NULL to free without returning. */
+void gw_pool_return_client(http_client_t *client, const char *endpoint);
+
+/* Close all idle connections in the pool */
+void gw_pool_cleanup(void);
+
 #endif /* HERMES_GATEWAY_H */
+

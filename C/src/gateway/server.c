@@ -16,12 +16,190 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
+#include <strings.h>
+#include <time.h>
 
 /* ================================================================
  *  Gateway state
  * ================================================================ */
 
 gateway_state_t g_gw;
+
+/* ================================================================
+ *  P101: Monotonic time helper
+ * ================================================================ */
+
+static double gw_mono_time(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
+
+/* ================================================================
+ *  P101: Message queue (thread-safe, bounded circular buffer)
+ * ================================================================ */
+
+void gw_queue_init(void) {
+    g_gw.msg_queue_head = 0;
+    g_gw.msg_queue_tail = 0;
+    pthread_mutex_init(&g_gw.queue_mutex, NULL);
+    pthread_cond_init(&g_gw.queue_cond, NULL);
+}
+
+bool gw_queue_push(const char *platform, const char *chat_id,
+                    const char *text, const char *thread_id) {
+    if (!platform || !chat_id || !text) return false;
+
+    pthread_mutex_lock(&g_gw.queue_mutex);
+
+    /* Check if queue is full */
+    int next = (g_gw.msg_queue_head + 1) % GW_QUEUE_MAX;
+    if (next == g_gw.msg_queue_tail) {
+        /* Queue full — drop oldest */
+        g_gw.msg_queue_tail = (g_gw.msg_queue_tail + 1) % GW_QUEUE_MAX;
+    }
+
+    gateway_msg_t *slot = &g_gw.msg_queue[g_gw.msg_queue_head];
+    snprintf(slot->platform, sizeof(slot->platform), "%s", platform);
+    snprintf(slot->chat_id, sizeof(slot->chat_id), "%s", chat_id);
+    snprintf(slot->text, sizeof(slot->text), "%s", text);
+    if (thread_id)
+        snprintf(slot->thread_id, sizeof(slot->thread_id), "%s", thread_id);
+    else
+        slot->thread_id[0] = '\0';
+    slot->timestamp = gw_mono_time();
+
+    g_gw.msg_queue_head = next;
+
+    pthread_cond_signal(&g_gw.queue_cond);
+    pthread_mutex_unlock(&g_gw.queue_mutex);
+    return true;
+}
+
+bool gw_queue_pop(gateway_msg_t *msg) {
+    if (!msg) return false;
+
+    pthread_mutex_lock(&g_gw.queue_mutex);
+    if (g_gw.msg_queue_head == g_gw.msg_queue_tail) {
+        pthread_mutex_unlock(&g_gw.queue_mutex);
+        return false; /* empty */
+    }
+
+    *msg = g_gw.msg_queue[g_gw.msg_queue_tail];
+    g_gw.msg_queue_tail = (g_gw.msg_queue_tail + 1) % GW_QUEUE_MAX;
+    pthread_mutex_unlock(&g_gw.queue_mutex);
+    return true;
+}
+
+int gw_queue_depth(void) {
+    pthread_mutex_lock(&g_gw.queue_mutex);
+    int depth = (g_gw.msg_queue_head - g_gw.msg_queue_tail + GW_QUEUE_MAX) % GW_QUEUE_MAX;
+    pthread_mutex_unlock(&g_gw.queue_mutex);
+    return depth;
+}
+
+/* ================================================================
+ *  P101: Rate limiter (token bucket)
+ * ================================================================ */
+
+void gw_rate_limit_init(int idx, double tokens_per_sec, double max_burst) {
+    if (idx < 0 || idx >= GW_MAX_PLATFORMS) return;
+    g_gw.rate_limiters[idx].tokens_per_sec = tokens_per_sec;
+    g_gw.rate_limiters[idx].max_tokens = max_burst;
+    g_gw.rate_limiters[idx].tokens = max_burst;
+    g_gw.rate_limiters[idx].last_refill = gw_mono_time();
+}
+
+bool gw_rate_limit_check(int idx) {
+    if (idx < 0 || idx >= GW_MAX_PLATFORMS) return true; /* no limit if out of range */
+
+    gw_rate_limiter_t *rl = &g_gw.rate_limiters[idx];
+    double now = gw_mono_time();
+
+    /* Refill tokens based on elapsed time */
+    double elapsed = now - rl->last_refill;
+    rl->tokens += elapsed * rl->tokens_per_sec;
+    if (rl->tokens > rl->max_tokens)
+        rl->tokens = rl->max_tokens;
+    rl->last_refill = now;
+
+    if (rl->tokens >= 1.0) {
+        rl->tokens -= 1.0;
+        return true; /* allowed */
+    }
+    return false; /* rate-limited */
+}
+
+/* ================================================================
+ *  P101: HTTP connection pool
+ * ================================================================ */
+
+http_client_t *gw_pool_get_client(const char *endpoint) {
+    pthread_mutex_lock(&g_gw.pool_mutex);
+
+    /* Look for an idle client with matching endpoint */
+    for (int i = 0; i < g_gw.pool_count; i++) {
+        if (!g_gw.http_pool[i].in_use &&
+            strcmp(g_gw.http_pool[i].endpoint, endpoint) == 0) {
+            g_gw.http_pool[i].in_use = true;
+            pthread_mutex_unlock(&g_gw.pool_mutex);
+            return g_gw.http_pool[i].client;
+        }
+    }
+
+    /* Create new client if pool not full */
+    if (g_gw.pool_count < GW_POOL_MAX) {
+        int i = g_gw.pool_count++;
+        g_gw.http_pool[i].client = http_client_new(30);
+        g_gw.http_pool[i].in_use = true;
+        snprintf(g_gw.http_pool[i].endpoint, sizeof(g_gw.http_pool[i].endpoint), "%s", endpoint ? endpoint : "");
+        g_gw.http_pool[i].last_used = gw_mono_time();
+        pthread_mutex_unlock(&g_gw.pool_mutex);
+        return g_gw.http_pool[i].client;
+    }
+
+    /* Pool full — return NULL, caller should create one-off */
+    pthread_mutex_unlock(&g_gw.pool_mutex);
+    return http_client_new(30);
+}
+
+void gw_pool_return_client(http_client_t *client, const char *endpoint) {
+    if (!client) return;
+
+    pthread_mutex_lock(&g_gw.pool_mutex);
+
+    for (int i = 0; i < g_gw.pool_count; i++) {
+        if (g_gw.http_pool[i].client == client) {
+            g_gw.http_pool[i].in_use = false;
+            g_gw.http_pool[i].last_used = gw_mono_time();
+            pthread_mutex_unlock(&g_gw.pool_mutex);
+            return;
+        }
+    }
+
+    /* Not found in pool — free it */
+    pthread_mutex_unlock(&g_gw.pool_mutex);
+    http_client_free(client);
+}
+
+void gw_pool_cleanup(void) {
+    pthread_mutex_lock(&g_gw.pool_mutex);
+    double now = gw_mono_time();
+    for (int i = 0; i < g_gw.pool_count; i++) {
+        if (!g_gw.http_pool[i].in_use &&
+            (now - g_gw.http_pool[i].last_used) > 300.0) {
+            /* Idle > 5 min — free */
+            http_client_free(g_gw.http_pool[i].client);
+            /* Swap with last entry */
+            if (i < g_gw.pool_count - 1) {
+                g_gw.http_pool[i] = g_gw.http_pool[g_gw.pool_count - 1];
+            }
+            g_gw.pool_count--;
+            i--; /* re-check this slot */
+        }
+    }
+    pthread_mutex_unlock(&g_gw.pool_mutex);
+}
 
 /* ================================================================
  *  Thread-safe agent chat
@@ -76,6 +254,22 @@ static void process_update(const char *platform, const char *chat_id, const char
     if (!platform || !chat_id || !text || !*text) return;
 
     printf("[gateway:%s] Message: %s\n", platform, text);
+
+    /* P101: Find platform index for rate limiting */
+    int plat_idx = -1;
+    for (int i = 0; i < g_gw.platform_count; i++) {
+        if (strcasecmp(g_gw.platforms[i], platform) == 0) {
+            plat_idx = i;
+            break;
+        }
+    }
+
+    /* P101: Check rate limit — if exceeded, queue the message */
+    if (plat_idx >= 0 && !gw_rate_limit_check(plat_idx)) {
+        gw_queue_push(platform, chat_id, text, NULL);
+        printf("[gateway:%s] Rate limited, queued\n", platform);
+        return;
+    }
 
     /* Send typing indicator */
     gateway_send_typing(platform, chat_id);
@@ -611,6 +805,10 @@ int hermes_gateway_main(int argc, char **argv) {
     g_gw.tg_offset = 0;
     pthread_mutex_init(&g_gw.agent_mutex, NULL);
 
+    /* P101: Initialize message queue and HTTP pool */
+    gw_queue_init();
+    pthread_mutex_init(&g_gw.pool_mutex, NULL);
+
     /* Parse --platform flag for backwards compat (single-platform mode) */
     char cli_platform[32] = {0};
     for (int i = 1; i < argc; i++) {
@@ -715,6 +913,13 @@ int hermes_gateway_main(int argc, char **argv) {
                     if (pthread_create(&g_gw.threads[g_gw.platform_count], NULL,
                                        all_platforms[i].thread_fn,
                                        &all_platforms[i].arg_int) == 0) {
+                        /* P101: Initialize rate limiter for this platform */
+                        double rps = (strcmp(tok, "email") == 0) ? 0.2 :
+                                     (strcmp(tok, "sms") == 0) ? 0.1 :
+                                     (strcmp(tok, "signal") == 0) ? 0.5 :
+                                     (strcmp(tok, "telegram") == 0) ? 30.0 :
+                                     (strcmp(tok, "discord") == 0) ? 5.0 : 3.0;
+                        gw_rate_limit_init(g_gw.platform_count, rps, rps * 3);
                         g_gw.platform_count++;
                     } else {
                         fprintf(stderr, "Error: Failed to create thread for %s\n", tok);
@@ -749,6 +954,11 @@ int hermes_gateway_main(int argc, char **argv) {
 
 cleanup:
     pthread_mutex_destroy(&g_gw.agent_mutex);
+    /* P101: Cleanup HTTP pool and queue */
+    gw_pool_cleanup();
+    pthread_mutex_destroy(&g_gw.pool_mutex);
+    pthread_mutex_destroy(&g_gw.queue_mutex);
+    pthread_cond_destroy(&g_gw.queue_cond);
     agent_free(&g_gw.agent);
     http_client_free(g_gw.http);
     printf("[gateway] Shutdown complete\n");
