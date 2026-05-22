@@ -190,6 +190,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_system (compilation failed)"
 fi
 
+# Rate limiter test (standalone — only needs rate_limit.c)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_rate_limit.c" \
+    "$CDIR/src/tools/rate_limit.c" \
+    -o /tmp/hermes_test_rl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_rl > /dev/null 2>&1; then ok "rate_limit (168 tests)"
+    else fail "rate_limit (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_rl
+else skip "rate_limit (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
