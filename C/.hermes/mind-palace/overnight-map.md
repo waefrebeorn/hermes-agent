@@ -118,3 +118,8 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Upstream drift: 5/12 remain** (L05-L06, L08-L11, L12 done; L01-L04, L07 pending)
 - ◀ **Build/doc: skills hub added to CLI and tool registry**
 - ◀ Committed: `dbe604c64`
+
+### Session 2026-05-22 (Evening Part 5)
+- ✅ **L04: xAI model retirement detection** — `xai_is_model_retired()` with official May 15, 2026 retirement list. Config validation checks principal.model, tools.vision_model, delegation.model, compression.model. Reports replacement + reasoning_effort hints.
+- ◀ **Upstream drift: 4/12 remain** (L01-L03, L07)
+- ◀ Committed: `4ea1bbadc`
