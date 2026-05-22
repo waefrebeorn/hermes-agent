@@ -33,6 +33,8 @@ typedef enum {
     PROVIDER_OPENROUTER,   /* OpenRouter — model routing with preferences */
     PROVIDER_DEEPSEEK,     /* DeepSeek — context caching, FIM */
     PROVIDER_XAI,          /* xAI — Grok API */
+    PROVIDER_AZURE,        /* Azure OpenAI — api-key auth, deployment URL */
+    PROVIDER_BEDROCK,      /* AWS Bedrock — SigV4 auth, Converse API */
     PROVIDER_CUSTOM,       /* Custom provider */
 } provider_type_t;
 
@@ -151,6 +153,15 @@ extern const provider_ops_t PROVIDER_OPS_ANTHROPIC;
 
 /* Google Gemini API format */
 extern const provider_ops_t PROVIDER_OPS_GOOGLE;
+
+/* Azure OpenAI API format */
+extern const provider_ops_t PROVIDER_OPS_AZURE;
+
+/* AWS Bedrock Converse API */
+extern const provider_ops_t PROVIDER_OPS_BEDROCK;
+
+/* Custom (user-defined) provider */
+extern const provider_ops_t PROVIDER_OPS_CUSTOM;
 
 /* Register all built-in providers */
 void provider_register_builtins(void);

@@ -35,6 +35,9 @@ void provider_register_builtins(void) {
     provider_register(PROVIDER_OPENROUTER, &PROVIDER_OPS_OPENROUTER);
     provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
     provider_register(PROVIDER_XAI, &PROVIDER_OPS_XAI);
+    provider_register(PROVIDER_AZURE, &PROVIDER_OPS_AZURE);
+    provider_register(PROVIDER_BEDROCK, &PROVIDER_OPS_BEDROCK);
+    provider_register(PROVIDER_CUSTOM, &PROVIDER_OPS_CUSTOM);
 }
 
 /* Find provider ops by name (case-insensitive) */
@@ -60,6 +63,10 @@ static const provider_ops_t *find_provider_ops(const char *name) {
         {"claude",      PROVIDER_ANTHROPIC},
         {"google",      PROVIDER_GOOGLE},
         {"gemini",      PROVIDER_GOOGLE},
+        {"azure",       PROVIDER_AZURE},
+        {"bedrock",     PROVIDER_BEDROCK},
+        {"aws",         PROVIDER_BEDROCK},
+        {"custom",      PROVIDER_CUSTOM},
         {NULL, 0}
     };
     for (int i = 0; providers[i].name; i++) {
