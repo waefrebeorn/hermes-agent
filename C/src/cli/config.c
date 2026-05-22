@@ -110,6 +110,134 @@ static char *config_expand_env_vars(const char *input) {
     return result;
 }
 
+/* A04: Preprocess YAML file to resolve !include directives.
+ * Scans file lines, replaces !include <path> with the content
+ * of the referenced file (relative to the including file's dir).
+ * Returns malloc'd preprocessed YAML, or strdup of original on error. */
+static char *config_resolve_includes(const char *filepath) {
+    FILE *f = fopen(filepath, "r");
+    if (!f) return NULL;
+
+    /* Read entire file */
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (fsize <= 0) { fclose(f); return NULL; }
+
+    char *content = (char *)malloc((size_t)fsize + 16384);
+    if (!content) { fclose(f); return NULL; }
+    size_t total = fread(content, 1, (size_t)fsize, f);
+    fclose(f);
+    content[total] = '\0';
+
+    /* Directory of the including file */
+    char dir[4096];
+    const char *last_slash = strrchr(filepath, '/');
+    if (last_slash) {
+        size_t dlen = (size_t)(last_slash - filepath);
+        memcpy(dir, filepath, dlen);
+        dir[dlen] = '\0';
+    } else {
+        snprintf(dir, sizeof(dir), ".");
+    }
+
+    /* Process line by line */
+    char *result = (char *)malloc((size_t)fsize + 32768);
+    if (!result) { free(content); return NULL; }
+    result[0] = '\0';
+    size_t pos = 0;
+
+    char *line_start = content;
+    while (line_start && *line_start) {
+        char *newline = strchr(line_start, '\n');
+        size_t line_len = newline ? (size_t)(newline - line_start) : strlen(line_start);
+
+        /* Trim leading whitespace */
+        const char *trimmed = line_start;
+        size_t indent = 0;
+        while (*trimmed == ' ' || *trimmed == '\t') { trimmed++; indent++; }
+
+        /* Check for !include directive */
+        if (strncmp(trimmed, "!include ", 9) == 0) {
+            const char *include_path = trimmed + 9;
+            /* Trim trailing whitespace */
+            char inc_path[4096];
+            size_t ip = 0;
+            while (*include_path && *include_path != '\n' && *include_path != '\r'
+                   && ip < sizeof(inc_path) - 1) {
+                inc_path[ip++] = *include_path++;
+            }
+            inc_path[ip] = '\0';
+
+            /* Resolve relative path */
+            char full_path[4096];
+            if (inc_path[0] == '/') {
+                snprintf(full_path, sizeof(full_path), "%s", inc_path);
+            } else {
+                snprintf(full_path, sizeof(full_path), "%s/%s", dir, inc_path);
+            }
+
+            /* Read included file content */
+            FILE *inc_f = fopen(full_path, "r");
+            if (!inc_f) {
+                /* File not found — output a comment instead of include */
+                size_t needed = pos + 60 + line_len;
+                if (needed > (size_t)fsize + 32768) break;
+                pos += snprintf(result + pos, (size_t)fsize + 32768 - pos,
+                                "# INCLUDE NOT FOUND: %s\n", inc_path);
+            } else {
+                fseek(inc_f, 0, SEEK_END);
+                long inc_size = ftell(inc_f);
+                fseek(inc_f, 0, SEEK_SET);
+
+                if (inc_size > 0) {
+                    char *inc_content = (char *)malloc((size_t)inc_size + 1);
+                    if (inc_content) {
+                        size_t nread = fread(inc_content, 1, (size_t)inc_size, inc_f);
+                        inc_content[nread] = '\0';
+
+                        /* Indent each line of included content */
+                        char *inc_line = inc_content;
+                        while (inc_line && *inc_line) {
+                            char *inc_nl = strchr(inc_line, '\n');
+                            size_t inc_ll = inc_nl ? (size_t)(inc_nl - inc_line) : strlen(inc_line);
+                            size_t needed = pos + indent + inc_ll + 2;
+                            if (needed > (size_t)fsize + 32768) break;
+                            /* Add indentation */
+                            for (size_t si = 0; si < indent && pos < (size_t)fsize + 32768 - 1; si++)
+                                result[pos++] = ' ';
+                            /* Copy line content */
+                            if (inc_ll > 0 && pos < (size_t)fsize + 32768 - inc_ll) {
+                                memcpy(result + pos, inc_line, inc_ll);
+                                pos += inc_ll;
+                            }
+                            /* Add newline */
+                            if (pos < (size_t)fsize + 32768 - 1)
+                                result[pos++] = '\n';
+                            inc_line = inc_nl ? inc_nl + 1 : NULL;
+                        }
+                        free(inc_content);
+                    }
+                }
+                fclose(inc_f);
+            }
+        } else {
+            /* Copy line as-is */
+            if (pos + line_len + 2 <= (size_t)fsize + 32768) {
+                memcpy(result + pos, line_start, line_len);
+                pos += line_len;
+                result[pos++] = '\n';
+            }
+        }
+
+        line_start = newline ? newline + 1 : NULL;
+    }
+
+    result[pos] = '\0';
+    free(content);
+    return result;
+}
+
 /* Resolve SLERMES_HOME. Default: ~/.slermes — delegates to hermes_get_home() */
 static void get_slermes_home(char *buf, size_t sz) {
     hermes_get_home(buf, sz);
@@ -487,9 +615,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         }
     }
 
-    /* Parse config.yaml */
+    /* Parse config.yaml — with A04: !include directive support */
     char *err = NULL;
-    yaml_doc_t *doc = yaml_parse_file(cfg->config_path, &err);
+    yaml_doc_t *doc = NULL;
+
+    /* Resolve !include directives before YAML parsing */
+    char *preprocessed = config_resolve_includes(cfg->config_path);
+    if (preprocessed) {
+        doc = yaml_parse(preprocessed, &err);
+        free(preprocessed);
+    }
+    if (!doc)
+        doc = yaml_parse_file(cfg->config_path, &err);
+
     if (!doc) {
         /* No config file or parse error — use defaults */
         if (err) { free(err); }
