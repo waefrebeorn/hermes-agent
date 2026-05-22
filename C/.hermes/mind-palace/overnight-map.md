@@ -1,22 +1,27 @@
-# Overnight Map — 2026-05-26
+# Overnight Map — 2026-05-27
 
-## Active Session: O13 TIRITH Policy Depth ✅ CLOSED
+## Active Session: O14 Sandbox Escape Detection ✅ CLOSED
 
-**Build/doc: 86% → 90%** (2 gaps remain: O14 sandbox escape, O02 Windows)
-**Suite: 103/0/0** (+1 test file, 57 assertions)
+**Build/doc: 90% → 95%** (1 gap remains: O02 Windows build)
+**Suite: 106/0/0** (+1 test file, 14 assertions)
 
 ## What Was Done
 
-- Policy rule engine: 4 rule types × 3 actions, glob matching, ALLOW-over-DENY
-- YAML loading from config (security.tirith_policy_text field)
-- Default policies (15 rules blocking /etc/passwd, /etc/shadow, SSH keys, localhost, internal networks)
-- Global policy instance initialized at CLI startup
-- test_tirith_policy.c — 57 assertions, all pass
-- Config wiring: YAML → security_config_t → policy engine
+- New sandbox_escape.c module: 48 escape patterns across 7 categories
+- Wired into terminal_handler() + exec_code_handler() — blocks escape before subprocess
+- sandbox_escape_check_path() for standalone path scanning
+- sandbox_escape_add_pattern() for custom patterns
+- test_sandbox_escape.c — 14 tests
+- Removed over-broad `&&`/`||`/`${` from default patterns
 
-## Next Gap Options
+## Remaining Build/doc gap
 
-1. **O14: Sandbox escape detection** — Full implementation needed, no existing code. Monitor for breakout patterns in subprocess execution.
-2. **O02: Windows build support** — MSVC/MinGW detection, _WIN32 ifdefs, Windows API conditionals. Big infrastructure change.
-3. **B32: DeepSeek FIM mode** — Fill-in-middle code completion. Self-contained, useful.
-4. **M08: Discord interaction tests** — Slash command, modal, component parsing tests.
+- **O02: Windows build support** — MSVC/MinGW detection, _WIN32 ifdefs. Big infra change.
+
+## P1 Gap Options (non-build)
+
+1. **M09: Slack block formatting tests** — block kit serialization/deserialization
+2. **B33: DeepSeek context caching** — prefix caching API
+3. **H14: JSON output mode** — `--json` CLI flag
+4. **M10: WhatsApp message format tests** — template, interactive button tests
+5. **M32-M44: Per-tool tests** — delegate, vision, TTS, memory, cron, etc.

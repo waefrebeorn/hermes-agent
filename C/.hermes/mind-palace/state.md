@@ -19,7 +19,7 @@
 || **Tests** | 36 | 62% | **62 files, 2,050+ assertions** (103 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-|| **Build/doc** | 2 | **90%** | Docker, CI, cross-compile, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file perms, O11 vault, O05 release, O12 audit rotation, **O13 TIRITH policy depth** |
+|| **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
@@ -395,4 +395,25 @@
 - ✅ **test_tirith_policy.c** — 57 assertions covering: lifecycle, rule matching, ALLOW-over-DENY, all 4 type evaluations, full pipeline, YAML loading (single/multiple rules), defaults (15 rules), edge cases (max rules 64, glob ?, null safety, reason strings)
 - ◀ **Build/doc: 86%→90%** (1/3 remaining O-section gaps closed: O13)
 - ◀ **Suite: 103/0/0** (+1 test, 57 assertions; was 102/0/0)
-- ◀ **Remaining O gaps:** O14 (sandbox escape detection), O02 (Windows build)
+|- ◀ **Remaining O gaps:** O14 (sandbox escape detection), O02 (Windows build)
+
+### Session 2026-05-27 — Sandbox escape detection (O14)
+
+- ✅ **sandbox_escape.c** — New module with 48 escape patterns across 7 categories:
+  - Path traversal (`../`, `..%2f`, deep traversal)
+  - Sensitive paths (`/etc/passwd`, `/etc/shadow`, `/etc/ssh/`, `/root/.ssh/`)
+  - /proc/ and /sys/ access (`/proc/self/`, `/proc/1/`, `/proc/`, `/sys/`)
+  - Shell injection (`;`, backtick, `$()`, `$(<`)
+  - Escape commands (`bwrap`, `nsenter`, `chroot`, `docker run/exec`, `kubectl exec`, `flatpak`, `snap`)
+  - Environment poisoning (`LD_PRELOAD`, `LD_LIBRARY_PATH`, `PYTHONPATH`, `PERL5LIB`)
+  - Fork bombs (`:(){`, `fork()`, `forkbomb`)
+  - Reverse shells (`nc -e`, `bash -i >&`, `>/dev/tcp/`, `curl/wget pipe-to-sh`, `socat`, `ncat`)
+- ✅ **Wired into terminal_handler()** — blocks escape patterns before subprocess execution
+- ✅ **Wired into exec_code_handler()** — blocks escape patterns before code execution
+- ✅ **sandbox_escape_init()** called from tools_init_all()
+- ✅ **sandbox_escape_add_pattern()** for custom pattern registration
+- ✅ **test_sandbox_escape.c** — 14 tests covering all categories + lifecycle + null safety + blocked count tracking
+- ✅ **Bugfix: `&&`/`||` too aggressive** — removed from default patterns (common in legit commands)
+- ✅ **Bugfix: `${}` too aggressive** — removed (normal shell var expansion)
+- ◀ **Build/doc: 90%→95%** (O14 closed, O02 Windows remains)
+- ◀ **Suite: 106/0/0** (+1 test, 14 assertions; was 105/0/0)
