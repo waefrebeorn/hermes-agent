@@ -4,6 +4,7 @@
 /*
  * url_safety.h — SSRF protection and URL safety checks for Hermes C.
  * Mirrors Python tools/url_safety.py: DNS resolution + IP range checks.
+ * Phase 160: Website blocklist — domain deny list + content category blocking.
  */
 
 #ifdef __cplusplus
@@ -11,6 +12,8 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+
+/* Core safety checks */
 
 /* Check if a URL is safe to fetch (not internal/SSRF).
  * Resolves hostname via DNS, checks IP against private ranges.
@@ -34,6 +37,32 @@ void url_set_allow_private(bool allow);
 
 /* Reset allow_private cache (for testing). */
 void url_reset_allow_private(void);
+
+/* ================================================================
+ *  P160: Website Blocklist API
+ * ================================================================ */
+
+/* Enable/disable the website blocklist */
+void url_blocklist_enable(bool enabled);
+
+/* Add a domain to the blocklist (e.g., "facebook.com", "*.malware.site") */
+bool url_blocklist_add_domain(const char *domain);
+
+/* Remove a domain from the blocklist */
+bool url_blocklist_remove_domain(const char *domain);
+
+/* Add a content category to block (e.g., "social_media", "streaming",
+ * "gaming", "adult", "downloads", "news") */
+bool url_blocklist_add_category(const char *category);
+
+/* Remove a content category from the blocklist */
+bool url_blocklist_remove_category(const char *category);
+
+/* Clear all blocklist entries */
+void url_blocklist_clear(void);
+
+/* Load blocklist config from security_config_t */
+void url_blocklist_load_config(const security_config_t *cfg);
 
 #ifdef __cplusplus
 }

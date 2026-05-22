@@ -2,6 +2,7 @@
  * url_safety.c — SSRF protection and URL safety checks.
  * DNS-based: resolves hostname via getaddrinfo, checks IP against private ranges.
  * Phase 111-115: Security — URL safety, path traversal, Tirith.
+ * Phase 160: Website blocklist — domain deny list + content category blocking.
  */
 
 #include "hermes.h"
@@ -12,6 +13,9 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
+/* Forward declaration */
+static char *extract_hostname(const char *url);
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
@@ -27,6 +31,283 @@ void url_set_allow_private(bool allow) {
 
 void url_reset_allow_private(void) {
     g_allow_private = false;
+}
+
+/* ================================================================
+ *  P160: Website Blocklist
+ * ================================================================ */
+
+#define MAX_BLOCKED_DOMAINS 256
+#define MAX_BLOCKED_CATEGORIES 32
+
+/* Blocked domain list */
+static char *g_blocked_domains[MAX_BLOCKED_DOMAINS];
+static int g_blocked_domain_count = 0;
+
+/* Blocked content categories */
+static char *g_blocked_categories[MAX_BLOCKED_CATEGORIES];
+static int g_blocked_category_count = 0;
+
+/* Whether blocklist is enabled */
+static bool g_blocklist_enabled = true;
+
+/* Extract registered domain from hostname (e.g., "www.google.com" -> "google.com") */
+static const char *extract_registered_domain(const char *hostname) {
+    if (!hostname) return NULL;
+    /* Find the last two domain components */
+    const char *last_dot = strrchr(hostname, '.');
+    if (!last_dot || last_dot == hostname) return hostname;
+
+    /* Find the second-to-last dot */
+    const char *prev_dot = hostname;
+    const char *scan = hostname;
+    while ((scan = strchr(scan + 1, '.')) != NULL) {
+        if (scan == last_dot) break;
+        prev_dot = scan;
+    }
+    if (prev_dot != hostname)
+        return prev_dot + 1;
+    return hostname;
+}
+
+/* Check if hostname matches a blocked domain */
+static bool is_domain_blocked(const char *hostname) {
+    if (!hostname || !g_blocklist_enabled || g_blocked_domain_count == 0)
+        return false;
+
+    /* Check full hostname and each parent domain */
+    const char *p = hostname;
+    while (p && *p) {
+        for (int i = 0; i < g_blocked_domain_count; i++) {
+            if (g_blocked_domains[i] && strcasecmp(p, g_blocked_domains[i]) == 0)
+                return true;
+        }
+        /* Move to parent domain */
+        p = strchr(p, '.');
+        if (p) p++;
+    }
+    return false;
+}
+
+/* Check if URL matches blocked content category */
+static bool is_content_category_blocked(const char *url) {
+    if (!url || !g_blocklist_enabled || g_blocked_category_count == 0)
+        return false;
+
+    /* Convert URL to lowercase for matching */
+    char url_lower[2048];
+    size_t ulen = strlen(url);
+    if (ulen >= sizeof(url_lower)) ulen = sizeof(url_lower) - 1;
+    for (size_t i = 0; i < ulen; i++)
+        url_lower[i] = (char)tolower((unsigned char)url[i]);
+    url_lower[ulen] = '\0';
+
+    /* Category keywords to match in URL/path */
+    for (int i = 0; i < g_blocked_category_count; i++) {
+        if (!g_blocked_categories[i]) continue;
+
+        const char *cat = g_blocked_categories[i];
+
+        /* Use a simple keyword-matching approach */
+        if (strcmp(cat, "social_media") == 0) {
+            static const char *social_domains[] = {
+                "facebook.com", "twitter.com", "x.com", "instagram.com",
+                "linkedin.com", "tiktok.com", "reddit.com", "snapchat.com",
+                "pinterest.com", "tumblr.com", "threads.net", NULL
+            };
+            const char *host = extract_hostname(url);
+            if (host) {
+                for (int d = 0; social_domains[d]; d++) {
+                    if (strcasestr(host, social_domains[d])) {
+                        free((void*)host);
+                        return true;
+                    }
+                }
+                free((void*)host);
+            }
+        } else if (strcmp(cat, "streaming") == 0) {
+            static const char *streaming_domains[] = {
+                "youtube.com", "netflix.com", "hulu.com", "twitch.tv",
+                "vimeo.com", "spotify.com", "disneyplus.com", "hbomax.com",
+                "peacocktv.com", "paramountplus.com", NULL
+            };
+            const char *host = extract_hostname(url);
+            if (host) {
+                for (int d = 0; streaming_domains[d]; d++) {
+                    if (strcasestr(host, streaming_domains[d])) {
+                        free((void*)host);
+                        return true;
+                    }
+                }
+                free((void*)host);
+            }
+        } else if (strcmp(cat, "gaming") == 0) {
+            static const char *gaming_domains[] = {
+                "steam", "epicgames", "xbox.com", "playstation.com",
+                "nintendo.com", "roblox.com", "minecraft.net", NULL
+            };
+            if (strstr(url_lower, "game") || strstr(url_lower, "gaming")) {
+                const char *host = extract_hostname(url);
+                if (host) {
+                    for (int d = 0; gaming_domains[d]; d++) {
+                        if (strcasestr(host, gaming_domains[d])) {
+                            free((void*)host);
+                            return true;
+                        }
+                    }
+                    free((void*)host);
+                }
+            }
+        } else if (strcmp(cat, "adult") == 0) {
+            /* Simple keyword check for adult content */
+            static const char *adult_keywords[] = {
+                "porn", "xxx", "adult", "nsfw", "onlyfans", NULL
+            };
+            for (int k = 0; adult_keywords[k]; k++) {
+                if (strstr(url_lower, adult_keywords[k]))
+                    return true;
+            }
+        } else if (strcmp(cat, "downloads") == 0) {
+            static const char *download_ext[] = {
+                ".torrent", "magnet:", ".exe", ".msi", ".dmg", ".iso", NULL
+            };
+            for (int k = 0; download_ext[k]; k++) {
+                if (strstr(url_lower, download_ext[k]))
+                    return true;
+            }
+        } else if (strcmp(cat, "news") == 0) {
+            static const char *news_domains[] = {
+                "cnn.com", "foxnews.com", "bbc.com", "bbc.co.uk",
+                "nytimes.com", "wsj.com", "reuters.com", NULL
+            };
+            const char *host = extract_hostname(url);
+            if (host) {
+                for (int d = 0; news_domains[d]; d++) {
+                    if (strcasestr(host, news_domains[d])) {
+                        free((void*)host);
+                        return true;
+                    }
+                }
+                free((void*)host);
+            }
+        }
+    }
+    return false;
+}
+
+/* Public API for blocklist management */
+void url_blocklist_enable(bool enabled) {
+    g_blocklist_enabled = enabled;
+}
+
+bool url_blocklist_add_domain(const char *domain) {
+    if (!domain || g_blocked_domain_count >= MAX_BLOCKED_DOMAINS) return false;
+
+    /* Lowercase the domain */
+    char lower[256];
+    size_t dlen = strlen(domain);
+    if (dlen >= sizeof(lower)) dlen = sizeof(lower) - 1;
+    for (size_t i = 0; i < dlen; i++)
+        lower[i] = (char)tolower((unsigned char)domain[i]);
+    lower[dlen] = '\0';
+
+    /* Check for duplicates */
+    for (int i = 0; i < g_blocked_domain_count; i++) {
+        if (g_blocked_domains[i] && strcmp(g_blocked_domains[i], lower) == 0)
+            return true; /* Already exists */
+    }
+
+    g_blocked_domains[g_blocked_domain_count] = strdup(lower);
+    if (g_blocked_domains[g_blocked_domain_count]) {
+        g_blocked_domain_count++;
+        return true;
+    }
+    return false;
+}
+
+bool url_blocklist_remove_domain(const char *domain) {
+    if (!domain) return false;
+    for (int i = 0; i < g_blocked_domain_count; i++) {
+        if (g_blocked_domains[i] && strcasecmp(g_blocked_domains[i], domain) == 0) {
+            free(g_blocked_domains[i]);
+            g_blocked_domains[i] = g_blocked_domains[--g_blocked_domain_count];
+            g_blocked_domains[g_blocked_domain_count] = NULL;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool url_blocklist_add_category(const char *category) {
+    if (!category || g_blocked_category_count >= MAX_BLOCKED_CATEGORIES) return false;
+
+    /* Check for duplicates */
+    for (int i = 0; i < g_blocked_category_count; i++) {
+        if (g_blocked_categories[i] && strcmp(g_blocked_categories[i], category) == 0)
+            return true;
+    }
+
+    g_blocked_categories[g_blocked_category_count] = strdup(category);
+    if (g_blocked_categories[g_blocked_category_count]) {
+        g_blocked_category_count++;
+        return true;
+    }
+    return false;
+}
+
+bool url_blocklist_remove_category(const char *category) {
+    if (!category) return false;
+    for (int i = 0; i < g_blocked_category_count; i++) {
+        if (g_blocked_categories[i] && strcmp(g_blocked_categories[i], category) == 0) {
+            free(g_blocked_categories[i]);
+            g_blocked_categories[i] = g_blocked_categories[--g_blocked_category_count];
+            g_blocked_categories[g_blocked_category_count] = NULL;
+            return true;
+        }
+    }
+    return false;
+}
+
+void url_blocklist_clear(void) {
+    for (int i = 0; i < g_blocked_domain_count; i++) {
+        free(g_blocked_domains[i]);
+        g_blocked_domains[i] = NULL;
+    }
+    g_blocked_domain_count = 0;
+    for (int i = 0; i < g_blocked_category_count; i++) {
+        free(g_blocked_categories[i]);
+        g_blocked_categories[i] = NULL;
+    }
+    g_blocked_category_count = 0;
+}
+
+/* Load blocklist config from security_config_t */
+void url_blocklist_load_config(const security_config_t *cfg) {
+    if (!cfg) return;
+    g_blocklist_enabled = cfg->website_blocklist_enabled;
+
+    /* Note: domains and categories would be loaded from config YAML.
+     * For now, they're managed via runtime API calls. */
+}
+
+/*
+ * URL Parsing
+ *
+ * extract_hostname() defined below in the URL Parsing section.
+ * The blocklist code uses it via forward declaration.
+ */
+
+/* strcasestr-like — use custom name to avoid conflict with glibc's strcasestr */
+static const char *strcasestr_safe(const char *haystack, const char *needle) {
+    if (!haystack || !needle) return NULL;
+    size_t nlen = strlen(needle);
+    if (nlen == 0) return haystack;
+    while (*haystack) {
+        if (strncasecmp(haystack, needle, nlen) == 0)
+            return haystack;
+        haystack++;
+    }
+    return NULL;
 }
 
 /* ================================================================
@@ -207,10 +488,20 @@ bool url_is_safe(const char *url) {
     /* Quick string check for blocked patterns */
     if (url_is_always_blocked(url)) return false;
 
-    /* DNS resolution + IP check */
+    /* P160: Check website blocklist */
+    if (is_content_category_blocked(url)) return false;
+
+    /* Extract hostname for domain check */
     char *hostname = extract_hostname(url);
     if (!hostname) return false;
 
+    /* P160: Check domain blocklist */
+    if (is_domain_blocked(hostname)) {
+        free(hostname);
+        return false;
+    }
+
+    /* DNS resolution + IP check */
     bool safe = url_check_ip(hostname);
     free(hostname);
     return safe;

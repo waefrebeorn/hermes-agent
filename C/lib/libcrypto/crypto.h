@@ -71,6 +71,15 @@ unsigned char *crypto_hex_decode(const char *hex, size_t *out_len);
 /* Convert bytes to hex string. Returns malloc'd string. */
 char *crypto_hex_encode(const unsigned char *data, size_t len);
 
+/* === Simple encrypt/decrypt for credential vault (P167) === */
+/* XOR-based obfuscation using derived key. NOT production-grade security.
+ * Uses SHA-256 to derive a keystream from the passphrase, then XORs
+ * data with it. Output is hex-encoded. */
+unsigned char *hermes_encrypt(const unsigned char *plaintext, size_t pt_len,
+                               const unsigned char *key, size_t *out_len);
+unsigned char *hermes_decrypt(const unsigned char *ciphertext, size_t ct_len,
+                               const unsigned char *key, size_t *out_len);
+
 #ifdef __cplusplus
 }
 #endif

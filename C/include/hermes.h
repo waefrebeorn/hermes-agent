@@ -638,4 +638,143 @@ bool agent_session_branch(agent_state_t *state, const char *new_id, int branch_p
 /* P150: Migrate all sessions to latest schema. Returns number migrated. */
 int agent_session_migrate(agent_state_t *state);
 
+/* ================================================================
+ *  P159-P168: Security phase functions
+ * ================================================================ */
+
+/* P159: Secrets redaction */
+char *hermes_redact(const char *input);
+bool hermes_redact_add_pattern(const char *pattern);
+void hermes_redact_clear_patterns(void);
+void hermes_redact_load_config(const char *patterns_str);
+
+/* P160: Website blocklist */
+void url_blocklist_enable(bool enabled);
+bool url_blocklist_add_domain(const char *domain);
+bool url_blocklist_remove_domain(const char *domain);
+bool url_blocklist_add_category(const char *category);
+bool url_blocklist_remove_category(const char *category);
+void url_blocklist_clear(void);
+void url_blocklist_load_config(const security_config_t *cfg);
+
+/* P161: Command allowlist */
+bool allowlist_add(const char *tool, const char *pattern);
+bool allowlist_remove(const char *tool, const char *pattern);
+void allowlist_clear(void);
+bool allowlist_check(const char *tool, const char *command);
+
+/* P162: Approval timeout */
+void approval_set_timeout(int seconds);
+int approval_get_timeout(void);
+
+/* P163: Tirith security policy (wired via approval/tool dispatch) */
+
+/* P164: Audit log */
+bool audit_init(const char *log_dir);
+void audit_shutdown(void);
+void audit_log_security(const char *category, const char *action,
+                         const char *result, const char *reason,
+                         const char *detail);
+void audit_log_approval(const char *tool, const char *command, bool approved);
+void audit_log_redaction(const char *context, const char *pattern_matched);
+void audit_log_violation(const char *rule, const char *detail);
+
+/* P165: Rate limiting */
+bool rate_limit_init_tool(const char *tool_name, int max_per_minute);
+bool rate_limit_init_provider(const char *provider_name, int max_per_minute);
+bool rate_limit_check_tool(const char *tool_name);
+bool rate_limit_check_provider(const char *provider_name);
+int rate_limit_remaining_tool(const char *tool_name);
+void rate_limit_reset_all(void);
+void rate_limit_clear(void);
+
+/* P166: Output sanitization */
+char *hermes_sanitize_output(const char *tool_name, const char *raw_output);
+
+/* P167: Credential vault */
+bool vault_set_master_key(const char *passphrase);
+bool vault_has_master_key(void);
+void vault_lock(void);
+void vault_set_path(const char *path);
+bool vault_save(void);
+bool vault_load(void);
+bool vault_store(const char *service, const char *key, const char *value);
+const char *vault_retrieve(const char *service, const char *key);
+bool vault_delete(const char *service, const char *key);
+int vault_list_services(char services[][128], int max_count);
+
+/* P168: File sandbox */
+void sandbox_init(void);
+void sandbox_enable(bool enabled);
+bool sandbox_add_allowed_dir(const char *dir);
+bool sandbox_remove_allowed_dir(const char *dir);
+void sandbox_clear(void);
+bool sandbox_check_path(const char *path);
+void sandbox_set_symlink_check(bool enabled);
+
+/* ================================================================
+ *  P169-P178: Cron/Scheduler phase functions
+ * ================================================================ */
+
+/* P169: SQLite job store */
+typedef struct cron_sqlite_store_t cron_sqlite_store_t;
+cron_sqlite_store_t *cron_sqlite_open(const char *path);
+void cron_sqlite_close(cron_sqlite_store_t *store);
+bool cron_sqlite_save_job(cron_sqlite_store_t *store, const char *name,
+                           const char *schedule, const char *command,
+                           bool active, int retry_count, int max_retries,
+                           const char *chain_from, const char *template_name,
+                           const char *script_type);
+bool cron_sqlite_load_jobs(cron_sqlite_store_t *store);
+bool cron_sqlite_delete_job(cron_sqlite_store_t *store, const char *name);
+bool cron_sqlite_update_job(cron_sqlite_store_t *store, const char *name,
+                             const char *field, const char *value);
+
+/* P170: Cron expression parser (libcron already exists — see lib/libcron/cron.h) */
+
+/* P171: Job locking */
+bool cron_lock_acquire(const char *lock_name);
+void cron_lock_release(const char *lock_name);
+bool cron_lock_is_locked(const char *lock_name);
+
+/* P172: Job retry */
+bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec);
+int  cron_job_get_retry_count(const char *job_name);
+int  cron_job_get_max_retries(const char *job_name);
+
+/* P173: Job notification */
+bool cron_notify_set_channel(const char *channel_id);
+bool cron_notify_on_complete(const char *job_name, bool enabled);
+bool cron_notify_on_failure(const char *job_name, bool enabled);
+
+/* P174: Job chaining */
+bool cron_chain_set_context(const char *job_name, const char *context_from);
+const char *cron_chain_get_context(const char *job_name);
+char *cron_chain_get_output(const char *job_name);
+void cron_chain_store_output(const char *job_name, const char *output);
+
+/* P175: Job templating */
+bool cron_template_create(const char *name, const char *schedule,
+                           const char *command, const char *params_json);
+bool cron_template_instantiate(const char *template_name,
+                                const char *params_json,
+                                char *out_name, size_t out_name_sz,
+                                char *out_schedule, size_t out_sched_sz,
+                                char *out_command, size_t out_cmd_sz);
+
+/* P176: Scheduler CLI */
+char *cron_cmd_handler(const char *args_json, const char *task_id);
+
+/* P177: Script-based jobs */
+bool cron_script_set_interpreter(const char *job_name, const char *interpreter);
+char *cron_run_script(const char *script_path, const char *interpreter,
+                       const char *args, int *exit_code);
+
+/* P178: Watchdog mode */
+bool cron_watchdog_enable(void);
+void cron_watchdog_disable(void);
+bool cron_watchdog_is_active(void);
+void cron_watchdog_ping(void);
+int  cron_watchdog_check(time_t timeout_sec);
+
 #endif /* HERMES_H */

@@ -274,3 +274,82 @@ char *crypto_hex_encode(const unsigned char *data, size_t len) {
         snprintf(out + i * 2, 3, "%02x", data[i]);
     return out;
 }
+
+/* === Simple encrypt/decrypt for credential vault (P167) === */
+
+/* XOR-based encrypt: derive keystream from key via SHA-256,
+ * XOR plaintext with keystream, output hex-encoded. */
+unsigned char *hermes_encrypt(const unsigned char *plaintext, size_t pt_len,
+                               const unsigned char *key, size_t *out_len) {
+    if (!plaintext || !key || !out_len) return NULL;
+
+    /* Derive keystream: SHA-256(key || counter) for each block */
+    size_t blocks = (pt_len + 31) / 32;  /* SHA-256 outputs 32 bytes */
+    unsigned char *keystream = (unsigned char *)calloc(blocks * 32, 1);
+    unsigned char *ciphertext = (unsigned char *)malloc(pt_len);
+    if (!keystream || !ciphertext) { free(keystream); free(ciphertext); return NULL; }
+
+    for (size_t b = 0; b < blocks; b++) {
+        unsigned char block_input[32 + 8];
+        size_t key_len = strlen((const char *)key);
+        size_t copy_len = key_len < 32 ? key_len : 32;
+        memset(block_input, 0, sizeof(block_input));
+        memcpy(block_input, key, copy_len);
+        /* Append counter */
+        for (int j = 0; j < 8; j++)
+            block_input[32 + j] = (unsigned char)((b >> (j * 8)) & 0xFF);
+        crypto_sha256(block_input, sizeof(block_input), keystream + b * 32);
+    }
+
+    for (size_t i = 0; i < pt_len; i++)
+        ciphertext[i] = plaintext[i] ^ keystream[i];
+
+    free(keystream);
+
+    /* Hex-encode output */
+    char *hex = crypto_hex_encode(ciphertext, pt_len);
+    free(ciphertext);
+
+    if (!hex) return NULL;
+    *out_len = pt_len * 2;
+    return (unsigned char *)hex;
+}
+
+unsigned char *hermes_decrypt(const unsigned char *ciphertext, size_t ct_len,
+                               const unsigned char *key, size_t *out_len) {
+    if (!ciphertext || !key || !out_len) return NULL;
+
+    /* Hex decode first */
+    size_t bin_len = 0;
+    unsigned char *binary = crypto_hex_decode((const char *)ciphertext, &bin_len);
+    if (!binary) return NULL;
+
+    unsigned char *result = NULL;
+    /* Derive keystream same way */
+    size_t blocks = (bin_len + 31) / 32;
+    unsigned char *keystream = (unsigned char *)calloc(blocks * 32, 1);
+    if (!keystream) { free(binary); return NULL; }
+
+    for (size_t b = 0; b < blocks; b++) {
+        unsigned char block_input[32 + 8];
+        size_t key_len = strlen((const char *)key);
+        size_t copy_len = key_len < 32 ? key_len : 32;
+        memset(block_input, 0, sizeof(block_input));
+        memcpy(block_input, key, copy_len);
+        for (int j = 0; j < 8; j++)
+            block_input[32 + j] = (unsigned char)((b >> (j * 8)) & 0xFF);
+        crypto_sha256(block_input, sizeof(block_input), keystream + b * 32);
+    }
+
+    result = (unsigned char *)malloc(bin_len + 1);
+    if (!result) { free(keystream); free(binary); return NULL; }
+
+    for (size_t i = 0; i < bin_len; i++)
+        result[i] = binary[i] ^ keystream[i];
+    result[bin_len] = '\0';
+
+    free(keystream);
+    free(binary);
+    *out_len = bin_len;
+    return result;
+}

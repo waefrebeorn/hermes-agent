@@ -13,6 +13,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <sys/select.h>
+
+/* Forward declarations for P164 audit logging */
+void audit_log_security(const char *category, const char *action,
+                         const char *result, const char *reason,
+                         const char *detail);
 
 /* ================================================================
  *  Dangerous Patterns
@@ -89,6 +95,9 @@ void approval_set_yolo(bool enabled) {
 void approval_set_allowlist_path(const char *path) {
     if (path) snprintf(g_allowlist_path, sizeof(g_allowlist_path), "%s", path);
 }
+
+/* P162: Forward declaration for approval timeout */
+static int g_approval_timeout;
 
 /* Load persistent allowlist from file */
 void approval_load_allowlist(void) {
@@ -218,15 +227,35 @@ static bool approval_prompt_user(const char *tool, const char *reason,
     fprintf(stderr, "  Tool: %s\n", tool);
     fprintf(stderr, "  Reason: %s\n", reason);
     if (detail) fprintf(stderr, "  Detail: %s\n", detail);
+    fprintf(stderr, "  Timeout: %ds\n", g_approval_timeout);
     fprintf(stderr, "  Approve? [y/N/a(always)/n] ");
 
     /* If not interactive (piped input), deny by default */
     if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "\n  → Denied (non-interactive mode)\n");
+        audit_log_security("approval", tool, "denied", "non-interactive", detail);
         return false;
     }
 
+    /* P162: Approval timeout — use alarm or select-based timeout */
     char response[16];
+    response[0] = '\0';
+
+    /* Set up timeout via select on stdin */
+    struct timeval tv;
+    tv.tv_sec = g_approval_timeout;
+    tv.tv_usec = 0;
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+
+    int sel_ret = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &tv);
+    if (sel_ret <= 0) {
+        fprintf(stderr, "\n  → Auto-denied (timeout after %ds)\n", g_approval_timeout);
+        audit_log_security("approval", tool, "timeout", reason, detail);
+        return false;
+    }
+
     if (!fgets(response, sizeof(response), stdin))
         return false;
 
@@ -235,17 +264,113 @@ static bool approval_prompt_user(const char *tool, const char *reason,
 
     if (response[0] == 'y') {
         approval_cache_add(tool, detail, true, false);
+        audit_log_security("approval", tool, "approved_once", reason, detail);
         return true;
     }
     if (response[0] == 'a') {
         approval_cache_add(tool, detail, true, true);
         approval_save_allowlist();
         fprintf(stderr, "  → Approved permanently (saved to allowlist).\n");
+        audit_log_security("approval", tool, "approved_always", reason, detail);
         return true;
     }
     approval_cache_add(tool, detail, false, true);
     fprintf(stderr, "  → Denied.\n");
+    audit_log_security("approval", tool, "denied", reason, detail);
     return false;
+}
+
+/* ================================================================
+ *  Command Allowlist (P161)
+ * ================================================================ */
+
+/* Per-tool accepted command patterns. When configured, only commands matching
+ * these patterns are allowed. Format: "tool_name:pattern" */
+#define MAX_ALLOWLIST_ENTRIES 128
+
+static struct {
+    char tool[64];
+    char pattern[256];  /* Simple substring match (eventually glob) */
+} g_allowlist[MAX_ALLOWLIST_ENTRIES];
+static int g_allowlist_count = 0;
+
+/* P161: Add command allowlist entry */
+bool allowlist_add(const char *tool, const char *pattern) {
+    if (!tool || !pattern || g_allowlist_count >= MAX_ALLOWLIST_ENTRIES)
+        return false;
+
+    /* Check for duplicates */
+    for (int i = 0; i < g_allowlist_count; i++) {
+        if (strcmp(g_allowlist[i].tool, tool) == 0 &&
+            strcmp(g_allowlist[i].pattern, pattern) == 0)
+            return true;
+    }
+
+    snprintf(g_allowlist[g_allowlist_count].tool, sizeof(g_allowlist[0].tool), "%s", tool);
+    snprintf(g_allowlist[g_allowlist_count].pattern, sizeof(g_allowlist[0].pattern), "%s", pattern);
+    g_allowlist_count++;
+    return true;
+}
+
+/* P161: Remove allowlist entry */
+bool allowlist_remove(const char *tool, const char *pattern) {
+    if (!tool) return false;
+    for (int i = 0; i < g_allowlist_count; i++) {
+        bool match_tool = strcmp(g_allowlist[i].tool, tool) == 0;
+        bool match_pat = !pattern || strcmp(g_allowlist[i].pattern, pattern) == 0;
+        if (match_tool && match_pat) {
+            g_allowlist[i] = g_allowlist[--g_allowlist_count];
+            g_allowlist[g_allowlist_count].tool[0] = '\0';
+            g_allowlist[g_allowlist_count].pattern[0] = '\0';
+            return true;
+        }
+    }
+    return false;
+}
+
+/* P161: Clear all allowlist entries */
+void allowlist_clear(void) {
+    memset(g_allowlist, 0, sizeof(g_allowlist));
+    g_allowlist_count = 0;
+}
+
+/* P161: Check if a command is allowed by the allowlist for a tool.
+ * Returns: true if allowed, false if denied.
+ * If the tool has no allowlist entries, all commands pass.
+ * If it has entries, the command must match at least one. */
+bool allowlist_check(const char *tool, const char *command) {
+    if (!tool || !command) return false;
+
+    /* Count entries for this tool */
+    bool has_entries = false;
+    for (int i = 0; i < g_allowlist_count; i++) {
+        if (strcmp(g_allowlist[i].tool, tool) == 0) {
+            has_entries = true;
+            if (strstr(command, g_allowlist[i].pattern))
+                return true; /* Matched */
+        }
+    }
+
+    /* If no entries exist for this tool, allow all (opt-in system) */
+    if (!has_entries) return true;
+
+    /* Had entries but none matched */
+    return false;
+}
+
+/* ================================================================
+ *  Approval Timeout (P162)
+ * ================================================================ */
+
+/* Default approval timeout in seconds */
+static int g_approval_timeout = 30;
+
+void approval_set_timeout(int seconds) {
+    g_approval_timeout = seconds > 0 ? seconds : 30;
+}
+
+int approval_get_timeout(void) {
+    return g_approval_timeout;
 }
 
 /* ================================================================
@@ -274,6 +399,17 @@ int approval_check(const char *tool_name, const char *args_json) {
     /* Check terminal tool */
     if (strcmp(tool_name, "terminal") == 0) {
         const char *cmd = json_get_str(args, "command", "");
+
+        /* P161: Check command allowlist */
+        if (!allowlist_check(tool_name, cmd)) {
+            danger_reason = "Command not in allowlist";
+            danger_detail = cmd;
+            json_free(args);
+            /* Denied — command not in allowlist */
+            audit_log_security("allowlist", tool_name, "denied", "command not in allowlist", cmd);
+            return 0;
+        }
+
         if (cmd && approval_is_terminal_dangerous(cmd)) {
             danger_reason = "Dangerous shell command";
             danger_detail = cmd;
