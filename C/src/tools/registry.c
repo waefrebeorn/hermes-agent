@@ -68,6 +68,7 @@ void registry_set_available(const char *name, bool available) {
  * ================================================================ */
 
 tool_t *registry_find(const char *name) {
+    if (!name) return NULL;
     for (size_t i = 0; i < g_registry.count; i++) {
         if (strcmp(g_registry.tools[i].name, name) == 0 && g_registry.tools[i].available)
             return &g_registry.tools[i];

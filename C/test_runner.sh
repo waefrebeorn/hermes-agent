@@ -130,6 +130,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "cli_commands (compilation failed)"
 fi
 
+# Tool registry test (needs registry.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_tool_registry.c" \
+    "$CDIR/src/tools/registry.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tools -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tools > /dev/null 2>&1; then ok "tool_registry (46 tests)"
+    else fail "tool_registry (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tools
+else skip "tool_registry (compilation failed)"
+fi
+
 # ==============================================
 # ==============================================
 # 2. Plugin tests
