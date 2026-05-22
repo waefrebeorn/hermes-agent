@@ -1,15 +1,16 @@
 # Slermes C — Overnight Map (May 21 session)
 
 ## What Changed This Session
-- **P87: Tool call parallelism** — pthread-based parallel tool dispatch (non-Windows), sequential fallback
-- **P89: Interrupt handling** — SIGINT handler, clean shutdown, agent_free unregisters
-- **P90: Smart context eviction** — 3 strategies: tool-first, user-pairs, keep-N. Token estimation API
-- Commits: c013c43 (P87), f2e3de2 (P89), 11679e3 (P90)
-- All pushed to wubu=waefrebeorn/hermes-agent main
+- **P95: Stream diagnostic** — token-level timing, latency breakdown per provider. `stream_diag_t` struct in `llm_response_t`, `mono_time()` helper, first-token tracking in both streaming paths, `finalize_stream_diag()` computes TTFB/total_stream_time/tokens_per_second
+- **P97: Compression feedback** — `compression_feedback_t` struct with `quality_score` (EMA), `adapt_threshold` (active 0.1-0.9), positive/negative rating functions, threshold adjustment
+- **P98: Checkpoint manager** — `checkpoint_t`/`checkpoint_manager_t` structs, `checkpoint.c` with save/restore/list/try_autosave, auto-save every N turns (default 5)
+- **P100: Background review** — `llm_background_review()` in llm_client.c, LLM-based review of tool results for issues/improvements/security
+- Refactored: `message_clone()` moved from static in agent_loop.c to exported in context.c
+- Commits pending
 
-## What's Next (P91-P100: Agent loop depth)
-- **P91: System prompt caching** — deduplicate system prompt across turns
-- **P92: Prefill messages** — Anthropic-style prefill support
-- **P93: Tool result classification** — error/fatal/success marking
-- **P94: Reasoning content** — depth (already stored in message_t)
-- **P95-P100:** Streaming diagnostics, compression feedback, checkpoints, init, background review
+## What's Next (P86-P100 remaining)
+- P86+P88, P87, P89, P90, P91, P92, P93, P94, P95, P96, P97, P98, P99, P100 all done ✅
+- **P86-P100 block COMPLETE**
+
+## Next Block (P101+)
+- Gateway depth, delegation, plugins, session DB, memory, security, cron, skills, TUI

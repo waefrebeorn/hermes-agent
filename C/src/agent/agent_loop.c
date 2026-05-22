@@ -63,6 +63,10 @@ void agent_init(agent_state_t *state) {
     agent_generate_session_id(state);
     /* Register built-in LLM providers */
     provider_register_builtins();
+    /* P97: Initialize compression feedback tracker */
+    compression_feedback_init(&state->compression_fb);
+    /* P98: Initialize checkpoint manager */
+    checkpoint_init(&state->checkpoints);
 }
 
 /* P99: Initialize agent infrastructure from configuration.
@@ -114,6 +118,8 @@ void agent_free(agent_state_t *state) {
         signal(SIGINT, SIG_DFL);
     }
 #endif
+    /* P98: Free checkpoint manager */
+    checkpoint_free(&state->checkpoints);
 }
 
 void agent_generate_session_id(agent_state_t *state) {
@@ -427,6 +433,8 @@ char *agent_run_conversation(agent_state_t *state,
         /* Has tool calls — create assistant message with tool_calls */
         /* Snapshot before tool execution for undo */
         agent_snapshot_take(state);
+        /* P98: Try auto-save checkpoint */
+        checkpoint_try_autosave(&state->checkpoints, state);
         message_t *assistant_msg = message_new_assistant_with_toolcalls(
             llm_resp->content, llm_resp->tool_calls, llm_resp->tool_calls_count,
             llm_resp->reasoning);
@@ -550,22 +558,7 @@ char *agent_run_conversation(agent_state_t *state,
  *  P28: Undo snapshot
  * ================================================================ */
 
-static message_t *message_clone(const message_t *src) {
-    message_t *dst = (message_t *)calloc(1, sizeof(message_t));
-    if (!dst) return NULL;
-    dst->role = src->role;
-    if (src->content) dst->content = strdup(src->content);
-    if (src->tool_call_id) dst->tool_call_id = strdup(src->tool_call_id);
-    if (src->tool_name) dst->tool_name = strdup(src->tool_name);
-    if (src->reasoning) dst->reasoning = strdup(src->reasoning);
-    dst->tool_calls_count = src->tool_calls_count;
-    for (int i = 0; i < src->tool_calls_count && i < 64; i++) {
-        snprintf(dst->tool_calls[i].id, sizeof(dst->tool_calls[i].id), "%s", src->tool_calls[i].id);
-        snprintf(dst->tool_calls[i].name, sizeof(dst->tool_calls[i].name), "%s", src->tool_calls[i].name);
-        snprintf(dst->tool_calls[i].arguments, sizeof(dst->tool_calls[i].arguments), "%s", src->tool_calls[i].arguments);
-    }
-    return dst;
-}
+/* Note: message_clone() is now in context.c (exported from hermes_agent.h) */
 
 void agent_snapshot_take(agent_state_t *state) {
     /* Free old snapshot if any */

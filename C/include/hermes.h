@@ -96,6 +96,19 @@ typedef struct {
     bool  system_cached; /* P91: system prompt cache primed */
 } llm_config_t;
 
+/* P95: Stream diagnostic — token-level timing and latency breakdown */
+typedef struct {
+    double  time_to_first_token;   /* seconds from request to first token */
+    double  total_stream_time;     /* seconds from first to last token */
+    double  tokens_per_second;     /* average throughput during stream */
+    size_t  total_tokens;          /* total tokens received in stream */
+    bool    first_token_received;  /* set when first content token arrives */
+    /* Internal: timing markers */
+    double  request_start_time;    /* monotonic time when request was sent */
+    double  first_token_time;      /* monotonic time when first token arrived */
+    double  stream_end_time;       /* monotonic time when stream finished */
+} stream_diag_t;
+
 /* LLM response */
 typedef struct {
     char         *content;
@@ -104,6 +117,8 @@ typedef struct {
     int           output_tokens;
     int           tool_calls_count;
     tool_call_t   tool_calls[64]; /* Max 64 tool calls per turn */
+    /* P95: Stream diagnostic — populated by streaming path */
+    stream_diag_t diag;
 } llm_response_t;
 
 /* Forward declaration for session database (defined in hermes_db.h) */
@@ -112,6 +127,34 @@ typedef struct db_t db_t;
 /* Streaming output callback. Called with each token content during LLM response.
  * Return non-zero to abort. */
 typedef int (*llm_token_cb_t)(const char *token, void *userdata);
+
+/* P97: Compression feedback — user-rated quality, adaptive threshold */
+typedef struct {
+    int   total_compressions;    /* number of compression events tracked */
+    int   positive_feedback;     /* user rated compression as good */
+    int   negative_feedback;     /* user rated compression as bad */
+    float quality_score;         /* running quality score (0-1) */
+    float adapt_threshold;       /* adaptive threshold factor (0.1-0.9) */
+} compression_feedback_t;
+
+/* P98: Checkpoint types */
+typedef struct {
+    message_t  **messages;
+    size_t       count;
+    size_t       capacity;
+    char         id[64];       /* timestamp-based unique ID */
+    char         label[128];   /* optional user label (e.g., "before_debug") */
+    time_t       created_at;
+} checkpoint_t;
+
+typedef struct {
+    checkpoint_t *checkpoints;
+    size_t        count;
+    size_t        capacity;
+    int           max_snapshots;        /* max checkpoints to keep */
+    int           auto_save_interval;   /* turns between auto-saves */
+    int           turn_counter;         /* turns since last auto-save */
+} checkpoint_manager_t;
 
 /* ================================================================
  *  Agent State
@@ -141,6 +184,10 @@ typedef struct {
     budget_tracker_t *budget;
     /* P92: Prefill message — assistant message injected before first user turn */
     char  prefill[4096];
+    /* P97: Compression feedback tracker */
+    compression_feedback_t compression_fb;
+    /* P98: Checkpoint manager — auto-save, named checkpoints, rollback */
+    checkpoint_manager_t  checkpoints;
 } agent_state_t;
 
 /* ================================================================

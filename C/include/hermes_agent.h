@@ -37,6 +37,8 @@ message_t *message_new_assistant_with_toolcalls(const char *content,
                                                   int tcalls_count,
                                                   const char *reasoning);
 void message_free(message_t *msg);
+/* Clone a message (deep copy) */
+message_t *message_clone(const message_t *src);
 
 /* === Context operations (context.c) === */
 void context_init(agent_state_t *state);
@@ -59,6 +61,23 @@ int  context_total_tokens(const agent_state_t *state);
 void context_evict_smart(agent_state_t *state, size_t max_messages,
                           eviction_strategy_t strategy);
 const char *context_get_system(const agent_state_t *state);
+
+/* P97: Compression feedback — user-rated quality and adaptive threshold */
+void compression_feedback_init(compression_feedback_t *fb);
+void compression_feedback_positive(compression_feedback_t *fb);
+void compression_feedback_negative(compression_feedback_t *fb);
+float compression_feedback_get_threshold(const compression_feedback_t *fb, float config_threshold);
+void compression_feedback_status(const compression_feedback_t *fb, char *buf, size_t sz);
+
+/* P98: Checkpoint manager — auto-save, named checkpoints, rollback */
+void    checkpoint_init(checkpoint_manager_t *mgr);
+void    checkpoint_free(checkpoint_manager_t *mgr);
+void    checkpoint_set_limits(checkpoint_manager_t *mgr, int max_snapshots, int auto_save_interval);
+bool    checkpoint_save(checkpoint_manager_t *mgr, agent_state_t *state, const char *label);
+bool    checkpoint_restore(checkpoint_manager_t *mgr, agent_state_t *state, const char *checkpoint_id);
+size_t  checkpoint_list(const checkpoint_manager_t *mgr, char (*ids)[64], char (*labels)[128], size_t max_count);
+size_t  checkpoint_count(const checkpoint_manager_t *mgr);
+bool    checkpoint_try_autosave(checkpoint_manager_t *mgr, agent_state_t *state);
 
 /* === LLM Client (llm_client.c) === */
 llm_response_t *llm_chat_completion(llm_config_t *cfg,
@@ -92,6 +111,13 @@ void llm_truncate_context(agent_state_t *state, size_t max_tokens);
  * Returns summary string (caller inserts) or NULL (fall back to dropping).
  * Pass compression.enabled flag from config. */
 char *llm_compress_context(agent_state_t *state, size_t max_tokens, bool enabled);
+
+/* P100: Background review — lightweight AI review of tool results.
+ * Returns malloc'd review text, caller must free. */
+char *llm_background_review(llm_config_t *cfg,
+                             const char *tool_name,
+                             const char *tool_args,
+                             const char *tool_result);
 
 /* === Agent Loop (agent_loop.c) === */
 void agent_init(agent_state_t *state);

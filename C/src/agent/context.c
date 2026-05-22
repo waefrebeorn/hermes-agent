@@ -79,6 +79,23 @@ void message_free(message_t *msg) {
     free(msg);
 }
 
+/* Clone a message (deep copy) */
+message_t *message_clone(const message_t *src) {
+    if (!src) return NULL;
+    message_t *dst = (message_t *)calloc(1, sizeof(message_t));
+    if (!dst) return NULL;
+    dst->role = src->role;
+    dst->content = src->content ? strdup(src->content) : NULL;
+    dst->tool_call_id = src->tool_call_id ? strdup(src->tool_call_id) : NULL;
+    dst->tool_name = src->tool_name ? strdup(src->tool_name) : NULL;
+    dst->reasoning = src->reasoning ? strdup(src->reasoning) : NULL;
+    dst->tool_calls_count = src->tool_calls_count;
+    for (int i = 0; i < src->tool_calls_count && i < 64; i++) {
+        memcpy(&dst->tool_calls[i], &src->tool_calls[i], sizeof(tool_call_t));
+    }
+    return dst;
+}
+
 /* ================================================================
  *  Context operations
  * ================================================================ */
@@ -299,4 +316,57 @@ const char *context_get_system(const agent_state_t *state) {
         if (state->messages[i]->role == MSG_SYSTEM)
             return state->messages[i]->content;
     return NULL;
+}
+
+/* ================================================================
+ *  P97: Compression feedback tracker
+ * ================================================================ */
+
+/* Track user ratings of compression quality and adapt threshold */
+void compression_feedback_init(compression_feedback_t *fb) {
+    if (!fb) return;
+    memset(fb, 0, sizeof(*fb));
+    fb->quality_score = 0.5f;  /* start neutral */
+    fb->adapt_threshold = 0.5f; /* default threshold */
+}
+
+/* Record positive feedback: user said compression was good.
+ * Increases quality score and may raise threshold (compress more aggressively). */
+void compression_feedback_positive(compression_feedback_t *fb) {
+    if (!fb) return;
+    fb->total_compressions++;
+    fb->positive_feedback++;
+    /* Update running quality score (EMA-like) */
+    fb->quality_score = fb->quality_score * 0.7f + 1.0f * 0.3f;
+    /* If compression is consistently good, raise threshold to compress more */
+    if (fb->positive_feedback >= 3 && fb->negative_feedback == 0)
+        fb->adapt_threshold += 0.05f;
+    if (fb->adapt_threshold > 0.9f) fb->adapt_threshold = 0.9f;
+}
+
+/* Record negative feedback: user said compression was bad.
+ * Decreases quality score and lowers threshold (compress less). */
+void compression_feedback_negative(compression_feedback_t *fb) {
+    if (!fb) return;
+    fb->total_compressions++;
+    fb->negative_feedback++;
+    fb->quality_score = fb->quality_score * 0.7f + (-0.5f) * 0.3f;
+    if (fb->quality_score < 0.0f) fb->quality_score = 0.0f;
+    /* Lower threshold to compress less aggressively */
+    fb->adapt_threshold -= 0.1f;
+    if (fb->adapt_threshold < 0.1f) fb->adapt_threshold = 0.1f;
+}
+
+/* Get the effective compression threshold (config default * adaptive factor) */
+float compression_feedback_get_threshold(const compression_feedback_t *fb, float config_threshold) {
+    if (!fb) return config_threshold;
+    return config_threshold * fb->adapt_threshold;
+}
+
+/* Get a brief status string for display */
+void compression_feedback_status(const compression_feedback_t *fb, char *buf, size_t sz) {
+    if (!fb || !buf || sz == 0) return;
+    snprintf(buf, sz, "compr: %d pos, %d neg, score=%.2f, thresh=%.2f",
+             fb->positive_feedback, fb->negative_feedback,
+             fb->quality_score, fb->adapt_threshold);
 }

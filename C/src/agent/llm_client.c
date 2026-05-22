@@ -11,6 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+/* ================================================================
+ *  Time helpers
+ * ================================================================ */
+
+/* P95: Monotonic time in seconds (for stream diagnostic timing) */
+static double mono_time(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
 
 /* ================================================================
  *  Internal helpers
@@ -421,6 +433,10 @@ typedef struct {
     char             tc_name[64][128]; /* name per index */
     char             tc_args[64][4096]; /* args buffer per index */
     bool             streaming_done; /* set when streaming is complete */
+    /* P95: Stream diagnostic timing */
+    double           req_start_time;  /* monotonic time of request send */
+    size_t           token_count;     /* running token count */
+    bool             first_token_flag; /* first content token tracked */
 } stream_ctx_t;
 
 /* Provider-aware stream chunk handler.
@@ -440,6 +456,15 @@ static int on_provider_stream_chunk(const char *data, size_t len, void *userdata
     if (delta) {
         /* Text content from provider */
         if (delta->content && delta->content[0]) {
+            /* P95: Track first token timing */
+            if (!ctx->first_token_flag) {
+                ctx->first_token_flag = true;
+                ctx->resp->diag.first_token_time = mono_time();
+                ctx->resp->diag.first_token_received = true;
+                ctx->resp->diag.time_to_first_token =
+                    ctx->resp->diag.first_token_time - ctx->req_start_time;
+            }
+            ctx->token_count++;
             size_t cur = ctx->resp->content ? strlen(ctx->resp->content) : 0;
             size_t add = strlen(delta->content);
             char *newc = (char *)realloc(ctx->resp->content, cur + add + 1);
@@ -567,6 +592,15 @@ static int on_stream_chunk(const char *data, size_t len, void *userdata) {
     /* Extract delta content */
     const char *content = json_object_get_string(delta, "content", NULL);
     if (content && content[0]) {
+        /* P95: Track first token timing */
+        if (!ctx->first_token_flag) {
+            ctx->first_token_flag = true;
+            ctx->resp->diag.first_token_time = mono_time();
+            ctx->resp->diag.first_token_received = true;
+            ctx->resp->diag.time_to_first_token =
+                ctx->resp->diag.first_token_time - ctx->req_start_time;
+        }
+        ctx->token_count++;
         /* Append to accumulated content */
         size_t cur = ctx->resp->content ? strlen(ctx->resp->content) : 0;
         size_t add = strlen(content);
@@ -650,6 +684,19 @@ static void finalize_stream_toolcalls(stream_ctx_t *ctx) {
     }
 }
 
+/* P95: Finalize stream diagnostic info */
+static void finalize_stream_diag(stream_ctx_t *ctx) {
+    if (!ctx->resp) return;
+    stream_diag_t *d = &ctx->resp->diag;
+    d->stream_end_time = mono_time();
+    d->total_tokens = ctx->token_count;
+    if (d->first_token_received) {
+        d->total_stream_time = d->stream_end_time - d->first_token_time;
+        if (d->total_stream_time > 0.001)
+            d->tokens_per_second = (double)d->total_tokens / d->total_stream_time;
+    }
+}
+
 llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                                             const message_t **messages,
                                             size_t message_count,
@@ -689,6 +736,7 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
         ctx.userdata = userdata;
         ctx.prov_ops = ops;
         ctx.prov = prov;
+        ctx.req_start_time = mono_time(); /* P95: start timing */
 
         http_t *h = http_new(60);
         int r = http_stream_request(h, HTTP_POST, url,
@@ -696,6 +744,9 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                                     on_provider_stream_chunk, &ctx);
         free(url); free(headers); free(body);
         http_free(h);
+
+        /* P95: Finalize stream diagnostics */
+        finalize_stream_diag(&ctx);
 
         if (r != 0 && r != -2) {
             if (!resp->content)
@@ -755,12 +806,13 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                  "Content-Type: application/json");
     }
 
-    /* Make HTTP request */
+    /* Make streaming request */
     stream_ctx_t ctx;
     memset(&ctx, 0, sizeof(ctx));
     ctx.resp = resp;
     ctx.token_cb = token_cb;
     ctx.userdata = userdata;
+    ctx.req_start_time = mono_time(); /* P95: start timing */
 
     /* Make streaming request */
     http_t *h = http_new(60);
@@ -770,6 +822,9 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
     json_free(req);
     free(body);
     http_free(h);
+
+    /* P95: Finalize stream diagnostics */
+    finalize_stream_diag(&ctx);
 
     if (r != 0 && r != -2 /* aborted by callback OK */) {
         resp->content = strdup("HTTP stream request failed");
@@ -787,4 +842,66 @@ void llm_response_free(llm_response_t *resp) {
     free(resp->content);
     free(resp->reasoning);
     free(resp);
+}
+
+/* ================================================================
+ *  P100: Background review — AI review of tool results
+ * ================================================================ */
+
+/* Review prompt template */
+#define REVIEW_PROMPT_P100 \
+    "Review the following tool execution results. Identify any potential issues, " \
+    "suggest improvements, and note any security concerns. " \
+    "Be concise. Output only your review:\n\n"
+
+/* Perform background review of a tool result.
+ * Returns malloc'd review text, or NULL on failure.
+ * This is a lightweight LLM call that should be async/non-blocking
+ * in production. Currently synchronous for simplicity. */
+char *llm_background_review(llm_config_t *cfg,
+                             const char *tool_name,
+                             const char *tool_args,
+                             const char *tool_result) {
+    if (!cfg || !tool_name || !tool_result) return NULL;
+
+    /* Build review text */
+    size_t total = strlen(REVIEW_PROMPT_P100) + 128 +
+                   strlen(tool_name) + 4 +
+                   (tool_args ? strlen(tool_args) : 0) + 1 +
+                   strlen(tool_result) + 1;
+
+    char *text = (char *)malloc(total);
+    if (!text) return NULL;
+    text[0] = '\0';
+
+    strcat(text, REVIEW_PROMPT_P100);
+    size_t cur = strlen(text);
+    snprintf(text + cur, total - cur,
+             "Tool: %s\n"
+             "Arguments: %s\n"
+             "Result:\n%s\n",
+             tool_name, tool_args ? tool_args : "{}", tool_result);
+
+    /* Create review messages */
+    message_t *sys = message_new(MSG_SYSTEM,
+        "You are a code review expert. Review tool execution results "
+        "and identify issues, improvements, and security concerns.");
+    message_t *user = message_new(MSG_USER, text);
+    const message_t *review_msgs[2] = {sys, user};
+
+    /* Use a fresh llm_config copy with no streaming */
+    llm_config_t review_cfg;
+    memcpy(&review_cfg, cfg, sizeof(review_cfg));
+    review_cfg.base_url[0] = '\0';  /* will use default URL */
+
+    llm_response_t *resp = llm_chat_completion(&review_cfg, review_msgs, 2, NULL);
+    char *review = NULL;
+    if (resp && resp->content) {
+        review = strdup(resp->content);
+    }
+    llm_response_free(resp);
+    message_free(sys);
+    message_free(user);
+    free(text);
+    return review;
 }
