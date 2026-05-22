@@ -32,6 +32,7 @@ void registry_init_homeassistant(void);
 void registry_init_kanban(void);
 void registry_init_computer_use(void);
 void registry_init_discord(void);
+void registry_init_mcp(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -61,4 +62,5 @@ void tools_init_all(void) {
     registry_init_kanban();
     registry_init_computer_use();
     registry_init_discord();
+    registry_init_mcp();
 }
