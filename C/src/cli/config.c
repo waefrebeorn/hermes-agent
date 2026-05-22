@@ -369,6 +369,9 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.azure_deployment_id[0] = '\0';
     cfg->provider_cfg.azure_api_version[0] = '\0';
     cfg->provider_cfg.openrouter_provider[0] = '\0';
+    cfg->provider_cfg.bedrock_inference_profile[0] = '\0';
+    cfg->provider_cfg.bedrock_guardrail_config[0] = '\0';
+    cfg->provider_cfg.bedrock_trace_enabled = false;
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -861,6 +864,15 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *or_prov = yaml_get_string(doc, "openrouter.provider");
     if (or_prov) snprintf(cfg->provider_cfg.openrouter_provider,
                            sizeof(cfg->provider_cfg.openrouter_provider), "%s", or_prov);
+
+    /* B39-B41: Bedrock provider depth */
+    const char *br_ip = yaml_get_string(doc, "bedrock.inference_profile");
+    if (br_ip) snprintf(cfg->provider_cfg.bedrock_inference_profile,
+                         sizeof(cfg->provider_cfg.bedrock_inference_profile), "%s", br_ip);
+    const char *br_gc = yaml_get_string(doc, "bedrock.guardrail_config");
+    if (br_gc) snprintf(cfg->provider_cfg.bedrock_guardrail_config,
+                         sizeof(cfg->provider_cfg.bedrock_guardrail_config), "%s", br_gc);
+    cfg->provider_cfg.bedrock_trace_enabled = yaml_get_bool(doc, "bedrock.trace_enabled", false);
 
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
@@ -1597,6 +1609,14 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     /* B43-B46: OpenRouter provider env var */
     v = getenv("HERMES_OPENROUTER_PROVIDER");
     if (v) snprintf(cfg->provider_cfg.openrouter_provider, sizeof(cfg->provider_cfg.openrouter_provider), "%s", v);
+
+    /* B39-B41: Bedrock provider env vars */
+    v = getenv("HERMES_BEDROCK_INFERENCE_PROFILE");
+    if (v) snprintf(cfg->provider_cfg.bedrock_inference_profile, sizeof(cfg->provider_cfg.bedrock_inference_profile), "%s", v);
+    v = getenv("HERMES_BEDROCK_GUARDRAIL_CONFIG");
+    if (v) snprintf(cfg->provider_cfg.bedrock_guardrail_config, sizeof(cfg->provider_cfg.bedrock_guardrail_config), "%s", v);
+    v = getenv("HERMES_BEDROCK_TRACE_ENABLED");
+    if (v) cfg->provider_cfg.bedrock_trace_enabled = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
@@ -2351,6 +2371,9 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "azure.deployment_id", def.provider_cfg.azure_deployment_id, active->provider_cfg.azure_deployment_id);
     diff_str(diff, "azure.api_version", def.provider_cfg.azure_api_version, active->provider_cfg.azure_api_version);
     diff_str(diff, "openrouter.provider", def.provider_cfg.openrouter_provider, active->provider_cfg.openrouter_provider);
+    diff_str(diff, "bedrock.inference_profile", def.provider_cfg.bedrock_inference_profile, active->provider_cfg.bedrock_inference_profile);
+    diff_str(diff, "bedrock.guardrail_config", def.provider_cfg.bedrock_guardrail_config, active->provider_cfg.bedrock_guardrail_config);
+    diff_bool(diff, "bedrock.trace_enabled", def.provider_cfg.bedrock_trace_enabled, active->provider_cfg.bedrock_trace_enabled);
     diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
 
     /* Display group */
@@ -2530,6 +2553,9 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_str(f, "  azure_deployment_id", cfg->provider_cfg.azure_deployment_id);
     exp_str(f, "  azure_api_version", cfg->provider_cfg.azure_api_version);
     exp_str(f, "  openrouter_provider", cfg->provider_cfg.openrouter_provider);
+    exp_str(f, "  bedrock_inference_profile", cfg->provider_cfg.bedrock_inference_profile);
+    exp_str(f, "  bedrock_guardrail_config", cfg->provider_cfg.bedrock_guardrail_config);
+    exp_bool(f, "  bedrock_trace_enabled", cfg->provider_cfg.bedrock_trace_enabled);
     exp_bool(f, "  supports_vision", cfg->provider_cfg.supports_vision);
 
     fprintf(f, "\ndisplay:\n");

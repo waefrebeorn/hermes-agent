@@ -130,6 +130,9 @@ typedef struct {
     char  azure_deployment_id[128]; /* B37: Azure deployment name override */
     char  azure_api_version[32];   /* B38: Azure API version override */
     char  openrouter_provider[2048]; /* B43-B46: OpenRouter provider preferences JSON */
+    char  bedrock_inference_profile[256]; /* B39: Bedrock inference profile ARN/name */
+    char  bedrock_guardrail_config[2048]; /* B40: Bedrock guardrail config JSON */
+    bool  bedrock_trace_enabled;         /* B41: Bedrock trace header */
     int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
     char  fallback_model[128];     /* model to fallback to on error */
     char  fallback_providers[1024]; /* comma-separated fallback providers */
@@ -344,6 +347,9 @@ typedef struct {
     char  azure_deployment_id[128]; /* B37: Azure deployment name override (default: model name) */
     char  azure_api_version[32];   /* B38: Azure API version override (default: 2024-10-01-preview) */
     char  openrouter_provider[2048]; /* B43-B46: OpenRouter provider preferences JSON */
+    char  bedrock_inference_profile[256]; /* B39: Bedrock inference profile ARN/name */
+    char  bedrock_guardrail_config[2048]; /* B40: Bedrock guardrail config JSON */
+    bool  bedrock_trace_enabled;         /* B41: Bedrock trace header */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */
 } provider_config_t;

@@ -177,6 +177,40 @@ else
     skip "azure_depth (compilation failed)"
 fi
 
+# Bedrock provider depth test (B39-B41: inferenceProfile + guardrails + trace)
+echo ""; echo "=== Bedrock Provider Depth Tests (B39-B41) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_bedrock_depth.c" \
+    "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (14 tests)"
+    else
+        echo "  Bedrock depth test output:"
+        /tmp/hermes_test_br_depth 2>&1 | sed 's/^/    /'
+        fail "bedrock_depth (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_br_depth
+else
+    echo "  Bedrock depth test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_bedrock_depth.c" \
+        "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "bedrock_depth (compilation failed)"
+fi
+
 # OpenRouter provider depth test (B43-B46: provider preferences)
 echo ""; echo "=== OpenRouter Provider Depth Tests (B43-B46) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \

@@ -417,6 +417,24 @@ static char *bedrock_build_request_body(const provider_t *p,
     }
     json_object_set(root, "inferenceConfig", inf_config);
 
+    /* B39: Bedrock inference profile */
+    if (p->config.bedrock_inference_profile[0])
+        json_object_set(root, "inferenceProfile", json_new_string(p->config.bedrock_inference_profile));
+
+    /* B40: Bedrock guardrail config */
+    if (p->config.bedrock_guardrail_config[0]) {
+        json_t *gc = json_parse(p->config.bedrock_guardrail_config, NULL);
+        if (gc && gc->type == JSON_OBJECT) {
+            json_object_set(root, "guardrailConfig", gc);
+        } else {
+            json_free(gc);
+        }
+    }
+
+    /* B41: Bedrock trace (enableTrace in request body) */
+    if (p->config.bedrock_trace_enabled)
+        json_object_set(root, "enableTrace", json_new_bool(true));
+
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);
