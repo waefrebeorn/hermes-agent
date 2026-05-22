@@ -82,7 +82,32 @@ static void print_banner(void) {
                    g_cli.config.model[0] ? g_cli.config.model : "(default)",
                    g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
     display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
-                   "  Type /help for commands, /exit to quit\n\n");
+                   "  Type /help for commands, /exit to quit\n");
+
+    /* Auto-load goal from mind-palace */
+    if (g_cli.interactive) {
+        char gp[4096];
+        const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                           getenv("HOME") ? getenv("HOME") : ".";
+        snprintf(gp, sizeof(gp), "%s/mind-palace/goal-mantra.md", home);
+        FILE *gf = fopen(gp, "r");
+        if (gf) {
+            char line[256], first[256] = "";
+            while (fgets(line, sizeof(line), gf)) {
+                if (line[0] == '#' || line[0] == '\n') continue;
+                strncpy(first, line, sizeof(first) - 1);
+                break;
+            }
+            fclose(gf);
+            if (first[0]) {
+                char *nl = strchr(first, '\n');
+                if (nl) *nl = '\0';
+                display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
+                               "  Goal: %s\n", first);
+            }
+        }
+    }
+    printf("\n");
 }
 
 /* Streaming output callback — prints tokens directly to stdout */

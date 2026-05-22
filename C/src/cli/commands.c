@@ -8,8 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <dlfcn.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -1786,10 +1788,59 @@ static void cmd_goal(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
         printf("Usage: /goal <goal description>\n");
+        printf("       /goal show   — show current goal\n");
+        printf("       /goal clear  — clear current goal\n");
         return;
     }
-    printf("Goal set: %s\n", args);
-    printf("(Goal persistence across turns not yet implemented in C CLI)\n");
+
+    if (strcmp(args, "show") == 0) {
+        /* Show saved goal */
+        char path[4096];
+        const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                           getenv("HOME") ? getenv("HOME") : ".";
+        snprintf(path, sizeof(path), "%s/mind-palace/goal-mantra.md", home);
+        FILE *f = fopen(path, "r");
+        if (!f) {
+            printf("No goal set. Use /goal <description> to set one.\n");
+            return;
+        }
+        printf("Current goal:\n");
+        char line[1024];
+        while (fgets(line, sizeof(line), f))
+            printf("%s", line);
+        fclose(f);
+        return;
+    }
+
+    if (strcmp(args, "clear") == 0) {
+        char path[4096];
+        const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                           getenv("HOME") ? getenv("HOME") : ".";
+        snprintf(path, sizeof(path), "%s/mind-palace/goal-mantra.md", home);
+        if (unlink(path) == 0)
+            printf("Goal cleared.\n");
+        else
+            printf("No goal to clear.\n");
+        return;
+    }
+
+    /* Save goal to mind-palace/goal-mantra.md */
+    char dir[4096];
+    const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                       getenv("HOME") ? getenv("HOME") : ".";
+    snprintf(dir, sizeof(dir), "%s/mind-palace", home);
+    mkdir(dir, 0755);
+
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/goal-mantra.md", dir);
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        printf("Error: Cannot save goal to %s\n", path);
+        return;
+    }
+    fprintf(f, "## Goal\n\n%s\n", args);
+    fclose(f);
+    printf("Goal saved: %s\n", args);
 }
 
 /* /agents: Show active subagents */
