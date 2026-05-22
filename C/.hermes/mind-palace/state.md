@@ -19,10 +19,16 @@
 | **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-| **Build/doc** | 10 | 55% | Dockerfile, CI, cross-compile, .dockerignore, man page |
+| **Build/doc** | 9 | 60% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-26 — CHANGELOG.md (O10)
+
+- ✅ **CHANGELOG.md** — Full changelog from v0.1.0 (initial scaffold) through v0.7.0 (test/build infrastructure) to unreleased (current provider test coverage). 150 lines covering all 4 phases, 9 major releases, organized by feature area with suite stats per version.
+- ◀ **Build/doc: 60%** (was 55%, O10 closed)
+- ◀ Committed: `ee65389a3`
 
 ### Session 2026-05-26 — Azure provider full tests + 3 bugfixes
 

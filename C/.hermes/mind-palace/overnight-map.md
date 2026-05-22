@@ -4,6 +4,12 @@
 ~60% complete  •  ~360 gaps remaining  •  125 commits behind upstream
 ```
 
+### Session 2026-05-26 — CHANGELOG.md (O10)
+
+- ✅ **CHANGELOG.md** — 150 lines, covers v0.1.0 through unreleased
+- ◀ **Build/doc: 60%** (was 55%, O10 closed)
+- ◀ Committed: `ee65389a3`
+
 ### Session 2026-05-26 — Azure provider full tests + 3 bugfixes
 
 - ✅ **test_azure_full.c** — 45 assertions: URL, headers, 12 LLM params, response_format/json_mode, metadata, tool_choice, messages, tools, response parsing, streaming, null safety
