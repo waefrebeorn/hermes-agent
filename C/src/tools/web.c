@@ -71,7 +71,7 @@ static const char *SCHEMA_SEARCH = "{"
     "\"type\":\"object\","
     "\"properties\":{"
       "\"query\":{\"type\":\"string\",\"description\":\"Search query\"},"
-      "\"backend\":{\"type\":\"string\",\"description\":\"Search backend: searxng/google/brave/tavily/firecrawl (default: config)\"},"
+      "\"backend\":{\"type\":\"string\",\"description\":\"Search backend: searxng/google/brave/tavily/firecrawl/xai (default: config)\"},"
       "\"count\":{\"type\":\"number\",\"description\":\"Number of results (default: 5)\",\"default\":5}"
     "},"
     "\"required\":[\"query\"]"
@@ -238,6 +238,47 @@ static char *search_firecrawl(http_client_t *client, const char *query, int coun
     return out ? out : strdup("{\"error\":\"Firecrawl: empty response\"}");
 }
 
+/* L03: xAI Web Search via Responses API */
+static char *search_xai(http_client_t *client, const char *query, int count) {
+    const char *api_key = tool_config_get("xai", "api_key");
+    if (!api_key) api_key = getenv("XAI_API_KEY");
+    if (!api_key) return strdup("{\"error\":\"xAI: XAI_API_KEY not set\"}");
+
+    char headers[256];
+    snprintf(headers, sizeof(headers), "Authorization: Bearer %s\r\nContent-Type: application/json", api_key);
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "model", json_new_string("grok-4.3"));
+    json_object_set(body, "input", json_new_string(query));
+    json_t *tools = json_new_array();
+    json_t *ws_tool = json_new_object();
+    json_object_set(ws_tool, "type", json_new_string("web_search"));
+    json_array_append(tools, ws_tool);
+    json_object_set(body, "tools", tools);
+    json_object_set(body, "max_results", json_new_number((double)count));
+
+    char *payload = json_serialize(body);
+    json_free(body);
+
+    http_response_t *resp = http_request(client, HTTP_POST,
+        "https://api.x.ai/v1/responses", headers, payload, strlen(payload));
+    free(payload);
+
+    if (!resp) return strdup("{\"error\":\"xAI: request failed\"}");
+
+    char *out = NULL;
+    if (resp->body) {
+        json_node_t *result = json_new_object();
+        json_object_set(result, "backend", json_new_string("xai"));
+        json_object_set(result, "query", json_new_string(query));
+        json_object_set(result, "results", json_new_string(resp->body));
+        out = json_serialize(result);
+        json_free(result);
+    }
+    http_response_free(resp);
+    return out ? out : strdup("{\"error\":\"xAI: empty response\"}");
+}
+
 /* Main web_search handler — dispatches to configured backend */
 char *web_search_handler(const char *args_json, const char *task_id) {
     (void)task_id;
@@ -288,6 +329,8 @@ char *web_search_handler(const char *args_json, const char *task_id) {
         result = search_tavily(client, query, count); /* Tavily POST needs raw query */
     else if (strcmp(backend, "firecrawl") == 0)
         result = search_firecrawl(client, query, count);
+    else if (strcmp(backend, "xai") == 0)
+        result = search_xai(client, query, count);
     else /* searxng default */
         result = search_searxng(client, encoded_query, count);
 

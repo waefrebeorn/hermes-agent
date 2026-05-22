@@ -17,7 +17,7 @@
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
 | **Tests** | 46 | 50% | **36 files, 2,057 assertions** (67 pass, 0 fail, 0 skip) |
-| **Upstream** | 3 | new | L02-L03, L07 remain (125 commits behind) |
+| **Upstream** | 2 | new | L02-L03 remain (125 commits behind) |
 | **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
@@ -37,3 +37,13 @@
   - Full config wiring: defaults, YAML parsing, env override, diff, export, merge, validation
   - Runtime: lazy bws install (curl download + chmod), BSM auth via `bws project list`, secret resolution `${BSM:name}` in config values
 - ◀ Committed: (current commit)
+
+### Session 2026-05-22 (Evening — L07: xAI Encrypted Reasoning Replay)
+- ✅ **L07: xAI encrypted reasoning replay** — Thread encrypted_content across conversation turns
+  - Added `encrypted_content` field to message_t, provider_response_t, llm_response_t
+  - Parse from xAI response messages (non-stream + stream path)
+  - Include in xAI request body for assistant messages on subsequent calls
+  - Generic llm_client parser also handles encrypted_content field
+  - Full message lifecycle: new, clone, free all handle encrypted_content
+  - Wire through agent_loop assistant message creation
+- ◀ Committed: `17a88748f`
