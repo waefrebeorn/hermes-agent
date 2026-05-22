@@ -747,6 +747,10 @@ static void show_section_compression(const hermes_config_t *cfg) {
     show_cfg_val_float("target_ratio", cfg->compression.target_ratio);
     show_cfg_val_int("min_messages", cfg->compression.min_messages);
     show_cfg_val_bool("preserve_system", cfg->compression.preserve_system);
+    show_cfg_val_int("protect_last_n", cfg->compression.protect_last_n);
+    show_cfg_val_int("protect_first_n", cfg->compression.protect_first_n);
+    show_cfg_val_int("hygiene_hard_message_limit", cfg->compression.hygiene_hard_message_limit);
+    show_cfg_val_bool("abort_on_summary_failure", cfg->compression.abort_on_summary_failure);
 }
 
 static void show_section_cron(const hermes_config_t *cfg) {

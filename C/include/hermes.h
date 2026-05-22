@@ -321,7 +321,11 @@ typedef struct {
     char  strategy[32];           /* compression_strategy: smart/summary */
     float target_ratio;           /* compression.target_ratio */
     int   min_messages;           /* min_messages_before_compress */
+    int   protect_last_n;         /* protect_last_n: recent messages to keep */
+    int   protect_first_n;        /* protect_first_n: head messages to preserve */
+    int   hygiene_hard_message_limit; /* hygiene_hard_message_limit: force-compress threshold */
     bool  preserve_system;        /* preserve_system: keep system prompt */
+    bool  abort_on_summary_failure; /* abort_on_summary_failure: skip drop on LLM error */
 } compression_config_t;
 
 /* ================================================================

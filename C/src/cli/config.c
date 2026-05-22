@@ -186,6 +186,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->compression.min_messages = 10;
     snprintf(cfg->compression.strategy, sizeof(cfg->compression.strategy), "smart");
     cfg->compression.preserve_system = true;
+    cfg->compression.protect_last_n = 20;
+    cfg->compression.protect_first_n = 3;
+    cfg->compression.hygiene_hard_message_limit = 400;
+    cfg->compression.abort_on_summary_failure = false;
 
     cfg->cron.max_concurrent_jobs = 5;
     cfg->cron.job_timeout = 3600;
@@ -636,6 +640,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
 
     /* Compression section */
     cfg->compress_enabled = yaml_get_bool(doc, "compression.enabled", false);
+    cfg->compression.protect_last_n = yaml_get_int(doc, "compression.protect_last_n", cfg->compression.protect_last_n);
+    cfg->compression.protect_first_n = yaml_get_int(doc, "compression.protect_first_n", cfg->compression.protect_first_n);
+    cfg->compression.hygiene_hard_message_limit = yaml_get_int(doc, "compression.hygiene_hard_message_limit", cfg->compression.hygiene_hard_message_limit);
+    cfg->compression.abort_on_summary_failure = yaml_get_bool(doc, "compression.abort_on_summary_failure", cfg->compression.abort_on_summary_failure);
 
     /* Quiet mode */
     cfg->agent.quiet_mode = cfg->quiet_mode;
@@ -878,6 +886,15 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_COMPRESSION_STRATEGY");
     if (v) snprintf(cfg->compression.strategy, sizeof(cfg->compression.strategy), "%s", v);
+
+    v = getenv("HERMES_COMPRESSION_PROTECT_LAST_N");
+    if (v) { int t = atoi(v); if (t > 0) cfg->compression.protect_last_n = t; }
+
+    v = getenv("HERMES_COMPRESSION_PROTECT_FIRST_N");
+    if (v) { int t = atoi(v); if (t >= 0) cfg->compression.protect_first_n = t; }
+
+    v = getenv("HERMES_COMPRESSION_HARD_LIMIT");
+    if (v) { int t = atoi(v); if (t > 0) cfg->compression.hygiene_hard_message_limit = t; }
 
     v = getenv("HERMES_CRON_DIR");
     if (v) snprintf(cfg->cron.dir, sizeof(cfg->cron.dir), "%s", v);
@@ -1185,6 +1202,9 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "agent.api_max_retries", def.agent.api_max_retries, active->agent.api_max_retries);
     diff_int(diff, "agent.clarify_timeout", def.agent.clarify_timeout, active->agent.clarify_timeout);
     diff_float(diff, "compression.threshold", def.agent.compress_threshold, active->agent.compress_threshold);
+    diff_int(diff, "compression.protect_last_n", def.compression.protect_last_n, active->compression.protect_last_n);
+    diff_int(diff, "compression.protect_first_n", def.compression.protect_first_n, active->compression.protect_first_n);
+    diff_int(diff, "compression.hygiene_hard_message_limit", def.compression.hygiene_hard_message_limit, active->compression.hygiene_hard_message_limit);
     diff_str(diff, "agent.system_prompt", def.agent.system_prompt, active->agent.system_prompt);
     diff_str(diff, "agent.profile", def.agent.profile, active->agent.profile);
 
@@ -1310,6 +1330,10 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_float(f, "  target_ratio", cfg->compression.target_ratio);
     exp_int(f, "  min_messages", cfg->compression.min_messages);
     exp_bool(f, "  preserve_system", cfg->compression.preserve_system);
+    exp_int(f, "  protect_last_n", cfg->compression.protect_last_n);
+    exp_int(f, "  protect_first_n", cfg->compression.protect_first_n);
+    exp_int(f, "  hygiene_hard_message_limit", cfg->compression.hygiene_hard_message_limit);
+    exp_bool(f, "  abort_on_summary_failure", cfg->compression.abort_on_summary_failure);
     exp_bool(f, "  enabled", cfg->compress_enabled);
 
     fprintf(f, "\ndelegation:\n");
@@ -1530,6 +1554,13 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     if (is_set_int(src->compression.min_messages))
         dst->compression.min_messages = src->compression.min_messages;
     dst->compression.preserve_system = src->compression.preserve_system;
+    if (is_set_int(src->compression.protect_last_n))
+        dst->compression.protect_last_n = src->compression.protect_last_n;
+    if (is_set_int(src->compression.protect_first_n))
+        dst->compression.protect_first_n = src->compression.protect_first_n;
+    if (is_set_int(src->compression.hygiene_hard_message_limit))
+        dst->compression.hygiene_hard_message_limit = src->compression.hygiene_hard_message_limit;
+    dst->compression.abort_on_summary_failure = src->compression.abort_on_summary_failure;
 
     /* Cron */
     if (is_set_str(src->cron.dir))
@@ -1803,8 +1834,12 @@ char *hermes_config_schema(void) {
         json_t *cprops = json_object();
         json_set(cprops, "model", schema_prop("string", "Compression model override", ""));
         json_set(cprops, "strategy", schema_prop("string", "Compression strategy", "smart"));
-        json_set(cprops, "target_ratio", schema_prop_num("Target compression ratio", 0.2, 0.0, 1.0));
-        json_set(cprops, "min_messages", schema_prop_int("Min messages before compress", 10, 2, 1000));
+        json_set(cprops, "target_ratio", schema_prop_num("Target compression ratio", 0.20, 0.01, 1.0));
+        json_set(cprops, "min_messages", schema_prop_int("Minimum messages before compress", 20, 2, 1000));
+        json_set(cprops, "protect_last_n", schema_prop_int("Recent messages to keep", 20, 1, 100));
+        json_set(cprops, "protect_first_n", schema_prop_int("Head messages to preserve", 3, 0, 20));
+        json_set(cprops, "hygiene_hard_message_limit", schema_prop_int("Force-compress threshold", 400, 50, 10000));
+        json_set(cprops, "abort_on_summary_failure", schema_prop_bool("Abort on LLM error", false));
         json_set(cprops, "preserve_system", schema_prop_bool("Preserve system prompt", true));
         json_set(comp, "properties", cprops);
         json_set(properties, "compression", comp);
