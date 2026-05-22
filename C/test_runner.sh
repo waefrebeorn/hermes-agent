@@ -56,6 +56,17 @@ fi
 run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$CDIR/lib/libtui/tui.c"
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 
+# Provider metadata test (needs libjson + libplugin includes)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_provider_metadata.c" \
+    "$CDIR/src/agent/provider_metadata.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_provmeta -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_provmeta > /dev/null 2>&1; then ok "provider_metadata"
+    else fail "provider_metadata (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_provmeta
+else skip "provider_metadata (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
