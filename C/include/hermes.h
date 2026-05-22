@@ -473,6 +473,11 @@ void approval_set_allowlist_path(const char *path);
 void approval_load_allowlist(void);
 void approval_save_allowlist(void);
 
+/* P39: Approval cache query */
+int approval_cache_count(void);
+const char *approval_cache_entry(int index);
+void approval_cache_clear_last(int n);
+
 /* Config runtime toggles (wired from config.yaml or /commands) */
 void commands_set_verbose(int level);   /* 0=off, 1=normal, 2=verbose */
 void commands_set_yolo(bool enabled);

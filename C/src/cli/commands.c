@@ -1387,17 +1387,39 @@ static void cmd_stop(const char *args, agent_state_t *state) {
     printf("Done. Killed %d process(es).\n", killed ? 1 : 0);
 }
 
-/* /approve: Approve a pending dangerous command (delegates to approval system) */
+/* /approve: Show pending approvals or approve a specific one */
 static void cmd_approve(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Approval: use /tools to manage tool permissions.\n");
+    (void)state;
+    if (args && args[0]) {
+        if (strcmp(args, "list") == 0 || strcmp(args, "-l") == 0) {
+            int count = approval_cache_count();
+            printf("Approval cache (%d entries):\n", count);
+            for (int i = 0; i < count; i++)
+                printf("  %s\n", approval_cache_entry(i));
+            return;
+        }
+        if (strcmp(args, "clear") == 0 || strcmp(args, "-c") == 0) {
+            approval_cache_clear_last(0);
+            printf("Approval cache cleared.\n");
+            return;
+        }
+        printf("Usage: /approve [list|clear]\n");
+        return;
+    }
+    int count = approval_cache_count();
+    if (count == 0) {
+        printf("No cached approvals. Use /tools to verify tool permissions.\n");
+    } else {
+        printf("Approval cache (%d entries). Use /approve list to view.\n", count);
+    }
 }
 
-/* /deny: Deny a pending dangerous command */
+/* /deny: Clear approval cache (deny all pending) */
 static void cmd_deny(const char *args, agent_state_t *state) {
     (void)args; (void)state;
+    int count = approval_cache_count();
     approval_reset_session();
-    printf("Approval cache cleared. All pending operations denied.\n");
+    printf("Approval cache cleared. %d entries removed. All operations denied.\n", count);
 }
 
 /* /title: Set a title for the current session */

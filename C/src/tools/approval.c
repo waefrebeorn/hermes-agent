@@ -346,6 +346,32 @@ static char *approval_status_handler(const char *args_json, const char *task_id)
     return result;
 }
 
+/* P39: Query approval cache — return count */
+int approval_cache_count(void) {
+    return g_approval_count;
+}
+
+/* P39: Get approval cache entry text for display */
+const char *approval_cache_entry(int index) {
+    static char buf[256];
+    if (index < 0 || index >= g_approval_count) return NULL;
+    snprintf(buf, sizeof(buf), "[%d] %s/%s: %s",
+             index,
+             g_approval_cache[index].tool,
+             g_approval_cache[index].command,
+             g_approval_cache[index].approved ? "APPROVED" : "DENIED");
+    return buf;
+}
+
+/* P39: Clear last N entries, or all if N=0 */
+void approval_cache_clear_last(int n) {
+    if (n <= 0 || n >= g_approval_count) {
+        g_approval_count = 0;
+        return;
+    }
+    g_approval_count -= n;
+}
+
 /* Register approval management tool */
 void registry_init_approval(void) {
     registry_register("approval_status",
