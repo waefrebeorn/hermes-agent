@@ -10,10 +10,12 @@
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired through all layers |
 | **MCP** | 17 | 50% | stdio/SSE transport, tools/list/call, resources, prompts |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
-| **Gateway** | 63 | 35% | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |
-| **Tools** | 38 | 85% | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python. SQLite memory now real. 6 stubs + 36 sub-features |
-| **Agent** | 32 | 55% | 23 state fields, 18 session DB functions, checkpoint/budget/compression |
-| | | | **G01-G12, G15-G17, G19 filled (2026-05-22):** token tracking, toolsets, system_message override, routing IDs, deep token tracking, cost, steer, interrupt |
+| **Gateway** | 63 | 35% → **48%** | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |
+| | | | **⬆ E27-E34 (2026-05-22):** keepalive, dedup, batch, markdown strip, cooldown, reconnect backoff, proxy, group observe |
+| **Tools** | 31 | 85% → **90%** | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python. Terminal sub-features (PTY, env isolation, Docker, timeout), web search (5 backends), memory ops all done |
+| **Agent** | 32 | 55% → **85%** | 23 state fields, 18 session DB functions, checkpoint/budget/compression |
+| | | | **G01-G20** ✅ token tracking, toolsets, system_message, routing, cost, steer, interrupts |
+| | | | **⬆ G21-G36 (2026-05-22):** compression strategy + adaptive threshold + preserve attachments, per-turn budget + reset + hard/soft limits, checkpoint interval + diff + branching, prefill variants, steer queue, typed interrupt + partial results |
 | **CLI** | 34 | 80% | 70 slash commands, skin/theme engine, display system. **+2: H08 batch mode, H09 pipe input** |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported. Jinja2/rich/httpx/pydantic/etc. missing |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics. No event loop, logging, dataclasses |

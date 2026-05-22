@@ -15,7 +15,8 @@
 | **P1** | Gateway depth (34 gaps) | 8 |
 | **P1** | Agent state + session (32) | 3 |
 | **P1** | CLI feature depth (34) | 4 |
-| **P1** | Tool sub-features (36) | 6 |
+| **P1** | Tool sub-features (31) | 5 |
+| **P2** | Plugin depth (51) | 15 |
 
 ## Build & Test
 
@@ -52,7 +53,25 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **G19: thread/user/chat IDs** — routing metadata fields in agent_state_t
 - ✅ **G01-G03: session token tracking** — session_total/input/output_tokens counters, updated after each LLM response
 - ✅ **G04-G12: deep token tracking** — reasoning/cache/cost counters, user/tool turn counts, last_activity_ts, pending_steer, interrupt_message on fatal tool errors; /status shows all fields
-- Next: G13-G14 tool_choice/parallel_tool_calls state, G18 conversation_history injection, G20 model_family, or gateway E06-E12 interactive sends (media_group, draft, clarify, approval, confirm, model_picker)
+- Next: G13-G14 tool_choice/parallel_tool_calls state, G18 conversation_history injection, G20 model_family, or gateway E06-E12 interactive sends, or upstream sync L01-L12
+
+### Session 2026-05-22 (Part 2)
+- ✅ **G21-G36 (16 gaps):** Compression depth, iteration budget, checkpoint depth, prefill variants, steer queue, typed interrupt + partial results
+- ◀ **Agent loop now at ~85% parity (G01-G36 all filled)** — 32/32 agent state gaps closed
+
+### Session 2026-05-22 (Part 3)
+- ✅ **E27-E34 (8 gaps):** Gateway infrastructure — keepalive per-platform, message dedup (64-entry TTL ring buffer), batch aggregation (2s coalesce), markdown stripping (code/bold/italic/headers), per-platform cooldown, reconnect backoff (exponential 2^attempt, ±10% jitter, 60s cap), proxy per-platform, group observe prefix
+- ◀ **Gateway now at ~48% parity** (30/63 gaps closed)
+- ◀ Committed: `d5e5109db`
+
+### Session 2026-05-22 (Part 6+)
+- ✅ **F11: Docker execution backend** — temp script approach, config-driven (docker_image, volumes, env forwarding, host user mapping, extra args), per-call image override
+- ✅ **F09+F10+F12** — PTY mode, env isolation, timeout propagation (marked in roadmap)
+- ✅ **F16-F20** — Web search backends (searxng, google, brave, tavily, firecrawl) marked in roadmap
+- ✅ **F30-F33** — Memory tool ops (save/search/delete/list) marked in roadmap
+- ◀ **Tools now at ~90% parity** (31 remaining gaps)
+- ◀ Roadmap gap count: ~387 total (~13 closed)
+- ◀ Commit: `F11 docker execution backend commit pending`
 
 ## Upstream
 - 125 commits since last sync, 52 Python

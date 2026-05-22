@@ -1,6 +1,7 @@
 # Build artifacts
 slermes
 slermes_test
+hermes
 *.o
 *.a
 *.so
