@@ -294,9 +294,9 @@ bool cron_template_instantiate(const char *template_name,
             /* Simple placeholder replacement */
             size_t len = json_len(params);
             for (size_t i = 0; i < len; i++) {
-                const char *key = json_obj_get_key(params, i);
+                const char *key = params->c.keys ? params->c.keys[i] : NULL;
                 json_t *val = json_get(params, i);
-                if (key && val && json_is_string(val)) {
+                if (key && val && val->type == JSON_STRING) {
                     /* Build {{key}} placeholder */
                     char placeholder[128];
                     snprintf(placeholder, sizeof(placeholder), "{{%s}}", key);

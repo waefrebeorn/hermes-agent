@@ -66,12 +66,13 @@ make -j$(nproc) && bash test_runner.sh --verbose
 
 ### Session 2026-05-22 (Part 6+)
 - ✅ **F11: Docker execution backend** — temp script approach, config-driven (docker_image, volumes, env forwarding, host user mapping, extra args), per-call image override
+- ✅ **F26+F28+F29: Cron job enhancements** — schedule validation (cron_parse at add-time), per-job notifications (notify_on_complete/notify_on_failure), retry with exponential backoff (max_retries + backoff_sec config)
 - ✅ **F09+F10+F12** — PTY mode, env isolation, timeout propagation (marked in roadmap)
 - ✅ **F16-F20** — Web search backends (searxng, google, brave, tavily, firecrawl) marked in roadmap
 - ✅ **F30-F33** — Memory tool ops (save/search/delete/list) marked in roadmap
 - ◀ **Tools now at ~90% parity** (31 remaining gaps)
 - ◀ Roadmap gap count: ~387 total (~13 closed)
-- ◀ Commit: `F11 docker execution backend commit pending`
+- ◀ Commit: `76bf19925 (F11 Docker execution backend)`
 
 ## Upstream
 - 125 commits since last sync, 52 Python
