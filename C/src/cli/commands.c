@@ -592,17 +592,137 @@ static void cmd_topic(const char *args, agent_state_t *state) {
 }
 
 static void cmd_config(const char *args, agent_state_t *state) {
-    (void)state;
-    if (!args || !args[0]) {
-        printf("Current configuration:\n");
-        printf("  model:      %s\n", state->llm.model);
-        printf("  provider:   %s\n", state->llm.provider);
-        printf("  base_url:   %s\n", state->llm.base_url);
-        printf("  max_turns:  %d\n", state->max_iterations);
-        printf("  messages:   %zu\n", state->message_count);
+    /* Load config to access full config struct */
+    hermes_config_t cfg;
+    if (!hermes_config_load(&cfg, state->hermes_home)) {
+        printf("Failed to load configuration.\n");
         return;
     }
-    printf("Config editing not yet implemented. Use /model to set model.\n");
+
+    if (!args || !args[0]) {
+        /* Show summary */
+        printf("Configuration:\n");
+        printf("  model:          %s\n", cfg.provider_cfg.model);
+        printf("  provider:       %s\n", cfg.provider_cfg.provider);
+        printf("  base_url:       %s\n", cfg.provider_cfg.base_url);
+        printf("  api_mode:       %s\n", cfg.provider_cfg.api_mode);
+        printf("  max_tokens:     %d\n", cfg.provider_cfg.max_tokens);
+        printf("  temperature:    %.1f\n", (double)cfg.provider_cfg.temperature);
+        printf("  top_p:          %.1f\n", (double)cfg.provider_cfg.top_p);
+        printf("  display.skin:   %s\n", cfg.display.skin[0] ? cfg.display.skin : "(default)");
+        printf("  display.stream: %s\n", cfg.display.stream ? "yes" : "no");
+        printf("  agent.turns:    %d\n", cfg.agent.max_iterations);
+        printf("  agent.verbose:  %d\n", cfg.agent.verbose_level);
+        printf("  approvals.mode: %s\n", cfg.tools.approval_mode);
+        printf("  terminal.timeout: %d\n", cfg.tools.terminal_timeout);
+        return;
+    }
+
+    /* Subcommands */
+    if (strcmp(args, "validate") == 0 || strcmp(args, "-v") == 0) {
+        config_validation_t result;
+        bool valid = hermes_config_validate(&cfg, &result);
+        if (valid) {
+            printf("Configuration valid.\n");
+        } else {
+            printf("Configuration issues (%d):\n", result.count);
+            for (int i = 0; i < result.count; i++)
+                printf("  [%s] %s\n", result.issues[i].key, result.issues[i].message);
+        }
+        return;
+    }
+
+    if (strcmp(args, "diff") == 0) {
+        cfg_diff_t diff;
+        if (hermes_config_diff(&cfg, &diff)) {
+            printf("Differences from defaults (%d):\n", diff.count);
+            for (int i = 0; i < diff.count; i++) {
+                const char *type_str;
+                switch (diff.entries[i].type) {
+                    case CFG_DIFF_ADDED:   type_str = "+"; break;
+                    case CFG_DIFF_CHANGED: type_str = "~"; break;
+                    case CFG_DIFF_MISSING: type_str = "-"; break;
+                    default:               type_str = "?"; break;
+                }
+                printf("  %s %s: \"%s\" -> \"%s\"\n", type_str,
+                       diff.entries[i].key,
+                       diff.entries[i].default_value,
+                       diff.entries[i].active_value);
+            }
+        } else {
+            printf("Configuration matches defaults.\n");
+        }
+        return;
+    }
+
+    if (strcmp(args, "export") == 0) {
+        hermes_config_export(&cfg, NULL);
+        return;
+    }
+
+    /* Show specific section */
+    if (strncmp(args, "show ", 5) == 0) {
+        const char *section = args + 5;
+        bool found = false;
+
+        if (strcmp(section, "model") == 0 || strcmp(section, "provider") == 0) {
+            printf("model:\n");
+            printf("  default: %s\n", cfg.provider_cfg.model);
+            printf("  provider: %s\n", cfg.provider_cfg.provider);
+            printf("  base_url: %s\n", cfg.provider_cfg.base_url);
+            printf("  api_mode: %s\n", cfg.provider_cfg.api_mode);
+            printf("  max_tokens: %d\n", cfg.provider_cfg.max_tokens);
+            printf("  temperature: %.1f\n", (double)cfg.provider_cfg.temperature);
+            printf("  top_p: %.1f\n", (double)cfg.provider_cfg.top_p);
+            found = true;
+        }
+        if (strcmp(section, "display") == 0) {
+            printf("display:\n");
+            printf("  skin: %s\n", cfg.display.skin);
+            printf("  streaming: %s\n", cfg.display.stream ? "true" : "false");
+            printf("  show_reasoning: %s\n", cfg.display.show_reasoning ? "true" : "false");
+            printf("  compact: %s\n", cfg.display.compact ? "true" : "false");
+            printf("  language: %s\n", cfg.display.language);
+            found = true;
+        }
+        if (strcmp(section, "agent") == 0) {
+            printf("agent:\n");
+            printf("  max_turns: %d\n", cfg.agent.max_iterations);
+            printf("  verbose: %d\n", cfg.agent.verbose_level);
+            printf("  fast: %s\n", cfg.agent.fast_mode ? "true" : "false");
+            printf("  api_max_retries: %d\n", cfg.agent.api_max_retries);
+            printf("  clarify_timeout: %d\n", cfg.agent.clarify_timeout);
+            found = true;
+        }
+        if (strcmp(section, "approvals") == 0 || strcmp(section, "tools") == 0) {
+            printf("approvals:\n");
+            printf("  mode: %s\n", cfg.tools.approval_mode);
+            printf("  timeout: %d\n", cfg.tools.approval_timeout);
+            printf("terminal:\n");
+            printf("  timeout: %d\n", cfg.tools.terminal_timeout);
+            found = true;
+        }
+        if (strcmp(section, "delegation") == 0) {
+            printf("delegation:\n");
+            printf("  max_concurrent_children: %d\n", cfg.delegation.max_concurrent_children);
+            printf("  max_spawn_depth: %d\n", cfg.delegation.max_spawn_depth);
+            printf("  child_timeout: %d\n", cfg.delegation.child_timeout);
+            found = true;
+        }
+        if (strcmp(section, "security") == 0) {
+            printf("security:\n");
+            printf("  tirith_enabled: %s\n", cfg.security.tirith_enabled ? "true" : "false");
+            printf("  allow_private_urls: %s\n", cfg.security.allow_private_urls ? "true" : "false");
+            found = true;
+        }
+        if (!found) {
+            printf("Unknown section: %s\n", section);
+            printf("Available: model, display, agent, approvals, delegation, security\n");
+        }
+        return;
+    }
+
+    printf("Usage: /config [validate|diff|export|show <section>]\n");
 }
 
 static void cmd_commands(const char *args, agent_state_t *state) {
