@@ -466,6 +466,87 @@ static json_node_t *handle_execute_command(const char *id, json_node_t *params, 
     return acp_make_response(id, result);
 }
 
+/* --- User message (core agent execution) --- */
+
+/* ACP notification sender — writes a JSON-RPC notification (no id) to stdout */
+static bool send_notification(const char *method, json_node_t *params) {
+    json_node_t *notif = json_new_object();
+    json_object_set(notif, "jsonrpc", json_new_string("2.0"));
+    json_object_set(notif, "method", json_new_string(method));
+    if (params)
+        json_object_set(notif, "params", json_copy(params));
+    else
+        json_object_set(notif, "params", json_new_object());
+    bool ok = acp_write_message(notif);
+    json_free(notif);
+    return ok;
+}
+
+/* Stream callback: called by agent loop for each token/event */
+static int acp_stream_cb(const char *token, void *userdata) {
+    const char *session_id = (const char *)userdata;
+    json_node_t *params = json_new_object();
+    json_object_set(params, "session_id", json_new_string(session_id));
+    json_object_set(params, "content", json_new_string(token));
+    json_object_set(params, "type", json_new_string("text"));
+    send_notification("agent_message_chunk", params);
+    json_free(params);
+    return 0; /* Continue streaming */
+}
+
+static json_node_t *handle_user_message(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
+    json_node_t *content_node = json_object_get(params, "content");
+
+    if (!session_id)
+        return acp_make_error(id, -32602, "Missing session_id", NULL);
+    if (!content_node)
+        return acp_make_error(id, -32602, "Missing content", NULL);
+
+    acp_session_t *sess = find_session(srv, session_id);
+    if (!sess)
+        return acp_make_error(id, -32000, "Session not found", NULL);
+
+    /* Extract text content (support both string and array-of-parts) */
+    const char *text = NULL;
+    if (content_node->type == JSON_STRING)
+        text = content_node->str_val;
+    if (!text || !*text)
+        return acp_make_error(id, -32602, "Empty content", NULL);
+
+    /* Set up streaming callback */
+    sess->agent.stream_cb = acp_stream_cb;
+    sess->agent.stream_data = (void *)sess->id;
+
+    /* Run the agent */
+    sess->message_count++;
+    fprintf(stderr, "[acp] Running agent for session %s: %s\n", session_id, text);
+    char *response = agent_run_conversation(&sess->agent, text, NULL);
+    sess->agent.stream_cb = NULL;
+    sess->agent.stream_data = NULL;
+
+    if (!response)
+        response = strdup("");
+
+    /* Send final response notification */
+    {
+        json_node_t *upd = json_new_object();
+        json_object_set(upd, "session_id", json_new_string(session_id));
+        json_object_set(upd, "content", json_new_string(response));
+        json_object_set(upd, "type", json_new_string("final_text"));
+        send_notification("update_agent_message_text", upd);
+        json_free(upd);
+    }
+
+    /* Return final result */
+    json_node_t *result = json_new_object();
+    json_object_set(result, "session_id", json_new_string(session_id));
+    json_object_set(result, "response", json_new_string(response));
+    free(response);
+
+    return acp_make_response(id, result);
+}
+
 /* ================================================================
  *  Request dispatcher
  * ================================================================ */
@@ -494,6 +575,8 @@ static json_node_t *dispatch_request(const char *method, const char *id,
         return handle_available_commands(id, params, srv);
     if (strcmp(method, "execute_command") == 0)
         return handle_execute_command(id, params, srv);
+    if (strcmp(method, "user_message") == 0)
+        return handle_user_message(id, params, srv);
 
     return acp_make_error(id, -32601, "Method not found", NULL);
 }

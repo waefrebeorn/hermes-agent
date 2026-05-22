@@ -44,8 +44,9 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ E14: Telegram forwardMessage
 - ✅ E15: Telegram pinChatMessage + unpinChatMessage
 - ✅ F41: Image format validation (extension check + 50MB limit)
-- ✅ B01: ACP server foundation — Session 1/4 (stdio JSON-RPC, init handshake, session mgmt)
-- Next: B01 Session 2 (session CRUD, tool dispatch, streaming), B02-B03, or P1 gateway-agent-CLI gaps
+- ✅ B01: ACP server Session 1/4 — stdio JSON-RPC, init handshake
+- ✅ B01: ACP server Session 2/4 — full session CRUD, tool dispatch, execute_command
+- Next: B01 Session 3/4 (streaming, auth, message handling), B02-B03, or P1 gateway-agent-CLI gaps
 
 ## Upstream
 - 125 commits since last sync, 52 Python
