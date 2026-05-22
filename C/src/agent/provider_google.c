@@ -101,6 +101,12 @@ static char *google_build_request_body(const provider_t *p,
     }
     json_set(root, "generationConfig", gen_config);
 
+    /* B30: generation_config depth — top_k, candidate_count */
+    if (p->config.top_k > 0)
+        json_set(gen_config, "topK", json_number(p->config.top_k));
+    if (p->config.candidate_count > 0)
+        json_set(gen_config, "candidateCount", json_number(p->config.candidate_count));
+
     /* B28/L05: extra_body — merge arbitrary JSON fields into request body */
     if (p->config.extra_body[0]) {
         json_t *eb = json_parse(p->config.extra_body, NULL);

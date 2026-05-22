@@ -29,6 +29,18 @@
 - ◀ **CLI: 87% → 88%** (H14 closed, 32 CLI gaps remain)
 - ◀ Committed: `ea869fb29`
 
+### Session 2026-05-26 — B23: json_mode + response_format UAF fix
+
+- ✅ **B23: json_mode convenience flag** — `agent.json_mode: true` auto-sets response_format to `{"type":"json_object"}` across all 9 providers
+  - YAML key: `agent.json_mode` (bool, default false)
+  - Env var: `HERMES_JSON_MODE` (0/1/false/true)
+  - Wire: config defaults, YAML parse, env override, diff, agent state init, llm_client forwarding
+- ✅ **Bugfix: pre-existing use-after-free in response_format path** — All 9 providers had `json_object_set(root, "response_format", rf); json_free(rf)` freeing a ref still in the tree. Fixed with `json_copy(rf)`. Same fix for Anthropic/Google (`json_set`). Bug existed since feature was added.
+- ✅ **test_json_mode.c** — 10 assertions, ASan-clean
+- ◀ **Suite: 89/0/0** (+1 test, 10 assertions)
+- ◀ **Providers: +1 gap (B23), 24 provider-specific API gaps remain**
+- ◀ Committed: `4e116f85b`
+
 ### Session 2026-05-24 — Config depth: A04 !include directive
 
 - ✅ **A04: `!include path.yaml` directive** — `config_resolve_includes()` preprocesses YAML files before parsing, inlining referenced files with correct indentation. Relative path resolution. Fallback to yaml_parse_file() if no includes found.

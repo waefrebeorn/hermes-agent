@@ -198,7 +198,15 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Build/doc: 55%** (was 30%, 5/15 gaps closed)
 - ◀ Commits: `a61cac0fd`, `20edb4d35`
 
-### Session 2026-05-24 — Test Coverage: Skin Engine
+### Session 2026-05-26 — B23: json_mode for all providers
+
+- ✅ **B23: json_mode convenience flag** — `agent.json_mode: true` auto-sets `response_format: {"type":"json_object"}` across all 9 providers
+  - YAML key, env var, config defaults, diff, agent state, llm_client forwarding
+- ✅ **Bugfix: pre-existing use-after-free in response_format path** — All 9 providers freed a node still referenced in the JSON tree. `json_object_set(root, ..., rf); json_free(rf)` → `...json_copy(rf); json_free(rf)`. Bug existed since response_format was added.
+- ✅ **test_json_mode.c** — 10 assertions, ASan-clean
+- ◀ **Suite: 89/0/0** (+1 test, 10 assertions)
+- ◀ Committed: `4e116f85b`
+- ◀ **Providers: 85% → 86%** (1/25 provider API gaps closed)
 
 - ✅ **test_skin.c** — 24 assertions: skin_default, dotted-path key lookup, fallback,
   ANSI color resolution (red/cyan/bold/dim/invalid), skin_color, skin_apply_color,

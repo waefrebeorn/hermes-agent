@@ -122,6 +122,8 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
+    int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
@@ -329,6 +331,8 @@ typedef struct {
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
+    int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
+    int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */

@@ -288,6 +288,8 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
         memcpy(prov->config.tool_choice, cfg->tool_choice,
                sizeof(prov->config.tool_choice));
         prov->config.parallel_tool_calls = cfg->parallel_tool_calls;
+        prov->config.top_k = cfg->top_k;
+        prov->config.candidate_count = cfg->candidate_count;
         prov->config.json_mode = cfg->json_mode;
         prov->config.max_tool_calls = cfg->max_tool_calls;
         prov->config.n = cfg->n;
@@ -800,6 +802,8 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
         memcpy(prov->config.tool_choice, cfg->tool_choice,
                sizeof(prov->config.tool_choice));
         prov->config.parallel_tool_calls = cfg->parallel_tool_calls;
+        prov->config.top_k = cfg->top_k;
+        prov->config.candidate_count = cfg->candidate_count;
         prov->config.json_mode = cfg->json_mode;
         prov->config.max_tool_calls = cfg->max_tool_calls;
         prov->config.n = cfg->n;

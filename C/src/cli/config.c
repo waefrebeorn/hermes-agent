@@ -363,6 +363,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.json_mode = false;
     cfg->provider_cfg.max_tool_calls = 0;
     cfg->provider_cfg.n = 1;
+    cfg->provider_cfg.top_k = 0;
+    cfg->provider_cfg.candidate_count = 0;
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -828,6 +830,11 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* n: number of choices (default 1) */
     int n_val = yaml_get_int(doc, "agent.n", 0);
     if (n_val > 0) cfg->provider_cfg.n = n_val;
+    /* B30: top_k + candidate_count (Google generation_config depth) */
+    int tk = yaml_get_int(doc, "agent.top_k", 0);
+    if (tk > 0) cfg->provider_cfg.top_k = tk;
+    int cc = yaml_get_int(doc, "agent.candidate_count", 0);
+    if (cc > 0) cfg->provider_cfg.candidate_count = cc;
     /* B23: json_mode — auto-set response_format to json_object */
     cfg->provider_cfg.json_mode = yaml_get_bool(doc, "agent.json_mode", false);
 
@@ -1543,6 +1550,12 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_N");
     if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.n = t; }
+
+    /* B30: top_k + candidate_count env vars */
+    v = getenv("HERMES_TOP_K");
+    if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.top_k = t; }
+    v = getenv("HERMES_CANDIDATE_COUNT");
+    if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.candidate_count = t; }
 
     /* B23: json_mode env var */
     v = getenv("HERMES_JSON_MODE");
@@ -2297,6 +2310,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_bool(diff, "model.parallel_tool_calls", def.provider_cfg.parallel_tool_calls, active->provider_cfg.parallel_tool_calls);
     diff_int(diff, "model.max_tool_calls", def.provider_cfg.max_tool_calls, active->provider_cfg.max_tool_calls);
     diff_int(diff, "model.n", def.provider_cfg.n, active->provider_cfg.n);
+    diff_int(diff, "model.top_k", def.provider_cfg.top_k, active->provider_cfg.top_k);
+    diff_int(diff, "model.candidate_count", def.provider_cfg.candidate_count, active->provider_cfg.candidate_count);
     diff_bool(diff, "model.json_mode", def.provider_cfg.json_mode, active->provider_cfg.json_mode);
     diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
 

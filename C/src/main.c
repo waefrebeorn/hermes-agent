@@ -151,6 +151,8 @@ int main(int argc, char **argv) {
         agent_state.llm.parallel_tool_calls = cfg.provider_cfg.parallel_tool_calls;
         agent_state.llm.max_tool_calls = cfg.provider_cfg.max_tool_calls;
         agent_state.llm.n = cfg.provider_cfg.n;
+        agent_state.llm.top_k = cfg.provider_cfg.top_k;
+        agent_state.llm.candidate_count = cfg.provider_cfg.candidate_count;
         agent_state.llm.json_mode = cfg.provider_cfg.json_mode;
         memcpy(agent_state.llm.extra_body, cfg.provider_cfg.extra_body,
                sizeof(agent_state.llm.extra_body));
