@@ -309,6 +309,52 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->voice.silence_threshold = 200;
     cfg->voice.silence_duration = 3.0f;
 
+    /* Discord config defaults */
+    cfg->discord.max_message_length = 2000;
+    cfg->discord.sync_permissions = true;
+    cfg->discord.slash_commands_enabled = true;
+    cfg->discord.thread_auto_archive = true;
+    snprintf(cfg->discord.command_prefix, sizeof(cfg->discord.command_prefix), "/");
+    snprintf(cfg->discord.status, sizeof(cfg->discord.status), "online");
+    snprintf(cfg->discord.activity_type, sizeof(cfg->discord.activity_type), "playing");
+
+    /* Kanban config defaults */
+    cfg->kanban.max_wip = 5;
+    cfg->kanban.default_sprint_days = 14;
+    cfg->kanban.auto_archive_days = 90;
+    cfg->kanban.auto_sync = true;
+
+    /* Guardrails config defaults */
+    cfg->guardrails.max_consecutive_failures = 3;
+    cfg->guardrails.max_tool_calls_per_turn = 10;
+    cfg->guardrails.max_result_bytes = 50000;
+    cfg->guardrails.abort_on_safety_violation = true;
+    cfg->guardrails.rate_limit_per_minute = 60;
+    cfg->guardrails.cooldown_seconds = 30;
+
+    /* Approvals config defaults */
+    snprintf(cfg->approvals.mode, sizeof(cfg->approvals.mode), "manual");
+    cfg->approvals.timeout = 600;
+    cfg->approvals.require_reason = false;
+    cfg->approvals.notify_on_pending = true;
+
+    /* Small platform config defaults */
+    snprintf(cfg->x_search.engine, sizeof(cfg->x_search.engine), "twitter");
+
+    cfg->model_catalog.auto_update = true;
+
+    cfg->openrouter.api_key[0] = '\0';
+
+    cfg->human_delay.min_ms = 0;
+    cfg->human_delay.max_ms = 3000;
+    cfg->human_delay.enabled = false;
+
+    cfg->updates.check_interval = 24;
+    snprintf(cfg->updates.channel, sizeof(cfg->updates.channel), "release");
+
+    cfg->dashboard.port = 8081;
+    snprintf(cfg->dashboard.theme, sizeof(cfg->dashboard.theme), "light");
+
     /* Display config defaults */
     snprintf(cfg->display.skin, sizeof(cfg->display.skin), "default");
     cfg->display.show_reasoning = true;

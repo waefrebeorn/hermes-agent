@@ -78,6 +78,24 @@ static void test_defaults(void) {
     /* Display defaults */
     TEST_STR_EQ("display.skin=default", cfg.display.skin, "default");
     TEST_BOOL("display.compact=false", cfg.display.compact, false);
+
+    /* New config group defaults */
+    TEST_INT_EQ("discord.max_message_length=2000", cfg.discord.max_message_length, 2000);
+    TEST_BOOL("discord.sync_permissions=true", cfg.discord.sync_permissions, true);
+    TEST_INT_EQ("kanban.max_wip=5", cfg.kanban.max_wip, 5);
+    TEST_INT_EQ("kanban.default_sprint_days=14", cfg.kanban.default_sprint_days, 14);
+    TEST_INT_EQ("guardrails.max_consecutive_failures=3", cfg.guardrails.max_consecutive_failures, 3);
+    TEST_INT_EQ("guardrails.rate_limit_per_minute=60", cfg.guardrails.rate_limit_per_minute, 60);
+    TEST_STR_EQ("approvals.mode=manual", cfg.approvals.mode, "manual");
+    TEST_INT_EQ("approvals.timeout=600", cfg.approvals.timeout, 600);
+    TEST_STR_EQ("x_search.engine=twitter", cfg.x_search.engine, "twitter");
+    TEST_BOOL("model_catalog.auto_update=true", cfg.model_catalog.auto_update, true);
+    TEST_INT_EQ("human_delay.min_ms=0", cfg.human_delay.min_ms, 0);
+    TEST_BOOL("human_delay.enabled=false", cfg.human_delay.enabled, false);
+    TEST_INT_EQ("updates.check_interval=24", cfg.updates.check_interval, 24);
+    TEST_STR_EQ("updates.channel=release", cfg.updates.channel, "release");
+    TEST_INT_EQ("dashboard.port=8081", cfg.dashboard.port, 8081);
+    TEST_STR_EQ("dashboard.theme=light", cfg.dashboard.theme, "light");
 }
 
 /* ================================================================

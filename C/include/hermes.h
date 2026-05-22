@@ -505,6 +505,124 @@ typedef struct {
 } voice_config_t;
 
 /* ================================================================
+ *  Discord Config (12 keys)
+ * ================================================================ */
+typedef struct {
+    char  token[256];               /* discord.token: bot token */
+    char  guild_id[64];             /* discord.guild_id */
+    char  command_prefix[16];       /* discord.command_prefix */
+    char  status[32];               /* discord.status: online/idle/dnd */
+    char  activity_type[16];        /* discord.activity_type */
+    char  activity_name[128];       /* discord.activity_name */
+    char  allowed_roles[1024];      /* discord.allowed_roles: comma-sep */
+    char  allowed_channels[1024];   /* discord.allowed_channels: comma-sep */
+    int   max_message_length;       /* discord.max_message_length */
+    bool  sync_permissions;         /* discord.sync_permissions */
+    bool  slash_commands_enabled;   /* discord.slash_commands_enabled */
+    bool  thread_auto_archive;      /* discord.thread_auto_archive */
+} discord_config_t;
+
+/* ================================================================
+ *  Kanban Config (10 keys)
+ * ================================================================ */
+typedef struct {
+    char  board_dir[HERMES_PATH_MAX];/* kanban.board_dir */
+    int   max_wip;                  /* kanban.max_wip */
+    int   default_sprint_days;      /* kanban.default_sprint_days */
+    int   auto_archive_days;        /* kanban.auto_archive_days */
+    char  ticket_template[HERMES_PATH_MAX];/* kanban.ticket_template */
+    char  label_colors[256];        /* kanban.label_colors: JSON */
+    char  assignee_field[64];       /* kanban.assignee_field */
+    char  priority_field[64];       /* kanban.priority_field */
+    char  estimate_field[64];       /* kanban.estimate_field */
+    bool  auto_sync;                /* kanban.auto_sync */
+} kanban_config_t;
+
+/* ================================================================
+ *  Tool Loop Guardrails Config (8 keys)
+ * ================================================================ */
+typedef struct {
+    int   max_consecutive_failures; /* guardrails.max_consecutive_failures */
+    int   max_tool_calls_per_turn;  /* guardrails.max_tool_calls_per_turn */
+    int   max_result_bytes;         /* guardrails.max_result_bytes */
+    bool  abort_on_safety_violation;/* guardrails.abort_on_safety_violation */
+    int   rate_limit_per_minute;    /* guardrails.rate_limit_per_minute */
+    int   cooldown_seconds;         /* guardrails.cooldown_seconds */
+    char  allowed_patterns[1024];   /* guardrails.allowed_patterns: comma-sep */
+    char  denied_patterns[1024];    /* guardrails.denied_patterns: comma-sep */
+} guardrails_config_t;
+
+/* ================================================================
+ *  Approvals Config (5 keys)
+ * ================================================================ */
+typedef struct {
+    char  mode[16];                 /* approvals.mode: off/manual/auto */
+    int   timeout;                  /* approvals.timeout: seconds */
+    bool  require_reason;           /* approvals.require_reason */
+    bool  notify_on_pending;        /* approvals.notify_on_pending */
+    char  auto_approve_patterns[1024];/* approvals.auto_approve_patterns */
+} approvals_config_t;
+
+/* ================================================================
+ *  Small Gateway/Platform Configs
+ * ================================================================ */
+typedef struct {
+    char  api_key[256];             /* x_search.api_key */
+    char  engine[32];               /* x_search.engine */
+} x_search_config_t;
+
+typedef struct {
+    char  token[256];               /* slack.token */
+    char  signing_secret[256];      /* slack.signing_secret */
+    char  app_token[256];           /* slack.app_token */
+} slack_config_t;
+
+typedef struct {
+    char  homeserver[256];          /* matrix.homeserver */
+    char  user_id[128];             /* matrix.user_id */
+    char  access_token[256];        /* matrix.access_token */
+} matrix_config_t;
+
+typedef struct {
+    char  url[256];                 /* mattermost.url */
+    char  token[256];               /* mattermost.token */
+    char  team_id[64];              /* mattermost.team_id */
+} mattermost_config_t;
+
+typedef struct {
+    bool  auto_update;              /* model_catalog.auto_update */
+    char  cache_file[256];          /* model_catalog.cache_file */
+    char  custom_models[1024];      /* model_catalog.custom_models: JSON */
+} model_catalog_config_t;
+
+typedef struct {
+    char  api_key[256];             /* openrouter.api_key */
+    char  referer[256];             /* openrouter.referer */
+    char  title[128];               /* openrouter.title */
+} openrouter_config_t;
+
+typedef struct {
+    int   min_ms;                   /* human_delay.min_ms */
+    int   max_ms;                   /* human_delay.max_ms */
+    bool  enabled;                  /* human_delay.enabled */
+} human_delay_config_t;
+
+typedef struct {
+    char  bot_token[256];           /* telegram.bot_token */
+    char  allowed_updates[1024];    /* telegram.allowed_updates: comma-sep */
+} telegram_config_t;
+
+typedef struct {
+    int   check_interval;           /* updates.check_interval: hours */
+    char  channel[64];              /* updates.channel: release/beta */
+} updates_config_t;
+
+typedef struct {
+    int   port;                     /* dashboard.port */
+    char  theme[32];                /* dashboard.theme */
+} dashboard_config_t;
+
+/* ================================================================
  *  Logging Config (Python logging group, 5 keys)
  * ================================================================ */
 typedef struct {
@@ -596,6 +714,34 @@ typedef struct {
     stt_config_t stt;
     /* Voice config */
     voice_config_t voice;
+    /* Discord config */
+    discord_config_t discord;
+    /* Kanban config */
+    kanban_config_t kanban;
+    /* Tool loop guardrails config */
+    guardrails_config_t guardrails;
+    /* Approvals config */
+    approvals_config_t approvals;
+    /* X/Twitter search config */
+    x_search_config_t x_search;
+    /* Slack config */
+    slack_config_t slack;
+    /* Matrix config */
+    matrix_config_t matrix;
+    /* Mattermost config */
+    mattermost_config_t mattermost;
+    /* Model catalog config */
+    model_catalog_config_t model_catalog;
+    /* OpenRouter config */
+    openrouter_config_t openrouter;
+    /* Human delay config */
+    human_delay_config_t human_delay;
+    /* Telegram config */
+    telegram_config_t telegram;
+    /* Updates config */
+    updates_config_t updates;
+    /* Dashboard config */
+    dashboard_config_t dashboard;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */
