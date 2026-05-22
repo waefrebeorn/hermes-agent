@@ -147,6 +147,50 @@ bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
     return ok;
 }
 
+/* E13: Async typing indicator — sends typing in background thread */
+#include <pthread.h>
+
+typedef struct {
+    http_client_t *http;
+    char chat_id[64];
+    volatile bool running;
+    pthread_t thread;
+} typing_state_t;
+
+static void *typing_thread_func(void *arg) {
+    typing_state_t *state = (typing_state_t *)arg;
+    while (state->running) {
+        telegram_send_chat_action(state->http, state->chat_id, "typing");
+        /* Sleep 5 seconds (Telegram's typing indicator lasts ~5-6s) */
+        for (int i = 0; i < 50 && state->running; i++)
+            usleep(100000); /* 100ms × 50 = 5s */
+    }
+    return NULL;
+}
+
+typing_state_t *telegram_start_typing(http_client_t *http, const char *chat_id) {
+    if (!http || !chat_id) return NULL;
+    typing_state_t *state = calloc(1, sizeof(typing_state_t));
+    if (!state) return NULL;
+    state->http = http;
+    snprintf(state->chat_id, sizeof(state->chat_id), "%s", chat_id);
+    state->running = true;
+    if (pthread_create(&state->thread, NULL, typing_thread_func, state) != 0) {
+        free(state);
+        return NULL;
+    }
+    pthread_detach(state->thread);
+    return state;
+}
+
+void telegram_stop_typing(typing_state_t *state) {
+    if (!state) return;
+    state->running = false;
+    /* Thread is detached, will exit on next interval check */
+    /* Don't free immediately — thread may still be running */
+    /* The thread owns this memory; on next loop it sees running=false and exits */
+}
+
 /* ================================================================
  *  P104: Answer inline query
  * ================================================================ */
