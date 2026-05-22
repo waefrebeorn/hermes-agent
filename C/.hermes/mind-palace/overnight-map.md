@@ -102,3 +102,19 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Upstream drift: 8/12 remain** (L05-L06, L08, L10 done)
 - ◀ **Tools: TTS chunking added** (previously single-file-only)
 - ◀ Committed: `154211f17`
+
+### Session 2026-05-22 (Evening Part 3)
+- ✅ **L09: Telegram location+media observe** — already covered by telegram_get_text()
+- ✅ **L11: Kanban sticky blocks** — sticky=true on block, auto-promote skips sticky, real promote count
+- ◀ **Upstream drift: 6/12 remain** (L05-L06, L08-L11 done; L07, L12 pending)
+- ◀ **Tools: Kanban now at 10/9 parity** (C ahead: sticky blocks + auto-promote)
+- ◀ Committed: `09577165d`
+
+### Session 2026-05-22 (Evening Part 4)
+- ✅ **L12: Browse.sh skills hub** — `skill_search_hub()` + `skill_install_from_hub()` with HTTP catalog fetch, query filtering, detail+CDN SKILL.md install, provenance tracking
+- ✅ **skill_hub tool** — `search <query>`, `install <slug>`, `list` actions
+- ✅ **skill_search hub:true** — merge hub results into search output with `source` field
+- ✅ **CLI /skills search-hub /install** — subcommands in cmd_skills
+- ◀ **Upstream drift: 5/12 remain** (L05-L06, L08-L11, L12 done; L01-L04, L07 pending)
+- ◀ **Build/doc: skills hub added to CLI and tool registry**
+- ◀ Committed: `dbe604c64`

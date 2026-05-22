@@ -1346,4 +1346,9 @@ bool skill_deps_resolve(const char *skill_name,
 char **skill_deps_get_missing(const char *skill_name, size_t *count);
 bool skill_deps_validate_order(const char ordered[][128], size_t count);
 
+/* L04: xAI model retirement detection */
+bool xai_is_model_retired(const char *model_name,
+                           char *replacement_out, size_t replacement_sz,
+                           char *reasoning_out, size_t reasoning_sz);
+
 #endif /* HERMES_H */

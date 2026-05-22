@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 static char *xai_build_url(const provider_t *p, const char *base_url) {
     (void)p;
@@ -225,6 +226,68 @@ static void xai_free_response(provider_response_t *resp) {
     free(resp->content);
     free(resp->reasoning);
     free(resp);
+}
+
+/* ================================================================
+ *  L04: xAI model retirement detection
+ *  Source: https://docs.x.ai/developers/migration/may-15-retirement
+ * ================================================================ */
+
+typedef struct {
+    const char *retired;
+    const char *replacement;
+    const char *reasoning_effort; /* NULL if not needed */
+} xai_retired_model_t;
+
+static const xai_retired_model_t XAI_RETIRED_MODELS[] = {
+    {"grok-4-0709",                 "grok-4.3", NULL},
+    {"grok-4-fast-reasoning",       "grok-4.3", NULL},
+    {"grok-4-fast-non-reasoning",   "grok-4.3", "none"},
+    {"grok-4-1-fast-reasoning",     "grok-4.3", NULL},
+    {"grok-4-1-fast-non-reasoning", "grok-4.3", "none"},
+    {"grok-code-fast-1",            "grok-4.3", NULL},
+    {"grok-3",                      "grok-4.3", NULL},
+    {"grok-imagine-image-pro",      "grok-imagine-image-quality", NULL},
+    {NULL, NULL, NULL}
+};
+
+/* Strips provider prefix ("x-ai/grok-4" → "grok-4") and lowercases */
+static const char *xai_normalize_model(const char *model_in, char *buf, size_t sz) {
+    if (!model_in || !model_in[0]) { buf[0] = '\0'; return buf; }
+    const char *m = model_in;
+    /* Skip provider prefixes */
+    if (strncasecmp(m, "x-ai/", 5) == 0) m += 5;
+    else if (strncasecmp(m, "xai/", 4) == 0) m += 4;
+    /* Lowercase */
+    size_t i;
+    for (i = 0; i < sz - 1 && m[i]; i++)
+        buf[i] = (char)tolower((unsigned char)m[i]);
+    buf[i] = '\0';
+    return buf;
+}
+
+/* Check if a model name is a known-retired xAI model.
+ * Returns true if model is retired, fills replacement and reasoning_effort.
+ * Strips "x-ai/" and "xai/" prefixes before comparison.
+ * Pass NULL for output params you don't need. */
+bool xai_is_model_retired(const char *model_name,
+                           char *replacement_out, size_t replacement_sz,
+                           char *reasoning_out, size_t reasoning_sz) {
+    if (!model_name || !model_name[0]) return false;
+    char norm[128];
+    xai_normalize_model(model_name, norm, sizeof(norm));
+    for (int i = 0; XAI_RETIRED_MODELS[i].retired; i++) {
+        if (strcasecmp(norm, XAI_RETIRED_MODELS[i].retired) == 0) {
+            if (replacement_out && replacement_sz > 0)
+                snprintf(replacement_out, replacement_sz, "%s", XAI_RETIRED_MODELS[i].replacement);
+            if (reasoning_out && reasoning_sz > 0 && XAI_RETIRED_MODELS[i].reasoning_effort)
+                snprintf(reasoning_out, reasoning_sz, "%s", XAI_RETIRED_MODELS[i].reasoning_effort);
+            else if (reasoning_out && reasoning_sz > 0)
+                reasoning_out[0] = '\0';
+            return true;
+        }
+    }
+    return false;
 }
 
 const provider_ops_t PROVIDER_OPS_XAI = {

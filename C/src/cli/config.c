@@ -1686,6 +1686,27 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->provider_cfg.top_logprobs < 0 || cfg->provider_cfg.top_logprobs > 20)
         add_issue(result, "model.top_logprobs", "must be 0-20, got %d", cfg->provider_cfg.top_logprobs);
 
+    /* L04: Check each model slot for xAI retirement */
+    {
+        char repl[128], reff[64];
+        if (xai_is_model_retired(cfg->provider_cfg.model, repl, sizeof(repl), reff, sizeof(reff)))
+            add_issue(result, "model.default", "xAI model '%s' retired May 15, 2026 → use '%s'%s",
+                      cfg->provider_cfg.model, repl,
+                      reff[0] ? reff : "");
+        if (cfg->tools.vision_model[0] &&
+            xai_is_model_retired(cfg->tools.vision_model, repl, sizeof(repl), reff, sizeof(reff)))
+            add_issue(result, "tools.vision_model",
+                      "xAI model '%s' retired → use '%s'", cfg->tools.vision_model, repl);
+        if (cfg->delegation.child_model[0] &&
+            xai_is_model_retired(cfg->delegation.child_model, repl, sizeof(repl), reff, sizeof(reff)))
+            add_issue(result, "delegation.model",
+                      "xAI model '%s' retired → use '%s'", cfg->delegation.child_model, repl);
+        if (cfg->compression.model[0] &&
+            xai_is_model_retired(cfg->compression.model, repl, sizeof(repl), reff, sizeof(reff)))
+            add_issue(result, "compression.model",
+                      "xAI model '%s' retired → use '%s'", cfg->compression.model, repl);
+    }
+
     /* Validate api_mode enum */
     if (cfg->provider_cfg.api_mode[0] &&
         strcmp(cfg->provider_cfg.api_mode, "chat_completions") != 0 &&
