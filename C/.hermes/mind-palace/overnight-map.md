@@ -159,3 +159,14 @@ make -j$(nproc) && bash test_runner.sh --verbose
   - Wired into agent loop — pre-request context limit warning at >90%
   - Test: test_tokenizer.c — 39 assertions, all model families + edge cases
 - ◀ **Suite: 78 pass, 0 fail, 1 skip (+1 tokenizer, 39 assertions)**
+
+## Session continuation (P126: In-memory memory plugin)
+- ✅ **P126: In-memory memory plugin** — `plugin_honcho.c` converted from stub to real backend
+  - Array-based store (1024 entries max), no external deps
+  - `memory_store()` — stores content + metadata JSON, returns unique ID
+  - `memory_search()` — keyword substring match with relevance ranking (recency + access count + position bonus), sorted by score
+  - `memory_clear()` — resets store
+  - All plugin API symbols exported: metadata, lifecycle, interface dispatch
+  - Plugin system proven end-to-end: load → init → interface → store → search → clear → cleanup → unload
+  - Test: test_plugin_honcho.c — 27 assertions covering all operations
+- ◀ **Suite: 79 pass, 0 fail, 1 skip (+1 plugin test, 27 assertions)**

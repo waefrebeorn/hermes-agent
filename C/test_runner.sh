@@ -41,6 +41,17 @@ run_lib_test "http"     "tests/test_http.c"         "lib/libhttp"            "$C
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
+echo ""; echo "=== Plugin Honcho (In-Memory Memory) Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
+    "$CDIR/tests/test_plugin_honcho.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_honcho -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_honcho > /dev/null 2>&1; then ok "plugin_honcho (in-memory memory)"
+    else fail "plugin_honcho (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_honcho
+else skip "plugin_honcho (compilation failed)"
+fi
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
