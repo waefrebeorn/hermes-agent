@@ -1,8 +1,10 @@
-# Slermes C — State (May 21 session complete)
+# Slermes C — State (May 21+ session)
 
 ## Honest Assessment
-**P1-P106 committed.** Config, CLI, tools, MCP, providers, agent loop, gateway depth all structurally complete.
-Remaining: P107-P200 (minor platforms, delegation, plugins, session DB, memory, security, cron, skills, TUI).
+**P1-P106 committed.** P15 (validation) + P22 (merge) gap-filled this session.
+- P15: Validation extended to all 14 config groups (browser, memory, compression, cron, notification, plugin, MCP + existing 7 groups). ✅ compiled+runtime
+- P22: Merge logic covers ALL config groups with full field-level merging (browser viewport/js, memory sub-fields, cron, notification, plugin, security, session, MCP expanded). ✅ compiled
+Remaining config gap phases: P19 (hot-reload/inotify), 164 leaf keys.
 
 ## This Session (10 phases)
 | Phase | Feature | Files |

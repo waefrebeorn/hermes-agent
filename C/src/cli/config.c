@@ -921,6 +921,56 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->session.retention_days < 0 || cfg->session.retention_days > 3650)
         add_issue(result, "sessions.retention_days", "unreasonable %d", cfg->session.retention_days);
 
+    /* --- Browser (P6) --- */
+    if (cfg->browser_cfg.browser_type[0] &&
+        strcmp(cfg->browser_cfg.browser_type, "auto") != 0 &&
+        strcmp(cfg->browser_cfg.browser_type, "chromium") != 0 &&
+        strcmp(cfg->browser_cfg.browser_type, "firefox") != 0)
+        add_issue(result, "browser.engine", "unknown '%s' (auto/chromium/firefox)", cfg->browser_cfg.browser_type);
+    if (cfg->browser_cfg.viewport_width < 320 || cfg->browser_cfg.viewport_width > 7680)
+        add_issue(result, "browser.viewport_width", "unreasonable %d", cfg->browser_cfg.viewport_width);
+    if (cfg->browser_cfg.viewport_height < 240 || cfg->browser_cfg.viewport_height > 4320)
+        add_issue(result, "browser.viewport_height", "unreasonable %d", cfg->browser_cfg.viewport_height);
+    if (cfg->browser_cfg.timeout < 1 || cfg->browser_cfg.timeout > 300)
+        add_issue(result, "browser.timeout", "unreasonable %d", cfg->browser_cfg.timeout);
+
+    /* --- Memory (P7) --- */
+    if (cfg->memory.char_limit < 100 || cfg->memory.char_limit > 1000000)
+        add_issue(result, "memory.char_limit", "unreasonable %d", cfg->memory.char_limit);
+    if (cfg->memory.ttl_days < 0 || cfg->memory.ttl_days > 36500)
+        add_issue(result, "memory.ttl_days", "out of range 0-36500, got %d", cfg->memory.ttl_days);
+    if (cfg->memory.storage_type < 0 || cfg->memory.storage_type > 3)
+        add_issue(result, "memory.storage_type", "must be 0-3 (0=inmem,1=file,2=sqlite,3=plugin), got %d", cfg->memory.storage_type);
+
+    /* --- Compression (P8) --- */
+    if (cfg->compression.strategy[0] &&
+        strcmp(cfg->compression.strategy, "smart") != 0 &&
+        strcmp(cfg->compression.strategy, "summary") != 0 &&
+        strcmp(cfg->compression.strategy, "extractive") != 0)
+        add_issue(result, "compression.strategy", "unknown '%s' (smart/summary/extractive)", cfg->compression.strategy);
+    if (cfg->compression.target_ratio < 0.1f || cfg->compression.target_ratio > 0.9f)
+        add_issue(result, "compression.target_ratio", "must be 0.1-0.9, got %.2f", cfg->compression.target_ratio);
+    if (cfg->compression.min_messages < 2 || cfg->compression.min_messages > 1000)
+        add_issue(result, "compression.min_messages", "unreasonable %d", cfg->compression.min_messages);
+
+    /* --- Cron (P9) --- */
+    if (cfg->cron.max_concurrent_jobs < 0 || cfg->cron.max_concurrent_jobs > 100)
+        add_issue(result, "cron.max_concurrent_jobs", "unreasonable %d", cfg->cron.max_concurrent_jobs);
+    if (cfg->cron.job_timeout < 1 || cfg->cron.job_timeout > 86400)
+        add_issue(result, "cron.job_timeout", "unreasonable %d", cfg->cron.job_timeout);
+    if (cfg->cron.retention_days < 0 || cfg->cron.retention_days > 36500)
+        add_issue(result, "cron.retention_days", "unreasonable %d", cfg->cron.retention_days);
+
+    /* --- Plugin (P13) --- */
+    if (cfg->plugin.dirs[0] == '\0')
+        add_issue(result, "plugin.dirs", "plugin directories not configured");
+
+    /* --- MCP (P14) --- */
+    if (cfg->mcp.timeout < 1 || cfg->mcp.timeout > 300)
+        add_issue(result, "mcp.timeout", "unreasonable %d", cfg->mcp.timeout);
+    if (cfg->mcp.max_tools < 1 || cfg->mcp.max_tools > 256)
+        add_issue(result, "mcp.max_tools", "unreasonable %d", cfg->mcp.max_tools);
+
     return result->count == 0;
 }
 
@@ -1348,12 +1398,25 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
         snprintf(dst->browser_cfg.browser_type, sizeof(dst->browser_cfg.browser_type), "%s", src->browser_cfg.browser_type);
     if (is_set_int(src->browser_cfg.timeout))
         dst->browser_cfg.timeout = src->browser_cfg.timeout;
+    if (is_set_int(src->browser_cfg.viewport_width))
+        dst->browser_cfg.viewport_width = src->browser_cfg.viewport_width;
+    if (is_set_int(src->browser_cfg.viewport_height))
+        dst->browser_cfg.viewport_height = src->browser_cfg.viewport_height;
+    dst->browser_cfg.enable_javascript = src->browser_cfg.enable_javascript;
 
     /* Memory */
     if (is_set_str(src->memory.provider))
         snprintf(dst->memory.provider, sizeof(dst->memory.provider), "%s", src->memory.provider);
     if (is_set_int(src->memory.char_limit))
         dst->memory.char_limit = src->memory.char_limit;
+    if (is_set_int(src->memory.user_char_limit))
+        dst->memory.user_char_limit = src->memory.user_char_limit;
+    if (is_set_int(src->memory.ttl_days))
+        dst->memory.ttl_days = src->memory.ttl_days;
+    if (is_set_int(src->memory.search_limit))
+        dst->memory.search_limit = src->memory.search_limit;
+    dst->memory.auto_save = src->memory.auto_save;
+    dst->memory.compression_enabled = src->memory.compression_enabled;
 
     /* Compression */
     if (is_set_str(src->compression.model))
@@ -1362,18 +1425,58 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
         snprintf(dst->compression.strategy, sizeof(dst->compression.strategy), "%s", src->compression.strategy);
     if (src->compression.target_ratio >= 0.01f)
         dst->compression.target_ratio = src->compression.target_ratio;
+    if (is_set_int(src->compression.min_messages))
+        dst->compression.min_messages = src->compression.min_messages;
+    dst->compression.preserve_system = src->compression.preserve_system;
+
+    /* Cron */
+    if (is_set_str(src->cron.dir))
+        snprintf(dst->cron.dir, sizeof(dst->cron.dir), "%s", src->cron.dir);
+    if (is_set_int(src->cron.max_concurrent_jobs))
+        dst->cron.max_concurrent_jobs = src->cron.max_concurrent_jobs;
+    if (is_set_int(src->cron.job_timeout))
+        dst->cron.job_timeout = src->cron.job_timeout;
+    if (is_set_int(src->cron.retention_days))
+        dst->cron.retention_days = src->cron.retention_days;
+    dst->cron.notify_on_failure = src->cron.notify_on_failure;
+
+    /* Notification */
+    if (is_set_str(src->notification.provider))
+        snprintf(dst->notification.provider, sizeof(dst->notification.provider), "%s", src->notification.provider);
+    if (is_set_str(src->notification.sound))
+        snprintf(dst->notification.sound, sizeof(dst->notification.sound), "%s", src->notification.sound);
+    dst->notification.on_complete = src->notification.on_complete;
+    dst->notification.on_error = src->notification.on_error;
+    dst->notification.on_approval = src->notification.on_approval;
+
+    /* Plugin */
+    if (is_set_str(src->plugin.dirs))
+        snprintf(dst->plugin.dirs, sizeof(dst->plugin.dirs), "%s", src->plugin.dirs);
+    if (is_set_str(src->plugin.enabled))
+        snprintf(dst->plugin.enabled, sizeof(dst->plugin.enabled), "%s", src->plugin.enabled);
 
     /* Security */
+    if (is_set_int(src->security.tirith_timeout))
+        dst->security.tirith_timeout = src->security.tirith_timeout;
     dst->security.tirith_enabled = src->security.tirith_enabled;
     dst->security.allow_private_urls = src->security.allow_private_urls;
+    dst->security.website_blocklist_enabled = src->security.website_blocklist_enabled;
 
     /* Session */
     if (is_set_int(src->session.retention_days))
         dst->session.retention_days = src->session.retention_days;
+    if (is_set_int(src->session.auto_save_interval))
+        dst->session.auto_save_interval = src->session.auto_save_interval;
+    dst->session.compress = src->session.compress;
+    dst->session.store_trajectories = src->session.store_trajectories;
 
     /* MCP */
     if (is_set_int(src->mcp.timeout))
         dst->mcp.timeout = src->mcp.timeout;
+    if (is_set_int(src->mcp.max_tools))
+        dst->mcp.max_tools = src->mcp.max_tools;
+    if (is_set_str(src->mcp.credential_store))
+        snprintf(dst->mcp.credential_store, sizeof(dst->mcp.credential_store), "%s", src->mcp.credential_store);
     dst->mcp.auth_enabled = src->mcp.auth_enabled;
 
     /* Sync flat fields for backward compat */
