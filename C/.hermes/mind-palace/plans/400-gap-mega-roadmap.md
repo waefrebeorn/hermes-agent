@@ -624,7 +624,7 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | # | Gap | Notes |
 |---|-----|-------|
 | O06 | Man page | `man hermes` with command reference |
-| O07 | API documentation | Doxygen/autodoc for all public headers |
+| O07 | API documentation | Doxygen/autodoc for all public headers ✅ |
 | O08 | Architecture documentation | High-level design, data flow diagrams |
 | O09 | SECURITY.md | Security policy, responsible disclosure |
 | O10 | CHANGELOG / release notes | Per-version change tracking ✅ |
@@ -660,7 +660,7 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | L. Upstream drift | 12 | 🔵 New (125 commits behind) |
 | M. Tests | 37 | ⚠️ 60% (60 test files, 96/0/0) |
 | N. Cross-cutting | 4 | ✅ 100% |
-| O. Build/doc/security | 9 | ⚠️ 60% |
+| O. Build/doc/security | 8 | ⚠️ 65% |
 
 | **Total** | **~355** | **~60% 1:1 parity** |
 

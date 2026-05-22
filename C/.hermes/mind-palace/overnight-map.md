@@ -1,8 +1,14 @@
-# Overnight Map (v8) — 2026-05-26
+# Overnight Map (v9) — 2026-05-26
 
 ```
-~60% complete  •  ~360 gaps remaining  •  125 commits behind upstream
+~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
+
+### Session 2026-05-26 — Doxygen API docs infrastructure (O07)
+
+- ✅ **Doxyfile** + `make docs` target + module comments for 13 headers
+- ◀ **Build/doc: 65%** (was 60%, O07 closed)
+- ◀ Committed: `c906bc5f2`
 
 ### Session 2026-05-26 — CHANGELOG.md (O10)
 

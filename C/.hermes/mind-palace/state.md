@@ -19,10 +19,18 @@
 | **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-| **Build/doc** | 9 | 60% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG |
+| **Build/doc** | 8 | 65% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen config, module docs |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-26 — Doxygen API docs infrastructure (O07)
+
+- ✅ **Doxyfile** — Full project config for Hermes Agent C API documentation
+- ✅ **Module doc comments** — Doxygen `\defgroup` tags for 13 key headers (hermes, provider, http, json, agent, db, crypto, yaml, gateway, display, memory, error, tokenizer, skin, plugin)
+- ✅ **`make docs` target** — Auto-detects doxygen, generates HTML docs
+- ◀ **Build/doc: 65%** (was 60%, O07 closed)
+- ◀ Committed: `c906bc5f2`
 
 ### Session 2026-05-26 — CHANGELOG.md (O10)
 
