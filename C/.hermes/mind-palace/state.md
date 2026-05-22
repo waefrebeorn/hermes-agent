@@ -19,9 +19,17 @@
 | **Tests** | 44 | 52% | **38 files, 2,219 assertions** (84 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
-| **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
+| **Build/doc** | 12 | 50% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), man page |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-24 — Build/doc infrastructure
+
+- ✅ **Dockerfile** — Multi-stage build: gcc:13-bookworm builder → debian:bookworm-slim runtime (~20MB). Stripped binary, libssl3 + curl for plugin HTTP calls.
+- ✅ **CI workflow** — GitHub Actions: build + smoke test + test suite + TUI + plugins + Docker build + image size check. Path-filtered to C/ changes.
+- ✅ **Cross-compile script** — `scripts/cross-compile.sh`: linux-x86_64, linux-aarch64, linux-armv7, windows-x86_64. Auto-detects toolchain, fails gracefully with install instructions.
+- ◀ **Build/doc: 50%** (was 30%, 3/15 gaps closed)
+- ◀ Committed: `a61cac0fd`
 
 ### Session 2026-05-24 (Spotify plugin real + test)
 
