@@ -210,6 +210,11 @@ int hermes_cli_main(int argc, char **argv) {
             arg_start = 3;
         }
 
+        /* Check for -e/--eval batch mode */
+        if (arg_start < argc && (strcmp(argv[arg_start], "-e") == 0 || strcmp(argv[arg_start], "--eval") == 0)) {
+            arg_start++; /* skip -e flag */
+        }
+
         if (arg_start < argc) {
             /* Open DB and load session if specified */
             if (g_cli.agent.hermes_home[0]) {
@@ -232,6 +237,40 @@ int hermes_cli_main(int argc, char **argv) {
             printf("%s\n", resp ? resp : "(no response)");
             free(resp);
             free(msg);
+
+            agent_close_db(&g_cli.agent);
+            agent_free(&g_cli.agent);
+            return 0;
+        }
+
+        /* --session without prompt: fall through to interactive with session loaded */
+    }
+
+    /* H09: Pipe input mode — non-interactive, no args, read from stdin */
+    if (!g_cli.interactive && argc <= 1) {
+        char input[65536];
+        size_t pos = 0;
+        int ch;
+        while (pos < sizeof(input) - 1 && (ch = fgetc(stdin)) != EOF) {
+            input[pos++] = (char)ch;
+        }
+        input[pos] = '\0';
+
+        /* Strip trailing newlines */
+        while (pos > 0 && (input[pos-1] == '\n' || input[pos-1] == '\r'))
+            input[--pos] = '\0';
+
+        if (pos > 0) {
+            /* Check for slash commands */
+            if (input[0] == '/') {
+                if (!commands_dispatch(input, &g_cli.agent)) {
+                    printf("Unknown command: %s\n", input);
+                }
+            } else {
+                char *resp = agent_chat(&g_cli.agent, input);
+                printf("%s\n", resp ? resp : "(no response)");
+                free(resp);
+            }
         }
 
         agent_close_db(&g_cli.agent);
