@@ -7,6 +7,7 @@
 
 #include "hermes.h"
 #include "plugin.h"
+#include "acp/server.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -30,6 +31,16 @@ int main(int argc, char **argv) {
         /* Forward declare — defined in scheduler.c */
         extern int hermes_cron_main(int, char**);
         return hermes_cron_main(argc - 1, argv + 1);
+    }
+
+    if (argc > 1 && strcmp(argv[1], "acp") == 0) {
+        /* ACP server mode — JSON-RPC over stdio */
+        acp_server_t *srv = acp_server_new();
+        if (srv) {
+            acp_server_run(srv);
+            acp_server_free(srv);
+        }
+        return 0;
     }
 
 #ifdef HAS_NCURSES_TUI

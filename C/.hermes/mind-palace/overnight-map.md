@@ -42,8 +42,9 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ P0 #3: F08 vision description — real Python Hermes CLI delegation
 - ✅ E01-E05: Telegram sendPhoto/Document/Voice/Video/Animation
 - ✅ E14: Telegram forwardMessage
+- ✅ E15: Telegram pinChatMessage + unpinChatMessage
 - ✅ F41: Image format validation (extension check + 50MB limit)
-- Next: F05-F07 stubs (still blocked), B01-B03 ACP providers, or P1 gateway/agent-depth gaps
+- Next: F05-F07 stubs (still blocked), B01-B03 ACP providers (4 sessions), or P1 gateway-agent-CLI gaps
 
 ## Upstream
 - 125 commits since last sync, 52 Python
