@@ -106,6 +106,17 @@ bool provider_url_is_trusted(const char *provider_name, const char *url);
  * Caller must free(). */
 char *provider_derive_api_key_name(const char *provider_name, const char *base_url);
 
+/* ================================================================
+ *  L06: supports_vision config override helper
+ * ================================================================ */
+
+/* Check if a model supports vision, respecting the config override.
+ * If supports_vision override is set (true), returns true regardless of metadata.
+ * If supports_vision override is unset (false), delegates to model_metadata.
+ * The override comes from model.supports_vision YAML key or HERMES_SUPPORTS_VISION env var.
+ * provider_cfg can be NULL (no override). */
+bool model_supports_vision(const char *model_name, const provider_config_t *provider_cfg);
+
 #ifdef __cplusplus
 }
 #endif

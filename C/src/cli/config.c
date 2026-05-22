@@ -439,10 +439,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
                     snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", env_val);
                     snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", env_val);
                 }
-                free(derived_name);
-            }
+            free(derived_name);
         }
-        return true;
+    }
+    /* L06: supports_vision from env in env-only path */
+    {
+        const char *sv_env = getenv("HERMES_SUPPORTS_VISION");
+        if (sv_env) {
+            cfg->provider_cfg.supports_vision = (strcmp(sv_env, "1") == 0 ||
+                                                  strcasecmp(sv_env, "true") == 0 ||
+                                                  strcasecmp(sv_env, "yes") == 0);
+        }
+    }
+    return true;
     }
 
     /* P1: Extended provider config — parse directly into provider_cfg, then sync to flat fields */
@@ -638,6 +647,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
                 fprintf(stderr, "[config] Derived API key from %s\n", derived_name);
             }
             free(derived_name);
+        }
+    }
+
+    /* L06: supports_vision config override */
+    cfg->provider_cfg.supports_vision = yaml_get_bool(doc, "model.supports_vision", false);
+
+    /* Env override for supports_vision */
+    {
+        const char *sv_env = getenv("HERMES_SUPPORTS_VISION");
+        if (sv_env) {
+            cfg->provider_cfg.supports_vision = (strcmp(sv_env, "1") == 0 ||
+                                                  strcasecmp(sv_env, "true") == 0 ||
+                                                  strcasecmp(sv_env, "yes") == 0);
         }
     }
 
@@ -1968,6 +1990,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_bool(diff, "model.parallel_tool_calls", def.provider_cfg.parallel_tool_calls, active->provider_cfg.parallel_tool_calls);
     diff_int(diff, "model.max_tool_calls", def.provider_cfg.max_tool_calls, active->provider_cfg.max_tool_calls);
     diff_int(diff, "model.n", def.provider_cfg.n, active->provider_cfg.n);
+    diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
@@ -2137,6 +2160,7 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_bool(f, "  parallel_tool_calls", cfg->provider_cfg.parallel_tool_calls);
     exp_int(f, "  max_tool_calls", cfg->provider_cfg.max_tool_calls);
     exp_int(f, "  n", cfg->provider_cfg.n);
+    exp_bool(f, "  supports_vision", cfg->provider_cfg.supports_vision);
 
     fprintf(f, "\ndisplay:\n");
     exp_str(f, "  skin", cfg->display.skin);

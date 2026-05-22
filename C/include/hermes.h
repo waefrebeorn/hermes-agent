@@ -324,6 +324,7 @@ typedef struct {
     int   n;                       /* number of response choices (1 = single) */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
+    bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */
 } provider_config_t;
 
 /* ================================================================

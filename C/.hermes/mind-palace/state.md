@@ -13,7 +13,7 @@
 | **Gateway** | 63 | **~98% (62/63)** | E01-E53, E55-E63 ✅. E54 (Slack upload) blocked — needs HTTP multipart. E51 Python-only, skip |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 32 | 85% | 23 state fields, 18 session DB, G01-G36 all filled |
-| **CLI** | 34 | 80% | 70 slash commands, skin/theme engine |
+| **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
 | **Errors** | 5 | **100% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
@@ -34,4 +34,6 @@
 - ✅ **N05: Local provider trust** — detect localhost/127.0.0.1 in base_url, set local_provider flag
 - ✅ **N03: API key leakage prevention** — provider_url_is_trusted() checks URL host matches provider's authoritative endpoint before sending API key in headers. Wired into llm_client.c (4 paths: provider+legacy, stream+non-stream)
 - ✅ **N04: Vendor API key derivation** — provider_derive_api_key_name() derives <VENDOR>_API_KEY from base_url hostname. Hooks in config.c (both YAML and env-only paths)
-- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf, eae17bdcf, 1c3bc1018
+- ✅ **H31: /session-search CLI command** — search past sessions, calls session_search_handler, displays ranked results with snippet
+- ✅ **H32: /session-export CLI command** — export session as JSON or Markdown via session_crud_handler
+- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf, eae17bdcf, 1c3bc1018, 1bfc8d03f, 4dabedce2

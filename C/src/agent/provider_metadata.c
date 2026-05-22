@@ -286,3 +286,16 @@ char *provider_derive_api_key_name(const char *provider_name, const char *base_u
 
     return strdup(result);
 }
+
+/* ================================================================
+ *  L06: supports_vision config override
+ * ================================================================ */
+
+bool model_supports_vision(const char *model_name, const provider_config_t *provider_cfg) {
+    /* Config override takes precedence */
+    if (provider_cfg && provider_cfg->supports_vision) {
+        return true;
+    }
+    /* Otherwise fall back to metadata lookup */
+    return model_name_has_capability(model_name, MODEL_CAP_VISION);
+}
