@@ -201,9 +201,13 @@ static char *anthropic_build_request_body(const provider_t *p,
 
             json_append(anthropic_tools, at);
         }
-        if (json_len(anthropic_tools) > 0)
+        if (json_len(anthropic_tools) > 0) {
             json_set(root, "tools", anthropic_tools);
-        else
+            /* B27: cache_control on tools — top-level field in request body */
+            json_t *tools_cc = json_object();
+            json_set(tools_cc, "type", json_string("ephemeral"));
+            json_set(root, "cache_control", tools_cc);
+        } else
             json_free(anthropic_tools);
     }
 
@@ -292,6 +296,21 @@ static char *anthropic_build_request_body(const provider_t *p,
         json_set(am, "role", json_string(role_str));
         json_set(am, "content", content_arr);
         json_append(msgs, am);
+    }
+
+    /* B27: cache_control on the last user message's last content block */
+    if (json_len(msgs) > 0) {
+        json_t *last_msg = json_get(msgs, json_len(msgs) - 1);
+        const char *last_role = json_get_str(last_msg, "role", "");
+        if (strcmp(last_role, "user") == 0) {
+            json_t *last_content = json_obj_get(last_msg, "content");
+            if (last_content && json_len(last_content) > 0) {
+                json_t *last_block = json_get(last_content, json_len(last_content) - 1);
+                json_t *cc = json_object();
+                json_set(cc, "type", json_string("ephemeral"));
+                json_set(last_block, "cache_control", cc);
+            }
+        }
     }
 
     if (json_len(msgs) == 0) {
