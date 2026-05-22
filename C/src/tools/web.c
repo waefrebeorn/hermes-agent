@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 /* Schema */
 static const char *SCHEMA_GET = "{"
@@ -294,6 +295,114 @@ char *web_search_handler(const char *args_json, const char *task_id) {
     return result ? result : strdup("{\"error\":\"Search failed\"}");
 }
 
+/* ================================================================
+ *  F21: Web extract handler with LLM depth
+ * ================================================================ */
+
+static const char *SCHEMA_EXTRACT = "{"
+    "\"type\":\"object\","
+    "\"properties\":{"
+      "\"url\":{\"type\":\"string\",\"description\":\"URL to extract content from\"},"
+      "\"prompt\":{\"type\":\"string\",\"description\":\"What to extract from the page (e.g., 'key metrics', 'main arguments', 'pricing info')\",\"default\":\"Extract key information\"},"
+      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30}"
+    "},"
+    "\"required\":[\"url\"]"
+"}";
+
+char *web_extract_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *url = json_get_str(args, "url", NULL);
+    const char *extract_prompt = json_get_str(args, "prompt", "Extract key information from this page");
+    int timeout = (int)json_get_num(args, "timeout", 30);
+
+    json_free(args);
+
+    if (!url) return strdup("{\"error\":\"Missing url\"}");
+
+    /* Build delegate script path relative to project root or HERMES_HOME */
+    char script_path[1024];
+    const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                       getenv("HOME") ? getenv("HOME") : ".";
+    snprintf(script_path, sizeof(script_path),
+             "%s/hermes-agent-dev/C/scripts/web_extract_delegate.py", home);
+
+    /* Check if script exists at project path; fallback to home scripts dir */
+    struct stat st;
+    if (stat(script_path, &st) != 0) {
+        snprintf(script_path, sizeof(script_path),
+                 "%s/.hermes/scripts/web_extract_delegate.py", home);
+    }
+
+    /* Build JSON input for the delegate */
+    json_t *input = json_object();
+    json_set(input, "url", json_string(url));
+    json_set(input, "prompt", json_string(extract_prompt));
+    json_set(input, "timeout", json_number((double)timeout));
+    char *input_json = json_serialize(input);
+    json_free(input);
+
+    /* Build command */
+    char cmd[4096];
+    snprintf(cmd, sizeof(cmd), "echo '%s' | python3 '%s' 2>/dev/null",
+             input_json, script_path);
+    free(input_json);
+
+    /* Execute via popen */
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return strdup("{\"error\":\"Failed to run extractor\"}");
+
+    /* Read output */
+    size_t cap = 16384, len = 0;
+    char *output = (char *)malloc(cap);
+    if (!output) { pclose(fp); return strdup("{\"error\":\"OOM\"}"); }
+    output[0] = '\0';
+
+    char line[4096];
+    while (fgets(line, sizeof(line), fp)) {
+        size_t add = strlen(line);
+        if (len + add + 1 > cap) {
+            cap *= 2;
+            output = realloc(output, cap);
+            if (!output) { pclose(fp); return strdup("{\"error\":\"OOM\"}"); }
+        }
+        memcpy(output + len, line, add + 1);
+        len += add;
+    }
+    int rc = pclose(fp);
+
+    if (rc != 0 || !output[0]) {
+        free(output);
+        return strdup("{\"error\":\"Extraction failed\"}");
+    }
+
+    /* Trim trailing newline */
+    char *end = output + strlen(output) - 1;
+    while (end > output && (*end == '\n' || *end == '\r')) *end-- = '\0';
+
+    /* Try to parse as JSON from delegate */
+    json_t *result = json_parse(output, NULL);
+    if (result) {
+        char *json_out = json_serialize(result);
+        json_free(result);
+        free(output);
+        return json_out;
+    }
+
+    /* Fallback: wrap raw output in result */
+    json_t *fallback = json_object();
+    json_set(fallback, "url", json_string(url));
+    json_set(fallback, "extraction", json_string(output));
+    char *json_out = json_serialize(fallback);
+    json_free(fallback);
+    free(output);
+    return json_out;
+}
+
 /* Auto-registration */
 void registry_init_web(void) {
     registry_register("web_get",
@@ -303,6 +412,8 @@ void registry_init_web(void) {
         "Search the web. Supports backends: searxng, google, brave, tavily, firecrawl.",
         SCHEMA_SEARCH, web_search_handler);
     registry_register("web_extract",
-        "Extract content from a web page URL. Returns the full page content as text.",
-        SCHEMA_GET, web_get_handler);
+        "Extract structured content from a web page using LLM. "
+        "Fetches URL, sends content to LLM with extraction prompt. "
+        "Supports custom extraction instructions via 'prompt' parameter.",
+        SCHEMA_EXTRACT, web_extract_handler);
 }
