@@ -97,6 +97,7 @@ char *llm_compress_context(agent_state_t *state, size_t max_tokens, bool enabled
 void agent_init(agent_state_t *state);
 void agent_generate_session_id(agent_state_t *state);
 void agent_free(agent_state_t *state);
+void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cfg);
 char *agent_run_conversation(agent_state_t *state,
                               const char *user_message,
                               const char *system_message);

@@ -65,6 +65,38 @@ void agent_init(agent_state_t *state) {
     provider_register_builtins();
 }
 
+/* P99: Initialize agent infrastructure from configuration.
+ * Called after agent_init() to apply config settings. */
+void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cfg) {
+    if (!state || !cfg) return;
+
+    /* Set LLM config from provider config */
+    if (cfg->provider_cfg.model[0])
+        snprintf(state->llm.model, sizeof(state->llm.model), "%s", cfg->provider_cfg.model);
+    if (cfg->provider_cfg.provider[0])
+        snprintf(state->llm.provider, sizeof(state->llm.provider), "%s", cfg->provider_cfg.provider);
+    if (cfg->provider_cfg.base_url[0])
+        snprintf(state->llm.base_url, sizeof(state->llm.base_url), "%s", cfg->provider_cfg.base_url);
+    if (cfg->provider_cfg.api_key[0])
+        snprintf(state->llm.api_key, sizeof(state->llm.api_key), "%s", cfg->provider_cfg.api_key);
+
+    /* Max iterations from agent config */
+    if (cfg->agent.max_iterations > 0)
+        state->max_iterations = cfg->agent.max_iterations;
+
+    /* Compress enabled */
+    state->compress_enabled = cfg->compress_enabled;
+
+    /* Budget tracker limits from config */
+    if (state->budget) {
+        budget_tracker_set_limits(state->budget,
+            cfg->agent.max_output_tokens > 0 ? (long long)cfg->agent.max_output_tokens * 10 : 0,
+            0,  /* output: no limit from config yet */
+            0.0, /* cost: no limit from config yet */
+            state->max_iterations > 0 ? state->max_iterations : 0);
+    }
+}
+
 void agent_free(agent_state_t *state) {
     context_clear(state);
     /* Free plugin registry if loaded */
