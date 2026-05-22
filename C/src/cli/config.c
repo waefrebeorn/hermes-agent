@@ -277,6 +277,23 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->auxiliary.curator.provider, sizeof(cfg->auxiliary.curator.provider), "auto");
     cfg->auxiliary.curator.timeout = 600;
 
+    /* TTS config defaults */
+    snprintf(cfg->tts.provider, sizeof(cfg->tts.provider), "edge");
+    snprintf(cfg->tts.edge_voice, sizeof(cfg->tts.edge_voice), "en-US-AriaNeural");
+    snprintf(cfg->tts.elevenlabs_voice_id, sizeof(cfg->tts.elevenlabs_voice_id), "pNInz6obpgDQGcFmaJgB");
+    snprintf(cfg->tts.elevenlabs_model_id, sizeof(cfg->tts.elevenlabs_model_id), "eleven_multilingual_v2");
+    snprintf(cfg->tts.openai_model, sizeof(cfg->tts.openai_model), "gpt-4o-mini-tts");
+    snprintf(cfg->tts.openai_voice, sizeof(cfg->tts.openai_voice), "alloy");
+    snprintf(cfg->tts.xai_voice_id, sizeof(cfg->tts.xai_voice_id), "eve");
+    snprintf(cfg->tts.xai_language, sizeof(cfg->tts.xai_language), "en");
+    cfg->tts.xai_sample_rate = 24000;
+    cfg->tts.xai_bit_rate = 128000;
+    snprintf(cfg->tts.mistral_model, sizeof(cfg->tts.mistral_model), "voxtral-mini-tts-2603");
+    snprintf(cfg->tts.mistral_voice_id, sizeof(cfg->tts.mistral_voice_id), "c69964a6-ab8b-4f8a-9465-ec0925096ec8");
+    snprintf(cfg->tts.neutts_model, sizeof(cfg->tts.neutts_model), "neuphonic/neutts-air-q4-gguf");
+    snprintf(cfg->tts.neutts_device, sizeof(cfg->tts.neutts_device), "cpu");
+    snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "en_US-lessac-medium");
+
     /* Display config defaults */
     snprintf(cfg->display.skin, sizeof(cfg->display.skin), "default");
     cfg->display.show_reasoning = true;
@@ -768,6 +785,25 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     { int v = yaml_get_int(doc, "auxiliary.curator.timeout", 0); if (v > 0) cfg->auxiliary.curator.timeout = v; }
     { const char *v = yaml_get_string(doc, "auxiliary.curator.extra_body"); if (v) snprintf(cfg->auxiliary.curator.extra_body, sizeof(cfg->auxiliary.curator.extra_body), "%s", v); }
 
+    /* TTS config */
+    { const char *v = yaml_get_string(doc, "tts.provider"); if (v) snprintf(cfg->tts.provider, sizeof(cfg->tts.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.edge.voice"); if (v) snprintf(cfg->tts.edge_voice, sizeof(cfg->tts.edge_voice), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.elevenlabs.voice_id"); if (v) snprintf(cfg->tts.elevenlabs_voice_id, sizeof(cfg->tts.elevenlabs_voice_id), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.elevenlabs.model_id"); if (v) snprintf(cfg->tts.elevenlabs_model_id, sizeof(cfg->tts.elevenlabs_model_id), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.openai.model"); if (v) snprintf(cfg->tts.openai_model, sizeof(cfg->tts.openai_model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.openai.voice"); if (v) snprintf(cfg->tts.openai_voice, sizeof(cfg->tts.openai_voice), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.xai.voice_id"); if (v) snprintf(cfg->tts.xai_voice_id, sizeof(cfg->tts.xai_voice_id), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.xai.language"); if (v) snprintf(cfg->tts.xai_language, sizeof(cfg->tts.xai_language), "%s", v); }
+    { int v = yaml_get_int(doc, "tts.xai.sample_rate", 0); if (v > 0) cfg->tts.xai_sample_rate = v; }
+    { int v = yaml_get_int(doc, "tts.xai.bit_rate", 0); if (v > 0) cfg->tts.xai_bit_rate = v; }
+    { const char *v = yaml_get_string(doc, "tts.mistral.model"); if (v) snprintf(cfg->tts.mistral_model, sizeof(cfg->tts.mistral_model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.mistral.voice_id"); if (v) snprintf(cfg->tts.mistral_voice_id, sizeof(cfg->tts.mistral_voice_id), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.neutts.ref_audio"); if (v) snprintf(cfg->tts.neutts_ref_audio, sizeof(cfg->tts.neutts_ref_audio), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.neutts.ref_text"); if (v) snprintf(cfg->tts.neutts_ref_text, sizeof(cfg->tts.neutts_ref_text), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.neutts.model"); if (v) snprintf(cfg->tts.neutts_model, sizeof(cfg->tts.neutts_model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.neutts.device"); if (v) snprintf(cfg->tts.neutts_device, sizeof(cfg->tts.neutts_device), "%s", v); }
+    { const char *v = yaml_get_string(doc, "tts.piper.voice"); if (v) snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "%s", v); }
+
     /* Terminal backend */
     const char *term_backend = yaml_get_string(doc, "terminal.backend");
     if (term_backend) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", term_backend);
@@ -1179,6 +1215,20 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     #undef LOAD_AUX_ENV_STR
     #undef LOAD_AUX_ENV_INT
 
+    /* TTS env overrides */
+    v = getenv("HERMES_TTS_PROVIDER");
+    if (v) snprintf(cfg->tts.provider, sizeof(cfg->tts.provider), "%s", v);
+    v = getenv("HERMES_TTS_EDGE_VOICE");
+    if (v) snprintf(cfg->tts.edge_voice, sizeof(cfg->tts.edge_voice), "%s", v);
+    v = getenv("HERMES_TTS_ELEVENLABS_VOICE_ID");
+    if (v) snprintf(cfg->tts.elevenlabs_voice_id, sizeof(cfg->tts.elevenlabs_voice_id), "%s", v);
+    v = getenv("HERMES_TTS_OPENAI_VOICE");
+    if (v) snprintf(cfg->tts.openai_voice, sizeof(cfg->tts.openai_voice), "%s", v);
+    v = getenv("HERMES_TTS_XAI_VOICE_ID");
+    if (v) snprintf(cfg->tts.xai_voice_id, sizeof(cfg->tts.xai_voice_id), "%s", v);
+    v = getenv("HERMES_TTS_PIPER_VOICE");
+    if (v) snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "%s", v);
+
     v = getenv("HERMES_TERMINAL_BACKEND");
     if (v) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", v);
 
@@ -1521,6 +1571,10 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->auxiliary.web_extract.timeout < 1 || cfg->auxiliary.web_extract.timeout > 3600)
         add_issue(result, "auxiliary.web_extract.timeout", "unreasonable %d", cfg->auxiliary.web_extract.timeout);
 
+    /* --- TTS --- */
+    if (cfg->tts.xai_sample_rate < 8000 || cfg->tts.xai_sample_rate > 192000)
+        add_issue(result, "tts.xai.sample_rate", "unreasonable %d", cfg->tts.xai_sample_rate);
+
     return result->count == 0;
 }
 
@@ -1742,6 +1796,13 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "checkpoints.interval", def.checkpoints.interval, active->checkpoints.interval);
     diff_int(diff, "checkpoints.max", def.checkpoints.max_checkpoints, active->checkpoints.max_checkpoints);
 
+    /* TTS */
+    diff_str(diff, "tts.provider", def.tts.provider, active->tts.provider);
+    diff_str(diff, "tts.edge.voice", def.tts.edge_voice, active->tts.edge_voice);
+    diff_str(diff, "tts.openai.model", def.tts.openai_model, active->tts.openai_model);
+    diff_str(diff, "tts.openai.voice", def.tts.openai_voice, active->tts.openai_voice);
+    diff_str(diff, "tts.piper.voice", def.tts.piper_voice, active->tts.piper_voice);
+
     return diff->count > 0;
 }
 
@@ -1925,6 +1986,25 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     E_AUX_TASK(f, profile_describer, "profile_describer");
     E_AUX_TASK(f, curator, "curator");
     #undef E_AUX_TASK
+
+    fprintf(f, "\ntts:\n");
+    exp_str(f, "  provider", cfg->tts.provider);
+    exp_str(f, "  edge.voice", cfg->tts.edge_voice);
+    exp_str(f, "  elevenlabs.voice_id", cfg->tts.elevenlabs_voice_id);
+    exp_str(f, "  elevenlabs.model_id", cfg->tts.elevenlabs_model_id);
+    exp_str(f, "  openai.model", cfg->tts.openai_model);
+    exp_str(f, "  openai.voice", cfg->tts.openai_voice);
+    exp_str(f, "  xai.voice_id", cfg->tts.xai_voice_id);
+    exp_str(f, "  xai.language", cfg->tts.xai_language);
+    exp_int(f, "  xai.sample_rate", cfg->tts.xai_sample_rate);
+    exp_int(f, "  xai.bit_rate", cfg->tts.xai_bit_rate);
+    exp_str(f, "  mistral.model", cfg->tts.mistral_model);
+    exp_str(f, "  mistral.voice_id", cfg->tts.mistral_voice_id);
+    exp_str(f, "  neutts.ref_audio", cfg->tts.neutts_ref_audio);
+    exp_str(f, "  neutts.ref_text", cfg->tts.neutts_ref_text);
+    exp_str(f, "  neutts.model", cfg->tts.neutts_model);
+    exp_str(f, "  neutts.device", cfg->tts.neutts_device);
+    exp_str(f, "  piper.voice", cfg->tts.piper_voice);
 
     if (close_file) fclose(f);
     return true;
@@ -2200,6 +2280,25 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     M_AUX_STR(curator, api_key); M_AUX_INT(curator, timeout); M_AUX_STR(curator, extra_body);
     #undef M_AUX_STR
     #undef M_AUX_INT
+
+    /* TTS merge */
+    if (is_set_str(src->tts.provider)) snprintf(dst->tts.provider, sizeof(dst->tts.provider), "%s", src->tts.provider);
+    if (is_set_str(src->tts.edge_voice)) snprintf(dst->tts.edge_voice, sizeof(dst->tts.edge_voice), "%s", src->tts.edge_voice);
+    if (is_set_str(src->tts.elevenlabs_voice_id)) snprintf(dst->tts.elevenlabs_voice_id, sizeof(dst->tts.elevenlabs_voice_id), "%s", src->tts.elevenlabs_voice_id);
+    if (is_set_str(src->tts.elevenlabs_model_id)) snprintf(dst->tts.elevenlabs_model_id, sizeof(dst->tts.elevenlabs_model_id), "%s", src->tts.elevenlabs_model_id);
+    if (is_set_str(src->tts.openai_model)) snprintf(dst->tts.openai_model, sizeof(dst->tts.openai_model), "%s", src->tts.openai_model);
+    if (is_set_str(src->tts.openai_voice)) snprintf(dst->tts.openai_voice, sizeof(dst->tts.openai_voice), "%s", src->tts.openai_voice);
+    if (is_set_str(src->tts.xai_voice_id)) snprintf(dst->tts.xai_voice_id, sizeof(dst->tts.xai_voice_id), "%s", src->tts.xai_voice_id);
+    if (is_set_str(src->tts.xai_language)) snprintf(dst->tts.xai_language, sizeof(dst->tts.xai_language), "%s", src->tts.xai_language);
+    if (is_set_int(src->tts.xai_sample_rate)) dst->tts.xai_sample_rate = src->tts.xai_sample_rate;
+    if (is_set_int(src->tts.xai_bit_rate)) dst->tts.xai_bit_rate = src->tts.xai_bit_rate;
+    if (is_set_str(src->tts.mistral_model)) snprintf(dst->tts.mistral_model, sizeof(dst->tts.mistral_model), "%s", src->tts.mistral_model);
+    if (is_set_str(src->tts.mistral_voice_id)) snprintf(dst->tts.mistral_voice_id, sizeof(dst->tts.mistral_voice_id), "%s", src->tts.mistral_voice_id);
+    if (is_set_str(src->tts.neutts_ref_audio)) snprintf(dst->tts.neutts_ref_audio, sizeof(dst->tts.neutts_ref_audio), "%s", src->tts.neutts_ref_audio);
+    if (is_set_str(src->tts.neutts_ref_text)) snprintf(dst->tts.neutts_ref_text, sizeof(dst->tts.neutts_ref_text), "%s", src->tts.neutts_ref_text);
+    if (is_set_str(src->tts.neutts_model)) snprintf(dst->tts.neutts_model, sizeof(dst->tts.neutts_model), "%s", src->tts.neutts_model);
+    if (is_set_str(src->tts.neutts_device)) snprintf(dst->tts.neutts_device, sizeof(dst->tts.neutts_device), "%s", src->tts.neutts_device);
+    if (is_set_str(src->tts.piper_voice)) snprintf(dst->tts.piper_voice, sizeof(dst->tts.piper_voice), "%s", src->tts.piper_voice);
 
     /* Sync flat fields for backward compat */
     snprintf(dst->model, sizeof(dst->model), "%s", dst->provider_cfg.model);
@@ -2534,6 +2633,23 @@ char *hermes_config_schema(void) {
     S_AUX_TASK(profile_describer, "profile_describer", "profile description", 60);
     S_AUX_TASK(curator, "curator", "skill-usage review", 600);
     #undef S_AUX_TASK
+
+    /* --- tts --- */
+    {
+        json_t *tts = json_object();
+        json_set(tts, "type", json_string("object"));
+        json_set(tts, "description", json_string("Text-to-speech configuration"));
+        json_t *tprops = json_object();
+        json_set(tprops, "provider", schema_prop("string", "TTS provider", "edge"));
+        json_set(tprops, "edge.voice", schema_prop("string", "Edge TTS voice name", "en-US-AriaNeural"));
+        json_set(tprops, "elevenlabs.voice_id", schema_prop("string", "ElevenLabs voice ID", "pNInz6obpgDQGcFmaJgB"));
+        json_set(tprops, "openai.model", schema_prop("string", "OpenAI TTS model", "gpt-4o-mini-tts"));
+        json_set(tprops, "openai.voice", schema_prop("string", "OpenAI TTS voice", "alloy"));
+        json_set(tprops, "xai.sample_rate", schema_prop_int("xAI sample rate", 24000, 8000, 192000));
+        json_set(tprops, "piper.voice", schema_prop("string", "Piper TTS voice", "en_US-lessac-medium"));
+        json_set(tts, "properties", tprops);
+        json_set(properties, "tts", tts);
+    }
 
     json_set(root, "properties", properties);
     json_set(root, "definitions", defs);

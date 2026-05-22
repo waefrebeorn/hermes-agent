@@ -466,6 +466,26 @@ typedef struct {
     bool  docker_run_as_host_user; /* terminal.docker_run_as_host_user */
 } terminal_config_t;
 
+typedef struct {
+    char  provider[32];            /* tts.provider: edge/elevenlabs/openai/xai/mistral/neutts/piper */
+    char  edge_voice[64];          /* tts.edge.voice */
+    char  elevenlabs_voice_id[64]; /* tts.elevenlabs.voice_id */
+    char  elevenlabs_model_id[64]; /* tts.elevenlabs.model_id */
+    char  openai_model[64];        /* tts.openai.model */
+    char  openai_voice[32];        /* tts.openai.voice */
+    char  xai_voice_id[64];        /* tts.xai.voice_id */
+    char  xai_language[16];        /* tts.xai.language */
+    int   xai_sample_rate;         /* tts.xai.sample_rate */
+    int   xai_bit_rate;            /* tts.xai.bit_rate */
+    char  mistral_model[64];       /* tts.mistral.model */
+    char  mistral_voice_id[64];    /* tts.mistral.voice_id */
+    char  neutts_ref_audio[256];   /* tts.neutts.ref_audio */
+    char  neutts_ref_text[256];    /* tts.neutts.ref_text */
+    char  neutts_model[128];       /* tts.neutts.model */
+    char  neutts_device[16];       /* tts.neutts.device: cpu/cuda/mps */
+    char  piper_voice[64];         /* tts.piper.voice */
+} tts_config_t;
+
 /* ================================================================
  *  Logging Config (Python logging group, 5 keys)
  * ================================================================ */
@@ -552,6 +572,8 @@ typedef struct {
     checkpoints_config_t checkpoints;
     /* Auxiliary config */
     auxiliary_config_t auxiliary;
+    /* TTS config */
+    tts_config_t tts;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */

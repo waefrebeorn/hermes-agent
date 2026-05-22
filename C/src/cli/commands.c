@@ -620,6 +620,7 @@ static const cfg_category_t CFG_CATEGORIES[] = {
     {"plugin",      "Plugin directories and enabled plugins",      "plugin.",      0},
     {"mcp",         "MCP server timeout, auth, tool limit",       "mcp.",         0},
     {"auxiliary",   "Auxiliary LLM routing (vision, web_extract, etc.)","auxiliary.",  0},
+    {"tts",         "Text-to-speech configuration",                "tts.",        0},
     {NULL, NULL, NULL, 0}
 };
 
@@ -727,6 +728,27 @@ static void show_section_auxiliary(const hermes_config_t *cfg) {
     SH_AUX_TASK(profile_describer, "profile_describer");
     SH_AUX_TASK(curator, "curator");
     #undef SH_AUX_TASK
+}
+
+static void show_section_tts(const hermes_config_t *cfg) {
+    printf("tts:  Text-to-speech configuration\n");
+    show_cfg_val("provider", "str", cfg->tts.provider);
+    show_cfg_val("edge.voice", "str", cfg->tts.edge_voice);
+    show_cfg_val("elevenlabs.voice_id", "str", cfg->tts.elevenlabs_voice_id);
+    show_cfg_val("elevenlabs.model_id", "str", cfg->tts.elevenlabs_model_id);
+    show_cfg_val("openai.model", "str", cfg->tts.openai_model);
+    show_cfg_val("openai.voice", "str", cfg->tts.openai_voice);
+    show_cfg_val("xai.voice_id", "str", cfg->tts.xai_voice_id);
+    show_cfg_val("xai.language", "str", cfg->tts.xai_language);
+    show_cfg_val_int("xai.sample_rate", cfg->tts.xai_sample_rate);
+    show_cfg_val_int("xai.bit_rate", cfg->tts.xai_bit_rate);
+    show_cfg_val("mistral.model", "str", cfg->tts.mistral_model);
+    show_cfg_val("mistral.voice_id", "str", cfg->tts.mistral_voice_id);
+    show_cfg_val("neutts.ref_audio", "str", cfg->tts.neutts_ref_audio);
+    show_cfg_val("neutts.ref_text", "str", cfg->tts.neutts_ref_text);
+    show_cfg_val("neutts.model", "str", cfg->tts.neutts_model);
+    show_cfg_val("neutts.device", "str", cfg->tts.neutts_device);
+    show_cfg_val("piper.voice", "str", cfg->tts.piper_voice);
 }
 
 static void show_section_delegation(const hermes_config_t *cfg) {
@@ -854,12 +876,14 @@ static bool show_config_section(const hermes_config_t *cfg, const char *section)
         { show_section_mcp(cfg); return true; }
     if (strcmp(section, "auxiliary") == 0)
         { show_section_auxiliary(cfg); return true; }
+    if (strcmp(section, "tts") == 0)
+        { show_section_tts(cfg); return true; }
     return false;
 }
 
 /* List all config groups */
 static void list_config_groups(void) {
-    printf("Config groups (15):\n");
+    printf("Config groups (16):\n");
     for (int i = 0; CFG_CATEGORIES[i].name; i++)
         printf("  %-15s  %s\n", CFG_CATEGORIES[i].name, CFG_CATEGORIES[i].desc);
     printf("\nUse /config show <group> to view keys in a group.\n");
