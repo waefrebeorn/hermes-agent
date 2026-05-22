@@ -67,6 +67,13 @@ static const provider_ops_t *find_provider_ops(const char *name) {
         {"bedrock",     PROVIDER_BEDROCK},
         {"aws",         PROVIDER_BEDROCK},
         {"custom",      PROVIDER_CUSTOM},
+        /* OpenAI-compat providers (use base_url from config) */
+        {"nous",        PROVIDER_OPENAI},
+        {"alibaba",     PROVIDER_OPENAI},
+        {"stepfun",     PROVIDER_OPENAI},
+        {"minimax",     PROVIDER_OPENAI},
+        {"novita",      PROVIDER_OPENAI},
+        {"zai",         PROVIDER_OPENAI},
         {NULL, 0}
     };
     for (int i = 0; providers[i].name; i++) {

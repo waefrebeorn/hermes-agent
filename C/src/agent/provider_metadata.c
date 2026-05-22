@@ -27,6 +27,12 @@ static const provider_metadata_t PROVIDERS[] = {
     {"xai",         "xAI",          "https://api.x.ai/v1",               true,  false, true},
     {"azure",       "Azure OpenAI", "https://YOUR_RESOURCE.openai.azure.com", true, true, true},
     {"bedrock",     "AWS Bedrock",  "",                                   true,  true,  true},
+    {"nous",        "Nous Research","https://inference.nousresearch.com/v1",  true,  false, true},
+    {"alibaba",     "Alibaba Qwen", "https://dashscope.aliyuncs.com/compatible-mode/v1", true, false, true},
+    {"stepfun",     "StepFun",      "https://api.stepfun.com/v1",          true,  false, true},
+    {"minimax",     "MiniMax",      "https://api.minimax.chat/v1",         true,  false, true},
+    {"novita",      "Novita AI",    "https://api.novita.ai/v3/openai",     true,  false, true},
+    {"zai",         "Zhipu AI",     "https://open.bigmodel.cn/api/paas/v4",true,  false, true},
     {NULL, NULL, NULL, false, false, false},
 };
 
