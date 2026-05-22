@@ -179,7 +179,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "gateway_subsystem (compilation failed)"
 fi
 
-# ==============================================
+# Plugin system test (needs plugin lib + dlfcn)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_plugins.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugins -lm -ldl > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugins > /dev/null 2>&1; then ok "plugin_system (38 tests)"
+    else fail "plugin_system (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugins
+else skip "plugin_system (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
