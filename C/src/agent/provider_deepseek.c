@@ -139,6 +139,19 @@ static char *deepseek_build_request_body(const provider_t *p,
     if (p->config.n > 1)
         json_object_set(root, "n", json_new_number(p->config.n));
 
+    /* L05: extra_body — merge arbitrary JSON fields into request body */
+    if (p->config.extra_body[0]) {
+        json_t *eb = json_parse(p->config.extra_body, NULL);
+        if (eb && eb->type == JSON_OBJECT) {
+            for (size_t i = 0; i < eb->c.count; i++) {
+                json_t *copy = json_copy(eb->c.items[i]);
+                if (copy)
+                    json_object_set(root, eb->c.keys[i], copy);
+            }
+        }
+        json_free(eb);
+    }
+
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }
 
