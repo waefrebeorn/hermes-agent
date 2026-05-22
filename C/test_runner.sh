@@ -317,6 +317,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "patch_tool (compilation failed)"
 fi
 
+# Process tool test (M39 — needs process.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_process.c" \
+    "$CDIR/src/tools/process.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_process -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_process > /dev/null 2>&1; then ok "process_tool (17 tests)"
+    else fail "process_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_process
+else skip "process_tool (compilation failed)"
+fi
+
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_approval.c" \
