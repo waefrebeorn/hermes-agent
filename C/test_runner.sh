@@ -432,6 +432,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "delegate_tool (compilation failed)"
 fi
 
+# Skills tool test (M38 — needs skills.c + json + yaml + http)
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_skills.c" \
+    "$CDIR/src/tools/skills.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_skills -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if HERMES_HOME=/tmp/hermes_test_skills_home /tmp/hermes_test_skills > /dev/null 2>&1; then ok "skills_tool (53 tests)"
+    else fail "skills_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_skills
+    rm -rf /tmp/hermes_test_skills_home
+else skip "skills_tool (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
