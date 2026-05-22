@@ -31,6 +31,16 @@ static int g_server_count = 0;
 static mcp_auth_t g_server_auth[MAX_MCP_SERVERS];
 static char g_credential_store_path[HERMES_PATH_MAX] = "";
 
+/* P66: Per-server tool filter config (parallel to g_servers) */
+#define MAX_FILTER_PATTERNS 32
+typedef struct {
+    char allow[MAX_FILTER_PATTERNS][128];  /* allowlist patterns */
+    int  allow_count;
+    char block[MAX_FILTER_PATTERNS][128];  /* blocklist patterns */
+    int  block_count;
+} mcp_filter_t;
+static mcp_filter_t g_server_filters[MAX_MCP_SERVERS];
+
 /* Dynamically registered tool handlers */
 typedef struct {
     char server_name[64];
@@ -150,6 +160,42 @@ static bool connect_stdio_server(const char *name, const char *command,
                         "skipping duplicate from '%s'\n", reg_name, name);
                 continue;
             }
+
+            /* P66: Apply per-server tool filter */
+            int sidx = g_server_count - 1; /* index of current server */
+            bool filtered = false;
+
+            /* Check allowlist: if allow patterns exist, tool must match one */
+            if (g_server_filters[sidx].allow_count > 0) {
+                bool allowed = false;
+                for (int fi = 0; fi < g_server_filters[sidx].allow_count; fi++) {
+                    if (registry_name_matches(tools[i].name,
+                            g_server_filters[sidx].allow[fi])) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) {
+                    fprintf(stderr, "MCP:   Skipped tool '%s' (not in allowlist)\n",
+                            tools[i].name);
+                    filtered = true;
+                }
+            }
+
+            /* Check blocklist: if block patterns exist, tool must not match any */
+            if (!filtered && g_server_filters[sidx].block_count > 0) {
+                for (int fi = 0; fi < g_server_filters[sidx].block_count; fi++) {
+                    if (registry_name_matches(tools[i].name,
+                            g_server_filters[sidx].block[fi])) {
+                        fprintf(stderr, "MCP:   Skipped tool '%s' (blocked by '%s')\n",
+                                tools[i].name, g_server_filters[sidx].block[fi]);
+                        filtered = true;
+                        break;
+                    }
+                }
+            }
+
+            if (filtered) continue;
 
             registry_register(
                 reg_name,
@@ -393,8 +439,46 @@ void mcp_init_all(void) {
                     g_server_auth[aidx].refresh_before_sec = yaml_get_int(doc, rbk, 60);
                 }
 
-                fprintf(stderr, "MCP: Auth enabled for '%s' (type=%s)\\n",
+                fprintf(stderr, "MCP: Auth enabled for '%s' (type=%s)\n",
                         known_servers[si], auth_type);
+            }
+
+            /* P66: Parse tool filter config for this server */
+            memset(&g_server_filters[aidx], 0, sizeof(mcp_filter_t));
+
+            /* Parse allow_tools list */
+            char filter_key[256];
+            snprintf(filter_key, sizeof(filter_key), "mcp_servers.%s.allow_tools",
+                     known_servers[si]);
+            size_t ac = yaml_list_count(doc, filter_key);
+            if (ac > 0) {
+                for (size_t fi = 0; fi < ac && g_server_filters[aidx].allow_count < MAX_FILTER_PATTERNS; fi++) {
+                    const char *pat = yaml_list_get(doc, filter_key, fi);
+                    if (pat) {
+                        snprintf(g_server_filters[aidx].allow[
+                            g_server_filters[aidx].allow_count++],
+                            sizeof(g_server_filters[aidx].allow[0]), "%s", pat);
+                    }
+                }
+                fprintf(stderr, "MCP: Filter for '%s' — allow %d patterns\n",
+                        known_servers[si], g_server_filters[aidx].allow_count);
+            }
+
+            /* Parse block_tools list */
+            snprintf(filter_key, sizeof(filter_key), "mcp_servers.%s.block_tools",
+                     known_servers[si]);
+            size_t bc = yaml_list_count(doc, filter_key);
+            if (bc > 0) {
+                for (size_t fi = 0; fi < bc && g_server_filters[aidx].block_count < MAX_FILTER_PATTERNS; fi++) {
+                    const char *pat = yaml_list_get(doc, filter_key, fi);
+                    if (pat) {
+                        snprintf(g_server_filters[aidx].block[
+                            g_server_filters[aidx].block_count++],
+                            sizeof(g_server_filters[aidx].block[0]), "%s", pat);
+                    }
+                }
+                fprintf(stderr, "MCP: Filter for '%s' — block %d patterns\n",
+                        known_servers[si], g_server_filters[aidx].block_count);
             }
 
             connect_stdio_server(known_servers[si], cmd, args, timeout);
