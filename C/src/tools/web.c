@@ -308,11 +308,15 @@ char *web_search_handler(const char *args_json, const char *task_id) {
     encoded_query[ei] = '\0';
 
     int count = (int)json_object_get_number(args, "count", 5);
-    const char *backend_arg = json_object_get_string(args, "backend", NULL);
+    const char *backend_ptr = json_object_get_string(args, "backend", NULL);
+    char backend_buf[64] = "";
+    if (backend_ptr) {
+        snprintf(backend_buf, sizeof(backend_buf), "%s", backend_ptr);
+    }
     json_free(args);
 
     /* Resolve backend: arg → config → default */
-    const char *backend = backend_arg;
+    const char *backend = backend_buf[0] ? backend_buf : NULL;
     if (!backend) {
         backend = tool_config_get("web", "search_backend");
         if (!backend) backend = "searxng"; /* default */
