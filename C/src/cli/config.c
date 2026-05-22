@@ -1026,3 +1026,158 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
 
     return diff->count > 0;
 }
+
+/* ================================================================
+ *  P20: Config Export
+ * ================================================================ */
+
+/* Helper: write a config value line */
+static void exp_str(FILE *f, const char *key, const char *val) {
+    if (val && val[0]) fprintf(f, "%s: %s\n", key, val);
+}
+static void exp_int(FILE *f, const char *key, int val) {
+    fprintf(f, "%s: %d\n", key, val);
+}
+static void exp_bool(FILE *f, const char *key, bool val) {
+    fprintf(f, "%s: %s\n", key, val ? "true" : "false");
+}
+static void exp_float(FILE *f, const char *key, float val) {
+    fprintf(f, "%s: %.2f\n", key, (double)val);
+}
+
+bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
+    FILE *f = stdout;
+    bool close_file = false;
+    if (path && path[0]) {
+        f = fopen(path, "w");
+        if (!f) { fprintf(stderr, "Error: cannot write %s\n", path); return false; }
+        close_file = true;
+    }
+
+    fprintf(f, "# Hermes C Config Export\n\n");
+
+    fprintf(f, "model:\n");
+    exp_str(f, "  default", cfg->provider_cfg.model);
+    exp_str(f, "  provider", cfg->provider_cfg.provider);
+    exp_str(f, "  base_url", cfg->provider_cfg.base_url);
+    exp_str(f, "  api_mode", cfg->provider_cfg.api_mode);
+    exp_str(f, "  fallback_model", cfg->provider_cfg.fallback_model);
+    exp_str(f, "  service_tier", cfg->provider_cfg.service_tier);
+    exp_int(f, "  max_tokens", cfg->provider_cfg.max_tokens);
+    exp_float(f, "  temperature", cfg->provider_cfg.temperature);
+    exp_float(f, "  top_p", cfg->provider_cfg.top_p);
+
+    fprintf(f, "\ndisplay:\n");
+    exp_str(f, "  skin", cfg->display.skin);
+    exp_str(f, "  banner", cfg->display.banner);
+    exp_str(f, "  spinner", cfg->display.spinner_style);
+    exp_str(f, "  indicator", cfg->display.indicator);
+    exp_str(f, "  language", cfg->display.language);
+    exp_str(f, "  personality", cfg->display.personality);
+    exp_bool(f, "  streaming", cfg->display.stream);
+    exp_bool(f, "  show_reasoning", cfg->display.show_reasoning);
+    exp_bool(f, "  compact", cfg->display.compact);
+    exp_bool(f, "  show_cost", cfg->display.show_cost);
+    exp_bool(f, "  timestamps", cfg->display.timestamps);
+
+    fprintf(f, "\nagent:\n");
+    exp_int(f, "  max_turns", cfg->agent.max_iterations);
+    exp_int(f, "  max_tool_calls_round", cfg->agent.max_tool_calls_round);
+    exp_int(f, "  verbose", cfg->agent.verbose_level);
+    exp_int(f, "  api_max_retries", cfg->agent.api_max_retries);
+    exp_int(f, "  clarify_timeout", cfg->agent.clarify_timeout);
+    exp_float(f, "  compress_threshold", cfg->agent.compress_threshold);
+    exp_str(f, "  system_prompt", cfg->agent.system_prompt);
+    exp_str(f, "  profile", cfg->agent.profile);
+    exp_str(f, "  reasoning_effort", cfg->agent.reasoning_effort);
+    exp_bool(f, "  fast", cfg->agent.fast_mode);
+    exp_bool(f, "  quiet", cfg->agent.quiet_mode);
+
+    fprintf(f, "\nterminal:\n");
+    exp_int(f, "  timeout", cfg->tools.terminal_timeout);
+
+    fprintf(f, "\napprovals:\n");
+    exp_str(f, "  mode", cfg->tools.approval_mode);
+    exp_int(f, "  timeout", cfg->tools.approval_timeout);
+
+    fprintf(f, "\ntool_output:\n");
+    exp_int(f, "  max_bytes", cfg->tools.max_result_size);
+
+    fprintf(f, "\ncompression:\n");
+    exp_str(f, "  model", cfg->compression.model);
+    exp_str(f, "  strategy", cfg->compression.strategy);
+    exp_float(f, "  target_ratio", cfg->compression.target_ratio);
+    exp_int(f, "  min_messages", cfg->compression.min_messages);
+    exp_bool(f, "  preserve_system", cfg->compression.preserve_system);
+    exp_bool(f, "  enabled", cfg->compress_enabled);
+
+    fprintf(f, "\ndelegation:\n");
+    exp_int(f, "  max_concurrent_children", cfg->delegation.max_concurrent_children);
+    exp_int(f, "  max_spawn_depth", cfg->delegation.max_spawn_depth);
+    exp_int(f, "  child_timeout_seconds", cfg->delegation.child_timeout);
+    exp_str(f, "  model", cfg->delegation.child_model);
+    exp_str(f, "  provider", cfg->delegation.child_provider);
+    exp_int(f, "  max_iterations", cfg->delegation.child_max_turns);
+
+    fprintf(f, "\nbrowser:\n");
+    exp_str(f, "  cdp_url", cfg->browser_cfg.cdp_url);
+    exp_str(f, "  engine", cfg->browser_cfg.browser_type);
+    exp_bool(f, "  headless", cfg->browser_cfg.headless);
+    exp_int(f, "  command_timeout", cfg->browser_cfg.timeout);
+
+    fprintf(f, "\nmemory:\n");
+    exp_str(f, "  provider", cfg->memory.provider);
+    exp_int(f, "  memory_char_limit", cfg->memory.char_limit);
+    exp_int(f, "  user_char_limit", cfg->memory.user_char_limit);
+
+    fprintf(f, "\nsecurity:\n");
+    exp_str(f, "  tirith_path", cfg->security.tirith_path);
+    exp_int(f, "  tirith_timeout", cfg->security.tirith_timeout);
+    exp_bool(f, "  tirith_enabled", cfg->security.tirith_enabled);
+    exp_bool(f, "  allow_private_urls", cfg->security.allow_private_urls);
+
+    fprintf(f, "\nsessions:\n");
+    exp_int(f, "  retention_days", cfg->session.retention_days);
+
+    fprintf(f, "\nmcp:\n");
+    exp_int(f, "  timeout", cfg->mcp.timeout);
+    exp_bool(f, "  auth_enabled", cfg->mcp.auth_enabled);
+
+    if (close_file) fclose(f);
+    return true;
+}
+
+bool hermes_config_import(hermes_config_t *cfg, const char *path) {
+    if (!path || !path[0]) return false;
+
+    char *err = NULL;
+    yaml_doc_t *doc = yaml_parse_file(path, &err);
+    if (!doc) {
+        if (err) { fprintf(stderr, "Import error: %s\n", err); free(err); }
+        return false;
+    }
+
+    /* Merge imported values over current config */
+    const char *v;
+    v = yaml_get_string(doc, "model.default");
+    if (v) snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", v);
+    v = yaml_get_string(doc, "model.provider");
+    if (v) snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", v);
+    v = yaml_get_string(doc, "model.base_url");
+    if (v) snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", v);
+    v = yaml_get_string(doc, "model.api_key");
+    if (v) snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", v);
+
+    int iv;
+    iv = yaml_get_int(doc, "agent.max_turns", 0);
+    if (iv > 0) { cfg->agent.max_iterations = iv; cfg->max_turns = iv; }
+
+    v = yaml_get_string(doc, "display.skin");
+    if (v) snprintf(cfg->display.skin, sizeof(cfg->display.skin), "%s", v);
+
+    v = yaml_get_string(doc, "approvals.mode");
+    if (v) snprintf(cfg->tools.approval_mode, sizeof(cfg->tools.approval_mode), "%s", v);
+
+    yaml_free(doc);
+    return true;
+}

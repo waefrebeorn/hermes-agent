@@ -393,6 +393,10 @@ void hermes_config_defaults(hermes_config_t *cfg);
 /* Diff active config vs defaults, returns entries grouped by section */
 bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff);
 
+/* P20: Config import/export */
+bool hermes_config_export(const hermes_config_t *cfg, const char *path);
+bool hermes_config_import(hermes_config_t *cfg, const char *path);
+
 /* ================================================================
  *  Include sub-headers for dependency wrappers
  * ================================================================ */
