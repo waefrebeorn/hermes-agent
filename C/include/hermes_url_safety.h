@@ -61,9 +61,6 @@ bool url_blocklist_remove_category(const char *category);
 /* Clear all blocklist entries */
 void url_blocklist_clear(void);
 
-/* Load blocklist config from security_config_t */
-void url_blocklist_load_config(const security_config_t *cfg);
-
 #ifdef __cplusplus
 }
 #endif

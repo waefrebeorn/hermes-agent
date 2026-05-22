@@ -201,6 +201,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "rate_limit (compilation failed)"
 fi
 
+# URL safety test (needs url_safety.c — scheme/blocklist tests, no DNS)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_url_safety.c" \
+    "$CDIR/src/tools/url_safety.c" \
+    -o /tmp/hermes_test_url -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_url > /dev/null 2>&1; then ok "url_safety (55 tests)"
+    else fail "url_safety (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_url
+else skip "url_safety (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
