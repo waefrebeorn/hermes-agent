@@ -11,7 +11,7 @@
 | **MCP** | 17 | 50% | stdio/SSE transport, tools/list/call, resources, prompts |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
 | **Gateway** | 63 | 35% | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |
-| **Tools** | 44 | 80% | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python |
+| **Tools** | 38 | 85% | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python. SQLite memory now real. 6 stubs + 36 sub-features |
 | **Agent** | 32 | 55% | 23 state fields, 18 session DB functions, checkpoint/budget/compression |
 | **CLI** | 34 | 80% | 70 slash commands, skin/theme engine, display system |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported. Jinja2/rich/httpx/pydantic/etc. missing |
@@ -36,8 +36,10 @@
 
 ### Session 2026-05-22 Progress
 - **P0 #1:** temperature=0.0 fix ✅ — s/>0.0f/>=0.0f/ × 9 providers
-- **P0 #2:** B04-B05 response_format + metadata ✅ — new fields wired through all 3 forwarding layers + config pipeline + all 9 providers
-- **P0 #3 partial:** F08 vision description — TODO replaced with Python delegation helper
-- **P0 #3 partial:** F01-F04 CDP tools already real (not stubs as originally stated)
-- **P0 #5:** B06-B07 tool_choice + parallel_tool_calls ✅ — wired through all layers + 9 providers
-- **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely (all params dropped) — now fixed with full forwarding block
+- **P0 #2:** B04-B05 response_format + metadata ✅ — 2 new JSON fields, full wiring
+- **P0 #3:** F01-F04 CDP tools already real ✅
+- **P0 #3:** F06 SQLite memory storage ✅ — real 16-function vtable, sqlite3 amalgamation embedded
+- **P0 #3:** F08 vision description partial 🔄 — Python delegation attempted
+- **P0 #5:** B06-B09 tool_choice + parallel_tool_calls + max_tool_calls + n ✅ — 4 LLM params
+- **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely — fixed ✅
+- **18/18 LLM params now fully wired** (was 10/12 at session start)

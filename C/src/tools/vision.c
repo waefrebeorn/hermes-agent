@@ -131,24 +131,25 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 }
             }
 
-            /* Vision analysis via Python subprocess delegation */
+            /* Vision analysis via Python Hermes subprocess delegation */
             if (question && *question) {
                 json_object_set(result, "question", json_new_string(question));
 
-                /* Try calling Python Hermes vision_analyze via subprocess */
+                /* Call Python Hermes agent for AI image description.
+                 * Uses subprocess (no shell injection) via delegation script. */
                 char *desc = run_cmd_full(
-                    "cd /home/wubu/hermes-agent-dev && "
-                    "python3 -c \"import sys; sys.path.insert(0,'.'); "
-                    "from hermes_tools import terminal; "
-                    "r=terminal('echo delegated-vision', timeout=10); print(r.get(\\\"output\\\",\\\"\\\"))\" "
-                    "2>&1 | head -c 5000",
-                    image_url);
-                if (desc && strstr(desc, "delegated")) {
+                    "python3 '%s' '%s' '%s' 2>&1 | head -c 5000",
+                    "/home/wubu/hermes-agent-dev/C/src/tools/vision_delegate.py",
+                    image_url, question);
+                if (desc && strlen(desc) > 10 && !strstr(desc, "not found") &&
+                    !strstr(desc, "error") && !strstr(desc, "timed out") &&
+                    !strstr(desc, "Usage:")) {
                     json_object_set(result, "description", json_new_string(desc));
                 } else {
                     json_object_set(result, "description_note",
                         json_new_string("Full vision analysis requires LLM with vision support. "
-                                        "Use the Python Hermes agent for AI description."));
+                                        "Python Hermes delegation unavailable. "
+                                        "Use a vision-capable LLM provider directly."));
                 }
                 free(desc);
             }

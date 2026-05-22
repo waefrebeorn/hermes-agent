@@ -217,6 +217,28 @@ bool telegram_send_poll(http_client_t *http, const char *chat_id,
 bool telegram_send_media_group(http_client_t *http, const char *chat_id,
                                 json_node_t *media);
 
+/* E01-E05: Media send methods */
+bool telegram_send_photo(http_client_t *http, const char *chat_id,
+                          const char *photo, const char *caption,
+                          const char *parse_mode);
+bool telegram_send_document(http_client_t *http, const char *chat_id,
+                             const char *document, const char *caption,
+                             const char *parse_mode);
+bool telegram_send_voice(http_client_t *http, const char *chat_id,
+                          const char *voice, const char *caption,
+                          const char *parse_mode);
+bool telegram_send_video(http_client_t *http, const char *chat_id,
+                          const char *video, const char *caption,
+                          const char *parse_mode);
+bool telegram_send_animation(http_client_t *http, const char *chat_id,
+                              const char *animation, const char *caption,
+                              const char *parse_mode);
+
+/* E14: Forward message */
+bool telegram_forward_message(http_client_t *http, const char *chat_id,
+                               const char *from_chat_id,
+                               const char *message_id);
+
 /* Forum topics */
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name);

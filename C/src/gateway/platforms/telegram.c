@@ -242,8 +242,117 @@ bool telegram_send_media_group(http_client_t *http, const char *chat_id,
 }
 
 /* ================================================================
- *  P104: Forum topic management
+ *  E01-E05: Media send methods (sendPhoto, sendDocument, etc.)
  * ================================================================ */
+
+bool telegram_send_photo(http_client_t *http, const char *chat_id,
+                          const char *photo, const char *caption,
+                          const char *parse_mode)
+{
+    if (!http || !chat_id || !photo) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "photo", json_new_string(photo));
+    if (caption)
+        json_object_set(body, "caption", json_new_string(caption));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    http_response_t *resp = tg_post(http, "sendPhoto", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_send_document(http_client_t *http, const char *chat_id,
+                             const char *document, const char *caption,
+                             const char *parse_mode)
+{
+    if (!http || !chat_id || !document) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "document", json_new_string(document));
+    if (caption)
+        json_object_set(body, "caption", json_new_string(caption));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    http_response_t *resp = tg_post(http, "sendDocument", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_send_voice(http_client_t *http, const char *chat_id,
+                          const char *voice, const char *caption,
+                          const char *parse_mode)
+{
+    if (!http || !chat_id || !voice) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "voice", json_new_string(voice));
+    if (caption)
+        json_object_set(body, "caption", json_new_string(caption));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    http_response_t *resp = tg_post(http, "sendVoice", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_send_video(http_client_t *http, const char *chat_id,
+                          const char *video, const char *caption,
+                          const char *parse_mode)
+{
+    if (!http || !chat_id || !video) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "video", json_new_string(video));
+    if (caption)
+        json_object_set(body, "caption", json_new_string(caption));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    http_response_t *resp = tg_post(http, "sendVideo", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_send_animation(http_client_t *http, const char *chat_id,
+                              const char *animation, const char *caption,
+                              const char *parse_mode)
+{
+    if (!http || !chat_id || !animation) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "animation", json_new_string(animation));
+    if (caption)
+        json_object_set(body, "caption", json_new_string(caption));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    http_response_t *resp = tg_post(http, "sendAnimation", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  E14: Forward message
+ * ================================================================ */
+
+bool telegram_forward_message(http_client_t *http, const char *chat_id,
+                               const char *from_chat_id,
+                               const char *message_id)
+{
+    if (!http || !chat_id || !from_chat_id || !message_id) return false;
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "from_chat_id", json_new_string(from_chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+    http_response_t *resp = tg_post(http, "forwardMessage", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
 
 bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *name)
