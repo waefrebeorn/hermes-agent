@@ -239,8 +239,34 @@ const char *telegram_get_message_thread_id(json_node_t *update);
 
 void discord_set_token(const char *token);
 void discord_set_channel(const char *id);
+void discord_set_application_id(const char *id);
+void discord_add_channel(const char *id);
 bool discord_send_message(http_client_t *http, const char *text);
+bool discord_send_message_to(http_client_t *http, const char *channel,
+                              const char *text);
+bool discord_send_embed(http_client_t *http, const char *channel,
+                         const char *title, const char *description,
+                         const char *color_hex);
 void discord_send_typing(http_client_t *http);
+void discord_send_typing_to(http_client_t *http, const char *channel);
+bool discord_start_thread(http_client_t *http, const char *channel,
+                           const char *message_id, const char *name,
+                           int auto_archive_duration);
+bool discord_join_thread(http_client_t *http, const char *thread_id);
+bool discord_register_slash_command(http_client_t *http,
+                                     const char *name,
+                                     const char *description,
+                                     json_node_t *options);
+bool discord_bulk_overwrite_commands(http_client_t *http,
+                                      json_node_t *commands);
+bool discord_create_interaction_response(http_client_t *http,
+                                          const char *interaction_id,
+                                          const char *interaction_token,
+                                          json_node_t *response_data);
+bool discord_edit_interaction_response(http_client_t *http,
+                                        const char *application_id_str,
+                                        const char *interaction_token,
+                                        json_node_t *response_data);
 json_node_t *discord_poll_messages(http_client_t *http);
 const char *discord_get_chat_id(json_node_t *update);
 const char *discord_get_text(json_node_t *update);
