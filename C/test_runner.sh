@@ -104,6 +104,10 @@ run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib
 echo ""; echo "=== JSON Output Mode Tests (H14) ==="
 run_lib_test "json_output" "tests/test_json_output.c" "." ""
 
+# WhatsApp message format test (M10 — needs json lib)
+echo ""; echo "=== WhatsApp Message Format Tests (M10) ==="
+run_lib_test "whatsapp_msg" "tests/test_whatsapp_msg.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
+
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
