@@ -7,7 +7,7 @@
 | Category | Gaps | Done% | Key Stats |
 |----------|------|-------|-----------|
 | **Config** | 6 depth | 95% | 322/322 YAML keys parsed, validated, env-overridden |
-| **Providers** | 46 | 80% | 9 ops + 31 aliases + 10/12 LLM params wired through config |
+| **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired through all layers |
 | **MCP** | 17 | 50% | stdio/SSE transport, tools/list/call, resources, prompts |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
 | **Gateway** | 63 | 35% | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |

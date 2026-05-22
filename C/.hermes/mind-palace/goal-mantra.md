@@ -26,7 +26,7 @@ Remote: wubu=waefrebeorn/hermes-agent | Upstream: NousResearch/hermes-agent (125
 ── CURRENT REALITY (1:1 parity audit, 2026-05-22) ──
 
 Config:      95% -- 322/322 keys + 6 depth features
-Providers:   80% -- 9 ops + 31 aliases + 10/12 LLM params. 3 ACP missing, 25 provider-specific APIs, 12 infra
+Providers:   85% -- 9 ops + 31 aliases + **18/18 LLM params** fully wired through all layers. 3 ACP missing, 25 provider-specific APIs, 12 infra
 Tools:       80% -- 28 reg'd, browser/memory/kanban 1:1 with Python. 8 stubs + 36 sub-features
 CLI:         80% -- 70 commands, 18 features + 16 depth gaps
 Gateway:     35% -- 19 platforms, 63 gaps (16 sends + 10 types + 8 infra + 5 hooks + 4 fmt + 4 err + 16 depth)

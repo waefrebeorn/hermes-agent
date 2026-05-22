@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include "sqlite3.h"
 
 /* ================================================================
  *  Forward declarations of built-in backend vtables
@@ -63,6 +64,25 @@ static bool vtable_file_load(memory_storage_t *st);
 static int vtable_file_compress_old(memory_storage_t *st, time_t before,
                                      char *(*compress_cb)(const char *content));
 static memory_entry_t *vtable_file_get_prioritized(memory_storage_t *st, size_t limit, size_t *count);
+
+/* SQLite backend vtable functions */
+static bool vtable_sqlite_open(memory_storage_t *st, const char *uri);
+static void vtable_sqlite_close(memory_storage_t *st);
+static bool vtable_sqlite_store(memory_storage_t *st, memory_entry_t *entry);
+static bool vtable_sqlite_get(memory_storage_t *st, const char *key, memory_entry_t *entry);
+static bool vtable_sqlite_delete(memory_storage_t *st, const char *key);
+static void vtable_sqlite_clear(memory_storage_t *st);
+static size_t vtable_sqlite_count(memory_storage_t *st);
+static char **vtable_sqlite_list_keys(memory_storage_t *st, size_t *count);
+static memory_entry_t *vtable_sqlite_search(memory_storage_t *st, const char *query, int limit);
+static int vtable_sqlite_import_json(memory_storage_t *st, const json_t *entries);
+static json_t *vtable_sqlite_export_json(memory_storage_t *st);
+static bool vtable_sqlite_get_by_hash(memory_storage_t *st, uint64_t hash, memory_entry_t *entry);
+static bool vtable_sqlite_persist(memory_storage_t *st);
+static bool vtable_sqlite_load(memory_storage_t *st);
+static int vtable_sqlite_compress_old(memory_storage_t *st, time_t before,
+                                      char *(*compress_cb)(const char *content));
+static memory_entry_t *vtable_sqlite_get_prioritized(memory_storage_t *st, size_t limit, size_t *count);
 
 /* ================================================================
  *  Internal: In-memory storage data
@@ -621,6 +641,322 @@ static memory_storage_vtable_t file_vtable = {
     .get_prioritized   = vtable_file_get_prioritized,
 };
 
+/* ================================================================
+ *  SQLite backend: vtable (F06)
+ * ================================================================ */
+
+static memory_storage_vtable_t sqlite_vtable = {
+    .name              = "sqlite",
+    .open              = vtable_sqlite_open,
+    .close             = vtable_sqlite_close,
+    .store             = vtable_sqlite_store,
+    .get               = vtable_sqlite_get,
+    .delete            = vtable_sqlite_delete,
+    .clear             = vtable_sqlite_clear,
+    .count             = vtable_sqlite_count,
+    .list_keys         = vtable_sqlite_list_keys,
+    .search            = vtable_sqlite_search,
+    .import_json       = vtable_sqlite_import_json,
+    .export_json       = vtable_sqlite_export_json,
+    .get_by_hash       = vtable_sqlite_get_by_hash,
+    .persist           = vtable_sqlite_persist,
+    .load              = vtable_sqlite_load,
+    .compress_old      = vtable_sqlite_compress_old,
+    .get_prioritized   = vtable_sqlite_get_prioritized,
+};
+
+/* ================================================================
+ *  SQLite backend: implementations
+ * ================================================================ */
+
+/* Tags helpers: serialize to/from comma-separated string */
+static char *tags_to_string(const memory_entry_t *entry) {
+    static char buf[1024];
+    buf[0] = '\0';
+    for (int i = 0; i < entry->tag_count && i < MEMORY_TAGS_MAX; i++) {
+        if (i > 0) strcat(buf, ",");
+        strcat(buf, entry->tags[i]);
+    }
+    return buf;
+}
+
+static void string_to_tags(const char *s, memory_entry_t *entry) {
+    entry->tag_count = 0;
+    if (!s || !*s) return;
+    char buf[1024];
+    strncpy(buf, s, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    char *tok = strtok(buf, ",");
+    while (tok && entry->tag_count < MEMORY_TAGS_MAX) {
+        strncpy(entry->tags[entry->tag_count], tok, MEMORY_TAG_MAX - 1);
+        entry->tags[entry->tag_count][MEMORY_TAG_MAX - 1] = '\0';
+        entry->tag_count++;
+        tok = strtok(NULL, ",");
+    }
+}
+
+static bool vtable_sqlite_open(memory_storage_t *st, const char *uri) {
+    if (!st || !uri) return false;
+    sqlite3 *db = NULL;
+    if (sqlite3_open(uri, &db) != SQLITE_OK) {
+        if (db) sqlite3_close(db);
+        return false;
+    }
+    const char *sql = "CREATE TABLE IF NOT EXISTS memory_entries ("
+        "key TEXT PRIMARY KEY,"
+        "content TEXT NOT NULL,"
+        "hash INTEGER NOT NULL DEFAULT 0,"
+        "priority INTEGER NOT NULL DEFAULT 0,"
+        "created_at INTEGER NOT NULL DEFAULT 0,"
+        "updated_at INTEGER NOT NULL DEFAULT 0,"
+        "expires_at INTEGER NOT NULL DEFAULT 0,"
+        "tags TEXT NOT NULL DEFAULT '',"
+        "compressed INTEGER NOT NULL DEFAULT 0,"
+        "access_count INTEGER NOT NULL DEFAULT 0,"
+        "last_accessed INTEGER NOT NULL DEFAULT 0"
+    ")";
+    char *err = NULL;
+    if (sqlite3_exec(db, sql, NULL, NULL, &err) != SQLITE_OK) {
+        sqlite3_free(err);
+        sqlite3_close(db);
+        return false;
+    }
+    st->data = db;
+    return true;
+}
+
+static void vtable_sqlite_close(memory_storage_t *st) {
+    if (st && st->data) {
+        sqlite3_close((sqlite3 *)st->data);
+        st->data = NULL;
+    }
+}
+
+/* Bind entry fields to a prepared INSERT OR REPLACE statement */
+static void bind_entry(sqlite3_stmt *stmt, const memory_entry_t *entry) {
+    sqlite3_bind_text(stmt, 1, entry->key, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, entry->content, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 3, (sqlite3_int64)entry->hash);
+    sqlite3_bind_int(stmt, 4, entry->priority);
+    sqlite3_bind_int64(stmt, 5, (sqlite3_int64)entry->created_at);
+    sqlite3_bind_int64(stmt, 6, (sqlite3_int64)entry->updated_at);
+    sqlite3_bind_int64(stmt, 7, (sqlite3_int64)entry->expires_at);
+    char *tags = tags_to_string(entry);
+    sqlite3_bind_text(stmt, 8, tags, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 9, entry->compressed ? 1 : 0);
+    sqlite3_bind_int(stmt, 10, entry->access_count);
+    sqlite3_bind_int64(stmt, 11, (sqlite3_int64)entry->last_accessed);
+}
+
+/* Read a row into an entry. Returns true if row had data. */
+static bool read_row(sqlite3_stmt *stmt, memory_entry_t *entry) {
+    if (sqlite3_step(stmt) != SQLITE_ROW) return false;
+    memset(entry, 0, sizeof(*entry));
+    const char *k = (const char *)sqlite3_column_text(stmt, 0);
+    if (k) strncpy(entry->key, k, sizeof(entry->key) - 1);
+    const char *c = (const char *)sqlite3_column_text(stmt, 1);
+    if (c) strncpy(entry->content, c, sizeof(entry->content) - 1);
+    entry->hash = (uint64_t)sqlite3_column_int64(stmt, 2);
+    entry->priority = sqlite3_column_int(stmt, 3);
+    entry->created_at = (time_t)sqlite3_column_int64(stmt, 4);
+    entry->updated_at = (time_t)sqlite3_column_int64(stmt, 5);
+    entry->expires_at = (time_t)sqlite3_column_int64(stmt, 6);
+    const char *t = (const char *)sqlite3_column_text(stmt, 7);
+    if (t) string_to_tags(t, entry);
+    entry->compressed = sqlite3_column_int(stmt, 8) != 0;
+    entry->access_count = sqlite3_column_int(stmt, 9);
+    entry->last_accessed = (time_t)sqlite3_column_int64(stmt, 10);
+    return true;
+}
+
+static bool vtable_sqlite_store(memory_storage_t *st, memory_entry_t *entry) {
+    if (!st || !st->data || !entry) return false;
+    sqlite3 *db = (sqlite3 *)st->data;
+    const char *sql = "INSERT OR REPLACE INTO memory_entries "
+        "(key,content,hash,priority,created_at,updated_at,expires_at,"
+        "tags,compressed,access_count,last_accessed) "
+        "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)";
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) return false;
+    bind_entry(stmt, entry);
+    bool ok = (sqlite3_step(stmt) == SQLITE_DONE);
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static bool vtable_sqlite_get(memory_storage_t *st, const char *key, memory_entry_t *entry) {
+    if (!st || !st->data || !key || !entry) return false;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT * FROM memory_entries WHERE key=?1", -1, &stmt, NULL) != SQLITE_OK)
+        return false;
+    sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
+    bool found = read_row(stmt, entry);
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+static bool vtable_sqlite_delete(memory_storage_t *st, const char *key) {
+    if (!st || !st->data || !key) return false;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "DELETE FROM memory_entries WHERE key=?1", -1, &stmt, NULL) != SQLITE_OK)
+        return false;
+    sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
+    bool ok = (sqlite3_step(stmt) == SQLITE_DONE);
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static void vtable_sqlite_clear(memory_storage_t *st) {
+    if (!st || !st->data) return;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_exec(db, "DELETE FROM memory_entries", NULL, NULL, NULL);
+}
+
+static size_t vtable_sqlite_count(memory_storage_t *st) {
+    if (!st || !st->data) return 0;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM memory_entries", -1, &stmt, NULL) != SQLITE_OK)
+        return 0;
+    size_t n = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) n = (size_t)sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    return n;
+}
+
+static char **vtable_sqlite_list_keys(memory_storage_t *st, size_t *count) {
+    if (!st || !st->data) { if (count) *count = 0; return NULL; }
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT key FROM memory_entries ORDER BY key", -1, &stmt, NULL) != SQLITE_OK) {
+        if (count) *count = 0;
+        return NULL;
+    }
+    size_t cap = 64, n = 0;
+    char **keys = (char **)calloc(cap, sizeof(char *));
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        if (n >= cap) { cap *= 2; keys = (char **)realloc(keys, cap * sizeof(char *)); }
+        const char *k = (const char *)sqlite3_column_text(stmt, 0);
+        keys[n] = k ? strdup(k) : NULL;
+        n++;
+    }
+    sqlite3_finalize(stmt);
+    if (count) *count = n;
+    return keys;
+}
+
+static memory_entry_t *vtable_sqlite_search(memory_storage_t *st, const char *query, int limit) {
+    if (!st || !st->data || !query) return NULL;
+    sqlite3 *db = (sqlite3 *)st->data;
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+        "SELECT * FROM memory_entries WHERE content LIKE '%%%s%%' OR key LIKE '%%%s%%' ORDER BY priority DESC",
+        query, query);
+    if (limit > 0) { char *p = sql + strlen(sql); snprintf(p, sizeof(sql) - (size_t)(p - sql), " LIMIT %d", limit); }
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) return NULL;
+    size_t cap = 16, n = 0;
+    memory_entry_t *results = (memory_entry_t *)calloc(cap, sizeof(memory_entry_t));
+    while (read_row(stmt, &results[n])) {
+        n++;
+        if (n >= cap) { cap *= 2; results = (memory_entry_t *)realloc(results, cap * sizeof(memory_entry_t)); memset(&results[n], 0, (cap - n) * sizeof(memory_entry_t)); }
+    }
+    sqlite3_finalize(stmt);
+    return results;
+}
+
+static int vtable_sqlite_import_json(memory_storage_t *st, const json_t *entries) {
+    if (!st || !st->data || !entries) return 0;
+    size_t n = json_len(entries);
+    int imported = 0;
+    for (size_t i = 0; i < n; i++) {
+        json_t *obj = json_get(entries, i);
+        memory_entry_t entry;
+        memset(&entry, 0, sizeof(entry));
+        if (memory_entry_from_json(&entry, obj) && vtable_sqlite_store(st, &entry))
+            imported++;
+    }
+    return imported;
+}
+
+static json_t *vtable_sqlite_export_json(memory_storage_t *st) {
+    if (!st || !st->data) return NULL;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT * FROM memory_entries ORDER BY key", -1, &stmt, NULL) != SQLITE_OK)
+        return NULL;
+    json_t *arr = json_new_array();
+    memory_entry_t entry;
+    while (read_row(stmt, &entry)) {
+        json_t *obj = memory_entry_to_json(&entry);
+        if (obj) json_append(arr, obj);
+    }
+    sqlite3_finalize(stmt);
+    return arr;
+}
+
+static bool vtable_sqlite_get_by_hash(memory_storage_t *st, uint64_t hash, memory_entry_t *entry) {
+    if (!st || !st->data || !entry) return false;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT * FROM memory_entries WHERE hash=?1", -1, &stmt, NULL) != SQLITE_OK)
+        return false;
+    sqlite3_bind_int64(stmt, 1, (sqlite3_int64)hash);
+    bool found = read_row(stmt, entry);
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+static bool vtable_sqlite_persist(memory_storage_t *st) { (void)st; return true; } /* SQLite auto-persists */
+static bool vtable_sqlite_load(memory_storage_t *st) { (void)st; return true; }    /* SQLite auto-loads */
+
+static int vtable_sqlite_compress_old(memory_storage_t *st, time_t before,
+                                      char *(*compress_cb)(const char *content)) {
+    if (!st || !st->data || !compress_cb) return 0;
+    sqlite3 *db = (sqlite3 *)st->data;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT * FROM memory_entries WHERE updated_at<?1 AND compressed=0",
+                           -1, &stmt, NULL) != SQLITE_OK) return 0;
+    sqlite3_bind_int64(stmt, 1, (sqlite3_int64)before);
+    int count = 0;
+    memory_entry_t entry;
+    while (read_row(stmt, &entry)) {
+        char *compressed = compress_cb(entry.content);
+        if (compressed) {
+            strncpy(entry.content, compressed, sizeof(entry.content) - 1);
+            entry.compressed = true;
+            entry.updated_at = time(NULL);
+            vtable_sqlite_store(st, &entry);
+            free(compressed);
+            count++;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+static memory_entry_t *vtable_sqlite_get_prioritized(memory_storage_t *st, size_t limit, size_t *count) {
+    if (!st || !st->data) { if (count) *count = 0; return NULL; }
+    sqlite3 *db = (sqlite3 *)st->data;
+    char sql[256];
+    snprintf(sql, sizeof(sql), "SELECT * FROM memory_entries ORDER BY priority DESC%s",
+             limit > 0 ? " LIMIT ?1" : "");
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) { if (count) *count = 0; return NULL; }
+    if (limit > 0) sqlite3_bind_int64(stmt, 1, (sqlite3_int64)limit);
+    size_t cap = 16, n = 0;
+    memory_entry_t *results = (memory_entry_t *)calloc(cap, sizeof(memory_entry_t));
+    while (read_row(stmt, &results[n])) {
+        n++;
+        if (n >= cap) { cap *= 2; results = (memory_entry_t *)realloc(results, cap * sizeof(memory_entry_t)); memset(&results[n], 0, (cap - n) * sizeof(memory_entry_t)); }
+    }
+    sqlite3_finalize(stmt);
+    if (count) *count = n;
+    return results;
+}
+
 /* Convert JSON entry object (stored as {key: {content, ...}}) to memory_entry_t */
 /* (file_json_to_entry replaced by memory_entry_from_json) */
 
@@ -1038,10 +1374,9 @@ bool memory_storage_sqlite_init(memory_storage_t *st, const char *path) {
     if (!st) return false;
     memset(st, 0, sizeof(*st));
     st->type = MEMORY_STORAGE_SQLITE;
-    /* SQLite support is a stub — in production, this would use libdb.
-     * For now, fall back to file-based storage with SQLite path name. */
+    st->vtable = sqlite_vtable;
     snprintf(st->uri, sizeof(st->uri), "%s", path ? path : "memory.db");
-    return memory_storage_file_init(st, path ? path : "memory.db");
+    return st->vtable.open(st, path ? path : "memory.db");
 }
 
 bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const char *plugin_name) {
