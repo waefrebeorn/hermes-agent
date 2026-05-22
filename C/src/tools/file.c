@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <libgen.h>
+#include <fnmatch.h>
 
 /* Schema */
 static const char *SCHEMA_READ = "{"
@@ -367,12 +368,39 @@ static char *handle_search(const char *args_json) {
         return strdup("{\"error\":\"Missing pattern\"}");
     }
 
-    /* Build grep command */
+    /* Build grep command — F14: with glob support via find for ** patterns */
     char cmd[16384];
-    if (file_glob && file_glob[0])
-        snprintf(cmd, sizeof(cmd), "grep -rn --include='%s' '%s' '%s' 2>/dev/null | head -50",
-                 file_glob, pattern, path);
-    else
+    if (file_glob && file_glob[0]) {
+        /* F14: glob with path prefix support (e.g., src/glob/*.c) */
+        char find_glob[1024];
+        const char *last_slash = strrchr(file_glob, '/');
+        if (last_slash) {
+            /* Glob has path component: extract dir + filename pattern */
+            size_t dir_len = (size_t)(last_slash - file_glob);
+            char glob_dir[1024];
+            snprintf(glob_dir, sizeof(glob_dir), "%.*s", (int)dir_len, file_glob);
+            snprintf(find_glob, sizeof(find_glob), "%s", last_slash + 1);
+
+            /* Resolve glob_dir relative to search path */
+            char resolved_dir[2048];
+            snprintf(resolved_dir, sizeof(resolved_dir), "%s/%s", path, glob_dir);
+            /* Remove trailing / and * characters */
+            char *pp = resolved_dir + strlen(resolved_dir) - 1;
+            while (pp > resolved_dir && (*pp == '/' || *pp == '*')) pp--;
+            pp[1] = '\0';
+
+            snprintf(cmd, sizeof(cmd),
+                     "find '%s' -name '%s' -type f 2>/dev/null | "
+                     "xargs -r grep -rn '%s' 2>/dev/null | head -50",
+                     resolved_dir, find_glob, pattern);
+        } else {
+            /* Simple glob pattern — find recurses naturally */
+            snprintf(cmd, sizeof(cmd),
+                     "find '%s' -name '%s' -type f 2>/dev/null | "
+                     "xargs -r grep -rn '%s' 2>/dev/null | head -50",
+                     path, file_glob, pattern);
+        }
+    } else
         snprintf(cmd, sizeof(cmd), "grep -rn '%s' '%s' 2>/dev/null | head -50",
                  pattern, path);
 

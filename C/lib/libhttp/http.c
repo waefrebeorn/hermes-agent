@@ -48,6 +48,7 @@ struct http_t {
     int      backoff_ms;
     SSL_CTX *ssl_ctx;
     bool     ssl_init;
+    char     proxy[512];     /* HTTP proxy URL, empty = direct */
 };
 
 typedef struct {
@@ -261,6 +262,7 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
     c->backoff_ms = backoff_ms > 0 ? backoff_ms : 1000;
     c->ssl_ctx = NULL;
     c->ssl_init = false;
+    c->proxy[0] = '\0';
     return c;
 }
 
@@ -268,6 +270,17 @@ void http_free(http_t *h) {
     if (!h) return;
     if (h->ssl_ctx) SSL_CTX_free(h->ssl_ctx);
     free(h);
+}
+
+/* Set HTTP proxy for all subsequent requests.
+ * proxy_url format: "http://host:port" or "host:port".
+ * Clears proxy when proxy_url is NULL or empty. */
+void http_client_set_proxy(http_t *h, const char *proxy_url) {
+    if (!h) return;
+    if (proxy_url && proxy_url[0])
+        snprintf(h->proxy, sizeof(h->proxy), "%s", proxy_url);
+    else
+        h->proxy[0] = '\0';
 }
 
 /* ================================================================
@@ -296,7 +309,34 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
 
         bool use_ssl = strcmp(purl.scheme, "https") == 0;
 
-        int fd = socket_connect(purl.host, purl.port, h->timeout_sec);
+        /* Resolve connect target — proxy may override */
+        const char *connect_host = purl.host;
+        int connect_port = purl.port;
+        bool use_proxy = h->proxy[0] != '\0';
+
+        if (use_proxy) {
+            /* Parse proxy URL to get proxy host:port */
+            parsed_url_t proxy_url;
+            memset(&proxy_url, 0, sizeof(proxy_url));
+            char proxy_url_buf[512];
+            snprintf(proxy_url_buf, sizeof(proxy_url_buf), "%s", h->proxy);
+            /* Prepend http:// if missing */
+            if (strncmp(h->proxy, "http://", 7) != 0 &&
+                strncmp(h->proxy, "https://", 8) != 0) {
+                char with_scheme[520];
+                snprintf(with_scheme, sizeof(with_scheme), "http://%s", h->proxy);
+                parse_url(with_scheme, &proxy_url);
+            } else {
+                parse_url(proxy_url_buf, &proxy_url);
+            }
+            if (proxy_url.host[0]) {
+                connect_host = proxy_url.host;
+                connect_port = proxy_url.port > 0 ? proxy_url.port :
+                               (strcmp(proxy_url.scheme, "https") == 0 ? 443 : 8080);
+            }
+        }
+
+        int fd = socket_connect(connect_host, connect_port, h->timeout_sec);
         if (fd < 0) {
             if (attempt <= h->max_retries) {
                 sleep_ms(h->backoff_ms * attempt);
@@ -312,6 +352,35 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
 
         SSL *ssl = NULL;
         if (use_ssl) {
+            /* For HTTPS through proxy: send CONNECT tunnel request first */
+            if (use_proxy) {
+                char connect_req[1024];
+                snprintf(connect_req, sizeof(connect_req),
+                         "CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\n\r\n",
+                         purl.host, purl.port, purl.host, purl.port);
+                socket_send_all(fd, connect_req, strlen(connect_req),
+                                h->timeout_sec);
+
+                /* Read CONNECT response */
+                size_t resp_len = 0;
+                char *resp = read_all(fd, NULL, &resp_len, h->timeout_sec);
+                if (!resp || strstr(resp, "200") == NULL) {
+                    free(resp);
+                    close(fd);
+                    if (attempt <= h->max_retries) {
+                        sleep_ms(h->backoff_ms * attempt);
+                        continue;
+                    }
+                    http_resp_t *r = (http_resp_t *)xmalloc(sizeof(http_resp_t));
+                    if (!r) return NULL;
+                    r->status = -1;
+                    r->headers = xstrdup("Proxy CONNECT failed");
+                    r->body = NULL; r->body_len = 0;
+                    return r;
+                }
+                free(resp);
+            }
+
             if (!h->ssl_init) {
                 SSL_load_error_strings();
 #if OPENSSL_VERSION_NUMBER < 0x10100000L

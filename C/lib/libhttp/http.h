@@ -99,6 +99,10 @@ int http_stream_request(http_t *h, http_method_t method,
 /* URL-encode a string. Caller free()s result. */
 char *http_url_encode(const char *str);
 
+/* === Proxy support === */
+/* Set HTTP proxy (CONNECT tunnel for HTTPS). Empty/NULL to clear. */
+void http_client_set_proxy(http_t *h, const char *proxy_url);
+
 #ifdef __cplusplus
 }
 #endif

@@ -66,14 +66,15 @@ make -j$(nproc) && bash test_runner.sh --verbose
 
 ### Session 2026-05-22 (Part 6+)
 - ✅ **F11: Docker execution backend** — temp script approach, config-driven (docker_image, volumes, env forwarding, host user mapping, extra args), per-call image override
+- ✅ **F14: Glob support in file ops** — find-based glob matching with path prefix support, replaces grep --include
 - ✅ **F34-F36: Process sub-features** — signal sending by name/number, env overrides on start, per-process timeout with auto-kill
 - ✅ **F26+F28+F29: Cron job enhancements** — schedule validation (cron_parse at add-time), per-job notifications (notify_on_complete/notify_on_failure), retry with exponential backoff (max_retries + backoff_sec config)
 - ✅ **F09+F10+F12** — PTY mode, env isolation, timeout propagation (marked in roadmap)
 - ✅ **F16-F20** — Web search backends (searxng, google, brave, tavily, firecrawl) marked in roadmap
 - ✅ **F30-F33** — Memory tool ops (save/search/delete/list) marked in roadmap
-- ◀ **Tools now at ~90% parity** (31 remaining gaps)
-- ◀ Roadmap gap count: ~387 total (~13 closed)
-- ◀ Commit: `76bf19925 (F11 Docker execution backend)`
+- ◀ **Tools now at ~92% parity** (24 remaining gaps)
+- ◀ Roadmap gap count: ~380 total (~20 closed this session)
+- ◀ Commits: `76bf19925 (F11)`, `796ffbdd4 (F26+F28+F29)`, `76443065f (F34-F36)`, `(F14+gateway+proxy — pending commit)`
 
 ## Upstream
 - 125 commits since last sync, 52 Python

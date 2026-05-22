@@ -557,7 +557,7 @@ static bool gw_cooldown_allow(int plat_idx) {
 /* E40: Convert markdown to HTML for platforms that support it.
  * Simple conversion: **bold** → <b>bold</b>, *italic* → <i>italic</i>,
  * `code` → <code>code</code> */
-static char *gw_markdown_to_html(const char *text) {
+char *gw_markdown_to_html(const char *text) {
     if (!text) return NULL;
     char *out = (char *)malloc(strlen(text) * 2 + 1);
     if (!out) return NULL;
@@ -601,7 +601,7 @@ static char *gw_markdown_to_html(const char *text) {
 }
 
 /* E41: Telegram MarkdownV2 escaping — escape reserved chars */
-static char *gw_markdown_v2_escape(const char *text) {
+char *gw_markdown_v2_escape(const char *text) {
     if (!text) return NULL;
     char *out = (char *)malloc(strlen(text) * 2 + 1);
     if (!out) return NULL;
@@ -624,8 +624,8 @@ static char *gw_strip_all_formatting(const char *text) {
 
 /* E43: Smart message truncation with ellipsis.
  * Truncates at word boundary if possible. */
-static char *gw_truncate_message(const char *text, size_t max_len) {
-    if (!text) return NULL;
+char *gw_truncate_message(const char *text, size_t max_len) {
+    if (!text || max_len == 0) return NULL;
     size_t len = strlen(text);
     if (len <= max_len) return strdup(text);
 
@@ -653,7 +653,7 @@ static char *gw_truncate_message(const char *text, size_t max_len) {
 
 /* E44: Retry an API call with exponential backoff on 429/5xx.
  * Returns true if at least one attempt succeeded. */
-static bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,
+bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,
                                    int max_retries, int base_delay_ms) {
     for (int attempt = 0; attempt <= max_retries; attempt++) {
         if (api_call(ctx)) return true;
@@ -669,7 +669,7 @@ static bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,
 
 /* E45: Token refresh — re-init platform when token expires.
  * Checks platform state and re-runs setup. */
-static bool gw_refresh_token(int plat_idx) {
+bool gw_refresh_token(int plat_idx) {
     if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return false;
     /* Re-initialize the platform's HTTP client */
     if (g_gw.platform_http[plat_idx]) {
