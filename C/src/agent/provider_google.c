@@ -101,6 +101,19 @@ static char *google_build_request_body(const provider_t *p,
     }
     json_set(root, "generationConfig", gen_config);
 
+    /* B28/L05: extra_body — merge arbitrary JSON fields into request body */
+    if (p->config.extra_body[0]) {
+        json_t *eb = json_parse(p->config.extra_body, NULL);
+        if (eb && eb->type == JSON_OBJECT) {
+            for (size_t i = 0; i < eb->c.count; i++) {
+                json_t *copy = json_copy(eb->c.items[i]);
+                if (copy)
+                    json_set(root, eb->c.keys[i], copy);
+            }
+        }
+        json_free(eb);
+    }
+
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);

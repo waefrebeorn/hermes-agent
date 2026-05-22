@@ -161,6 +161,19 @@ static char *anthropic_build_request_body(const provider_t *p,
     if (streaming)
         json_set(root, "stream", json_bool(true));
 
+    /* extra_body — merge arbitrary JSON fields into request body */
+    if (p->config.extra_body[0]) {
+        json_t *eb = json_parse(p->config.extra_body, NULL);
+        if (eb && eb->type == JSON_OBJECT) {
+            for (size_t i = 0; i < eb->c.count; i++) {
+                json_t *copy = json_copy(eb->c.items[i]);
+                if (copy)
+                    json_set(root, eb->c.keys[i], copy);
+            }
+        }
+        json_free(eb);
+    }
+
     /* B26: Anthropic thinking blocks — extended reasoning */
     if (p->config.reasoning_effort[0]) {
         int budget = 0;
