@@ -125,6 +125,7 @@ typedef struct {
     int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
     int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
+    char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
     char  fallback_model[128];     /* model to fallback to on error */
@@ -335,6 +336,7 @@ typedef struct {
     int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
     int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
+    char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */

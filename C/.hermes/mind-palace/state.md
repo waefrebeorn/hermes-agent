@@ -29,6 +29,22 @@
 - ◀ **CLI: 87% → 88%** (H14 closed, 32 CLI gaps remain)
 - ◀ Committed: `ea869fb29`
 
+### Session 2026-05-26 — B22: finish_reason tracking
+
+- ✅ **B22: finish_reason in stream chunks** — 20 change sites across 10 files
+  - Added `finish_reason[32]` to `provider_response_t` + `llm_response_t`
+  - All 8 OpenAI-compat providers extract from `choices[0].finish_reason`
+  - Anthropic extracts from `message_delta.delta.stop_reason`
+  - Google extracts from `candidate.finishReason`
+  - Forwarded through stream handlers (`on_provider_stream_chunk`, `on_stream_chunk`)
+- ✅ **Bugfix: Google parse_stream_chunk ordering** — checked finishReason after early
+  text return, so final chunks with both text and finishReason lost the finish reason.
+  Reordered to check finishReason first.
+- ✅ **test_finish_reason.c** — 12 assertions across 6 providers
+- ◀ **Suite: 91/0/0** (+1 test, 12 assertions)
+- ◀ **Providers: 21 provider-specific API gaps remain**
+- ◀ Committed: `12a635e64`
+
 ### Session 2026-05-26 — B30-B31: Google provider depth
 
 - ✅ **B30: top_k + candidate_count** — `agent.top_k: 40`, `HERMES_TOP_K`, YAML/env/config/diff/agent/llm_client wire. Google writes `topK`/`candidateCount` to generationConfig when > 0.

@@ -126,6 +126,8 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     state->llm.top_k = cfg->provider_cfg.top_k;
     state->llm.candidate_count = cfg->provider_cfg.candidate_count;
     state->llm.json_mode = cfg->provider_cfg.json_mode;
+    memcpy(state->llm.safety_settings, cfg->provider_cfg.safety_settings,
+           sizeof(state->llm.safety_settings));
     memcpy(state->llm.extra_body, cfg->provider_cfg.extra_body,
            sizeof(state->llm.extra_body));
 

@@ -120,6 +120,16 @@ static char *google_build_request_body(const provider_t *p,
         json_free(eb);
     }
 
+    /* B29: Google safety settings — parsed from JSON array string */
+    if (p->config.safety_settings[0]) {
+        json_t *ss = json_parse(p->config.safety_settings, NULL);
+        if (ss && ss->type == JSON_ARRAY) {
+            json_set(root, "safetySettings", ss);
+        } else if (ss) {
+            json_free(ss);
+        }
+    }
+
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);

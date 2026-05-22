@@ -154,6 +154,8 @@ int main(int argc, char **argv) {
         agent_state.llm.top_k = cfg.provider_cfg.top_k;
         agent_state.llm.candidate_count = cfg.provider_cfg.candidate_count;
         agent_state.llm.json_mode = cfg.provider_cfg.json_mode;
+        memcpy(agent_state.llm.safety_settings, cfg.provider_cfg.safety_settings,
+               sizeof(agent_state.llm.safety_settings));
         memcpy(agent_state.llm.extra_body, cfg.provider_cfg.extra_body,
                sizeof(agent_state.llm.extra_body));
         agent_state.max_iterations = cfg.max_turns;
