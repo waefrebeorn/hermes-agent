@@ -47,6 +47,19 @@ bool context_set_system(agent_state_t *state, const char *content);
 void context_truncate(agent_state_t *state, size_t max_messages);
 const message_t *context_get(const agent_state_t *state, size_t index);
 
+/* P90: Smart context eviction strategies */
+typedef enum {
+    EVICT_OLDEST_TOOL_FIRST,
+    EVICT_OLDEST_USER,
+    EVICT_KEEP_RECENT_N,
+} eviction_strategy_t;
+
+int  context_message_tokens(const message_t *msg);
+int  context_total_tokens(const agent_state_t *state);
+void context_evict_smart(agent_state_t *state, size_t max_messages,
+                          eviction_strategy_t strategy);
+const char *context_get_system(const agent_state_t *state);
+
 /* === LLM Client (llm_client.c) === */
 llm_response_t *llm_chat_completion(llm_config_t *cfg,
                                      const message_t **messages,
