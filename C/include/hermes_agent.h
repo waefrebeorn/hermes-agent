@@ -135,6 +135,22 @@ bool agent_save_session(agent_state_t *state);
 bool agent_load_session(agent_state_t *state, const char *session_id);
 void agent_close_db(agent_state_t *state);
 
+/* P141-P150: Session DB depth */
+bool agent_save_meta(agent_state_t *state);
+bool agent_load_meta(agent_state_t *state, session_meta_t *meta);
+bool agent_session_create(agent_state_t *state, const char *session_id);
+session_entry_t *agent_session_list(size_t *count, const char *tag_filter, int limit);
+bool agent_session_delete(agent_state_t *state, const char *session_id);
+bool agent_auto_save(agent_state_t *state, int interval);
+bool agent_crash_recover(agent_state_t *state);
+int  agent_auto_prune(agent_state_t *state, int retention_days);
+bool agent_session_add_tag(agent_state_t *state, const char *tag);
+bool agent_session_remove_tag(agent_state_t *state, const char *tag);
+char *agent_session_export_json(agent_state_t *state, const char *session_id);
+char *agent_session_export_markdown(agent_state_t *state, const char *session_id);
+bool agent_session_branch(agent_state_t *state, const char *new_id, int branch_point);
+int  agent_session_migrate(agent_state_t *state);
+
 /* P28: Undo snapshot — capture/restore message state */
 void agent_snapshot_take(agent_state_t *state);
 bool agent_snapshot_restore(agent_state_t *state);

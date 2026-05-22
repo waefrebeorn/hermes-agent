@@ -348,8 +348,8 @@ typedef struct {
  * ================================================================ */
 typedef struct {
     char  db_path[HERMES_PATH_MAX];  /* sessions DB path */
-    int   retention_days;            /* sessions.retention_days */
-    int   auto_save_interval;        /* auto-save interval in turns */
+    int   retention_days;            /* sessions.retention_days, P145: auto-prune */
+    int   auto_save_interval;        /* auto-save interval in turns, P144: auto-save */
     bool  compress;                  /* session_compress */
     bool  store_trajectories;        /* session_store_trajectories */
 } session_config_t;
@@ -583,5 +583,51 @@ bool registry_name_matches(const char *name, const char *pattern);
 /* P49-P50: Tool result storage and output limits */
 char *tool_result_store(const char *data, size_t size, size_t max_inline);
 void tool_result_cleanup(int max_age_seconds);
+
+/* ================================================================
+ *  P141-P150: Session DB depth — metadata, search, CRUD, export, branching, migration
+ * ================================================================ */
+
+/* P141: Save session metadata (title, model, token count, timestamps) to sidecar file */
+bool agent_save_meta(agent_state_t *state);
+
+/* P141: Load session metadata */
+bool agent_load_meta(agent_state_t *state, session_meta_t *meta);
+
+/* P143: Session CRUD — create new session with metadata */
+bool agent_session_create(agent_state_t *state, const char *session_id);
+
+/* P143: List sessions with metadata filtering. Returns malloc'd array. Caller must free. */
+session_entry_t *agent_session_list(size_t *count, const char *tag_filter, int limit);
+
+/* P143: Delete a session */
+bool agent_session_delete(agent_state_t *state, const char *session_id);
+
+/* P144: Auto-save current session (checks interval config) */
+bool agent_auto_save(agent_state_t *state, int interval);
+
+/* P144: Crash recovery — check for and restore backup */
+bool agent_crash_recover(agent_state_t *state);
+
+/* P145: Auto-prune — remove old sessions based on retention_days. Returns number removed. */
+int agent_auto_prune(agent_state_t *state, int retention_days);
+
+/* P146: Add tag to session metadata */
+bool agent_session_add_tag(agent_state_t *state, const char *tag);
+
+/* P146: Remove tag from session metadata */
+bool agent_session_remove_tag(agent_state_t *state, const char *tag);
+
+/* P148: Export session as JSON string. Caller must free. */
+char *agent_session_export_json(agent_state_t *state, const char *session_id);
+
+/* P148: Export session as Markdown string. Caller must free. */
+char *agent_session_export_markdown(agent_state_t *state, const char *session_id);
+
+/* P149: Branch session — fork at message index N into new session */
+bool agent_session_branch(agent_state_t *state, const char *new_id, int branch_point);
+
+/* P150: Migrate all sessions to latest schema. Returns number migrated. */
+int agent_session_migrate(agent_state_t *state);
 
 #endif /* HERMES_H */

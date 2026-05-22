@@ -20,6 +20,7 @@ void registry_init_send_message(void);
 void registry_init_cronjob(void);
 void registry_init_skill_view(void);
 void registry_init_session_search(void);
+void registry_init_session_crud(void);
 void registry_init_tts(void);
 void registry_init_vision(void);
 void registry_init_delegate(void);
@@ -50,6 +51,7 @@ void tools_init_all(void) {
     registry_init_cronjob();
     registry_init_skill_view();
     registry_init_session_search();
+    registry_init_session_crud();
     registry_init_tts();
     registry_init_vision();
     registry_init_delegate();
