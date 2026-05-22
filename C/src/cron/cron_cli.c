@@ -16,6 +16,9 @@
 extern cron_sqlite_store_t *g_cron_store;
 void cron_run_job(const char *name, const char *command);
 
+/* Forward declarations from cron_extras.c */
+bool cron_chain_set_context(const char *job_name, const char *context_from);
+
 /* ================================================================
  *  CLI Command Handler
  * ================================================================ */
@@ -28,12 +31,36 @@ char *cron_cmd_handler(const char *args_json, const char *task_id) {
     json_t *args = json_parse(args_json, &err);
     if (!args) { free(err); return strdup("{\"error\":\"JSON parse\"}"); }
 
+    /* Lazy init: create store on first use. Path from config or default. */
+    if (!g_cron_store) {
+        const hermes_config_t *cfg = hermes_config_get();
+        const char *store_path = NULL;
+        if (cfg) {
+            json_t *cron_cfg = json_obj_get(cfg->root, "cron");
+            if (cron_cfg)
+                store_path = json_get_str(cron_cfg, "store_path", NULL);
+        }
+        if (!store_path) {
+            const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                               getenv("HOME") ? getenv("HOME") : ".";
+            char default_path[512];
+            snprintf(default_path, sizeof(default_path), "%s/.hermes/cron_jobs.json", home);
+            store_path = default_path;
+            g_cron_store = cron_sqlite_open(store_path);
+        } else {
+            g_cron_store = cron_sqlite_open(store_path);
+        }
+        if (g_cron_store)
+            cron_sqlite_load_jobs(g_cron_store);
+    }
+
     const char *action = json_get_str(args, "action", "list");
     const char *name = json_get_str(args, "name", NULL);
     const char *schedule = json_get_str(args, "schedule", NULL);
     const char *command = json_get_str(args, "command", NULL);
     const char *field = json_get_str(args, "field", NULL);
     const char *value = json_get_str(args, "value", NULL);
+    const char *context_from = json_get_str(args, "context_from", NULL);
 
     json_t *result = json_object();
     json_set(result, "action", json_string(action));
@@ -69,9 +96,13 @@ char *cron_cmd_handler(const char *args_json, const char *task_id) {
         } else {
             bool ok = cron_sqlite_save_job(g_cron_store, name, schedule,
                                             command ? command : "",
-                                            true, 0, 0, NULL, NULL, NULL);
+                                            true, 0, 0,
+                                            context_from, NULL, NULL);
             if (ok) {
                 json_set(result, "status", json_string("added"));
+                /* Register chain context in-memory for run-time dispatch */
+                if (context_from && context_from[0])
+                    cron_chain_set_context(name, context_from);
             } else {
                 json_set(result, "status", json_string("error"));
                 json_set(result, "error", json_string("Failed to add job"));
@@ -146,7 +177,7 @@ char *cron_cmd_handler(const char *args_json, const char *task_id) {
 /* Register cron CLI tool */
 void registry_init_cron_cmd(void) {
     registry_register("cron_cmd",
-        "Manage cron jobs. Actions: list, add (name, schedule, command), "
+        "Manage cron jobs. Actions: list, add (name, schedule, command, context_from), "
         "edit (name, field, value), remove (name), pause (name), "
         "resume (name), run-now (name).",
         "{"
@@ -156,6 +187,7 @@ void registry_init_cron_cmd(void) {
           "\"name\":{\"type\":\"string\",\"description\":\"Job name\"},"
           "\"schedule\":{\"type\":\"string\",\"description\":\"Cron expression\"},"
           "\"command\":{\"type\":\"string\",\"description\":\"Command to run\"},"
+          "\"context_from\":{\"type\":\"string\",\"description\":\"Chain from: job whose output is injected as context\"},"
           "\"field\":{\"type\":\"string\",\"description\":\"Field to edit (e.g., schedule, command, active)\"},"
           "\"value\":{\"type\":\"string\",\"description\":\"New value\"}"
         "},"

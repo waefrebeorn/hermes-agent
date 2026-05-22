@@ -19,6 +19,9 @@
 
 #define MAX_JOBS_STORED 256
 
+/* Global store instance — initialized lazily */
+cron_sqlite_store_t *g_cron_store = NULL;
+
 typedef struct {
     char name[128];
     char schedule[128];

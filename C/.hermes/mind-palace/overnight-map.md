@@ -74,7 +74,7 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **F30-F33** — Memory tool ops (save/search/delete/list) marked in roadmap
 - ◀ **Tools now at ~92% parity** (24 remaining gaps)
 - ◀ Roadmap gap count: ~380 total (~20 closed this session)
-- ◀ Commits: `76bf19925 (F11)`, `796ffbdd4 (F26+F28+F29)`, `76443065f (F34-F36)`, `(F14+gateway+proxy — pending commit)`
+- ◀ Commits: `76bf19925 (F11)`, `796ffbdd4 (F26+F28+F29)`, `76443065f (F34-F36)`, `20e8f41b4 (F14+gateway+proxy)`
 
 ## Upstream
 - 125 commits since last sync, 52 Python

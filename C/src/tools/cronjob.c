@@ -21,6 +21,7 @@ static const char *SCHEMA = "{"
       "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config)\"},"
       "\"schedule\":{\"type\":\"string\",\"description\":\"Crontab expression or @hourly/@daily/@weekly (required for add)\"},"
       "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for add)\"},"
+      "\"context_from\":{\"type\":\"string\",\"description\":\"Chain input: job name whose output becomes context for this job\"},"
       "\"notify_on_complete\":{\"type\":\"boolean\",\"description\":\"Send notification on successful completion\"},"
       "\"notify_on_failure\":{\"type\":\"boolean\",\"description\":\"Send notification on job failure\"},"
       "\"retry\":{\"type\":\"integer\",\"description\":\"Max retries on failure (0=no retry)\",\"default\":0},"
@@ -38,6 +39,7 @@ char *cron_list_jobs(void);
 bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec);
 bool cron_notify_on_complete(const char *job_name, bool enabled);
 bool cron_notify_on_failure(const char *job_name, bool enabled);
+bool cron_chain_set_context(const char *job_name, const char *context_from);
 
 /* F28: Validate cron schedule expression using libcron */
 #include "../lib/libcron/cron.h"  /* for cron_parse */
@@ -131,6 +133,14 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                         if (cron_job_set_retry(name, retry, backoff)) {
                             json_object_set(result, "retry", json_new_number((double)retry));
                             json_object_set(result, "backoff_sec", json_new_number((double)backoff));
+                        }
+                    }
+
+                    /* F27: Configure job chaining */
+                    const char *context_from = json_object_get_string(args, "context_from", NULL);
+                    if (context_from && context_from[0]) {
+                        if (cron_chain_set_context(name, context_from)) {
+                            json_object_set(result, "context_from", json_new_string(context_from));
                         }
                     }
                 } else {
