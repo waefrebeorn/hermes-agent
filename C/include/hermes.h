@@ -208,6 +208,7 @@ typedef struct {
     char  stop_sequences[HERMES_STOP_SEQUENCES_MAX][128];  /* stop strings */
     int   stop_count;
     char  fallback_model[128];     /* model to fallback to on error */
+    char  fallback_providers[1024]; /* comma-separated fallback providers (P83) */
     char  service_tier[32];        /* auto, default (for Anthropic) */
     char  reasoning_effort[32];    /* low, medium, high */
 } provider_config_t;

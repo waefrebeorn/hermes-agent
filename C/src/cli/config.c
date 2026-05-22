@@ -323,6 +323,11 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (fallback_model) snprintf(cfg->provider_cfg.fallback_model,
                                   sizeof(cfg->provider_cfg.fallback_model), "%s", fallback_model);
 
+    const char *fallback_providers = yaml_get_string(doc, "model.fallback_providers");
+    if (!fallback_providers) fallback_providers = yaml_get_string(doc, "provider.fallback_providers");
+    if (fallback_providers) snprintf(cfg->provider_cfg.fallback_providers,
+                                      sizeof(cfg->provider_cfg.fallback_providers), "%s", fallback_providers);
+
     const char *service_tier = yaml_get_string(doc, "agent.service_tier");
     if (service_tier) snprintf(cfg->provider_cfg.service_tier,
                                 sizeof(cfg->provider_cfg.service_tier), "%s", service_tier);
@@ -1119,6 +1124,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "model.base_url", def.provider_cfg.base_url, active->provider_cfg.base_url);
     diff_str(diff, "model.api_mode", def.provider_cfg.api_mode, active->provider_cfg.api_mode);
     diff_str(diff, "model.fallback_model", def.provider_cfg.fallback_model, active->provider_cfg.fallback_model);
+    diff_str(diff, "model.fallback_providers", def.provider_cfg.fallback_providers, active->provider_cfg.fallback_providers);
     diff_str(diff, "model.service_tier", def.provider_cfg.service_tier, active->provider_cfg.service_tier);
     diff_int(diff, "model.max_tokens", def.provider_cfg.max_tokens, active->provider_cfg.max_tokens);
     diff_float(diff, "model.temperature", def.provider_cfg.temperature, active->provider_cfg.temperature);
@@ -1203,6 +1209,7 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_str(f, "  base_url", cfg->provider_cfg.base_url);
     exp_str(f, "  api_mode", cfg->provider_cfg.api_mode);
     exp_str(f, "  fallback_model", cfg->provider_cfg.fallback_model);
+    exp_str(f, "  fallback_providers", cfg->provider_cfg.fallback_providers);
     exp_str(f, "  service_tier", cfg->provider_cfg.service_tier);
     exp_int(f, "  max_tokens", cfg->provider_cfg.max_tokens);
     exp_float(f, "  temperature", cfg->provider_cfg.temperature);
@@ -1596,7 +1603,8 @@ char *hermes_config_schema(void) {
         json_set(mprops, "base_url", schema_prop("string", "API base URL", ""));
         json_set(mprops, "api_mode", schema_prop("string", "API mode", "chat_completions"));
         json_set(mprops, "fallback_model", schema_prop("string", "Fallback model", ""));
-        json_set(mprops, "service_tier", schema_prop("string", "Service tier", "default"));
+        json_set(mprops, "fallback_providers", schema_prop("string", "Comma-separated fallback providers", ""));
+        json_set(mprops, "service_tier", schema_prop("string", "Service tier", "auto"));
         json_set(mprops, "reasoning_effort", schema_prop("string", "Reasoning effort", "medium"));
         json_set(mprops, "max_tokens", schema_prop_int("Max output tokens", 4096, 1, 1048576));
         json_set(mprops, "temperature", schema_prop_num("Sampling temperature", 1.0, 0.0, 2.0));

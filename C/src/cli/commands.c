@@ -651,6 +651,7 @@ static void show_section_model(const hermes_config_t *cfg) {
     show_cfg_val("base_url", "str", cfg->provider_cfg.base_url);
     show_cfg_val("api_mode", "str", cfg->provider_cfg.api_mode);
     show_cfg_val("fallback_model", "str", cfg->provider_cfg.fallback_model);
+    show_cfg_val("fallback_providers", "str", cfg->provider_cfg.fallback_providers);
     show_cfg_val("service_tier", "str", cfg->provider_cfg.service_tier);
     show_cfg_val("reasoning_effort", "str", cfg->provider_cfg.reasoning_effort);
     show_cfg_val_int("max_tokens", cfg->provider_cfg.max_tokens);
