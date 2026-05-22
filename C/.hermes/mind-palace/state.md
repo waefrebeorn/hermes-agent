@@ -6,7 +6,7 @@
 
 | Category | Gaps | Done% | Key Stats |
 |----------|------|-------|-----------|
-| **Config** | 5 depth | 96% | 322/322 YAML keys parsed, **profiles auto-load from `~/.slermes/profiles/<name>.yaml`** |
+| **Config** | 4 depth | 97% | 322/322 YAML keys parsed, **profiles auto-load**, **`${VAR:-default}` env expansion** |
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve. **G55: SSE transport added** |
 | **Plugins** | 48 | 14% | 3 .so plugins: kanban (real) + honcho (real) + spotify (real: Web API via curl) — **45+27+18 test verified** |
@@ -16,12 +16,33 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added. **H01: `hermes completions {bash|zsh}`** |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 42 | 54% | **40 files, 2,260 assertions** (86 pass, 0 fail, 0 skip) |
+| **Tests** | 40 | 56% | **50 files, 2,374 assertions** (88 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
 | **Build/doc** | 10 | 55% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), .dockerignore, man page (hermes.1) |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-24 — Docs overhaul: 400-gap-roadmap synced to reality
+
+- ✅ **400-gap-mega-roadmap.md updated** — A, C, E, K, N, O categories corrected to real percentages. Total gap count: ~380 at ~55% parity.
+- ◀ Suite: 88/0/0 (no regression)
+- ◀ Committed: `TBD`
+
+### Session 2026-05-24 — Config depth: A03 env var expansion
+
+- ✅ **A03: `${VAR:-default}` env var expansion** — `config_expand_env_vars()` scans strings for `${VAR}` and `${VAR:-default}` patterns, substitutes env var values or defaults. Applied to 4 critical YAML keys: model.default, model.provider, model.base_url, model.api_key.
+- ✅ **Prestige docs updated** — goal-mantra.md + prestige_prompt.md v7 now reflect real current state (not stale May 22). P0 gaps all marked done.
+- ◀ **Suite: 88/0/0** (no regression)
+- ◀ **Config: 96% → 97%** (A03 closed, 4 depth gaps remain)
+- ◀ Committed: `856ab9722`
+
+### Session 2026-05-24 — Protobuf library test (test_protobuf.c)
+
+- ✅ **test_protobuf.c** — 63 assertions: decode varint (single/multi/truncated/null), varint_size (0/UINT64_MAX), encode varint round-trip (10 values), tag encode/parse, skip field (all 4 wire types + invalid), varint field encode+find, delimited field encode+find (with/without data), fixed32 field encode+find, multi-field scan (3 fields), wrong tag/wire type, empty buffer, null safety
+- ◀ **Suite: 88/0/0** (+1 test, 63 assertions; was 87/0/0)
+- ◀ **Tests: 56%** (2/42 gaps closed)
+- ◀ Committed: `c2c471e78`
 
 ### Session 2026-05-24 — Cron library test (test_cron_lib.c)
 
