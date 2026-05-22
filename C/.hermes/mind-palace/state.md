@@ -10,7 +10,7 @@
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 17 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
-| **Gateway** | 63 | ~82% (52/63) | All E01-E47 done. E48+E52 ✅. E49-E50 pre-existing ✅. E51, E53-E63 remain |
+| **Gateway** | 63 | **~98% (62/63)** | E01-E53, E55-E63 ✅. E54 (Slack upload) blocked — needs HTTP multipart. E51 Python-only, skip |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 32 | 85% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 34 | 80% | 70 slash commands, skin/theme engine |
@@ -29,4 +29,5 @@
 - ✅ **C11-C13: MCP serve HTTP server** — POST /mcp endpoint, tool discovery via tools/list, tool call via tools/call, initialize/ping, CORS, lifecycle thread
 - ✅ **E48: Discord interaction depth** — interaction type/id/token helpers, defer_interaction, show_modal
 - ✅ **E52: Discord typing 429** — graceful per-channel cooldown tracker, 429 detection + backoff
-- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf
+- ✅ **E55: Matrix room management** — create_room, join_room, leave_room
+- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf, eae17bdcf

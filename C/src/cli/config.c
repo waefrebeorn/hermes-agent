@@ -385,6 +385,22 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->config_path, sizeof(cfg->config_path), "%s/config.yaml", hermes_home);
     snprintf(cfg->env_path, sizeof(cfg->env_path), "%s/.env", hermes_home);
 
+    /* N02: Secure parent dir — chmod 0700 on config directory.
+     * Skips if running as root (root can read anything anyway).
+     * Creates directory if it doesn't exist. */
+    {
+        struct stat st;
+        if (stat(hermes_home, &st) != 0) {
+            /* Directory doesn't exist — create it with secure permissions */
+            mkdir(hermes_home, 0700);
+        } else if (S_ISDIR(st.st_mode)) {
+            /* Directory exists — harden permissions unless root */
+            if (geteuid() != 0) {
+                chmod(hermes_home, 0700);
+            }
+        }
+    }
+
     /* Parse config.yaml */
     char *err = NULL;
     yaml_doc_t *doc = yaml_parse_file(cfg->config_path, &err);
@@ -434,6 +450,17 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
 
     const char *base_url = yaml_get_string(doc, "model.base_url");
     if (base_url) snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", base_url);
+
+    /* N05: Local provider trust — if base_url is localhost/127.0.0.1,
+     * skip API key requirement. The key may still be provided for
+     * providers that need it, but we don't error if missing. */
+    {
+        const char *burl = cfg->provider_cfg.base_url;
+        if (burl[0] && (strstr(burl, "localhost") || strstr(burl, "127.0.0.1") ||
+                        strstr(burl, "::1") || strstr(burl, "0.0.0.0"))) {
+            cfg->provider_cfg.local_provider = true;
+        }
+    }
 
     const char *api_key = yaml_get_string(doc, "model.api_key");
     if (api_key) snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", api_key);
