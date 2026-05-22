@@ -633,6 +633,30 @@ else
     skip "xai_retirement (compilation failed)"
 fi
 
+# Browse.sh skills hub test (L12)
+echo ""; echo "=== Browse.sh Skills Hub Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_skills_hub.c" \
+    "$CDIR/src/skills_hub.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_hub -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_hub > /dev/null 2>&1; then ok "skills_hub (17 tests)"
+    else
+        echo "  Skills hub test output:"
+        /tmp/hermes_test_hub 2>&1 | sed 's/^/    /'
+        fail "skills_hub (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_hub
+else
+    echo "  Skills hub test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_skills_hub.c" \
+        "$CDIR/src/skills_hub.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_hub -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "skills_hub (compilation failed)"
+fi
+
 # Checkpoint tests (needs context.c for message_new/message_free)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_checkpoint.c" \
