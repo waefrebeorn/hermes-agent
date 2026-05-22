@@ -1,0 +1,91 @@
+name: C Build & Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'C/**'
+      - '.github/workflows/c-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'C/**'
+      - '.github/workflows/c-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1 | tail -20
+        working-directory: C/
+
+      - name: Quick smoke test
+        run: |
+          ./hermes --help
+        working-directory: C/
+
+      - name: Run test suite
+        run: bash test_runner.sh --verbose 2>&1
+        working-directory: C/
+
+      - name: Build TUI
+        run: |
+          sudo apt-get install -y -qq libncurses-dev
+          make clean 2>/dev/null
+          make -j$(nproc) tui 2>&1 | tail -5
+          test -f hermes-tui
+        working-directory: C/
+
+      - name: Build plugins
+        run: make -C src/plugins 2>&1
+        working-directory: C/
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: build-output
+          path: C/
+          retention-days: 3
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@5c3f82e026e7c63bf83dbdd8e9a1e60aab3ce32f  # v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t hermes-c -f C/Dockerfile .
+          docker run --rm hermes-c --help > /dev/null
+
+      - name: Check image size
+        run: docker images hermes-c --format "{{.Size}}"
