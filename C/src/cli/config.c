@@ -294,6 +294,21 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->tts.neutts_device, sizeof(cfg->tts.neutts_device), "cpu");
     snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "en_US-lessac-medium");
 
+    /* STT config defaults */
+    cfg->stt.enabled = true;
+    snprintf(cfg->stt.provider, sizeof(cfg->stt.provider), "local");
+    snprintf(cfg->stt.local_model, sizeof(cfg->stt.local_model), "base");
+    snprintf(cfg->stt.openai_model, sizeof(cfg->stt.openai_model), "whisper-1");
+    snprintf(cfg->stt.mistral_model, sizeof(cfg->stt.mistral_model), "voxtral-mini-latest");
+
+    /* Voice config defaults */
+    snprintf(cfg->voice.record_key, sizeof(cfg->voice.record_key), "ctrl+b");
+    cfg->voice.max_recording_seconds = 120;
+    cfg->voice.auto_tts = false;
+    cfg->voice.beep_enabled = true;
+    cfg->voice.silence_threshold = 200;
+    cfg->voice.silence_duration = 3.0f;
+
     /* Display config defaults */
     snprintf(cfg->display.skin, sizeof(cfg->display.skin), "default");
     cfg->display.show_reasoning = true;
@@ -804,6 +819,22 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     { const char *v = yaml_get_string(doc, "tts.neutts.device"); if (v) snprintf(cfg->tts.neutts_device, sizeof(cfg->tts.neutts_device), "%s", v); }
     { const char *v = yaml_get_string(doc, "tts.piper.voice"); if (v) snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "%s", v); }
 
+    /* STT config */
+    cfg->stt.enabled = yaml_get_bool(doc, "stt.enabled", true);
+    { const char *v = yaml_get_string(doc, "stt.provider"); if (v) snprintf(cfg->stt.provider, sizeof(cfg->stt.provider), "%s", v); }
+    { const char *v = yaml_get_string(doc, "stt.local.model"); if (v) snprintf(cfg->stt.local_model, sizeof(cfg->stt.local_model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "stt.local.language"); if (v) snprintf(cfg->stt.local_language, sizeof(cfg->stt.local_language), "%s", v); }
+    { const char *v = yaml_get_string(doc, "stt.openai.model"); if (v) snprintf(cfg->stt.openai_model, sizeof(cfg->stt.openai_model), "%s", v); }
+    { const char *v = yaml_get_string(doc, "stt.mistral.model"); if (v) snprintf(cfg->stt.mistral_model, sizeof(cfg->stt.mistral_model), "%s", v); }
+
+    /* Voice config */
+    { const char *v = yaml_get_string(doc, "voice.record_key"); if (v) snprintf(cfg->voice.record_key, sizeof(cfg->voice.record_key), "%s", v); }
+    { int v = yaml_get_int(doc, "voice.max_recording_seconds", 0); if (v > 0) cfg->voice.max_recording_seconds = v; }
+    cfg->voice.auto_tts = yaml_get_bool(doc, "voice.auto_tts", false);
+    cfg->voice.beep_enabled = yaml_get_bool(doc, "voice.beep_enabled", true);
+    { int v = yaml_get_int(doc, "voice.silence_threshold", 0); if (v > 0) cfg->voice.silence_threshold = v; }
+    { const char *v = yaml_get_string(doc, "voice.silence_duration"); if (v) cfg->voice.silence_duration = (float)atof(v); }
+
     /* Terminal backend */
     const char *term_backend = yaml_get_string(doc, "terminal.backend");
     if (term_backend) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", term_backend);
@@ -1229,6 +1260,18 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     v = getenv("HERMES_TTS_PIPER_VOICE");
     if (v) snprintf(cfg->tts.piper_voice, sizeof(cfg->tts.piper_voice), "%s", v);
 
+    /* STT env overrides */
+    v = getenv("HERMES_STT_PROVIDER");
+    if (v) snprintf(cfg->stt.provider, sizeof(cfg->stt.provider), "%s", v);
+    v = getenv("HERMES_STT_LOCAL_MODEL");
+    if (v) snprintf(cfg->stt.local_model, sizeof(cfg->stt.local_model), "%s", v);
+
+    /* Voice env overrides */
+    v = getenv("HERMES_VOICE_RECORD_KEY");
+    if (v) snprintf(cfg->voice.record_key, sizeof(cfg->voice.record_key), "%s", v);
+    v = getenv("HERMES_VOICE_AUTO_TTS");
+    if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0)) cfg->voice.auto_tts = true;
+
     v = getenv("HERMES_TERMINAL_BACKEND");
     if (v) snprintf(cfg->tools.terminal_backend, sizeof(cfg->tools.terminal_backend), "%s", v);
 
@@ -1575,6 +1618,10 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     if (cfg->tts.xai_sample_rate < 8000 || cfg->tts.xai_sample_rate > 192000)
         add_issue(result, "tts.xai.sample_rate", "unreasonable %d", cfg->tts.xai_sample_rate);
 
+    /* --- STT --- */
+    if (cfg->voice.silence_threshold < 0 || cfg->voice.silence_threshold > 32767)
+        add_issue(result, "voice.silence_threshold", "unreasonable %d", cfg->voice.silence_threshold);
+
     return result->count == 0;
 }
 
@@ -1803,6 +1850,16 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "tts.openai.voice", def.tts.openai_voice, active->tts.openai_voice);
     diff_str(diff, "tts.piper.voice", def.tts.piper_voice, active->tts.piper_voice);
 
+    /* STT */
+    diff_bool(diff, "stt.enabled", def.stt.enabled, active->stt.enabled);
+    diff_str(diff, "stt.provider", def.stt.provider, active->stt.provider);
+    diff_str(diff, "stt.local.model", def.stt.local_model, active->stt.local_model);
+
+    /* Voice */
+    diff_str(diff, "voice.record_key", def.voice.record_key, active->voice.record_key);
+    diff_int(diff, "voice.max_recording_seconds", def.voice.max_recording_seconds, active->voice.max_recording_seconds);
+    diff_bool(diff, "voice.auto_tts", def.voice.auto_tts, active->voice.auto_tts);
+
     return diff->count > 0;
 }
 
@@ -2005,6 +2062,22 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_str(f, "  neutts.model", cfg->tts.neutts_model);
     exp_str(f, "  neutts.device", cfg->tts.neutts_device);
     exp_str(f, "  piper.voice", cfg->tts.piper_voice);
+
+    fprintf(f, "\nstt:\n");
+    exp_bool(f, "  enabled", cfg->stt.enabled);
+    exp_str(f, "  provider", cfg->stt.provider);
+    exp_str(f, "  local.model", cfg->stt.local_model);
+    exp_str(f, "  local.language", cfg->stt.local_language);
+    exp_str(f, "  openai.model", cfg->stt.openai_model);
+    exp_str(f, "  mistral.model", cfg->stt.mistral_model);
+
+    fprintf(f, "\nvoice:\n");
+    exp_str(f, "  record_key", cfg->voice.record_key);
+    exp_int(f, "  max_recording_seconds", cfg->voice.max_recording_seconds);
+    exp_bool(f, "  auto_tts", cfg->voice.auto_tts);
+    exp_bool(f, "  beep_enabled", cfg->voice.beep_enabled);
+    exp_int(f, "  silence_threshold", cfg->voice.silence_threshold);
+    exp_float(f, "  silence_duration", cfg->voice.silence_duration);
 
     if (close_file) fclose(f);
     return true;
@@ -2299,6 +2372,22 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     if (is_set_str(src->tts.neutts_model)) snprintf(dst->tts.neutts_model, sizeof(dst->tts.neutts_model), "%s", src->tts.neutts_model);
     if (is_set_str(src->tts.neutts_device)) snprintf(dst->tts.neutts_device, sizeof(dst->tts.neutts_device), "%s", src->tts.neutts_device);
     if (is_set_str(src->tts.piper_voice)) snprintf(dst->tts.piper_voice, sizeof(dst->tts.piper_voice), "%s", src->tts.piper_voice);
+
+    /* STT merge */
+    dst->stt.enabled = src->stt.enabled;
+    if (is_set_str(src->stt.provider)) snprintf(dst->stt.provider, sizeof(dst->stt.provider), "%s", src->stt.provider);
+    if (is_set_str(src->stt.local_model)) snprintf(dst->stt.local_model, sizeof(dst->stt.local_model), "%s", src->stt.local_model);
+    if (is_set_str(src->stt.local_language)) snprintf(dst->stt.local_language, sizeof(dst->stt.local_language), "%s", src->stt.local_language);
+    if (is_set_str(src->stt.openai_model)) snprintf(dst->stt.openai_model, sizeof(dst->stt.openai_model), "%s", src->stt.openai_model);
+    if (is_set_str(src->stt.mistral_model)) snprintf(dst->stt.mistral_model, sizeof(dst->stt.mistral_model), "%s", src->stt.mistral_model);
+
+    /* Voice merge */
+    if (is_set_str(src->voice.record_key)) snprintf(dst->voice.record_key, sizeof(dst->voice.record_key), "%s", src->voice.record_key);
+    if (is_set_int(src->voice.max_recording_seconds)) dst->voice.max_recording_seconds = src->voice.max_recording_seconds;
+    dst->voice.auto_tts = src->voice.auto_tts;
+    dst->voice.beep_enabled = src->voice.beep_enabled;
+    if (is_set_int(src->voice.silence_threshold)) dst->voice.silence_threshold = src->voice.silence_threshold;
+    if (src->voice.silence_duration >= 0.1f) dst->voice.silence_duration = src->voice.silence_duration;
 
     /* Sync flat fields for backward compat */
     snprintf(dst->model, sizeof(dst->model), "%s", dst->provider_cfg.model);
@@ -2649,6 +2738,34 @@ char *hermes_config_schema(void) {
         json_set(tprops, "piper.voice", schema_prop("string", "Piper TTS voice", "en_US-lessac-medium"));
         json_set(tts, "properties", tprops);
         json_set(properties, "tts", tts);
+    }
+
+    /* --- stt --- */
+    {
+        json_t *stt = json_object();
+        json_set(stt, "type", json_string("object"));
+        json_set(stt, "description", json_string("Speech-to-text configuration"));
+        json_t *sprops = json_object();
+        json_set(sprops, "enabled", schema_prop_bool("STT enabled", true));
+        json_set(sprops, "provider", schema_prop("string", "STT provider", "local"));
+        json_set(sprops, "local.model", schema_prop("string", "Local whisper model", "base"));
+        json_set(sprops, "openai.model", schema_prop("string", "OpenAI whisper model", "whisper-1"));
+        json_set(stt, "properties", sprops);
+        json_set(properties, "stt", stt);
+    }
+
+    /* --- voice --- */
+    {
+        json_t *voice = json_object();
+        json_set(voice, "type", json_string("object"));
+        json_set(voice, "description", json_string("Voice input recording settings"));
+        json_t *vprops = json_object();
+        json_set(vprops, "record_key", schema_prop("string", "Record key binding", "ctrl+b"));
+        json_set(vprops, "max_recording_seconds", schema_prop_int("Max recording length", 120, 1, 600));
+        json_set(vprops, "auto_tts", schema_prop_bool("Auto-TTS on voice input", false));
+        json_set(vprops, "beep_enabled", schema_prop_bool("Record start/stop beeps", true));
+        json_set(voice, "properties", vprops);
+        json_set(properties, "voice", voice);
     }
 
     json_set(root, "properties", properties);

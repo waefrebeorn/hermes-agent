@@ -621,6 +621,8 @@ static const cfg_category_t CFG_CATEGORIES[] = {
     {"mcp",         "MCP server timeout, auth, tool limit",       "mcp.",         0},
     {"auxiliary",   "Auxiliary LLM routing (vision, web_extract, etc.)","auxiliary.",  0},
     {"tts",         "Text-to-speech configuration",                "tts.",        0},
+    {"stt",         "Speech-to-text configuration",                "stt.",        0},
+    {"voice",       "Voice input recording settings",              "voice.",      0},
     {NULL, NULL, NULL, 0}
 };
 
@@ -751,6 +753,26 @@ static void show_section_tts(const hermes_config_t *cfg) {
     show_cfg_val("piper.voice", "str", cfg->tts.piper_voice);
 }
 
+static void show_section_stt(const hermes_config_t *cfg) {
+    printf("stt:  Speech-to-text configuration\n");
+    show_cfg_val_bool("enabled", cfg->stt.enabled);
+    show_cfg_val("provider", "str", cfg->stt.provider);
+    show_cfg_val("local.model", "str", cfg->stt.local_model);
+    show_cfg_val("local.language", "str", cfg->stt.local_language);
+    show_cfg_val("openai.model", "str", cfg->stt.openai_model);
+    show_cfg_val("mistral.model", "str", cfg->stt.mistral_model);
+}
+
+static void show_section_voice(const hermes_config_t *cfg) {
+    printf("voice:  Voice input recording settings\n");
+    show_cfg_val("record_key", "str", cfg->voice.record_key);
+    show_cfg_val_int("max_recording_seconds", cfg->voice.max_recording_seconds);
+    show_cfg_val_bool("auto_tts", cfg->voice.auto_tts);
+    show_cfg_val_bool("beep_enabled", cfg->voice.beep_enabled);
+    show_cfg_val_int("silence_threshold", cfg->voice.silence_threshold);
+    show_cfg_val_float("silence_duration", cfg->voice.silence_duration);
+}
+
 static void show_section_delegation(const hermes_config_t *cfg) {
     printf("delegation:  Subagent spawning and child config\n");
     show_cfg_val_int("max_concurrent_children", cfg->delegation.max_concurrent_children);
@@ -878,12 +900,16 @@ static bool show_config_section(const hermes_config_t *cfg, const char *section)
         { show_section_auxiliary(cfg); return true; }
     if (strcmp(section, "tts") == 0)
         { show_section_tts(cfg); return true; }
+    if (strcmp(section, "stt") == 0)
+        { show_section_stt(cfg); return true; }
+    if (strcmp(section, "voice") == 0)
+        { show_section_voice(cfg); return true; }
     return false;
 }
 
 /* List all config groups */
 static void list_config_groups(void) {
-    printf("Config groups (16):\n");
+    printf("Config groups (18):\n");
     for (int i = 0; CFG_CATEGORIES[i].name; i++)
         printf("  %-15s  %s\n", CFG_CATEGORIES[i].name, CFG_CATEGORIES[i].desc);
     printf("\nUse /config show <group> to view keys in a group.\n");

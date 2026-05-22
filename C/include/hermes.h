@@ -486,6 +486,24 @@ typedef struct {
     char  piper_voice[64];         /* tts.piper.voice */
 } tts_config_t;
 
+typedef struct {
+    bool  enabled;                  /* stt.enabled */
+    char  provider[32];             /* stt.provider: local/groq/openai/mistral */
+    char  local_model[32];          /* stt.local.model: tiny/base/small/medium/large-v3 */
+    char  local_language[16];       /* stt.local.language: auto-detect if empty */
+    char  openai_model[32];         /* stt.openai.model: whisper-1/gpt-4o-mini-transcribe */
+    char  mistral_model[48];        /* stt.mistral.model */
+} stt_config_t;
+
+typedef struct {
+    char  record_key[16];           /* voice.record_key: e.g. "ctrl+b" */
+    int   max_recording_seconds;    /* voice.max_recording_seconds */
+    bool  auto_tts;                 /* voice.auto_tts */
+    bool  beep_enabled;             /* voice.beep_enabled */
+    int   silence_threshold;        /* voice.silence_threshold: RMS value 0-32767 */
+    float silence_duration;         /* voice.silence_duration: seconds */
+} voice_config_t;
+
 /* ================================================================
  *  Logging Config (Python logging group, 5 keys)
  * ================================================================ */
@@ -574,6 +592,10 @@ typedef struct {
     auxiliary_config_t auxiliary;
     /* TTS config */
     tts_config_t tts;
+    /* STT config */
+    stt_config_t stt;
+    /* Voice config */
+    voice_config_t voice;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */
