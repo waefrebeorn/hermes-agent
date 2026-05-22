@@ -19,7 +19,7 @@
 | **Errors** | 5 | **100% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 | **Upstream** | 12 | new | 125 commits behind origin/main |
 | **Tests** | 53 | 40% | 26 files, 1422 assertions |
-| **Cross-cut** | 5 | 40% | Token counting, secure parent dir, key leakage |
+| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
 ### Session 2026-05-22 (Last Continuation)
@@ -30,4 +30,8 @@
 - ✅ **E48: Discord interaction depth** — interaction type/id/token helpers, defer_interaction, show_modal
 - ✅ **E52: Discord typing 429** — graceful per-channel cooldown tracker, 429 detection + backoff
 - ✅ **E55: Matrix room management** — create_room, join_room, leave_room
-- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf, eae17bdcf
+- ✅ **N02: Secure parent dir** — chmod 0700 on config dir at load time, skip root
+- ✅ **N05: Local provider trust** — detect localhost/127.0.0.1 in base_url, set local_provider flag
+- ✅ **N03: API key leakage prevention** — provider_url_is_trusted() checks URL host matches provider's authoritative endpoint before sending API key in headers. Wired into llm_client.c (4 paths: provider+legacy, stream+non-stream)
+- ✅ **N04: Vendor API key derivation** — provider_derive_api_key_name() derives <VENDOR>_API_KEY from base_url hostname. Hooks in config.c (both YAML and env-only paths)
+- Commits: 7dd20224e, 38ae186c3, 5a8150ca1, b3a3ea0cf, eae17bdcf, 1c3bc1018

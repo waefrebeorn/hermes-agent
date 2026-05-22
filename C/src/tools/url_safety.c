@@ -506,3 +506,38 @@ bool url_is_safe(const char *url) {
     free(hostname);
     return safe;
 }
+
+/* ================================================================
+ *  Public URL Parsing API
+ * ================================================================ */
+
+/* Public wrapper: extract hostname from URL */
+char *url_extract_hostname(const char *url) {
+    return extract_hostname(url);
+}
+
+/* Check if URL host matches expected host (exact or subdomain match) */
+bool url_host_matches(const char *url, const char *expected_host) {
+    if (!url || !expected_host) return false;
+
+    char *host = extract_hostname(url);
+    if (!host) return false;
+
+    /* Exact match */
+    bool match = (strcasecmp(host, expected_host) == 0);
+
+    /* Subdomain match: host ends with ".expected_host" */
+    if (!match) {
+        size_t host_len = strlen(host);
+        size_t expected_len = strlen(expected_host);
+        if (host_len > expected_len + 1) {
+            if (host[host_len - expected_len - 1] == '.' &&
+                strcasecmp(host + host_len - expected_len, expected_host) == 0) {
+                match = true;
+            }
+        }
+    }
+
+    free(host);
+    return match;
+}

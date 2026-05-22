@@ -8,6 +8,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "provider.h"
+#include "provider_metadata.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -294,7 +295,12 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;
         char *url = ops->build_url(prov, cfg->base_url);
-        char *headers = ops->build_headers(prov, cfg->api_key);
+        /* P158: Verify URL is trusted for this provider's API key */
+        const char *effective_key = cfg->api_key;
+        if (effective_key[0] && !provider_url_is_trusted(cfg->provider, url)) {
+            effective_key = "";
+        }
+        char *headers = ops->build_headers(prov, effective_key);
         char *body = ops->build_request_body(prov, messages, message_count, tools_json, false);
         if (!url || !headers || !body) {
             free(url); free(headers); free(body);
@@ -356,10 +362,14 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
 
     /* Build auth header */
     char auth_header[512];
-    if (cfg->api_key[0]) {
+    const char *effective_key = cfg->api_key;
+    if (effective_key[0] && !provider_url_is_trusted(cfg->provider, url)) {
+        effective_key = "";
+    }
+    if (effective_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
                 "Authorization: Bearer %s\r\nContent-Type: application/json",
-                 cfg->api_key);
+                 effective_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
                  "Content-Type: application/json");
@@ -780,7 +790,12 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;
         char *url = ops->build_url(prov, cfg->base_url);
-        char *headers = ops->build_headers(prov, cfg->api_key);
+        /* P158: Verify URL is trusted for this provider's API key */
+        const char *effective_key = cfg->api_key;
+        if (effective_key[0] && !provider_url_is_trusted(cfg->provider, url)) {
+            effective_key = "";
+        }
+        char *headers = ops->build_headers(prov, effective_key);
         char *body = ops->build_request_body(prov, messages, message_count, tools_json, true);
         if (!url || !headers || !body) {
             free(url); free(headers); free(body);
@@ -855,10 +870,14 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
 
     /* Build auth header */
     char auth_header[512];
-    if (cfg->api_key[0]) {
+    const char *effective_key = cfg->api_key;
+    if (effective_key[0] && !provider_url_is_trusted(cfg->provider, url)) {
+        effective_key = "";
+    }
+    if (effective_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
                 "Authorization: Bearer %s\r\nContent-Type: application/json",
-                 cfg->api_key);
+                 effective_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
                  "Content-Type: application/json");

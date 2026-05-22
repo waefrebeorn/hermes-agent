@@ -7,10 +7,12 @@
 
 #include "provider_metadata.h"
 #include "hermes_json.h"
+#include "hermes_url_safety.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <ctype.h>
 
 /* ================================================================
  *  Provider metadata
@@ -158,4 +160,129 @@ char *provider_metadata_list_json(void) {
     char *result = json_serialize_pretty(root, 2);
     json_free(root);
     return result;
+}
+
+/* ================================================================
+ *  P158: API Key Security
+ * ================================================================ */
+
+bool provider_url_is_trusted(const char *provider_name, const char *url) {
+    if (!provider_name || !url) return false;
+    if (!url_has_valid_scheme(url)) return false;
+
+    /* Look up provider metadata */
+    const provider_metadata_t *meta = provider_metadata_find(provider_name);
+    if (!meta || !meta->base_url || !*meta->base_url) {
+        /* Unknown provider — trust by default (defensive) */
+        return true;
+    }
+
+    /* Extract hostname from the provider's known base_url */
+    char *expected_host = url_extract_hostname(meta->base_url);
+    if (!expected_host) {
+        /* Can't extract from metadata — trust by default */
+        return true;
+    }
+
+    /* Check if URL host matches provider's authoritative host */
+    bool trusted = url_host_matches(url, expected_host);
+    free(expected_host);
+
+    if (!trusted) {
+        fprintf(stderr, "[provider-security] WARNING: URL %s does not match "
+                "provider %s's known endpoint %s — not sending API key\n",
+                url, provider_name, meta->base_url);
+    }
+
+    return trusted;
+}
+
+char *provider_derive_api_key_name(const char *provider_name, const char *base_url) {
+    if (!provider_name && !base_url) return NULL;
+
+    const char *src = NULL;
+
+    /* First try: extract hostname from base_url */
+    if (base_url && *base_url) {
+        char *host = url_extract_hostname(base_url);
+        if (host) {
+            char host_lower[256];
+            size_t hl = 0;
+            for (const char *p = host; *p && hl < sizeof(host_lower) - 1; p++) {
+                host_lower[hl++] = tolower((unsigned char)*p);
+            }
+            host_lower[hl] = '\0';
+
+            /* Common API subdomains to skip */
+            static const char *prefixes[] = {
+                "api.", "api-", "openapi.", "rest.", "ws.", "gateway.",
+                "generativelanguage.", NULL
+            };
+
+            char stripped[256] = "";
+            for (int pi = 0; prefixes[pi]; pi++) {
+                size_t plen = strlen(prefixes[pi]);
+                if (strncmp(host_lower, prefixes[pi], plen) == 0) {
+                    const char *rest = host_lower + plen;
+                    const char *dot = strchr(rest, '.');
+                    if (dot) {
+                        size_t root_len = (size_t)(dot - rest);
+                        if (root_len > 0 && root_len < sizeof(stripped)) {
+                            memcpy(stripped, rest, root_len);
+                            stripped[root_len] = '\0';
+                            src = stripped;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            /* If no prefix stripped, use the first label */
+            if (!src && hl > 0) {
+                const char *dot = strchr(host_lower, '.');
+                if (dot) {
+                    size_t first_len = (size_t)(dot - host_lower);
+                    if (first_len > 0 && first_len < sizeof(stripped)) {
+                        memcpy(stripped, host_lower, first_len);
+                        stripped[first_len] = '\0';
+                        src = stripped;
+                    }
+                }
+            }
+
+            free(host);
+        }
+    }
+
+    /* Second try: use provider name directly */
+    if (!src && provider_name) {
+        const provider_metadata_t *meta = provider_metadata_find(provider_name);
+        if (meta && meta->provider_name) {
+            src = meta->provider_name;
+        } else {
+            src = provider_name;
+        }
+    }
+
+    if (!src) return NULL;
+
+    /* Build env var name: VENDOR_API_KEY (uppercase, underscores for hyphens) */
+    char result[128];
+    int pos = 0;
+    for (const char *p = src; *p && pos < (int)sizeof(result) - 12; p++) {
+        if (*p == '-' || *p == ' ') {
+            result[pos++] = '_';
+        } else {
+            result[pos++] = toupper((unsigned char)*p);
+        }
+    }
+    const char *suffix = "_API_KEY";
+    size_t slen = strlen(suffix);
+    if ((size_t)pos + slen < sizeof(result)) {
+        memcpy(result + pos, suffix, slen + 1);
+    } else {
+        return NULL;
+    }
+
+    return strdup(result);
 }

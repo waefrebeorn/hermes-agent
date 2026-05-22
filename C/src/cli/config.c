@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_yaml.h"
 #include "hermes_json.h"
+#include "provider_metadata.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -428,6 +429,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
             snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", key_env);
             snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", key_env);
         }
+        /* P158: Derive <VENDOR>_API_KEY in env-only path */
+        if (cfg->api_key[0] == '\0' && cfg->provider_cfg.base_url[0]) {
+            char *derived_name = provider_derive_api_key_name(
+                cfg->provider_cfg.provider, cfg->provider_cfg.base_url);
+            if (derived_name) {
+                const char *env_val = getenv(derived_name);
+                if (env_val && env_val[0]) {
+                    snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", env_val);
+                    snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", env_val);
+                }
+                free(derived_name);
+            }
+        }
         return true;
     }
 
@@ -610,6 +624,21 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (key_env && key_env[0]) {
         snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", key_env);
         snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", key_env);
+    }
+
+    /* P158: Derive <VENDOR>_API_KEY from base_url/provider when no explicit key set */
+    if (cfg->api_key[0] == '\0' && cfg->provider_cfg.base_url[0]) {
+        char *derived_name = provider_derive_api_key_name(
+            cfg->provider_cfg.provider, cfg->provider_cfg.base_url);
+        if (derived_name) {
+            const char *env_val = getenv(derived_name);
+            if (env_val && env_val[0]) {
+                snprintf(cfg->api_key, sizeof(cfg->api_key), "%s", env_val);
+                snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", env_val);
+                fprintf(stderr, "[config] Derived API key from %s\n", derived_name);
+            }
+            free(derived_name);
+        }
     }
 
     /* Agent section */

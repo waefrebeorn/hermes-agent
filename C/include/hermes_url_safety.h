@@ -61,6 +61,19 @@ bool url_blocklist_remove_category(const char *category);
 /* Clear all blocklist entries */
 void url_blocklist_clear(void);
 
+/* ================================================================
+ *  URL Parsing Utilities (P158)
+ * ================================================================ */
+
+/* Extract hostname from URL. Returns malloc'd string (caller must free). */
+char *url_extract_hostname(const char *url);
+
+/* Check if a URL's hostname matches an expected host (or subdomain).
+ * e.g. url_host_matches("https://api.openai.com/v1/chat", "api.openai.com") == true
+ *      url_host_matches("https://evil.com/", "api.openai.com") == false
+ * Returns true if host matches or is subdomain of expected. */
+bool url_host_matches(const char *url, const char *expected_host);
+
 #ifdef __cplusplus
 }
 #endif

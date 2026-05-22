@@ -89,6 +89,23 @@ char *model_metadata_list_json(void);
 /* Get all known providers as JSON string (malloc'd). Caller must free(). */
 char *provider_metadata_list_json(void);
 
+/* ================================================================
+ *  P158: API Key Security
+ * ================================================================ */
+
+/* Check if a URL is trusted to receive this provider's API key.
+ * Compares URL host against the provider's known authoritative hostname.
+ * Returns true if host matches (or is subdomain of) the provider's known host.
+ * Falls back to true if provider not found in metadata (defensive). */
+bool provider_url_is_trusted(const char *provider_name, const char *url);
+
+/* Derive <VENDOR>_API_KEY env var name from provider name or base_url.
+ * When no explicit API key is set, this derives the likely env var name
+ * from the provider's hostname (e.g. "api.deepseek.com" → "DEEPSEEK_API_KEY").
+ * Returns malloc'd env var name string, or NULL if undetermined.
+ * Caller must free(). */
+char *provider_derive_api_key_name(const char *provider_name, const char *base_url);
+
 #ifdef __cplusplus
 }
 #endif

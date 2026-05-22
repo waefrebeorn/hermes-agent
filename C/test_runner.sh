@@ -56,10 +56,11 @@ fi
 run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$CDIR/lib/libtui/tui.c"
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 
-# Config test (needs config.c + paths.c + yaml + json libs)
+# Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \
     "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+    "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_config -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_config > /dev/null 2>&1; then ok "config (70 tests)"
@@ -74,15 +75,16 @@ else
     gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
         "$CDIR/tests/test_config.c" \
         "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+        "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
         "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
         -o /tmp/hermes_test_config -lm 2>&1 | sed 's/^/    /'
     skip "config (compilation failed)"
 fi
 
-# Provider metadata test (needs libjson + libplugin includes)
+# Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \
-    "$CDIR/src/agent/provider_metadata.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_provmeta -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_provmeta > /dev/null 2>&1; then ok "provider_metadata"
     else fail "provider_metadata (test binary returned non-zero)"; fi
@@ -154,10 +156,11 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "credential_pool (compilation failed)"
 fi
 
-# Budget tracker test (needs budget_tracker.c + provider_metadata + json lib)
+# Budget tracker test (needs budget_tracker.c + provider_metadata + url_safety + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_budget_tracker.c" \
     "$CDIR/src/agent/budget_tracker.c" "$CDIR/src/agent/provider_metadata.c" \
+    "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_budget -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_budget > /dev/null 2>&1; then ok "budget_tracker (104 tests)"
