@@ -16,13 +16,29 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 39 | 57% | **57 files, 2,454+ assertions** (93 pass, 0 fail, 0 skip) |
+| **Tests** | 38 | 59% | **59 files, 2,529+ assertions** (95 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 | **Build/doc** | 10 | 55% | Dockerfile, CI, cross-compile, .dockerignore, man page |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-26 — Bedrock provider full tests + 3 bugfixes
+
+- ✅ **test_bedrock_full.c** — 35 assertions covering:
+  - URL building (default region us-east-1, custom model)
+  - Headers without AWS creds
+  - Request body: inferenceConfig, system array, messages, B39-B41
+  - response_format, json_mode, tool_choice, metadata
+  - Response parsing: text, toolUse (arguments serialized), empty, error
+  - Streaming chunk passthrough, null safety
+- ✅ **Bugfix: UAF in metadata path** — `json_object_set` then `json_free` on same node
+- ✅ **Bugfix: UAF in tool_choice parsing** — same pattern
+- ✅ **Bugfix: toolUse input object deserialized as string** — `json_get_str` returned `{}` for object. Changed to `json_serialize`.
+- ◀ **Suite: 95/0/0** (+1 test, 35 assertions; was 94/0/0)
+- ◀ **Tests: 59%** (2 gaps closed: M03-M04)
+- ◀ Committed: `b0a6c38b5`, `ef14d000e`, `6f0a44091`
 
 ### Session 2026-05-26 — Anthropic provider depth tests (B26-B28)
 
@@ -43,6 +59,26 @@
 - ◀ **Tests: 57%** (was 56%, 1/40 test gaps closed)
 - ◀ **Providers: 87%** (B26-B28 coverage verified)
 - ◀ Committed: `b0a6c38b5`
+
+### Session 2026-05-26 — Google provider full tests + 3 bugfixes
+
+- ✅ **test_google_full.c** — 40 assertions covering:
+  - URL building (default, custom, trailing slash fix, :generateContent)
+  - Headers with/without API key
+  - Generation config: maxOutputTokens, temperature, topP, stopSequences, topK, candidateCount
+  - B29: safety_settings JSON array parsing
+  - System instruction extraction to systemInstruction with parts array
+  - OpenAI→Google tool format conversion: functionDeclarations wrapper fix
+  - response_format, json_mode, tool_choice, parallel_tool_calls, extra_body
+  - Response parsing: text, functionCall, empty candidates, error
+  - Streaming: text delta, finishReason, [DONE] marker, non-data prefix
+  - Null safety: free_response, NULL/empty/invalid
+- ✅ **Bugfix: Google tools functionDeclarations set on array** — `json_set(tools_arr, "functionDeclarations", ...)` on array was a no-op. Added wrapper object + append.
+- ✅ **Bugfix: Trailing slash → //models** — stripped trailing slash in URL builder.
+- ✅ **Bugfix: NULL crash in google_parse_stream_chunk** — strncmp on NULL.
+- ◀ **Suite: 94/0/0** (+1 test, 40 assertions; was 93/0/0)
+- ◀ **Tests: 58%** (M03 closed; was 57%)
+- ◀ Committed: `ef14d000e`
 
 ### Session 2026-05-26 — B22: finish_reason tracking
 

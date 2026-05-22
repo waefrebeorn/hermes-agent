@@ -1,8 +1,24 @@
-# Overnight Map (v7) — 2026-05-26
+# Overnight Map (v8) — 2026-05-26
 
 ```
-~55% complete  •  ~370 gaps remaining  •  125 commits behind upstream
+~58% complete  •  ~365 gaps remaining  •  125 commits behind upstream
 ```
+
+### Session 2026-05-26 — Bedrock provider full tests + 3 bugfixes
+
+- ✅ **test_bedrock_full.c** — 35 assertions: URL, inferenceConfig, system, messages, B39-B41, response parsing (text/toolUse/error), null safety
+- ✅ **3 bugfixes in provider_bedrock.c** — 2x UAF (metadata + tool_choice), toolUse input serialization
+- ◀ **Suite: 95/0/0** (+1 test, 35 assertions)
+- ◀ **Tests: 59%** (M03-M04 closed, 2/39 gaps)
+- ◀ Committed: `6f0a44091`
+
+### Session 2026-05-26 — Google provider full tests + 3 bugfixes
+
+- ✅ **test_google_full.c** — 40 assertions: URL, headers, gen config, safety settings, systemInstruction, tools (functionDeclarations fix), response parsing, streaming, null safety
+- ✅ **3 bugfixes in provider_google.c** — functionDeclarations on array (no-op), trailing slash //models, NULL stream crash
+- ◀ **Suite: 94/0/0** (+1 test, 40 assertions)
+- ◀ **Tests: 58%** (M03 closed)
+- ◀ Committed: `ef14d000e`
 
 ### Session 2026-05-26 — Anthropic provider depth test (B26-B28)
 
