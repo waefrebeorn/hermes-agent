@@ -131,10 +131,10 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Tests: 36 files, 6,920 lines, 69 passed, 0 failed, 0 skipped**
 - ◀ **~315 gaps remaining** (2 closed this session)
 
-## Session continuation (2 gaps closed)
+## Session continuation (3 gaps closed)
 - ✅ **M38: Skills system test** — test_skills.c, 53 assertions covering scan, validate, origin, cache, usage, search, bundle, sync, curator, hub install
 - ✅ **L05: extra_body passthrough** — JSON key merge into request body for all 6 OpenAI-compat providers. Config key: `agent.extra_body`
-- ◀ **Tests: 41 files, 74 pass, 0 fail, 1 skip**
-- ◀ **Suite: 74 tests, +1 test binary (skills_tool)**
-- ◀ Committed: `ce094d8dc`, `cfb63915e`
-- ◀ ~306 gaps remaining
+- ✅ **M44: MCP tool test** — test_mcp.c, 24 assertions covering 7 MCP tool registration, handler dispatch, timeout config
+- ✅ **All per-tool tests complete** — M29-M44 all done (17 tests)
+- ◀ **Tests: 42 files, 75 pass, 0 fail, 1 skip**
+- ◀ Committed: `ce094d8dc`, `cfb63915e`, `3f69bd4fa`

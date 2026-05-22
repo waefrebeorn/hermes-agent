@@ -161,6 +161,22 @@ static char *anthropic_build_request_body(const provider_t *p,
     if (streaming)
         json_set(root, "stream", json_bool(true));
 
+    /* B26: Anthropic thinking blocks — extended reasoning */
+    if (p->config.reasoning_effort[0]) {
+        int budget = 0;
+        const char *effort = p->config.reasoning_effort;
+        if (strcmp(effort, "low") == 0)        budget = 8192;
+        else if (strcmp(effort, "medium") == 0) budget = 16384;
+        else if (strcmp(effort, "high") == 0)   budget = 32768;
+        else budget = atoi(effort); /* direct number */
+        if (budget >= 1024) {
+            json_t *thinking = json_object();
+            json_set(thinking, "type", json_string("enabled"));
+            json_set(thinking, "budget_tokens", json_number(budget));
+            json_set(root, "thinking", thinking);
+        }
+    }
+
     /* Tools (convert from OpenAI format to Anthropic format) */
     if (tools_json && json_len(tools_json) > 0) {
         json_t *anthropic_tools = json_array();
@@ -365,6 +381,7 @@ static provider_response_t *anthropic_parse_response(const provider_t *p,
          *   {"type":"text","text":"..."}
          *   {"type":"tool_use","id":"...","name":"...","input":{...}} */
         size_t text_len = 0;
+        size_t thinking_len = 0;
         int tc_count = 0;
         size_t n = json_len(content_arr);
         for (size_t i = 0; i < n; i++) {
@@ -373,6 +390,9 @@ static provider_response_t *anthropic_parse_response(const provider_t *p,
             if (strcmp(type, "text") == 0) {
                 const char *text = json_get_str(block, "text", "");
                 text_len += strlen(text);
+            } else if (strcmp(type, "thinking") == 0) {
+                const char *text = json_get_str(block, "thinking", "");
+                thinking_len += strlen(text);
             } else if (strcmp(type, "tool_use") == 0) {
                 if (tc_count < 64) tc_count++;
             }
@@ -399,6 +419,27 @@ static provider_response_t *anthropic_parse_response(const provider_t *p,
             }
         } else {
             resp->content = strdup("");
+        }
+
+        /* Extract reasoning from thinking blocks (B26) */
+        if (thinking_len > 0) {
+            resp->reasoning = (char *)calloc(thinking_len + 1, 1);
+            if (resp->reasoning) {
+                size_t pos = 0;
+                for (size_t i = 0; i < n; i++) {
+                    json_t *block = json_get(content_arr, i);
+                    const char *type = json_get_str(block, "type", "");
+                    if (strcmp(type, "thinking") == 0) {
+                        const char *text = json_get_str(block, "thinking", "");
+                        size_t add = strlen(text);
+                        if (pos + add < thinking_len + 1) {
+                            memcpy(resp->reasoning + pos, text, add);
+                            pos += add;
+                        }
+                    }
+                }
+                resp->reasoning[pos] = '\0';
+            }
         }
 
         /* Extract tool calls */
@@ -520,6 +561,9 @@ static provider_response_t *anthropic_parse_stream_chunk(const provider_t *p,
                  * in the streaming callback context, not per-chunk.
                  * Return empty content for now. */
                 resp->content = strdup("");
+            } else if (strcmp(delta_type, "thinking_delta") == 0) {
+                /* B26: Anthropic thinking blocks — streaming reasoning */
+                resp->reasoning = strdup(json_get_str(delta, "thinking", ""));
             } else {
                 resp->content = strdup("");
             }
