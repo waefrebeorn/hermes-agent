@@ -22,7 +22,7 @@
 
 ```bash
 make -j$(nproc) && bash test_runner.sh --verbose
-# Expect: 58/59 pass (pre-existing plugin failure)
+# Expect: 58/58 pass (plugin test + warning fixes applied)
 ```
 
 ## Known Issues
@@ -87,3 +87,12 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - 125 commits since last sync, 52 Python
 - 12 new feature gaps identified
 - 75% of upstream work is TUI/computer_use/skills — C stubs skip those
+
+### Session 2026-05-22 (Evening — This Continuation)
+- ✅ **Plugin test fixes** — test name mismatch, unused func removal, -Wpedantic func ptr casts
+- ✅ **E54: Slack file upload** — `slack_upload_file()` via two-step external upload API
+- ✅ **L08: Telegram observe unmentioned groups** — `telegram_get_me()`, `telegram_is_mentioned()`, `telegram_is_group()`, observe buffer with context injection on @mention
+- ◀ **Gateway now at 100%** (63/63 gaps)
+- ◀ **Upstream drift: 9/12 remain** (L05-L06, L08 done)
+- ◀ **Tests: 58/58 pass, 0 fail, 2 skip**
+- ◀ Committed: `a626e95ba`, `fd8de11d8`

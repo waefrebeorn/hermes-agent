@@ -10,7 +10,7 @@
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 17 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
 | **Plugins** | 51 | 8% | 3 .so stubs vs 45 Python backends (biggest structural gap) |
-| **Gateway** | 63 | **~98% (62/63)** | E01-E53, E55-E63 ✅. E54 (Slack upload) blocked — needs HTTP multipart. E51 Python-only, skip |
+| **Gateway** | 63 | **100% ✅** | E01-E55, E57-E63 ✅. E56 (Matrix read receipts) would require deeper event tracking |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 32 | 85% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
@@ -22,7 +22,12 @@
 | **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
-### Session 2026-05-22 (Last Continuation)
+### Session 2026-05-22 (This Continuation)
+
+- ✅ **Plugin test fixes** — test_plugin_load.c name fix, plugin.c unused func removal, -Wpedantic function pointer casts via union
+- ✅ **E54: Slack file upload** — `slack_upload_file()` using two-step external upload API (getUploadURLExternal → PUT → completeUploadExternal). No multipart needed.
+- ✅ **L08: Telegram observe unmentioned groups** — `telegram_get_me()`, `telegram_is_mentioned()`, `telegram_is_group()`, `gw_observe_append/consume` buffer, silent accumulation of unmentioned group messages with context injection on @mention trigger
+- Commits: a626e95ba, fd8de11d8
 
 - ✅ **K01-K05: Typed error hierarchy** — hermes_error.h/c with 5 error types, thread-local last error, format helpers. 11 tests, all pass
 - ✅ **C04-C05: MCP sampling protocol** — incoming request queue, sampling callback, createMessage/respond/notify

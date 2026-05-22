@@ -20,7 +20,8 @@ static const char *SCHEMA = "{"
       "\"text\":{\"type\":\"string\",\"description\":\"Text to convert to speech\"},"
       "\"output_path\":{\"type\":\"string\",\"description\":\"Optional output file path\"},"
       "\"provider\":{\"type\":\"string\",\"description\":\"TTS backend: espeak (default), edge, elevenlabs, openai, xai\"},"
-      "\"voice\":{\"type\":\"string\",\"description\":\"Voice/model (provider-specific: e.g., 'alloy' for openai, '21m00Tcm4TlvDq8ikWAM' for elevenlabs)\"}"
+      "\"voice\":{\"type\":\"string\",\"description\":\"Voice/model (provider-specific: e.g., 'alloy' for openai, '21m00Tcm4TlvDq8ikWAM' for elevenlabs)\"},"
+      "\"max_chunk_duration_s\":{\"type\":\"integer\",\"description\":\"L10: Max seconds per audio chunk (default 60). Longer text is split.\"}"
     "},"
     "\"required\":[\"text\"]"
 "}";
@@ -212,6 +213,78 @@ static bool tts_xai(const char *text, const char *voice, const char *output_path
     return ok;
 }
 
+/* L10: Split text into chunks at sentence boundaries.
+ * Returns array of strings (caller must free each + the array).
+ * chunk_chars: approximate max characters per chunk (~15 chars/sec speech). */
+static char **tts_chunk_text(const char *text, int chunk_chars, int *nchunks) {
+    *nchunks = 0;
+    if (!text || !*text) return NULL;
+    size_t total = strlen(text);
+    if ((int)total <= chunk_chars) {
+        /* Single chunk */
+        char **chunks = malloc(sizeof(char *));
+        chunks[0] = strdup(text);
+        *nchunks = 1;
+        return chunks;
+    }
+
+    /* Estimate: allocate max chunks */
+    int max_chunks = (int)(total / (chunk_chars / 2)) + 2;
+    char **chunks = calloc((size_t)max_chunks, sizeof(char *));
+    if (!chunks) return NULL;
+
+    const char *start = text;
+    int idx = 0;
+    while (*start && idx < max_chunks) {
+        if ((int)strlen(start) <= chunk_chars) {
+            chunks[idx++] = strdup(start);
+            break;
+        }
+        /* Find break point within chunk_chars: prefer sentence end (. ! ? then \n) */
+        const char *end = start + chunk_chars;
+        const char *break_at = NULL;
+        const char *p = end;
+        while (p > start) {
+            if (*p == '.' || *p == '!' || *p == '?') {
+                if (p + 1 == end || *(p+1) == ' ' || *(p+1) == '\n' || *(p+1) == '\0') {
+                    break_at = p + 1;
+                    break;
+                }
+            }
+            p--;
+        }
+        if (!break_at) {
+            /* Try newline */
+            p = end;
+            while (p > start) { if (*p == '\n') { break_at = p + 1; break; } p--; }
+        }
+        if (!break_at) {
+            /* Try comma */
+            p = end;
+            while (p > start) { if (*p == ',') { break_at = p + 1; break; } p--; }
+        }
+        if (!break_at) {
+            /* Fallback: word boundary */
+            p = end;
+            while (p > start && *p != ' ') p--;
+            break_at = (p > start) ? p : end;
+        }
+        if (break_at <= start) break_at = start + chunk_chars;
+        size_t len = (size_t)(break_at - start);
+        char *chunk = malloc(len + 1);
+        if (chunk) {
+            memcpy(chunk, start, len);
+            chunk[len] = '\0';
+            chunks[idx++] = chunk;
+        }
+        start = break_at;
+        while (*start == ' ') start++; /* trim leading spaces */
+    }
+
+    *nchunks = idx;
+    return chunks;
+}
+
 char *tts_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -224,64 +297,102 @@ char *tts_handler(const char *args_json, const char *task_id) {
     const char *output_path = json_object_get_string(args, "output_path", NULL);
     const char *provider = json_object_get_string(args, "provider", "espeak");
     const char *voice = json_object_get_string(args, "voice", NULL);
+    int max_chunk_s = (int)json_object_get_number(args, "max_chunk_duration_s", 60);
 
     json_node_t *result = json_new_object();
 
     if (!text || !*text) {
         json_object_set(result, "error", json_new_string("Missing text"));
     } else {
-        /* Generate default output path */
-        char default_path[4096];
-        if (!output_path) {
-            output_path = tts_default_path(default_path, sizeof(default_path));
+        /* L10: Chunk text if too long (~15 chars/sec speech) */
+        int chunk_chars = max_chunk_s * 15; /* ~15 chars/sec */
+        int nchunks = 0;
+        char **chunks = tts_chunk_text(text, chunk_chars, &nchunks);
+        if (!chunks || nchunks == 0) {
+            chunks = malloc(sizeof(char *));
+            chunks[0] = strdup(text);
+            nchunks = 1;
         }
 
-        bool success = false;
+        json_node_t *files = json_new_array();
+        bool all_ok = true;
 
-        if (strcmp(provider, "elevenlabs") == 0) {
-            success = tts_elevenlabs(text, voice, output_path);
-        } else if (strcmp(provider, "openai") == 0) {
-            success = tts_openai(text, voice, output_path);
-        } else if (strcmp(provider, "xai") == 0) {
-            success = tts_xai(text, voice, output_path);
-        } else if (strcmp(provider, "edge") == 0) {
-            /* edge-tts (Python) */
-            char escaped[16384];
-            tts_escape_text(text, escaped, sizeof(escaped));
-            char cmd[65536];
-            snprintf(cmd, sizeof(cmd),
-                     "edge-tts --text '%s' --write-media '%s' 2>/dev/null",
-                     escaped, output_path);
-            success = (system(cmd) == 0);
-        } else {
-            /* default: espeak-ng */
-            char escaped[16384];
-            tts_escape_text(text, escaped, sizeof(escaped));
-            char cmd[65536];
-            if (strlen(escaped) < 10000) {
-                snprintf(cmd, sizeof(cmd),
-                         "espeak-ng -w '%s' -- '%s' 2>/dev/null",
-                         output_path, escaped);
-                success = (system(cmd) == 0);
+        for (int i = 0; i < nchunks; i++) {
+            /* Generate per-chunk output path */
+            char chunk_path[4096];
+            if (output_path && nchunks == 1) {
+                snprintf(chunk_path, sizeof(chunk_path), "%s", output_path);
+            } else {
+                char default_path[4096];
+                const char *base = output_path ? output_path :
+                    tts_default_path(default_path, sizeof(default_path));
+                /* Insert _chunkN before extension */
+                const char *dot = strrchr(base, '.');
+                if (dot) {
+                    size_t prelen = (size_t)(dot - base);
+                    snprintf(chunk_path, sizeof(chunk_path), "%.*s_chunk%d%s",
+                             (int)prelen, base, i, dot);
+                } else {
+                    snprintf(chunk_path, sizeof(chunk_path), "%s_chunk%d", base, i);
+                }
             }
-            /* Fallback to edge-tts if espeak fails */
-            if (!success) {
+
+            bool ok = false;
+            if (strcmp(provider, "elevenlabs") == 0) {
+                ok = tts_elevenlabs(chunks[i], voice, chunk_path);
+            } else if (strcmp(provider, "openai") == 0) {
+                ok = tts_openai(chunks[i], voice, chunk_path);
+            } else if (strcmp(provider, "xai") == 0) {
+                ok = tts_xai(chunks[i], voice, chunk_path);
+            } else if (strcmp(provider, "edge") == 0) {
+                char escaped[16384];
+                tts_escape_text(chunks[i], escaped, sizeof(escaped));
+                char cmd[65536];
                 snprintf(cmd, sizeof(cmd),
                          "edge-tts --text '%s' --write-media '%s' 2>/dev/null",
-                         escaped, output_path);
-                success = (system(cmd) == 0);
+                         escaped, chunk_path);
+                ok = (system(cmd) == 0);
+            } else {
+                char escaped[16384];
+                tts_escape_text(chunks[i], escaped, sizeof(escaped));
+                char cmd[65536];
+                if (strlen(escaped) < 10000) {
+                    snprintf(cmd, sizeof(cmd),
+                             "espeak-ng -w '%s' -- '%s' 2>/dev/null",
+                             chunk_path, escaped);
+                    ok = (system(cmd) == 0);
+                }
+                if (!ok) {
+                    snprintf(cmd, sizeof(cmd),
+                             "edge-tts --text '%s' --write-media '%s' 2>/dev/null",
+                             escaped, chunk_path);
+                    ok = (system(cmd) == 0);
+                }
             }
-        }
 
-        struct stat st;
-        if (success && stat(output_path, &st) == 0 && st.st_size > 0) {
-            json_object_set(result, "status", json_new_string("generated"));
-            json_object_set(result, "output_path", json_new_string(output_path));
-            json_object_set(result, "file_size", json_new_number((double)st.st_size));
-            json_object_set(result, "provider", json_new_string(provider));
-        } else {
-            json_object_set(result, "error", json_new_string("TTS generation failed"));
+            struct stat st;
+            json_node_t *file_info = json_new_object();
+            json_object_set(file_info, "chunk", json_new_number((double)i));
+            json_object_set(file_info, "path", json_new_string(chunk_path));
+            if (ok && stat(chunk_path, &st) == 0 && st.st_size > 0) {
+                json_object_set(file_info, "status", json_new_string("generated"));
+                json_object_set(file_info, "file_size", json_new_number((double)st.st_size));
+            } else {
+                json_object_set(file_info, "status", json_new_string("failed"));
+                all_ok = false;
+            }
+            json_append(files, file_info);
+            free(chunks[i]);
         }
+        free(chunks);
+
+        json_object_set(result, "files", files);
+        json_object_set(result, "chunk_count", json_new_number((double)nchunks));
+        json_object_set(result, "provider", json_new_string(provider));
+        if (all_ok)
+            json_object_set(result, "status", json_new_string("generated"));
+        else
+            json_object_set(result, "status", json_new_string("partial"));
     }
 
     char *json_out = json_serialize(result);
