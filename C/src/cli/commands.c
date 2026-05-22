@@ -1473,25 +1473,50 @@ static void cmd_usage(const char *args, agent_state_t *state) {
     printf("  Iterations:  %d\n", state->iteration_count);
 }
 
-/* /plugins: List installed plugins */
+/* /plugins: List installed plugins and their status */
 static void cmd_plugins(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    /* Check ~/.slermes/plugins/ directory */
-    const char *home = getenv("SLERMES_HOME");
-    if (!home) home = getenv("HOME");
-    char path[512];
-    if (home) snprintf(path, sizeof(path), "%s/.slermes/plugins", home);
-    else      snprintf(path, sizeof(path), "/tmp/.slermes/plugins");
+    /* Resolve plugins directory */
+    char plugins_dir[HERMES_PATH_MAX];
+    char home[HERMES_PATH_MAX];
+    hermes_get_home(home, sizeof(home));
+    snprintf(plugins_dir, sizeof(plugins_dir), "%s/plugins", home);
 
-    /* Try loading hello_plugin.so to verify plugin system */
+    printf("Plugin system status:\n");
+    printf("  Directory: %s\n", plugins_dir);
+
+    /* Check for .so files */
+    char cmd[HERMES_PATH_MAX + 32];
+    snprintf(cmd, sizeof(cmd), "ls %s/*.so 2>/dev/null | wc -l", plugins_dir);
+    FILE *fp = popen(cmd, "r");
+    if (fp) {
+        char count[16] = "0";
+        if (fgets(count, sizeof(count), fp)) {
+            int n = atoi(count);
+            printf("  Loaded plugins: %d\n", n);
+            if (n > 0) {
+                snprintf(cmd, sizeof(cmd), "ls %s/*.so 2>/dev/null", plugins_dir);
+                FILE *lp = popen(cmd, "r");
+                if (lp) {
+                    char line[256];
+                    while (fgets(line, sizeof(line), lp))
+                        printf("    %s", line);
+                    pclose(lp);
+                }
+            }
+        }
+        pclose(fp);
+    }
+
+    /* Try loading a plugin to verify system */
     void *handle = dlopen("libhello_plugin.so", RTLD_NOW | RTLD_LOCAL);
     if (handle) {
-        printf("Plugin system: active\n");
+        printf("  Plugin API: verified (hello_plugin.so loaded)\n");
         dlclose(handle);
     } else {
-        printf("Plugin system: available (no plugins loaded)\n");
+        printf("  Plugin API: %s\n", dlerror());
     }
-    printf("Plugin directory: %s\n", path);
+    printf("  Config: %s/plugins section or plugin.dirs\n", home);
 }
 
 /* /platforms: Show gateway platform status */
@@ -1635,10 +1660,33 @@ static void cmd_skills(const char *args, agent_state_t *state) {
 static void cmd_cron(const char *args, agent_state_t *state) {
     (void)state;
     if (args && args[0]) {
-        printf("Cron %s: use /tools for cron management\n", args);
+        if (strcmp(args, "list") == 0 || strcmp(args, "-l") == 0) {
+            char cron_dir[HERMES_PATH_MAX];
+            hermes_get_home(cron_dir, sizeof(cron_dir));
+            strncat(cron_dir, "/cron", sizeof(cron_dir) - strlen(cron_dir) - 1);
+            printf("Scheduled tasks in %s:\n", cron_dir);
+            char cmd[HERMES_PATH_MAX + 32];
+            snprintf(cmd, sizeof(cmd), "ls -la %s/ 2>/dev/null || echo '(empty)'", cron_dir);
+            FILE *fp = popen(cmd, "r");
+            if (fp) {
+                char line[256];
+                while (fgets(line, sizeof(line), fp)) printf("  %s", line);
+                pclose(fp);
+            }
+            return;
+        }
+        printf("Usage: /cron [list]\n");
         return;
     }
-    printf("Cron scheduler: active. Use cronjob tool to manage tasks.\n");
+    /* Show cron config */
+    char cron_dir[HERMES_PATH_MAX];
+    hermes_get_home(cron_dir, sizeof(cron_dir));
+    strncat(cron_dir, "/cron", sizeof(cron_dir) - strlen(cron_dir) - 1);
+    printf("Cron scheduler: active\n");
+    printf("  Directory: %s\n", cron_dir);
+    printf("  Config: cron.dir, cron.max_concurrent_jobs, cron.job_timeout\n");
+    printf("  Use cronjob tool to create/manage tasks.\n");
+    printf("  Use /cron list to show scheduled tasks.\n");
 }
 
 /* /fast: Toggle fast mode */
@@ -1760,22 +1808,39 @@ static void cmd_handoff(const char *args, agent_state_t *state) {
     printf("Session handoff to %s: start gateway with --platform %s\n", args, args);
 }
 
-/* /platform: Pause/resume/list gateway platforms */
+/* /platform: List gateway platforms */
 static void cmd_platform(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
-        printf("Gateway platforms available:\n");
-        printf("  telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+        printf("Gateway platforms (configured via config.yaml gateway.platforms):\n");
+        printf("  All 19 C platforms: telegram, discord, slack, matrix,\n");
+        printf("  mattermost, webhook, whatsapp, email, signal, sms,\n");
+        printf("  homeassistant, feishu, wecom, dingtalk, qqbot,\n");
+        printf("  bluebubbles, msgraph_webhook, weixin, yuanbao\n");
+        printf("  Use /platform list to show active status.\n");
         return;
     }
     if (strcmp(args, "list") == 0) {
-        printf("Active: telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+        /* Show platforms from config */
+        const char *gw = getenv("HERMES_GATEWAY_PLATFORMS");
+        if (gw) {
+            printf("Gateway platforms (env): %s\n", gw);
+        } else {
+            hermes_config_t cfg;
+            hermes_config_load(&cfg, state->hermes_home);
+            if (cfg.gateway_platforms[0])
+                printf("Gateway platforms (config): %s\n", cfg.gateway_platforms);
+            else
+                printf("Gateway platforms: none configured\n");
+        }
+        printf("\nAll 19 C gateway modules compiled in.\n");
+        printf("Active platforms determined by gateway.platforms config key.\n");
     } else if (strncmp(args, "pause", 5) == 0) {
-        printf("Platform pause not yet supported in C gateway.\n");
+        printf("Platform pause: not yet supported in C gateway.\n");
     } else if (strncmp(args, "resume", 6) == 0) {
-        printf("Platform resume not yet supported in C gateway.\n");
+        printf("Platform resume: not yet supported in C gateway.\n");
     } else {
-        printf("Unknown platform command: %s. Use: list, pause, resume\n", args);
+        printf("Unknown: %s. Use: list\n", args);
     }
 }
 
