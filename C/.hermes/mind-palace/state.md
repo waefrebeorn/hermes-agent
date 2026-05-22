@@ -13,10 +13,10 @@
 | **Gateway** | 63 | **100% ✅** | E01-E55, E57-E63 ✅. E56 (Matrix read receipts) would require deeper event tracking |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 32 | 85% | 23 state fields, 18 session DB, G01-G36 all filled |
-| **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
+| **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added. **H01: `hermes completions {bash|zsh}`** |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 46 | 50% | **36 files, 2,153 assertions** (79 pass, 0 fail, 0 skip) |
+| **Tests** | 46 | 50% | **36 files, 2,156 assertions** (82 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |

@@ -170,3 +170,11 @@ make -j$(nproc) && bash test_runner.sh --verbose
   - Plugin system proven end-to-end: load → init → interface → store → search → clear → cleanup → unload
   - Test: test_plugin_honcho.c — 27 assertions covering all operations
 - ◀ **Suite: 79 pass, 0 fail, 1 skip (+1 plugin test, 27 assertions)**
+
+## Session continuation (H01: Shell completions)
+- ✅ **H01: Shell completions** — `hermes completions {bash|zsh}` generates shell completion scripts
+  - bash: `_hermes_completions()` with `compgen -W` for first-level opts
+  - zsh: `_hermes()` with `_arguments` for top-level + subcommand dispatch
+  - contrib/completions/ directory with standalone files
+  - Test: test_runner section 7 — 3 assertions (bash, zsh, usage)
+- ◀ **Suite: 82 pass, 0 fail, 1 skip (+3 completions tests)**

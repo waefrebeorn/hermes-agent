@@ -34,6 +34,44 @@ int main(int argc, char **argv) {
         return hermes_cron_main(argc - 1, argv + 1);
     }
 
+    if (argc > 1 && strcmp(argv[1], "completions") == 0) {
+        /* Print shell completion script */
+        if (argc > 2) {
+            if (strcmp(argv[2], "bash") == 0) {
+                printf("# hermes bash completion — source: . <(hermes completions bash)\n");
+                printf("_hermes_completions() {\n");
+                printf("    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
+                printf("    local opts=\"--help -h --version -v --session gateway cron --tui completions\"\n");
+                printf("    if [[ $COMP_CWORD -eq 1 ]]; then\n");
+                printf("        COMPREPLY=($(compgen -W \"$opts\" -- \"$cur\"))\n");
+                printf("    fi\n");
+                printf("}\n");
+                printf("complete -F _hermes_completions hermes\n");
+                return 0;
+            }
+            if (strcmp(argv[2], "zsh") == 0) {
+                printf("#compdef hermes\n");
+                printf("_hermes() {\n");
+                printf("    local -a opts\n");
+                printf("    opts=(\n");
+                printf("        '--help[Show help]' '-h[Show help]'\n");
+                printf("        '--version[Show version]' '-v[Show version]'\n");
+                printf("        '--session[Attach to session]:session:'\n");
+                printf("        'gateway:Start gateway:->gateway'\n");
+                printf("        'cron:Run scheduler:->cron'\n");
+                printf("        '--tui[Start TUI]'\n");
+                printf("        'completions:Generate completions:->completions'\n");
+                printf("    )\n");
+                printf("    _arguments $opts\n");
+                printf("}\n");
+                printf("_hermes \"$@\"\n");
+                return 0;
+            }
+        }
+        printf("Usage: hermes completions {bash|zsh}\n");
+        return 0;
+    }
+
     if (argc > 1 && strcmp(argv[1], "acp") == 0) {
         /* ACP server mode — JSON-RPC over stdio */
         acp_server_t *srv = acp_server_new();
