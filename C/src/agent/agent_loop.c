@@ -103,6 +103,10 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
            sizeof(state->llm.service_tier));
     memcpy(state->llm.reasoning_effort, cfg->provider_cfg.reasoning_effort,
            sizeof(state->llm.reasoning_effort));
+    memcpy(state->llm.response_format, cfg->provider_cfg.response_format,
+           sizeof(state->llm.response_format));
+    memcpy(state->llm.metadata, cfg->provider_cfg.metadata,
+           sizeof(state->llm.metadata));
 
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)

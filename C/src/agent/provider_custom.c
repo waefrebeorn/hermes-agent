@@ -56,7 +56,7 @@ static char *custom_build_request_body(const provider_t *p,
     /* LLM params from config */
     int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
     json_object_set(root, "max_tokens", json_new_number(max_tok));
-    if (p->config.temperature > 0.0f)
+    if (p->config.temperature >= 0.0f)
         json_object_set(root, "temperature", json_new_number(p->config.temperature));
     if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
         json_object_set(root, "top_p", json_new_number(p->config.top_p));
@@ -85,6 +85,16 @@ static char *custom_build_request_body(const provider_t *p,
     }
     if (p->config.user[0])
         json_object_set(root, "user", json_new_string(p->config.user));
+
+    /* response_format + metadata */
+    if (p->config.response_format[0]) {
+        json_t *rf = json_parse(p->config.response_format, NULL);
+        if (rf) { json_object_set(root, "response_format", rf); json_free(rf); }
+    }
+    if (p->config.metadata[0]) {
+        json_t *md = json_parse(p->config.metadata, NULL);
+        if (md) { json_object_set(root, "metadata", md); json_free(md); }
+    }
 
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }

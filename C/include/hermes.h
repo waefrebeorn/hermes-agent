@@ -110,6 +110,8 @@ typedef struct {
     char  user[128];
     char  service_tier[32];
     char  reasoning_effort[32];
+    char  response_format[256];    /* JSON: "json_object" or {"type":"json_schema","json_schema":{...}} */
+    char  metadata[256];           /* key-value map JSON string */
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
@@ -233,6 +235,8 @@ typedef struct {
     char  fallback_providers[1024]; /* comma-separated fallback providers (P83) */
     char  service_tier[32];        /* auto, default (for Anthropic) */
     char  reasoning_effort[32];    /* low, medium, high */
+    char  response_format[256];    /* "json_object" or JSON schema string */
+    char  metadata[256];           /* key-value map JSON string */
 } provider_config_t;
 
 /* ================================================================

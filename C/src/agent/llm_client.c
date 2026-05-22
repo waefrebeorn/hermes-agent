@@ -280,6 +280,10 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                sizeof(prov->config.service_tier));
         memcpy(prov->config.reasoning_effort, cfg->reasoning_effort,
                sizeof(prov->config.reasoning_effort));
+        memcpy(prov->config.response_format, cfg->response_format,
+               sizeof(prov->config.response_format));
+        memcpy(prov->config.metadata, cfg->metadata,
+               sizeof(prov->config.metadata));
     }
 
     if (prov && prov->ops) {
@@ -738,6 +742,30 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
 
     /* P91: Pass system cache state to provider */
     if (prov) prov->system_cached = cfg->system_cached;
+
+    /* Copy LLM request params from config to provider (streaming path) */
+    if (prov) {
+        prov->config.max_tokens = cfg->max_tokens;
+        prov->config.temperature = cfg->temperature;
+        prov->config.top_p = cfg->top_p;
+        prov->config.stop_count = cfg->stop_count;
+        memcpy(prov->config.stop_sequences, cfg->stop_sequences,
+               sizeof(prov->config.stop_sequences));
+        prov->config.presence_penalty = cfg->presence_penalty;
+        prov->config.frequency_penalty = cfg->frequency_penalty;
+        prov->config.seed = cfg->seed;
+        prov->config.logprobs = cfg->logprobs;
+        prov->config.top_logprobs = cfg->top_logprobs;
+        memcpy(prov->config.user, cfg->user, sizeof(prov->config.user));
+        memcpy(prov->config.service_tier, cfg->service_tier,
+               sizeof(prov->config.service_tier));
+        memcpy(prov->config.reasoning_effort, cfg->reasoning_effort,
+               sizeof(prov->config.reasoning_effort));
+        memcpy(prov->config.response_format, cfg->response_format,
+               sizeof(prov->config.response_format));
+        memcpy(prov->config.metadata, cfg->metadata,
+               sizeof(prov->config.metadata));
+    }
 
     if (prov && prov->ops) {
         const provider_ops_t *ops = prov->ops;

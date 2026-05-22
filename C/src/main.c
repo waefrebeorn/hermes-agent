@@ -83,6 +83,10 @@ int main(int argc, char **argv) {
                sizeof(agent_state.llm.service_tier));
         memcpy(agent_state.llm.reasoning_effort, cfg.provider_cfg.reasoning_effort,
                sizeof(agent_state.llm.reasoning_effort));
+        memcpy(agent_state.llm.response_format, cfg.provider_cfg.response_format,
+               sizeof(agent_state.llm.response_format));
+        memcpy(agent_state.llm.metadata, cfg.provider_cfg.metadata,
+               sizeof(agent_state.llm.metadata));
         agent_state.max_iterations = cfg.max_turns;
         if (cfg.config_path[0])
             snprintf(agent_state.hermes_home, sizeof(agent_state.hermes_home), "%s", cfg.config_path);

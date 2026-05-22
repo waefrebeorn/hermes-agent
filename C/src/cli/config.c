@@ -147,6 +147,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->provider_cfg.api_mode, sizeof(cfg->provider_cfg.api_mode), "chat_completions");
     snprintf(cfg->provider_cfg.service_tier, sizeof(cfg->provider_cfg.service_tier), "default");
     snprintf(cfg->provider_cfg.reasoning_effort, sizeof(cfg->provider_cfg.reasoning_effort), "medium");
+    cfg->provider_cfg.response_format[0] = '\0';
+    cfg->provider_cfg.metadata[0] = '\0';
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -511,6 +513,14 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *reasoning_effort = yaml_get_string(doc, "agent.reasoning_effort");
     if (reasoning_effort) snprintf(cfg->provider_cfg.reasoning_effort,
                                     sizeof(cfg->provider_cfg.reasoning_effort), "%s", reasoning_effort);
+
+    const char *response_format = yaml_get_string(doc, "agent.response_format");
+    if (response_format) snprintf(cfg->provider_cfg.response_format,
+                                   sizeof(cfg->provider_cfg.response_format), "%s", response_format);
+
+    const char *metadata = yaml_get_string(doc, "agent.metadata");
+    if (metadata) snprintf(cfg->provider_cfg.metadata,
+                            sizeof(cfg->provider_cfg.metadata), "%s", metadata);
 
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
@@ -1147,6 +1157,12 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_REASONING_EFFORT");
     if (v) snprintf(cfg->provider_cfg.reasoning_effort, sizeof(cfg->provider_cfg.reasoning_effort), "%s", v);
+
+    v = getenv("HERMES_RESPONSE_FORMAT");
+    if (v) snprintf(cfg->provider_cfg.response_format, sizeof(cfg->provider_cfg.response_format), "%s", v);
+
+    v = getenv("HERMES_METADATA");
+    if (v) snprintf(cfg->provider_cfg.metadata, sizeof(cfg->provider_cfg.metadata), "%s", v);
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
@@ -1848,6 +1864,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_bool(diff, "model.logprobs", def.provider_cfg.logprobs, active->provider_cfg.logprobs);
     diff_int(diff, "model.top_logprobs", def.provider_cfg.top_logprobs, active->provider_cfg.top_logprobs);
     diff_str(diff, "model.user", def.provider_cfg.user, active->provider_cfg.user);
+    diff_str(diff, "model.response_format", def.provider_cfg.response_format, active->provider_cfg.response_format);
+    diff_str(diff, "model.metadata", def.provider_cfg.metadata, active->provider_cfg.metadata);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
@@ -2009,6 +2027,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_int(f, "  max_tokens", cfg->provider_cfg.max_tokens);
     exp_float(f, "  temperature", cfg->provider_cfg.temperature);
     exp_float(f, "  top_p", cfg->provider_cfg.top_p);
+    exp_str(f, "  response_format", cfg->provider_cfg.response_format);
+    exp_str(f, "  metadata", cfg->provider_cfg.metadata);
 
     fprintf(f, "\ndisplay:\n");
     exp_str(f, "  skin", cfg->display.skin);

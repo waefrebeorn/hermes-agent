@@ -87,7 +87,7 @@ static char *google_build_request_body(const provider_t *p,
     json_t *gen_config = json_object();
     int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
     json_set(gen_config, "maxOutputTokens", json_number(max_tok));
-    if (p->config.temperature > 0.0f)
+    if (p->config.temperature >= 0.0f)
         json_set(gen_config, "temperature", json_number(p->config.temperature));
     if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
         json_set(gen_config, "topP", json_number(p->config.top_p));
@@ -100,6 +100,16 @@ static char *google_build_request_body(const provider_t *p,
         else json_free(stop_arr);
     }
     json_set(root, "generationConfig", gen_config);
+
+    /* response_format + metadata */
+    if (p->config.response_format[0]) {
+        json_t *rf = json_parse(p->config.response_format, NULL);
+        if (rf) { json_set(root, "response_format", rf); json_free(rf); }
+    }
+    if (p->config.metadata[0]) {
+        json_t *md = json_parse(p->config.metadata, NULL);
+        if (md) { json_set(root, "metadata", md); json_free(md); }
+    }
 
     /* System instruction (separate from contents) */
     char system_text[4096] = "";
