@@ -8,22 +8,59 @@
 |----------|------|-------|-----------|
 | **Config** | 5 depth | 96% | 322/322 YAML keys parsed, **profiles auto-load from `~/.slermes/profiles/<name>.yaml`** |
 | **Providers** | 40 | 85% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
-| **MCP** | 17 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
-| **Plugins** | 50 | 10% | 4 plugins: 3 .so stubs + **in-memory memory backend (P126 proven) — 27-test verified** |
+| **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve. **G55: SSE transport added** |
+| **Plugins** | 48 | 14% | 3 .so plugins: kanban (real) + honcho (real) + spotify (real: Web API via curl) — **45+27+18 test verified** |
 | **Gateway** | 63 | **100% ✅** | E01-E55, E57-E63 ✅. E56 (Matrix read receipts) would require deeper event tracking |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
-| **Agent** | 32 | 85% | 23 state fields, 18 session DB, G01-G36 all filled |
+| **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled. **Phase 113: LLM retry (api_max_retries=3) + fallback_model + fallback_providers** |
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added. **H01: `hermes completions {bash|zsh}`** |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 46 | 50% | **36 files, 2,156 assertions** (82 pass, 0 fail, 0 skip) |
+| **Tests** | 44 | 52% | **38 files, 2,219 assertions** (84 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
-### Session 2026-05-22 (This Continuation)
+### Session 2026-05-24 (Spotify plugin real + test)
+
+- ✅ **Spotify plugin real** — `plugin_spotify.c` upgraded from stub to real Spotify Web API integration:
+  - Client Credentials OAuth flow via `popen("curl ...")` — no external library deps
+  - Real endpoints: play (PUT /me/player/play), pause (PUT /me/player/pause), next (POST /me/player/next), current-playing (GET /me/player/currently-playing), search (GET /search)
+  - Token management: auto-refresh, expiry tracking, 60s safety buffer
+  - Config via plugin_configure(): client_id, client_secret, device_id
+  - Graceful error: "authentication failed" when unconfigured, parse errors on bad API response
+  - Plugin version 1.0.0
+- ✅ **test_plugin_spotify.c** — 18 assertions covering metadata, interface ptrs, error handling with/without config
+- ✅ **Suite: 84/0/1** (+1 pass)
+- ✅ **Plugins: 14%** (all 3 .so now real — 0 remaining stubs)
+- ◀ Committed: `2198e92dd`
+
+### Session 2026-05-24 (Kanban plugin real + test)
+
+- ✅ **Kanban plugin real** — `plugin_kanban.c` upgraded from stub to full in-memory board with task CRUD:
+  - 8 boards × 256 tasks per board in static storage
+  - Real task storage: description, column (todo/in_progress/done/blocked), priority (1-5), assignee, sticky flag
+  - JSON output with proper escaping via `json_escape()`
+  - Error handling: max boards, board full, null name, invalid board ID
+  - All 4 interface functions: create_board, add_task, get_board, list_boards
+  - Plugin version 1.0.0
+- ✅ **test_plugin_kanban.c** — 45 assertions covering create, list, add task (×3), get board, error paths, cleanup
+- ✅ **test_runner.sh** — kanban plugin test added
+- ◀ **Suite: 83/0/1** ✅ (+1 pass)
+- ◀ **Plugins: ~12%** (1 more real plugin, was 10%)
+- ◀ Committed: `ddede70b9`
+
+## Session 2026-05-22 (Current)
+
+- ✅ **G55: MCP SSE transport** — Replaced "not yet implemented" stub with real `connect_sse_server()`. Uses `mcp_server_set_sse()` + HTTP/SSE transport with auth header injection, root directories, tool filtering, and dynamic handler registration. Same pattern as stdio path.
+- ◀ **Suite: 82/0/1** ✅
+- ◀ Committed: `2216e98b4`
+
+- ✅ **Phase 113: Agent loop retry + fallback** — LLM call retry loop with exponential backoff (1s-16s). Wire `api_max_retries` (default 3), `fallback_model`, `fallback_providers` from config → llm_config_t. Fallback model first, then comma-separated fallback providers. Test: 9 new assertions.
+- ◀ **Suite: 82/0/1** (config test now 79 assertions)
+- ◀ Committed: `b667db689`
 
 - ✅ **M31: File tool test** — test_file.c, 35 assertions for file CRUD (read/write/search) + sandbox enforcement. Covers: create, overwrite, parent dirs, empty file, missing path, offset/limit read, non-existent file, null args, pattern/glob search, path traversal /etc blocking, 500B content, special path chars
 - ✅ **-Werror fixes in file.c** — `/*` within comment, unused `fread` return
