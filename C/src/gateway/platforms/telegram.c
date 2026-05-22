@@ -643,3 +643,189 @@ const char *telegram_get_message_thread_id(json_node_t *update) {
     snprintf(buf, sizeof(buf), "%.0f", id);
     return buf;
 }
+
+/* ================================================================
+ *  E07-E12: Interactive Telegram send methods
+ * ================================================================ */
+
+/* E07: Send editable draft with placeholder text (no keyboard) */
+bool telegram_send_draft(http_client_t *http, const char *chat_id,
+                          const char *text, const char *parse_mode)
+{
+    return telegram_send_message_with_keyboard(http, chat_id, text, parse_mode, NULL);
+}
+
+/* E08: Send clarification prompt with inline Yes/No/Explain buttons */
+bool telegram_send_clarify(http_client_t *http, const char *chat_id,
+                            const char *question, const char **options, int n_options,
+                            const char *parse_mode)
+{
+    if (!http || !chat_id || !question) return false;
+
+    json_node_t *keyboard = json_new_object();
+    json_node_t *rows = json_new_array();
+    json_node_t *row = json_new_array();
+    for (int i = 0; i < n_options && i < 4; i++) {
+        json_node_t *btn = json_new_object();
+        json_object_set(btn, "text", json_new_string(options[i]));
+        json_object_set(btn, "callback_data", json_new_string(options[i]));
+        json_array_append(row, btn);
+    }
+    json_array_append(rows, row);
+    json_object_set(keyboard, "inline_keyboard", rows);
+
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, question, parse_mode, keyboard);
+    json_free(keyboard);
+    return ok;
+}
+
+/* E09: Send dangerous command approval prompt with Approve/Deny buttons */
+bool telegram_send_approval_prompt(http_client_t *http, const char *chat_id,
+                                    const char *command, const char *reason,
+                                    const char *parse_mode)
+{
+    if (!http || !chat_id || !command) return false;
+
+    char text[4096];
+    if (reason && *reason)
+        snprintf(text, sizeof(text), "⚠️ *Approve dangerous command?*\n\n`%s`\n\nReason: %s", command, reason);
+    else
+        snprintf(text, sizeof(text), "⚠️ *Approve dangerous command?*\n\n`%s`", command);
+
+    json_node_t *keyboard = json_new_object();
+    json_node_t *rows = json_new_array();
+    json_node_t *row = json_new_array();
+
+    json_node_t *approve = json_new_object();
+    json_object_set(approve, "text", json_new_string("✅ Approve"));
+    json_object_set(approve, "callback_data", json_new_string("approve"));
+    json_array_append(row, approve);
+
+    json_node_t *deny = json_new_object();
+    json_object_set(deny, "text", json_new_string("❌ Deny"));
+    json_object_set(deny, "callback_data", json_new_string("deny"));
+    json_array_append(row, deny);
+
+    json_array_append(rows, row);
+    json_object_set(keyboard, "inline_keyboard", rows);
+
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, "Markdown", keyboard);
+    json_free(keyboard);
+    return ok;
+}
+
+/* E10: Send slash command confirmation with Confirm/Cancel buttons */
+bool telegram_send_confirm_prompt(http_client_t *http, const char *chat_id,
+                                   const char *action, const char *detail,
+                                   const char *parse_mode)
+{
+    if (!http || !chat_id || !action) return false;
+
+    char text[4096];
+    if (detail && *detail)
+        snprintf(text, sizeof(text), "Confirm: %s\n\n%s", action, detail);
+    else
+        snprintf(text, sizeof(text), "Confirm: %s", action);
+
+    json_node_t *keyboard = json_new_object();
+    json_node_t *rows = json_new_array();
+    json_node_t *row = json_new_array();
+
+    json_node_t *confirm = json_new_object();
+    json_object_set(confirm, "text", json_new_string("✅ Confirm"));
+    json_object_set(confirm, "callback_data", json_new_string("confirm"));
+    json_array_append(row, confirm);
+
+    json_node_t *cancel = json_new_object();
+    json_object_set(cancel, "text", json_new_string("❌ Cancel"));
+    json_object_set(cancel, "callback_data", json_new_string("cancel"));
+    json_array_append(row, cancel);
+
+    json_array_append(rows, row);
+    json_object_set(keyboard, "inline_keyboard", rows);
+
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text,
+                parse_mode ? parse_mode : "Markdown", keyboard);
+    json_free(keyboard);
+    return ok;
+}
+
+/* E11: Send model picker with inline keyboard of models */
+bool telegram_send_model_picker(http_client_t *http, const char *chat_id,
+                                 const char **models, int n_models,
+                                 const char *current_model)
+{
+    if (!http || !chat_id || !models || n_models <= 0) return false;
+
+    char text[512];
+    if (current_model && *current_model)
+        snprintf(text, sizeof(text), "Select model (current: %s):", current_model);
+    else
+        snprintf(text, sizeof(text), "Select model:");
+
+    json_node_t *keyboard = json_new_object();
+    json_node_t *rows = json_new_array();
+    json_node_t *row = json_new_array();
+    int items_in_row = 0;
+
+    for (int i = 0; i < n_models; i++) {
+        json_node_t *btn = json_new_object();
+        char label[128];
+        if (current_model && strcmp(models[i], current_model) == 0)
+            snprintf(label, sizeof(label), "✓ %s", models[i]);
+        else
+            snprintf(label, sizeof(label), "%s", models[i]);
+        json_object_set(btn, "text", json_new_string(label));
+        json_object_set(btn, "callback_data", json_new_string(models[i]));
+        json_array_append(row, btn);
+        items_in_row++;
+
+        /* Max 2 per row for readability */
+        if (items_in_row >= 2 || i == n_models - 1) {
+            json_array_append(rows, row);
+            row = json_new_array();
+            items_in_row = 0;
+        }
+    }
+    json_object_set(keyboard, "inline_keyboard", rows);
+
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, NULL, keyboard);
+    json_free(keyboard);
+    return ok;
+}
+
+/* E12: Send update prompt with diff + Apply/Dismiss buttons */
+bool telegram_send_update_prompt(http_client_t *http, const char *chat_id,
+                                  const char *diff_text, const char *summary,
+                                  const char *parse_mode)
+{
+    if (!http || !chat_id || !diff_text) return false;
+
+    char text[4096];
+    if (summary && *summary)
+        snprintf(text, sizeof(text), "*Update available:* %s\n\n```diff\n%s\n```", summary, diff_text);
+    else
+        snprintf(text, sizeof(text), "*Update:*\n```diff\n%s\n```", diff_text);
+
+    json_node_t *keyboard = json_new_object();
+    json_node_t *rows = json_new_array();
+    json_node_t *row = json_new_array();
+
+    json_node_t *apply = json_new_object();
+    json_object_set(apply, "text", json_new_string("✅ Apply"));
+    json_object_set(apply, "callback_data", json_new_string("apply"));
+    json_array_append(row, apply);
+
+    json_node_t *dismiss = json_new_object();
+    json_object_set(dismiss, "text", json_new_string("❌ Dismiss"));
+    json_object_set(dismiss, "callback_data", json_new_string("dismiss"));
+    json_array_append(row, dismiss);
+
+    json_array_append(rows, row);
+    json_object_set(keyboard, "inline_keyboard", rows);
+
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text,
+                parse_mode ? parse_mode : "Markdown", keyboard);
+    json_free(keyboard);
+    return ok;
+}

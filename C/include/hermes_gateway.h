@@ -265,6 +265,25 @@ const char *telegram_get_inline_query_id(json_node_t *update);
 const char *telegram_get_update_type(json_node_t *update);
 const char *telegram_get_message_thread_id(json_node_t *update);
 
+/* E07-E12: Interactive Telegram send methods with inline keyboards */
+bool telegram_send_draft(http_client_t *http, const char *chat_id,
+                          const char *text, const char *parse_mode);
+bool telegram_send_clarify(http_client_t *http, const char *chat_id,
+                            const char *question, const char **options, int n_options,
+                            const char *parse_mode);
+bool telegram_send_approval_prompt(http_client_t *http, const char *chat_id,
+                                    const char *command, const char *reason,
+                                    const char *parse_mode);
+bool telegram_send_confirm_prompt(http_client_t *http, const char *chat_id,
+                                   const char *action, const char *detail,
+                                   const char *parse_mode);
+bool telegram_send_model_picker(http_client_t *http, const char *chat_id,
+                                 const char **models, int n_models,
+                                 const char *current_model);
+bool telegram_send_update_prompt(http_client_t *http, const char *chat_id,
+                                  const char *diff_text, const char *summary,
+                                  const char *parse_mode);
+
 /* ================================================================
  *  Discord platform
  * ================================================================ */
