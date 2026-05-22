@@ -133,6 +133,9 @@ void mcp_server_set_env(mcp_server_t *srv, char **env);
 void mcp_server_set_timeout(mcp_server_t *srv, int tool_timeout_sec);
 void mcp_server_set_connect_timeout(mcp_server_t *srv, int connect_timeout_sec);
 
+/* P61: Set max reconnect attempts (0 = no reconnect, -1 = infinite) */
+void mcp_server_set_max_retries(mcp_server_t *srv, int max_retries);
+
 /* Set HTTP headers for SSE transport */
 void mcp_server_set_headers(mcp_server_t *srv, const char *headers);
 
@@ -178,6 +181,30 @@ const char *mcp_server_name(mcp_server_t *srv);
 
 /* Get connection status */
 bool mcp_server_is_connected(mcp_server_t *srv);
+
+/* P61: Server lifecycle management */
+
+/* Server status */
+typedef enum {
+    MCP_STATUS_DISCONNECTED,
+    MCP_STATUS_CONNECTING,
+    MCP_STATUS_CONNECTED,
+    MCP_STATUS_RECONNECTING,
+    MCP_STATUS_FAILED,
+} mcp_server_status_t;
+
+/* Get current server status */
+mcp_server_status_t mcp_server_status(mcp_server_t *srv);
+
+/* Health check with ping. Returns true if server is healthy.
+ * If server is unresponsive, triggers reconnect attempt. */
+bool mcp_server_health_check(mcp_server_t *srv);
+
+/* Force reconnect. Returns true on success. */
+bool mcp_server_reconnect(mcp_server_t *srv);
+
+/* Get reconnect count (total attempts) */
+int mcp_server_reconnect_count(mcp_server_t *srv);
 
 #ifdef __cplusplus
 }

@@ -78,6 +78,12 @@ struct mcp_server {
     /* Message buffer for reading responses */
     char    read_buf[65536];
     size_t  read_len;
+
+    /* P61: Server lifecycle */
+    mcp_server_status_t status;
+    int     max_retries;         /* max reconnect attempts */
+    int     reconnect_count;     /* total reconnection attempts */
+    int     reconnect_delay_ms;  /* current backoff delay */
 };
 
 /* ================================================================
@@ -339,6 +345,9 @@ mcp_server_t *mcp_server_new(const char *name) {
     srv->tool_timeout = 120;
     srv->connect_timeout = 60;
     srv->transport_type = MCP_TRANSPORT_NONE;
+    srv->status = MCP_STATUS_DISCONNECTED;
+    srv->max_retries = 3;       /* default: 3 reconnect attempts */
+    srv->reconnect_delay_ms = 1000; /* start with 1s backoff */
     return srv;
 }
 
@@ -368,12 +377,18 @@ void mcp_server_set_connect_timeout(mcp_server_t *srv, int connect_timeout_sec) 
     if (srv) srv->connect_timeout = connect_timeout_sec;
 }
 
+void mcp_server_set_max_retries(mcp_server_t *srv, int max_retries) {
+    if (srv) srv->max_retries = max_retries;
+}
+
 void mcp_server_set_headers(mcp_server_t *srv, const char *headers) {
     if (srv && headers) snprintf(srv->sse.headers, sizeof(srv->sse.headers), "%s", headers);
 }
 
 bool mcp_server_connect(mcp_server_t *srv) {
     if (!srv) return false;
+
+    srv->status = MCP_STATUS_CONNECTING;
 
     /* Validate transport config */
     if (srv->transport_type == MCP_TRANSPORT_STDIO) {
@@ -422,6 +437,8 @@ bool mcp_server_connect(mcp_server_t *srv) {
         }
 
         srv->initialized = true;
+        srv->status = MCP_STATUS_CONNECTED;
+        srv->reconnect_delay_ms = 1000; /* reset backoff */
         return true;
     }
 
@@ -429,11 +446,13 @@ bool mcp_server_connect(mcp_server_t *srv) {
         /* SSE transport not yet implemented (P62) */
         snprintf(srv->last_error, sizeof(srv->last_error),
                  "SSE transport not yet implemented");
+        srv->status = MCP_STATUS_FAILED;
         return false;
     }
 
     snprintf(srv->last_error, sizeof(srv->last_error),
              "No transport configured");
+    srv->status = MCP_STATUS_FAILED;
     return false;
 }
 
@@ -452,6 +471,7 @@ void mcp_server_disconnect(mcp_server_t *srv) {
 
     srv->initialized = false;
     srv->read_len = 0;
+    srv->status = MCP_STATUS_DISCONNECTED;
 }
 
 void mcp_server_free(mcp_server_t *srv) {
@@ -607,6 +627,58 @@ char *mcp_server_call_tool(mcp_server_t *srv, const char *tool_name,
 void mcp_tool_list_free(mcp_tool_t *tools, int count) {
     (void)count;
     free(tools);
+}
+
+/* ================================================================
+ *  P61: Server lifecycle
+ * ================================================================ */
+
+mcp_server_status_t mcp_server_status(mcp_server_t *srv) {
+    return srv ? srv->status : MCP_STATUS_FAILED;
+}
+
+int mcp_server_reconnect_count(mcp_server_t *srv) {
+    return srv ? srv->reconnect_count : 0;
+}
+
+bool mcp_server_health_check(mcp_server_t *srv) {
+    if (!srv) return false;
+
+    /* Try ping */
+    if (mcp_server_ping(srv))
+        return true;
+
+    /* Ping failed — server may be dead. Try reconnect with backoff. */
+    return mcp_server_reconnect(srv);
+}
+
+bool mcp_server_reconnect(mcp_server_t *srv) {
+    if (!srv) return false;
+
+    /* Check retry limit */
+    if (srv->max_retries >= 0 && srv->reconnect_count >= srv->max_retries) {
+        srv->status = MCP_STATUS_FAILED;
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "Max reconnects (%d) reached", srv->max_retries);
+        return false;
+    }
+
+    srv->reconnect_count++;
+    srv->status = MCP_STATUS_RECONNECTING;
+
+    /* Calculate backoff: 1s, 2s, 4s, 8s, ... capped at 60s */
+    int delay = srv->reconnect_delay_ms;
+    if (delay < 60000)
+        srv->reconnect_delay_ms *= 2; /* exponential backoff */
+
+    fprintf(stderr, "MCP: Reconnecting '%s' (attempt %d, delay %dms)\n",
+            srv->name, srv->reconnect_count, delay);
+
+    usleep(delay * 1000);
+
+    /* Disconnect and reconnect */
+    mcp_server_disconnect(srv);
+    return mcp_server_connect(srv);
 }
 
 /* ================================================================
