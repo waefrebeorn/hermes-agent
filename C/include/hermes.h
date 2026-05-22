@@ -420,6 +420,9 @@ void hermes_resolve_path(const char *sub, char *buf, size_t sz);
 void hermes_set_profile(const char *name);
 const char *hermes_get_profile(void);
 
+/* P22: Config merge — deep merge src into dst (dst values take priority for non-default fields) */
+void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src);
+
 /* ================================================================
  *  Include sub-headers for dependency wrappers
  * ================================================================ */

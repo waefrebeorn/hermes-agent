@@ -1170,3 +1170,149 @@ bool hermes_config_import(hermes_config_t *cfg, const char *path) {
     yaml_free(doc);
     return true;
 }
+
+/* ================================================================
+ *  P22: Config merge — deep merge src into dst
+ *  Only non-default (non-zero, non-empty) src fields overwrite dst.
+ * ================================================================ */
+
+/* Helpers: check if a string field is "set" (non-default) */
+static bool is_set_str(const char *s) { return s && s[0] != '\0'; }
+static bool is_set_int(int v) { return v != 0; }
+static bool is_set_bool(bool v) { return v; }  /* bools always overwrite if true */
+
+void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
+    /* Provider */
+    if (is_set_str(src->provider_cfg.model))
+        snprintf(dst->provider_cfg.model, sizeof(dst->provider_cfg.model), "%s", src->provider_cfg.model);
+    if (is_set_str(src->provider_cfg.provider))
+        snprintf(dst->provider_cfg.provider, sizeof(dst->provider_cfg.provider), "%s", src->provider_cfg.provider);
+    if (is_set_str(src->provider_cfg.base_url))
+        snprintf(dst->provider_cfg.base_url, sizeof(dst->provider_cfg.base_url), "%s", src->provider_cfg.base_url);
+    if (is_set_str(src->provider_cfg.api_key))
+        snprintf(dst->provider_cfg.api_key, sizeof(dst->provider_cfg.api_key), "%s", src->provider_cfg.api_key);
+    if (is_set_str(src->provider_cfg.api_mode))
+        snprintf(dst->provider_cfg.api_mode, sizeof(dst->provider_cfg.api_mode), "%s", src->provider_cfg.api_mode);
+    if (is_set_str(src->provider_cfg.fallback_model))
+        snprintf(dst->provider_cfg.fallback_model, sizeof(dst->provider_cfg.fallback_model), "%s", src->provider_cfg.fallback_model);
+    if (is_set_str(src->provider_cfg.service_tier))
+        snprintf(dst->provider_cfg.service_tier, sizeof(dst->provider_cfg.service_tier), "%s", src->provider_cfg.service_tier);
+    if (src->provider_cfg.temperature >= 0.01f)
+        dst->provider_cfg.temperature = src->provider_cfg.temperature;
+    if (src->provider_cfg.top_p >= 0.01f)
+        dst->provider_cfg.top_p = src->provider_cfg.top_p;
+    if (is_set_int(src->provider_cfg.max_tokens))
+        dst->provider_cfg.max_tokens = src->provider_cfg.max_tokens;
+
+    /* Display */
+    if (is_set_str(src->display.skin))
+        snprintf(dst->display.skin, sizeof(dst->display.skin), "%s", src->display.skin);
+    if (is_set_str(src->display.banner))
+        snprintf(dst->display.banner, sizeof(dst->display.banner), "%s", src->display.banner);
+    if (is_set_str(src->display.spinner_style))
+        snprintf(dst->display.spinner_style, sizeof(dst->display.spinner_style), "%s", src->display.spinner_style);
+    if (is_set_str(src->display.indicator))
+        snprintf(dst->display.indicator, sizeof(dst->display.indicator), "%s", src->display.indicator);
+    if (is_set_str(src->display.language))
+        snprintf(dst->display.language, sizeof(dst->display.language), "%s", src->display.language);
+    if (is_set_str(src->display.personality))
+        snprintf(dst->display.personality, sizeof(dst->display.personality), "%s", src->display.personality);
+    dst->display.stream = src->display.stream;
+    dst->display.show_reasoning = src->display.show_reasoning;
+    dst->display.compact = src->display.compact;
+    dst->display.show_cost = src->display.show_cost;
+    dst->display.timestamps = src->display.timestamps;
+
+    /* Agent */
+    if (is_set_int(src->agent.max_iterations))
+        dst->agent.max_iterations = src->agent.max_iterations;
+    if (is_set_int(src->agent.max_tool_calls_round))
+        dst->agent.max_tool_calls_round = src->agent.max_tool_calls_round;
+    if (is_set_int(src->agent.verbose_level))
+        dst->agent.verbose_level = src->agent.verbose_level;
+    if (is_set_int(src->agent.api_max_retries))
+        dst->agent.api_max_retries = src->agent.api_max_retries;
+    if (is_set_int(src->agent.clarify_timeout))
+        dst->agent.clarify_timeout = src->agent.clarify_timeout;
+    if (src->agent.compress_threshold >= 0.01f)
+        dst->agent.compress_threshold = src->agent.compress_threshold;
+    dst->agent.fast_mode = src->agent.fast_mode;
+    dst->agent.quiet_mode = src->agent.quiet_mode;
+    if (is_set_str(src->agent.system_prompt))
+        snprintf(dst->agent.system_prompt, sizeof(dst->agent.system_prompt), "%s", src->agent.system_prompt);
+    if (is_set_str(src->agent.profile))
+        snprintf(dst->agent.profile, sizeof(dst->agent.profile), "%s", src->agent.profile);
+    if (is_set_str(src->agent.reasoning_effort))
+        snprintf(dst->agent.reasoning_effort, sizeof(dst->agent.reasoning_effort), "%s", src->agent.reasoning_effort);
+
+    /* Tools */
+    if (is_set_str(src->tools.approval_mode))
+        snprintf(dst->tools.approval_mode, sizeof(dst->tools.approval_mode), "%s", src->tools.approval_mode);
+    if (is_set_int(src->tools.approval_timeout))
+        dst->tools.approval_timeout = src->tools.approval_timeout;
+    if (is_set_int(src->tools.max_result_size))
+        dst->tools.max_result_size = src->tools.max_result_size;
+    if (is_set_int(src->tools.terminal_timeout))
+        dst->tools.terminal_timeout = src->tools.terminal_timeout;
+    if (is_set_str(src->tools.vision_model))
+        snprintf(dst->tools.vision_model, sizeof(dst->tools.vision_model), "%s", src->tools.vision_model);
+
+    /* Delegation */
+    if (is_set_int(src->delegation.max_concurrent_children))
+        dst->delegation.max_concurrent_children = src->delegation.max_concurrent_children;
+    if (is_set_int(src->delegation.max_spawn_depth))
+        dst->delegation.max_spawn_depth = src->delegation.max_spawn_depth;
+    if (is_set_int(src->delegation.child_timeout))
+        dst->delegation.child_timeout = src->delegation.child_timeout;
+    if (is_set_str(src->delegation.child_model))
+        snprintf(dst->delegation.child_model, sizeof(dst->delegation.child_model), "%s", src->delegation.child_model);
+    if (is_set_str(src->delegation.child_provider))
+        snprintf(dst->delegation.child_provider, sizeof(dst->delegation.child_provider), "%s", src->delegation.child_provider);
+    if (is_set_int(src->delegation.child_max_turns))
+        dst->delegation.child_max_turns = src->delegation.child_max_turns;
+
+    /* Browser */
+    if (is_set_str(src->browser_cfg.cdp_url))
+        snprintf(dst->browser_cfg.cdp_url, sizeof(dst->browser_cfg.cdp_url), "%s", src->browser_cfg.cdp_url);
+    if (is_set_str(src->browser_cfg.browser_type))
+        snprintf(dst->browser_cfg.browser_type, sizeof(dst->browser_cfg.browser_type), "%s", src->browser_cfg.browser_type);
+    if (is_set_int(src->browser_cfg.timeout))
+        dst->browser_cfg.timeout = src->browser_cfg.timeout;
+
+    /* Memory */
+    if (is_set_str(src->memory.provider))
+        snprintf(dst->memory.provider, sizeof(dst->memory.provider), "%s", src->memory.provider);
+    if (is_set_int(src->memory.char_limit))
+        dst->memory.char_limit = src->memory.char_limit;
+
+    /* Compression */
+    if (is_set_str(src->compression.model))
+        snprintf(dst->compression.model, sizeof(dst->compression.model), "%s", src->compression.model);
+    if (is_set_str(src->compression.strategy))
+        snprintf(dst->compression.strategy, sizeof(dst->compression.strategy), "%s", src->compression.strategy);
+    if (src->compression.target_ratio >= 0.01f)
+        dst->compression.target_ratio = src->compression.target_ratio;
+
+    /* Security */
+    dst->security.tirith_enabled = src->security.tirith_enabled;
+    dst->security.allow_private_urls = src->security.allow_private_urls;
+
+    /* Session */
+    if (is_set_int(src->session.retention_days))
+        dst->session.retention_days = src->session.retention_days;
+
+    /* MCP */
+    if (is_set_int(src->mcp.timeout))
+        dst->mcp.timeout = src->mcp.timeout;
+    dst->mcp.auth_enabled = src->mcp.auth_enabled;
+
+    /* Sync flat fields for backward compat */
+    snprintf(dst->model, sizeof(dst->model), "%s", dst->provider_cfg.model);
+    snprintf(dst->provider, sizeof(dst->provider), "%s", dst->provider_cfg.provider);
+    snprintf(dst->base_url, sizeof(dst->base_url), "%s", dst->provider_cfg.base_url);
+    snprintf(dst->api_key, sizeof(dst->api_key), "%s", dst->provider_cfg.api_key);
+    dst->max_turns = dst->agent.max_iterations;
+    dst->verbose = dst->agent.verbose_level;
+    dst->fast_mode = dst->agent.fast_mode;
+    dst->quiet_mode = dst->agent.quiet_mode;
+}
