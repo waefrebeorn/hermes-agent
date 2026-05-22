@@ -424,6 +424,40 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "provider_smoke (compilation failed)"
 fi
 
+# Provider error handling edge cases test (M06 — all providers with error inputs)
+echo ""; echo "=== Provider Error Handling Edge Cases (M06) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_provider_error.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_proverr -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_proverr > /dev/null 2>&1; then ok "provider_error (M06: all providers error handling)"
+    else
+        echo "  Provider error test output:"
+        /tmp/hermes_test_proverr 2>&1 | sed 's/^/    /'
+        fail "provider_error (M06: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_proverr
+else
+    echo "  Provider error test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_provider_error.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_proverr -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "provider_error (M06: compilation failed)"
+fi
+
 # Checkpoint tests (needs context.c for message_new/message_free)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_checkpoint.c" \

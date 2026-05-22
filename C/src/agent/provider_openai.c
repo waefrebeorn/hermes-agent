@@ -258,6 +258,17 @@ static provider_response_t *openai_parse_response(const provider_t *p,
         resp->output_tokens = (int)json_get_num(usage, "completion_tokens", 0);
     }
 
+    /* Check for API error response */
+    json_t *error_obj = json_object_get(root, "error");
+    if (error_obj) {
+        const char *err_msg = json_get_str(error_obj, "message", "unknown error");
+        resp->content = (char *)malloc(1024);
+        if (resp->content)
+            snprintf(resp->content, 1024, "OpenAI API error: %s", err_msg);
+        json_free(root);
+        return resp;
+    }
+
     /* Choices */
     json_t *choices = json_object_get(root, "choices");
     if (choices && json_len(choices) > 0) {
@@ -301,6 +312,7 @@ static provider_response_t *openai_parse_stream_chunk(const provider_t *p,
     (void)p;
     provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
     if (!resp) return NULL;
+    if (!chunk) { resp->content = strdup(""); return resp; }
 
     /* SSE format: "data: {...}" */
     const char *prefix = "data: ";

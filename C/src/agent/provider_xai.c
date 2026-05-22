@@ -209,6 +209,16 @@ static provider_response_t *xai_parse_response(const provider_t *p,
         resp->input_tokens = (int)json_get_num(usage, "prompt_tokens", 0);
         resp->output_tokens = (int)json_get_num(usage, "completion_tokens", 0);
     }
+    /* Check for API error response */
+    json_t *error_obj = json_object_get(root, "error");
+    if (error_obj) {
+        const char *err_msg = json_get_str(error_obj, "message", "unknown error");
+        resp->content = (char *)malloc(1024);
+        if (resp->content)
+            snprintf(resp->content, 1024, "xAI API error: %s", err_msg);
+        json_free(root);
+        return resp;
+    }
     json_t *choices = json_object_get(root, "choices");
     if (choices && json_len(choices) > 0) {
         json_t *choice = json_get(choices, 0);
@@ -248,6 +258,7 @@ static provider_response_t *xai_parse_stream_chunk(const provider_t *p,
     (void)p;
     provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
     if (!resp) return NULL;
+    if (!chunk) { resp->content = strdup(""); return resp; }
     const char *prefix = "data: ";
     if (strncmp(chunk, prefix, 6) != 0) { resp->content = strdup(chunk); return resp; }
     const char *json_str = chunk + 6;

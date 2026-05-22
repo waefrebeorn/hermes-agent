@@ -507,9 +507,23 @@ static provider_response_t *bedrock_parse_response(const provider_t *p,
         resp->input_tokens = (int)json_get_num(usage, "inputTokens", 0);
         resp->output_tokens = (int)json_get_num(usage, "outputTokens", 0);
     }
-
-    /* Output → message → content */
+    /* Check for Bedrock API error response (no "output" key = error) */
     json_t *output = json_object_get(root, "output");
+    if (!output) {
+        /* Check for raw message field (Bedrock API error format) */
+        const char *msg = json_get_str(root, "message", NULL);
+        if (msg) {
+            resp->content = strdup(msg);
+        }
+        /* Check for wrapped error object (e.g. {"error":{"message":"..."}}) */
+        json_t *err_obj = json_object_get(root, "error");
+        if (err_obj) {
+            const char *err_msg = json_get_str(err_obj, "message", NULL);
+            if (err_msg) resp->content = strdup(err_msg);
+        }
+        json_free(root);
+        return resp;
+    }
     if (output) {
         json_t *message = json_object_get(output, "message");
         if (message) {

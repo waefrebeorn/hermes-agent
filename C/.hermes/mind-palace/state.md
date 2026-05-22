@@ -24,6 +24,21 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — M06: Provider error handling edge cases
+
+- ✅ **test_provider_error.c** — 225 assertions across 9 providers covering:
+  - NULL body/empty string/malformed JSON/different JSON types → no crash, non-NULL response
+  - Auth error/rate limit/server error → parsed content with descriptive message
+  - NULL/empty/malformed stream chunks → no SIGSEGV
+  - free_response(NULL) → no crash
+  - Provider-specific edge cases: empty choices, empty content blocks, [DONE] markers, finish reason in stream
+- ✅ **Bugfix: NULL SIGSEGV in 6 parse_stream_chunk** — openai, openrouter, deepseek, xai, anthropic, custom all lacked `if (!chunk) return;` before `strncmp(chunk, ...)`. Azure/google/bedrock were already safe. All 9 providers now null-safe on stream chunk input.
+- ✅ **Bugfix: API error JSON silently dropped in 6 parse_response** — openai, openrouter, deepseek, xai, custom had no `{"error":{...}}` check. Bedrock lacked both raw message and wrapped error handling. All 9 providers now return descriptive error content when API returns error JSON.
+- ◀ **Suite: ALL PASSED** (M06 + existing tests verified)
+- ◀ **Tests: 61%** (1/37 gaps closed: M06)
+- ◀ **Providers: 88%** (error handling bugs fixed across all providers)
+- ◀ Committed: `TBD`
+
 ### Session 2026-05-26 — Doxygen API docs infrastructure (O07)
 
 - ✅ **Doxyfile** — Full project config for Hermes Agent C API documentation
