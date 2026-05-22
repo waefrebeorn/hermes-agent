@@ -762,6 +762,150 @@ void mcp_tool_list_free(mcp_tool_t *tools, int count) {
 }
 
 /* ================================================================
+ *  P67: Resource protocol methods
+ * ================================================================ */
+
+int mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out) {
+    if (!srv || !srv->initialized || !resources_out) return -1;
+
+    if (!srv->caps.supports_resources) {
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "Server does not support resources");
+        return -1;
+    }
+
+    json_t *resp = send_request(srv, "resources/list", NULL,
+                                 srv->tool_timeout * 1000);
+    if (!resp) return -1;
+
+    json_t *result = json_obj_get(resp, "result");
+    if (!result) {
+        json_free(resp);
+        return -1;
+    }
+
+    json_t *resources_arr = json_obj_get(result, "resources");
+    if (!resources_arr) {
+        json_free(resp);
+        return 0;
+    }
+
+    size_t count = json_len(resources_arr);
+    if (count == 0) {
+        json_free(resp);
+        *resources_out = NULL;
+        return 0;
+    }
+
+    mcp_resource_t *resources = (mcp_resource_t *)calloc(count, sizeof(mcp_resource_t));
+    if (!resources) { json_free(resp); return -1; }
+
+    for (size_t i = 0; i < count; i++) {
+        json_t *r = json_get(resources_arr, i);
+        if (!r) continue;
+
+        const char *uri = json_get_str(r, "uri", "");
+        if (uri) snprintf(resources[i].uri, sizeof(resources[i].uri), "%s", uri);
+
+        const char *name = json_get_str(r, "name", "");
+        if (name) snprintf(resources[i].name, sizeof(resources[i].name), "%s", name);
+
+        const char *desc = json_get_str(r, "description", "");
+        if (desc) snprintf(resources[i].description, sizeof(resources[i].description), "%s", desc);
+
+        const char *mime = json_get_str(r, "mimeType", "");
+        if (mime) snprintf(resources[i].mime_type, sizeof(resources[i].mime_type), "%s", mime);
+    }
+
+    json_free(resp);
+    *resources_out = resources;
+    return (int)count;
+}
+
+mcp_resource_content_t *mcp_server_read_resource(mcp_server_t *srv,
+                                                   const char *resource_uri) {
+    if (!srv || !srv->initialized || !resource_uri) return NULL;
+
+    json_t *params = json_object();
+    json_set(params, "uri", json_string(resource_uri));
+
+    json_t *resp = send_request(srv, "resources/read", params,
+                                 srv->tool_timeout * 1000);
+    if (!resp) {
+        json_free(params);
+        return NULL;
+    }
+
+    json_t *result = json_obj_get(resp, "result");
+    if (!result) {
+        json_free(resp);
+        json_free(params);
+        return NULL;
+    }
+
+    json_t *contents = json_obj_get(result, "contents");
+    mcp_resource_content_t *content = NULL;
+
+    if (contents && json_len(contents) > 0) {
+        json_t *first = json_get(contents, 0);
+        if (first) {
+            content = (mcp_resource_content_t *)calloc(1, sizeof(mcp_resource_content_t));
+            if (content) {
+                const char *uri = json_get_str(first, "uri", "");
+                if (uri) snprintf(content->uri, sizeof(content->uri), "%s", uri);
+
+                const char *mime = json_get_str(first, "mimeType", "");
+                if (mime) snprintf(content->mime_type, sizeof(content->mime_type), "%s", mime);
+
+                const char *text = json_get_str(first, "text", NULL);
+                if (text) {
+                    content->text = strdup(text);
+                    content->text_len = strlen(text);
+                    content->is_text = true;
+                } else {
+                    /* Check for binary blob */
+                    const char *blob_b64 = json_get_str(first, "blob", NULL);
+                    if (blob_b64) {
+                        content->blob = (unsigned char *)strdup(blob_b64);
+                        content->blob_len = strlen(blob_b64);
+                        content->is_text = false;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!content) {
+        /* Return the raw result as text fallback */
+        content = (mcp_resource_content_t *)calloc(1, sizeof(mcp_resource_content_t));
+        if (content) {
+            char *result_str = json_serialize(result);
+            if (result_str) {
+                content->text = result_str;
+                content->text_len = strlen(result_str);
+                content->is_text = true;
+            }
+        }
+    }
+
+    json_free(resp);
+    json_free(params);
+    return content;
+}
+
+void mcp_resource_list_free(mcp_resource_t *resources, int count) {
+    (void)count;
+    free(resources);
+}
+
+void mcp_resource_content_free(mcp_resource_content_t *content) {
+    if (!content) return;
+    free(content->text);
+    free(content->blob);
+    free(content);
+}
+
+/* ================================================================
  *  P61: Server lifecycle
  * ================================================================ */
 

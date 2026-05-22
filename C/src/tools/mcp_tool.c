@@ -798,6 +798,110 @@ static char *mcp_auth_handler(const char *args_json, const char *task_id) {
 }
 
 /* ================================================================
+ *  P67: MCP resource handler
+ * ================================================================ */
+
+static char *mcp_resource_list_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_t *args = json_parse(args_json, NULL);
+    (void)args; /* no params yet, could add server filter */
+
+    json_t *result = json_object();
+    json_t *resources_arr = json_array();
+
+    for (int si = 0; si < g_server_count; si++) {
+        mcp_server_t *srv = g_servers[si];
+        if (!mcp_server_is_connected(srv)) continue;
+        if (!mcp_server_capabilities(srv).supports_resources) continue;
+
+        mcp_resource_t *resources = NULL;
+        int count = mcp_server_list_resources(srv, &resources);
+        if (count <= 0) continue;
+
+        for (int ri = 0; ri < count; ri++) {
+            json_t *r = json_object();
+            json_set(r, "server", json_string(mcp_server_name(srv)));
+            json_set(r, "uri", json_string(resources[ri].uri));
+            json_set(r, "name", json_string(resources[ri].name));
+            if (resources[ri].description[0])
+                json_set(r, "description", json_string(resources[ri].description));
+            if (resources[ri].mime_type[0])
+                json_set(r, "mimeType", json_string(resources[ri].mime_type));
+            json_append(resources_arr, r);
+        }
+
+        mcp_resource_list_free(resources, count);
+    }
+
+    json_set(result, "resources", resources_arr);
+    json_set(result, "count", json_number((double)json_len(resources_arr)));
+
+    char *s = json_serialize(result);
+    json_free(result);
+    if (args) json_free(args);
+    return s;
+}
+
+static char *mcp_resource_read_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"Invalid JSON arguments\"}");
+
+    const char *server_name = json_get_str(args, "server", "");
+    const char *uri = json_get_str(args, "uri", "");
+
+    if (!server_name[0] || !uri[0]) {
+        json_free(args);
+        return strdup("{\"error\":\"server and uri fields required\"}");
+    }
+
+    /* Find server */
+    mcp_server_t *srv = NULL;
+    for (int i = 0; i < g_server_count; i++) {
+        if (strcmp(mcp_server_name(g_servers[i]), server_name) == 0) {
+            srv = g_servers[i];
+            break;
+        }
+    }
+
+    if (!srv) {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Unknown MCP server: %s\"}", server_name);
+        return strdup(buf);
+    }
+
+    mcp_resource_content_t *content = mcp_server_read_resource(srv, uri);
+    if (!content) {
+        const char *err = mcp_server_last_error(srv);
+        json_free(args);
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Read failed: %s\"}",
+                 err ? err : "unknown error");
+        return strdup(buf);
+    }
+
+    json_t *result = json_object();
+    json_set(result, "uri", json_string(content->uri));
+    if (content->mime_type[0])
+        json_set(result, "mimeType", json_string(content->mime_type));
+    if (content->is_text && content->text)
+        json_set(result, "text", json_string(content->text));
+    else if (content->blob) {
+        /* Include warning that this is base64-encoded binary */
+        json_set(result, "blob", json_string((const char *)content->blob));
+        json_set(result, "isBinary", json_bool(true));
+    }
+
+    mcp_resource_content_free(content);
+    char *s = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return s;
+}
+
+/* ================================================================
  *  Registry registration
  * ================================================================ */
 
@@ -854,4 +958,31 @@ void registry_init_mcp(void) {
         "}",
         mcp_auth_handler
     );
+
+    /* P67: MCP resource tools */
+    registry_register(
+        "mcp_resource_list",
+        "List all available resources from connected MCP servers. "
+        "Returns resource URIs, names, descriptions, and MIME types.",
+        "{\"type\":\"object\",\"properties\":{}}",
+        mcp_resource_list_handler
+    );
+
+    registry_register(
+        "mcp_resource_read",
+        "Read the content of a specific resource from an MCP server. "
+        "Use mcp_resource_list first to discover available URIs.",
+        "{"
+          "\"type\":\"object\",\"properties\":{"
+            "\"server\":{\"type\":\"string\","
+              "\"description\":\"MCP server name\"},"
+            "\"uri\":{\"type\":\"string\","
+              "\"description\":\"Resource URI to read\"}"
+          "},"
+          "\"required\":[\"server\",\"uri\"]"
+        "}",
+        mcp_resource_read_handler
+    );
+
+    registry_set_timeout("mcp_resource_read", 60);
 }

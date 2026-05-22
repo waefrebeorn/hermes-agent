@@ -100,6 +100,35 @@ typedef struct {
 void mcp_tool_list_free(mcp_tool_t *tools, int count);
 
 /* ================================================================
+ *  Resource types (P67)
+ * ================================================================ */
+
+/* An MCP resource discovered from a server */
+typedef struct {
+    char                uri[512];
+    char                name[256];
+    char                description[1024];
+    char                mime_type[64];
+} mcp_resource_t;
+
+/* An MCP resource content (result of resources/read) */
+typedef struct {
+    char                uri[512];
+    char                mime_type[64];
+    char               *text;           /* malloc'd text content */
+    size_t              text_len;
+    bool                is_text;        /* false = binary blob */
+    unsigned char      *blob;
+    size_t              blob_len;
+} mcp_resource_content_t;
+
+/* Free a resource list returned by mcp_server_list_resources */
+void mcp_resource_list_free(mcp_resource_t *resources, int count);
+
+/* Free resource content returned by mcp_server_read_resource */
+void mcp_resource_content_free(mcp_resource_content_t *content);
+
+/* ================================================================
  *  Server state
  * ================================================================ */
 
@@ -165,6 +194,21 @@ int  mcp_server_list_tools(mcp_server_t *srv, mcp_tool_t **tools_out);
  * Returns NULL on error (check mcp_server_last_error for details). */
 char *mcp_server_call_tool(mcp_server_t *srv, const char *tool_name,
                             const char *args_json);
+
+/* ================================================================
+ *  P67: Resource access
+ * ================================================================ */
+
+/* List resources — returns array of discovered resources.
+ * resources_out: set to malloc'd array, caller must free with mcp_resource_list_free().
+ * Returns number of resources, or -1 on error. */
+int  mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out);
+
+/* Read a specific resource by URI.
+ * Returns malloc'd content struct, caller must free with mcp_resource_content_free().
+ * Returns NULL on error (check mcp_server_last_error). */
+mcp_resource_content_t *mcp_server_read_resource(mcp_server_t *srv,
+                                                   const char *resource_uri);
 
 /* ================================================================
  *  Error handling
