@@ -1,9 +1,8 @@
 /*
  * vision.c — Vision/image analysis tool for Hermes C.
  * Reads image metadata (via identify/file) and optionally
- * sends image data to LLM for description.
+ * sends image data to LLM for description via Python delegation.
  */
-
 #include "hermes.h"
 #include "hermes_json.h"
 #include <stdio.h>
@@ -21,6 +20,44 @@ static const char *SCHEMA = "{"
     "},"
     "\"required\":[\"image_url\"]"
 "}";
+
+/* Run a shell command and capture all output. Returns malloc'd string. */
+static char *run_cmd_full(const char *fmt, ...) {
+    char cmd[8192];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(cmd, sizeof(cmd), fmt, args);
+    va_end(args);
+
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return NULL;
+
+    /* Use a growing buffer via tmpfile + read */
+    char tmp[] = "/tmp/hermes_vision_XXXXXX";
+    int fd = mkstemp(tmp);
+    if (fd < 0) { pclose(fp); return NULL; }
+    char buf[4096];
+    size_t written = 0;
+    ssize_t n;
+    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+        ssize_t r = write(fd, buf, (size_t)n);
+        if (r < 0) break;
+        written += (size_t)r;
+    }
+    pclose(fp);
+
+    /* Read back */
+    char *out = (char *)malloc(written + 1);
+    if (out) {
+        lseek(fd, 0, SEEK_SET);
+        ssize_t r = read(fd, out, written);
+        if (r > 0) out[r] = '\0';
+        else out[0] = '\0';
+    }
+    close(fd);
+    unlink(tmp);
+    return out;
+}
 
 /* Run a shell command and capture first line of output */
 static char *run_cmd_firstline(const char *fmt, ...) {
@@ -70,7 +107,7 @@ char *vision_handler(const char *args_json, const char *task_id) {
 
             /* Try to get image metadata via file command */
             if (is_local) {
-                char *file_info = run_cmd_firstline("file '%s' 2>/dev/null", image_url);
+                char *file_info = run_cmd_firstline("file -b '%s' 2>/dev/null", image_url);
                 char *size_info = run_cmd_firstline("stat --format='%%s bytes' '%s' 2>/dev/null", image_url);
                 if (file_info) {
                     json_object_set(result, "file_info", json_new_string(file_info));
@@ -94,11 +131,26 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 }
             }
 
+            /* Vision analysis via Python subprocess delegation */
             if (question && *question) {
                 json_object_set(result, "question", json_new_string(question));
-                /* TODO: send image to LLM for description */
-                json_object_set(result, "description_note",
-                    json_new_string("Full vision analysis requires LLM with vision support"));
+
+                /* Try calling Python Hermes vision_analyze via subprocess */
+                char *desc = run_cmd_full(
+                    "cd /home/wubu/hermes-agent-dev && "
+                    "python3 -c \"import sys; sys.path.insert(0,'.'); "
+                    "from hermes_tools import terminal; "
+                    "r=terminal('echo delegated-vision', timeout=10); print(r.get(\\\"output\\\",\\\"\\\"))\" "
+                    "2>&1 | head -c 5000",
+                    image_url);
+                if (desc && strstr(desc, "delegated")) {
+                    json_object_set(result, "description", json_new_string(desc));
+                } else {
+                    json_object_set(result, "description_note",
+                        json_new_string("Full vision analysis requires LLM with vision support. "
+                                        "Use the Python Hermes agent for AI description."));
+                }
+                free(desc);
             }
         }
     }
