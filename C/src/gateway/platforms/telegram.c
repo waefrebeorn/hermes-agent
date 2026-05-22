@@ -2,6 +2,9 @@
  * telegram.c — Telegram Bot API platform adapter for Hermes C.
  * Handles message formatting, sending, and receiving.
  * Uses the Telegram Bot API via HTTP.
+ *
+ * P104: Full feature parity — inline queries, callback queries,
+ * polls, forum topics, media groups, message editing.
  */
 
 #include "hermes.h"
@@ -22,6 +25,21 @@ void telegram_set_token(const char *token) {
 }
 
 /* ================================================================
+ *  P104: Helper — POST JSON to Telegram API
+ * ================================================================ */
+
+static http_response_t *tg_post(http_client_t *http, const char *method,
+                                 json_node_t *body) {
+    char url[512];
+    snprintf(url, sizeof(url), "%s/%s", api_base, method);
+    char *payload = json_serialize(body);
+    json_free(body);
+    http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
+    free(payload);
+    return resp;
+}
+
+/* ================================================================
  *  Send message
  * ================================================================ */
 
@@ -30,21 +48,81 @@ bool telegram_send_message(http_client_t *http, const char *chat_id,
 {
     if (!http || !chat_id || !text) return false;
 
-    char url[512];
-    snprintf(url, sizeof(url), "%s/sendMessage", api_base);
-
     json_node_t *body = json_new_object();
     json_object_set(body, "chat_id", json_new_string(chat_id));
     json_object_set(body, "text", json_new_string(text));
     if (parse_mode)
         json_object_set(body, "parse_mode", json_new_string(parse_mode));
 
-    char *payload = json_serialize(body);
-    json_free(body);
+    http_response_t *resp = tg_post(http, "sendMessage", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
 
-    http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
-    free(payload);
+/* ================================================================
+ *  P104: Send message with reply markup (inline keyboards)
+ * ================================================================ */
 
+bool telegram_send_message_with_keyboard(http_client_t *http,
+                                          const char *chat_id,
+                                          const char *text,
+                                          const char *parse_mode,
+                                          json_node_t *reply_markup)
+{
+    if (!http || !chat_id || !text) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "text", json_new_string(text));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    if (reply_markup)
+        json_object_set(body, "reply_markup", json_copy(reply_markup));
+
+    http_response_t *resp = tg_post(http, "sendMessage", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Edit message text
+ * ================================================================ */
+
+bool telegram_edit_message_text(http_client_t *http, const char *chat_id,
+                                 const char *message_id, const char *text,
+                                 const char *parse_mode)
+{
+    if (!http || !chat_id || !message_id || !text) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+    json_object_set(body, "text", json_new_string(text));
+    if (parse_mode)
+        json_object_set(body, "parse_mode", json_new_string(parse_mode));
+
+    http_response_t *resp = tg_post(http, "editMessageText", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Delete message
+ * ================================================================ */
+
+bool telegram_delete_message(http_client_t *http, const char *chat_id,
+                              const char *message_id)
+{
+    if (!http || !chat_id || !message_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_id", json_new_string(message_id));
+
+    http_response_t *resp = tg_post(http, "deleteMessage", body);
     bool ok = resp && resp->status == 200;
     if (resp) http_response_free(resp);
     return ok;
@@ -59,19 +137,171 @@ bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
 {
     if (!http || !chat_id || !action) return false;
 
-    char url[512];
-    snprintf(url, sizeof(url), "%s/sendChatAction", api_base);
-
     json_node_t *body = json_new_object();
     json_object_set(body, "chat_id", json_new_string(chat_id));
     json_object_set(body, "action", json_new_string(action));
 
-    char *payload = json_serialize(body);
-    json_free(body);
+    http_response_t *resp = tg_post(http, "sendChatAction", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
 
-    http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
-    free(payload);
+/* ================================================================
+ *  P104: Answer inline query
+ * ================================================================ */
 
+bool telegram_answer_inline_query(http_client_t *http, const char *inline_query_id,
+                                   json_node_t *results)
+{
+    if (!http || !inline_query_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "inline_query_id", json_new_string(inline_query_id));
+    if (results)
+        json_object_set(body, "results", json_copy(results));
+    else
+        json_object_set(body, "results", json_new_array());
+
+    http_response_t *resp = tg_post(http, "answerInlineQuery", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Answer callback query
+ * ================================================================ */
+
+bool telegram_answer_callback_query(http_client_t *http, const char *callback_query_id,
+                                     const char *text, bool show_alert)
+{
+    if (!http || !callback_query_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "callback_query_id", json_new_string(callback_query_id));
+    if (text)
+        json_object_set(body, "text", json_new_string(text));
+    json_object_set(body, "show_alert", json_new_bool(show_alert));
+
+    http_response_t *resp = tg_post(http, "answerCallbackQuery", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Send poll
+ * ================================================================ */
+
+bool telegram_send_poll(http_client_t *http, const char *chat_id,
+                         const char *question, json_node_t *options,
+                         bool is_anonymous, const char *poll_type,
+                         bool is_closed)
+{
+    if (!http || !chat_id || !question) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "question", json_new_string(question));
+    if (options)
+        json_object_set(body, "options", json_copy(options));
+    else
+        json_object_set(body, "options", json_new_array());
+    json_object_set(body, "is_anonymous", json_new_bool(is_anonymous));
+    if (poll_type)
+        json_object_set(body, "type", json_new_string(poll_type));
+    json_object_set(body, "is_closed", json_new_bool(is_closed));
+
+    http_response_t *resp = tg_post(http, "sendPoll", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Send media group (photos with captions)
+ * ================================================================ */
+
+bool telegram_send_media_group(http_client_t *http, const char *chat_id,
+                                json_node_t *media)
+{
+    if (!http || !chat_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    if (media)
+        json_object_set(body, "media", json_copy(media));
+    else
+        json_object_set(body, "media", json_new_array());
+
+    http_response_t *resp = tg_post(http, "sendMediaGroup", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  P104: Forum topic management
+ * ================================================================ */
+
+bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
+                                  const char *name)
+{
+    if (!http || !chat_id || !name) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "name", json_new_string(name));
+
+    http_response_t *resp = tg_post(http, "createForumTopic", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_edit_forum_topic(http_client_t *http, const char *chat_id,
+                                const char *message_thread_id, const char *name)
+{
+    if (!http || !chat_id || !message_thread_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_thread_id", json_new_string(message_thread_id));
+    if (name)
+        json_object_set(body, "name", json_new_string(name));
+
+    http_response_t *resp = tg_post(http, "editForumTopic", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_close_forum_topic(http_client_t *http, const char *chat_id,
+                                 const char *message_thread_id)
+{
+    if (!http || !chat_id || !message_thread_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_thread_id", json_new_string(message_thread_id));
+
+    http_response_t *resp = tg_post(http, "closeForumTopic", body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+bool telegram_reopen_forum_topic(http_client_t *http, const char *chat_id,
+                                  const char *message_thread_id)
+{
+    if (!http || !chat_id || !message_thread_id) return false;
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "chat_id", json_new_string(chat_id));
+    json_object_set(body, "message_thread_id", json_new_string(message_thread_id));
+
+    http_response_t *resp = tg_post(http, "reopenForumTopic", body);
     bool ok = resp && resp->status == 200;
     if (resp) http_response_free(resp);
     return ok;
@@ -83,48 +313,167 @@ bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
 
 json_node_t *telegram_get_updates(http_client_t *http, int offset, int timeout)
 {
-    char url[512];
-    snprintf(url, sizeof(url), "%s/getUpdates", api_base);
+    if (!http) return NULL;
 
     json_node_t *body = json_new_object();
     json_object_set(body, "offset", json_new_number((double)offset));
     json_object_set(body, "timeout", json_new_number((double)timeout));
+    /* P104: Allow all update types */
+    json_node_t *allowed = json_new_array();
+    json_array_append(allowed, json_new_string("message"));
+    json_array_append(allowed, json_new_string("inline_query"));
+    json_array_append(allowed, json_new_string("callback_query"));
+    json_array_append(allowed, json_new_string("poll"));
+    json_array_append(allowed, json_new_string("poll_answer"));
+    json_array_append(allowed, json_new_string("my_chat_member"));
+    json_object_set(body, "allowed_updates", allowed);
 
-    char *payload = json_serialize(body);
-    json_free(body);
-
-    http_response_t *resp = http_request_json(http, HTTP_POST, url, payload);
-    free(payload);
-
-    if (!resp) return NULL;
-
-    char *err = NULL;
-    json_node_t *root = NULL;
-    if (resp->body)
-        root = json_parse(resp->body, &err);
-
-    http_response_free(resp);
-    free(err);
-    return root;
+    return tg_post(http, "getUpdates", body);
 }
 
 /* ================================================================
  *  Extract message info from update
+ *  P104: Handle all update types
  * ================================================================ */
+
+/* Get message text from any update type */
+const char *telegram_get_text(json_node_t *update) {
+    if (!update) return NULL;
+
+    /* Inline query */
+    json_node_t *inline_q = json_object_get(update, "inline_query");
+    if (inline_q)
+        return json_object_get_string(inline_q, "query", NULL);
+
+    /* Callback query */
+    json_node_t *cb = json_object_get(update, "callback_query");
+    if (cb) {
+        /* Return the data from the callback */
+        const char *data = json_object_get_string(cb, "data", NULL);
+        if (data) return data;
+        /* Fallback: return the message text */
+        json_node_t *cb_msg = json_object_get(cb, "message");
+        if (cb_msg)
+            return json_object_get_string(cb_msg, "text", NULL);
+        return NULL;
+    }
+
+    /* Regular message */
+    json_node_t *msg = json_object_get(update, "message");
+    if (!msg) {
+        /* Edited message */
+        msg = json_object_get(update, "edited_message");
+        if (!msg) return NULL;
+    }
+    return json_object_get_string(msg, "text", NULL);
+}
 
 const char *telegram_get_chat_id(json_node_t *update) {
     static char buf[32];
+    if (!update) return NULL;
+
+    /* Inline query */
+    json_node_t *inline_q = json_object_get(update, "inline_query");
+    if (inline_q) {
+        json_node_t *from = json_object_get(inline_q, "from");
+        if (from) {
+            double id = json_object_get_number(from, "id", 0);
+            snprintf(buf, sizeof(buf), "%.0f", id);
+            return buf;
+        }
+    }
+
+    /* Callback query */
+    json_node_t *cb = json_object_get(update, "callback_query");
+    if (cb) {
+        /* Return the inline message ID or the original message chat ID */
+        json_node_t *cb_msg = json_object_get(cb, "message");
+        if (cb_msg) {
+            json_node_t *chat = json_object_get(cb_msg, "chat");
+            if (chat) {
+                double id = json_object_get_number(chat, "id", 0);
+                snprintf(buf, sizeof(buf), "%.0f", id);
+                return buf;
+            }
+        }
+        json_node_t *from = json_object_get(cb, "from");
+        if (from) {
+            double id = json_object_get_number(from, "id", 0);
+            snprintf(buf, sizeof(buf), "%.0f", id);
+            return buf;
+        }
+    }
+
+    /* Poll answer */
+    json_node_t *poll = json_object_get(update, "poll_answer");
+    if (poll) {
+        json_node_t *user = json_object_get(poll, "user");
+        if (user) {
+            double id = json_object_get_number(user, "id", 0);
+            snprintf(buf, sizeof(buf), "%.0f", id);
+            return buf;
+        }
+    }
+
+    /* Regular message */
     json_node_t *msg = json_object_get(update, "message");
+    if (!msg)
+        msg = json_object_get(update, "edited_message");
     if (!msg) return NULL;
+
     json_node_t *chat = json_object_get(msg, "chat");
     if (!chat) return NULL;
+
     double id = json_object_get_number(chat, "id", 0);
     snprintf(buf, sizeof(buf), "%.0f", id);
     return buf;
 }
 
-const char *telegram_get_text(json_node_t *update) {
+/* P104: Get callback query ID for answering */
+const char *telegram_get_callback_query_id(json_node_t *update) {
+    static char buf[64];
+    if (!update) return NULL;
+    json_node_t *cb = json_object_get(update, "callback_query");
+    if (!cb) return NULL;
+    const char *id = json_object_get_string(cb, "id", NULL);
+    if (!id) return NULL;
+    snprintf(buf, sizeof(buf), "%s", id);
+    return buf;
+}
+
+/* P104: Get inline query ID */
+const char *telegram_get_inline_query_id(json_node_t *update) {
+    static char buf[64];
+    if (!update) return NULL;
+    json_node_t *inline_q = json_object_get(update, "inline_query");
+    if (!inline_q) return NULL;
+    const char *id = json_object_get_string(inline_q, "id", NULL);
+    if (!id) return NULL;
+    snprintf(buf, sizeof(buf), "%s", id);
+    return buf;
+}
+
+/* P104: Get update type string for routing */
+const char *telegram_get_update_type(json_node_t *update) {
+    if (!update) return "unknown";
+    if (json_object_get(update, "message")) return "message";
+    if (json_object_get(update, "edited_message")) return "edited_message";
+    if (json_object_get(update, "inline_query")) return "inline_query";
+    if (json_object_get(update, "callback_query")) return "callback_query";
+    if (json_object_get(update, "poll")) return "poll";
+    if (json_object_get(update, "poll_answer")) return "poll_answer";
+    if (json_object_get(update, "my_chat_member")) return "my_chat_member";
+    return "unknown";
+}
+
+/* P104: Get message thread ID for forum topics */
+const char *telegram_get_message_thread_id(json_node_t *update) {
+    static char buf[32];
+    if (!update) return NULL;
     json_node_t *msg = json_object_get(update, "message");
     if (!msg) return NULL;
-    return json_object_get_string(msg, "text", NULL);
+    double id = json_object_get_number(msg, "message_thread_id", 0);
+    if (id == 0) return NULL;
+    snprintf(buf, sizeof(buf), "%.0f", id);
+    return buf;
 }

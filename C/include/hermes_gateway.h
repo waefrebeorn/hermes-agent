@@ -182,6 +182,58 @@ const char *telegram_get_chat_id(json_node_t *update);
 const char *telegram_get_text(json_node_t *update);
 
 /* ================================================================
+ *  P104: Extended Telegram API
+ * ================================================================ */
+
+/* Keyboard/reply markup messages */
+bool telegram_send_message_with_keyboard(http_client_t *http,
+                                          const char *chat_id,
+                                          const char *text,
+                                          const char *parse_mode,
+                                          json_node_t *reply_markup);
+
+/* Edit/delete */
+bool telegram_edit_message_text(http_client_t *http, const char *chat_id,
+                                 const char *message_id, const char *text,
+                                 const char *parse_mode);
+bool telegram_delete_message(http_client_t *http, const char *chat_id,
+                              const char *message_id);
+
+/* Interactive queries */
+bool telegram_answer_inline_query(http_client_t *http,
+                                   const char *inline_query_id,
+                                   json_node_t *results);
+bool telegram_answer_callback_query(http_client_t *http,
+                                     const char *callback_query_id,
+                                     const char *text, bool show_alert);
+
+/* Polls */
+bool telegram_send_poll(http_client_t *http, const char *chat_id,
+                         const char *question, json_node_t *options,
+                         bool is_anonymous, const char *poll_type,
+                         bool is_closed);
+
+/* Media */
+bool telegram_send_media_group(http_client_t *http, const char *chat_id,
+                                json_node_t *media);
+
+/* Forum topics */
+bool telegram_create_forum_topic(http_client_t *http, const char *chat_id,
+                                  const char *name);
+bool telegram_edit_forum_topic(http_client_t *http, const char *chat_id,
+                                const char *message_thread_id, const char *name);
+bool telegram_close_forum_topic(http_client_t *http, const char *chat_id,
+                                 const char *message_thread_id);
+bool telegram_reopen_forum_topic(http_client_t *http, const char *chat_id,
+                                  const char *message_thread_id);
+
+/* Update parsers */
+const char *telegram_get_callback_query_id(json_node_t *update);
+const char *telegram_get_inline_query_id(json_node_t *update);
+const char *telegram_get_update_type(json_node_t *update);
+const char *telegram_get_message_thread_id(json_node_t *update);
+
+/* ================================================================
  *  Discord platform
  * ================================================================ */
 
