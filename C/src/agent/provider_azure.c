@@ -118,13 +118,13 @@ static char *azure_build_request_body(const provider_t *p,
     }
     if (p->config.metadata[0]) {
         json_t *md = json_parse(p->config.metadata, NULL);
-        if (md) { json_object_set(root, "metadata", md); json_free(md); }
+        if (md) { json_object_set(root, "metadata", json_copy(md)); json_free(md); }
     }
 
     /* tool_choice + parallel_tool_calls */
     if (p->config.tool_choice[0]) {
         json_t *tc = json_parse(p->config.tool_choice, NULL);
-        if (tc) { json_object_set(root, "tool_choice", tc); json_free(tc); }
+        if (tc) { json_object_set(root, "tool_choice", json_copy(tc)); json_free(tc); }
         else { json_object_set(root, "tool_choice", json_new_string(p->config.tool_choice)); }
     }
     if (!p->config.parallel_tool_calls)
@@ -209,6 +209,18 @@ static provider_response_t *azure_parse_response(const provider_t *p,
         resp->input_tokens = (int)json_get_num(usage, "prompt_tokens", 0);
         resp->output_tokens = (int)json_get_num(usage, "completion_tokens", 0);
     }
+
+    /* Check for error object */
+    json_t *error_obj = json_object_get(root, "error");
+    if (error_obj) {
+        const char *err_msg = json_get_str(error_obj, "message", "unknown error");
+        resp->content = (char *)malloc(1024);
+        if (resp->content)
+            snprintf(resp->content, 1024, "Azure API error: %s", err_msg);
+        json_free(root);
+        return resp;
+    }
+
     json_t *choices = json_object_get(root, "choices");
     if (choices && json_len(choices) > 0) {
         json_t *choice = json_get(choices, 0);
@@ -242,6 +254,10 @@ static provider_response_t *azure_parse_stream_chunk(const provider_t *p,
     (void)p;
     provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
     if (!resp) return NULL;
+
+    /* Null-safe */
+    if (!chunk) { resp->content = strdup(""); return resp; }
+
     const char *prefix = "data: ";
     if (strncmp(chunk, prefix, 6) != 0) { resp->content = strdup(chunk); return resp; }
     const char *json_str = chunk + 6;
