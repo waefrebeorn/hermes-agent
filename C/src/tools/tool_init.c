@@ -8,6 +8,9 @@
 /* P168: File sandbox init */
 void sandbox_init(void);
 
+/* O14: Sandbox escape detection init */
+void sandbox_escape_init(void);
+
 /* Tool init declarations (defined in each tool's .c file) */
 void registry_init_terminal(void);
 void registry_init_file(void);
@@ -43,6 +46,9 @@ void registry_init_file_batch(void);
 void tools_init_all(void) {
     /* P168: Initialize file sandbox before any tool registration */
     sandbox_init();
+
+    /* O14: Initialize sandbox escape detection */
+    sandbox_escape_init();
 
     registry_init_terminal();
     registry_init_file();

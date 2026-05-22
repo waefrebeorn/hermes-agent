@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_tool_config.h"
+#include "hermes_sandbox.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -478,6 +479,15 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     if (!command)
         return strdup("{\"error\": \"Missing required 'command' argument\"}");
+
+    /* O14: Check command for sandbox escape patterns before execution */
+    sandbox_escape_result_t esc = sandbox_escape_check(command, -1, "terminal");
+    if (esc.blocked) {
+        char err[512];
+        snprintf(err, sizeof(err),
+                 "{\"error\": \"%s\"}", esc.reason);
+        return strdup(err);
+    }
 
     /* Build workdir prefix */
     char workdir_prefix[4096] = "";

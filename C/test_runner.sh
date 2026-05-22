@@ -884,10 +884,11 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "web_tool (compilation failed)"
 fi
 
-# Terminal tool test (M29 — needs terminal.c + tool_config + json)
+# Terminal tool test (M29 — needs terminal.c + tool_config + json + sandbox_escape)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_terminal.c" \
     "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" \
+    "$CDIR/src/sandbox_escape.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_terminal -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (26 tests)"
@@ -1157,6 +1158,28 @@ else fail "config profile activation failed"; fi
 
 # Cleanup test profile only (don't remove slermes dir)
 rm -f "$PROFILE_DIR/test-profile.yaml"
+
+# O14: Sandbox escape detection test (needs libplugin for plugin.h include chain)
+echo ""; echo "=== Sandbox Escape Detection Tests (O14) ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_sandbox_escape.c" \
+    "$CDIR/src/sandbox_escape.c" \
+    -o /tmp/hermes_test_sandbox_esc -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_sandbox_esc > /dev/null 2>&1; then ok "sandbox_escape (14 tests)"
+    else
+        echo "  Sandbox escape test output:"
+        /tmp/hermes_test_sandbox_esc 2>&1 | sed 's/^/    /'
+        fail "sandbox_escape (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_sandbox_esc
+else
+    echo "  Sandbox escape test compilation error:"
+    gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_sandbox_escape.c" \
+        "$CDIR/src/sandbox_escape.c" \
+        -o /tmp/hermes_test_sandbox_esc -lm 2>&1 | sed 's/^/    /'
+    skip "sandbox_escape (compilation failed)"
+fi
 
 # ==============================================
 # 7. Completions test

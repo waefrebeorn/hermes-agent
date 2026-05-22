@@ -6,6 +6,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_sandbox.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,6 +137,16 @@ char *exec_code_handler(const char *args_json, const char *task_id) {
     json_free(args);
 
     if (!code) return strdup("{\"error\":\"Missing required 'code'\"}");
+
+    /* O14: Check code for sandbox escape patterns before execution */
+    sandbox_escape_result_t esc = sandbox_escape_check(code, -1, "exec_code");
+    if (esc.blocked) {
+        char err[512];
+        snprintf(err, sizeof(err),
+                 "{\"error\":\"%s\"}", esc.reason);
+        return strdup(err);
+    }
+
     return run_python(code, timeout, sandbox);
 }
 
