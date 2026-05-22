@@ -91,6 +91,23 @@ typedef struct {
     /* Free a provider response */
     void (*free_response)(provider_response_t *resp);
 
+    /* B32: FIM (Fill-in-the-Middle) — optional, NULL = not supported.
+     * Build FIM request body with prompt + suffix for code completion.
+     * Returns malloc'd JSON string or NULL. */
+    char *(*build_fim_body)(const provider_t *p,
+                            const char *prompt,
+                            const char *suffix,
+                            int max_tokens);
+
+    /* B32: Parse FIM response (returns text in content field, not message.content).
+     * Returns provider_response with content set to FIM completion text. */
+    provider_response_t *(*parse_fim_response)(const provider_t *p,
+                                                const char *response_body);
+
+    /* B32: Build FIM endpoint URL (e.g., /beta/completions instead of /chat/completions).
+     * Returns malloc'd URL or NULL. Defaults to build_url if NULL. */
+    char *(*build_fim_url)(const provider_t *p, const char *base_url);
+
     /* Provider name */
     const char *name;
 } provider_ops_t;
@@ -133,6 +150,18 @@ void provider_set_credential_pool(provider_t *p, credential_pool_t *pool);
 
 /* Get the credential pool attached to this provider (may be NULL). */
 credential_pool_t *provider_get_credential_pool(const provider_t *p);
+
+/* B32: FIM (Fill-in-the-Middle) code completion call.
+ * Returns provider_response with content set to FIM completion text.
+ * Returns NULL if provider does not support FIM.
+ * Caller must free response with provider_free_response(). */
+provider_response_t *provider_fim(provider_t *p,
+                                   const char *prompt,
+                                   const char *suffix,
+                                   int max_tokens);
+
+/* Check if provider supports FIM */
+bool provider_has_fim(const provider_t *p);
 
 /* Get provider operations (convenience) */
 static inline const provider_ops_t *provider_ops(const provider_t *p) {

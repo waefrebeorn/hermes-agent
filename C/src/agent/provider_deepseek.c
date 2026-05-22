@@ -323,6 +323,118 @@ static void deepseek_free_response(provider_response_t *resp) {
 }
 
 /* ================================================================
+ *  B32: FIM (Fill-in-the-Middle) — /beta/completions endpoint
+ * ================================================================ */
+
+static char *deepseek_build_fim_url(const provider_t *p, const char *base_url) {
+    (void)p;
+    if (!base_url || !*base_url)
+        base_url = "https://api.deepseek.com/v1";
+
+    /* Replace trailing /chat/completions with /beta/completions */
+    size_t len = strlen(base_url);
+    char *url = (char *)malloc(len + 24);
+    if (!url) return NULL;
+
+    const char *chat_suffix = "/chat/completions";
+    size_t chat_len = strlen(chat_suffix);
+    if (len >= chat_len && strcmp(base_url + len - chat_len, chat_suffix) == 0) {
+        /* Replace chat completions suffix with beta/completions */
+        size_t prefix_len = len - chat_len;
+        memcpy(url, base_url, prefix_len);
+        strcpy(url + prefix_len, "/beta/completions");
+    } else {
+        /* Append /beta/completions to base */
+        snprintf(url, len + 24, "%s%s/beta/completions",
+                 base_url, base_url[len-1] == '/' ? "" : "/");
+    }
+    return url;
+}
+
+static char *deepseek_build_fim_body(const provider_t *p,
+                                      const char *prompt,
+                                      const char *suffix,
+                                      int max_tokens) {
+    (void)p;
+    json_t *root = json_new_object();
+    if (!root) return NULL;
+
+    json_object_set(root, "model", json_new_string(
+        p->model[0] ? p->model : "deepseek-chat"));
+    json_object_set(root, "prompt", json_new_string(prompt ? prompt : ""));
+    if (suffix && suffix[0])
+        json_object_set(root, "suffix", json_new_string(suffix));
+    if (max_tokens > 0) {
+        json_object_set(root, "max_tokens", json_new_number(max_tokens));
+    } else {
+        json_object_set(root, "max_tokens", json_new_number(256));
+    }
+    /* FIM does not stream — single response */
+    json_object_set(root, "stream", json_new_bool(false));
+
+    char *body = json_serialize(root);
+    json_free(root);
+    return body;
+}
+
+static provider_response_t *deepseek_parse_fim_response(const provider_t *p,
+                                                         const char *response_body) {
+    (void)p;
+    provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
+    if (!resp) return NULL;
+
+    if (!response_body) {
+        resp->content = strdup("");
+        return resp;
+    }
+
+    char *err = NULL;
+    json_t *root = json_parse(response_body, &err);
+    if (!root) {
+        resp->content = (char *)malloc(256);
+        if (resp->content)
+            snprintf(resp->content, 256, "FIM JSON parse error: %s", err ? err : "unknown");
+        free(err);
+        return resp;
+    }
+
+    /* Check for API error */
+    json_t *error_obj = json_object_get(root, "error");
+    if (error_obj) {
+        const char *err_msg = json_get_str(error_obj, "message", "unknown error");
+        resp->content = (char *)malloc(1024);
+        if (resp->content)
+            snprintf(resp->content, 1024, "DeepSeek FIM API error: %s", err_msg);
+        json_free(root);
+        return resp;
+    }
+
+    /* Parse FIM response: choices[0].text (not message.content!) */
+    json_t *choices = json_object_get(root, "choices");
+    if (choices && json_len(choices) > 0) {
+        json_t *choice = json_get(choices, 0);
+        const char *text = json_get_str(choice, "text", "");
+        resp->content = strdup(text);
+
+        /* B22: finish_reason */
+        const char *fr = json_get_str(choice, "finish_reason", NULL);
+        if (fr) snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", fr);
+    } else {
+        resp->content = strdup("");
+    }
+
+    /* Usage metadata */
+    json_t *usage = json_object_get(root, "usage");
+    if (usage) {
+        resp->input_tokens = (int)json_get_num(usage, "prompt_tokens", 0);
+        resp->output_tokens = (int)json_get_num(usage, "completion_tokens", 0);
+    }
+
+    json_free(root);
+    return resp;
+}
+
+/* ================================================================
  *  Provider Operations Table
  * ================================================================ */
 
@@ -333,5 +445,8 @@ const provider_ops_t PROVIDER_OPS_DEEPSEEK = {
     .parse_response = deepseek_parse_response,
     .parse_stream_chunk = deepseek_parse_stream_chunk,
     .free_response = deepseek_free_response,
+    .build_fim_body = deepseek_build_fim_body,
+    .parse_fim_response = deepseek_parse_fim_response,
+    .build_fim_url = deepseek_build_fim_url,
     .name = "deepseek"
 };

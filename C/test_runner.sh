@@ -495,6 +495,31 @@ else
     skip "azure_full (compilation failed)"
 fi
 
+# DeepSeek FIM tests (B32 — needs all providers + JSON + HTTP + URL safety)
+echo ""; echo "=== DeepSeek FIM (Fill-in-the-Middle) Tests (B32) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" \
+    -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
+    -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    "$CDIR/tests/test_deepseek_fim.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_xai.c" "$CDIR/src/agent/provider_anthropic.c" \
+    "$CDIR/src/agent/provider_google.c" "$CDIR/src/agent/provider_azure.c" \
+    "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_deepseek_fim -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_deepseek_fim > /dev/null 2>&1; then ok "deepseek_fim (30 tests)"
+    else
+        echo "  DeepSeek FIM test output:"
+        /tmp/hermes_test_deepseek_fim 2>&1 | sed 's/^/    /'
+        fail "deepseek_fim (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_deepseek_fim
+else skip "deepseek_fim (compilation failed)"
+fi
+
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_smoke.c" \

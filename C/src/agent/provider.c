@@ -5,6 +5,7 @@
 
 #include "hermes.h"
 #include "provider.h"
+#include "hermes_http.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -146,4 +147,47 @@ void provider_set_credential_pool(provider_t *p, credential_pool_t *pool) {
 
 credential_pool_t *provider_get_credential_pool(const provider_t *p) {
     return p ? p->pool : NULL;
+}
+
+/* B32: FIM dispatch — calls build_fim_url → HTTP POST → parse_fim_response */
+provider_response_t *provider_fim(provider_t *p,
+                                   const char *prompt,
+                                   const char *suffix,
+                                   int max_tokens) {
+    if (!p || !p->ops || !prompt) return NULL;
+    if (!p->ops->build_fim_body || !p->ops->parse_fim_response) return NULL;
+
+    /* Build FIM URL */
+    const char *base = p->base_url[0] ? p->base_url : "https://api.deepseek.com/v1";
+    char *url = p->ops->build_fim_url
+        ? p->ops->build_fim_url(p, base)
+        : p->ops->build_url(p, base);
+    if (!url) return NULL;
+
+    /* Build headers */
+    char *headers = p->ops->build_headers(p, p->api_key);
+    if (!headers) { free(url); return NULL; }
+
+    /* Build FIM body */
+    char *body = p->ops->build_fim_body(p, prompt, suffix, max_tokens);
+    if (!body) { free(url); free(headers); return NULL; }
+
+    /* HTTP POST via libhttp */
+    http_client_t *client = http_client_new(30);
+    if (!client) { free(url); free(headers); free(body); return NULL; }
+
+    http_response_t *http_resp = http_request(client, HTTP_POST, url, headers, body, strlen(body));
+    free(url); free(headers); free(body);
+
+    provider_response_t *resp = NULL;
+    if (http_resp) {
+        resp = p->ops->parse_fim_response(p, http_resp->body);
+        http_response_free(http_resp);
+    }
+    http_client_free(client);
+    return resp;
+}
+
+bool provider_has_fim(const provider_t *p) {
+    return p && p->ops && p->ops->build_fim_body && p->ops->parse_fim_response;
 }
