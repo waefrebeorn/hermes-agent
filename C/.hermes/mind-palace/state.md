@@ -1,11 +1,14 @@
-# Slermes C — State (May 21+ session, 4 commits)
+# Slermes C — State (May 21+ session, 5 commits)
 
 ## Honest Assessment
-**This session:** P15 (validation), P22 (merge), YAML parser gap-fill, P168 (file sandbox).
+**This session:** P15 (validation), P19 (hot-reload), P22 (merge), YAML parser gap-fill, P168 (file sandbox).
 - P15: Validation extended to all 14 config groups ✅ compiled+runtime
+- P19: SIGHUP-based config hot-reload ✅ compiled
 - P22: Merge logic covers ALL config groups with full field-level merging ✅ compiled
-- YAML parser: ~16 struct fields now populated from config.yaml (plugin, session, MCP, memory, browser, cron, notification) ✅ compiled+runtime
-- P168: File sandbox wired into tools_init_all() — HOME/tmp/SLERMES_HOME allowed, symlink protection ✅ compiled
+- YAML parser: ~16 struct fields now populated from config.yaml ✅ compiled+runtime
+- P168: File sandbox wired into tools_init_all() — HOME/tmp/SLERMES_HOME allowed ✅ compiled
+
+**P1-P25 (Config):** All 25 phases now implemented. ~85% coverage (~150 leaf keys remain).
 
 ## This Session (10 phases)
 | Phase | Feature | Files |

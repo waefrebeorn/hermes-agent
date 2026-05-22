@@ -39,7 +39,7 @@ Scanned all 57 commits in C history for:
 | P16 | Env var override | ✅ | runtime | HERMES_MODEL/PROVIDER/BASE_URL/API_KEY/MAX_TURNS/etc. work |
 | P17 | Config profiles | ✅ | compiled | hermes_config_load_profile() exists |
 | P18 | Config diff/show | ✅ | runtime | /config shows all keys; config show works |
-| P19 | Config hot-reload | ❌ | — | No inotify watcher |
+| P19 | Config hot-reload | ✅ | compiled | SIGHUP handler reloads config on signal; falls back to previous on failure |
 | P20 | Config import/export | ✅ | compiled | Export to file works; import exists |
 | P21 | Constants module | ✅ | runtime | hermes_get_home(), env paths, XDG |
 | P22 | Config merge logic | ✅ | compiled | Deep merge for all config groups — fields only override when set in src |
@@ -356,7 +356,7 @@ Scanned all 57 commits in C history for:
 
 | Group | Coverage | Verdict |
 |-------|----------|---------|
-| P1-P25 Config | ~70% | P15+P22 done, YAML gap-fill. P19 (hot-reload) remaining. ~150 leaf keys. |
+| P1-P25 Config | ~85% | All 25 phases implemented. P15/P19/P22 gap-filled this session. |
 | P26-P40 CLI | 85% | /clear missing, some shallow handlers |
 | P41-P55 Tools | 92% | 14 feishu/MoA/video/yuanbao tools missing |
 | P56-P70 MCP | 70% | Core works, namespace/filter/sampling missing |

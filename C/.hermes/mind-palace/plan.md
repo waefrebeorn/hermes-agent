@@ -1,8 +1,9 @@
 # Slermes C — Plan (May 21 DA v4)
 
 ## Current State
-- Overall: **~45% complete** (up from 8% at DA v3)
-- Config keys: 154/318 (48%) ← 164 still missing
+- Overall: **~55% complete** (Config P1-P25 structural expansion done this session)
+- **P1-P25 (Config):** All 25 phases implemented ✅ P15/P19/P22 gap-filled
+- Config keys: 154/318 (48%) ← 164 still missing (leaf key expansion, not phase gaps)
 - Tools: 74 registered, 54 expected all found (92%)
 - CLI: 72/85 commands (85%), all dispatch, most feature-complete
 - Providers: 3/29+ (10%) ← BIGGEST gap by count
@@ -12,14 +13,18 @@
 - LLM runtime: WORKING (DeepSeek v4 Flash tested)
 
 ## Active Phase
-**P1-P25 gap: Config expansion (P15+P22 done this session).** Still 164 keys missing from C struct vs Python DEFAULT_CONFIG.
-Missing categories: credential_pool_contexts, fallback_providers, toolset arrays, web.* (search_backend, extract_backend), approval subkeys, logging.*, kanban.*, stt/tts/vision/auxiliary sub-dicts, gateway timeouts, guardrail.*, orchestator.*, goals.*, checkpoints.*, backup.*, personality profiles.
+**P71-P85: Provider expansion — 26 providers missing (10%, 3/29).** 
+Config P1-P25 structural phases now complete. Moving to biggest gap by count.
+OpenRouter, Groq, Together, Bedrock, Azure, xAI top priority.
+DeepSeek works via OpenAI compat.
 
-### Just Completed
+### Just Completed (This Session)
 - **P15: Config validation** — all 14 groups now validated (type/range/enum)
+- **P19: Config hot-reload** — SIGHUP handler reloads config; fallback on error
 - **P22: Config merge logic** — full field-level merge for all config groups
-- **YAML parser gap-fill** — 12 struct fields now populated from config.yaml (plugin.dirs/enabled, sessions auto_save_interval/compress/store_trajectories, mcp max_tools/credential_store, memory ttl_days/auto_save/compression_enabled/search_limit, browser.enable_javascript, cron.notify_on_failure, notification.sound)
-- Commits: aafcc0e44 (P15+P22), edf1d764d (YAML gap-fill)
+- **P168: File sandbox** — wired into tools_init_all(); HOME/tmp/SLERMES_HOME allowed
+- **YAML parser gap-fill** — ~16 struct fields now populated from config.yaml
+- Commits: aafcc0e44, edf1d764d, 1768f1c97, 6b9cc5846, 010ebbb4a
 
 ## Next Phases In Queue
 1. **Config gap (164 keys)** — credential_pool, fallback_providers, toolset arrays, web.*, etc.

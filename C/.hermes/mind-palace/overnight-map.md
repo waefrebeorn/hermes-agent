@@ -1,16 +1,23 @@
-# Slermes C — Overnight Map (May 21 session)
+# Slermes C — Overnight Map (May 21+ session — 5 commits)
 
 ## What Changed This Session
-- **P95: Stream diagnostic** — token-level timing, latency breakdown per provider. `stream_diag_t` struct in `llm_response_t`, `mono_time()` helper, first-token tracking in both streaming paths, `finalize_stream_diag()` computes TTFB/total_stream_time/tokens_per_second
-- **P97: Compression feedback** — `compression_feedback_t` struct with `quality_score` (EMA), `adapt_threshold` (active 0.1-0.9), positive/negative rating functions, threshold adjustment
-- **P98: Checkpoint manager** — `checkpoint_t`/`checkpoint_manager_t` structs, `checkpoint.c` with save/restore/list/try_autosave, auto-save every N turns (default 5)
-- **P100: Background review** — `llm_background_review()` in llm_client.c, LLM-based review of tool results for issues/improvements/security
-- Refactored: `message_clone()` moved from static in agent_loop.c to exported in context.c
-- Commits pending
+- **P15: Config validation** — extended to all 14 config groups. Type/range/enum checks for browser, memory, compression, cron, notification, plugin, MCP + existing groups.
+- **P19: Config hot-reload** — SIGHUP handler. `hermes_config_setup_reload()` + `hermes_config_check_reload()` wired into CLI startup + main loop.
+- **P22: Config merge logic** — full field-level merge for ALL config groups (browser viewport/js, memory sub-fields, cron, notification, plugin, security/session/MCP expanded).
+- **P168: File sandbox** — `sandbox_init()` call added to `tools_init_all()`. HOME/tmp/SLERMES_HOME directories allowed. Symlink attack protection active.
+- **YAML parser gap-fill** — ~16 struct fields now populated from config.yaml: plugin.dirs/enabled, session auto_save_interval/compress/store_trajectories, MCP max_tools/credential_store, memory ttl_days/auto_save/compression_enabled/search_limit/auto_save_interval/dedup/storage_type/storage_path, browser.javascript, cron.notify_on_failure, notification.sound.
+- DA audit updated: P15/P19/P22/P13/P168 all ✅ now. Config group ~85%.
 
-## What's Next (P86-P100 remaining)
-- P86+P88, P87, P89, P90, P91, P92, P93, P94, P95, P96, P97, P98, P99, P100 all done ✅
-- **P86-P100 block COMPLETE**
+## What's Next (Provider Expansion)
+- **Active phase: P71-P85 (Providers)** — 26 providers missing (10%, 3/29). Biggest gap by count.
+- Config P1-P25 all 25 phases now structurally complete (~85%, ~150 leaf keys remain).
+- Priorities: OpenRouter, Groq, Together, Bedrock, Azure, xAI native implementations.
+- Provider pattern: provider_openai.c / provider_anthropic.c / provider_google.c implement provider_ops_t vtable.
+- P72 (Provider plugin .so system) also ❌.
 
-## Next Block (P101+)
-- Gateway depth, delegation, plugins, session DB, memory, security, cron, skills, TUI
+## Pending
+- Providers: 3/29. 26 missing. Most critical: OpenRouter, Groq, Together.
+- Tools: 14 missing (feishu doc+drive (5), MoA (1), video analyze+gen (2), yuanbao (6)).
+- MCP: namespace/filter/sampling/roots (P65, P66, P68, P70).
+- TUI: 6/12 phases (P193-P200).
+- Tests: <1% — critical gap but deferred until features stabilize.
