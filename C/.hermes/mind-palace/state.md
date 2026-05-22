@@ -16,12 +16,21 @@
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added. **H01: `hermes completions {bash|zsh}`** |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 43 | 54% | **39 files, 2,243 assertions** (85 pass, 0 fail, 0 skip) |
+| **Tests** | 42 | 54% | **40 files, 2,260 assertions** (86 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. **N01 token counting added: model-aware heuristic, context windows, cost rates** |
 | **Build/doc** | 10 | 55% | Dockerfile (multi-stage, ~20MB), CI workflow (build+test+TUI+plugins+Docker), cross-compile script (4 targets), .dockerignore, man page (hermes.1) |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-24 — Redact heap overflow fix + test
+
+- ✅ **Bugfix: heap overflow in hermes_redact** — `strndup` allocated exact-size buffer, but `redact_value` expansion (`***REDACTED***` = 15 chars vs shorter values) wrote past buffer. Fixed: `malloc(len + 512)`.
+- ✅ **Bugfix: double-counted pointer advancement** — `adj` offset added AFTER `sizeof("***REDACTED***") - 1` already positioned correctly. Removed from both builtin and custom pattern loops. Could cause skipped text or read-past-buffer.
+- ✅ **test_redact.c** — 17 assertions: NULL/empty/plain, api_key, sk-, ghp_, token, password, Bearer+JWT, multiple secrets, large input, custom patterns, lifecycle, error handling
+- ◀ **Suite: 86/0/1** (+1 test, 17 assertions)
+- ◀ **Tests: 54%** (was 54%, 1/43 gaps closed + bugfix)
+- ◀ Committed: `2801a39c6`
 
 ### Session 2026-05-24 — Build/doc infrastructure (cont)
 
