@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -769,5 +770,154 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
         cfg->mcp.auth_enabled = true;
 
+    return true;
+}
+
+/* ================================================================
+ *  P15: Config Validation
+ * ================================================================ */
+
+static void add_issue(config_validation_t *r, const char *key, const char *fmt, ...) {
+    if (r->count >= 64) return;
+    snprintf(r->issues[r->count].key, sizeof(r->issues[r->count].key), "%s", key);
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(r->issues[r->count].message, sizeof(r->issues[r->count].message), fmt, ap);
+    va_end(ap);
+    r->count++;
+}
+
+bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *result) {
+    memset(result, 0, sizeof(*result));
+
+    /* --- Provider group --- */
+    if (cfg->provider_cfg.model[0] == '\0')
+        add_issue(result, "model.default", "model name is empty");
+    if (cfg->provider_cfg.provider[0] == '\0')
+        add_issue(result, "model.provider", "provider name is empty");
+    if (cfg->provider_cfg.temperature < 0.0f || cfg->provider_cfg.temperature > 2.0f)
+        add_issue(result, "model.temperature", "must be 0.0-2.0, got %.1f", cfg->provider_cfg.temperature);
+    if (cfg->provider_cfg.top_p < 0.0f || cfg->provider_cfg.top_p > 1.0f)
+        add_issue(result, "model.top_p", "must be 0.0-1.0, got %.2f", cfg->provider_cfg.top_p);
+    if (cfg->provider_cfg.max_tokens < 1 || cfg->provider_cfg.max_tokens > 1048576)
+        add_issue(result, "model.max_tokens", "unreasonable value %d", cfg->provider_cfg.max_tokens);
+
+    /* Validate api_mode enum */
+    if (cfg->provider_cfg.api_mode[0] &&
+        strcmp(cfg->provider_cfg.api_mode, "chat_completions") != 0 &&
+        strcmp(cfg->provider_cfg.api_mode, "codex_responses") != 0)
+        add_issue(result, "model.api_mode", "unknown mode '%s'", cfg->provider_cfg.api_mode);
+
+    /* Validate reasoning_effort enum */
+    if (cfg->provider_cfg.reasoning_effort[0] &&
+        strcmp(cfg->provider_cfg.reasoning_effort, "low") != 0 &&
+        strcmp(cfg->provider_cfg.reasoning_effort, "medium") != 0 &&
+        strcmp(cfg->provider_cfg.reasoning_effort, "high") != 0)
+        add_issue(result, "model.reasoning_effort", "unknown '%s' (low/medium/high)", cfg->provider_cfg.reasoning_effort);
+
+    /* --- Display group --- */
+    if (cfg->display.language[0] &&
+        strcmp(cfg->display.language, "en") != 0 &&
+        strcmp(cfg->display.language, "zh") != 0 &&
+        strcmp(cfg->display.language, "ja") != 0)
+        add_issue(result, "display.language", "unsupported '%s'", cfg->display.language);
+
+    /* --- Agent group --- */
+    if (cfg->agent.max_iterations < 1 || cfg->agent.max_iterations > 10000)
+        add_issue(result, "agent.max_turns", "unreasonable %d", cfg->agent.max_iterations);
+    if (cfg->agent.max_tool_calls_round < 0 || cfg->agent.max_tool_calls_round > 1000)
+        add_issue(result, "agent.max_tool_calls_round", "unreasonable %d", cfg->agent.max_tool_calls_round);
+    if (cfg->agent.verbose_level < 0 || cfg->agent.verbose_level > 2)
+        add_issue(result, "agent.verbose", "must be 0-2, got %d", cfg->agent.verbose_level);
+    if (cfg->agent.compress_threshold < 0.0f || cfg->agent.compress_threshold > 1.0f)
+        add_issue(result, "compression.threshold", "must be 0.0-1.0, got %.2f", cfg->agent.compress_threshold);
+    if (cfg->agent.api_max_retries < 0 || cfg->agent.api_max_retries > 100)
+        add_issue(result, "agent.api_max_retries", "unreasonable %d", cfg->agent.api_max_retries);
+
+    /* --- Tools group --- */
+    if (cfg->tools.approval_mode[0] &&
+        strcmp(cfg->tools.approval_mode, "off") != 0 &&
+        strcmp(cfg->tools.approval_mode, "manual") != 0 &&
+        strcmp(cfg->tools.approval_mode, "auto") != 0)
+        add_issue(result, "approvals.mode", "unknown '%s'", cfg->tools.approval_mode);
+    if (cfg->tools.approval_timeout < 0 || cfg->tools.approval_timeout > 86400)
+        add_issue(result, "approvals.timeout", "unreasonable %d", cfg->tools.approval_timeout);
+    if (cfg->tools.max_result_size < 256)
+        add_issue(result, "tool_output.max_bytes", "too small %d, min 256", cfg->tools.max_result_size);
+    if (cfg->tools.terminal_timeout < 1 || cfg->tools.terminal_timeout > 86400)
+        add_issue(result, "terminal.timeout", "unreasonable %d", cfg->tools.terminal_timeout);
+
+    /* --- Delegation --- */
+    if (cfg->delegation.max_concurrent_children < 1 || cfg->delegation.max_concurrent_children > 50)
+        add_issue(result, "delegation.max_concurrent_children", "unreasonable %d", cfg->delegation.max_concurrent_children);
+    if (cfg->delegation.max_spawn_depth < 0 || cfg->delegation.max_spawn_depth > 10)
+        add_issue(result, "delegation.max_spawn_depth", "unreasonable %d", cfg->delegation.max_spawn_depth);
+
+    /* --- Security --- */
+    if (cfg->security.tirith_timeout < 0 || cfg->security.tirith_timeout > 300)
+        add_issue(result, "security.tirith_timeout", "unreasonable %d", cfg->security.tirith_timeout);
+
+    /* --- Session --- */
+    if (cfg->session.retention_days < 0 || cfg->session.retention_days > 3650)
+        add_issue(result, "sessions.retention_days", "unreasonable %d", cfg->session.retention_days);
+
+    return result->count == 0;
+}
+
+/* ================================================================
+ *  P17: Config Profiles
+ * ================================================================ */
+
+bool hermes_config_load_profile(hermes_config_t *cfg, const char *profile_name, const char *config_dir) {
+    if (!profile_name || profile_name[0] == '\0') return false;
+
+    char profile_path[HERMES_PATH_MAX];
+    if (config_dir && config_dir[0])
+        snprintf(profile_path, sizeof(profile_path), "%s/profiles/%s.yaml", config_dir, profile_name);
+    else {
+        char slermes_home[HERMES_PATH_MAX];
+        const char *env = getenv("SLERMES_HOME");
+        if (env) snprintf(slermes_home, sizeof(slermes_home), "%s", env);
+        else snprintf(slermes_home, sizeof(slermes_home), "%s/.slermes", getenv("HOME") ? getenv("HOME") : "/tmp");
+        snprintf(profile_path, sizeof(profile_path), "%s/profiles/%s.yaml", slermes_home, profile_name);
+    }
+
+    /* Check file exists */
+    struct stat st;
+    if (stat(profile_path, &st) != 0) return false;
+
+    char *err = NULL;
+    yaml_doc_t *doc = yaml_parse_file(profile_path, &err);
+    if (!doc) {
+        if (err) fprintf(stderr, "Warning: profile '%s' parse error: %s\n", profile_name, err);
+        if (err) free(err);
+        return false;
+    }
+
+    /* Merge profile settings — only override what's set in profile */
+    /* Model */
+    const char *v;
+    v = yaml_get_string(doc, "model.default");
+    if (v) snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", v);
+    v = yaml_get_string(doc, "model.provider");
+    if (v) snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", v);
+    v = yaml_get_string(doc, "model.base_url");
+    if (v) snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", v);
+    v = yaml_get_string(doc, "model.api_key");
+    if (v) snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", v);
+    v = yaml_get_string(doc, "model.api_mode");
+    if (v) snprintf(cfg->provider_cfg.api_mode, sizeof(cfg->provider_cfg.api_mode), "%s", v);
+
+    /* Agent */
+    int iv = yaml_get_int(doc, "agent.max_turns", 0);
+    if (iv > 0) { cfg->agent.max_iterations = iv; cfg->max_turns = iv; }
+    iv = yaml_get_int(doc, "agent.verbose", 0);
+    if (iv >= 0 && iv <= 2) { cfg->agent.verbose_level = iv; cfg->verbose = iv; }
+
+    /* Display */
+    v = yaml_get_string(doc, "display.skin");
+    if (v) snprintf(cfg->display.skin, sizeof(cfg->display.skin), "%s", v);
+
+    yaml_free(doc);
     return true;
 }

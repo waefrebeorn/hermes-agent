@@ -359,6 +359,22 @@ typedef struct {
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
 bool hermes_config_load_env(hermes_config_t *cfg);
 
+/* P15: Config validation — returns true if valid, logs warnings for issues */
+typedef struct {
+    char key[128];
+    char message[256];
+} config_issue_t;
+
+typedef struct {
+    config_issue_t issues[64];
+    int count;
+} config_validation_t;
+
+bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *result);
+
+/* P17: Config profiles — load named profile from ~/.slermes/profiles/<name>.yaml */
+bool hermes_config_load_profile(hermes_config_t *cfg, const char *profile_name, const char *config_dir);
+
 /* ================================================================
  *  Include sub-headers for dependency wrappers
  * ================================================================ */
