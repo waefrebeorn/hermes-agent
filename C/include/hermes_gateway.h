@@ -231,6 +231,26 @@ void gw_reconnect_reset(int plat_idx);
 /* E34: Set group observe prefix. Messages from groups with this prefix are observed. */
 void gw_set_group_observe(const char *prefix, bool enabled);
 
+/* E35-E38: Gateway hooks system */
+typedef json_node_t *(*gw_hook_t)(json_node_t *data, void *userdata);
+void gw_register_pre_send(gw_hook_t hook, void *userdata);
+void gw_register_post_receive(gw_hook_t hook, void *userdata);
+void gw_register_interceptor(gw_hook_t hook, void *userdata);
+
+/* E38: Gateway event bus */
+typedef void (*gw_event_listener_t)(const char *event_type, json_node_t *data, void *userdata);
+void gw_event_register(gw_event_listener_t listener, void *userdata);
+void gw_event_emit(const char *event_type, json_node_t *data);
+
+/* E40-E43: Gateway formatting utilities */
+char *gw_markdown_to_html(const char *text);
+char *gw_markdown_v2_escape(const char *text);
+char *gw_truncate_message(const char *text, size_t max_len);
+
+/* E44-E47: Gateway error handling */
+bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx, int max_retries, int base_delay_ms);
+bool gw_refresh_token(int plat_idx);
+
 /* ================================================================
  *  Telegram platform
  * ================================================================ */

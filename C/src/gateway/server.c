@@ -382,10 +382,321 @@ bool gw_set_proxy(int plat_idx, const char *proxy_url) {
  *  E34: Group observe — observe unmentioned group messages
  * ================================================================ */
 
+/* Forward declarations for functions defined later */
+static void gateway_send(const char *platform, const char *target, const char *text);
+static void gateway_send_fallback(const char *platform, const char *target,
+                                   const char *text);
+
 void gw_set_group_observe(const char *prefix, bool enabled) {
     if (prefix)
         snprintf(g_gw.group_observe_prefix, sizeof(g_gw.group_observe_prefix), "%s", prefix);
     g_gw.group_observe_enabled = enabled;
+}
+
+/* ================================================================
+ *  E35-E39: Gateway hooks/middleware system
+ * ================================================================ */
+
+/* Hook function types */
+typedef json_node_t *(*gw_hook_t)(json_node_t *data, void *userdata);
+
+#define GW_HOOKS_MAX 16
+
+static struct {
+    gw_hook_t pre_send[GW_HOOKS_MAX];      /* E35: transform outgoing messages */
+    void     *pre_send_data[GW_HOOKS_MAX];
+    int       pre_send_count;
+
+    gw_hook_t post_receive[GW_HOOKS_MAX];  /* E36: process incoming */
+    void     *post_receive_data[GW_HOOKS_MAX];
+    int       post_receive_count;
+
+    gw_hook_t interceptor[GW_HOOKS_MAX];   /* E37: censor/modify in transit */
+    void     *interceptor_data[GW_HOOKS_MAX];
+    int       interceptor_count;
+} gw_hooks;
+
+void gw_register_pre_send(gw_hook_t hook, void *userdata) {
+    if (gw_hooks.pre_send_count >= GW_HOOKS_MAX) return;
+    gw_hooks.pre_send[gw_hooks.pre_send_count] = hook;
+    gw_hooks.pre_send_data[gw_hooks.pre_send_count] = userdata;
+    gw_hooks.pre_send_count++;
+}
+
+void gw_register_post_receive(gw_hook_t hook, void *userdata) {
+    if (gw_hooks.post_receive_count >= GW_HOOKS_MAX) return;
+    gw_hooks.post_receive[gw_hooks.post_receive_count] = hook;
+    gw_hooks.post_receive_data[gw_hooks.post_receive_count] = userdata;
+    gw_hooks.post_receive_count++;
+}
+
+void gw_register_interceptor(gw_hook_t hook, void *userdata) {
+    if (gw_hooks.interceptor_count >= GW_HOOKS_MAX) return;
+    gw_hooks.interceptor[gw_hooks.interceptor_count] = hook;
+    gw_hooks.interceptor_data[gw_hooks.interceptor_count] = userdata;
+    gw_hooks.interceptor_count++;
+}
+
+/* E38: Event bus — broadcast a JSON event to all registered listeners */
+#define GW_EVENT_LISTENERS_MAX 16
+
+typedef void (*gw_event_listener_t)(const char *event_type, json_node_t *data, void *userdata);
+
+static struct {
+    gw_event_listener_t listeners[GW_EVENT_LISTENERS_MAX];
+    void               *data[GW_EVENT_LISTENERS_MAX];
+    int                 count;
+} gw_event_bus;
+
+void gw_event_register(gw_event_listener_t listener, void *userdata) {
+    if (gw_event_bus.count >= GW_EVENT_LISTENERS_MAX) return;
+    gw_event_bus.listeners[gw_event_bus.count] = listener;
+    gw_event_bus.data[gw_event_bus.count] = userdata;
+    gw_event_bus.count++;
+}
+
+void gw_event_emit(const char *event_type, json_node_t *data) {
+    for (int i = 0; i < gw_event_bus.count; i++) {
+        gw_event_bus.listeners[i](event_type, data, gw_event_bus.data[i]);
+    }
+}
+
+/* E35: Apply pre-send hooks to a message before sending */
+static char *gw_apply_pre_send_hooks(const char *platform, const char *text) {
+    if (!text) return NULL;
+
+    json_node_t *data = json_new_object();
+    json_object_set(data, "platform", json_new_string(platform));
+    json_object_set(data, "text", json_new_string(text));
+
+    for (int i = 0; i < gw_hooks.pre_send_count; i++) {
+        json_node_t *result = gw_hooks.pre_send[i](data, gw_hooks.pre_send_data[i]);
+        if (result) {
+            const char *new_text = json_object_get_string(result, "text", NULL);
+            if (new_text) {
+                json_object_set(data, "text", json_new_string(new_text));
+            }
+            json_free(result);
+        }
+    }
+
+    const char *final_text = json_object_get_string(data, "text", "");
+    char *out = strdup(final_text);
+    json_free(data);
+    return out;
+}
+
+/* E36: Apply post-receive hooks on incoming message */
+static char *gw_apply_post_receive_hooks(const char *platform, const char *chat_id,
+                                          const char *text) {
+    if (!text) return NULL;
+
+    json_node_t *data = json_new_object();
+    json_object_set(data, "platform", json_new_string(platform));
+    json_object_set(data, "chat_id", json_new_string(chat_id));
+    json_object_set(data, "text", json_new_string(text));
+
+    for (int i = 0; i < gw_hooks.post_receive_count; i++) {
+        json_node_t *result = gw_hooks.post_receive[i](data, gw_hooks.post_receive_data[i]);
+        if (result) {
+            const char *new_text = json_object_get_string(result, "text", NULL);
+            if (new_text)
+                json_object_set(data, "text", json_new_string(new_text));
+            json_free(result);
+        }
+    }
+
+    const char *final_text = json_object_get_string(data, "text", "");
+    char *out = strdup(final_text);
+    json_free(data);
+    return out;
+}
+
+/* E37: Apply interceptors — can return NULL to drop message */
+static char *gw_apply_interceptors(const char *platform, const char *chat_id,
+                                    const char *text) {
+    if (!text) return NULL;
+
+    json_node_t *data = json_new_object();
+    json_object_set(data, "platform", json_new_string(platform));
+    json_object_set(data, "chat_id", json_new_string(chat_id));
+    json_object_set(data, "text", json_new_string(text));
+
+    for (int i = 0; i < gw_hooks.interceptor_count; i++) {
+        json_node_t *result = gw_hooks.interceptor[i](data, gw_hooks.interceptor_data[i]);
+        if (!result) {
+            /* Interceptor dropped the message */
+            json_free(data);
+            return NULL;
+        }
+        const char *new_text = json_object_get_string(result, "text", NULL);
+        if (new_text)
+            json_object_set(data, "text", json_new_string(new_text));
+        json_free(result);
+    }
+
+    const char *final_text = json_object_get_string(data, "text", "");
+    char *out = strdup(final_text);
+    json_free(data);
+    return out;
+}
+
+/* E39: Cooldown manager — enforce min interval between sends */
+static bool gw_cooldown_allow(int plat_idx) {
+    if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return true;
+    double remaining = gw_cooldown_remaining(plat_idx);
+    if (remaining > 0.0) return false;
+    gw_cooldown_mark(plat_idx);
+    return true;
+}
+
+/* ================================================================
+ *  E40-E43: Gateway message formatting
+ * ================================================================ */
+
+/* E40: Convert markdown to HTML for platforms that support it.
+ * Simple conversion: **bold** → <b>bold</b>, *italic* → <i>italic</i>,
+ * `code` → <code>code</code> */
+static char *gw_markdown_to_html(const char *text) {
+    if (!text) return NULL;
+    char *out = (char *)malloc(strlen(text) * 2 + 1);
+    if (!out) return NULL;
+    int j = 0;
+    for (int i = 0; text[i]; i++) {
+        if (text[i] == '*' && text[i+1] == '*') {
+            out[j++] = '<'; out[j++] = 'b'; out[j++] = '>';
+            i++;
+            while (text[i+1] && !(text[i+1] == '*' && text[i+2] == '*')) {
+                out[j++] = text[++i];
+            }
+            out[j++] = '<'; out[j++] = '/'; out[j++] = 'b'; out[j++] = '>';
+            i += 2;
+        } else if (text[i] == '*' && text[i+1] != '*') {
+            out[j++] = '<'; out[j++] = 'i'; out[j++] = '>';
+            i++;
+            while (text[i] && text[i] != '*') {
+                out[j++] = text[i++];
+            }
+            out[j++] = '<'; out[j++] = '/'; out[j++] = 'i'; out[j++] = '>';
+        } else if (text[i] == '`') {
+            out[j++] = '<'; out[j++] = 'c'; out[j++] = 'o'; out[j++] = 'd';
+            out[j++] = 'e'; out[j++] = '>';
+            i++;
+            while (text[i] && text[i] != '`') {
+                if (text[i] == '\\' && text[i+1] == '`') i++;
+                out[j++] = text[i++];
+            }
+            out[j++] = '<'; out[j++] = '/'; out[j++] = 'c'; out[j++] = 'o';
+            out[j++] = 'd'; out[j++] = 'e'; out[j++] = '>';
+        } else {
+            /* Escape HTML entities */
+            if (text[i] == '<') { out[j++] = '&'; out[j++] = 'l'; out[j++] = 't'; out[j++] = ';'; }
+            else if (text[i] == '>') { out[j++] = '&'; out[j++] = 'g'; out[j++] = 't'; out[j++] = ';'; }
+            else if (text[i] == '&') { out[j++] = '&'; out[j++] = 'a'; out[j++] = 'm'; out[j++] = 'p'; out[j++] = ';'; }
+            else out[j++] = text[i];
+        }
+    }
+    out[j] = '\0';
+    return out;
+}
+
+/* E41: Telegram MarkdownV2 escaping — escape reserved chars */
+static char *gw_markdown_v2_escape(const char *text) {
+    if (!text) return NULL;
+    char *out = (char *)malloc(strlen(text) * 2 + 1);
+    if (!out) return NULL;
+    int j = 0;
+    for (int i = 0; text[i]; i++) {
+        /* Characters that need escaping in MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . ! */
+        if (strchr("_*[]()~`>#+-=|{}.!", text[i])) {
+            out[j++] = '\\';
+        }
+        out[j++] = text[i];
+    }
+    out[j] = '\0';
+    return out;
+}
+
+/* E42: Strip all formatting for plain text platforms */
+static char *gw_strip_all_formatting(const char *text) {
+    return gw_strip_markdown(text, true, true, true);
+}
+
+/* E43: Smart message truncation with ellipsis.
+ * Truncates at word boundary if possible. */
+static char *gw_truncate_message(const char *text, size_t max_len) {
+    if (!text) return NULL;
+    size_t len = strlen(text);
+    if (len <= max_len) return strdup(text);
+
+    char *out = (char *)malloc(max_len + 4);
+    if (!out) return NULL;
+    memcpy(out, text, max_len);
+
+    /* Try to break at word boundary (space) */
+    int break_at = (int)max_len;
+    while (break_at > 0 && out[break_at - 1] != ' ') break_at--;
+
+    if (break_at > (int)max_len / 2) {
+        out[break_at] = '\0';
+        strcat(out, "...");
+    } else {
+        out[max_len] = '\0';
+        strcat(out, "...");
+    }
+    return out;
+}
+
+/* ================================================================
+ *  E44-E47: Gateway error handling
+ * ================================================================ */
+
+/* E44: Retry an API call with exponential backoff on 429/5xx.
+ * Returns true if at least one attempt succeeded. */
+static bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,
+                                   int max_retries, int base_delay_ms) {
+    for (int attempt = 0; attempt <= max_retries; attempt++) {
+        if (api_call(ctx)) return true;
+        if (attempt < max_retries) {
+            int delay = base_delay_ms * (1 << attempt); /* exponential */
+            /* Add jitter ±20% */
+            delay += (int)(((double)rand() / RAND_MAX) * 2.0 * 0.2 * delay - 0.2 * delay);
+            usleep(delay * 1000);
+        }
+    }
+    return false;
+}
+
+/* E45: Token refresh — re-init platform when token expires.
+ * Checks platform state and re-runs setup. */
+static bool gw_refresh_token(int plat_idx) {
+    if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return false;
+    /* Re-initialize the platform's HTTP client */
+    if (g_gw.platform_http[plat_idx]) {
+        http_client_free(g_gw.platform_http[plat_idx]);
+    }
+    g_gw.platform_http[plat_idx] = http_client_new(30);
+    /* Apply proxy if configured */
+    if (g_gw.proxy_enabled[plat_idx] && g_gw.platform_proxy[plat_idx][0]) {
+        http_client_set_proxy(g_gw.platform_http[plat_idx],
+                              g_gw.platform_proxy[plat_idx]);
+    }
+    gw_reconnect_reset(plat_idx);
+    return true;
+}
+
+/* E47: Send a plain text fallback when rich formatting fails */
+static void gateway_send_fallback(const char *platform, const char *target,
+                                   const char *text) {
+    if (!platform || !target || !text) return;
+    /* Strip all formatting and truncate */
+    char *plain = gw_strip_all_formatting(text);
+    char *truncated = gw_truncate_message(plain ? plain : text, 4000);
+    if (truncated) {
+        gateway_send(platform, target, truncated);
+        free(truncated);
+    }
+    free(plain);
 }
 
 /* ================================================================
