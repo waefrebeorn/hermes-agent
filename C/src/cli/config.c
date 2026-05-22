@@ -28,18 +28,9 @@ static char *xstrdup(const char *s) {
     return d;
 }
 
-/* Resolve SLERMES_HOME. Default: ~/.slermes */
+/* Resolve SLERMES_HOME. Default: ~/.slermes — delegates to hermes_get_home() */
 static void get_slermes_home(char *buf, size_t sz) {
-    const char *env = getenv("SLERMES_HOME");
-    if (env) {
-        snprintf(buf, sz, "%s", env);
-        return;
-    }
-    const char *home = getenv("HOME");
-    if (home)
-        snprintf(buf, sz, "%s/.slermes", home);
-    else
-        snprintf(buf, sz, "/tmp/.slermes");
+    hermes_get_home(buf, sz);
 }
 
 /* ================================================================
@@ -875,11 +866,9 @@ bool hermes_config_load_profile(hermes_config_t *cfg, const char *profile_name, 
     if (config_dir && config_dir[0])
         snprintf(profile_path, sizeof(profile_path), "%s/profiles/%s.yaml", config_dir, profile_name);
     else {
-        char slermes_home[HERMES_PATH_MAX];
-        const char *env = getenv("SLERMES_HOME");
-        if (env) snprintf(slermes_home, sizeof(slermes_home), "%s", env);
-        else snprintf(slermes_home, sizeof(slermes_home), "%s/.slermes", getenv("HOME") ? getenv("HOME") : "/tmp");
-        snprintf(profile_path, sizeof(profile_path), "%s/profiles/%s.yaml", slermes_home, profile_name);
+        char profiles_sub[HERMES_PATH_MAX];
+        snprintf(profiles_sub, sizeof(profiles_sub), "profiles/%s.yaml", profile_name);
+        hermes_resolve_path(profiles_sub, profile_path, sizeof(profile_path));
     }
 
     /* Check file exists */

@@ -398,6 +398,29 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path);
 bool hermes_config_import(hermes_config_t *cfg, const char *path);
 
 /* ================================================================
+ *  P21: Path resolution (hermes_constants port)
+ * ================================================================ */
+
+/* Resolve SLERMES_HOME (profile-aware). Returns path in buf. */
+void hermes_get_home(char *buf, size_t sz);
+
+/* Resolve XDG-style paths relative to SLERMES_HOME */
+void hermes_config_dir(char *buf, size_t sz);    /* ~/.slermes/ */
+void hermes_data_dir(char *buf, size_t sz);      /* ~/.slermes/data/ */
+void hermes_cache_dir(char *buf, size_t sz);     /* ~/.slermes/cache/ */
+void hermes_log_dir(char *buf, size_t sz);       /* ~/.slermes/logs/ */
+
+/* Display resolved Hermes paths to stdout */
+void hermes_display_home(void);
+
+/* Resolve path within SLERMES_HOME: hermes_resolve_path("profiles/default.yaml") */
+void hermes_resolve_path(const char *sub, char *buf, size_t sz);
+
+/* Set active profile name (affects hermes_get_home resolution) */
+void hermes_set_profile(const char *name);
+const char *hermes_get_profile(void);
+
+/* ================================================================
  *  Include sub-headers for dependency wrappers
  * ================================================================ */
 #include "hermes_json.h"
