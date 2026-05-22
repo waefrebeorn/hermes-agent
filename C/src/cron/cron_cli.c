@@ -31,25 +31,13 @@ char *cron_cmd_handler(const char *args_json, const char *task_id) {
     json_t *args = json_parse(args_json, &err);
     if (!args) { free(err); return strdup("{\"error\":\"JSON parse\"}"); }
 
-    /* Lazy init: create store on first use. Path from config or default. */
+    /* Lazy init: create store on first use at default path */
     if (!g_cron_store) {
-        const hermes_config_t *cfg = hermes_config_get();
-        const char *store_path = NULL;
-        if (cfg) {
-            json_t *cron_cfg = json_obj_get(cfg->root, "cron");
-            if (cron_cfg)
-                store_path = json_get_str(cron_cfg, "store_path", NULL);
-        }
-        if (!store_path) {
-            const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
-                               getenv("HOME") ? getenv("HOME") : ".";
-            char default_path[512];
-            snprintf(default_path, sizeof(default_path), "%s/.hermes/cron_jobs.json", home);
-            store_path = default_path;
-            g_cron_store = cron_sqlite_open(store_path);
-        } else {
-            g_cron_store = cron_sqlite_open(store_path);
-        }
+        const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                           getenv("HOME") ? getenv("HOME") : ".";
+        char store_path[512];
+        snprintf(store_path, sizeof(store_path), "%s/.hermes/cron_jobs.json", home);
+        g_cron_store = cron_sqlite_open(store_path);
         if (g_cron_store)
             cron_sqlite_load_jobs(g_cron_store);
     }

@@ -37,6 +37,7 @@ void registry_init_kanban(void);
 void registry_init_computer_use(void);
 void registry_init_discord(void);
 void registry_init_mcp(void);
+void registry_init_file_batch(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -71,6 +72,9 @@ void tools_init_all(void) {
     registry_init_computer_use();
     registry_init_discord();
     registry_init_mcp();
+
+    /* F15: Batch file ops */
+    registry_init_file_batch();
 
     /* P150: Assign toolsets for enabled/disabled filtering */
     registry_set_toolset("browser_navigate", "browser");
