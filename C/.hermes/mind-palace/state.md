@@ -1,10 +1,11 @@
-# Slermes C — State (May 21+ session, 2 commits)
+# Slermes C — State (May 21+ session, 4 commits)
 
 ## Honest Assessment
-**P1-P106+ committed.** This session: P15 (validation), P22 (merge), YAML parser gap-fill.
+**This session:** P15 (validation), P22 (merge), YAML parser gap-fill, P168 (file sandbox).
 - P15: Validation extended to all 14 config groups ✅ compiled+runtime
 - P22: Merge logic covers ALL config groups with full field-level merging ✅ compiled
-- YAML parser: 12 missing struct fields now populated from config.yaml (plugin.dirs/enabled, sessions auto_save/compress/store, mcp max_tools/credential_store, memory ttl_days/auto_save/compression/search_limit, browser.javascript, cron.notify_on_failure, notification.sound) ✅ compiled+runtime
+- YAML parser: ~16 struct fields now populated from config.yaml (plugin, session, MCP, memory, browser, cron, notification) ✅ compiled+runtime
+- P168: File sandbox wired into tools_init_all() — HOME/tmp/SLERMES_HOME allowed, symlink protection ✅ compiled
 
 ## This Session (10 phases)
 | Phase | Feature | Files |

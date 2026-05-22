@@ -13,6 +13,7 @@
 #include <strings.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/stat.h>
 
 /* ================================================================
@@ -1944,4 +1945,40 @@ bool hermes_config_migrate(hermes_config_t *cfg, const char *config_dir) {
     }
 
     return changed;
+}
+
+/* ================================================================
+ *  P19: Config hot-reload via SIGHUP
+ * ================================================================ */
+
+static volatile sig_atomic_t g_config_reload_requested = 0;
+
+static void config_sighup_handler(int sig) {
+    (void)sig;
+    g_config_reload_requested = 1;
+}
+
+void hermes_config_setup_reload(void) {
+    signal(SIGHUP, config_sighup_handler);
+}
+
+bool hermes_config_check_reload(hermes_config_t *cfg, const char *config_dir) {
+    if (!g_config_reload_requested)
+        return false;
+    g_config_reload_requested = 0;
+
+    fprintf(stderr, "SIGHUP received — reloading config...\n");
+
+    /* Save current config as fallback */
+    hermes_config_t old = *cfg;
+
+    /* Reload — this resets to defaults then overlays YAML + env */
+    if (!hermes_config_load(cfg, config_dir)) {
+        fprintf(stderr, "Config reload FAILED — restoring previous config\n");
+        *cfg = old;
+        return false;
+    }
+
+    fprintf(stderr, "Config reloaded successfully.\n");
+    return true;
 }

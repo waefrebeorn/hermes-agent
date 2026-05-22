@@ -495,6 +495,11 @@ char *hermes_config_schema(void);
 /* P25: Config migration — upgrade config version, returns true if migration ran */
 bool hermes_config_migrate(hermes_config_t *cfg, const char *config_dir);
 
+/* P19: Config hot-reload via SIGHUP — setup signal handler and poll flag */
+void hermes_config_setup_reload(void);
+/* Returns true and reloads config if SIGHUP was received */
+bool hermes_config_check_reload(hermes_config_t *cfg, const char *config_dir);
+
 /* ================================================================
  *  P21: Path resolution (hermes_constants port)
  * ================================================================ */

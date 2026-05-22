@@ -106,6 +106,8 @@ int hermes_cli_main(int argc, char **argv) {
     /* Load config */
     hermes_config_load(&g_cli.config, NULL);
     hermes_config_load_env(&g_cli.config);
+    /* P19: Enable SIGHUP-based config reload */
+    hermes_config_setup_reload();
 
     /* Initialize skin (loads from config.skin_path, falls back to default) */
     cli_skin_init();
@@ -249,6 +251,9 @@ int hermes_cli_main(int argc, char **argv) {
 
     char input[65536];
     while (g_cli.running) {
+        /* P19: Check SIGHUP-based config reload before each input */
+        hermes_config_check_reload(&g_cli.config, NULL);
+
         if (g_cli.interactive)
             display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
                            "\nhermes> ");

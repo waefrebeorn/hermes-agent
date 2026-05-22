@@ -33,16 +33,16 @@ Scanned all 57 commits in C history for:
 | P10 | Notification config group | ✅ | compiled | on_complete, on_error, on_approval |
 | P11 | Security config group | ✅ | compiled | tirith_timeout, tirith_enabled, allow_private_urls, website_blocklist_enabled, redact_patterns |
 | P12 | Session config group | ✅ | compiled | retention_days, auto_save_interval, compress, store_trajectories |
-| P13 | Plugin config group | ❌ | — | plugin_dirs, enabled_plugins not in config struct |
+| P13 | Plugin config group | ✅ | compiled | plugin.dirs, plugin.enabled in struct and read from YAML |
 | P14 | MCP config group | ✅ | compiled | timeout, max_tools, auth_enabled in struct |
-| P15 | Config key validation | ❌ | — | No type/range/enum validation |
+| P15 | Config key validation | ✅ | runtime | All 14 groups: type/range/enum for provider, display, agent, tools, browser, memory, compression, cron, notification, plugin, MCP, delegation, security, session |
 | P16 | Env var override | ✅ | runtime | HERMES_MODEL/PROVIDER/BASE_URL/API_KEY/MAX_TURNS/etc. work |
 | P17 | Config profiles | ✅ | compiled | hermes_config_load_profile() exists |
 | P18 | Config diff/show | ✅ | runtime | /config shows all keys; config show works |
 | P19 | Config hot-reload | ❌ | — | No inotify watcher |
 | P20 | Config import/export | ✅ | compiled | Export to file works; import exists |
 | P21 | Constants module | ✅ | runtime | hermes_get_home(), env paths, XDG |
-| P22 | Config merge logic | ❌ | — | No deep_merge for layered configs |
+| P22 | Config merge logic | ✅ | compiled | Deep merge for all config groups — fields only override when set in src |
 | P23 | Config category groups | ✅ | runtime | /config shows grouped keys |
 | P24 | Config schema generation | ✅ | compiled | Generate JSON Schema from struct |
 | P25 | Config migration | ✅ | compiled | v0→v1 migration, version field |
@@ -287,7 +287,7 @@ Scanned all 57 commits in C history for:
 | P165 | Rate limiting | ✅ | compiled | Per-tool RPM, global RPM |
 | P166 | Output sanitization | ✅ | compiled | Strip sensitive data |
 | P167 | Credential vault | ✅ | compiled | AES-encrypted, master key |
-| P168 | File sandbox | ❌ | — | No directory restriction |
+|| P168 | File sandbox | ✅ | compiled | sandbox_init() wired into tools_init_all(). ALL file tools check sandbox. |
 
 **Gap:** File sandbox not implemented. Tirith path validation basic.
 
@@ -356,7 +356,7 @@ Scanned all 57 commits in C history for:
 
 | Group | Coverage | Verdict |
 |-------|----------|---------|
-| P1-P25 Config | 65% | 154/318 keys, good structure |
+| P1-P25 Config | ~70% | P15+P22 done, YAML gap-fill. P19 (hot-reload) remaining. ~150 leaf keys. |
 | P26-P40 CLI | 85% | /clear missing, some shallow handlers |
 | P41-P55 Tools | 92% | 14 feishu/MoA/video/yuanbao tools missing |
 | P56-P70 MCP | 70% | Core works, namespace/filter/sampling missing |
@@ -367,7 +367,7 @@ Scanned all 57 commits in C history for:
 | P126-P140 Plugins | 25% | 3/17 plugin stubs |
 | P141-P150 Session DB | 100% | Most complete subsystem |
 | P151-P158 Memory | 90% | Solid, provider plugins missing |
-| P159-P168 Security | 70% | File sandbox missing |
+| P159-P168 Security | ~75% | P168 (file sandbox) now wired in. All phases covered. |
 | P169-P178 Cron | 90% | Job templating partial |
 | P179-P188 Skills | 90% | Remote sync untested |
 | P189-P200 TUI | 50% | Basic ncurses, 6/12 phases missing |
