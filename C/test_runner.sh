@@ -234,6 +234,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "audit_log (compilation failed)"
 fi
 
+# Approval system test (needs approval.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_approval.c" \
+    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_app -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_app > /dev/null 2>&1; then ok "approval_system (18 tests)"
+    else fail "approval_system (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_app
+else skip "approval_system (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
