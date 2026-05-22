@@ -58,8 +58,8 @@ int main(void) {
             TEST("plugin_registry_init_all runs", ok > 0);
 
             /* Find by name */
-            plugin_t *found = plugin_registry_find(reg, "hello_plugin");
-            TEST("plugin_registry_find(hello_plugin)", found != NULL);
+            plugin_t *found = plugin_registry_find(reg, "hello-plugin");
+            TEST("plugin_registry_find(hello-plugin)", found != NULL);
         }
 
         plugin_registry_free(reg);

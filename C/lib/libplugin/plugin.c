@@ -124,9 +124,6 @@ plugin_type_t plugin_type_from_str(const char *s) {
  *     - key: value
  */
 
-/* Forward declaration */
-static bool parse_metadata_file(const char *path, plugin_t *p);
-
 /* Read a text file into a malloc'd buffer. Caller must free. */
 static char *read_file_content(const char *path) {
     FILE *f = fopen(path, "rb");
@@ -193,100 +190,6 @@ static char *yaml_get_value(const char *yaml, const char *key) {
     }
 
     return NULL;
-}
-
-/* Parse YAML list items under a key. Returns array of strings, count via *n.
- * Handles format:
- *   dependencies:
- *     - name: "foo"
- *       min_version: "1.0.0"
- *       optional: false
- */
-static char **yaml_get_list(const char *yaml, const char *key, int *n) {
-    *n = 0;
-    if (!yaml || !key) return NULL;
-
-    size_t klen = strlen(key);
-    const char *p = yaml;
-
-    /* Find the key */
-    while (*p) {
-        while (*p == ' ' || *p == '\t') p++;
-        if (*p == '\n' || *p == '\r') { p++; continue; }
-        if (*p == '#') {
-            while (*p && *p != '\n') p++;
-            continue;
-        }
-
-        if (strncmp(p, key, klen) == 0 && p[klen] == ':') {
-            p += klen + 1;
-            /* Skip to end of line (the key line itself) */
-            while (*p && *p != '\n') p++;
-            if (*p) p++;
-            break;
-        }
-
-        while (*p && *p != '\n') p++;
-        if (*p) p++;
-    }
-
-    if (!*p) return NULL;
-
-    /* Count list items */
-    int count = 0;
-    const char *scan = p;
-    while (*scan) {
-        /* Skip blank lines */
-        while (*scan == ' ' || *scan == '\t' || *scan == '\n' || *scan == '\r') scan++;
-        if (!*scan) break;
-        if (*scan == '#') {
-            while (*scan && *scan != '\n') scan++;
-            continue;
-        }
-        if (strncmp(scan, "- ", 2) == 0 || strncmp(scan, "-\n", 2) == 0) {
-            count++;
-            scan++;
-        }
-        while (*scan && *scan != '\n') scan++;
-        if (*scan) scan++;
-    }
-
-    if (count == 0) return NULL;
-
-    /* Allocate for line-level items (enough capacity) */
-    char **items = (char **)calloc((size_t)count, sizeof(char *));
-    if (!items) return NULL;
-
-    int idx = 0;
-    while (*p && idx < count) {
-        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
-        if (!*p) break;
-        if (*p == '#') {
-            while (*p && *p != '\n') p++;
-            continue;
-        }
-        if (*p == '-') {
-            p++;
-            while (*p == ' ' || *p == '\t') p++;
-            /* Check if this is inline value "- value" */
-            const char *end = p;
-            while (*end && *end != '\n' && *end != '\r') end++;
-            size_t len = (size_t)(end - p);
-            if (len > 0) {
-                char *val = (char *)malloc(len + 1);
-                if (val) {
-                    memcpy(val, p, len);
-                    val[len] = '\0';
-                    items[idx++] = val;
-                }
-            }
-        }
-        while (*p && *p != '\n') p++;
-        if (*p) p++;
-    }
-
-    *n = idx;
-    return items;
 }
 
 /* Parse YAML sub-items under a list entry.
@@ -679,7 +582,7 @@ bool plugin_satisfies_dep(const plugin_t *p, const plugin_dep_t *dep) {
     return plugin_version_cmp(&p->version, &dep->min_version) >= 0;
 }
 
-int plugin_check_deps(const plugin_t *p, const plugin_registry_t *reg) {
+int plugin_check_deps(const plugin_t *p, plugin_registry_t *reg) {
     if (!p || !reg) return -1;
     int unsatisfied = 0;
     for (int i = 0; i < p->ndeps; i++) {
@@ -871,7 +774,9 @@ int plugin_registry_init_ordered(plugin_registry_t *reg) {
         for (int i = 0; i < sorted_count; i++) {
             plugin_t *p = reg->plugins[order[i]];
             if (p->initialized) { ok++; continue; }
-            int (*init_fn)(void) = (int (*)(void))plugin_symbol(p, "plugin_init");
+            union { void *ptr; int (*fn)(void); } u;
+            u.ptr = dlsym(p->handle, "plugin_init");
+            int (*init_fn)(void) = u.fn;
             if (init_fn) {
                 if (init_fn() == 0) {
                     p->initialized = true;
@@ -904,7 +809,9 @@ int plugin_registry_shutdown(plugin_registry_t *reg) {
         for (int i = sorted_count - 1; i >= 0; i--) {
             plugin_t *p = reg->plugins[order[i]];
             if (!p->initialized) continue;
-            int (*cleanup_fn)(void) = (int (*)(void))plugin_symbol(p, "plugin_cleanup");
+            union { void *ptr; int (*fn)(void); } u;
+            u.ptr = dlsym(p->handle, "plugin_cleanup");
+            int (*cleanup_fn)(void) = u.fn;
             if (cleanup_fn) {
                 if (cleanup_fn() == 0) ok++;
             } else {
@@ -918,7 +825,9 @@ int plugin_registry_shutdown(plugin_registry_t *reg) {
         for (int i = reg->count - 1; i >= 0; i--) {
             plugin_t *p = reg->plugins[i];
             if (!p->initialized) continue;
-            int (*cleanup_fn)(void) = (int (*)(void))plugin_symbol(p, "plugin_cleanup");
+            union { void *ptr; int (*fn)(void); } u;
+            u.ptr = dlsym(p->handle, "plugin_cleanup");
+            int (*cleanup_fn)(void) = u.fn;
             if (cleanup_fn) {
                 if (cleanup_fn() == 0) ok++;
             }
@@ -934,7 +843,9 @@ int plugin_registry_init_all(plugin_registry_t *reg) {
     int ok = 0;
     for (int i = 0; i < reg->count; i++) {
         if (reg->plugins[i]->initialized) { ok++; continue; }
-        int (*init_fn)(void) = (int (*)(void))plugin_symbol(reg->plugins[i], "plugin_init");
+        union { void *ptr; int (*fn)(void); } u;
+        u.ptr = dlsym(reg->plugins[i]->handle, "plugin_init");
+        int (*init_fn)(void) = u.fn;
         if (init_fn) {
             if (init_fn() == 0) {
                 reg->plugins[i]->initialized = true;

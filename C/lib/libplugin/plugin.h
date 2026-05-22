@@ -295,7 +295,7 @@ bool plugin_satisfies_dep(const plugin_t *p, const plugin_dep_t *dep);
 
 /* Check all dependencies of a plugin against the registry.
  * Returns 0 if all satisfied, or count of unsatisfied deps. */
-int plugin_check_deps(const plugin_t *p, const plugin_registry_t *reg);
+int plugin_check_deps(const plugin_t *p, plugin_registry_t *reg);
 
 #ifdef __cplusplus
 }
