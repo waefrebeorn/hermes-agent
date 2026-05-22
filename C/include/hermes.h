@@ -125,6 +125,7 @@ typedef struct {
     int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
     int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
+    bool  response_format_strict;   /* B24: strict JSON schema enforcement (OpenAI) */
     char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     char  azure_deployment_id[128]; /* B37: Azure deployment name override */
@@ -342,6 +343,7 @@ typedef struct {
     int   top_k;                    /* B30: top-k sampling (Google, etc.); 0=unset */
     int   candidate_count;          /* B30: number of response candidates (Google); 0=unset */
     bool  json_mode;                /* B23: convenience — auto-set response_format to json_object */
+    bool  response_format_strict;   /* B24: strict JSON schema enforcement (OpenAI) */
     char  safety_settings[2048];   /* B29: Google safety settings JSON array */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
     char  azure_deployment_id[128]; /* B37: Azure deployment name override (default: model name) */

@@ -126,7 +126,13 @@ static char *openai_build_request_body(const provider_t *p,
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);
-        if (rf) { json_object_set(root, "response_format", json_copy(rf)); json_free(rf); }
+        if (rf) {
+            /* B24: strict JSON schema enforcement */
+            if (p->config.response_format_strict)
+                json_object_set(rf, "strict", json_new_bool(true));
+            json_object_set(root, "response_format", json_copy(rf));
+            json_free(rf);
+        }
     } else if (p->config.json_mode) {
         /* B23: json_mode convenience — auto-set to json_object */
         json_t *rf = json_new_object();

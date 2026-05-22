@@ -361,6 +361,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.tool_choice[0] = '\0';
     cfg->provider_cfg.parallel_tool_calls = true;
     cfg->provider_cfg.json_mode = false;
+    cfg->provider_cfg.response_format_strict = false;
     cfg->provider_cfg.safety_settings[0] = '\0';
     cfg->provider_cfg.max_tool_calls = 0;
     cfg->provider_cfg.n = 1;
@@ -844,6 +845,9 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (cc > 0) cfg->provider_cfg.candidate_count = cc;
     /* B23: json_mode — auto-set response_format to json_object */
     cfg->provider_cfg.json_mode = yaml_get_bool(doc, "agent.json_mode", false);
+    /* B24: response_format_strict — strict JSON schema enforcement */
+    cfg->provider_cfg.response_format_strict = yaml_get_bool(doc, "agent.response_format_strict", false);
+
     /* B29: safety_settings JSON array */
     const char *ss = yaml_get_string(doc, "agent.safety_settings");
     if (ss) snprintf(cfg->provider_cfg.safety_settings, sizeof(cfg->provider_cfg.safety_settings), "%s", ss);
@@ -1592,6 +1596,10 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     /* B23: json_mode env var */
     v = getenv("HERMES_JSON_MODE");
     if (v) cfg->provider_cfg.json_mode = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
+
+    /* B24: response_format_strict env var */
+    v = getenv("HERMES_RESPONSE_FORMAT_STRICT");
+    if (v) cfg->provider_cfg.response_format_strict = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
 
     /* B29: safety_settings env var */
     v = getenv("HERMES_SAFETY_SETTINGS");
@@ -2367,6 +2375,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "model.top_k", def.provider_cfg.top_k, active->provider_cfg.top_k);
     diff_int(diff, "model.candidate_count", def.provider_cfg.candidate_count, active->provider_cfg.candidate_count);
     diff_bool(diff, "model.json_mode", def.provider_cfg.json_mode, active->provider_cfg.json_mode);
+    diff_bool(diff, "model.response_format_strict", def.provider_cfg.response_format_strict, active->provider_cfg.response_format_strict);
     diff_str(diff, "model.safety_settings", def.provider_cfg.safety_settings, active->provider_cfg.safety_settings);
     diff_str(diff, "azure.deployment_id", def.provider_cfg.azure_deployment_id, active->provider_cfg.azure_deployment_id);
     diff_str(diff, "azure.api_version", def.provider_cfg.azure_api_version, active->provider_cfg.azure_api_version);
@@ -2556,6 +2565,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_str(f, "  bedrock_inference_profile", cfg->provider_cfg.bedrock_inference_profile);
     exp_str(f, "  bedrock_guardrail_config", cfg->provider_cfg.bedrock_guardrail_config);
     exp_bool(f, "  bedrock_trace_enabled", cfg->provider_cfg.bedrock_trace_enabled);
+    exp_bool(f, "  json_mode", cfg->provider_cfg.json_mode);
+    exp_bool(f, "  response_format_strict", cfg->provider_cfg.response_format_strict);
     exp_bool(f, "  supports_vision", cfg->provider_cfg.supports_vision);
 
     fprintf(f, "\ndisplay:\n");
