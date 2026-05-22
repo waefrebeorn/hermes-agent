@@ -32,7 +32,7 @@ void provider_register_builtins(void) {
     provider_register(PROVIDER_OPENAI, &PROVIDER_OPS_OPENAI);
     provider_register(PROVIDER_ANTHROPIC, &PROVIDER_OPS_ANTHROPIC);
     provider_register(PROVIDER_GOOGLE, &PROVIDER_OPS_GOOGLE);
-    /* Add more as implemented: */
+    provider_register(PROVIDER_OPENROUTER, &PROVIDER_OPS_OPENROUTER);
 }
 
 /* Find provider ops by name (case-insensitive) */
@@ -50,7 +50,7 @@ static const provider_ops_t *find_provider_ops(const char *name) {
     struct { const char *name; provider_type_t type; } providers[] = {
         {"openai",      PROVIDER_OPENAI},
         {"deepseek",    PROVIDER_OPENAI},
-        {"openrouter",  PROVIDER_OPENAI},
+        {"openrouter",  PROVIDER_OPENROUTER},
         {"groq",        PROVIDER_OPENAI},
         {"together",    PROVIDER_OPENAI},
         {"anthropic",   PROVIDER_ANTHROPIC},

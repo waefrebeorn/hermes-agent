@@ -132,7 +132,7 @@ Scanned all 57 commits in C history for:
 | P73 | OpenAI provider | ✅ | runtime | Chat, streaming, tools, vision |
 | P74 | Anthropic provider | ✅ | compiled | Messages API, streaming, tools |
 | P75 | Google provider | ✅ | compiled | Gemini API, tool calling |
-| P76 | OpenRouter provider | ❌ | — | Falls back to OpenAI compat |
+| P76 | OpenRouter provider | ✅ | compiled | Native OpenRouter: extra HTTP-Referer/X-Title headers, proper type enum, 243 LOC |
 | P77 | AWS Bedrock | ❌ | — | Not implemented |
 | P78 | Azure | ❌ | — | Not implemented |
 | P79 | DeepSeek | ✅ | runtime | Works via OpenAI compat + base_url |
@@ -360,7 +360,7 @@ Scanned all 57 commits in C history for:
 | P26-P40 CLI | 85% | /clear missing, some shallow handlers |
 | P41-P55 Tools | 92% | 14 feishu/MoA/video/yuanbao tools missing |
 | P56-P70 MCP | 70% | Core works, namespace/filter/sampling missing |
-| P71-P85 Providers | 10% | 3/29 — biggest gap by count |
+| P71-P85 Providers | ~15% | 4/29 (OpenAI, Anthropic, Google, OpenRouter native). OpenRouter native added this session. |
 | P86-P100 Agent Loop | 75% | Functional, edge cases need testing |
 | P101-P115 Gateway | 95% | 19/20 platforms, OAuth partial |
 | P116-P125 Delegation | 80% | Nested delegation not tested |
