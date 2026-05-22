@@ -101,6 +101,16 @@ struct mcp_server {
     int         subscription_count;
     void      (*on_resource_change)(const char *server_name, const char *resource_uri, void *userdata);
     void       *on_resource_change_data;
+
+    /* C04-C05: Incoming request queue (server→client requests) */
+    int         incoming_count;
+    char        incoming_ids[MCP_MAX_INCOMING][64];
+    char        incoming_methods[MCP_MAX_INCOMING][64];
+    char        incoming_params[MCP_MAX_INCOMING][16384]; /* JSON params string */
+
+    /* C04: Sampling callback */
+    mcp_sampling_callback_t on_sampling;
+    void                   *on_sampling_data;
 };
 
 /* ================================================================
@@ -295,6 +305,26 @@ static json_t *transport_read_response(mcp_server_t *srv, const char *request_id
                         const char *rid = json_get_str(result, "id", "");
                         if (rid && strcmp(rid, request_id) == 0)
                             return result;
+
+                        /* C04-C05: Check for incoming server→client request.
+                         * If it has an id (it's a request, not response) and a method,
+                         * queue it as an incoming request for later processing. */
+                        const char *method = json_get_str(result, "method", "");
+                        if (rid && rid[0] && method[0] && srv->incoming_count < MCP_MAX_INCOMING) {
+                            int idx = srv->incoming_count;
+                            snprintf(srv->incoming_ids[idx], sizeof(srv->incoming_ids[0]), "%s", rid);
+                            snprintf(srv->incoming_methods[idx], sizeof(srv->incoming_methods[0]), "%s", method);
+                            json_t *params = json_obj_get(result, "params");
+                            if (params) {
+                                char *pstr = json_serialize(params);
+                                snprintf(srv->incoming_params[idx], sizeof(srv->incoming_params[0]), "%s", pstr);
+                                free(pstr);
+                            } else {
+                                srv->incoming_params[idx][0] = '\0';
+                            }
+                            srv->incoming_count++;
+                        }
+
                         json_free(result);
                     }
                     continue;
@@ -1112,6 +1142,175 @@ bool mcp_server_handle_notification(mcp_server_t *srv, const char *method,
     }
 
     return false; /* unknown notification */
+}
+
+/* ================================================================
+ *  C04-C05: Sampling protocol
+ * ================================================================ */
+
+/* Set sampling callback */
+void mcp_server_set_sampling_callback(mcp_server_t *srv,
+                                       mcp_sampling_callback_t callback,
+                                       void *userdata) {
+    if (!srv) return;
+    srv->on_sampling = callback;
+    srv->on_sampling_data = userdata;
+}
+
+/* Send a sampling/createMessage response back to the server */
+bool mcp_server_sampling_respond(mcp_server_t *srv, const char *request_id,
+                                  const mcp_sampling_content_t *content,
+                                  const char *model) {
+    if (!srv || !request_id || !content) return false;
+
+    json_t *result = json_object();
+    json_t *content_obj = json_object();
+    json_set(content_obj, "type", json_string(content->type));
+    json_set(content_obj, "text", json_string(content->text));
+    json_set(result, "content", content_obj);
+    json_set(result, "model", json_string(model && model[0] ? model : "default"));
+
+    json_t *resp = json_object();
+    json_set(resp, "jsonrpc", json_string(MCP_JSONRPC_VERSION));
+    json_set(resp, "id", json_string(request_id));
+    json_set(resp, "result", result);
+
+    char *msg = json_serialize(resp);
+    bool ok = transport_send(srv, msg);
+    free(msg);
+    json_free(resp);
+    return ok;
+}
+
+/* Send a sampling/notify notification to the server (client→server). */
+bool mcp_server_sampling_notify(mcp_server_t *srv,
+                                 const mcp_sampling_content_t *content,
+                                 const char *model) {
+    if (!srv || !content) return false;
+
+    json_t *params = json_object();
+    json_t *content_obj = json_object();
+    json_set(content_obj, "type", json_string(content->type));
+    json_set(content_obj, "text", json_string(content->text));
+    json_set(params, "content", content_obj);
+    json_set(params, "model", json_string(model && model[0] ? model : "default"));
+
+    char *msg = build_notification("sampling/notify", params);
+    bool ok = transport_send(srv, msg);
+    free(msg);
+    return ok;
+}
+
+/* Process pending incoming server→client requests.
+ * Currently handles: sampling/createMessage.
+ * Call periodically from the tool layer to keep sampling flowing. */
+int mcp_server_process_incoming(mcp_server_t *srv) {
+    if (!srv) return 0;
+    int handled = 0;
+
+    while (srv->incoming_count > 0) {
+        /* Dequeue the oldest incoming request */
+        char id[64], method[64], params_str[16384];
+        snprintf(id, sizeof(id), "%s", srv->incoming_ids[0]);
+        snprintf(method, sizeof(method), "%s", srv->incoming_methods[0]);
+        snprintf(params_str, sizeof(params_str), "%s", srv->incoming_params[0]);
+
+        /* Shift queue */
+        srv->incoming_count--;
+        for (int i = 0; i < srv->incoming_count; i++) {
+            snprintf(srv->incoming_ids[i], sizeof(srv->incoming_ids[0]), "%s", srv->incoming_ids[i+1]);
+            snprintf(srv->incoming_methods[i], sizeof(srv->incoming_methods[0]), "%s", srv->incoming_methods[i+1]);
+            snprintf(srv->incoming_params[i], sizeof(srv->incoming_params[0]), "%s", srv->incoming_params[i+1]);
+        }
+
+        /* Dispatch by method */
+        if (strcmp(method, "sampling/createMessage") == 0) {
+            if (srv->on_sampling) {
+                /* Parse params */
+                mcp_sampling_params_t params;
+                memset(&params, 0, sizeof(params));
+
+                json_t *jparams = params_str[0] ? json_parse(params_str, NULL) : NULL;
+                if (jparams) {
+                    const char *sp = json_get_str(jparams, "systemPrompt", NULL);
+                    if (sp) snprintf(params.system_prompt, sizeof(params.system_prompt), "%s", sp);
+
+                    json_t *msgs = json_obj_get(jparams, "messages");
+                    if (msgs) {
+                        char *ms = json_serialize(msgs);
+                        snprintf(params.messages, sizeof(params.messages), "%s", ms);
+                        free(ms);
+                    }
+
+                    params.max_tokens = (int)json_get_num(jparams, "maxTokens", 4096);
+                    params.temperature = json_get_num(jparams, "temperature", 1.0);
+                    params.include_context = json_get_bool(jparams, "includeContext", false);
+
+                    const char *mp = json_get_str(jparams, "modelPreference", NULL);
+                    if (mp) snprintf(params.model_preference, sizeof(params.model_preference), "%s", mp);
+
+                    const char *stop = json_get_str(jparams, "stopSequences", NULL);
+                    if (stop) snprintf(params.stop_sequences, sizeof(params.stop_sequences), "%s", stop);
+
+                    json_free(jparams);
+                }
+
+                /* Call the sampling callback */
+                mcp_sampling_content_t result;
+                memset(&result, 0, sizeof(result));
+
+                bool ok = srv->on_sampling(srv->name, &params, &result, srv->on_sampling_data);
+                if (ok) {
+                    const char *model = params.model_preference[0] ? params.model_preference : "default";
+                    mcp_server_sampling_respond(srv, id, &result, model);
+                } else {
+                    /* Send error response */
+                    json_t *error_resp = json_object();
+                    json_set(error_resp, "jsonrpc", json_string(MCP_JSONRPC_VERSION));
+                    json_set(error_resp, "id", json_string(id));
+                    json_t *err_obj = json_object();
+                    json_set(err_obj, "code", json_number(-32603));
+                    json_set(err_obj, "message", json_string("Sampling callback returned false"));
+                    json_set(error_resp, "error", err_obj);
+                    char *msg = json_serialize(error_resp);
+                    transport_send(srv, msg);
+                    free(msg);
+                    json_free(error_resp);
+                }
+                handled++;
+            } else {
+                /* No sampling callback — send method not found */
+                json_t *error_resp = json_object();
+                json_set(error_resp, "jsonrpc", json_string(MCP_JSONRPC_VERSION));
+                json_set(error_resp, "id", json_string(id));
+                json_t *err_obj = json_object();
+                json_set(err_obj, "code", json_number(-32601));
+                json_set(err_obj, "message", json_string("sampling/createMessage not supported (no callback registered)"));
+                json_set(error_resp, "error", err_obj);
+                char *msg = json_serialize(error_resp);
+                transport_send(srv, msg);
+                free(msg);
+                json_free(error_resp);
+                handled++;
+            }
+        } else {
+            /* Unknown method — send method not found error */
+            json_t *error_resp = json_object();
+            json_set(error_resp, "jsonrpc", json_string(MCP_JSONRPC_VERSION));
+            json_set(error_resp, "id", json_string(id));
+            json_t *err_obj = json_object();
+            json_set(err_obj, "code", json_number(-32601));
+            json_set(err_obj, "message", json_string("Unknown method"));
+            json_set(error_resp, "error", err_obj);
+            char *msg = json_serialize(error_resp);
+            transport_send(srv, msg);
+            free(msg);
+            json_free(error_resp);
+            handled++;
+        }
+    }
+
+    return handled;
 }
 
 /* ================================================================

@@ -274,6 +274,62 @@ bool mcp_server_handle_notification(mcp_server_t *srv, const char *method,
                                      const char *params_json);
 
 /* ================================================================
+ *  C04-C05: Sampling protocol
+ * ================================================================ */
+
+/* Maximum pending incoming requests (server→client) */
+#define MCP_MAX_INCOMING 8
+
+/* Sampling message content struct (result of LLM call) */
+typedef struct {
+    char  role[16];          /* "assistant" */
+    char  type[16];          /* "text" */
+    char  text[16384];       /* content text */
+} mcp_sampling_content_t;
+
+/* Sampling parameters from server request */
+typedef struct {
+    char  system_prompt[4096];    /* optional system prompt */
+    char  messages[16384];        /* JSON array of messages to sample */
+    int   max_tokens;
+    char  model_preference[64];   /* optional model hint */
+    double temperature;           /* 0=disabled */
+    char  stop_sequences[1024];   /* JSON array of stop sequences */
+    bool  include_context;        /* include MCP context */
+} mcp_sampling_params_t;
+
+/* Callback for handling sampling/createMessage requests from server.
+ * Receives server name, sampling params, and userdata.
+ * Must call mcp_server_sampling_respond() to send the response.
+ * Return true if handled, false to send error response. */
+typedef bool (*mcp_sampling_callback_t)(const char *server_name,
+                                         const mcp_sampling_params_t *params,
+                                         mcp_sampling_content_t *result,
+                                         void *userdata);
+
+/* Set sampling callback for a server. Must be called before connect. */
+void mcp_server_set_sampling_callback(mcp_server_t *srv,
+                                       mcp_sampling_callback_t callback,
+                                       void *userdata);
+
+/* Send a sampling/createMessage response back to the server.
+ * Returns true if the response was sent successfully. */
+bool mcp_server_sampling_respond(mcp_server_t *srv, const char *request_id,
+                                  const mcp_sampling_content_t *content,
+                                  const char *model);
+
+/* Send a sampling/notify notification to the server.
+ * Notifies the server of a completed sampling operation without
+ * an explicit request. */
+bool mcp_server_sampling_notify(mcp_server_t *srv,
+                                 const mcp_sampling_content_t *content,
+                                 const char *model);
+
+/* Process any pending incoming server→client requests (including sampling).
+ * Call periodically to handle incoming requests. Returns number handled. */
+int mcp_server_process_incoming(mcp_server_t *srv);
+
+/* ================================================================
  *  P69: Prompt templates
  * ================================================================ */
 
