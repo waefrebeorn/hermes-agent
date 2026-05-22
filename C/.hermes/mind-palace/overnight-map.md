@@ -64,17 +64,24 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Gateway now at ~48% parity** (30/63 gaps closed)
 - ◀ Committed: `d5e5109db`
 
-### Session 2026-05-22 (Part 6+)
-- ✅ **F11: Docker execution backend** — temp script approach, config-driven (docker_image, volumes, env forwarding, host user mapping, extra args), per-call image override
-- ✅ **F14: Glob support in file ops** — find-based glob matching with path prefix support, replaces grep --include
-- ✅ **F34-F36: Process sub-features** — signal sending by name/number, env overrides on start, per-process timeout with auto-kill
-- ✅ **F26+F28+F29: Cron job enhancements** — schedule validation (cron_parse at add-time), per-job notifications (notify_on_complete/notify_on_failure), retry with exponential backoff (max_retries + backoff_sec config)
-- ✅ **F09+F10+F12** — PTY mode, env isolation, timeout propagation (marked in roadmap)
-- ✅ **F16-F20** — Web search backends (searxng, google, brave, tavily, firecrawl) marked in roadmap
-- ✅ **F30-F33** — Memory tool ops (save/search/delete/list) marked in roadmap
-- ◀ **Tools now at ~92% parity** (24 remaining gaps)
-- ◀ Roadmap gap count: ~380 total (~20 closed this session)
-- ◀ Commits: `76bf19925 (F11)`, `796ffbdd4 (F26+F28+F29)`, `76443065f (F34-F36)`, `20e8f41b4 (F14+gateway+proxy)`
+## Session 2026-05-22 (Part ~8)
+
+### Gaps closed this session: 13+
+- ✅ **F27: Cron job chaining** — context_from arg, cron_run_job (popen + chain output), cron_cli.c added to build
+- ✅ **F15: Batch file ops** — file_batch tool: copy/move/delete multi-file with sandbox enforcement
+- ✅ **F21: Web LLM extract** — web_extract_delegate.py, fetch+LLM extraction via hermes chat subprocess
+- ✅ **F37-F39: TTS providers** — elevenlabs, openai, xai API-based backends (provider + voice args)
+- ✅ **F40: LLM vision description** — hardcoded path replaced with SLERMES_HOME configurable detection
+- ✅ **F42: send_message routing** — platform:chat_id format, generic gateway dispatch
+- ✅ **F43: send_message media** — media_path arg + MEDIA: prefix compat, extension-based Telegram send
+- ✅ **F44: exec_code sandbox** — sandbox bool arg, bwrap namespace/seccomp isolation
+- ✅ **C01-C03: MCP resource subscriptions** — subscribe/unsubscribe/is_subscribed + notification handler + callback
+- ✅ **C08-C10: MCP roots management** — add_root/remove_root/root_count/get_root dynamic operations
+- ✅ Fixed: cron_cli.c dead code (was not compiled), g_cron_store global added, cron_run_job defined
+- ◀ Committed: `a5b626344`, `b56bd8aa3`, `4295bc03b`, `31dcdbe3c`, `3d5af3d48`, `05ae948d9`, `bd05f10ec`
+- ◀ **Tools at ~95% parity** (6 stubs remaining, all CDP/plugin-blocked)
+- ◀ **MCP at ~70% parity** (8/17 gaps closed)
+- ◀ **Roadmap gap count: ~367 remaining** (~33 closed total)
 
 ## Upstream
 - 125 commits since last sync, 52 Python

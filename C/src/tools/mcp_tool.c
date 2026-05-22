@@ -138,7 +138,19 @@ static bool connect_stdio_server(const char *name, const char *command,
     /* P70: Set workspace roots before connect */
     if (roots && root_count > 0) {
         mcp_server_set_roots(srv, roots, root_count);
-        fprintf(stderr, "MCP:   Roots set for '%s' (%d roots)\n", name, root_count);
+        fprintf(stderr, "MCP:   Roots set for '%s' (%d roots)\\n", name, root_count);
+    }
+
+    /* C17: Wire header-based auth for SSE transport */
+    if (g_server_auth[aidx].type[0] &&
+        strcmp(g_server_auth[aidx].type, "header") == 0 &&
+        g_server_auth[aidx].header_name[0] &&
+        g_server_auth[aidx].token[0]) {
+        char hdr[1024];
+        snprintf(hdr, sizeof(hdr), "%s: %s", g_server_auth[aidx].header_name,
+                 g_server_auth[aidx].token);
+        mcp_server_set_headers(srv, hdr);
+        fprintf(stderr, "MCP:   Auth header set for '%s'\\n", name);
     }
 
     if (!mcp_server_connect(srv)) {
@@ -293,6 +305,29 @@ static char *mcp_status_handler(const char *args_json, const char *task_id) {
         json_t *srv = json_object();
         json_set(srv, "name", json_string(mcp_server_name(g_servers[i])));
         json_set(srv, "connected", json_bool(mcp_server_is_connected(g_servers[i])));
+
+        /* C15-C16: Report health + reconnection info */
+        mcp_server_status_t status = mcp_server_status(g_servers[i]);
+        const char *status_str = "unknown";
+        if (status == MCP_STATUS_CONNECTED) status_str = "connected";
+        else if (status == MCP_STATUS_CONNECTING) status_str = "connecting";
+        else if (status == MCP_STATUS_DISCONNECTED) status_str = "disconnected";
+        else if (status == MCP_STATUS_FAILED) status_str = "failed";
+        json_set(srv, "status", json_string(status_str));
+        json_set(srv, "reconnect_count", json_number((double)mcp_server_reconnect_count(g_servers[i])));
+        json_set(srv, "last_error", json_string(mcp_server_last_error(g_servers[i])));
+
+        /* C15: Run a health check ping on each server */
+        if (mcp_server_is_connected(g_servers[i])) {
+            bool healthy = mcp_server_health_check(g_servers[i]);
+            json_set(srv, "healthy", json_bool(healthy));
+        } else {
+            json_set(srv, "healthy", json_bool(false));
+            /* C16: Attempt reconnect if disconnected but max_retries not exhausted */
+            mcp_server_reconnect(g_servers[i]);
+            json_set(srv, "reconnect_attempted", json_bool(true));
+            json_set(srv, "reconnected", json_bool(mcp_server_is_connected(g_servers[i])));
+        }
 
         mcp_capabilities_t caps = mcp_server_capabilities(g_servers[i]);
         json_t *caps_obj = json_object();
