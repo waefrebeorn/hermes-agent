@@ -1,0 +1,9 @@
+# Metadata for honcho-memory plugin
+name: "honcho-memory"
+version: "1.0.0"
+type: "memory"
+description: "Honcho memory provider backend for persistent agent memory"
+dependencies:
+  - name: "base-memory"
+    min_version: "0.1.0"
+    optional: true

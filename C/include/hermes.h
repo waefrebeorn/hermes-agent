@@ -524,6 +524,7 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src);
 #include "hermes_display.h"
 #include "hermes_skin.h"
 #include "hermes_agent.h"
+#include "hermes_plugin.h"
 
 /* ================================================================
  *  Entry Points
