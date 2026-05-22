@@ -2,65 +2,16 @@
  * budget_tracker.c — Per-session budget tracking (P84).
  *
  * Tracks token/cost usage with configurable limits and alerts.
+ * Cost estimation delegates to provider_metadata.c pricing tables.
  */
 
 #include "budget_tracker.h"
+#include "provider_metadata.h"
 #include "hermes_json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-
-/* ================================================================
- *  Per-model pricing (approximate USD per 1M tokens)
- *  Source: public API pricing as of May 2026.
- * ================================================================ */
-
-typedef struct {
-    const char *model_prefix;  /* matched by prefix */
-    double input_per_1m;       /* USD per 1M input tokens */
-    double output_per_1m;      /* USD per 1M output tokens */
-} model_pricing_t;
-
-static const model_pricing_t PRICING[] = {
-    /* OpenAI — longest prefixes first to avoid false matches */
-    {"gpt-4.1",        2.00,  8.00},
-    {"gpt-4o-mini",    0.15,  0.60},
-    {"gpt-4o",         2.50, 10.00},
-    {"gpt-4-turbo",   10.00, 30.00},
-    {"gpt-4",         30.00, 60.00},
-    {"gpt-3.5",        0.50,  1.50},
-    {"o1",            15.00, 60.00},
-    {"o3-mini",        1.10,  4.40},
-    /* Anthropic */
-    {"claude-3.5-sonnet", 3.00, 15.00},
-    {"claude-3.5-haiku", 0.80,  4.00},
-    {"claude-3-opus",   15.00, 75.00},
-    {"claude-4",        3.00, 15.00},
-    /* Google */
-    {"gemini-2.0-pro",  2.00,  8.00},
-    {"gemini-2.0-flash", 0.10, 0.40},
-    {"gemini-1.5-pro",  3.50, 10.50},
-    {"gemini-1.5-flash", 0.075, 0.30},
-    /* DeepSeek */
-    {"deepseek-chat",   0.27,  1.10},
-    {"deepseek-reasoner", 0.55, 2.19},
-    /* Default fallback */
-    {NULL,              1.00,  4.00}, /* catch-all */
-};
-
-/* ================================================================
- *  Helpers
- * ================================================================ */
-
-static const model_pricing_t *find_pricing(const char *model) {
-    if (!model) return &PRICING[sizeof(PRICING)/sizeof(PRICING[0]) - 1]; /* default */
-    for (int i = 0; PRICING[i].model_prefix; i++) {
-        if (strncasecmp(model, PRICING[i].model_prefix, strlen(PRICING[i].model_prefix)) == 0)
-            return &PRICING[i];
-    }
-    return &PRICING[sizeof(PRICING)/sizeof(PRICING[0]) - 1]; /* default */
-}
 
 /* ================================================================
  *  Public API
@@ -207,10 +158,7 @@ int budget_tracker_remaining_turns(const budget_tracker_t *bt) {
 double budget_tracker_estimate_cost(const char *model,
                                      long long input_tokens,
                                      long long output_tokens) {
-    const model_pricing_t *p = find_pricing(model);
-    double input_cost = (double)input_tokens / 1000000.0 * p->input_per_1m;
-    double output_cost = (double)output_tokens / 1000000.0 * p->output_per_1m;
-    return input_cost + output_cost;
+    return model_estimate_cost(model, input_tokens, output_tokens);
 }
 
 char *budget_tracker_stats_json(const budget_tracker_t *bt) {
