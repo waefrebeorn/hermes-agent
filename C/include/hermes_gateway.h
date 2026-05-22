@@ -323,9 +323,9 @@ bool telegram_reopen_forum_topic(http_client_t *http, const char *chat_id,
                                   const char *message_thread_id);
 
 /* Update parsers */
+const char *telegram_get_update_type(json_node_t *update);
 const char *telegram_get_callback_query_id(json_node_t *update);
 const char *telegram_get_inline_query_id(json_node_t *update);
-const char *telegram_get_update_type(json_node_t *update);
 const char *telegram_get_message_thread_id(json_node_t *update);
 
 /* E07-E12: Interactive Telegram send methods with inline keyboards */

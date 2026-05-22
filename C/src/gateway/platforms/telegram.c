@@ -531,7 +531,139 @@ const char *telegram_get_text(json_node_t *update) {
         msg = json_object_get(update, "edited_message");
         if (!msg) return NULL;
     }
-    return json_object_get_string(msg, "text", NULL);
+
+    /* Try text first */
+    const char *text = json_object_get_string(msg, "text", NULL);
+    if (text) return text;
+
+    /* E17: Sticker */
+    json_node_t *sticker = json_object_get(msg, "sticker");
+    if (sticker) {
+        static char sticker_buf[256];
+        const char *emoji = json_object_get_string(sticker, "emoji", "");
+        const char *set_name = json_object_get_string(sticker, "set_name", "");
+        snprintf(sticker_buf, sizeof(sticker_buf), "Sticker%s%s%s%s",
+                 emoji[0] ? " " : "", emoji,
+                 set_name[0] ? " [" : "", set_name[0] ? set_name : "",
+                 set_name[0] ? "]" : "");
+        /* If neither emoji nor set name, use file_id */
+        if (!emoji[0] && !set_name[0]) {
+            const char *fid = json_object_get_string(sticker, "file_id", "");
+            snprintf(sticker_buf, sizeof(sticker_buf), "Sticker: %s", fid);
+        }
+        return sticker_buf;
+    }
+
+    /* E18: Animation (GIF) */
+    json_node_t *animation = json_object_get(msg, "animation");
+    if (animation) {
+        static char anim_buf[128];
+        const char *fname = json_object_get_string(animation, "file_name", "");
+        const char *mime = json_object_get_string(animation, "mime_type", "");
+        snprintf(anim_buf, sizeof(anim_buf), "Animation%s%s%s%s",
+                 fname[0] ? " " : "", fname,
+                 mime[0] ? " (" : "", mime[0] ? mime : "",
+                 mime[0] ? ")" : "");
+        return anim_buf;
+    }
+
+    /* E19: Voice message */
+    json_node_t *voice = json_object_get(msg, "voice");
+    if (voice) {
+        double duration = json_object_get_number(voice, "duration", 0);
+        static char voice_buf[64];
+        snprintf(voice_buf, sizeof(voice_buf), "Voice message (%.0f sec)", duration);
+        return voice_buf;
+    }
+
+    /* E20: Video */
+    json_node_t *video = json_object_get(msg, "video");
+    if (video) {
+        const char *caption = json_object_get_string(msg, "caption", NULL);
+        static char vid_buf[256];
+        if (caption && caption[0])
+            snprintf(vid_buf, sizeof(vid_buf), "Video: %s", caption);
+        else
+            snprintf(vid_buf, sizeof(vid_buf), "Video message");
+        return vid_buf;
+    }
+
+    /* E21: Audio */
+    json_node_t *audio = json_object_get(msg, "audio");
+    if (audio) {
+        const char *title = json_object_get_string(audio, "title", "");
+        const char *performer = json_object_get_string(audio, "performer", "");
+        static char audio_buf[256];
+        if (title[0] && performer[0])
+            snprintf(audio_buf, sizeof(audio_buf), "Audio: %s - %s", performer, title);
+        else if (title[0])
+            snprintf(audio_buf, sizeof(audio_buf), "Audio: %s", title);
+        else
+            snprintf(audio_buf, sizeof(audio_buf), "Audio file");
+        return audio_buf;
+    }
+
+    /* E22: Photo */
+    json_node_t *photos = json_object_get(msg, "photo");
+    if (photos && json_len(photos) > 0) {
+        const char *caption = json_object_get_string(msg, "caption", NULL);
+        static char photo_buf[256];
+        if (caption && caption[0])
+            snprintf(photo_buf, sizeof(photo_buf), "Photo: %s", caption);
+        else
+            snprintf(photo_buf, sizeof(photo_buf), "Photo");
+        return photo_buf;
+    }
+
+    /* E23: Location */
+    json_node_t *location = json_object_get(msg, "location");
+    if (location) {
+        double lat = json_object_get_number(location, "latitude", 0);
+        double lon = json_object_get_number(location, "longitude", 0);
+        static char loc_buf[64];
+        snprintf(loc_buf, sizeof(loc_buf), "Location: %.6f, %.6f", lat, lon);
+        return loc_buf;
+    }
+
+    /* E24: Venue */
+    json_node_t *venue = json_object_get(msg, "venue");
+    if (venue) {
+        const char *title = json_object_get_string(venue, "title", "");
+        const char *address = json_object_get_string(venue, "address", "");
+        static char venue_buf[256];
+        snprintf(venue_buf, sizeof(venue_buf), "Venue: %s, %s", title, address);
+        return venue_buf;
+    }
+
+    /* E25: Contact */
+    json_node_t *contact = json_object_get(msg, "contact");
+    if (contact) {
+        const char *fn = json_object_get_string(contact, "first_name", "");
+        const char *ln = json_object_get_string(contact, "last_name", "");
+        const char *phone = json_object_get_string(contact, "phone_number", "");
+        static char contact_buf[256];
+        if (ln[0])
+            snprintf(contact_buf, sizeof(contact_buf), "Contact: %s %s, %s", fn, ln, phone);
+        else
+            snprintf(contact_buf, sizeof(contact_buf), "Contact: %s, %s", fn, phone);
+        return contact_buf;
+    }
+
+    /* E26: Poll/Quiz */
+    json_node_t *poll = json_object_get(msg, "poll");
+    if (poll) {
+        const char *question = json_object_get_string(poll, "question", "");
+        static char poll_buf[256];
+        /* Check if it's a quiz by looking for correct_option_id */
+        double corr_opt = json_object_get_number(poll, "correct_option_id", -1);
+        if (corr_opt >= 0)
+            snprintf(poll_buf, sizeof(poll_buf), "Quiz: %s", question);
+        else
+            snprintf(poll_buf, sizeof(poll_buf), "Poll: %s", question);
+        return poll_buf;
+    }
+
+    return NULL;
 }
 
 const char *telegram_get_chat_id(json_node_t *update) {
@@ -595,6 +727,36 @@ const char *telegram_get_chat_id(json_node_t *update) {
     return buf;
 }
 
+/* E17-E26: Get message type identifier — returns static string
+ * like "text", "sticker", "animation", "voice", "video", "audio",
+ * "photo", "location", "venue", "contact", "poll", "quiz". */
+const char *telegram_get_update_type(json_node_t *update) {
+    if (!update) return NULL;
+
+    /* Check each update type in priority order */
+    if (json_object_get(update, "inline_query")) return "inline_query";
+    if (json_object_get(update, "callback_query")) return "callback_query";
+    if (json_object_get(update, "poll_answer")) return "poll_answer";
+
+    json_node_t *msg = json_object_get(update, "message");
+    if (!msg) msg = json_object_get(update, "edited_message");
+    if (!msg) return NULL;
+
+    if (json_object_get_string(msg, "text", NULL))               return "text";
+    if (json_object_get(msg, "sticker"))                         return "sticker";
+    if (json_object_get(msg, "animation"))                       return "animation";
+    if (json_object_get(msg, "voice"))                           return "voice";
+    if (json_object_get(msg, "video"))                           return "video";
+    if (json_object_get(msg, "audio"))                           return "audio";
+    if (json_object_get(msg, "photo") && json_len(json_object_get(msg, "photo")) > 0)
+                                                                 return "photo";
+    if (json_object_get(msg, "location"))                        return "location";
+    if (json_object_get(msg, "venue"))                           return "venue";
+    if (json_object_get(msg, "contact"))                         return "contact";
+    if (json_object_get(msg, "poll"))                            return "poll";
+    return "unknown";
+}
+
 /* P104: Get callback query ID for answering */
 const char *telegram_get_callback_query_id(json_node_t *update) {
     static char buf[64];
@@ -617,19 +779,6 @@ const char *telegram_get_inline_query_id(json_node_t *update) {
     if (!id) return NULL;
     snprintf(buf, sizeof(buf), "%s", id);
     return buf;
-}
-
-/* P104: Get update type string for routing */
-const char *telegram_get_update_type(json_node_t *update) {
-    if (!update) return "unknown";
-    if (json_object_get(update, "message")) return "message";
-    if (json_object_get(update, "edited_message")) return "edited_message";
-    if (json_object_get(update, "inline_query")) return "inline_query";
-    if (json_object_get(update, "callback_query")) return "callback_query";
-    if (json_object_get(update, "poll")) return "poll";
-    if (json_object_get(update, "poll_answer")) return "poll_answer";
-    if (json_object_get(update, "my_chat_member")) return "my_chat_member";
-    return "unknown";
 }
 
 /* P104: Get message thread ID for forum topics */
