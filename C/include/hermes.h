@@ -408,6 +408,9 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff);
 bool hermes_config_export(const hermes_config_t *cfg, const char *path);
 bool hermes_config_import(hermes_config_t *cfg, const char *path);
 
+/* P24: Config schema generation — returns malloc'd JSON string, caller must free */
+char *hermes_config_schema(void);
+
 /* P25: Config migration — upgrade config version, returns true if migration ran */
 bool hermes_config_migrate(hermes_config_t *cfg, const char *config_dir);
 

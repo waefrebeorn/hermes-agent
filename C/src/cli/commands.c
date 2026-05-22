@@ -834,7 +834,7 @@ static void list_config_groups(void) {
 }
 
 /* Set a config key: parse key=value, validate, print new value */
-static bool config_set_key(hermes_config_t *cfg, const char *args, agent_state_t *state) {
+static bool config_set_key(hermes_config_t *cfg, const char *args) {
     /* Find '=' or space delimiter */
     const char *eq = strchr(args, '=');
     if (!eq) {
@@ -1035,6 +1035,17 @@ static void cmd_config(const char *args, agent_state_t *state) {
         return;
     }
 
+    if (strcmp(args, "schema") == 0) {
+        char *schema = hermes_config_schema();
+        if (schema) {
+            printf("Config schema (JSON Schema draft-07):\n%s\n", schema);
+            free(schema);
+        } else {
+            printf("Failed to generate config schema.\n");
+        }
+        return;
+    }
+
     /* Show specific section */
     if (strncmp(args, "show ", 5) == 0) {
         const char *section = args + 5;
@@ -1047,7 +1058,7 @@ static void cmd_config(const char *args, agent_state_t *state) {
     if (strncmp(args, "get ", 4) == 0) {
         const char *key = args + 4;
         /* Show the section the key belongs to */
-        if (strstr(key, "model") == key || strcmp(key, "provider") == key)
+        if (strstr(key, "model") == key || strcmp(key, "provider") == 0)
             show_section_model(&cfg);
         else if (strstr(key, "display") == key)
             show_section_display(&cfg);
@@ -1082,11 +1093,11 @@ static void cmd_config(const char *args, agent_state_t *state) {
 
     /* Set a key=value */
     if (strncmp(args, "set ", 4) == 0) {
-        config_set_key(&cfg, args + 4, state);
+        config_set_key(&cfg, args + 4);
         return;
     }
 
-    printf("Usage: /config [validate|diff|export|migrate|groups|show <group>|get <key>|set <key>=<value>]\n");
+    printf("Usage: /config [validate|diff|export|migrate|groups|schema|show <group>|get <key>|set <key>=<value>]\n");
 }
 
 static void cmd_commands(const char *args, agent_state_t *state) {
