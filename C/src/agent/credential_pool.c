@@ -50,6 +50,10 @@ credential_pool_t *credential_pool_create(const char *provider_name) {
     credential_pool_t *pool = (credential_pool_t *)calloc(1, sizeof(credential_pool_t));
     if (!pool) return NULL;
 
+    /* Seed random for weighted selection (one-shot, ok if redundant) */
+    static bool seeded = false;
+    if (!seeded) { srand((unsigned int)(time(NULL) ^ (uintptr_t)pool)); seeded = true; }
+
     if (provider_name)
         snprintf(pool->provider_name, sizeof(pool->provider_name), "%s", provider_name);
     else
@@ -86,32 +90,66 @@ int credential_pool_add_key(credential_pool_t *pool,
     e->total_requests = 0;
     e->quota_limit = -1;
     e->last_used = 0;
+    e->weight = 1;  /* B11: default weight = normal */
 
     pool->entry_count++;
     return idx;
+}
+
+/* B11: Set weight for a specific entry */
+bool credential_pool_set_weight(credential_pool_t *pool, int entry_index, int weight) {
+    if (!pool || entry_index < 0 || entry_index >= pool->entry_count)
+        return false;
+    pool->entries[entry_index].weight = weight < 0 ? 0 : weight;
+    return true;
 }
 
 const char *credential_pool_next_key(const credential_pool_t *pool, int *out_index) {
     if (!pool || pool->entry_count == 0) return NULL;
 
     time_t now = time(NULL);
+    int n = pool->entry_count;
 
-    /* Round-robin search starting from current_index */
-    for (int i = 0; i < pool->entry_count; i++) {
-        int idx = (pool->current_index + i) % pool->entry_count;
+    /* B11: Check if any entry has non-default weight (weight != 1) */
+    bool has_weights = false;
+    int total_weight = 0;
+    for (int i = 0; i < n; i++) {
+        if (pool->entries[i].weight != 1) { has_weights = true; }
+        if (entry_usable(&pool->entries[i], now) && pool->entries[i].weight > 0)
+            total_weight += pool->entries[i].weight;
+    }
+
+    if (has_weights && total_weight > 0) {
+        /* Weighted random selection */
+        int roll = rand() % total_weight;
+        int accum = 0;
+        for (int i = 0; i < n; i++) {
+            if (!entry_usable(&pool->entries[i], now) || pool->entries[i].weight <= 0)
+                continue;
+            accum += pool->entries[i].weight;
+            if (roll < accum) {
+                if (out_index) *out_index = i;
+                ((credential_pool_t *)pool)->current_index = (i + 1) % n;
+                return pool->entries[i].api_key;
+            }
+        }
+    }
+
+    /* Round-robin search (fallback for uniform weights or empty usable after weighting) */
+    for (int i = 0; i < n; i++) {
+        int idx = (pool->current_index + i) % n;
         if (entry_usable(&pool->entries[idx], now)) {
             if (out_index) *out_index = idx;
-            /* Advance cursor past selected key for next call */
-            ((credential_pool_t *)pool)->current_index = (idx + 1) % pool->entry_count;
+            ((credential_pool_t *)pool)->current_index = (idx + 1) % n;
             return pool->entries[idx].api_key;
         }
     }
 
     /* No usable key — try resurrecting any cooled-off failed entry */
-    for (int i = 0; i < pool->entry_count; i++) {
+    for (int i = 0; i < n; i++) {
         if (pool->entries[i].status == CRED_FAILED) {
             if (out_index) *out_index = i;
-            ((credential_pool_t *)pool)->current_index = (i + 1) % pool->entry_count;
+            ((credential_pool_t *)pool)->current_index = (i + 1) % n;
             return pool->entries[i].api_key;
         }
     }
@@ -205,6 +243,7 @@ char *credential_pool_stats_json(const credential_pool_t *pool) {
         json_node_t *entry = json_object();
 
         json_set(entry, "label", json_string(e->label));
+        json_set(entry, "weight", json_number(e->weight));
         json_set(entry, "status", json_string(
             e->status == CRED_OK ? "ok" :
             e->status == CRED_RATE_LIMITED ? "rate_limited" :

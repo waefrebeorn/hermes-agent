@@ -35,6 +35,7 @@ typedef struct {
     char  api_key[512];           /* The actual key */
     char  label[64];              /* Human label (e.g. "prod-1", "backup") */
     credential_status_t status;
+    int   weight;                 /* B11: selection weight (1=normal, higher=more likely) */
     int   consecutive_failures;   /* Incremented on 4xx/5xx (not 429) */
     int   max_consecutive_failures; /* Defaults to 3, then mark FAILED */
 
@@ -97,6 +98,10 @@ credential_status_t credential_pool_report(credential_pool_t *pool,
 /* Reset a failed/rate-limited entry back to CRED_OK (e.g. after cooloff).
  * Returns true if the entry exists. */
 bool credential_pool_reset(credential_pool_t *pool, int entry_index);
+
+/* B11: Set weight for a specific entry (higher = more likely selected).
+ * weight=0 excludes the entry. Returns false if entry_index invalid. */
+bool credential_pool_set_weight(credential_pool_t *pool, int entry_index, int weight);
 
 /* Get stats for all entries in the pool. Returns a malloc'd JSON string or NULL.
  * Caller must free(). */

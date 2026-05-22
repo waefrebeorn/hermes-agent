@@ -674,7 +674,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/credential_pool.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_credpool -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_credpool > /dev/null 2>&1; then ok "credential_pool (65 tests)"
+    if /tmp/hermes_test_credpool > /dev/null 2>&1; then ok "credential_pool (80 tests)"
     else fail "credential_pool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_credpool
 else skip "credential_pool (compilation failed)"

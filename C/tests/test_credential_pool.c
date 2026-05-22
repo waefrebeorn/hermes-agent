@@ -249,7 +249,87 @@ int main(void) {
     credential_pool_free(empty);
 
     /* ================================================================
-     *  7. Edge cases
+     *  7. B11: Weighted selection
+     * ================================================================ */
+    printf("\n--- Weighted selection ---\n");
+
+    credential_pool_free(pool);
+    pool = credential_pool_create("weighted");
+    credential_pool_add_key(pool, "key-A", "A");
+    credential_pool_add_key(pool, "key-B", "B");
+    credential_pool_add_key(pool, "key-C", "C");
+
+    /* Default weight is 1 */
+    TEST_INT_EQ("default weight is 1", pool->entries[0].weight, 1);
+    TEST_INT_EQ("default weight is 1", pool->entries[1].weight, 1);
+    TEST_INT_EQ("default weight is 1", pool->entries[2].weight, 1);
+
+    /* set_weight with invalid index returns false */
+    TEST("set_weight bad index", !credential_pool_set_weight(pool, 999, 5));
+    TEST("set_weight NULL pool", !credential_pool_set_weight(NULL, 0, 5));
+
+    /* Set weight=0 excludes entry */
+    TEST("set_weight valid", credential_pool_set_weight(pool, 0, 0));
+    TEST_INT_EQ("weight 0 set", pool->entries[0].weight, 0);
+
+    /* With weight=0, key-A should never be selected */
+    int count_a = 0;
+    for (int i = 0; i < 50; i++) {
+        key = credential_pool_next_key(pool, &out_idx);
+        if (key && strcmp(key, "key-A") == 0) count_a++;
+    }
+    TEST_INT_EQ("weight 0 never selected", count_a, 0);
+
+    /* Restore key-A with weight=1 */
+    credential_pool_set_weight(pool, 0, 1);
+
+    /* Set key-A weight=10, key-B weight=1, key-C weight=1.
+     * Weighted random should favor key-A roughly 10/12 ≈ 83% */
+    credential_pool_set_weight(pool, 0, 10);
+    credential_pool_set_weight(pool, 1, 1);
+    credential_pool_set_weight(pool, 2, 1);
+
+    int counts[3] = {0, 0, 0};
+    for (int i = 0; i < 120; i++) {
+        key = credential_pool_next_key(pool, &out_idx);
+        if (out_idx >= 0 && out_idx < 3) counts[out_idx]++;
+    }
+
+    TEST("weighted: key-A most selected",
+         counts[0] > counts[1] && counts[0] > counts[2]);
+
+    /* All weights equal should behave like round-robin.
+     * Recreate pool to reset current_index */
+    credential_pool_free(pool);
+    pool = credential_pool_create("uniform");
+    credential_pool_add_key(pool, "key-A", "A");
+    credential_pool_add_key(pool, "key-B", "B");
+    credential_pool_add_key(pool, "key-C", "C");
+
+    out_idx = -1;
+    key = credential_pool_next_key(pool, &out_idx);
+    TEST_INT_EQ("uniform weights: round-robin index 0", out_idx, 0);
+    key = credential_pool_next_key(pool, &out_idx);
+    TEST_INT_EQ("uniform weights: round-robin index 1", out_idx, 1);
+    key = credential_pool_next_key(pool, &out_idx);
+    TEST_INT_EQ("uniform weights: round-robin index 2", out_idx, 2);
+
+    /* Set negative weight -> clamped to 0 */
+    credential_pool_set_weight(pool, 0, -1);
+    TEST_INT_EQ("negative weight clamped to 0", pool->entries[0].weight, 0);
+
+    /* Stats JSON includes weight */
+    {
+        char *s2 = credential_pool_stats_json(pool);
+        TEST_NOT_NULL("stats with weight", s2);
+        if (s2) {
+            TEST("stats contains weight field", strstr(s2, "weight") != NULL);
+            free(s2);
+        }
+    }
+
+    /* ================================================================
+     *  8. Edge cases
      * ================================================================ */
     printf("\n--- Edge cases ---\n");
 
