@@ -44,5 +44,6 @@
 - **E01-E05:** Telegram sendPhoto/sendDocument/sendVoice/sendVideo/sendAnimation ✅
 - **E14:** Telegram forwardMessage ✅
 - **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely — fixed ✅
-- **18/18 LLM params now fully wired** (was 10/12 at session start)
-- **@@ commits this session:** e57746cdd (F08 + Telegram send methods)
+- **F41:** Image format validation (extension check + 50MB limit)
+- **B01:** ACP server foundation (Session 1/4) — stdio JSON-RPC, init handshake, session manager, available_commands
+- **@@ commits this session:** e57746cdd (F08+Telegram sends), f9deca6cb (F41), eb83701fb (E15 pin), 6e091d8c (B01 ACP foundation)
