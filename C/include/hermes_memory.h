@@ -17,6 +17,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "plugin.h"
 #include <time.h>
 #include <pthread.h>
 
@@ -131,6 +132,8 @@ struct memory_storage_t {
     memory_storage_vtable_t vtable;
     void                   *data;     /* backend-specific data */
     char                    uri[512]; /* connection URI / file path */
+    plugin_t               *plugin_plug;   /* loaded plugin handle (plugin backend) */
+    plugin_interface_t     *plugin_iface;  /* cached interface pointer */
 };
 
 /* ================================================================
@@ -304,6 +307,9 @@ bool memory_storage_sqlite_init(memory_storage_t *st, const char *path);
  * plugin_reg: the plugin registry to search for a PLUGIN_MEMORY plugin.
  * plugin_name: name of the memory plugin to use (or NULL for first found). */
 bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const char *plugin_name);
+
+/* Set global plugin registry for plugin-backed memory */
+void memory_set_plugin_registry(void *reg);
 
 #ifdef __cplusplus
 }

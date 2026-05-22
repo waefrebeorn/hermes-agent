@@ -69,12 +69,18 @@ int main(int argc, char **argv) {
             plugin_registry_t *plugs = plugin_registry_new();
             if (plugs) {
                 int n = plugin_registry_discover(plugs, pdir);
+                /* Also scan source tree plugins directory for dev */
+                char dev_pdir[4096];
+                snprintf(dev_pdir, sizeof(dev_pdir), "%s/hermes-agent-dev/C/src/plugins", hermes_home);
+                n += plugin_registry_discover(plugs, dev_pdir);
+
                 if (n > 0) {
                     plugin_registry_init_all(plugs);
-                    agent_state.plugin_reg = plugs;
-                } else {
-                    plugin_registry_free(plugs);
                 }
+                agent_state.plugin_reg = plugs;
+                /* Pass to memory system for plugin-backed memory */
+                extern void memory_set_plugin_registry(void *reg);
+                memory_set_plugin_registry(plugs);
             }
         }
 

@@ -1379,15 +1379,151 @@ bool memory_storage_sqlite_init(memory_storage_t *st, const char *path) {
     return st->vtable.open(st, path ? path : "memory.db");
 }
 
-bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const char *plugin_name) {
+/* ================================================================
+ *  Plugin-backed vtable — delegates to plugin_interface_t
+ * ================================================================ */
+
+static bool plugin_open(memory_storage_t *st, const char *uri) {
+    (void)st; (void)uri;
+    return true; /* plugin already initialized */
+}
+
+static void plugin_close(memory_storage_t *st) {
+    if (st && st->plugin_iface && st->plugin_iface->memory_clear)
+        st->plugin_iface->memory_clear();
+}
+
+static bool plugin_store(memory_storage_t *st, memory_entry_t *entry) {
+    if (!st || !st->plugin_iface || !st->plugin_iface->memory_store || !entry)
+        return false;
+    char *result = st->plugin_iface->memory_store(
+        entry->content,
+        "{\"key\":\"%s\"}" /* minimal metadata with key */);
+    bool ok = (result && strstr(result, "\"status\":\"ok\"") != NULL);
+    free(result);
+    return ok;
+}
+
+static bool plugin_get(memory_storage_t *st, const char *key, memory_entry_t *entry) {
+    (void)st; (void)key; (void)entry;
+    return false; /* plugin search is query-based, not key-based */
+}
+
+static bool plugin_delete(memory_storage_t *st, const char *key) {
+    (void)st; (void)key;
+    return false; /* not supported via plugin interface */
+}
+
+static void plugin_clear(memory_storage_t *st) {
+    if (st && st->plugin_iface && st->plugin_iface->memory_clear)
+        st->plugin_iface->memory_clear();
+}
+
+static size_t plugin_count(memory_storage_t *st) {
+    (void)st;
+    return 0; /* plugin doesn't expose count in standard interface */
+}
+
+static char **plugin_list_keys(memory_storage_t *st, size_t *count) {
+    (void)st;
+    if (count) *count = 0;
+    return NULL;
+}
+
+/* Plugin search via plugin's memory_search */
+static memory_entry_t *plugin_search(memory_storage_t *st, const char *query, int limit) {
+    if (!st || !st->plugin_iface || !st->plugin_iface->memory_search)
+        return NULL;
+    char *result_json = st->plugin_iface->memory_search(query, limit);
+    if (!result_json) return NULL;
+
+    /* Parse the JSON result to extract entries */
+    /* Simple approach: return a single entry with the raw JSON */
+    memory_entry_t *entries = (memory_entry_t *)calloc(1, sizeof(memory_entry_t));
+    if (entries) {
+        entries->key[0] = '\0';
+        snprintf(entries->content, sizeof(entries->content), "%s", result_json);
+        entries->created_at = time(NULL);
+        entries->access_count = 5;
+    }
+    free(result_json);
+    return entries;
+}
+
+static bool plugin_vtable_persist(memory_storage_t *st) {
+    (void)st; return true; /* plugin manages its own state */
+}
+
+static bool plugin_vtable_load(memory_storage_t *st) {
+    (void)st; return true;
+}
+
+static memory_storage_vtable_t plugin_vtable = {
+    .name        = "plugin",
+    .open        = plugin_open,
+    .close       = plugin_close,
+    .store       = plugin_store,
+    .get         = plugin_get,
+    .delete      = plugin_delete,
+    .clear       = plugin_clear,
+    .count       = plugin_count,
+    .list_keys   = plugin_list_keys,
+    .search      = plugin_search,
+    .import_json = NULL,  /* not supported */
+    .export_json = NULL,  /* not supported */
+    .get_by_hash = NULL,  /* not supported */
+    .persist     = plugin_vtable_persist,
+    .load        = plugin_vtable_load,
+    .compress_old = NULL, /* not supported */
+    .get_prioritized  = NULL,  /* not supported */
+};
+
+bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const char *plugin_name_str) {
     if (!st) return false;
     memset(st, 0, sizeof(*st));
     st->type = MEMORY_STORAGE_PLUGIN;
-    /* Plugin delegate is a stub — in production, this would search the plugin
-     * registry for a PLUGIN_MEMORY plugin and delegate via plugin_interface_t.
-     * For now, fall back to in-memory. */
-    (void)plugin_reg;
-    (void)plugin_name;
+
+    /* Search plugin registry for a PLUGIN_MEMORY plugin */
+    if (plugin_reg) {
+        plugin_registry_t *reg = (plugin_registry_t *)plugin_reg;
+        const char *target_name = plugin_name_str && plugin_name_str[0] ? plugin_name_str : "in-memory-store";
+
+        /* Find the plugin by name */
+        plugin_t *plug = plugin_registry_find(reg, target_name);
+        if (!plug) {
+            /* Try loading from source tree if not found in registry */
+            char plugin_path[512];
+            const char *home = getenv("HOME");
+            if (!home) home = "/tmp";
+            snprintf(plugin_path, sizeof(plugin_path),
+                     "%s/hermes-agent-dev/C/src/plugins/plugin_honcho.so", home);
+            plug = plugin_load(plugin_path);
+            if (plug) {
+                plugin_registry_add(reg, plug);
+                /* Initialize */
+                typedef int (*init_fn_t)(void);
+                init_fn_t init_fn = (init_fn_t)plugin_symbol(plug, "plugin_init");
+                if (init_fn) init_fn();
+            }
+        }
+
+        if (plug && plugin_type(plug) == PLUGIN_MEMORY) {
+            void *(*get_iface)(void) = (void *(*)(void))plugin_symbol(plug, "plugin_get_interface");
+            if (get_iface) {
+                plugin_interface_t *iface = (plugin_interface_t *)get_iface();
+                if (iface && iface->memory_store && iface->memory_search) {
+                    st->plugin_plug = plug;
+                    st->plugin_iface = iface;
+                    st->vtable = plugin_vtable;
+                    fprintf(stderr, "[memory] using plugin: %s\n", plugin_name(plug));
+                    return true;
+                }
+            }
+        }
+    }
+
+    /* Fallback to in-memory if plugin not available */
+    fprintf(stderr, "[memory] plugin not found, falling back to in-memory\n");
     return memory_storage_inmem_init(st);
 }
 
@@ -1866,6 +2002,12 @@ int memory_compress_old(memory_t *mem, time_t before,
 /* Static memory instance for the tool handler */
 static memory_t g_memory;
 static bool g_memory_initialized = false;
+static void *g_plugin_registry = NULL;
+
+/* Set plugin registry for plugin-backed memory */
+void memory_set_plugin_registry(void *reg) {
+    g_plugin_registry = reg;
+}
 
 /* Ensure global memory is initialized */
 static memory_t *get_global_memory(void) {
@@ -1874,9 +2016,14 @@ static memory_t *get_global_memory(void) {
         const char *home = getenv("HERMES_HOME");
         if (!home) home = getenv("HOME");
         if (!home) home = "/tmp";
-        snprintf(path, sizeof(path), "%s/.hermes/memory.json", home);
 
-        memory_init(&g_memory, MEMORY_STORAGE_FILE, path);
+        /* Try plugin-backed memory if registry available */
+        if (g_plugin_registry) {
+            memory_init(&g_memory, MEMORY_STORAGE_PLUGIN, NULL);
+        } else {
+            snprintf(path, sizeof(path), "%s/.hermes/memory.json", home);
+            memory_init(&g_memory, MEMORY_STORAGE_FILE, path);
+        }
         g_memory.dedup_enabled = true;
         g_memory.search_limit = 20;
         g_memory.ttl_days = 30;
