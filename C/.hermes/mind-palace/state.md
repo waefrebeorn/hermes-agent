@@ -24,6 +24,14 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — Config env priority tests (M23)
+
+- ✅ **test_config.c: 99 assertions** (+10 M23 env priority tests)
+- ✅ Tests: numeric/float/string/boolean env overrides, empty/non-existent
+- ◀ **Tests: 64%** (1/34 gaps closed: M23)
+- ◀ **Config: 98%** (env override priority chain verified)
+- ◀ Committed: `66923f2ed`
+
 ### Session 2026-05-26 — Config validation edge cases (M22)
 
 - ✅ **test_config.c: 89 assertions** (+10 new M22 edge cases)

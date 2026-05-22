@@ -4,6 +4,12 @@
 ~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
 
+### Session 2026-05-26 — Config env priority tests (M23)
+
+- ✅ **test_config.c: 99 assertions** (+10 M23 env priority)
+- ◀ **Tests: 64%** (1/34 gaps closed: M23)
+- ◀ Committed: `66923f2ed`
+
 ### Session 2026-05-26 — Config validation edge cases (M22)
 
 - ✅ **test_config.c: 89 assertions** (+10 edge cases)
