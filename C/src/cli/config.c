@@ -30,6 +30,86 @@ static char *xstrdup(const char *s) {
     return d;
 }
 
+/* A03: Expand ${VAR:-default} env var references in YAML string values.
+ * Scans for ${...} patterns, looks up the env var, substitutes its value
+ * or the :-default if the var is unset. Returns malloc'd result.
+ * Caller must free(). */
+static char *config_expand_env_vars(const char *input) {
+    if (!input) return NULL;
+    size_t cap = strlen(input) + 1;
+    char *result = (char *)malloc(cap);
+    if (!result) return NULL;
+    const char *p = input;
+    size_t pos = 0;
+    while (*p) {
+        if (*p == '$' && *(p + 1) == '{') {
+            const char *start = p + 2;
+            const char *end = strchr(start, '}');
+            if (!end) {
+                /* No closing brace — copy as literal */
+                result[pos++] = *p++;
+                continue;
+            }
+            /* Find ':-' separator for default value */
+            const char *colon_dash = NULL;
+            const char *scan = start;
+            while (scan < end) {
+                if (*scan == ':' && (scan + 1 < end) && *(scan + 1) == '-') {
+                    colon_dash = scan;
+                    break;
+                }
+                scan++;
+            }
+            const char *var_name = start;
+            size_t var_len;
+            const char *default_val = NULL;
+            size_t default_len = 0;
+            if (colon_dash) {
+                var_len = (size_t)(colon_dash - start);
+                default_val = colon_dash + 2;
+                default_len = (size_t)(end - default_val);
+            } else {
+                var_len = (size_t)(end - start);
+            }
+            /* Look up env var */
+            char var_buf[256];
+            size_t vn = var_len < sizeof(var_buf) - 1 ? var_len : sizeof(var_buf) - 1;
+            memcpy(var_buf, var_name, vn);
+            var_buf[vn] = '\0';
+            const char *env_val = getenv(var_buf);
+            const char *subst;
+            size_t subst_len;
+            if (env_val && env_val[0]) {
+                subst = env_val;
+                subst_len = strlen(env_val);
+            } else if (default_val) {
+                subst = default_val;
+                subst_len = default_len;
+            } else {
+                subst = NULL;
+                subst_len = 0;
+            }
+            if (subst) {
+                /* Grow buffer if needed */
+                size_t needed = pos + subst_len + 1;
+                if (needed > cap) {
+                    cap = needed + 256;
+                    char *new_r = (char *)realloc(result, cap);
+                    if (!new_r) { free(result); return NULL; }
+                    result = new_r;
+                }
+                memcpy(result + pos, subst, subst_len);
+                pos += subst_len;
+            }
+            p = end + 1; /* Skip past } */
+        } else {
+            result[pos++] = *p++;
+        }
+    }
+    result[pos] = '\0';
+    return result;
+}
+
 /* Resolve SLERMES_HOME. Default: ~/.slermes — delegates to hermes_get_home() */
 static void get_slermes_home(char *buf, size_t sz) {
     hermes_get_home(buf, sz);
@@ -471,13 +551,25 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
 
     /* model section */
     const char *model_name = yaml_get_string(doc, "model.default");
-    if (model_name) snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", model_name);
+    if (model_name) {
+        char *exp = config_expand_env_vars(model_name);
+        snprintf(cfg->provider_cfg.model, sizeof(cfg->provider_cfg.model), "%s", exp ? exp : model_name);
+        free(exp);
+    }
 
     const char *provider_str = yaml_get_string(doc, "model.provider");
-    if (provider_str) snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", provider_str);
+    if (provider_str) {
+        char *exp = config_expand_env_vars(provider_str);
+        snprintf(cfg->provider_cfg.provider, sizeof(cfg->provider_cfg.provider), "%s", exp ? exp : provider_str);
+        free(exp);
+    }
 
     const char *base_url = yaml_get_string(doc, "model.base_url");
-    if (base_url) snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", base_url);
+    if (base_url) {
+        char *exp = config_expand_env_vars(base_url);
+        snprintf(cfg->provider_cfg.base_url, sizeof(cfg->provider_cfg.base_url), "%s", exp ? exp : base_url);
+        free(exp);
+    }
 
     /* N05: Local provider trust — if base_url is localhost/127.0.0.1,
      * skip API key requirement. The key may still be provided for
@@ -491,7 +583,11 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     }
 
     const char *api_key = yaml_get_string(doc, "model.api_key");
-    if (api_key) snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", api_key);
+    if (api_key) {
+        char *exp = config_expand_env_vars(api_key);
+        snprintf(cfg->provider_cfg.api_key, sizeof(cfg->provider_cfg.api_key), "%s", exp ? exp : api_key);
+        free(exp);
+    }
 
     const char *api_mode = yaml_get_string(doc, "model.api_mode");
     if (api_mode) snprintf(cfg->provider_cfg.api_mode, sizeof(cfg->provider_cfg.api_mode), "%s", api_mode);
