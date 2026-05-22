@@ -794,6 +794,11 @@ static void cmd_tools_verify(const char *args, agent_state_t *state) {
 /* /reset: Clear all messages, reset iteration count, generate new session */
 static void cmd_reset(const char *args, agent_state_t *state) {
     (void)args;
+    /* Persist current session before reset */
+    if (state->db && state->message_count > 0) {
+        agent_save_session(state);
+        printf("Previous session saved: %s\n", state->session_id);
+    }
     context_clear(state);
     agent_generate_session_id(state);
     state->iteration_count = 0;

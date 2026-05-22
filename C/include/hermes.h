@@ -475,4 +475,8 @@ void cdp_set_url(const char *url);
 size_t registry_get_count(void);
 const char *registry_get_name(size_t i);
 
+/* P49-P50: Tool result storage and output limits */
+char *tool_result_store(const char *data, size_t size, size_t max_inline);
+void tool_result_cleanup(int max_age_seconds);
+
 #endif /* HERMES_H */
