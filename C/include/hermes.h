@@ -492,6 +492,13 @@ const char *registry_get_name(size_t i);
 void registry_set_timeout(const char *name, int seconds);
 int  registry_get_timeout(const char *name);
 
+/* P55: Tool wildcard matching — enable/disable all tools matching a pattern */
+/* Pattern supports '*' wildcard: "discord:*", "browser_*", "*_search" */
+void registry_set_available_pattern(const char *pattern, bool available);
+
+/* Check if tool name matches a wildcard pattern. Returns true on match. */
+bool registry_name_matches(const char *name, const char *pattern);
+
 /* P49-P50: Tool result storage and output limits */
 char *tool_result_store(const char *data, size_t size, size_t max_inline);
 void tool_result_cleanup(int max_age_seconds);

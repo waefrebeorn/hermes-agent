@@ -162,3 +162,46 @@ int registry_get_timeout(const char *name) {
     }
     return 0; /* Not found */
 }
+
+/* P55: Wildcard pattern matching — simple glob support */
+bool registry_name_matches(const char *name, const char *pattern) {
+    if (!name || !pattern) return false;
+
+    /* If no wildcard, exact match */
+    if (!strchr(pattern, '*'))
+        return strcmp(name, pattern) == 0;
+
+    /* Find positions of '*' */
+    const char *star = strchr(pattern, '*');
+
+    /* Pattern: "prefix*" — match prefix */
+    if (star[1] == '\0') {
+        size_t plen = (size_t)(star - pattern);
+        return strncmp(name, pattern, plen) == 0;
+    }
+
+    /* Pattern: "*suffix" — match suffix */
+    if (star == pattern) {
+        const char *suffix = pattern + 1;
+        size_t slen = strlen(name);
+        size_t suflen = strlen(suffix);
+        if (slen < suflen) return false;
+        return strcmp(name + slen - suflen, suffix) == 0;
+    }
+
+    /* Pattern: "prefix*suffix" — match both */
+    size_t plen = (size_t)(star - pattern);
+    const char *suffix = star + 1;
+    size_t slen = strlen(name);
+    size_t suflen = strlen(suffix);
+    if (slen < plen + suflen) return false;
+    return strncmp(name, pattern, plen) == 0 &&
+           strcmp(name + slen - suflen, suffix) == 0;
+}
+
+void registry_set_available_pattern(const char *pattern, bool available) {
+    for (size_t i = 0; i < g_registry.count; i++) {
+        if (registry_name_matches(g_registry.tools[i].name, pattern))
+            g_registry.tools[i].available = available;
+    }
+}
