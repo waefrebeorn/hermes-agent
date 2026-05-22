@@ -448,6 +448,13 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
             json_node_t *reasoning_content = json_object_get(message, "reasoning_content");
             if (!resp->reasoning && reasoning_content && reasoning_content->type == JSON_STRING)
                 resp->reasoning = xstrdup(reasoning_content->str_val);
+
+            /* L07: xAI encrypted reasoning content — serialize the encrypted_content array */
+            json_node_t *enc_content = json_object_get(message, "encrypted_content");
+            if (enc_content && json_array_count(enc_content) > 0) {
+                char *ser = json_serialize(enc_content);
+                if (ser) { resp->encrypted_content = ser; }
+            }
         }
     }
 
@@ -700,6 +707,15 @@ static int on_stream_chunk(const char *data, size_t len, void *userdata) {
         }
     }
 
+    /* L07: xAI encrypted reasoning content in streaming delta */
+    if (!ctx->resp->encrypted_content) {
+        json_node_t *enc_content = json_object_get(delta, "encrypted_content");
+        if (enc_content && json_array_count(enc_content) > 0) {
+            char *ser = json_serialize(enc_content);
+            if (ser) ctx->resp->encrypted_content = ser;
+        }
+    }
+
     /* Extract usage if present (final chunk with finish_reason) */
     if (finish && finish[0]) {
         json_node_t *usage = json_object_get(root, "usage");
@@ -918,6 +934,7 @@ void llm_response_free(llm_response_t *resp) {
     if (!resp) return;
     free(resp->content);
     free(resp->reasoning);
+    free(resp->encrypted_content);
     free(resp);
 }
 

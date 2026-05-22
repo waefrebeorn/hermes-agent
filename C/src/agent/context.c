@@ -31,6 +31,7 @@ message_t *message_new(message_role_t role, const char *content) {
     msg->tool_call_id = NULL;
     msg->tool_name = NULL;
     msg->reasoning = NULL;
+    msg->encrypted_content = NULL;
     return msg;
 }
 
@@ -42,13 +43,15 @@ message_t *message_new_tool(const char *tool_call_id, const char *content) {
 }
 
 message_t *message_new_assistant(const char *content, const char *tool_name,
-                                  const char *tool_call_id, const char *reasoning)
+                                  const char *tool_call_id, const char *reasoning,
+                                  const char *encrypted_content)
 {
     message_t *msg = message_new(MSG_ASSISTANT, content);
     if (msg) {
         if (tool_name) msg->tool_name = strdup(tool_name);
         if (tool_call_id) msg->tool_call_id = strdup(tool_call_id);
         if (reasoning) msg->reasoning = strdup(reasoning);
+        if (encrypted_content) msg->encrypted_content = strdup(encrypted_content);
         msg->tool_calls_count = 0;
     }
     return msg;
@@ -58,11 +61,13 @@ message_t *message_new_assistant(const char *content, const char *tool_name,
 message_t *message_new_assistant_with_toolcalls(const char *content,
                                                   const tool_call_t *tcalls,
                                                   int tcalls_count,
-                                                  const char *reasoning)
+                                                  const char *reasoning,
+                                                  const char *encrypted_content)
 {
     message_t *msg = message_new(MSG_ASSISTANT, content);
     if (!msg) return NULL;
     if (reasoning) msg->reasoning = strdup(reasoning);
+    if (encrypted_content) msg->encrypted_content = strdup(encrypted_content);
     msg->tool_calls_count = tcalls_count > 64 ? 64 : tcalls_count;
     for (int i = 0; i < msg->tool_calls_count; i++) {
         memcpy(&msg->tool_calls[i], &tcalls[i], sizeof(tool_call_t));
@@ -76,6 +81,7 @@ void message_free(message_t *msg) {
     free(msg->tool_call_id);
     free(msg->tool_name);
     free(msg->reasoning);
+    free(msg->encrypted_content);
     free(msg);
 }
 
@@ -89,6 +95,7 @@ message_t *message_clone(const message_t *src) {
     dst->tool_call_id = src->tool_call_id ? strdup(src->tool_call_id) : NULL;
     dst->tool_name = src->tool_name ? strdup(src->tool_name) : NULL;
     dst->reasoning = src->reasoning ? strdup(src->reasoning) : NULL;
+    dst->encrypted_content = src->encrypted_content ? strdup(src->encrypted_content) : NULL;
     dst->tool_calls_count = src->tool_calls_count;
     for (int i = 0; i < src->tool_calls_count && i < 64; i++) {
         memcpy(&dst->tool_calls[i], &src->tool_calls[i], sizeof(tool_call_t));

@@ -93,14 +93,14 @@ static void test_message_tool(void) {
 
 static void test_message_assistant(void) {
     printf("\n--- Message: Assistant ---\n");
-    message_t *m = message_new_assistant("I think...", NULL, NULL, "reasoning");
+    message_t *m = message_new_assistant("I think...", NULL, NULL, "reasoning", NULL);
     TEST_TRUE("create assistant msg", m != NULL);
     TEST_EQ("role == MSG_ASSISTANT", m->role, MSG_ASSISTANT);
     TEST_STR("content set", m->content, "I think...");
     TEST_STR("reasoning set", m->reasoning, "reasoning");
     TEST_TRUE("tool_name NULL", m->tool_name == NULL);
     message_free(m);
-    m = message_new_assistant(NULL, "get_weather", "call_789", NULL);
+    m = message_new_assistant(NULL, "get_weather", "call_789", NULL, NULL);
     TEST_TRUE("assistant with tool", m != NULL);
     TEST_STR("tool_name set", m->tool_name, "get_weather");
     TEST_STR("tool_call_id set", m->tool_call_id, "call_789");
@@ -117,7 +117,7 @@ static void test_message_assistant_toolcalls(void) {
     snprintf(tcalls[1].id, sizeof(tcalls[1].id), "call_2");
     snprintf(tcalls[1].name, sizeof(tcalls[1].name), "write_file");
     snprintf(tcalls[1].arguments, sizeof(tcalls[1].arguments), "{\"path\":\"/tmp/x\",\"content\":\"hi\"}");
-    message_t *m = message_new_assistant_with_toolcalls("Let me do that.", tcalls, 2, "reasoning text");
+    message_t *m = message_new_assistant_with_toolcalls("Let me do that.", tcalls, 2, "reasoning text", NULL);
     TEST_TRUE("create assistant with tcalls", m != NULL);
     TEST_STR("content set", m->content, "Let me do that.");
     TEST_STR("reasoning set", m->reasoning, "reasoning text");
@@ -126,12 +126,12 @@ static void test_message_assistant_toolcalls(void) {
     TEST_STR("tc[1] name", m->tool_calls[1].name, "write_file");
     TEST_STR("tc[0] id", m->tool_calls[0].id, "call_1");
     message_free(m);
-    m = message_new_assistant_with_toolcalls("No tools.", NULL, 0, NULL);
+    m = message_new_assistant_with_toolcalls("No tools.", NULL, 0, NULL, NULL);
     TEST_TRUE("assistant with 0 tcalls", m != NULL);
     TEST_EQ("0 tool calls", m->tool_calls_count, 0);
     TEST_TRUE("no reasoning", m->reasoning == NULL);
     message_free(m);
-    m = message_new_assistant_with_toolcalls(NULL, tcalls, 1, NULL);
+    m = message_new_assistant_with_toolcalls(NULL, tcalls, 1, NULL, NULL);
     TEST_TRUE("assistant with NULL content", m != NULL);
     TEST_TRUE("content NULL", m->content == NULL);
     message_free(m);
@@ -154,7 +154,7 @@ static void test_message_clone(void) {
     snprintf(tc.id, sizeof(tc.id), "call_x");
     snprintf(tc.name, sizeof(tc.name), "tool_x");
     snprintf(tc.arguments, sizeof(tc.arguments), "{}");
-    orig = message_new_assistant_with_toolcalls("do it", &tc, 1, "reason");
+    orig = message_new_assistant_with_toolcalls("do it", &tc, 1, "reason", NULL);
     clone = message_clone(orig);
     TEST_TRUE("clone with tcalls non-NULL", clone != NULL);
     TEST_EQ("clone has tcalls", clone->tool_calls_count, 1);

@@ -926,7 +926,7 @@ char *agent_run_conversation(agent_state_t *state,
         checkpoint_try_autosave(&state->checkpoints, state);
         message_t *assistant_msg = message_new_assistant_with_toolcalls(
             llm_resp->content, llm_resp->tool_calls, llm_resp->tool_calls_count,
-            llm_resp->reasoning);
+            llm_resp->reasoning, llm_resp->encrypted_content);
         context_push(state, assistant_msg);
 
         /* P87: Parallel tool dispatch — execute independent tools concurrently */

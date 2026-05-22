@@ -125,8 +125,23 @@ static char *xai_build_request_body(const provider_t *p,
             default:            role_str = "user";      break;
         }
         json_object_set(msg, "role", json_new_string(role_str));
-        json_object_set(msg, "content", json_new_string(
-            messages[i]->content ? messages[i]->content : ""));
+        /* L07: if message has encrypted_content, use it instead of plain content */
+        if (messages[i]->role == MSG_ASSISTANT && messages[i]->encrypted_content) {
+            json_t *ec = json_parse(messages[i]->encrypted_content, NULL);
+            if (ec && json_array_count(ec) > 0) {
+                json_object_set(msg, "encrypted_content", ec);
+                /* Still set content (may be empty string) */
+                json_object_set(msg, "content", json_new_string(
+                    messages[i]->content ? messages[i]->content : ""));
+            } else {
+                json_object_set(msg, "content", json_new_string(
+                    messages[i]->content ? messages[i]->content : ""));
+            }
+            json_free(ec);
+        } else {
+            json_object_set(msg, "content", json_new_string(
+                messages[i]->content ? messages[i]->content : ""));
+        }
         if (messages[i]->role == MSG_TOOL && messages[i]->tool_call_id)
             json_object_set(msg, "tool_call_id", json_new_string(messages[i]->tool_call_id));
         if (messages[i]->role == MSG_ASSISTANT && messages[i]->tool_calls_count > 0) {
@@ -177,6 +192,12 @@ static provider_response_t *xai_parse_response(const provider_t *p,
         json_t *message = json_object_get(choice, "message");
         if (message) {
             resp->content = strdup(json_get_str(message, "content", ""));
+            /* L07: xAI encrypted reasoning content */
+            json_t *ec = json_object_get(message, "encrypted_content");
+            if (ec && json_len(ec) > 0) {
+                char *ser = json_serialize(ec);
+                if (ser) resp->encrypted_content = ser;
+            }
             json_t *tcs = json_object_get(message, "tool_calls");
             if (tcs && json_len(tcs) > 0) {
                 resp->tool_calls_count = (int)json_len(tcs);
@@ -215,7 +236,15 @@ static provider_response_t *xai_parse_stream_chunk(const provider_t *p,
     if (choices && json_len(choices) > 0) {
         json_t *choice = json_get(choices, 0);
         json_t *delta = json_object_get(choice, "delta");
-        if (delta) resp->content = strdup(json_get_str(delta, "content", ""));
+        if (delta) {
+            resp->content = strdup(json_get_str(delta, "content", ""));
+            /* L07: xAI encrypted reasoning content in stream */
+            json_t *ec = json_object_get(delta, "encrypted_content");
+            if (ec && json_len(ec) > 0) {
+                char *ser = json_serialize(ec);
+                if (ser) resp->encrypted_content = ser;
+            }
+        }
     }
     json_free(root);
     return resp;
@@ -225,6 +254,7 @@ static void xai_free_response(provider_response_t *resp) {
     if (!resp) return;
     free(resp->content);
     free(resp->reasoning);
+    free(resp->encrypted_content);
     free(resp);
 }
 

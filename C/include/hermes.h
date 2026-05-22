@@ -66,6 +66,7 @@ typedef struct {
     char           *tool_call_id; /* for tool results */
     char           *tool_name;    /* for tool calls (single) */
     char           *reasoning;   /* reasoning content if any */
+    char           *encrypted_content; /* L07: xAI encrypted reasoning content */
     int             tool_calls_count;
     tool_call_t     tool_calls[64];
 } message_t;
@@ -140,6 +141,7 @@ typedef struct {
 typedef struct {
     char         *content;
     char         *reasoning;
+    char         *encrypted_content; /* L07: xAI encrypted reasoning content */
     int           input_tokens;
     int           output_tokens;
     int           reasoning_tokens;      /* G04: reasoning-only tokens */

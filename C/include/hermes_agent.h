@@ -35,11 +35,13 @@ void tools_init_all(void);
 message_t *message_new(message_role_t role, const char *content);
 message_t *message_new_tool(const char *tool_call_id, const char *content);
 message_t *message_new_assistant(const char *content, const char *tool_name,
-                                  const char *tool_call_id, const char *reasoning);
+                                  const char *tool_call_id, const char *reasoning,
+                                  const char *encrypted_content);
 message_t *message_new_assistant_with_toolcalls(const char *content,
                                                   const tool_call_t *tcalls,
                                                   int tcalls_count,
-                                                  const char *reasoning);
+                                                  const char *reasoning,
+                                                  const char *encrypted_content);
 void message_free(message_t *msg);
 /* Clone a message (deep copy) */
 message_t *message_clone(const message_t *src);

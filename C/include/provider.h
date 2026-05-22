@@ -45,6 +45,7 @@ typedef struct provider_t provider_t;
 typedef struct {
     char *content;
     char *reasoning;
+    char *encrypted_content;  /* L07: xAI encrypted reasoning content */
     int   input_tokens;
     int   output_tokens;
     int   tool_calls_count;
