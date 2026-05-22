@@ -339,6 +339,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "approval_system (compilation failed)"
 fi
 
+# Kanban tool test (M41 — needs kanban.c + registry.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_kanban.c" \
+    "$CDIR/src/tools/kanban.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_kanban -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    SLERMES_HOME=/tmp/hermes_test_kanban_home /tmp/hermes_test_kanban > /dev/null 2>&1
+    if [ $? -eq 0 ]; then ok "kanban_tool (38 tests)"
+    else fail "kanban_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_kanban
+    rm -rf /tmp/hermes_test_kanban_home
+else skip "kanban_tool (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================

@@ -277,7 +277,6 @@ static char *handle_show(const char *args_json, const char *task_id) {
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
 
     const char *tid = default_task_id(json_get_str(args, "task_id", ""));
-    json_free(args);
     if (!tid || !*tid)
         return strdup("{\"error\":\"task_id is required (or set HERMES_KANBAN_TASK in the env)\"}");
 
@@ -295,7 +294,7 @@ static char *handle_show(const char *args_json, const char *task_id) {
 
     json_t *comments = json_obj_get(task, "comments");
     if (!comments) comments = json_array();
-    json_set(result, "comments", comments);
+    json_set(result, "comments", json_copy(comments));
 
     json_t *events = json_obj_get(task, "events");
     if (events) {
@@ -303,7 +302,7 @@ static char *handle_show(const char *args_json, const char *task_id) {
         size_t start = n > 50 ? n - 50 : 0;
         json_t *trimmed = json_array();
         for (size_t i = start; i < n; i++)
-            json_append(trimmed, json_get(events, i));
+            json_append(trimmed, json_copy(json_get(events, i)));
         json_set(result, "events", trimmed);
     } else {
         json_set(result, "events", json_array());
@@ -311,10 +310,11 @@ static char *handle_show(const char *args_json, const char *task_id) {
 
     json_t *runs = json_obj_get(task, "runs");
     if (!runs) runs = json_array();
-    json_set(result, "runs", runs);
+    json_set(result, "runs", json_copy(runs));
 
     char *out = json_serialize(result);
     json_free(result);
+    json_free(args);
     return out ? out : strdup("{\"error\":\"OOM\"}");
 }
 
@@ -393,7 +393,6 @@ static char *handle_list(const char *args_json, const char *task_id) {
     const char *tenant = json_get_str(args, "tenant", "");
     bool include_archived = json_get_bool(args, "include_archived", false);
     int limit = (int)json_get_num(args, "limit", KANBAN_LIST_LIMIT_DEFAULT);
-    json_free(args);
 
     if (limit < 1) limit = 1;
     if (limit > KANBAN_LIST_LIMIT_MAX) limit = KANBAN_LIST_LIMIT_MAX;
@@ -462,6 +461,7 @@ static char *handle_list(const char *args_json, const char *task_id) {
 
     char *out = json_serialize(result);
     json_free(result);
+    json_free(args);
     return out ? out : strdup("{\"error\":\"OOM\"}");
 }
 
@@ -477,7 +477,6 @@ static char *handle_complete(const char *args_json, const char *task_id) {
 
     const char *summary = json_get_str(args, "summary", "");
     const char *result_str = json_get_str(args, "result", "");
-    json_free(args);
 
     if (!*summary && !*result_str)
         return strdup("{\"error\":\"provide at least one of: summary or result\"}");
@@ -512,7 +511,8 @@ static char *handle_complete(const char *args_json, const char *task_id) {
     add_event(tid, "completed", summary, task);
     write_task(tid, task);
     json_free(task);
-    return strdup("{\"ok\":true}");
+    json_free(args);
+    return strdup("{\"ok\":true,\"status\":\"done\"}");
 }
 
 static char *handle_block(const char *args_json, const char *task_id) {
@@ -523,7 +523,6 @@ static char *handle_block(const char *args_json, const char *task_id) {
     const char *tid = default_task_id(json_get_str(args, "task_id", ""));
     const char *reason = json_get_str(args, "reason", "");
     bool sticky = json_get_bool(args, "sticky", false);
-    json_free(args);
     if (!tid || !*tid) return strdup("{\"error\":\"task_id is required\"}");
 
     const char *ownership = enforce_ownership(tid);
@@ -552,7 +551,6 @@ static char *handle_heartbeat(const char *args_json, const char *task_id) {
     json_t *args = json_parse(args_json, NULL);
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
     const char *tid = default_task_id(json_get_str(args, "task_id", ""));
-    json_free(args);
     if (!tid || !*tid) return strdup("{\"error\":\"task_id is required\"}");
 
     const char *ownership = enforce_ownership(tid);
@@ -568,6 +566,7 @@ static char *handle_heartbeat(const char *args_json, const char *task_id) {
     add_event(tid, "heartbeat", ts, task);
     write_task(tid, task);
     json_free(task);
+    json_free(args);
     return strdup("{\"ok\":true}");
 }
 
@@ -577,7 +576,6 @@ static char *handle_comment(const char *args_json, const char *task_id) {
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
     const char *tid = default_task_id(json_get_str(args, "task_id", ""));
     const char *body = json_get_str(args, "body", "");
-    json_free(args);
     if (!tid || !*tid) return strdup("{\"error\":\"task_id is required\"}");
     if (!*body) return strdup("{\"error\":\"body is required\"}");
 
@@ -601,6 +599,7 @@ static char *handle_comment(const char *args_json, const char *task_id) {
     add_event(tid, "comment", body, task);
     write_task(tid, task);
     json_free(task);
+    json_free(args);
     return strdup("{\"ok\":true}");
 }
 
@@ -638,7 +637,6 @@ static char *handle_create(const char *args_json, const char *task_id) {
 
     const char *initial_status = json_get_str(args, "initial_status", "");
     bool triage = json_get_bool(args, "triage", false);
-    json_free(args);
 
     const char *status = "running";
     if (*initial_status) status = initial_status;
@@ -662,6 +660,7 @@ static char *handle_create(const char *args_json, const char *task_id) {
     char out[256];
     snprintf(out, sizeof(out),
              "{\"ok\":true,\"task_id\":\"%s\",\"status\":\"%s\"}", new_id, status);
+    json_free(args);
     return strdup(out);
 }
 
@@ -672,7 +671,6 @@ static char *handle_unblock(const char *args_json, const char *task_id) {
     json_t *args = json_parse(args_json, NULL);
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
     const char *tid = json_get_str(args, "task_id", "");
-    json_free(args);
     if (!*tid) return strdup("{\"error\":\"task_id is required\"}");
 
     json_t *task = read_task(tid);
@@ -689,6 +687,7 @@ static char *handle_unblock(const char *args_json, const char *task_id) {
     char out[256];
     snprintf(out, sizeof(out),
              "{\"ok\":true,\"task_id\":\"%s\",\"status\":\"ready\"}", tid);
+    json_free(args);
     return strdup(out);
 }
 
@@ -698,7 +697,6 @@ static char *handle_link(const char *args_json, const char *task_id) {
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
     const char *parent_id = json_get_str(args, "parent_id", "");
     const char *child_id = json_get_str(args, "child_id", "");
-    json_free(args);
     if (!*parent_id || !*child_id)
         return strdup("{\"error\":\"both parent_id and child_id are required\"}");
     if (strcmp(parent_id, child_id) == 0)
@@ -768,6 +766,7 @@ static char *handle_link(const char *args_json, const char *task_id) {
     char out[256];
     snprintf(out, sizeof(out),
              "{\"ok\":true,\"parent_id\":\"%s\",\"child_id\":\"%s\"}", parent_id, child_id);
+    json_free(args);
     return strdup(out);
 }
 
