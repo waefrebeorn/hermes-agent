@@ -84,6 +84,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "provider_smoke (compilation failed)"
 fi
 
+# Checkpoint tests (needs context.c for message_new/message_free)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_checkpoint.c" \
+    "$CDIR/src/agent/checkpoint.c" "$CDIR/src/agent/context.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_checkpoint -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_checkpoint > /dev/null 2>&1; then ok "checkpoint (44 tests)"
+    else fail "checkpoint (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_checkpoint
+else skip "checkpoint (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
