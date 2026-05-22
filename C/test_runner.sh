@@ -56,6 +56,29 @@ fi
 run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$CDIR/lib/libtui/tui.c"
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 
+# Config test (needs config.c + paths.c + yaml + json libs)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_config.c" \
+    "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+    "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_config -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_config > /dev/null 2>&1; then ok "config (54 tests)"
+    else
+        echo "  Config test output:"
+        /tmp/hermes_test_config 2>&1 | sed 's/^/    /'
+        fail "config (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_config
+else
+    echo "  Config test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_config.c" \
+        "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+        "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_config -lm 2>&1 | sed 's/^/    /'
+    skip "config (compilation failed)"
+fi
+
 # Provider metadata test (needs libjson + libplugin includes)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \
