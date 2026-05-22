@@ -144,3 +144,21 @@ const char *registry_get_name(size_t i) {
     if (i >= g_registry.count) return NULL;
     return g_registry.tools[i].name;
 }
+
+/* P52: Per-tool timeout */
+void registry_set_timeout(const char *name, int seconds) {
+    for (size_t i = 0; i < g_registry.count; i++) {
+        if (strcmp(g_registry.tools[i].name, name) == 0) {
+            g_registry.tools[i].timeout_sec = seconds;
+            return;
+        }
+    }
+}
+
+int registry_get_timeout(const char *name) {
+    for (size_t i = 0; i < g_registry.count; i++) {
+        if (strcmp(g_registry.tools[i].name, name) == 0)
+            return g_registry.tools[i].timeout_sec;
+    }
+    return 0; /* Not found */
+}

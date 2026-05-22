@@ -73,6 +73,7 @@ typedef struct {
     char   schema_json[4096];
     char *(*handler)(const char *args_json, const char *task_id);
     bool  available;
+    int   timeout_sec;   /* P52: per-tool timeout. 0 = inherit default. -1 = no timeout. */
 } tool_t;
 
 typedef struct {
@@ -486,6 +487,10 @@ void cdp_set_url(const char *url);
 /* Registry accessors */
 size_t registry_get_count(void);
 const char *registry_get_name(size_t i);
+
+/* P52: Per-tool timeout. Set seconds, 0 = default, -1 = no timeout. */
+void registry_set_timeout(const char *name, int seconds);
+int  registry_get_timeout(const char *name);
 
 /* P49-P50: Tool result storage and output limits */
 char *tool_result_store(const char *data, size_t size, size_t max_inline);
