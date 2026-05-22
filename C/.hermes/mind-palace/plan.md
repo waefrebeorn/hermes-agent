@@ -1,12 +1,12 @@
 # Slermes C — Plan (May 21 DA v4)
 
 ## Current State
-- Overall: **~55% complete** (Config P1-P25 structural expansion done this session)
+- Overall: **~57% complete** (P76 OpenRouter native done this session)
 - **P1-P25 (Config):** All 25 phases implemented ✅ P15/P19/P22 gap-filled
 - Config keys: 154/318 (48%) ← 164 still missing (leaf key expansion, not phase gaps)
 - Tools: 74 registered, 54 expected all found (92%)
 - CLI: 72/85 commands (85%), all dispatch, most feature-complete
-- Providers: 3/29+ (10%) ← BIGGEST gap by count
+- **Providers: 4/29+ (~15%)** ← OpenRouter native added (P76)
 - MCP: 70% (core client + 6 tools)
 - Plugins: 25% (3/17 types)
 - Tests: <1% (12 files, 1.3K LOC vs ~17K) ← CRITICAL gap
