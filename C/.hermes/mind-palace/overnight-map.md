@@ -4,6 +4,13 @@
 ~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
 
+### Session 2026-05-26 — Config validation edge cases (M22)
+
+- ✅ **test_config.c: 89 assertions** (+10 edge cases)
+- ✅ **Bugfix: NULL cfg/result in hermes_config_validate** — no crash
+- ◀ **Tests: 63%** (1/35 gaps closed: M22)
+- ◀ Committed: `51eb4eedf`
+
 ### Session 2026-05-26 — Gateway escape mode tests (M07)
 
 - ✅ **test_gateway_escape.c** — 30 assertions across 3 gateway formatting functions

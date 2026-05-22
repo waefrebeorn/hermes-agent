@@ -24,6 +24,15 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — Config validation edge cases (M22)
+
+- ✅ **test_config.c: 89 assertions** (+10 new M22 edge cases)
+- ✅ **Bugfix: hermes_config_validate** — NULL cfg/result no longer SEGV
+- ✅ **Bugfix: add_issue(NULL)** — guarded against null result pointer
+- ◀ **Tests: 63%** (1/35 gaps closed: M22)
+- ◀ **Config: 98%** (validation function hardened)
+- ◀ Committed: `51eb4eedf`
+
 ### Session 2026-05-26 — Gateway escape mode tests (M07)
 
 - ✅ **test_gateway_escape.c** — 30 assertions covering:
