@@ -2220,10 +2220,38 @@ static void cmd_reload_skills(const char *args, agent_state_t *state) {
 static void cmd_browser(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
-        printf("CDP browser connection: use /browser connect <url>\n");
+        printf("Usage: /browser connect <ws_url>  — connect to CDP browser\n");
+        printf("       /browser status            — show CDP connection status\n");
+        printf("       /browser disconnect         — close CDP connection\n");
         return;
     }
-    printf("CDP browser: %s. CDP not yet implemented in C browser.\n", args);
+
+    if (strncmp(args, "connect ", 8) == 0) {
+        const char *url = args + 8;
+        while (*url == ' ') url++;
+        if (!*url) { printf("Usage: /browser connect <ws_url>\n"); return; }
+        cdp_set_url(url);
+        printf("CDP URL set to: %s\n", url);
+        printf("Use browser_navigate, browser_snapshot, etc. via the tool system.\n");
+        return;
+    }
+
+    if (strcmp(args, "disconnect") == 0) {
+        cdp_set_url("");
+        printf("CDP connection cleared.\n");
+        return;
+    }
+
+    if (strcmp(args, "status") == 0) {
+        const char *url = cdp_get_url();
+        if (url && url[0])
+            printf("CDP connected to: %s\n", url);
+        else
+            printf("CDP not connected. Use /browser connect <ws_url>.\n");
+        return;
+    }
+
+    printf("Unknown browser command: %s\n", args);
 }
 
 /* /update: Update Hermes Agent */

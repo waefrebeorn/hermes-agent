@@ -1023,6 +1023,7 @@ bool commands_get_fast(void);
 
 /* CDP browser URL config */
 void cdp_set_url(const char *url);
+const char *cdp_get_url(void);
 
 /* Registry accessors */
 size_t registry_get_count(void);

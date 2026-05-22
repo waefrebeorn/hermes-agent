@@ -1193,7 +1193,7 @@ static char g_cdp_url[512] = {0};
 static int g_cdp_msg_id = 0;
 
 /* Get CDP URL from config or env */
-static const char *cdp_get_url(void) {
+const char *cdp_get_url(void) {
     if (g_cdp_url[0]) return g_cdp_url;
     const char *env = getenv("CAMOFOX_WS_URL");
     if (env) { snprintf(g_cdp_url, sizeof(g_cdp_url), "%s", env); return g_cdp_url; }
