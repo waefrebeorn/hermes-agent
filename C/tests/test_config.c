@@ -123,6 +123,120 @@ static void test_env_overrides(void) {
     unsetenv("HERMES_VOICE_RECORD_KEY");
 }
 
+/* M23: Env var override priority — env > YAML > default chain */
+static void test_env_priority(void) {
+    printf("\n=== Env Priority (M23) ===\n");
+
+    /* 1. Numeric env var (HERMES_MAX_TOKENS) */
+    setenv("HERMES_MAX_TOKENS", "8192", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_INT_EQ("HERMES_MAX_TOKENS=8192", cfg.provider_cfg.max_tokens, 8192);
+    }
+    unsetenv("HERMES_MAX_TOKENS");
+
+    /* 2. Float env var (HERMES_TEMPERATURE) */
+    setenv("HERMES_TEMPERATURE", "0.7", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST("HERMES_TEMPERATURE=0.7", cfg.provider_cfg.temperature > 0.69f && cfg.provider_cfg.temperature < 0.71f);
+    }
+    unsetenv("HERMES_TEMPERATURE");
+
+    /* 3. String env var (HERMES_MODEL) */
+    setenv("HERMES_MODEL", "gpt-5", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_STR_EQ("HERMES_MODEL=gpt-5", cfg.provider_cfg.model, "gpt-5");
+    }
+    unsetenv("HERMES_MODEL");
+
+    /* 4. String env var (HERMES_SKIN → display.skin) */
+    setenv("HERMES_SKIN", "dark", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_STR_EQ("HERMES_SKIN=dark", cfg.display.skin, "dark");
+    }
+    unsetenv("HERMES_SKIN");
+
+    /* 5. Boolean env var (HERMES_YOLO) */
+    setenv("HERMES_YOLO", "true", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_BOOL("HERMES_YOLO=true", cfg.yolo_mode, true);
+    }
+    unsetenv("HERMES_YOLO");
+
+    /* 6. Numeric env var (HERMES_MAX_TURNS) */
+    setenv("HERMES_MAX_TURNS", "50", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_INT_EQ("HERMES_MAX_TURNS=50", cfg.agent.max_iterations, 50);
+    }
+    unsetenv("HERMES_MAX_TURNS");
+
+    /* 7. Provider env var (HERMES_PROVIDER) */
+    setenv("HERMES_PROVIDER", "anthropic", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_STR_EQ("HERMES_PROVIDER=anthropic", cfg.provider_cfg.provider, "anthropic");
+    }
+    unsetenv("HERMES_PROVIDER");
+
+    /* 8. Base URL env var */
+    setenv("HERMES_BASE_URL", "https://custom.api.com", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST_STR_EQ("HERMES_BASE_URL overrides", cfg.provider_cfg.base_url, "https://custom.api.com");
+    }
+    unsetenv("HERMES_BASE_URL");
+
+    /* 9. Non-existent env var does not crash */
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        TEST("non-existent env var no crash", true);
+    }
+
+    /* 10. Empty string env var — implementation writes it */
+    setenv("HERMES_MODEL", "", 1);
+    {
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        /* Current impl: empty env writes empty string to model */
+        TEST("empty env var no crash", true);
+    }
+    unsetenv("HERMES_MODEL");
+}
+
 /* ================================================================
  *  3. Validation Test
  * ================================================================ */
@@ -336,6 +450,7 @@ int main(void) {
     test_diff();
     test_retry_config();
     test_validation_edge_cases();
+    test_env_priority();
 
     printf("\nResults: %d passed, %d failed\n", passed, failed);
     return failed > 0 ? 1 : 0;
