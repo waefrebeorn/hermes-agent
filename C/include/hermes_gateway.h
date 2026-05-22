@@ -160,6 +160,42 @@ typedef struct {
 
     /* Per-platform HTTP clients (owned by thread functions) */
     http_client_t  *platform_http[GW_MAX_PLATFORMS];
+
+    /* Per-platform HTTP keepalive config (seconds, 0=default) */
+    double platform_keepalive_sec[GW_MAX_PLATFORMS];
+
+    /* E28: Message deduplication — ring buffer of recent message IDs */
+    char   dedup_ids[64][128];     /* recent message IDs (update_id or message_id) */
+    double dedup_timestamps[64];   /* when each ID was seen (monotonic) */
+    int    dedup_head;
+    int    dedup_count;
+    double dedup_ttl;              /* seconds to keep dedup entries (default 5.0) */
+
+    /* E29: Batch aggregation — coalesce fragmented messages */
+    char   batch_buf[4096];        /* accumulated text */
+    char   batch_platform[32];
+    char   batch_chat_id[128];
+    double batch_start_time;       /* when batch accumulation started */
+    bool   batch_active;
+
+    /* E31: Per-platform cooldown (seconds to wait between actions) */
+    double platform_cooldown_sec[GW_MAX_PLATFORMS];
+    double platform_last_action[GW_MAX_PLATFORMS];
+
+    /* E32: Reconnect backoff — exponential backoff per platform */
+    int    reconnect_attempt[GW_MAX_PLATFORMS];
+    double reconnect_delay_sec[GW_MAX_PLATFORMS];
+#define GW_RECONNECT_BASE_SEC   1.0
+#define GW_RECONNECT_MAX_SEC    60.0
+#define GW_RECONNECT_JITTER     0.1
+
+    /* E33: Proxy per-platform */
+    char   platform_proxy[GW_MAX_PLATFORMS][512];
+    bool   proxy_enabled[GW_MAX_PLATFORMS];
+
+    /* E34: Group observe — observe unmentioned messages */
+    char   group_observe_prefix[64];  /* prefix to strip from group names */
+    bool   group_observe_enabled;
 } gateway_state_t;
 
 /* Global gateway state — defined in server.c */
@@ -167,6 +203,33 @@ extern gateway_state_t g_gw;
 
 /* Thread-safe agent_chat wrapper — acquires mutex, calls agent_chat, releases */
 char *gateway_agent_chat(const char *message);
+
+/* E28: Check if message ID was already processed (dedup). Returns true if duplicate. */
+bool gw_dedup_check(const char *message_id);
+
+/* E28: Record a message ID as processed. */
+void gw_dedup_add(const char *message_id);
+
+/* E29: Accumulate a batch of text fragments. Call gw_batch_flush() to process. */
+void gw_batch_accumulate(const char *platform, const char *chat_id, const char *fragment);
+
+/* E29: Flush the current batch (process as single message). */
+void gw_batch_flush(void);
+
+/* E31: Check if platform is in cooldown. Returns seconds remaining (>0 = in cooldown). */
+double gw_cooldown_remaining(int plat_idx);
+
+/* E31: Mark an action as performed on platform (resets cooldown timer). */
+void gw_cooldown_mark(int plat_idx);
+
+/* E32: Calculate reconnect delay with exponential backoff. Returns seconds to sleep. */
+double gw_reconnect_delay(int plat_idx);
+
+/* E32: Reset reconnect backoff on successful connection. */
+void gw_reconnect_reset(int plat_idx);
+
+/* E34: Set group observe prefix. Messages from groups with this prefix are observed. */
+void gw_set_group_observe(const char *prefix, bool enabled);
 
 /* ================================================================
  *  Telegram platform

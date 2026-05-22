@@ -188,17 +188,204 @@ void gw_pool_cleanup(void) {
     for (int i = 0; i < g_gw.pool_count; i++) {
         if (!g_gw.http_pool[i].in_use &&
             (now - g_gw.http_pool[i].last_used) > 300.0) {
-            /* Idle > 5 min — free */
             http_client_free(g_gw.http_pool[i].client);
-            /* Swap with last entry */
             if (i < g_gw.pool_count - 1) {
                 g_gw.http_pool[i] = g_gw.http_pool[g_gw.pool_count - 1];
             }
             g_gw.pool_count--;
-            i--; /* re-check this slot */
+            i--;
         }
     }
     pthread_mutex_unlock(&g_gw.pool_mutex);
+}
+
+/* ================================================================
+ *  E27: HTTP keepalive per-platform (set via config)
+ * ================================================================ */
+
+void gw_set_keepalive(int plat_idx, double keepalive_sec) {
+    if (plat_idx >= 0 && plat_idx < GW_MAX_PLATFORMS)
+        g_gw.platform_keepalive_sec[plat_idx] = keepalive_sec;
+}
+
+/* E28: Message deduplication (TTL-based ring buffer) */
+/* Forward declaration for process_update (defined below) */
+static void process_update(const char *platform, const char *chat_id, const char *text);
+
+bool gw_dedup_check(const char *message_id) {
+    if (!message_id || !*message_id) return false;
+    double now = gw_mono_time();
+
+    /* Prune expired entries */
+    while (g_gw.dedup_count > 0 &&
+           (now - g_gw.dedup_timestamps[g_gw.dedup_head]) > g_gw.dedup_ttl) {
+        g_gw.dedup_head = (g_gw.dedup_head + 1) % 64;
+        g_gw.dedup_count--;
+    }
+
+    /* Linear scan for match (small ring, <64 entries) */
+    for (int i = 0; i < g_gw.dedup_count; i++) {
+        int idx = (g_gw.dedup_head + i) % 64;
+        if (strcmp(g_gw.dedup_ids[idx], message_id) == 0)
+            return true; /* duplicate */
+    }
+    return false;
+}
+
+void gw_dedup_add(const char *message_id) {
+    if (!message_id || !*message_id) return;
+    if (g_gw.dedup_count >= 64) return; /* ring full, skip */
+
+    int idx = (g_gw.dedup_head + g_gw.dedup_count) % 64;
+    snprintf(g_gw.dedup_ids[idx], sizeof(g_gw.dedup_ids[idx]), "%s", message_id);
+    g_gw.dedup_timestamps[idx] = gw_mono_time();
+    g_gw.dedup_count++;
+}
+
+/* ================================================================
+ *  E29: Batch aggregation — coalesce fragmented messages
+ * ================================================================ */
+
+void gw_batch_accumulate(const char *platform, const char *chat_id, const char *fragment) {
+    if (!platform || !chat_id || !fragment) return;
+
+    double now = gw_mono_time();
+    double BATCH_TIMEOUT = 2.0; /* seconds to wait for more fragments */
+
+    /* If no active batch or different source, flush first */
+    if (g_gw.batch_active &&
+        (strcmp(g_gw.batch_platform, platform) != 0 ||
+         strcmp(g_gw.batch_chat_id, chat_id) != 0 ||
+         (now - g_gw.batch_start_time) > BATCH_TIMEOUT)) {
+        gw_batch_flush();
+    }
+
+    /* Start or continue batch */
+    if (!g_gw.batch_active) {
+        snprintf(g_gw.batch_platform, sizeof(g_gw.batch_platform), "%s", platform);
+        snprintf(g_gw.batch_chat_id, sizeof(g_gw.batch_chat_id), "%s", chat_id);
+        g_gw.batch_buf[0] = '\0';
+        g_gw.batch_start_time = now;
+        g_gw.batch_active = true;
+    }
+
+    size_t remaining = sizeof(g_gw.batch_buf) - strlen(g_gw.batch_buf) - 1;
+    if (remaining > 0) {
+        strncat(g_gw.batch_buf, fragment, remaining);
+    }
+}
+
+void gw_batch_flush(void) {
+    if (!g_gw.batch_active) return;
+    if (g_gw.batch_buf[0]) {
+        process_update(g_gw.batch_platform, g_gw.batch_chat_id, g_gw.batch_buf);
+    }
+    g_gw.batch_buf[0] = '\0';
+    g_gw.batch_active = false;
+}
+
+/* ================================================================
+ *  E30: Markdown stripping per-platform
+ * ================================================================ */
+
+static char *gw_strip_markdown(const char *text, bool strip_code, bool strip_bold,
+                                bool strip_italic) {
+    if (!text) return NULL;
+    /* Simple in-place markdown stripping. Allocates for worst case. */
+    char *out = (char *)malloc(strlen(text) + 1);
+    if (!out) return NULL;
+    int j = 0;
+    for (int i = 0; text[i]; i++) {
+        if (text[i] == '`' && strip_code) continue;
+        if (text[i] == '*' && strip_bold) {
+            /* Skip ** */
+            if (text[i+1] == '*') i++;
+            continue;
+        }
+        if (text[i] == '_' && strip_italic) continue;
+        if (text[i] == '~' && text[i+1] == '~') { i++; continue; } /* strikethrough ~~ */
+        if (text[i] == '#' && (i == 0 || text[i-1] == '\n')) continue; /* headers */
+        if (text[i] == '>') { /* block quotes */
+            if (i == 0 || text[i-1] == '\n') continue;
+        }
+        out[j++] = text[i];
+    }
+    out[j] = '\0';
+    return out;
+}
+
+/* ================================================================
+ *  E31: Per-platform cooldown
+ * ================================================================ */
+
+double gw_cooldown_remaining(int plat_idx) {
+    if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return 0.0;
+    double remaining = g_gw.platform_cooldown_sec[plat_idx] -
+        (gw_mono_time() - g_gw.platform_last_action[plat_idx]);
+    return remaining > 0.0 ? remaining : 0.0;
+}
+
+void gw_cooldown_mark(int plat_idx) {
+    if (plat_idx >= 0 && plat_idx < GW_MAX_PLATFORMS)
+        g_gw.platform_last_action[plat_idx] = gw_mono_time();
+}
+
+/* ================================================================
+ *  E32: Reconnect backoff (exponential with jitter)
+ * ================================================================ */
+
+double gw_reconnect_delay(int plat_idx) {
+    if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return GW_RECONNECT_BASE_SEC;
+
+    g_gw.reconnect_attempt[plat_idx]++;
+
+    /* Exponential: base * 2 ^ (attempt - 1) with jitter */
+    double base = GW_RECONNECT_BASE_SEC *
+        (1 << (g_gw.reconnect_attempt[plat_idx] - 1));
+    if (base > GW_RECONNECT_MAX_SEC) base = GW_RECONNECT_MAX_SEC;
+
+    /* Add random jitter ±10% */
+    double jitter = ((double)rand() / RAND_MAX) * 2.0 * GW_RECONNECT_JITTER * base
+        - GW_RECONNECT_JITTER * base;
+    double delay = base + jitter;
+    if (delay < GW_RECONNECT_BASE_SEC) delay = GW_RECONNECT_BASE_SEC;
+
+    g_gw.reconnect_delay_sec[plat_idx] = delay;
+    return delay;
+}
+
+void gw_reconnect_reset(int plat_idx) {
+    if (plat_idx >= 0 && plat_idx < GW_MAX_PLATFORMS) {
+        g_gw.reconnect_attempt[plat_idx] = 0;
+        g_gw.reconnect_delay_sec[plat_idx] = 0.0;
+    }
+}
+
+/* ================================================================
+ *  E33: Proxy support per-platform
+ * ================================================================ */
+
+bool gw_set_proxy(int plat_idx, const char *proxy_url) {
+    if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return false;
+    if (!proxy_url || !*proxy_url) {
+        g_gw.proxy_enabled[plat_idx] = false;
+        g_gw.platform_proxy[plat_idx][0] = '\0';
+        return true;
+    }
+    snprintf(g_gw.platform_proxy[plat_idx], sizeof(g_gw.platform_proxy[plat_idx]),
+             "%s", proxy_url);
+    g_gw.proxy_enabled[plat_idx] = true;
+    return true;
+}
+
+/* ================================================================
+ *  E34: Group observe — observe unmentioned group messages
+ * ================================================================ */
+
+void gw_set_group_observe(const char *prefix, bool enabled) {
+    if (prefix)
+        snprintf(g_gw.group_observe_prefix, sizeof(g_gw.group_observe_prefix), "%s", prefix);
+    g_gw.group_observe_enabled = enabled;
 }
 
 /* ================================================================
