@@ -154,16 +154,26 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 }
             }
 
-            /* Vision analysis via Python Hermes subprocess delegation */
-            if (question && *question) {
-                json_object_set(result, "question", json_new_string(question));
+                /* Vision analysis via Python Hermes subprocess delegation */
+                if (question && *question) {
+                    json_object_set(result, "question", json_new_string(question));
 
-                /* Call Python Hermes agent for AI image description.
-                 * Uses subprocess (no shell injection) via delegation script. */
-                char *desc = run_cmd_full(
-                    "python3 '%s' '%s' '%s' 2>&1 | head -c 5000",
-                    "/home/wubu/hermes-agent-dev/C/src/tools/vision_delegate.py",
-                    image_url, question);
+                    /* Find vision delegate script path */
+                    char script_path[1024];
+                    const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
+                                       getenv("HOME") ? getenv("HOME") : ".";
+                    snprintf(script_path, sizeof(script_path),
+                             "%s/hermes-agent-dev/C/src/tools/vision_delegate.py", home);
+                    struct stat sp;
+                    if (stat(script_path, &sp) != 0) {
+                        snprintf(script_path, sizeof(script_path),
+                                 "%s/.hermes/scripts/vision_delegate.py", home);
+                    }
+
+                    /* Call Python Hermes agent for AI image description */
+                    char *desc = run_cmd_full(
+                        "python3 '%s' '%s' '%s' 2>&1 | head -c 5000",
+                        script_path, image_url, question);
                 if (desc && strlen(desc) > 10 && !strstr(desc, "not found") &&
                     !strstr(desc, "error") && !strstr(desc, "timed out") &&
                     !strstr(desc, "Usage:")) {

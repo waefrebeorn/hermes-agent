@@ -21,12 +21,22 @@ static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
       "\"code\":{\"type\":\"string\",\"description\":\"Python code to execute\"},"
-      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout seconds\",\"default\":60}"
+      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout seconds\",\"default\":60},"
+      "\"sandbox\":{\"type\":\"boolean\",\"description\":\"F44: Enable sandbox isolation via bwrap (namespace/seccomp)\",\"default\":false}"
     "},"
     "\"required\":[\"code\"]"
 "}";
 
-static char *run_python(const char *code, int timeout_sec) {
+static bool has_bwrap(void) {
+    FILE *fp = popen("which bwrap 2>/dev/null", "r");
+    if (!fp) return false;
+    char buf[16] = {0};
+    bool found = fgets(buf, sizeof(buf), fp) != NULL;
+    pclose(fp);
+    return found;
+}
+
+static char *run_python(const char *code, int timeout_sec, bool sandbox_mode) {
     if (!code) return strdup("{\"error\":\"No code provided\"}");
 
     /* Write code to temp file */
@@ -38,11 +48,34 @@ static char *run_python(const char *code, int timeout_sec) {
     fputs(code, f);
     fclose(f);
 
-    /* Build command with timeout */
-    char cmd[32768];
-    snprintf(cmd, sizeof(cmd),
-             "timeout %d python3 %s 2>&1 || true",
-             timeout_sec > 0 ? timeout_sec : EXEC_DEFAULT_TIMEOUT, tmp_path);
+    /* Build command with timeout and optional sandbox */
+    char cmd[65536];
+    char cmd_prefix[1024] = {0};
+
+    if (sandbox_mode && has_bwrap()) {
+        /* F44: Use bubblewrap for namespace/seccomp isolation */
+        snprintf(cmd_prefix, sizeof(cmd_prefix),
+                 "bwrap --seccomp 10 --unshare-all --die-with-parent "
+                 "--ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 "
+                 "--ro-bind /etc/alternatives /etc/alternatives "
+                 "--tmpfs /tmp --proc /proc --dev /dev "
+                 "--ro-bind /bin /bin ");
+    } else if (sandbox_mode) {
+        /* Sandbox requested but bwrap not available */
+        /* Use a note that sandbox isn't available, but still run */
+        fprintf(stderr, "[exec_code] Sandbox requested but bwrap not found, running unsandboxed\n");
+    }
+
+    if (cmd_prefix[0]) {
+        snprintf(cmd, sizeof(cmd),
+                 "timeout %d %spython3 %s 2>&1 || true",
+                 timeout_sec > 0 ? timeout_sec : EXEC_DEFAULT_TIMEOUT,
+                 cmd_prefix, tmp_path);
+    } else {
+        snprintf(cmd, sizeof(cmd),
+                 "timeout %d python3 %s 2>&1 || true",
+                 timeout_sec > 0 ? timeout_sec : EXEC_DEFAULT_TIMEOUT, tmp_path);
+    }
 
     FILE *fp = popen(cmd, "r");
     if (!fp) {
@@ -99,15 +132,17 @@ char *exec_code_handler(const char *args_json, const char *task_id) {
 
     const char *code = json_object_get_string(args, "code", NULL);
     int timeout = (int)json_object_get_number(args, "timeout", EXEC_DEFAULT_TIMEOUT);
+    bool sandbox = json_object_get_bool(args, "sandbox", false);
     json_free(args);
 
     if (!code) return strdup("{\"error\":\"Missing required 'code'\"}");
-    return run_python(code, timeout);
+    return run_python(code, timeout, sandbox);
 }
 
 void registry_init_exec_code(void) {
     registry_register("execute_code",
         "Execute Python code in a subprocess. Returns stdout, stderr, and exit code. "
+        "Supports 'sandbox' mode for namespace/seccomp isolation via bwrap. "
         "Use for running calculations, data processing, and automation.",
         SCHEMA, exec_code_handler);
 }
