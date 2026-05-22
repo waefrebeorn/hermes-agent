@@ -324,6 +324,8 @@ static void cmd_sessions(const char *args, agent_state_t *state) {
 
 static void cmd_save(const char *args, agent_state_t *state) {
     (void)args;
+    /* Auto-open DB if needed */
+    if (!state->db) agent_open_db(state);
     if (agent_save_session(state))
         printf("Session saved: %s\n", state->session_id);
     else
@@ -334,6 +336,13 @@ static void cmd_load(const char *args, agent_state_t *state) {
     if (!args || !args[0]) {
         printf("Usage: /load <session_id>\n");
         return;
+    }
+    /* Auto-open DB if needed */
+    if (!state->db) agent_open_db(state);
+    /* Save current session before loading new one */
+    if (state->message_count > 0 && state->db) {
+        agent_save_session(state);
+        printf("Previous session saved: %s\n", state->session_id);
     }
     if (agent_load_session(state, args))
         printf("Session loaded: %s (%zu messages)\n", args, state->message_count);
@@ -349,6 +358,16 @@ static void cmd_stats(const char *args, agent_state_t *state) {
     printf("Tools registered: %zu\n", state->tools.count);
     printf("Model:     %s\n", state->llm.model);
     printf("Provider:  %s\n", state->llm.provider);
+
+    /* Token estimation */
+    size_t total_chars = 0;
+    for (size_t i = 0; i < state->message_count; i++) {
+        if (state->messages[i]->content)
+            total_chars += strlen(state->messages[i]->content);
+    }
+    size_t est_tokens = llm_estimate_tokens("") + total_chars / 4;
+    printf("Est. tokens: %zu across %zu messages\n",
+           est_tokens, state->message_count);
 }
 
 static void cmd_conv(const char *args, agent_state_t *state) {
