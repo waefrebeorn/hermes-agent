@@ -18,8 +18,8 @@
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
 | **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
-| **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-|| **Build/doc** | 7 | 77% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen config, module docs, ARCHITECTURE.md, SECURITY.md, **O15: file permissions hardening** |
+|| **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
+|| **Build/doc** | 6 | **80%** | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file permissions hardening, O11 vault encryption at rest |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
@@ -33,6 +33,18 @@
 - ✅ Skips when uid==0 (root), NULL-safe, empty-string safe, missing-file safe
 - ◀ **Build/doc: 75%→77%** (1/7 gaps closed: O15)
 - ◀ **Suite: 99/0/0** (+1 test, 15 assertions; was 98/0/0)
+
+### Session 2026-05-26 — Vault encryption at rest test (O11)
+
+- ✅ **test_vault.c** — 37 assertions covering full vault lifecycle:
+  - Master key set/lock/has, store/retrieve/delete credentials
+  - Persistence: save encrypted file, reload, verify data survives
+  - Update existing credential, persisted update after reload
+  - List services (deduped), wrong-key decryption fails gracefully
+  - NULL safety (9 edge cases)
+- ✅ **Bugfix: vault_set_master_key didn't set g_vault_unlocked** — retrieve returned NULL after set_master_key+store because unlocked flag was only set on vault_load()
+- ◀ **Build/doc: 77%→80%** (1 gap closed: O11)
+- ◀ **Suite: 100/0/0** (+1 test, 37 assertions; was 99/0/0)
 
 ### Session 2026-05-26 — Architecture documentation (O08)
 

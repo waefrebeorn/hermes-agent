@@ -180,6 +180,23 @@ else
     skip "file_permissions (compilation failed)"
 fi
 
+# Vault encryption at rest test (O11 — needs vault.c + crypto + json)
+echo ""; echo "=== Vault Encryption at Rest (O11) ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_vault.c" \
+    "$CDIR/src/agent/vault.c" \
+    "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_vault -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_vault > /dev/null 2>&1; then ok "vault (37 tests)"
+    else
+        echo "  Vault test output:"
+        /tmp/hermes_test_vault 2>&1 | sed 's/^/    /'
+        fail "vault (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_vault
+else skip "vault (compilation failed)"
+fi
+
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \

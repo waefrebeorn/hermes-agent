@@ -74,7 +74,10 @@ static bool derive_key(const char *passphrase, unsigned char *key_out,
 bool vault_set_master_key(const char *passphrase) {
     if (!passphrase) return false;
     bool ok = derive_key(passphrase, g_master_key, sizeof(g_master_key));
-    if (ok) g_master_key_set = true;
+    if (ok) {
+        g_master_key_set = true;
+        g_vault_unlocked = true;  /* key set = vault ready for use */
+    }
     return ok;
 }
 
