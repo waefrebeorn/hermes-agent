@@ -205,6 +205,31 @@ static void *tool_dispatch_thread(void *arg) {
     return NULL;
 }
 
+/* P93: Tool result classification */
+typedef enum {
+    TOOL_RESULT_SUCCESS = 0,
+    TOOL_RESULT_ERROR,   /* Non-fatal error — loop continues */
+    TOOL_RESULT_FATAL,   /* Fatal error — abort loop */
+} tool_result_class_t;
+
+/* Classify a tool result string. Returns classification level. */
+static tool_result_class_t classify_tool_result(const char *result, const char *tool_name) {
+    (void)tool_name;
+    if (!result || !*result) return TOOL_RESULT_ERROR;
+
+    /* Check for error patterns in JSON result */
+    if (strstr(result, "\"error\"")) {
+        /* Check for fatal patterns */
+        if (strstr(result, "fatal") || strstr(result, "FATAL") ||
+            strstr(result, "not found") || strstr(result, "permission denied") ||
+            strstr(result, "access denied") || strstr(result, "unauthorized"))
+            return TOOL_RESULT_FATAL;
+        return TOOL_RESULT_ERROR;
+    }
+
+    return TOOL_RESULT_SUCCESS;
+}
+
 /* Convert tool registry to JSON for tool_choice */
 static json_node_t *tools_to_json(tool_registry_t *reg) {
     json_node_t *tools = json_new_array();
@@ -463,6 +488,10 @@ char *agent_run_conversation(agent_state_t *state,
                 works[i].result ? works[i].result :
                     "{\"error\":\"Tool returned NULL\"}");
             context_push(state, tool_msg);
+            /* P93: Classify tool result — abort on fatal */
+            if (classify_tool_result(works[i].result, works[i].tool_name) == TOOL_RESULT_FATAL) {
+                state->interrupted = true;
+            }
             free(works[i].tool_name);
             free(works[i].tool_args);
             free(works[i].tool_id);
@@ -471,7 +500,10 @@ char *agent_run_conversation(agent_state_t *state,
         free(works);
 
         llm_response_free(llm_resp);
-        /* Loop back to LLM with tool results appended */
+        /* P93: Break on fatal tool result */
+        if (!state->interrupted) {
+            /* Loop back to LLM with tool results appended */
+        }
     }
 
     json_free(tools_json);
