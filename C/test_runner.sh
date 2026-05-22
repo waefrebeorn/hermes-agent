@@ -197,6 +197,22 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
 else skip "vault (compilation failed)"
 fi
 
+# Audit log rotation test (O12 — needs audit.c)
+echo ""; echo "=== Audit Log Rotation (O12) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_audit_rotate.c" \
+    "$CDIR/src/agent/audit.c" \
+    -o /tmp/hermes_test_audit -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_audit > /dev/null 2>&1; then ok "audit_rotate (11 tests)"
+    else
+        echo "  Audit rotate test output:"
+        /tmp/hermes_test_audit 2>&1 | sed 's/^/    /'
+        fail "audit_rotate (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_audit
+else skip "audit_rotate (compilation failed)"
+fi
+
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \

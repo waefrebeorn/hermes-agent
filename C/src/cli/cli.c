@@ -209,6 +209,9 @@ int hermes_cli_main(int argc, char **argv) {
             hermes_file_permissions_harden(home, NULL, NULL, geteuid());
     }
 
+    /* O12: Audit log rotation — 10MB max, 5 rotated files, 30-day expiry */
+    audit_set_rotation(10240, 5, 30);
+
     /* Set up persistent allowlist path and load saved approvals */
     {
         const char *home = g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : NULL;

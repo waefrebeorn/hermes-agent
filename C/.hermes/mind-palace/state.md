@@ -19,7 +19,7 @@
 | **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-|| **Build/doc** | 6 | **80%** | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file permissions hardening, O11 vault encryption at rest |
+|| **Build/doc** | 3 | **86%** | Docker, CI, cross-compile, man page, CHANGELOG, Doxygen, ARCHITECTURE.md, SECURITY.md, O15 file perms, O11 vault, O05 release, **O12 audit rotation** |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
@@ -45,6 +45,33 @@
 - ✅ **Bugfix: vault_set_master_key didn't set g_vault_unlocked** — retrieve returned NULL after set_master_key+store because unlocked flag was only set on vault_load()
 - ◀ **Build/doc: 77%→80%** (1 gap closed: O11)
 - ◀ **Suite: 100/0/0** (+1 test, 37 assertions; was 99/0/0)
+
+### Session 2026-05-26 — Release automation (O05)
+
+- ✅ **scripts/release.sh** — Automated release script: version bump (patch/minor/major), build, run tests, update CHANGELOG, git commit + tag
+- ✅ **Makefile `release` target** — `make release [patch|minor|major]`
+- ✅ Does NOT auto-push — caller must `git push --tags origin main`
+- ◀ **Build/doc: 80%→83%** (1 gap closed: O05)
+- ◀ Committed: pending
+
+### Session 2026-05-26 — Audit log rotation (O12)
+
+- ✅ **audit_check_rotate()** — Auto-rotate when log exceeds max_size (configurable: max_size_kb, max_files, max_age_days)
+- ✅ **audit_set_rotation()** — Public API for setting rotation params
+- ✅ **Shift + expiry** — Rotated files shift (1→2, 2→3…), expired files deleted by mtime
+- ✅ **Wired in CLI init** — 10MB max, 5 rotated files, 30-day expiry defaults
+- ✅ **test_audit_rotate.c** — 11 assertions: init, log write, content verification, config changes
+- ✅ Fix: added missing `#include <unistd.h>` for `unlink()`
+- ◀ **Build/doc: 83%→86%** (1 gap closed: O12)
+- ◀ **Suite: 101/0/0** (+1 test, 11 assertions; was 100/0/0)
+
+### Session 2026-05-26 — Release automation (O05)
+
+- ✅ **scripts/release.sh** — Automated release script: version bump (patch/minor/major), build, run tests, update CHANGELOG, git commit + tag
+- ✅ **Makefile `release` target** — `make release [patch|minor|major]`
+- ✅ Does NOT auto-push — caller must `git push --tags origin main`
+- ◀ **Build/doc: 80%→83%** (1 gap closed: O05)
+- ◀ Committed: pending
 
 ### Session 2026-05-26 — Architecture documentation (O08)
 

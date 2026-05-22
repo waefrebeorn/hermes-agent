@@ -203,3 +203,7 @@ clean:
 	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
 	rm -f $(LIB_OBJ) $(LIB_A)
 	rm -rf digest_output/
+
+# O05: Release automation target
+release:
+	@bash scripts/release.sh $(filter-out $@,$(MAKECMDGOALS))

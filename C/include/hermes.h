@@ -1205,6 +1205,9 @@ const char *vault_retrieve(const char *service, const char *key);
 bool vault_delete(const char *service, const char *key);
 int vault_list_services(char services[][128], int max_count);
 
+/* O12: Audit log rotation parameters */
+void audit_set_rotation(size_t max_size_kb, int max_files, int max_age_days);
+
 /* P168: File sandbox */
 void sandbox_init(void);
 void sandbox_enable(bool enabled);
