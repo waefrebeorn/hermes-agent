@@ -4,6 +4,12 @@
 ~62% complete  •  ~350 gaps remaining  •  125 commits behind upstream
 ```
 
+### Session 2026-05-26 — Architecture documentation (O08)
+
+- ✅ **ARCHITECTURE.md** — Full system overview with diagram
+- ◀ **Build/doc: 75%** (was 70%, 1/7 gaps closed: O08)
+- ◀ Committed: `3f53e0154`
+
 ### Session 2026-05-26 — Config env priority tests (M23)
 
 - ✅ **test_config.c: 99 assertions** (+10 M23 env priority)

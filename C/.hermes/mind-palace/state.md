@@ -24,6 +24,13 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-26 — Architecture documentation (O08)
+
+- ✅ **ARCHITECTURE.md** — Full system overview with ASCII diagram: CLI/Gateway → Agent Loop → Providers → Config/Plugins → Library stack
+- ✅ Covers: data flow, startup sequence, module architecture (config 322+ fields, 9 providers, 28 tools, 19 gateway platforms, 14 libraries), design decisions, testing philosophy
+- ◀ **Build/doc: 75%** (was 70%, 1/7 gaps closed: O08)
+- ◀ Committed: `3f53e0154`
+
 ### Session 2026-05-26 — Config env priority tests (M23)
 
 - ✅ **test_config.c: 99 assertions** (+10 M23 env priority tests)
