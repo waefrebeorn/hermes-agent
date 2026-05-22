@@ -212,6 +212,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "url_safety (compilation failed)"
 fi
 
+# Command allowlist test (needs approval.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_allowlist.c" \
+    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_al -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_al > /dev/null 2>&1; then ok "allowlist (34 tests)"
+    else fail "allowlist (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_al
+else skip "allowlist (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
