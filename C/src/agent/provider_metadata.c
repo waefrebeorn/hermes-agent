@@ -33,6 +33,18 @@ static const provider_metadata_t PROVIDERS[] = {
     {"minimax",     "MiniMax",      "https://api.minimax.chat/v1",         true,  false, true},
     {"novita",      "Novita AI",    "https://api.novita.ai/v3/openai",     true,  false, true},
     {"zai",         "Zhipu AI",     "https://open.bigmodel.cn/api/paas/v4",true,  false, true},
+    /* More OpenAI-compat providers (G41-G51) */
+    {"huggingface", "Hugging Face", "https://huggingface.co/api/inference/v1", true, false, true},
+    {"arcee",       "Arcee AI",     "https://api.arcee.ai/v1",                true, false, true},
+    {"ollama_cloud","Ollama Cloud", "https://api.ollama.cloud/v1",            true, false, true},
+    {"nvidia",      "Nvidia NIM",   "https://api.nvcf.nvidia.com/v1",         true, false, true},
+    {"gmi",         "GMI",          "https://api.gmi.com/v1",                 true, false, true},
+    {"kilocode",    "KiloCode",     "https://api.kilocode.ai/v1",             true, false, true},
+    {"kimi",        "Kimi Coding",  "https://api.moonshot.cn/v1",             true, false, true},
+    {"ai_gateway",  "AI Gateway",   "https://gateway.ai.cloudflare.com/v1",   true, false, true},
+    {"azure_foundry","Azure AI Foundry","https://YOUR_PROJECT.openai.azure.com", true, true, true},
+    {"xiaomi",      "Xiaomi",       "https://api.xiaomi.com/v1",              true, false, true},
+    {"qwen_oauth",  "Qwen OAuth",   "https://dashscope.aliyuncs.com/v1",      true, false, true},
     {NULL, NULL, NULL, false, false, false},
 };
 

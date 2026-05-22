@@ -14,7 +14,7 @@
  *  Registry
  * ================================================================ */
 
-#define MAX_PROVIDERS 16
+#define MAX_PROVIDERS 32
 static struct {
     provider_type_t type;
     const provider_ops_t *ops;
@@ -74,6 +74,18 @@ static const provider_ops_t *find_provider_ops(const char *name) {
         {"minimax",     PROVIDER_OPENAI},
         {"novita",      PROVIDER_OPENAI},
         {"zai",         PROVIDER_OPENAI},
+        /* More OpenAI-compat providers (G41-G51) */
+        {"huggingface", PROVIDER_OPENAI},
+        {"arcee",       PROVIDER_OPENAI},
+        {"ollama_cloud",PROVIDER_OPENAI},
+        {"nvidia",      PROVIDER_OPENAI},
+        {"gmi",         PROVIDER_OPENAI},
+        {"kilocode",    PROVIDER_OPENAI},
+        {"kimi",        PROVIDER_OPENAI},
+        {"ai_gateway",  PROVIDER_OPENAI},
+        {"azure_foundry",PROVIDER_OPENAI},
+        {"xiaomi",      PROVIDER_OPENAI},
+        {"qwen_oauth",  PROVIDER_OPENAI},
         {NULL, 0}
     };
     for (int i = 0; providers[i].name; i++) {
