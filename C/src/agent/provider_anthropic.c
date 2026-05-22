@@ -531,6 +531,12 @@ static provider_response_t *anthropic_parse_stream_chunk(const provider_t *p,
     provider_response_t *resp = (provider_response_t *)calloc(1, sizeof(*resp));
     if (!resp) return NULL;
 
+    /* Null-safe */
+    if (!chunk) {
+        resp->content = strdup("");
+        return resp;
+    }
+
     /* Anthropic SSE format:
      *   event: content_block_delta
      *   data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}

@@ -263,6 +263,42 @@ else
     skip "openrouter_depth (compilation failed)"
 fi
 
+# Anthropic provider depth test (B26-B28: thinking, cache control, tool format)
+echo ""; echo "=== Anthropic Provider Depth Tests (B26-B28) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_anthropic_depth.c" \
+    "$CDIR/src/agent/provider_anthropic.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (50 tests)"
+    else
+        echo "  Anthropic depth test output:"
+        /tmp/hermes_test_anth_depth 2>&1 | sed 's/^/    /'
+        fail "anthropic_depth (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_anth_depth
+else
+    echo "  Anthropic depth test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_anthropic_depth.c" \
+        "$CDIR/src/agent/provider_anthropic.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "anthropic_depth (compilation failed)"
+fi
+
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_smoke.c" \
