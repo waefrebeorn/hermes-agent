@@ -16,8 +16,8 @@
 | **CLI** | 34 | 85% | 70 slash commands, skin/theme engine. H31-H32 /session-search + /session-export added |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-| **Tests** | 53 | 41% | 28 files, 1,473 assertions |
-| **Upstream** | 4 | new | L01-L03, L07 remain (125 commits behind) |
+| **Tests** | 46 | 50% | **36 files, 2,057 assertions** (67 pass, 0 fail, 0 skip) |
+| **Upstream** | 3 | new | L02-L03, L07 remain (125 commits behind) |
 | **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
@@ -30,3 +30,10 @@
 - ✅ **test_runner.sh updated** — file_tool (35 tests) added
 - ◀ **Tests now 28 files, 1,473 assertions. Suite: 59/59 pass, 0 fail, 3 skip**
 - ◀ Committed: `2ebd96df5`
+
+### Session 2026-05-22 (Later — L01: BSM Secrets Manager)
+- ✅ **L01: Bitwarden Secrets Manager** — New `secrets` subsystem with config struct (`secrets_config_t`), `include/hermes_secrets.h` header, `src/secrets.c` implementation
+  - Config: YAML keys `secrets.bitwarden.{enabled,access_token,organization_id,bws_path,install_timeout}`, env vars `HERMES_SECRETS_BITWARDEN_*`
+  - Full config wiring: defaults, YAML parsing, env override, diff, export, merge, validation
+  - Runtime: lazy bws install (curl download + chmod), BSM auth via `bws project list`, secret resolution `${BSM:name}` in config values
+- ◀ Committed: (current commit)

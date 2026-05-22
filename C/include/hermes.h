@@ -775,6 +775,17 @@ typedef struct {
 } checkpoints_config_t;
 
 /* ================================================================
+ *  Secrets Config (L01: Bitwarden Secrets Manager)
+ * ================================================================ */
+typedef struct {
+    bool  enabled;                 /* secrets.bitwarden.enabled */
+    char  access_token[512];       /* secrets.bitwarden.access_token: BSM access token */
+    char  organization_id[128];    /* secrets.bitwarden.organization_id: optional org scope */
+    char  bws_path[512];           /* secrets.bitwarden.bws_path: path to bws CLI (auto-discovered) */
+    int   install_timeout;         /* secrets.bitwarden.install_timeout: seconds for lazy install */
+} secrets_config_t;
+
+/* ================================================================
  *  Config
  * ================================================================ */
 typedef struct {
@@ -858,6 +869,8 @@ typedef struct {
     updates_config_t updates;
     /* Dashboard config */
     dashboard_config_t dashboard;
+    /* Secrets config */
+    secrets_config_t secrets;
     char  skin_path[HERMES_PATH_MAX];
     char  personality[1024];   /* display.personality: system prompt override */
     char  cdp_url[512];        /* browser.cdp_url: Chrome DevTools Protocol WebSocket URL */

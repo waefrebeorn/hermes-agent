@@ -109,6 +109,9 @@ int hermes_cli_main(int argc, char **argv) {
     /* P19: Enable SIGHUP-based config reload */
     hermes_config_setup_reload();
 
+    /* L01: Initialize Bitwarden Secrets Manager */
+    hermes_secrets_init(&g_cli.config);
+
     /* Initialize skin (loads from config.skin_path, falls back to default) */
     cli_skin_init();
 

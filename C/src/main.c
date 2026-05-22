@@ -8,6 +8,7 @@
 #include "hermes.h"
 #include "plugin.h"
 #include "acp/server.h"
+#include "hermes_secrets.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -50,6 +51,9 @@ int main(int argc, char **argv) {
         memset(&cfg, 0, sizeof(cfg));
         hermes_config_load(&cfg, NULL);
         hermes_config_load_env(&cfg);
+
+        /* L01: Initialize Bitwarden Secrets Manager */
+        hermes_secrets_init(&cfg);
 
         agent_state_t agent_state;
         agent_init(&agent_state);

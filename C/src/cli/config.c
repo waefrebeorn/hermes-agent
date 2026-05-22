@@ -269,7 +269,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->checkpoints.compression_level = 1;
     cfg->checkpoints.include_tool_results = false;
 
-    /* Auxiliary config defaults (11 sub-tasks, Python defaults) */
+    /* Secrets config defaults (L01: Bitwarden Secrets Manager) */
+    cfg->secrets.enabled = false;
+    cfg->secrets.access_token[0] = '\0';
+    cfg->secrets.organization_id[0] = '\0';
+    cfg->secrets.bws_path[0] = '\0';
+    cfg->secrets.install_timeout = 30;
     snprintf(cfg->auxiliary.vision.provider, sizeof(cfg->auxiliary.vision.provider), "auto");
     cfg->auxiliary.vision.timeout = 120;
     cfg->auxiliary.vision_download_timeout = 30;
@@ -1146,6 +1151,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         cfg->checkpoints.include_tool_results = yaml_get_bool(doc, "checkpoints.include_tool_results", cfg->checkpoints.include_tool_results);
     }
 
+    /* Secrets config (L01: Bitwarden Secrets Manager) */
+    {
+        cfg->secrets.enabled = yaml_get_bool(doc, "secrets.bitwarden.enabled", cfg->secrets.enabled);
+        const char *sat = yaml_get_string(doc, "secrets.bitwarden.access_token");
+        if (sat) snprintf(cfg->secrets.access_token, sizeof(cfg->secrets.access_token), "%s", sat);
+        const char *soi = yaml_get_string(doc, "secrets.bitwarden.organization_id");
+        if (soi) snprintf(cfg->secrets.organization_id, sizeof(cfg->secrets.organization_id), "%s", soi);
+        const char *sbp = yaml_get_string(doc, "secrets.bitwarden.bws_path");
+        if (sbp) snprintf(cfg->secrets.bws_path, sizeof(cfg->secrets.bws_path), "%s", sbp);
+        int sit = yaml_get_int(doc, "secrets.bitwarden.install_timeout", 0);
+        if (sit > 0) cfg->secrets.install_timeout = sit;
+    }
+
     /* Quiet mode */
     cfg->agent.quiet_mode = cfg->quiet_mode;
 
@@ -1648,6 +1666,21 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     v = getenv("HERMES_CHECKPOINTS_DIR");
     if (v) snprintf(cfg->checkpoints.dir, sizeof(cfg->checkpoints.dir), "%s", v);
 
+    /* Secrets env overrides (L01: Bitwarden Secrets Manager) */
+    v = getenv("HERMES_SECRETS_BITWARDEN_ENABLED");
+    if (v && (strcmp(v, "1") == 0 || strcasecmp(v, "true") == 0))
+        cfg->secrets.enabled = true;
+    if (v && (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0))
+        cfg->secrets.enabled = false;
+    v = getenv("HERMES_SECRETS_BITWARDEN_ACCESS_TOKEN");
+    if (v) snprintf(cfg->secrets.access_token, sizeof(cfg->secrets.access_token), "%s", v);
+    v = getenv("HERMES_SECRETS_BITWARDEN_ORGANIZATION_ID");
+    if (v) snprintf(cfg->secrets.organization_id, sizeof(cfg->secrets.organization_id), "%s", v);
+    v = getenv("HERMES_SECRETS_BITWARDEN_BWS_PATH");
+    if (v) snprintf(cfg->secrets.bws_path, sizeof(cfg->secrets.bws_path), "%s", v);
+    v = getenv("HERMES_SECRETS_BITWARDEN_INSTALL_TIMEOUT");
+    if (v) { int t = atoi(v); if (t > 0) cfg->secrets.install_timeout = t; }
+
     return true;
 }
 
@@ -1861,6 +1894,10 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
         add_issue(result, "checkpoints.max", "unreasonable %d", cfg->checkpoints.max_checkpoints);
     if (cfg->checkpoints.compression_level < 0 || cfg->checkpoints.compression_level > 9)
         add_issue(result, "checkpoints.compression", "must be 0-9, got %d", cfg->checkpoints.compression_level);
+
+    /* --- Secrets --- */
+    if (cfg->secrets.enabled && !cfg->secrets.access_token[0])
+        add_issue(result, "secrets.bitwarden.access_token", "required when enabled=true");
 
     /* --- Auxiliary --- */
     if (cfg->auxiliary.vision.timeout < 1 || cfg->auxiliary.vision.timeout > 3600)
@@ -2114,6 +2151,12 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "checkpoints.interval", def.checkpoints.interval, active->checkpoints.interval);
     diff_int(diff, "checkpoints.max", def.checkpoints.max_checkpoints, active->checkpoints.max_checkpoints);
 
+    /* Secrets */
+    diff_bool(diff, "secrets.bitwarden.enabled", def.secrets.enabled, active->secrets.enabled);
+    diff_str(diff, "secrets.bitwarden.access_token",
+             def.secrets.access_token[0] ? "***set***" : "",
+             active->secrets.access_token[0] ? "***set***" : "");
+
     /* TTS */
     diff_str(diff, "tts.provider", def.tts.provider, active->tts.provider);
     diff_str(diff, "tts.edge.voice", def.tts.edge_voice, active->tts.edge_voice);
@@ -2305,6 +2348,13 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_int(f, "  interval", cfg->checkpoints.interval);
     exp_int(f, "  max", cfg->checkpoints.max_checkpoints);
     exp_str(f, "  dir", cfg->checkpoints.dir);
+
+    fprintf(f, "\nsecrets:\n  bitwarden:\n");
+    exp_bool(f, "    enabled", cfg->secrets.enabled);
+    exp_str(f, "    access_token", cfg->secrets.access_token);
+    exp_str(f, "    organization_id", cfg->secrets.organization_id);
+    exp_str(f, "    bws_path", cfg->secrets.bws_path);
+    exp_int(f, "    install_timeout", cfg->secrets.install_timeout);
 
     /* Auxiliary export */
     #define E_AUX_TASK(f, task, nm) do {         fprintf(f, "\nauxiliary." #task ":\n");         exp_str(f, "  provider", cfg->auxiliary.task.provider);         exp_str(f, "  model", cfg->auxiliary.task.model);         exp_str(f, "  base_url", cfg->auxiliary.task.base_url);         exp_str(f, "  api_key", cfg->auxiliary.task.api_key);         exp_int(f, "  timeout", cfg->auxiliary.task.timeout);         exp_str(f, "  extra_body", cfg->auxiliary.task.extra_body);     } while(0)
@@ -2666,6 +2716,17 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     dst->voice.beep_enabled = src->voice.beep_enabled;
     if (is_set_int(src->voice.silence_threshold)) dst->voice.silence_threshold = src->voice.silence_threshold;
     if (src->voice.silence_duration >= 0.1f) dst->voice.silence_duration = src->voice.silence_duration;
+
+    /* Secrets merge */
+    dst->secrets.enabled = src->secrets.enabled;
+    if (is_set_str(src->secrets.access_token))
+        snprintf(dst->secrets.access_token, sizeof(dst->secrets.access_token), "%s", src->secrets.access_token);
+    if (is_set_str(src->secrets.organization_id))
+        snprintf(dst->secrets.organization_id, sizeof(dst->secrets.organization_id), "%s", src->secrets.organization_id);
+    if (is_set_str(src->secrets.bws_path))
+        snprintf(dst->secrets.bws_path, sizeof(dst->secrets.bws_path), "%s", src->secrets.bws_path);
+    if (is_set_int(src->secrets.install_timeout))
+        dst->secrets.install_timeout = src->secrets.install_timeout;
 
     /* Sync flat fields for backward compat */
     snprintf(dst->model, sizeof(dst->model), "%s", dst->provider_cfg.model);
