@@ -921,3 +921,108 @@ bool hermes_config_load_profile(hermes_config_t *cfg, const char *profile_name, 
     yaml_free(doc);
     return true;
 }
+
+/* ================================================================
+ *  P18: Config default factory
+ * ================================================================ */
+
+void hermes_config_defaults(hermes_config_t *cfg) {
+    hermes_config_load(cfg, NULL);
+    /* Don't touch env_path/config_path — caller sets those */
+}
+
+/* Helper: add a diff entry for string or int fields */
+static void diff_str(cfg_diff_t *d, const char *key,
+                     const char *def, const char *act) {
+    if (d->count >= 128) return;
+    if (def[0] == '\0' && act[0] != '\0') {
+        d->entries[d->count].type = CFG_DIFF_ADDED;
+    } else if (def[0] != '\0' && act[0] == '\0') {
+        d->entries[d->count].type = CFG_DIFF_MISSING;
+    } else if (strcmp(def, act) != 0) {
+        d->entries[d->count].type = CFG_DIFF_CHANGED;
+    } else {
+        return; /* identical, skip */
+    }
+    snprintf(d->entries[d->count].key, sizeof(d->entries[d->count].key), "%s", key);
+    snprintf(d->entries[d->count].default_value, sizeof(d->entries[d->count].default_value), "%s", def);
+    snprintf(d->entries[d->count].active_value, sizeof(d->entries[d->count].active_value), "%s", act);
+    d->count++;
+}
+
+static void diff_int(cfg_diff_t *d, const char *key, int def, int act) {
+    char dbuf[32], abuf[32];
+    snprintf(dbuf, sizeof(dbuf), "%d", def);
+    snprintf(abuf, sizeof(abuf), "%d", act);
+    diff_str(d, key, dbuf, abuf);
+}
+
+static void diff_bool(cfg_diff_t *d, const char *key, bool def, bool act) {
+    diff_str(d, key, def ? "true" : "false", act ? "true" : "false");
+}
+
+static void diff_float(cfg_diff_t *d, const char *key, float def, float act) {
+    char dbuf[32], abuf[32];
+    snprintf(dbuf, sizeof(dbuf), "%.2f", (double)def);
+    snprintf(abuf, sizeof(abuf), "%.2f", (double)act);
+    diff_str(d, key, dbuf, abuf);
+}
+
+bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
+    memset(diff, 0, sizeof(*diff));
+    hermes_config_t def;
+    hermes_config_defaults(&def);
+
+    /* Provider group */
+    diff_str(diff, "model.default", def.provider_cfg.model, active->provider_cfg.model);
+    diff_str(diff, "model.provider", def.provider_cfg.provider, active->provider_cfg.provider);
+    diff_str(diff, "model.base_url", def.provider_cfg.base_url, active->provider_cfg.base_url);
+    diff_str(diff, "model.api_mode", def.provider_cfg.api_mode, active->provider_cfg.api_mode);
+    diff_str(diff, "model.fallback_model", def.provider_cfg.fallback_model, active->provider_cfg.fallback_model);
+    diff_str(diff, "model.service_tier", def.provider_cfg.service_tier, active->provider_cfg.service_tier);
+    diff_int(diff, "model.max_tokens", def.provider_cfg.max_tokens, active->provider_cfg.max_tokens);
+    diff_float(diff, "model.temperature", def.provider_cfg.temperature, active->provider_cfg.temperature);
+    diff_float(diff, "model.top_p", def.provider_cfg.top_p, active->provider_cfg.top_p);
+
+    /* Display group */
+    diff_str(diff, "display.skin", def.display.skin, active->display.skin);
+    diff_str(diff, "display.banner", def.display.banner, active->display.banner);
+    diff_str(diff, "display.spinner_style", def.display.spinner_style, active->display.spinner_style);
+    diff_str(diff, "display.indicator", def.display.indicator, active->display.indicator);
+    diff_str(diff, "display.language", def.display.language, active->display.language);
+    diff_bool(diff, "display.streaming", def.display.stream, active->display.stream);
+    diff_bool(diff, "display.show_reasoning", def.display.show_reasoning, active->display.show_reasoning);
+    diff_bool(diff, "display.compact", def.display.compact, active->display.compact);
+
+    /* Agent group */
+    diff_int(diff, "agent.max_turns", def.agent.max_iterations, active->agent.max_iterations);
+    diff_int(diff, "agent.max_tool_calls_round", def.agent.max_tool_calls_round, active->agent.max_tool_calls_round);
+    diff_int(diff, "agent.verbose", def.agent.verbose_level, active->agent.verbose_level);
+    diff_int(diff, "agent.api_max_retries", def.agent.api_max_retries, active->agent.api_max_retries);
+    diff_int(diff, "agent.clarify_timeout", def.agent.clarify_timeout, active->agent.clarify_timeout);
+    diff_float(diff, "compression.threshold", def.agent.compress_threshold, active->agent.compress_threshold);
+    diff_str(diff, "agent.system_prompt", def.agent.system_prompt, active->agent.system_prompt);
+    diff_str(diff, "agent.profile", def.agent.profile, active->agent.profile);
+
+    /* Tools group */
+    diff_str(diff, "approvals.mode", def.tools.approval_mode, active->tools.approval_mode);
+    diff_int(diff, "approvals.timeout", def.tools.approval_timeout, active->tools.approval_timeout);
+    diff_int(diff, "tool_output.max_bytes", def.tools.max_result_size, active->tools.max_result_size);
+    diff_int(diff, "terminal.timeout", def.tools.terminal_timeout, active->tools.terminal_timeout);
+    diff_str(diff, "auxiliary.vision.model", def.tools.vision_model, active->tools.vision_model);
+
+    /* Delegation */
+    diff_int(diff, "delegation.max_concurrent_children",
+             def.delegation.max_concurrent_children, active->delegation.max_concurrent_children);
+    diff_int(diff, "delegation.max_spawn_depth",
+             def.delegation.max_spawn_depth, active->delegation.max_spawn_depth);
+    diff_str(diff, "delegation.model", def.delegation.child_model, active->delegation.child_model);
+
+    /* Security */
+    diff_bool(diff, "security.tirith_enabled", def.security.tirith_enabled, active->security.tirith_enabled);
+
+    /* Session */
+    diff_int(diff, "sessions.retention_days", def.session.retention_days, active->session.retention_days);
+
+    return diff->count > 0;
+}

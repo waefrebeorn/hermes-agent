@@ -375,6 +375,24 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
 /* P17: Config profiles — load named profile from ~/.slermes/profiles/<name>.yaml */
 bool hermes_config_load_profile(hermes_config_t *cfg, const char *profile_name, const char *config_dir);
 
+/* P18: Config display utilities */
+typedef enum { CFG_DIFF_ADDED, CFG_DIFF_CHANGED, CFG_DIFF_MISSING } cfg_diff_type_t;
+typedef struct {
+    char key[128];
+    cfg_diff_type_t type;
+    char default_value[256];
+    char active_value[256];
+} cfg_diff_entry_t;
+typedef struct {
+    cfg_diff_entry_t entries[128];
+    int count;
+} cfg_diff_t;
+
+/* Get default config (factory settings) */
+void hermes_config_defaults(hermes_config_t *cfg);
+/* Diff active config vs defaults, returns entries grouped by section */
+bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff);
+
 /* ================================================================
  *  Include sub-headers for dependency wrappers
  * ================================================================ */
