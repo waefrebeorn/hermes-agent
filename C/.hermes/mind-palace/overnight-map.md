@@ -130,3 +130,11 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **Bugfix: use-after-free in web_search_handler** — backend arg read after json_free(args), all backends silently fell through to searxng
 - ◀ **Tests: 36 files, 6,920 lines, 69 passed, 0 failed, 0 skipped**
 - ◀ **~315 gaps remaining** (2 closed this session)
+
+## Session continuation (2 gaps closed)
+- ✅ **M38: Skills system test** — test_skills.c, 53 assertions covering scan, validate, origin, cache, usage, search, bundle, sync, curator, hub install
+- ✅ **L05: extra_body passthrough** — JSON key merge into request body for all 6 OpenAI-compat providers. Config key: `agent.extra_body`
+- ◀ **Tests: 41 files, 74 pass, 0 fail, 1 skip**
+- ◀ **Suite: 74 tests, +1 test binary (skills_tool)**
+- ◀ Committed: `ce094d8dc`, `cfb63915e`
+- ◀ ~306 gaps remaining

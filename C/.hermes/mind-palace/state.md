@@ -18,10 +18,10 @@
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
 | **Tests** | 46 | 50% | **36 files, 2,057 assertions** (67 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
-| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Only N01 token counting remains as known gap |
+| **Cross-cut** | 5 | **100% (5/5) ✅** | N02 secure parent dir, N05 local trust, N03 key leakage prevention, N04 vendor key derivation. Cross-cut 5/5 |
 | **Build/doc** | 15 | 30% | Cross-compile, Windows, Docker, CI |
 
-**Known bug:** temperature=0.0 is silently dropped — `s/> 0.0f/>= 0.0f/` in 9 providers. **FIXED ✅**
+**Known bug:** temperature=0.0 — **FIXED ✅**
 
 ### Session 2026-05-22 (This Continuation)
 
