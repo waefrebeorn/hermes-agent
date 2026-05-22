@@ -108,6 +108,10 @@ run_lib_test "json_output" "tests/test_json_output.c" "." ""
 echo ""; echo "=== WhatsApp Message Format Tests (M10) ==="
 run_lib_test "whatsapp_msg" "tests/test_whatsapp_msg.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
 
+# Vision tool test (M33 — self-contained, no deps)
+echo ""; echo "=== Vision Tool Tests (M33) ==="
+run_lib_test "vision_tool" "tests/test_vision_tool.c" "." ""
+
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
