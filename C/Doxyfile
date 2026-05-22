@@ -1,0 +1,46 @@
+# Doxyfile 1.12.0
+# Hermes Agent C — API documentation configuration
+# Install doxygen: sudo apt install doxygen
+# Generate: make docs
+
+PROJECT_NAME           = "Hermes Agent C"
+PROJECT_NUMBER         = 0.7.0
+PROJECT_BRIEF          = "C translation of Hermes Agent — AI assistant framework"
+OUTPUT_DIRECTORY       = docs/api
+INPUT                  = include/ \
+                         src/ \
+                         README.md
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.c
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+SORT_MEMBER_DOCS       = YES
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_OUTPUT            = html
+HTML_HEADER            =
+HTML_FOOTER            =
+HTML_EXTRA_STYLESHEET  =
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+QUIET                  = YES
+WARNINGS               = NO
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = "DOXYGEN_SHOULD_SKIP_THIS"
+SKIP_FUNCTION_MACROS   = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCES_LINK_SOURCE = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+HAVE_DOT               = NO
+CLASS_DIAGRAMS         = NO
+UML_LOOK               = NO

@@ -9,6 +9,19 @@
  *  - build_message_body: construct the JSON message body (provider-specific format)
  */
 
+/**
+ * @defgroup providers Provider System
+ * @brief Provider operations tables and registration.
+ *
+ * Defines provider_ops_t interface (build_url, build_headers,
+ * build_request_body, parse_response, parse_stream_chunk, free_response)
+ * and the provider registration system (max 32 providers).
+ *
+ * Implementations: OpenAI, OpenRouter, DeepSeek, xAI, Anthropic,
+ * Google, Azure, Bedrock, Custom.
+ *
+ * @{
+ */
 #ifndef PROVIDER_H
 #define PROVIDER_H
 
@@ -173,5 +186,7 @@ void provider_register_builtins(void);
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */ /* end of providers group */
 
 #endif /* PROVIDER_H */

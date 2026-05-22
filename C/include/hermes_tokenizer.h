@@ -1,3 +1,14 @@
+/**
+ * @defgroup hermes_tokenizer Tokenizer
+ * @brief Model-aware token counting.
+ *
+ * 
+Heuristic token counter supporting 9 model families
+with configurable chars-per-token ratio, context window
+sizes, and cost rate estimation.
+ *
+ * @{
+ */
 #ifndef HERMES_TOKENIZER_H
 #define HERMES_TOKENIZER_H
 
@@ -91,4 +102,5 @@ size_t hermes_token_context_size(const char *model);
 }
 #endif
 
+/** @} */ /* end of hermes_tokenizer group */
 #endif /* HERMES_TOKENIZER_H */

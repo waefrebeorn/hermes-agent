@@ -1,3 +1,12 @@
+/**
+ * @defgroup http HTTP Client
+ * @brief HTTP/HTTPS client with TLS support.
+ *
+ * Synchronous request/response API. Methods: GET, POST, PUT, DELETE.
+ * Supports custom headers, streaming downloads, and TLS via OpenSSL.
+ *
+ * @{
+ */
 #ifndef HERMES_HTTP_H
 #define HERMES_HTTP_H
 
@@ -52,5 +61,7 @@ static inline http_response_t *http_get_with_headers(http_client_t *client,
 {
     return http_get(client, url, headers);
 }
+
+/** @} */ /* end of http group */
 
 #endif /* HERMES_HTTP_H */

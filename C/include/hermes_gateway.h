@@ -1,3 +1,14 @@
+/**
+ * @defgroup hermes_gateway Gateway
+ * @brief Multi-platform messaging gateway.
+ *
+ * 
+Routes messages between 19+ platforms and the agent loop.
+Handles platform adapters, message queues, rate limiting,
+markdown formatting, and media attachments.
+ *
+ * @{
+ */
 #ifndef HERMES_GATEWAY_H
 #define HERMES_GATEWAY_H
 
@@ -1028,5 +1039,6 @@ bool gw_platform_send(const char *platform_name, const char *chat_id, const char
 /* Send typing indicator on a registered platform (no-op if not supported). */
 void gw_platform_send_typing(const char *platform_name, const char *chat_id);
 
+/** @} */ /* end of hermes_gateway group */
 #endif /* HERMES_GATEWAY_H */
 

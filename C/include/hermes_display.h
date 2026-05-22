@@ -1,3 +1,14 @@
+/**
+ * @defgroup hermes_display Display
+ * @brief Terminal output formatting.
+ *
+ * 
+ANSI color, spinner/progress display, structured output.
+Used by CLI and TUI for status messages and activity
+feedback.
+ *
+ * @{
+ */
 #ifndef HERMES_DISPLAY_H
 #define HERMES_DISPLAY_H
 
@@ -97,4 +108,5 @@ int display_width(void);
 }
 #endif
 
+/** @} */ /* end of hermes_display group */
 #endif /* HERMES_DISPLAY_H */

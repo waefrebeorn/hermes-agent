@@ -1,3 +1,14 @@
+/**
+ * @defgroup hermes_agent Agent Loop
+ * @brief Core conversation loop and state management.
+ *
+ * 
+Defines agent_state_t, agent_run_conversation(), and the main
+LLM interaction loop with tool calling, session persistence,
+streaming, and interrupt handling.
+ *
+ * @{
+ */
 #ifndef HERMES_AGENT_H
 #define HERMES_AGENT_H
 
@@ -178,4 +189,5 @@ char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 }
 #endif
 
+/** @} */ /* end of hermes_agent group */
 #endif /* HERMES_AGENT_H */

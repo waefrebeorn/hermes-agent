@@ -4,6 +4,16 @@
  * K01-K05: Structured error types with code, message, and context.
  * Replaces bare "return NULL" / "fprintf(stderr, ...)" patterns.
  */
+/**
+ * @defgroup hermes_error Error Types
+ * @brief Typed error system (K01-K05).
+ *
+ * 
+ValueError, TypeError, RuntimeError, OSError,
+TimeoutError with structured error info.
+ *
+ * @{
+ */
 #ifndef HERMES_ERROR_H
 #define HERMES_ERROR_H
 
@@ -98,4 +108,5 @@ void hermes_error_format(const hermes_error_t *e, char *buf, size_t buf_size);
 }
 #endif
 
+/** @} */ /* end of hermes_error group */
 #endif /* HERMES_ERROR_H */

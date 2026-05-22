@@ -1,3 +1,13 @@
+/**
+ * @defgroup json JSON Library
+ * @brief JSON parser, builder, and serialization.
+ *
+ * Convenience macros and shim layer over libjson. Supports
+ * object/array/string/number/bool/null types, deep copy,
+ * and printf-style serialization.
+ *
+ * @{
+ */
 #ifndef HERMES_JSON_H
 #define HERMES_JSON_H
 
@@ -33,5 +43,7 @@ typedef json_t json_node_t;
 #define json_object_get_string(o,k,d) json_get_str((o),(k),(d))
 #define json_object_get_number(o,k,d) json_get_num((o),(k),(d))
 #define json_object_get_bool(o,k,d)   json_get_bool((o),(k),(d))
+
+/** @} */ /* end of json group */
 
 #endif /* HERMES_JSON_H */

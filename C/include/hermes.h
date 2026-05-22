@@ -1,3 +1,13 @@
+/**
+ * @defgroup hermes Main API
+ * @brief Master header for WuBu Hermes C implementation.
+ *
+ * Defines core types: provider_config_t, agent_state_t, message_t,
+ * tool_call_t, llm_config_t, llm_response_t, gateway_config_t,
+ * plugin_config_t. Includes all subsystem headers.
+ *
+ * @{
+ */
 #ifndef HERMES_H
 #define HERMES_H
 
@@ -1393,5 +1403,7 @@ bool skill_deps_validate_order(const char ordered[][128], size_t count);
 bool xai_is_model_retired(const char *model_name,
                            char *replacement_out, size_t replacement_sz,
                            char *reasoning_out, size_t reasoning_sz);
+
+/** @} */ /* end of hermes group */
 
 #endif /* HERMES_H */

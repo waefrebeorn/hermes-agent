@@ -1,3 +1,14 @@
+/**
+ * @defgroup hermes_plugin Plugin System
+ * @brief Dynamic .so plugin loading and lifecycle.
+ *
+ * 
+Plugin interface definition (metadata, init, dispatch,
+cleanup), discovery via directory scan, and hot-reload
+support.
+ *
+ * @{
+ */
 #ifndef HERMES_PLUGIN_H
 #define HERMES_PLUGIN_H
 
@@ -117,4 +128,5 @@ int hermes_plugin_list(const plugin_registry_t *reg, char *buf, size_t sz);
 }
 #endif
 
+/** @} */ /* end of hermes_plugin group */
 #endif /* HERMES_PLUGIN_H */

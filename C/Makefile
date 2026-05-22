@@ -43,7 +43,7 @@ PHASE4_OBJ = $(PHASE3_OBJ) $(GATEWAY_OBJ)
 PHASE5_OBJ = $(PHASE4_OBJ) $(CRON_OBJ)
 
 .PHONY: all clean phase1 phase2 phase3 phase4 phase5 test digest \
-        upstream-sync upstream-merge what-changed test-libs tui
+        upstream-sync upstream-merge what-changed test-libs tui docs
 
 all: phase5
 
@@ -188,6 +188,16 @@ test-libs:
 # Check what changed since last git pull
 what-changed:
 	@cd .. && git log --oneline @{u}..HEAD --name-only -- '*.py' 2>/dev/null | head -40
+
+# API documentation
+docs:
+	@if command -v doxygen > /dev/null 2>&1; then \
+		echo "Generating API docs..."; \
+		doxygen Doxyfile 2>/dev/null; \
+		echo "Done: docs/api/html/index.html"; \
+	else \
+		echo "doxygen not installed. Install: sudo apt install doxygen"; \
+	fi
 
 clean:
 	rm -f hermes src/*.o src/*/*.o src/*/*/*.o

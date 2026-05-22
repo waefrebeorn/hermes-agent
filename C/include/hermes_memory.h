@@ -1,3 +1,13 @@
+/**
+ * @defgroup hermes_memory Memory
+ * @brief In-memory and plugin-backed memory store.
+ *
+ * 
+Interface for memory_store/search/clear operations.
+Backed by the honcho plugin (in-memory array store).
+ *
+ * @{
+ */
 #ifndef HERMES_MEMORY_H
 #define HERMES_MEMORY_H
 
@@ -315,4 +325,5 @@ void memory_set_plugin_registry(void *reg);
 }
 #endif
 
+/** @} */ /* end of hermes_memory group */
 #endif /* HERMES_MEMORY_H */

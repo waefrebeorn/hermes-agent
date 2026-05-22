@@ -1,3 +1,13 @@
+/**
+ * @defgroup hermes_crypto Cryptography
+ * @brief Cryptographic utilities.
+ *
+ * 
+Base64 encoding/decoding, SHA-256 hashing, HMAC-SHA256
+signing. Lightweight wrappers around OpenSSL EVP API.
+ *
+ * @{
+ */
 #ifndef HERMES_CRYPTO_H
 #define HERMES_CRYPTO_H
 
@@ -10,4 +20,5 @@
 
 #include "../lib/libcrypto/crypto.h"
 
+/** @} */ /* end of hermes_crypto group */
 #endif /* HERMES_CRYPTO_H */
