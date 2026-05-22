@@ -222,6 +222,34 @@ static void test_diff(void) {
     TEST_BOOL("defaults have no diff (or warnings)", has_diff || diff.count == 0, true);
 }
 
+/* Phase 113: Retry and fallback config tests */
+static void test_retry_config(void) {
+    printf("\n=== Retry & Fallback Config ===\n");
+    hermes_config_t cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    hermes_config_load(&cfg, NULL);
+
+    /* Defaults */
+    TEST_INT_EQ("api_max_retries default=3", cfg.agent.api_max_retries, 3);
+    TEST_STR_EQ("fallback_model default=empty", cfg.provider_cfg.fallback_model, "");
+    TEST_STR_EQ("fallback_providers default=empty", cfg.provider_cfg.fallback_providers, "");
+
+    /* llm_config_t struct has the new fields */
+    llm_config_t llm;
+    memset(&llm, 0, sizeof(llm));
+    TEST_INT_EQ("llm.max_retries default=0", llm.max_retries, 0);
+    TEST_STR_EQ("llm.fallback_model default=empty", llm.fallback_model, "");
+    TEST_STR_EQ("llm.fallback_providers default=empty", llm.fallback_providers, "");
+
+    /* Struct size sanity — fields exist at the right offsets */
+    TEST_INT_EQ("llm.max_retries field present", 
+        (int)sizeof(llm.max_retries), (int)sizeof(int));
+    TEST_INT_EQ("llm.fallback_model field size", 
+        (int)sizeof(llm.fallback_model), 128);
+    TEST_INT_EQ("llm.fallback_providers field size", 
+        (int)sizeof(llm.fallback_providers), 1024);
+}
+
 int main(void) {
     printf("Hermes C Config Test Suite\n");
     printf("==========================\n");
@@ -232,6 +260,7 @@ int main(void) {
     test_export_roundtrip();
     test_schema_generation();
     test_diff();
+    test_retry_config();
 
     printf("\nResults: %d passed, %d failed\n", passed, failed);
     return failed > 0 ? 1 : 0;

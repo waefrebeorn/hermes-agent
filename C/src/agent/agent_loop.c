@@ -126,6 +126,13 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     memcpy(state->llm.extra_body, cfg->provider_cfg.extra_body,
            sizeof(state->llm.extra_body));
 
+    /* Phase 113: Forward retry and fallback config */
+    state->llm.max_retries = cfg->agent.api_max_retries;
+    memcpy(state->llm.fallback_model, cfg->provider_cfg.fallback_model,
+           sizeof(state->llm.fallback_model));
+    memcpy(state->llm.fallback_providers, cfg->provider_cfg.fallback_providers,
+           sizeof(state->llm.fallback_providers));
+
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)
         state->max_iterations = cfg->agent.max_iterations;
@@ -845,37 +852,160 @@ char *agent_run_conversation(agent_state_t *state,
             }
         }
 
-        /* Call LLM — use streaming if callback set */
-        llm_response_t *llm_resp;
-        if (state->stream_cb) {
-            llm_resp = llm_chat_completion_stream(
-                &state->llm,
-                (const message_t **)state->messages,
-                state->message_count,
-                tools_json,
-                state->stream_cb,
-                state->stream_data);
-        } else {
-            llm_resp = llm_chat_completion(
-                &state->llm,
-                (const message_t **)state->messages,
-                state->message_count,
-                tools_json);
+        /* Call LLM with retry and fallback support (Phase 113) */
+        llm_response_t *llm_resp = NULL;
+        int retries = state->llm.max_retries > 0 ? state->llm.max_retries : 0;
+        bool dont_retry = false; /* skip retries for certain errors */
+
+        /* Retry loop */
+        for (int attempt = 0; attempt <= retries && !dont_retry; attempt++) {
+            /* Backoff between retries: 1s, 2s, 4s... cap at 16s */
+            if (attempt > 0) {
+                int delay = 1 << (attempt - 1);
+                if (delay > 16) delay = 16;
+                fprintf(stderr, "[retry] attempt %d/%d after %ds...\n", attempt, retries, delay);
+                struct timespec ts = {delay, 0};
+                nanosleep(&ts, NULL);
+            }
+
+            /* Free previous failed response before retrying */
+            if (llm_resp) { llm_response_free(llm_resp); llm_resp = NULL; }
+
+            if (state->stream_cb) {
+                llm_resp = llm_chat_completion_stream(
+                    &state->llm,
+                    (const message_t **)state->messages,
+                    state->message_count,
+                    tools_json,
+                    state->stream_cb,
+                    state->stream_data);
+            } else {
+                llm_resp = llm_chat_completion(
+                    &state->llm,
+                    (const message_t **)state->messages,
+                    state->message_count,
+                    tools_json);
+            }
+
+            if (!llm_resp) {
+                fprintf(stderr, "[retry] LLM call returned NULL (attempt %d/%d)\n",
+                        attempt + 1, retries);
+                continue; /* retry */
+            }
+
+            /* Check for empty response */
+            if (!llm_resp->content && llm_resp->tool_calls_count == 0) {
+                fprintf(stderr, "[retry] Empty LLM response (attempt %d/%d)\n",
+                        attempt + 1, retries);
+                continue; /* retry */
+            }
+
+            /* Success — break out of retry loop */
+            break;
         }
 
-        if (!llm_resp) {
+        /* If all retries failed, try fallback providers */
+        if (!llm_resp || (!llm_resp->content && llm_resp->tool_calls_count == 0)) {
+            char saved_provider[64] = {0};
+            char saved_model[128] = {0};
+            memcpy(saved_provider, state->llm.provider, sizeof(saved_provider));
+            memcpy(saved_model, state->llm.model, sizeof(saved_model));
+
+            /* Try fallback model first if set */
+            if (state->llm.fallback_model[0]) {
+                fprintf(stderr, "[fallback] Trying fallback model: %s\n",
+                        state->llm.fallback_model);
+                memcpy(state->llm.model, state->llm.fallback_model,
+                       sizeof(state->llm.model));
+
+                if (state->stream_cb) {
+                    llm_resp = llm_chat_completion_stream(
+                        &state->llm,
+                        (const message_t **)state->messages,
+                        state->message_count,
+                        tools_json,
+                        state->stream_cb,
+                        state->stream_data);
+                } else {
+                    llm_resp = llm_chat_completion(
+                        &state->llm,
+                        (const message_t **)state->messages,
+                        state->message_count,
+                        tools_json);
+                }
+
+                if (llm_resp && (llm_resp->content || llm_resp->tool_calls_count > 0)) {
+                    /* Restore original provider but keep using fallback model */
+                    memcpy(state->llm.provider, saved_provider, sizeof(state->llm.provider));
+                    goto retry_done;
+                }
+                if (llm_resp) { llm_response_free(llm_resp); llm_resp = NULL; }
+                /* Restore original model */
+                memcpy(state->llm.model, saved_model, sizeof(state->llm.model));
+            }
+
+            /* Try fallback providers */
+            if (state->llm.fallback_providers[0]) {
+                char fb_copy[1024];
+                memcpy(fb_copy, state->llm.fallback_providers, sizeof(fb_copy));
+                char *provider = fb_copy;
+                char *next;
+
+                while (provider && *provider) {
+                    /* Skip whitespace */
+                    while (*provider == ' ' || *provider == ',') provider++;
+                    if (!*provider) break;
+
+                    next = strchr(provider, ',');
+                    if (next) *next++ = '\0';
+
+                    /* Trim trailing spaces */
+                    char *end = provider + strlen(provider) - 1;
+                    while (end > provider && *end == ' ') end--;
+                    *(end + 1) = '\0';
+
+                    if (!*provider) { provider = next; continue; }
+
+                    fprintf(stderr, "[fallback] Trying provider: %s\n", provider);
+                    memcpy(state->llm.provider, provider, sizeof(state->llm.provider));
+
+                    if (state->stream_cb) {
+                        llm_resp = llm_chat_completion_stream(
+                            &state->llm,
+                            (const message_t **)state->messages,
+                            state->message_count,
+                            tools_json,
+                            state->stream_cb,
+                            state->stream_data);
+                    } else {
+                        llm_resp = llm_chat_completion(
+                            &state->llm,
+                            (const message_t **)state->messages,
+                            state->message_count,
+                            tools_json);
+                    }
+
+                    if (llm_resp && (llm_resp->content || llm_resp->tool_calls_count > 0)) {
+                        memcpy(state->llm.model, saved_model, sizeof(state->llm.model));
+                        goto retry_done;
+                    }
+                    if (llm_resp) { llm_response_free(llm_resp); llm_resp = NULL; }
+
+                    provider = next;
+                }
+                /* All fallback providers failed — restore original provider */
+                memcpy(state->llm.provider, saved_provider, sizeof(state->llm.provider));
+                memcpy(state->llm.model, saved_model, sizeof(state->llm.model));
+            }
+
+            /* All retries and fallbacks exhausted */
             json_free(tools_json);
-            return strdup("Error: LLM call returned NULL");
+            if (llm_resp) llm_response_free(llm_resp);
+            return strdup("{\"error\":\"LLM call failed after retries and fallbacks. "
+                          "Check provider/network connectivity and config.\"}");
         }
 
-        /* No content + no tool calls → error */
-        if (!llm_resp->content && llm_resp->tool_calls_count == 0) {
-            char *result = strdup("Error: Empty LLM response");
-            llm_response_free(llm_resp);
-            json_free(tools_json);
-            return result;
-        }
-
+retry_done:
         /* P91: Mark system prompt as cached after first successful call */
         if (!state->llm.system_cached) {
             state->llm.system_cached = true;

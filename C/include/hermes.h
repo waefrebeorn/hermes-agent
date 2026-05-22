@@ -123,6 +123,9 @@ typedef struct {
     int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
     int   n;                       /* number of response choices (1 = single) */
     char  extra_body[4096];        /* L05: extra JSON fields to merge into request body */
+    int   max_retries;              /* agent.api_max_retries: API call retries (0=no retry) */
+    char  fallback_model[128];     /* model to fallback to on error */
+    char  fallback_providers[1024]; /* comma-separated fallback providers */
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
