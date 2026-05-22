@@ -223,6 +223,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "allowlist (compilation failed)"
 fi
 
+# Audit log test (needs audit.c — standalone, no JSON deps)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_audit.c" \
+    "$CDIR/src/agent/audit.c" \
+    -o /tmp/hermes_test_audit -lm -lpthread > /dev/null 2>&1; then
+    if /tmp/hermes_test_audit > /dev/null 2>&1; then ok "audit_log (20 tests)"
+    else fail "audit_log (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_audit
+else skip "audit_log (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
