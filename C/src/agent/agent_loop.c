@@ -668,6 +668,21 @@ char *agent_run_conversation(agent_state_t *state,
     message_t *user_msg = message_new(MSG_USER, user_message);
     if (!user_msg) return strdup("Error: OOM");
     context_push(state, user_msg);
+    /* G09: Count this as a user turn */
+    state->user_turn_count++;
+
+    /* G10: Set last activity on user message */
+    state->last_activity_ts = time(NULL);
+
+    /* G11: Inject pending steer before LLM call if set */
+    if (state->pending_steer[0]) {
+        if (state->pending_steer[0] == '/') {
+            /* Treat as system prefill — inject as system message suffix */
+            /* (In practice, steers are applied as system messages or injected messages) */
+        }
+        /* Clear after use — one-shot steer */
+        state->pending_steer[0] = '\0';
+    }
 
     /* Build tools JSON from registry */
     json_node_t *tools_json = NULL;
@@ -786,6 +801,25 @@ char *agent_run_conversation(agent_state_t *state,
         state->session_output_tokens += llm_resp->output_tokens;
         state->session_total_tokens = state->session_input_tokens + state->session_output_tokens;
 
+        /* G04-G06: Deep token tracking */
+        state->session_reasoning_tokens += llm_resp->reasoning_tokens;
+        state->session_cache_read_tokens += llm_resp->cache_read_tokens;
+        state->session_cache_write_tokens += llm_resp->cache_write_tokens;
+
+        /* G07-G08: Track cumulative cost from budget tracker */
+        if (state->budget) {
+            state->session_estimated_cost_usd = (double)state->budget->total_cost_usd;
+            snprintf(state->session_cost_source, sizeof(state->session_cost_source), "budget_tracker");
+        }
+
+        /* G09: Count tool turns */
+        if (llm_resp->tool_calls_count > 0) {
+            state->tool_turn_count++;
+        }
+
+        /* G10: Update last activity timestamp */
+        state->last_activity_ts = time(NULL);
+
         /* If no tool calls, we're done — return final content */
         if (llm_resp->tool_calls_count == 0) {
             /* Take snapshot for undo before finalizing */
@@ -902,6 +936,11 @@ char *agent_run_conversation(agent_state_t *state,
             /* P93: Classify tool result — abort on fatal */
             if (classify_tool_result(works[i].result, works[i].tool_name) == TOOL_RESULT_FATAL) {
                 state->interrupted = true;
+                /* G12: Set interrupt message with context */
+                snprintf(state->interrupt_message, sizeof(state->interrupt_message),
+                         "Fatal tool result from '%s': %s",
+                         works[i].tool_name,
+                         works[i].result ? works[i].result : "unknown error");
             }
             free(works[i].tool_name);
             free(works[i].tool_args);

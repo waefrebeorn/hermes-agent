@@ -1466,12 +1466,34 @@ static void cmd_snapshot(const char *args, agent_state_t *state) {
 /* /status: Show session status and configuration */
 static void cmd_status(const char *args, agent_state_t *state) {
     (void)args;
-    printf("Session:  %s\n", state->session_id[0] ? state->session_id : "(unsaved)");
-    printf("Model:    %s\n", state->llm.model[0] ? state->llm.model : "(default)");
-    printf("Provider: %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
-    printf("Messages: %zu\n", state->message_count);
-    printf("Iterations: %d/%d\n", state->iteration_count, state->max_iterations);
-    printf("Tools:    %zu registered\n", state->tools.count);
+    printf("Session:       %s\n", state->session_id[0] ? state->session_id : "(unsaved)");
+    printf("Model:         %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+    printf("Provider:      %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+    printf("Messages:      %zu\n", state->message_count);
+    printf("Iterations:    %d/%d\n", state->iteration_count, state->max_iterations);
+    printf("Tools:         %zu registered\n", state->tools.count);
+    printf("Tokens in:     %d\n", state->session_input_tokens);
+    printf("Tokens out:    %d\n", state->session_output_tokens);
+    printf("Tokens total:  %d\n", state->session_total_tokens);
+    if (state->session_reasoning_tokens > 0)
+        printf("Reasoning:     %d tokens\n", state->session_reasoning_tokens);
+    if (state->session_estimated_cost_usd > 0.0)
+        printf("Est. cost:     $%.6f\n", state->session_estimated_cost_usd);
+    printf("User turns:    %d\n", state->user_turn_count);
+    printf("Tool turns:    %d\n", state->tool_turn_count);
+    if (state->enabled_toolsets[0])
+        printf("Toolsets:      enabled=%s\n", state->enabled_toolsets);
+    if (state->disabled_toolsets[0])
+        printf("               disabled=%s\n", state->disabled_toolsets);
+    if (state->thread_id[0])
+        printf("Thread:        %s\n", state->thread_id);
+    if (state->chat_id[0])
+        printf("Chat:          %s\n", state->chat_id);
+    time_t now = time(NULL);
+    if (state->last_activity_ts > 0)
+        printf("Last activity: %lds ago\n", (long)(now - state->last_activity_ts));
+    if (state->interrupt_message[0])
+        printf("Interrupt:     %s\n", state->interrupt_message);
 }
 
 /* /stop: Kill all running background processes */

@@ -138,6 +138,9 @@ typedef struct {
     char         *reasoning;
     int           input_tokens;
     int           output_tokens;
+    int           reasoning_tokens;      /* G04: reasoning-only tokens */
+    int           cache_read_tokens;     /* G05: prompt cache hit tokens */
+    int           cache_write_tokens;    /* G06: prompt cache write tokens */
     int           tool_calls_count;
     tool_call_t   tool_calls[64]; /* Max 64 tool calls per turn */
     /* P95: Stream diagnostic — populated by streaming path */
@@ -224,6 +227,22 @@ typedef struct {
     int session_total_tokens;
     int session_input_tokens;
     int session_output_tokens;
+    /* G04-G06: Deep token tracking — reasoning, cache cost */
+    int session_reasoning_tokens;
+    int session_cache_read_tokens;
+    int session_cache_write_tokens;
+    /* G07-G08: Cost tracking */
+    double session_estimated_cost_usd;
+    char   session_cost_source[32];  /* budget_tracker, provider_report, estimated */
+    /* G09: Turn counters */
+    int user_turn_count;       /* user-initiated turns */
+    int tool_turn_count;       /* tool-calling turns */
+    /* G10: Idle tracking */
+    time_t last_activity_ts;  /* monotonic timestamp of last agent activity */
+    /* G11: Pending steer — queued assistant/system prefill for next LLM call */
+    char pending_steer[4096];
+    /* G12: Structured interrupt message */
+    char interrupt_message[1024];
 } agent_state_t;
 
 /* ================================================================
