@@ -474,3 +474,182 @@ const char *discord_get_text(json_node_t *update) {
     if (!msg) return NULL;
     return json_get_str(msg, "text", NULL);
 }
+
+/* ================================================================
+ *  E48: Advanced interaction handling (modal, deferred, components)
+ * ================================================================ */
+
+/* Discord interaction types */
+#define DISCORD_INTERACTION_PING            1
+#define DISCORD_INTERACTION_COMMAND         2
+#define DISCORD_INTERACTION_COMPONENT       3
+#define DISCORD_INTERACTION_AUTOCOMPLETE    4
+#define DISCORD_INTERACTION_MODAL_SUBMIT    5
+
+/* Discord interaction callback types */
+#define DISCORD_CB_PONG                     1
+#define DISCORD_CB_CHANNEL_WITH_SOURCE      4
+#define DISCORD_CB_DEFERRED_UPDATE          6
+#define DISCORD_CB_DEFERRED_CREATE          5
+#define DISCORD_CB_UPDATE                   7
+#define DISCORD_CB_MODAL                    9
+
+/* Get interaction type from update. Returns 0 if not an interaction. */
+int discord_get_interaction_type(json_node_t *update) {
+    if (!update) return 0;
+    json_node_t *interaction = json_obj_get(update, "interaction");
+    if (!interaction) return 0;
+    return (int)json_get_num(interaction, "type", 0);
+}
+
+/* Get interaction ID from update for responding. */
+const char *discord_get_interaction_id(json_node_t *update) {
+    static char buf[64];
+    if (!update) return NULL;
+    json_node_t *interaction = json_obj_get(update, "interaction");
+    if (!interaction) return NULL;
+    double id = json_get_num(interaction, "id", 0);
+    if (id == 0) return NULL;
+    snprintf(buf, sizeof(buf), "%.0f", id);
+    return buf;
+}
+
+/* Get interaction token from update for responding. */
+const char *discord_get_interaction_token(json_node_t *update) {
+    static char buf[512];
+    if (!update) return NULL;
+    json_node_t *interaction = json_obj_get(update, "interaction");
+    if (!interaction) return NULL;
+    const char *token = json_get_str(interaction, "token", NULL);
+    if (!token) return NULL;
+    snprintf(buf, sizeof(buf), "%s", token);
+    return buf;
+}
+
+/* Respond to an interaction with a deferred update (for component interactions).
+ * This tells Discord we'll edit the message later. */
+bool discord_defer_interaction(http_client_t *http,
+                                const char *interaction_id,
+                                const char *interaction_token) {
+    if (!http || !interaction_id || !interaction_token) return false;
+
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/interactions/%s/%s/callback",
+             DISCORD_API, interaction_id, interaction_token);
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "type", json_new_number(DISCORD_CB_DEFERRED_UPDATE));
+
+    http_response_t *resp = discord_post(http, url, body);
+    json_free(body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* Respond to an interaction with a modal. */
+bool discord_show_modal(http_client_t *http,
+                         const char *interaction_id,
+                         const char *interaction_token,
+                         const char *custom_id,
+                         const char *title,
+                         json_node_t *components) {
+    if (!http || !interaction_id || !interaction_token) return false;
+
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/interactions/%s/%s/callback",
+             DISCORD_API, interaction_id, interaction_token);
+
+    json_node_t *body = json_new_object();
+    json_object_set(body, "type", json_new_number(DISCORD_CB_MODAL));
+    json_node_t *data = json_new_object();
+    json_object_set(data, "custom_id", json_new_string(custom_id ? custom_id : "modal"));
+    json_object_set(data, "title", json_new_string(title ? title : "Hermes"));
+    if (components)
+        json_object_set(data, "components", json_copy(components));
+    else
+        json_object_set(data, "components", json_new_array());
+    json_object_set(body, "data", data);
+
+    http_response_t *resp = discord_post(http, url, body);
+    json_free(body);
+    bool ok = resp && resp->status == 200;
+    if (resp) http_response_free(resp);
+    return ok;
+}
+
+/* ================================================================
+ *  E52: Typing with graceful 429 handling — rate-limit aware typing
+ * ================================================================ */
+
+/* Track last typing time per channel for rate limit avoidance */
+#define DISCORD_TYPING_TRACKER_MAX 32
+static struct {
+    char   channel[128];
+    double last_typing; /* monotonic time */
+} g_typing_tracker[DISCORD_TYPING_TRACKER_MAX];
+static int g_typing_tracker_count = 0;
+static pthread_mutex_t g_typing_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* Send typing indicator with 429 avoidance.
+ * Discord rate-limits typing to once per ~8 seconds per channel.
+ * Returns true if typing was sent, false if skipped (rate limited) or failed. */
+bool discord_send_typing_graceful(http_client_t *http, const char *channel) {
+    if (!http || !channel) return false;
+
+    double now = 0;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    now = (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+
+    pthread_mutex_lock(&g_typing_mutex);
+
+    /* Check if we recently sent typing for this channel */
+    bool should_send = true;
+    for (int i = 0; i < g_typing_tracker_count; i++) {
+        if (strcmp(g_typing_tracker[i].channel, channel) == 0) {
+            if (now - g_typing_tracker[i].last_typing < 7.0) {
+                should_send = false; /* Still within cooldown */
+            }
+            g_typing_tracker[i].last_typing = now;
+            break;
+        }
+    }
+
+    if (should_send && g_typing_tracker_count < DISCORD_TYPING_TRACKER_MAX) {
+        snprintf(g_typing_tracker[g_typing_tracker_count].channel,
+                 sizeof(g_typing_tracker[0].channel), "%s", channel);
+        g_typing_tracker[g_typing_tracker_count].last_typing = now;
+        g_typing_tracker_count++;
+    }
+
+    pthread_mutex_unlock(&g_typing_mutex);
+
+    if (!should_send) return false; /* Rate limited — skip silently */
+
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/channels/%s/typing", DISCORD_API, channel);
+
+    char headers[1024];
+    discord_build_headers(headers, sizeof(headers), false);
+
+    http_response_t *resp = http_request(http, HTTP_POST, url,
+                                          headers, NULL, 0);
+    if (resp) {
+        bool ok = resp->status == 200 || resp->status == 204;
+        if (resp->status == 429) {
+            /* Rate limited by Discord — reset tracker */
+            pthread_mutex_lock(&g_typing_mutex);
+            for (int i = 0; i < g_typing_tracker_count; i++) {
+                if (strcmp(g_typing_tracker[i].channel, channel) == 0) {
+                    g_typing_tracker[i].last_typing = now + 10.0; /* Extend cooldown */
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&g_typing_mutex);
+        }
+        http_response_free(resp);
+        return ok;
+    }
+    return false;
+}

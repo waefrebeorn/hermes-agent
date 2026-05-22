@@ -405,6 +405,23 @@ json_node_t *discord_poll_messages(http_client_t *http);
 const char *discord_get_chat_id(json_node_t *update);
 const char *discord_get_text(json_node_t *update);
 
+/* E48: Interaction handling — get interaction metadata from update */
+int discord_get_interaction_type(json_node_t *update);
+const char *discord_get_interaction_id(json_node_t *update);
+const char *discord_get_interaction_token(json_node_t *update);
+bool discord_defer_interaction(http_client_t *http,
+                                const char *interaction_id,
+                                const char *interaction_token);
+bool discord_show_modal(http_client_t *http,
+                         const char *interaction_id,
+                         const char *interaction_token,
+                         const char *custom_id,
+                         const char *title,
+                         json_node_t *components);
+
+/* E52: Typing with graceful 429 handling */
+bool discord_send_typing_graceful(http_client_t *http, const char *channel);
+
 /* ================================================================
  *  Webhook HTTP API platform
  * ================================================================ */
