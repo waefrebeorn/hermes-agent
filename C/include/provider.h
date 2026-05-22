@@ -27,10 +27,11 @@ extern "C" {
 
 /* Provider identification */
 typedef enum {
-    PROVIDER_OPENAI,       /* OpenAI-compatible (OpenAI, DeepSeek, etc.) */
+    PROVIDER_OPENAI,       /* OpenAI-compatible (OpenAI, Groq, Together, etc.) */
     PROVIDER_ANTHROPIC,    /* Anthropic API format */
     PROVIDER_GOOGLE,       /* Google AI / Gemini */
     PROVIDER_OPENROUTER,   /* OpenRouter — model routing with preferences */
+    PROVIDER_DEEPSEEK,     /* DeepSeek — context caching, FIM */
     PROVIDER_CUSTOM,       /* Custom provider */
 } provider_type_t;
 
@@ -137,6 +138,9 @@ extern const provider_ops_t PROVIDER_OPS_OPENAI;
 
 /* OpenRouter with model routing and provider preferences */
 extern const provider_ops_t PROVIDER_OPS_OPENROUTER;
+
+/* DeepSeek with context caching and FIM support */
+extern const provider_ops_t PROVIDER_OPS_DEEPSEEK;
 
 /* Anthropic API format */
 extern const provider_ops_t PROVIDER_OPS_ANTHROPIC;

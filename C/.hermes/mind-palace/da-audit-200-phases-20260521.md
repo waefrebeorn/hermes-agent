@@ -135,7 +135,7 @@ Scanned all 57 commits in C history for:
 | P76 | OpenRouter provider | ✅ | compiled | Native OpenRouter: extra HTTP-Referer/X-Title headers, proper type enum, 243 LOC |
 | P77 | AWS Bedrock | ❌ | — | Not implemented |
 | P78 | Azure | ❌ | — | Not implemented |
-| P79 | DeepSeek | ✅ | runtime | Works via OpenAI compat + base_url |
+| P79 | DeepSeek provider | ✅ | compiled | Native DeepSeek: x-ds-cache-ttl context caching header, reasoning_content extraction, proper type enum |
 | P80 | xAI provider | ❌ | — | Not implemented |
 | P81 | Custom provider | ✅ | compiled | Custom base_url/api_key passthrough |
 | P82 | Credential pool | ✅ | compiled | credential_pool.c: multi-key rotation |
