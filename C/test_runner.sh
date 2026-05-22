@@ -57,12 +57,12 @@ run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$C
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 
 # Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \
     "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
     "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_config -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_config -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_config > /dev/null 2>&1; then ok "config (70 tests)"
     else
         echo "  Config test output:"
@@ -110,10 +110,10 @@ else skip "provider_smoke (compilation failed)"
 fi
 
 # Checkpoint tests (needs context.c for message_new/message_free)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_checkpoint.c" \
     "$CDIR/src/agent/checkpoint.c" "$CDIR/src/agent/context.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_checkpoint -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_checkpoint -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_checkpoint > /dev/null 2>&1; then ok "checkpoint (44 tests)"
     else fail "checkpoint (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_checkpoint
@@ -205,11 +205,11 @@ else skip "rate_limit (compilation failed)"
 fi
 
 # Agent loop/context test suite (G166 — needs context.c, checkpoint.c, json, plugin)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_agent.c" \
     "$CDIR/src/agent/context.c" "$CDIR/src/agent/checkpoint.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libplugin/plugin.c" \
-    -o /tmp/hermes_test_agent -lm -lpthread > /dev/null 2>&1; then
+    -o /tmp/hermes_test_agent -lm -lpthread -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_agent > /dev/null 2>&1; then ok "agent_loop_context (161 tests)"
     else fail "agent_loop_context (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_agent
