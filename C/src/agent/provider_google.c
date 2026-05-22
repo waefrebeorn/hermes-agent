@@ -580,6 +580,15 @@ static provider_response_t *google_parse_stream_chunk(const provider_t *p,
     json_t *candidates = json_obj_get(root, "candidates");
     if (candidates && json_len(candidates) > 0) {
         json_t *candidate = json_get(candidates, 0);
+
+        /* Check finish reason FIRST (before content, since final chunk
+         * may have finishReason + text content simultaneously) */
+        const char *finish = json_get_str(candidate, "finishReason", NULL);
+        if (finish) {
+            snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", finish);
+            /* Also extract text if present before signaling end */
+        }
+
         json_t *content = json_obj_get(candidate, "content");
         if (content) {
             json_t *parts = json_obj_get(content, "parts");
@@ -589,6 +598,11 @@ static provider_response_t *google_parse_stream_chunk(const provider_t *p,
                 const char *text = json_get_str(part, "text", NULL);
                 if (text) {
                     resp->content = strdup(text);
+                    if (finish) {
+                        /* Final chunk with both finishReason and text */
+                        json_free(root);
+                        return resp;
+                    }
                     json_free(root);
                     return resp;
                 }
@@ -603,10 +617,8 @@ static provider_response_t *google_parse_stream_chunk(const provider_t *p,
             }
         }
 
-        /* Check finish reason in streaming chunk */
-        const char *finish = json_get_str(candidate, "finishReason", NULL);
         if (finish) {
-            /* Signal end of stream with empty content */
+            /* finishReason but no content → signal end of stream */
             resp->content = strdup("");
             json_free(root);
             return resp;

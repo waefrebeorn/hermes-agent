@@ -50,6 +50,7 @@ typedef struct {
     int   output_tokens;
     int   tool_calls_count;
     tool_call_t tool_calls[64];
+    char  finish_reason[32];   /* B22: "stop", "length", "tool_calls", "content_filter" */
 } provider_response_t;
 
 /* Provider operations (function pointers) */

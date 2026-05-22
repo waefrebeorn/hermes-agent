@@ -525,6 +525,11 @@ static int on_provider_stream_chunk(const char *data, size_t len, void *userdata
                 ctx->token_cb(delta->content, ctx->userdata);
         }
 
+        /* B22: finish_reason from provider delta */
+        if (delta->finish_reason[0])
+            snprintf(ctx->resp->finish_reason, sizeof(ctx->resp->finish_reason),
+                     "%s", delta->finish_reason);
+
         /* Token counts from delta (Anthropic sends in message_delta) */
         if (delta->input_tokens > 0)
             ctx->resp->input_tokens = delta->input_tokens;
@@ -604,6 +609,7 @@ static int on_provider_stream_chunk(const char *data, size_t len, void *userdata
                 const char *finish = json_object_get_string(choice, "finish_reason", NULL);
                 if (finish && finish[0]) {
                     ctx->streaming_done = true;
+                    snprintf(ctx->resp->finish_reason, sizeof(ctx->resp->finish_reason), "%s", finish);
                     json_node_t *usage = json_object_get(root, "usage");
                     if (usage) {
                         ctx->resp->input_tokens = (int)json_object_get_number(usage, "prompt_tokens", 0);
@@ -637,6 +643,8 @@ static int on_stream_chunk(const char *data, size_t len, void *userdata) {
 
     /* Extract finish_reason */
     const char *finish = json_object_get_string(choice, "finish_reason", NULL);
+    if (finish && finish[0])
+        snprintf(ctx->resp->finish_reason, sizeof(ctx->resp->finish_reason), "%s", finish);
 
     /* Extract delta content */
     const char *content = json_object_get_string(delta, "content", NULL);

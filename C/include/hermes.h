@@ -156,6 +156,7 @@ typedef struct {
     int           cache_write_tokens;    /* G06: prompt cache write tokens */
     int           tool_calls_count;
     tool_call_t   tool_calls[64]; /* Max 64 tool calls per turn */
+    char          finish_reason[32]; /* B22: "stop", "length", "tool_calls", "content_filter" */
     /* P95: Stream diagnostic — populated by streaming path */
     stream_diag_t diag;
 } llm_response_t;

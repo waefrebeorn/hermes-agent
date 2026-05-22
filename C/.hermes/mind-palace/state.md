@@ -29,6 +29,15 @@
 - ◀ **CLI: 87% → 88%** (H14 closed, 32 CLI gaps remain)
 - ◀ Committed: `ea869fb29`
 
+### Session 2026-05-26 — B30-B31: Google provider depth
+
+- ✅ **B30: top_k + candidate_count** — `agent.top_k: 40`, `HERMES_TOP_K`, YAML/env/config/diff/agent/llm_client wire. Google writes `topK`/`candidateCount` to generationConfig when > 0.
+  - Google provider already had B31 (systemInstruction, verified with test)
+- ✅ **test_google_depth.c** — 7 assertions
+- ◀ **Suite: 90/0/0** (+1 test, 7 assertions)
+- ◀ **Providers: 22 provider-specific API gaps remain**
+- ◀ Committed: `5662b2004`
+
 ### Session 2026-05-26 — B23: json_mode + response_format UAF fix
 
 - ✅ **B23: json_mode convenience flag** — `agent.json_mode: true` auto-sets response_format to `{"type":"json_object"}` across all 9 providers

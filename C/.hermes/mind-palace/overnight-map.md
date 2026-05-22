@@ -198,6 +198,15 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Build/doc: 55%** (was 30%, 5/15 gaps closed)
 - ◀ Commits: `a61cac0fd`, `20edb4d35`
 
+### Session 2026-05-26 — B30-B31: Google provider depth
+
+- ✅ **B30: top_k + candidate_count** — `agent.top_k`, `HERMES_TOP_K`, config/agent/llm wire. Google writes `topK`/`candidateCount` to generationConfig.
+- ✅ **B31: systemInstruction** — already implemented, verified with test
+- ✅ **test_google_depth.c** — 7 assertions
+- ◀ **Suite: 90/0/0** (+1 test, 7 assertions)
+- ◀ Committed: `5662b2004`
+- ◀ **Provider-specific API gaps: 25→22** (B23, B30, B31 closed; B31 was already done)
+
 ### Session 2026-05-26 — B23: json_mode for all providers
 
 - ✅ **B23: json_mode convenience flag** — `agent.json_mode: true` auto-sets `response_format: {"type":"json_object"}` across all 9 providers

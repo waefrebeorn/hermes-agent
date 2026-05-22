@@ -244,6 +244,8 @@ static provider_response_t *custom_parse_stream_chunk(const provider_t *p,
     json_t *choices = json_object_get(root, "choices");
     if (choices && json_len(choices) > 0) {
         json_t *choice = json_get(choices, 0);
+        /* B22: finish_reason */
+        { const char *fr = json_get_str(choice, "finish_reason", NULL); if (fr) snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", fr); }
         json_t *delta = json_object_get(choice, "delta");
         if (delta) resp->content = strdup(json_get_str(delta, "content", ""));
     }

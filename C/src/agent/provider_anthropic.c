@@ -636,6 +636,7 @@ static provider_response_t *anthropic_parse_stream_chunk(const provider_t *p,
         /* Check stop_reason for tool_use */
         if (delta) {
             const char *stop = json_get_str(delta, "stop_reason", "");
+            if (stop[0]) snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", stop);
             if (strcmp(stop, "tool_use") == 0) {
                 /* Signal: more tool calls may follow.
                  * The streaming callback accumulates these. */
