@@ -15,6 +15,88 @@
 #include <string.h>
 
 /* ================================================================
+ *  Bot identity
+ * ================================================================ */
+
+static char bot_username[128] = "";
+
+void telegram_set_username(const char *username) {
+    if (username) snprintf(bot_username, sizeof(bot_username), "%s", username);
+}
+
+const char *telegram_get_username(void) {
+    return bot_username;
+}
+
+/* L08: Check if message has @mention of the bot in entities or text.
+ * Returns true if the bot is directly mentioned. */
+bool telegram_is_mentioned(json_node_t *update) {
+    if (!update || !bot_username[0]) return true; /* No username = assume mentioned */
+
+    json_node_t *msg = json_obj_get(update, "message");
+    if (!msg) {
+        msg = json_obj_get(update, "edited_message");
+        if (!msg) return true; /* Non-message updates always processed */
+    }
+
+    /* Check entities for mention type */
+    json_node_t *entities = json_obj_get(msg, "entities");
+    if (entities) {
+        size_t n = json_len(entities);
+        for (size_t i = 0; i < n; i++) {
+            json_node_t *ent = json_get(entities, i);
+            const char *type = json_get_str(ent, "type", "");
+            if (strcmp(type, "mention") == 0) {
+                const char *txt = json_get_str(msg, "text", "");
+                if (!txt) continue;
+                long offset = (long)json_get_num(ent, "offset", -1);
+                long length = (long)json_get_num(ent, "length", 0);
+                if (offset >= 0 && length > 0) {
+                    char mention[128] = "";
+                    size_t slen = strlen(txt);
+                    if ((size_t)offset < slen) {
+                        size_t mlen = (size_t)length;
+                        if (mlen > sizeof(mention) - 1) mlen = sizeof(mention) - 1;
+                        memcpy(mention, txt + offset, mlen);
+                        mention[mlen] = '\0';
+                        /* Check if mention matches @bot_username */
+                        if (mention[0] == '@' &&
+                            strcasecmp(mention + 1, bot_username) == 0)
+                            return true;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Also check text directly for @bot_username */
+    const char *text = json_get_str(msg, "text", NULL);
+    if (text) {
+        char at_mention[256];
+        snprintf(at_mention, sizeof(at_mention), "@%s", bot_username);
+        if (strstr(text, at_mention))
+            return true;
+    }
+
+    return false;
+}
+
+/* L08: Check if the message is from a group chat.
+ * Returns true if chat type is group, supergroup, or channel. */
+bool telegram_is_group(json_node_t *update) {
+    if (!update) return false;
+    json_node_t *msg = json_obj_get(update, "message");
+    if (!msg) {
+        msg = json_obj_get(update, "edited_message");
+        if (!msg) return false;
+    }
+    json_node_t *chat = json_obj_get(msg, "chat");
+    if (!chat) return false;
+    const char *type = json_get_str(chat, "type", "private");
+    return (strcmp(type, "group") == 0 || strcmp(type, "supergroup") == 0);
+}
+
+/* ================================================================
  *  Telegram API URLs
  * ================================================================ */
 
@@ -22,6 +104,29 @@ static char api_base[512] = "https://api.telegram.org/bot";
 
 void telegram_set_token(const char *token) {
     snprintf(api_base, sizeof(api_base), "https://api.telegram.org/bot%s", token);
+}
+
+/* Fetch bot info from /getMe. Returns true on success, sets bot_username. */
+bool telegram_get_me(http_client_t *http) {
+    if (!http) return false;
+    char url[512];
+    snprintf(url, sizeof(url), "%s/getMe", api_base);
+    http_response_t *resp = http_request(http, HTTP_GET, url, NULL, NULL, 0);
+    if (!resp) return false;
+    char *err = NULL;
+    json_node_t *j = json_parse(resp->body, &err);
+    http_response_free(resp);
+    if (!j) { free(err); return false; }
+    bool ok = json_get_bool(j, "ok", false);
+    if (ok) {
+        json_node_t *user = json_obj_get(j, "result");
+        if (user) {
+            const char *uname = json_get_str(user, "username", NULL);
+            if (uname) telegram_set_username(uname);
+        }
+    }
+    json_free(j); free(err);
+    return ok;
 }
 
 /* ================================================================

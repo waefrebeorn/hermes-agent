@@ -196,6 +196,9 @@ typedef struct {
     /* E34: Group observe — observe unmentioned messages */
     char   group_observe_prefix[64];  /* prefix to strip from group names */
     bool   group_observe_enabled;
+    /* L08: Group observe buffer — accumulated unmentioned messages */
+    char   observe_buffer[65536];     /* rolling buffer of observed messages */
+    pthread_mutex_t observe_mutex;
 } gateway_state_t;
 
 /* Global gateway state — defined in server.c */
@@ -230,6 +233,11 @@ void gw_reconnect_reset(int plat_idx);
 
 /* E34: Set group observe prefix. Messages from groups with this prefix are observed. */
 void gw_set_group_observe(const char *prefix, bool enabled);
+/* L08: Append a message to the observe buffer (thread-safe). */
+void gw_observe_append(const char *platform, const char *chat_id, const char *text);
+/* L08: Consume and clear the observe buffer for a given platform+chat (thread-safe).
+ * Returns a strdup'd string, caller must free(). Returns NULL if empty. */
+char *gw_observe_consume(const char *platform, const char *chat_id);
 
 /* E35-E38: Gateway hooks system */
 typedef json_node_t *(*gw_hook_t)(json_node_t *data, void *userdata);
@@ -256,6 +264,11 @@ bool gw_refresh_token(int plat_idx);
  * ================================================================ */
 
 void telegram_set_token(const char *token);
+void telegram_set_username(const char *username);
+const char *telegram_get_username(void);
+bool telegram_get_me(http_client_t *http);
+bool telegram_is_mentioned(json_node_t *update);
+bool telegram_is_group(json_node_t *update);
 bool telegram_send_message(http_client_t *http, const char *chat_id,
                             const char *text, const char *parse_mode);
 bool telegram_send_chat_action(http_client_t *http, const char *chat_id,

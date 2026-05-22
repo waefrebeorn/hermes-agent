@@ -393,6 +393,45 @@ void gw_set_group_observe(const char *prefix, bool enabled) {
     g_gw.group_observe_enabled = enabled;
 }
 
+/* L08: Append message to observe buffer (thread-safe, rolling). */
+void gw_observe_append(const char *platform, const char *chat_id, const char *text) {
+    if (!platform || !chat_id || !text || !*text) return;
+    pthread_mutex_lock(&g_gw.observe_mutex);
+    size_t cur = strlen(g_gw.observe_buffer);
+    size_t add = strlen(platform) + 1 + strlen(chat_id) + 2 + strlen(text) + 3;
+    if (cur + add >= sizeof(g_gw.observe_buffer)) {
+        /* Buffer full — trim from front */
+        char *nl = strchr(g_gw.observe_buffer, '\n');
+        if (nl) {
+            size_t remain = strlen(nl + 1);
+            memmove(g_gw.observe_buffer, nl + 1, remain + 1);
+            cur = remain;
+        } else {
+            g_gw.observe_buffer[0] = '\0';
+            cur = 0;
+        }
+    }
+    char entry[2048];
+    snprintf(entry, sizeof(entry), "[%s:%s] %s\n", platform, chat_id, text);
+    strncat(g_gw.observe_buffer, entry,
+            sizeof(g_gw.observe_buffer) - strlen(g_gw.observe_buffer) - 1);
+    pthread_mutex_unlock(&g_gw.observe_mutex);
+}
+
+/* L08: Consume and clear observe buffer for a given platform+chat. */
+char *gw_observe_consume(const char *platform, const char *chat_id) {
+    if (!platform || !chat_id) return NULL;
+    pthread_mutex_lock(&g_gw.observe_mutex);
+    if (g_gw.observe_buffer[0] == '\0') {
+        pthread_mutex_unlock(&g_gw.observe_mutex);
+        return NULL;
+    }
+    char *result = strdup(g_gw.observe_buffer);
+    g_gw.observe_buffer[0] = '\0';
+    pthread_mutex_unlock(&g_gw.observe_mutex);
+    return result;
+}
+
 /* ================================================================
  *  E35-E39: Gateway hooks/middleware system
  * ================================================================ */
@@ -906,6 +945,19 @@ static void process_update(const char *platform, const char *chat_id, const char
 
     printf("[gateway:%s] Message: %s\n", platform, text);
 
+    /* L08: Prepend any accumulated observe buffer before processing
+     * a triggered message (one where the bot IS mentioned). */
+    char *observe_ctx = gw_observe_consume(platform, chat_id);
+    const char *actual_text = text;
+    char combined[66560]; /* 65536 observe buf + 1024 message */
+    if (observe_ctx) {
+        snprintf(combined, sizeof(combined),
+                 "[Observed context from this chat]\n%s\n[Trigger message]\n%s",
+                 observe_ctx, text);
+        actual_text = combined;
+        free(observe_ctx);
+    }
+
     /* P101: Find platform index for rate limiting */
     int plat_idx = -1;
     for (int i = 0; i < g_gw.platform_count; i++) {
@@ -953,6 +1005,11 @@ static void *thread_poll_telegram(void *arg) {
     (void)arg;
     printf("[gateway] Telegram polling (interval: %ds)\n", g_gw.poll_interval);
 
+    /* L08: Fetch bot identity on first run for @mention detection */
+    telegram_get_me(g_gw.http);
+    if (telegram_get_username()[0])
+        printf("[gateway] Telegram bot: @%s\n", telegram_get_username());
+
     while (g_gw.running) {
         json_node_t *root = telegram_get_updates(g_gw.http, g_gw.tg_offset, 30);
 
@@ -965,9 +1022,21 @@ static void *thread_poll_telegram(void *arg) {
                     double update_id = json_get_num(update, "update_id", 0);
                     if (update_id > 0)
                         g_gw.tg_offset = (int)update_id + 1;
-                    process_update("telegram",
-                                   telegram_get_chat_id(update),
-                                   telegram_get_text(update));
+
+                    const char *chat_id = telegram_get_chat_id(update);
+                    const char *text = telegram_get_text(update);
+                    if (!chat_id || !text) continue;
+
+                    /* L08: Group observe — silently accumulate unmentioned group messages */
+                    if (g_gw.group_observe_enabled &&
+                        telegram_is_group(update) &&
+                        !telegram_is_mentioned(update)) {
+                        gw_observe_append("telegram", chat_id, text);
+                        printf("[gateway] Observed (no @mention): %s\n", text);
+                        continue;
+                    }
+
+                    process_update("telegram", chat_id, text);
                 }
             }
             json_free(root);
@@ -1509,6 +1578,8 @@ int hermes_gateway_main(int argc, char **argv) {
 
     /* P101: Initialize message queue and HTTP pool */
     gw_queue_init();
+    g_gw.observe_buffer[0] = '\0';
+    pthread_mutex_init(&g_gw.observe_mutex, NULL);
     pthread_mutex_init(&g_gw.pool_mutex, NULL);
     /* P102: Initialize session pool */
     pthread_mutex_init(&g_gw.session_mutex, NULL);
