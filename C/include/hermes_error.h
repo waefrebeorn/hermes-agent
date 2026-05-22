@@ -1,137 +1,98 @@
+/*
+ * hermes_error.h — Typed error system for Hermes C.
+ *
+ * K01-K05: Structured error types with code, message, and context.
+ * Replaces bare "return NULL" / "fprintf(stderr, ...)" patterns.
+ */
 #ifndef HERMES_ERROR_H
 #define HERMES_ERROR_H
 
-/*
- * hermes_error.h — Typed error hierarchy for Hermes C.
- *
- * K01-K05: Provides structured error types replacing bare bool returns
- * and fprintf(stderr) with typed, capturable errors that carry type,
- * message, source location, and optional system errno.
- *
- * Python equivalent: ValueError, TypeError, RuntimeError,
- * OSError/FileNotFoundError, TimeoutError with tracebacks.
- */
-
-#include <stdbool.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* ================================================================
- *  K01-K05: Error types
+ *  Error Codes (K01-K05)
  * ================================================================ */
-
 typedef enum {
-    HERMES_OK          = 0,    /* Not an error — success indicator */
-    HERMES_ERR_VALUE   = 1,    /* K01: ValueError — invalid argument */
-    HERMES_ERR_TYPE    = 2,    /* K02: TypeError — type mismatch */
-    HERMES_ERR_RUNTIME = 3,    /* K03: RuntimeError — general failure */
-    HERMES_ERR_OS      = 4,    /* K04: OSError — filesystem/OS failure */
-    HERMES_ERR_TIMEOUT = 5,    /* K05: TimeoutError — operation timed out */
-    HERMES_ERR_CUSTOM  = 6     /* Extension point for plugin-specific errors */
-} hermes_error_type_t;
+    HERMES_OK = 0,
+
+    /* K01: Value errors — invalid arguments, config values */
+    HERMES_ERR_VALUE,           /* General invalid argument */
+    HERMES_ERR_OUT_OF_RANGE,    /* Value outside acceptable range */
+    HERMES_ERR_INVALID_CONFIG,  /* Config validation failure */
+
+    /* K02: Type errors — type mismatches */
+    HERMES_ERR_TYPE,            /* General type mismatch */
+    HERMES_ERR_UNEXPECTED_TYPE, /* Expected different JSON/YAML type */
+
+    /* K03: Runtime errors */
+    HERMES_ERR_RUNTIME,         /* General runtime failure */
+    HERMES_ERR_NOT_FOUND,       /* Resource/session/entity not found */
+    HERMES_ERR_ALREADY_EXISTS,  /* Duplicate creation */
+    HERMES_ERR_NOT_IMPLEMENTED, /* Stub/unimplemented feature */
+    HERMES_ERR_BUSY,            /* Resource in use */
+
+    /* K04: I/O errors */
+    HERMES_ERR_IO,              /* General I/O failure */
+    HERMES_ERR_FILE_NOT_FOUND,  /* File does not exist */
+    HERMES_ERR_PERMISSION,      /* Permission denied */
+    HERMES_ERR_DISK_FULL,       /* No space left */
+
+    /* K05: Timeout errors */
+    HERMES_ERR_TIMEOUT,         /* General timeout */
+    HERMES_ERR_NETWORK_TIMEOUT, /* Network request timed out */
+    HERMES_ERR_LLM_TIMEOUT,     /* LLM response timed out */
+} hermes_error_code_t;
+
+/* Human-readable error code names */
+const char *hermes_error_name(hermes_error_code_t code);
 
 /* ================================================================
- *  Error struct — compact (stack-friendly), ~1152 bytes
+ *  Error Result (K01-K05)
  * ================================================================ */
-
-#define HERMES_ERR_MSG_MAX  768
-#define HERMES_ERR_FILE_MAX 256
-
 typedef struct {
-    hermes_error_type_t type;
-    int                 code;          /* errno or HTTP status code */
-    char                message[HERMES_ERR_MSG_MAX];
-    char                file[HERMES_ERR_FILE_MAX];
-    int                 line;
+    hermes_error_code_t code;  /* Error code */
+    char message[1024];        /* Human-readable error description */
+    char context[256];         /* Context: function name, file:line, or tag */
 } hermes_error_t;
 
-/* ================================================================
- *  Construction helpers
- * ================================================================ */
-
-/* Create a typed error with printf-style format message.
- * Returns err (or a static singleton if err is NULL) for chaining.
- * Stack-allocated: pass &local_err to fill an existing struct. */
-hermes_error_t *hermes_error_set(hermes_error_t *err,
-                                  hermes_error_type_t type,
-                                  const char *file, int line,
-                                  const char *fmt, ...)
-    __attribute__((format(printf, 5, 6)));
-
-/* Convenience: create a ValueError */
-#define hermes_err_value(err, ...) \
-    hermes_error_set((err), HERMES_ERR_VALUE, __FILE__, __LINE__, __VA_ARGS__)
-
-/* Convenience: create a TypeError */
-#define hermes_err_type(err, ...) \
-    hermes_error_set((err), HERMES_ERR_TYPE, __FILE__, __LINE__, __VA_ARGS__)
-
-/* Convenience: create a RuntimeError */
-#define hermes_err_runtime(err, ...) \
-    hermes_error_set((err), HERMES_ERR_RUNTIME, __FILE__, __LINE__, __VA_ARGS__)
-
-/* Convenience: create an OSError capturing errno */
-#define hermes_err_os(err, ...) \
-    hermes_error_set((err), HERMES_ERR_OS, __FILE__, __LINE__, __VA_ARGS__)
-
-/* Convenience: create a TimeoutError */
-#define hermes_err_timeout(err, ...) \
-    hermes_error_set((err), HERMES_ERR_TIMEOUT, __FILE__, __LINE__, __VA_ARGS__)
-
-/* Create an OSError from the current errno value.
- * Sets code = errno and appends strerror(errno) to message. */
-hermes_error_t *hermes_error_from_errno(hermes_error_t *err,
-                                         const char *file, int line,
-                                         const char *context);
-
-#define hermes_errno(err, ctx) \
-    hermes_error_from_errno((err), __FILE__, __LINE__, (ctx))
-
-/* ================================================================
- *  Query / formatting
- * ================================================================ */
-
-/* Human-readable type name (static string, no free needed) */
-const char *hermes_error_type_name(hermes_error_type_t type);
-
-/* Format error as string into buffer. Returns buf.
- * Format: "[ValueError] in file.c:42: message (code=22)" */
-char *hermes_error_string(const hermes_error_t *err,
-                           char *buf, size_t buf_size);
-
-/* Quick check: is this an error? (type != HERMES_OK) */
-static inline bool hermes_is_error(const hermes_error_t *err) {
-    return err && err->type != HERMES_OK;
+/* Create a simple error */
+static inline hermes_error_t hermes_error(hermes_error_code_t code, const char *msg) {
+    hermes_error_t e = {code, {0}, {0}};
+    if (msg) {
+        size_t len = strlen(msg);
+        if (len >= sizeof(e.message)) len = sizeof(e.message) - 1;
+        memcpy(e.message, msg, len);
+        e.message[len] = '\0';
+    }
+    return e;
 }
 
-/* Quick check: is this particular type of error? */
-static inline bool hermes_error_is_type(const hermes_error_t *err,
-                                         hermes_error_type_t type) {
-    return err && err->type == type;
+/* Create an error with context tag */
+static inline hermes_error_t hermes_error_ctx(hermes_error_code_t code, const char *msg, const char *ctx) {
+    hermes_error_t e = hermes_error(code, msg);
+    if (ctx) {
+        size_t len = strlen(ctx);
+        if (len >= sizeof(e.context)) len = sizeof(e.context) - 1;
+        memcpy(e.context, ctx, len);
+        e.context[len] = '\0';
+    }
+    return e;
 }
 
-/* ================================================================
- *  Thread-local last error (Python-style errno for hermes)
- * ================================================================ */
+/* Check if error indicates success */
+static inline bool hermes_ok(hermes_error_t e) { return e.code == HERMES_OK; }
 
-/* Get the thread-local last error. Returns NULL if no error set. */
-hermes_error_t *hermes_get_last_error(void);
+/* Check if error indicates failure */
+static inline bool hermes_failed(hermes_error_t e) { return e.code != HERMES_OK; }
 
-/* Set the thread-local last error. Returns err. */
-hermes_error_t *hermes_set_last_error(const hermes_error_t *err);
-
-/* Clear the thread-local last error. */
-void hermes_clear_last_error(void);
-
-/* Convenience: set last error from type + message */
-#define hermes_set_error(type, ...) do { \
-    hermes_error_t _e; \
-    hermes_error_set(&_e, (type), __FILE__, __LINE__, __VA_ARGS__); \
-    hermes_set_last_error(&_e); \
-} while(0)
+/* Format error as string (truncated to buf) */
+void hermes_error_format(const hermes_error_t *e, char *buf, size_t buf_size);
 
 #ifdef __cplusplus
 }

@@ -96,6 +96,22 @@ run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$C
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I$CDIR/lib/libjson $CDIR/lib/libskin/skin.c $CDIR/lib/libjson/json.c -lm"
 
+# Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
+echo ""; echo "=== Error System Tests (K01-K05) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
+    "$CDIR/tests/test_hermes_error.c" \
+    "$CDIR/src/hermes_error.c" \
+    -o /tmp/hermes_test_errors -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_errors > /dev/null 2>&1; then ok "hermes_error (20 tests)"
+    else
+        echo "  Error system test output:"
+        /tmp/hermes_test_errors 2>&1 | sed 's/^/    /'
+        fail "hermes_error (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_errors
+else skip "hermes_error (compilation failed)"
+fi
+
 echo ""; echo "=== Redact Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
     "$CDIR/tests/test_redact.c" \
