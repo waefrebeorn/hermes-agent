@@ -16,6 +16,10 @@ extern "C" {
 bool registry_register(const char *name, const char *description,
                         const char *schema_json,
                         char *(*handler)(const char *args_json, const char *task_id));
+/* P150: Extended registration with toolset name for enabled/disabled filtering */
+bool registry_register_ex(const char *name, const char *description,
+                          const char *schema_json, const char *toolset,
+                          char *(*handler)(const char *args_json, const char *task_id));
 void registry_set_available(const char *name, bool available);
 tool_t *registry_find(const char *name);
 char *registry_dispatch(const char *name, const char *args_json,

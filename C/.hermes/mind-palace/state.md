@@ -13,6 +13,7 @@
 | **Gateway** | 63 | 35% | 19 platforms basic send/poll. Telegram 479 vs 5465 Python lines |
 | **Tools** | 38 | 85% | 28 registered. Browser(13) / Memory(1) / Kanban(9) = 1:1 with Python. SQLite memory now real. 6 stubs + 36 sub-features |
 | **Agent** | 32 | 55% | 23 state fields, 18 session DB functions, checkpoint/budget/compression |
+**Updated 2026-05-22 Session 2:** +10 gaps (G01-G03 token tracking, G15-G16 toolsets, G17 system_message override, G19 routing IDs, registry_filter_by_toolset, registry_register_ex, toolset registration for 34 key tools)
 | **CLI** | 34 | 80% | 70 slash commands, skin/theme engine, display system |
 | **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported. Jinja2/rich/httpx/pydantic/etc. missing |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics. No event loop, logging, dataclasses |

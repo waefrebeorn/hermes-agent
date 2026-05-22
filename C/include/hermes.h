@@ -77,6 +77,7 @@ typedef struct {
     char *(*handler)(const char *args_json, const char *task_id);
     bool  available;
     int   timeout_sec;   /* P52: per-tool timeout. 0 = inherit default. -1 = no timeout. */
+    char   toolset[32];  /* P150: toolset group for enabled/disabled filtering (e.g. "browser", "terminal") */
 } tool_t;
 
 typedef struct {
@@ -210,6 +211,19 @@ typedef struct {
     compression_feedback_t compression_fb;
     /* P98: Checkpoint manager — auto-save, named checkpoints, rollback */
     checkpoint_manager_t  checkpoints;
+    /* G15-G16: Enabled/disabled toolsets — comma-separated lists for tool filtering */
+    char enabled_toolsets[1024];
+    char disabled_toolsets[1024];
+    /* G17: Per-conversation system message override */
+    char system_message[4096];
+    /* G19: Session routing metadata — thread/user/chat IDs */
+    char thread_id[64];
+    char user_id[64];
+    char chat_id[64];
+    /* G01-G03: Session token tracking — cumulative across all turns */
+    int session_total_tokens;
+    int session_input_tokens;
+    int session_output_tokens;
 } agent_state_t;
 
 /* ================================================================
@@ -302,6 +316,8 @@ typedef struct {
     char  web_backend[32];         /* web.backend: shared fallback for search/extract */
     char  web_search_backend[32];  /* web.search_backend: searxng, google, etc. */
     char  web_extract_backend[32]; /* web.extract_backend: native, jina, etc. */
+    char  enabled_toolsets[1024];  /* tools.enabled_toolsets: comma-separated toolset list */
+    char  disabled_toolsets[1024]; /* tools.disabled_toolsets: comma-separated toolset list */
 } tools_config_t;
 
 /* ================================================================
@@ -932,6 +948,12 @@ tool_t *registry_find(const char *name);
 
 /* P52: Per-tool timeout. Set seconds, 0 = default, -1 = no timeout. */
 void registry_set_timeout(const char *name, int seconds);
+/* P150: Filter tool registry by enabled/disabled toolsets. Marks matching tools unavailable. */
+void registry_filter_by_toolset(tool_registry_t *reg, const char *enabled_csv, const char *disabled_csv);
+/* P150: Get toolset name for a registered tool. Returns "" if not set. */
+const char *registry_get_toolset(const char *name);
+/* P150: Set toolset name for a registered tool (after registration). */
+void registry_set_toolset(const char *name, const char *toolset);
 int  registry_get_timeout(const char *name);
 
 /* P55: Tool wildcard matching — enable/disable all tools matching a pattern */

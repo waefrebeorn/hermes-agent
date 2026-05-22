@@ -120,6 +120,12 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     /* Compress enabled */
     state->compress_enabled = cfg->compress_enabled;
 
+    /* P150: Forward enabled/disabled toolsets */
+    if (cfg->tools.enabled_toolsets[0])
+        snprintf(state->enabled_toolsets, sizeof(state->enabled_toolsets), "%s", cfg->tools.enabled_toolsets);
+    if (cfg->tools.disabled_toolsets[0])
+        snprintf(state->disabled_toolsets, sizeof(state->disabled_toolsets), "%s", cfg->tools.disabled_toolsets);
+
     /* Budget tracker limits from config */
     if (state->budget) {
         budget_tracker_set_limits(state->budget,
@@ -665,8 +671,23 @@ char *agent_run_conversation(agent_state_t *state,
 
     /* Build tools JSON from registry */
     json_node_t *tools_json = NULL;
-    if (state->tools.count > 0)
-        tools_json = tools_to_json(&state->tools);
+    if (state->tools.count > 0) {
+        /* P150: Apply enabled/disabled toolsets filter before building tool list */
+        if (state->enabled_toolsets[0] || state->disabled_toolsets[0]) {
+            tool_registry_t filtered = state->tools;
+            registry_filter_by_toolset(&filtered,
+                state->enabled_toolsets[0] ? state->enabled_toolsets : NULL,
+                state->disabled_toolsets[0] ? state->disabled_toolsets : NULL);
+            tools_json = tools_to_json(&filtered);
+        } else {
+            tools_json = tools_to_json(&state->tools);
+        }
+    }
+
+    /* P150: Apply system_message override if set */
+    if (state->system_message[0]) {
+        context_set_system(state, state->system_message);
+    }
 
     int iteration = 0;
     bool grace_call = false; /* P88: one extra LLM call without tools after budget */
@@ -759,6 +780,11 @@ char *agent_run_conversation(agent_state_t *state,
                                         cost,
                                         state->llm.model);
         }
+
+        /* G01-G03: Track session token totals */
+        state->session_input_tokens += llm_resp->input_tokens;
+        state->session_output_tokens += llm_resp->output_tokens;
+        state->session_total_tokens = state->session_input_tokens + state->session_output_tokens;
 
         /* If no tool calls, we're done — return final content */
         if (llm_resp->tool_calls_count == 0) {

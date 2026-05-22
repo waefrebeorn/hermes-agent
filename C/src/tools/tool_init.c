@@ -71,4 +71,45 @@ void tools_init_all(void) {
     registry_init_computer_use();
     registry_init_discord();
     registry_init_mcp();
+
+    /* P150: Assign toolsets for enabled/disabled filtering */
+    registry_set_toolset("browser_navigate", "browser");
+    registry_set_toolset("browser_snapshot", "browser");
+    registry_set_toolset("browser_back", "browser");
+    registry_set_toolset("browser_forward", "browser");
+    registry_set_toolset("browser_click", "browser");
+    registry_set_toolset("browser_type", "browser");
+    registry_set_toolset("browser_scroll", "browser");
+    registry_set_toolset("browser_get_images", "browser");
+    registry_set_toolset("browser_press", "browser");
+    registry_set_toolset("browser_vision", "browser");
+    registry_set_toolset("browser_console", "browser");
+    registry_set_toolset("browser_dialog", "browser");
+    registry_set_toolset("browser_cdp", "browser");
+
+    registry_set_toolset("kanban_show", "kanban");
+    registry_set_toolset("kanban_list", "kanban");
+    registry_set_toolset("kanban_complete", "kanban");
+    registry_set_toolset("kanban_block", "kanban");
+    registry_set_toolset("kanban_heartbeat", "kanban");
+    registry_set_toolset("kanban_comment", "kanban");
+    registry_set_toolset("kanban_create", "kanban");
+    registry_set_toolset("kanban_link", "kanban");
+    registry_set_toolset("kanban_unblock", "kanban");
+
+    registry_set_toolset("ha_list_entities", "homeassistant");
+    registry_set_toolset("ha_get_state", "homeassistant");
+    registry_set_toolset("ha_list_services", "homeassistant");
+    registry_set_toolset("ha_call_service", "homeassistant");
+
+    registry_set_toolset("voice_listen", "voice");
+    registry_set_toolset("voice_speak", "voice");
+
+    registry_set_toolset("image_generate", "image_gen");
+    registry_set_toolset("cronjob", "cron");
+    registry_set_toolset("cron_cmd", "cron");
+    registry_set_toolset("memory", "memory");
+    registry_set_toolset("delegate_task", "delegate");
+    registry_set_toolset("send_message", "send_message");
+    registry_set_toolset("computer_use", "computer_use");
 }

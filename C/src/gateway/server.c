@@ -1050,6 +1050,11 @@ int hermes_gateway_main(int argc, char **argv) {
     memcpy(g_gw.agent.llm.provider, g_gw.config.provider, sizeof(g_gw.agent.llm.provider));
     g_gw.agent.max_iterations = g_gw.config.max_turns;
     g_gw.agent.compress_enabled = g_gw.config.compress_enabled;
+    /* P150: Forward enabled/disabled toolsets to agent */
+    if (g_gw.config.tools.enabled_toolsets[0])
+        snprintf(g_gw.agent.enabled_toolsets, sizeof(g_gw.agent.enabled_toolsets), "%s", g_gw.config.tools.enabled_toolsets);
+    if (g_gw.config.tools.disabled_toolsets[0])
+        snprintf(g_gw.agent.disabled_toolsets, sizeof(g_gw.agent.disabled_toolsets), "%s", g_gw.config.tools.disabled_toolsets);
     /* Also copy yolo/fast/verbose for gateway runtime */
     approval_set_yolo(g_gw.config.yolo_mode);
 

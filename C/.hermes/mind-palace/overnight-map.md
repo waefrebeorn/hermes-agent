@@ -38,15 +38,20 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ P0 #5: tool_choice + parallel_tool_calls
 - ✅ P0 #6: max_tool_calls + n (choices)
 - ✅ Fixed streaming config forwarding gap
-- ✅ **18/18 LLM params fully wired** (was 10/12 at session start)
+- ✅ **18/18 LLM params fully wired**
 - ✅ P0 #3: F08 vision description — real Python Hermes CLI delegation
 - ✅ E01-E05: Telegram sendPhoto/Document/Voice/Video/Animation
 - ✅ E14: Telegram forwardMessage
 - ✅ E15: Telegram pinChatMessage + unpinChatMessage
 - ✅ F41: Image format validation (extension check + 50MB limit)
-- ✅ B01: ACP server Session 2/4 — full session CRUD, tool dispatch, execute_command
-- ✅ B01: ACP server Session 3/4 — user_message handling, streaming via agent_message_chunk notifications
-- Next: B01 Session 4/4 (auth, ACP protocol compliance, testing), B02-B03, or P1 gateway-agent-CLI gaps
+- ✅ B01: ACP server Sessions 2-4 — full lifecycle + auth + streaming
+- ✅ B02-B03: Covered by B01 ACP server infrastructure
+- ✅ E16: Telegram message reactions (setMessageReaction API)
+- ✅ **G15+G16: enabled_toolsets + disabled_toolsets** — toolset field in tool_t, registry_register_ex, registry_filter_by_toolset, tools.enabled_toolsets/disabled_toolsets YAML keys, agent state wiring, toolset labels for 34 key tools
+- ✅ **G17: system_message override** — per-conversation override field in agent_state_t, wired in agent_run_conversation before each LLM call
+- ✅ **G19: thread/user/chat IDs** — routing metadata fields in agent_state_t
+- ✅ **G01-G03: session token tracking** — session_total/input/output_tokens counters, updated after each LLM response
+- Next: remaining agent loop gaps (G04-G12 deep token tracking, G13-G14 tool_choice/parallel_tool_calls state, G18 conversation_history injection, G20 model_family), or gateway E06-E12 interactive sends, or CLI H08-H09 batch/pipe
 
 ## Upstream
 - 125 commits since last sync, 52 Python

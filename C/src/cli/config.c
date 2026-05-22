@@ -598,6 +598,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *profile = yaml_get_string(doc, "agent.profile");
     if (profile) snprintf(cfg->agent.profile, sizeof(cfg->agent.profile), "%s", profile);
 
+    /* Tools: enabled/disabled toolsets */
+    const char *enabled_ts = yaml_get_string(doc, "tools.enabled_toolsets");
+    if (enabled_ts) snprintf(cfg->tools.enabled_toolsets, sizeof(cfg->tools.enabled_toolsets), "%s", enabled_ts);
+    const char *disabled_ts = yaml_get_string(doc, "tools.disabled_toolsets");
+    if (disabled_ts) snprintf(cfg->tools.disabled_toolsets, sizeof(cfg->tools.disabled_toolsets), "%s", disabled_ts);
+
     /* Compression section — threshold */
     int c_thresh_int = yaml_get_int(doc, "compression.threshold", -1);
     if (c_thresh_int >= 0 && c_thresh_int <= 100) {
@@ -1962,6 +1968,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "web.search_backend", def.tools.web_search_backend, active->tools.web_search_backend);
     diff_str(diff, "web.extract_backend", def.tools.web_extract_backend, active->tools.web_extract_backend);
     diff_int(diff, "web.search_timeout", def.tools.web_search_timeout, active->tools.web_search_timeout);
+    diff_str(diff, "tools.enabled_toolsets", def.tools.enabled_toolsets, active->tools.enabled_toolsets);
+    diff_str(diff, "tools.disabled_toolsets", def.tools.disabled_toolsets, active->tools.disabled_toolsets);
 
     /* Delegation */
     diff_int(diff, "delegation.max_concurrent_children",
