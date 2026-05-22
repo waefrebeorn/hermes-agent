@@ -93,6 +93,12 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     state->llm.stop_count = cfg->provider_cfg.stop_count;
     memcpy(state->llm.stop_sequences, cfg->provider_cfg.stop_sequences,
            sizeof(state->llm.stop_sequences));
+    state->llm.presence_penalty = cfg->provider_cfg.presence_penalty;
+    state->llm.frequency_penalty = cfg->provider_cfg.frequency_penalty;
+    state->llm.seed = cfg->provider_cfg.seed;
+    state->llm.logprobs = cfg->provider_cfg.logprobs;
+    state->llm.top_logprobs = cfg->provider_cfg.top_logprobs;
+    memcpy(state->llm.user, cfg->provider_cfg.user, sizeof(state->llm.user));
     memcpy(state->llm.service_tier, cfg->provider_cfg.service_tier,
            sizeof(state->llm.service_tier));
     memcpy(state->llm.reasoning_effort, cfg->provider_cfg.reasoning_effort,

@@ -71,6 +71,21 @@ static char *xai_build_request_body(const provider_t *p,
     if (p->config.service_tier[0])
         json_object_set(root, "service_tier", json_new_string(p->config.service_tier));
 
+    if (p->config.presence_penalty != 0.0f)
+        json_object_set(root, "presence_penalty", json_new_number(p->config.presence_penalty));
+    if (p->config.frequency_penalty != 0.0f)
+        json_object_set(root, "frequency_penalty", json_new_number(p->config.frequency_penalty));
+    if (p->config.seed >= 0)
+        json_object_set(root, "seed", json_new_number(p->config.seed));
+    if (p->config.logprobs)
+        json_object_set(root, "logprobs", json_new_bool(true));
+    if (p->config.top_logprobs > 0) {
+        json_object_set(root, "logprobs", json_new_bool(true));
+        json_object_set(root, "top_logprobs", json_new_number(p->config.top_logprobs));
+    }
+    if (p->config.user[0])
+        json_object_set(root, "user", json_new_string(p->config.user));
+
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }
     for (size_t i = 0; i < msg_count; i++) {

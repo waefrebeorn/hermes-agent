@@ -102,6 +102,12 @@ typedef struct {
     float top_p;
     char  stop_sequences[HERMES_STOP_SEQUENCES_MAX][128];
     int   stop_count;
+    float presence_penalty;
+    float frequency_penalty;
+    int   seed;
+    bool  logprobs;
+    int   top_logprobs;
+    char  user[128];
     char  service_tier[32];
     char  reasoning_effort[32];
 } llm_config_t;
@@ -217,6 +223,12 @@ typedef struct {
     float top_p;                   /* nucleus sampling (0.0-1.0) */
     char  stop_sequences[HERMES_STOP_SEQUENCES_MAX][128];  /* stop strings */
     int   stop_count;
+    float presence_penalty;        /* -2.0 to 2.0, penalize new tokens based on existence */
+    float frequency_penalty;       /* -2.0 to 2.0, penalize new tokens based on frequency */
+    int   seed;                    /* deterministic sampling seed (-1 = random) */
+    bool  logprobs;                /* request token-level log probabilities */
+    int   top_logprobs;            /* number of top logprobs to return (0 = none via logprobs) */
+    char  user[128];               /* per-request user identifier */
     char  fallback_model[128];     /* model to fallback to on error */
     char  fallback_providers[1024]; /* comma-separated fallback providers (P83) */
     char  service_tier[32];        /* auto, default (for Anthropic) */

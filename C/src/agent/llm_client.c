@@ -270,6 +270,12 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
         prov->config.stop_count = cfg->stop_count;
         memcpy(prov->config.stop_sequences, cfg->stop_sequences,
                sizeof(prov->config.stop_sequences));
+        prov->config.presence_penalty = cfg->presence_penalty;
+        prov->config.frequency_penalty = cfg->frequency_penalty;
+        prov->config.seed = cfg->seed;
+        prov->config.logprobs = cfg->logprobs;
+        prov->config.top_logprobs = cfg->top_logprobs;
+        memcpy(prov->config.user, cfg->user, sizeof(prov->config.user));
         memcpy(prov->config.service_tier, cfg->service_tier,
                sizeof(prov->config.service_tier));
         memcpy(prov->config.reasoning_effort, cfg->reasoning_effort,

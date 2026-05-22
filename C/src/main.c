@@ -73,6 +73,12 @@ int main(int argc, char **argv) {
         agent_state.llm.stop_count = cfg.provider_cfg.stop_count;
         memcpy(agent_state.llm.stop_sequences, cfg.provider_cfg.stop_sequences,
                sizeof(agent_state.llm.stop_sequences));
+        agent_state.llm.presence_penalty = cfg.provider_cfg.presence_penalty;
+        agent_state.llm.frequency_penalty = cfg.provider_cfg.frequency_penalty;
+        agent_state.llm.seed = cfg.provider_cfg.seed;
+        agent_state.llm.logprobs = cfg.provider_cfg.logprobs;
+        agent_state.llm.top_logprobs = cfg.provider_cfg.top_logprobs;
+        memcpy(agent_state.llm.user, cfg.provider_cfg.user, sizeof(agent_state.llm.user));
         memcpy(agent_state.llm.service_tier, cfg.provider_cfg.service_tier,
                sizeof(agent_state.llm.service_tier));
         memcpy(agent_state.llm.reasoning_effort, cfg.provider_cfg.reasoning_effort,

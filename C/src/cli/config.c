@@ -138,6 +138,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.temperature = 1.0f;
     cfg->provider_cfg.top_p = 1.0f;
     cfg->provider_cfg.stop_count = 0;
+    cfg->provider_cfg.presence_penalty = 0.0f;
+    cfg->provider_cfg.frequency_penalty = 0.0f;
+    cfg->provider_cfg.seed = -1;
+    cfg->provider_cfg.logprobs = false;
+    cfg->provider_cfg.top_logprobs = 0;
+    cfg->provider_cfg.user[0] = '\0';
     snprintf(cfg->provider_cfg.api_mode, sizeof(cfg->provider_cfg.api_mode), "chat_completions");
     snprintf(cfg->provider_cfg.service_tier, sizeof(cfg->provider_cfg.service_tier), "default");
     snprintf(cfg->provider_cfg.reasoning_effort, sizeof(cfg->provider_cfg.reasoning_effort), "medium");
@@ -465,6 +471,29 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         }
     }
 
+    /* presence_penalty, frequency_penalty, seed, logprobs, user */
+    {
+        const char *s = yaml_get_string(doc, "model.presence_penalty");
+        if (s) { float f = (float)atof(s); if (f >= -2.0f && f <= 2.0f) cfg->provider_cfg.presence_penalty = f; }
+    }
+    {
+        const char *s = yaml_get_string(doc, "model.frequency_penalty");
+        if (s) { float f = (float)atof(s); if (f >= -2.0f && f <= 2.0f) cfg->provider_cfg.frequency_penalty = f; }
+    }
+    int seed = yaml_get_int(doc, "model.seed", -2);
+    if (seed >= 0) cfg->provider_cfg.seed = seed;
+    {
+        const char *s = yaml_get_string(doc, "model.logprobs");
+        if (s) cfg->provider_cfg.logprobs = (strcmp(s, "true") == 0 || strcmp(s, "1") == 0);
+    }
+    int tl = yaml_get_int(doc, "model.top_logprobs", -1);
+    if (tl >= 0) cfg->provider_cfg.top_logprobs = tl;
+    {
+        const char *s = yaml_get_string(doc, "model.user");
+        if (s) snprintf(cfg->provider_cfg.user, sizeof(cfg->provider_cfg.user), "%s", s);
+    }
+
+    /* Service tier from config */
     const char *fallback_model = yaml_get_string(doc, "model.fallback");
     if (!fallback_model) fallback_model = yaml_get_string(doc, "model.fallback_model");
     if (fallback_model) snprintf(cfg->provider_cfg.fallback_model,
@@ -1089,6 +1118,24 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     v = getenv("HERMES_TEMPERATURE");
     if (v) { float f = (float)atof(v); if (f >= 0.0f && f <= 2.0f) cfg->provider_cfg.temperature = f; }
 
+    v = getenv("HERMES_PRESENCE_PENALTY");
+    if (v) { float f = (float)atof(v); if (f >= -2.0f && f <= 2.0f) cfg->provider_cfg.presence_penalty = f; }
+
+    v = getenv("HERMES_FREQUENCY_PENALTY");
+    if (v) { float f = (float)atof(v); if (f >= -2.0f && f <= 2.0f) cfg->provider_cfg.frequency_penalty = f; }
+
+    v = getenv("HERMES_SEED");
+    if (v) { int t = atoi(v); if (t >= 0) cfg->provider_cfg.seed = t; }
+
+    v = getenv("HERMES_LOGPROBS");
+    if (v) cfg->provider_cfg.logprobs = (strcmp(v, "true") == 0 || strcmp(v, "1") == 0);
+
+    v = getenv("HERMES_TOP_LOGPROBS");
+    if (v) { int t = atoi(v); if (t >= 0) cfg->provider_cfg.top_logprobs = t; }
+
+    v = getenv("HERMES_USER");
+    if (v) snprintf(cfg->provider_cfg.user, sizeof(cfg->provider_cfg.user), "%s", v);
+
     v = getenv("HERMES_TOP_P");
     if (v) { float f = (float)atof(v); if (f >= 0.0f && f <= 1.0f) cfg->provider_cfg.top_p = f; }
 
@@ -1496,6 +1543,12 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
         add_issue(result, "model.top_p", "must be 0.0-1.0, got %.2f", cfg->provider_cfg.top_p);
     if (cfg->provider_cfg.max_tokens < 1 || cfg->provider_cfg.max_tokens > 1048576)
         add_issue(result, "model.max_tokens", "unreasonable value %d", cfg->provider_cfg.max_tokens);
+    if (cfg->provider_cfg.presence_penalty < -2.0f || cfg->provider_cfg.presence_penalty > 2.0f)
+        add_issue(result, "model.presence_penalty", "must be -2.0-2.0, got %.1f", cfg->provider_cfg.presence_penalty);
+    if (cfg->provider_cfg.frequency_penalty < -2.0f || cfg->provider_cfg.frequency_penalty > 2.0f)
+        add_issue(result, "model.frequency_penalty", "must be -2.0-2.0, got %.1f", cfg->provider_cfg.frequency_penalty);
+    if (cfg->provider_cfg.top_logprobs < 0 || cfg->provider_cfg.top_logprobs > 20)
+        add_issue(result, "model.top_logprobs", "must be 0-20, got %d", cfg->provider_cfg.top_logprobs);
 
     /* Validate api_mode enum */
     if (cfg->provider_cfg.api_mode[0] &&
@@ -1789,6 +1842,12 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "model.max_tokens", def.provider_cfg.max_tokens, active->provider_cfg.max_tokens);
     diff_float(diff, "model.temperature", def.provider_cfg.temperature, active->provider_cfg.temperature);
     diff_float(diff, "model.top_p", def.provider_cfg.top_p, active->provider_cfg.top_p);
+    diff_float(diff, "model.presence_penalty", def.provider_cfg.presence_penalty, active->provider_cfg.presence_penalty);
+    diff_float(diff, "model.frequency_penalty", def.provider_cfg.frequency_penalty, active->provider_cfg.frequency_penalty);
+    diff_int(diff, "model.seed", def.provider_cfg.seed, active->provider_cfg.seed);
+    diff_bool(diff, "model.logprobs", def.provider_cfg.logprobs, active->provider_cfg.logprobs);
+    diff_int(diff, "model.top_logprobs", def.provider_cfg.top_logprobs, active->provider_cfg.top_logprobs);
+    diff_str(diff, "model.user", def.provider_cfg.user, active->provider_cfg.user);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
