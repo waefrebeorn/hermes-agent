@@ -261,6 +261,9 @@ static json_t *task_summary(const char *tid, json_t *task) {
     json_set(s, "workspace_path", json_string(json_get_str(task, "workspace_path", "")));
     json_set(s, "created_by", json_string(json_get_str(task, "created_by", "")));
     json_set(s, "created_at", json_string(json_get_str(task, "created_at", "")));
+    /* L11: Expose sticky block status in task summary */
+    bool sticky = json_get_bool(task, "sticky_blocked", false);
+    json_set(s, "sticky_blocked", json_bool(sticky));
     return s;
 }
 
@@ -315,10 +318,72 @@ static char *handle_show(const char *args_json, const char *task_id) {
     return out ? out : strdup("{\"error\":\"OOM\"}");
 }
 
+/* L11: Auto-promote stale tasks. Skips sticky-blocked tasks.
+ * Promotes running/blocked tasks older than 2 hours to 'stale' state.
+ * Returns count of promoted tasks. */
+static int kanban_promote_stale(void) {
+    int promoted = 0;
+    DIR *dir = opendir(kanban_dir());
+    if (!dir) return 0;
+
+    time_t now = time(NULL);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        const char *name = entry->d_name;
+        size_t nlen = strlen(name);
+        if (nlen < 6) continue;
+        if (strcmp(name + nlen - 5, ".json") != 0) continue;
+        if (strcmp(name, "links.json") == 0) continue;
+
+        char tid[256];
+        snprintf(tid, sizeof(tid), "%.*s", (int)(nlen - 5), name);
+
+        json_t *task = read_task(tid);
+        if (!task) continue;
+
+        const char *status = json_get_str(task, "status", "");
+        bool sticky = json_get_bool(task, "sticky_blocked", false);
+        const char *created = json_get_str(task, "created_at", NULL);
+
+        /* Skip sticky-blocked tasks */
+        if (sticky) { json_free(task); continue; }
+
+        /* Check if task has been in running/blocked state for > 2 hours */
+        bool should_promote = false;
+        if ((strcmp(status, "running") == 0 || strcmp(status, "blocked") == 0) && created) {
+            /* Parse created_at as ISO8601 */
+            struct tm tm = {0};
+            if (sscanf(created, "%d-%d-%dT%d:%d:%d",
+                       &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+                       &tm.tm_hour, &tm.tm_min, &tm.tm_sec) >= 6) {
+                tm.tm_year -= 1900;
+                tm.tm_mon -= 1;
+                time_t created_ts = timegm(&tm);
+                if (created_ts > 0 && (now - created_ts) > 7200) /* 2 hours */
+                    should_promote = true;
+            }
+        }
+
+        if (should_promote) {
+            json_set(task, "status", json_string("stale"));
+            char ts[64]; now_iso(ts, sizeof(ts));
+            add_event(tid, "auto-promoted", "stale after 2h inactivity", task);
+            write_task(tid, task);
+            promoted++;
+        }
+        json_free(task);
+    }
+    closedir(dir);
+    return promoted;
+}
+
 static char *handle_list(const char *args_json, const char *task_id) {
     (void)task_id;
     const char *guard = require_orchestrator("kanban_list");
     if (guard) return strdup(guard);
+
+    /* L11: Run auto-promotion before listing (skips sticky-blocked) */
+    int promoted = kanban_promote_stale();
 
     json_t *args = json_parse(args_json, NULL);
     if (!args) return strdup("{\"error\":\"Invalid JSON\"}");
@@ -388,7 +453,7 @@ static char *handle_list(const char *args_json, const char *task_id) {
     json_set(result, "count", json_number((double)count));
     json_set(result, "limit", json_number((double)limit));
     json_set(result, "truncated", json_bool(truncated));
-    json_set(result, "promoted", json_number(0));
+    json_set(result, "promoted", json_number((double)promoted));
     if (truncated && limit < KANBAN_LIST_LIMIT_MAX) {
         int next = limit * 2;
         if (next > KANBAN_LIST_LIMIT_MAX) next = KANBAN_LIST_LIMIT_MAX;
@@ -457,6 +522,7 @@ static char *handle_block(const char *args_json, const char *task_id) {
 
     const char *tid = default_task_id(json_get_str(args, "task_id", ""));
     const char *reason = json_get_str(args, "reason", "");
+    bool sticky = json_get_bool(args, "sticky", false);
     json_free(args);
     if (!tid || !*tid) return strdup("{\"error\":\"task_id is required\"}");
 
@@ -470,10 +536,15 @@ static char *handle_block(const char *args_json, const char *task_id) {
         return strdup(err);
     }
     json_set(task, "status", json_string("blocked"));
+    json_set(task, "sticky_blocked", json_bool(sticky));
     add_event(tid, "blocked", *reason ? reason : "blocked without reason", task);
     write_task(tid, task);
     json_free(task);
-    return strdup("{\"ok\":true,\"status\":\"blocked\"}");
+
+    char result[256];
+    snprintf(result, sizeof(result), "{\"ok\":true,\"status\":\"blocked\",\"sticky\":%s}",
+             sticky ? "true" : "false");
+    return strdup(result);
 }
 
 static char *handle_heartbeat(const char *args_json, const char *task_id) {
@@ -611,6 +682,7 @@ static char *handle_unblock(const char *args_json, const char *task_id) {
         return strdup(err);
     }
     json_set(task, "status", json_string("ready"));
+    json_set(task, "sticky_blocked", json_bool(false));
     add_event(tid, "unblocked", "unblocked by orchestrator", task);
     write_task(tid, task);
     json_free(task);
@@ -720,8 +792,9 @@ void registry_init_kanban(void) {
         handle_complete);
 
     registry_register("kanban_block",
-        "Mark your current task as blocked. Provide a reason.",
-        "{\"type\":\"object\",\"properties\":{\"task_id\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"}},\"required\":[]}",
+        "Mark your current task as blocked. Provide a reason. "
+        "Use sticky=true if this should survive auto-promotion.",
+        "{\"type\":\"object\",\"properties\":{\"task_id\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\",\"description\":\"Why blocked\"},\"sticky\":{\"type\":\"boolean\",\"description\":\"L11: Block survives auto-promotion (default false)\"}},\"required\":[]}",
         handle_block);
 
     registry_register("kanban_heartbeat",

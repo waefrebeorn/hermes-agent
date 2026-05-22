@@ -96,3 +96,9 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ◀ **Upstream drift: 9/12 remain** (L05-L06, L08 done)
 - ◀ **Tests: 58/58 pass, 0 fail, 2 skip**
 - ◀ Committed: `a626e95ba`, `fd8de11d8`
+
+### Session 2026-05-22 (Evening Part 2)
+- ✅ **L10: Voice chunk oversized recordings** — TTS chunking at sentence boundaries, `max_chunk_duration_s` param, multi-file array output
+- ◀ **Upstream drift: 8/12 remain** (L05-L06, L08, L10 done)
+- ◀ **Tools: TTS chunking added** (previously single-file-only)
+- ◀ Committed: `154211f17`
