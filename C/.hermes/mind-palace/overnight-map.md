@@ -197,3 +197,12 @@ make -j$(nproc) && bash test_runner.sh --verbose
 - ✅ **Man page** — hermes.1: 14 options, 12 commands, config/plugin/gateway docs
 - ◀ **Build/doc: 55%** (was 30%, 5/15 gaps closed)
 - ◀ Commits: `a61cac0fd`, `20edb4d35`
+
+### Session 2026-05-24 — Test Coverage: Skin Engine
+
+- ✅ **test_skin.c** — 24 assertions: skin_default, dotted-path key lookup, fallback,
+  ANSI color resolution (red/cyan/bold/dim/invalid), skin_color, skin_apply_color,
+  symbols, format flags, NULL safety, skin_with_overrides, error handling
+- ◀ **Suite: 85/0/1** (+1 test, 24 assertions)
+- ◀ **Tests: 54%** (was 52%, 1/44 gaps closed)
+- ◀ Committed: `589f75b81`
