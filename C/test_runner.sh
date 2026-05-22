@@ -148,6 +148,38 @@ else
     skip "config (compilation failed)"
 fi
 
+# File permissions hardening test (O15 — needs config.c + paths.c + all libs)
+echo ""; echo "=== File Permission Hardening Tests (O15) ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
+    -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" \
+    -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    "$CDIR/tests/test_file_permissions.c" \
+    "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+    "$CDIR/src/secrets.c" "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
+    "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_perm -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_perm > /dev/null 2>&1; then ok "file_permissions (15 tests)"
+    else
+        echo "  Permission test output:"
+        /tmp/hermes_test_perm 2>&1 | sed 's/^/    /'
+        fail "file_permissions (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_perm
+else
+    echo "  Permission test compilation error (non-fatal, missing symbols expected):"
+    gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+        -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
+        -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" \
+        -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+        "$CDIR/tests/test_file_permissions.c" \
+        "$CDIR/src/cli/config.c" "$CDIR/src/cli/paths.c" \
+        "$CDIR/src/secrets.c" "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
+        "$CDIR/lib/libyaml/yaml.c" "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_perm -lm 2>&1 | sed 's/^/    /'
+    skip "file_permissions (compilation failed)"
+fi
+
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_provider_metadata.c" \

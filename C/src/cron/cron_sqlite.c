@@ -125,7 +125,7 @@ static bool store_save(cron_sqlite_store_t *store) {
     fclose(f);
 
     rename(tmp_path, store->path);
-    chmod(store->path, 0644);
+    chmod(store->path, 0600);
 
     free(json_str);
     return true;

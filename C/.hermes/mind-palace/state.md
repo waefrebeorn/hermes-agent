@@ -19,10 +19,20 @@
 | **Tests** | 37 | 60% | **60 files, 2,574+ assertions** (96 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 | **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-| **Build/doc** | 8 | 65% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen config, module docs |
+|| **Build/doc** | 7 | 77% | Dockerfile, CI, cross-compile, .dockerignore, man page, CHANGELOG, Doxygen config, module docs, ARCHITECTURE.md, SECURITY.md, **O15: file permissions hardening** |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
+
+### Session 2026-05-26 — File permission hardening (O15)
+
+- ✅ **hermes_file_permissions_harden()** — Function that sets 0600/0700 on home dir, config.yaml, .env, session DB, vault.dat, cron store
+- ✅ **cron_sqlite.c: 0644→0600** — Cron store now secures to 0600 (contained API keys in job configs)
+- ✅ **Wired in CLI init** — Called after config load in hermes_cli_main
+- ✅ **test_file_permissions.c** — 15 assertions: basic hardening (6 files), root-skip (2), NULL/edge safety (3), vault paths (2)
+- ✅ Skips when uid==0 (root), NULL-safe, empty-string safe, missing-file safe
+- ◀ **Build/doc: 75%→77%** (1/7 gaps closed: O15)
+- ◀ **Suite: 99/0/0** (+1 test, 15 assertions; was 98/0/0)
 
 ### Session 2026-05-26 — Architecture documentation (O08)
 

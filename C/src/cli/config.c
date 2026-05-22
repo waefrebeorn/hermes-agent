@@ -3520,6 +3520,73 @@ static int migrate_v0_to_v1(hermes_config_t *cfg, const char *config_path) {
     return (written == pre_len + ver_len + remaining) ? 0 : -1;
 }
 
+/* O15: File permission hardening — secure sensitive files to 0600/0700 */
+/* Skips if owner is 0 (root). Hardens: home dir (0700), config.yaml (0600),
+   .env (0600), session DB (0600), vault file (0600), cron store (0600). */
+void hermes_file_permissions_harden(const char *hermes_home,
+                                    const char *session_db_path,
+                                    const char *cron_store_path,
+                                    uid_t owner)
+{
+    if (owner == 0) return;  /* root — skip, permissions are moot */
+
+    /* 1. Home directory — 0700 */
+    if (hermes_home && *hermes_home) {
+        struct stat st;
+        if (stat(hermes_home, &st) == 0 && S_ISDIR(st.st_mode))
+            chmod(hermes_home, 0700);
+    }
+
+    /* 2. Config file — 0600 */
+    if (hermes_home && *hermes_home) {
+        char path[HERMES_PATH_MAX];
+        snprintf(path, sizeof(path), "%s/config.yaml", hermes_home);
+        struct stat st;
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(path, 0600);
+    }
+
+    /* 3. .env file — 0600 */
+    if (hermes_home && *hermes_home) {
+        char path[HERMES_PATH_MAX];
+        snprintf(path, sizeof(path), "%s/.env", hermes_home);
+        struct stat st;
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(path, 0600);
+    }
+
+    /* 4. Session DB — 0600 */
+    if (session_db_path && *session_db_path) {
+        struct stat st;
+        if (stat(session_db_path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(session_db_path, 0600);
+    }
+
+    /* 5. Vault file — 0600 (standard location under HERMES_HOME) */
+    if (hermes_home && *hermes_home) {
+        char path[HERMES_PATH_MAX];
+        snprintf(path, sizeof(path), "%s/data/vault.dat", hermes_home);
+        struct stat st;
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(path, 0600);
+        /* Also check ~/.slermes/ location */
+        snprintf(path, sizeof(path), "%s/.slermes/vault.dat", hermes_home);
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(path, 0600);
+        /* And ~/.hermes/ location */
+        snprintf(path, sizeof(path), "%s/.hermes/vault.dat", hermes_home);
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(path, 0600);
+    }
+
+    /* 6. Cron store — 0600 (contains job configs that may embed API keys) */
+    if (cron_store_path && *cron_store_path) {
+        struct stat st;
+        if (stat(cron_store_path, &st) == 0 && S_ISREG(st.st_mode))
+            chmod(cron_store_path, 0600);
+    }
+}
+
 bool hermes_config_migrate(hermes_config_t *cfg, const char *config_dir) {
     if (!cfg) return false;
 

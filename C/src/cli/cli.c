@@ -200,6 +200,15 @@ int hermes_cli_main(int argc, char **argv) {
     char *slash = strrchr(g_cli.agent.hermes_home, '/');
     if (slash) *slash = '\0';
 
+    /* O15: File permission hardening — secure sensitive files */
+    {
+        const char *home = g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : NULL;
+        if (!home) home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (home)
+            hermes_file_permissions_harden(home, NULL, NULL, geteuid());
+    }
+
     /* Set up persistent allowlist path and load saved approvals */
     {
         const char *home = g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : NULL;

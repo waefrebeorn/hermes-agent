@@ -974,6 +974,14 @@ void hermes_config_setup_reload(void);
 /* Returns true and reloads config if SIGHUP was received */
 bool hermes_config_check_reload(hermes_config_t *cfg, const char *config_dir);
 
+/* O15: File permission hardening — set 0600/0700 on sensitive files */
+/* Secures config.yaml, .env, session DB, vault, cron store, and home dir.
+   owner argument: pass geteuid(). Skips if running as root.  */
+void hermes_file_permissions_harden(const char *hermes_home,
+                                    const char *session_db_path,
+                                    const char *cron_store_path,
+                                    uid_t owner);
+
 /* ================================================================
  *  P21: Path resolution (hermes_constants port)
  * ================================================================ */
