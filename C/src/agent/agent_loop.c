@@ -19,6 +19,9 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#ifndef _WIN32
+#include <pthread.h>
+#endif
 
 /* ================================================================
  *  Agent initialization
@@ -156,6 +159,20 @@ void agent_close_db(agent_state_t *state) {
 /* ================================================================
  *  Core loop
  * ================================================================ */
+
+/* P87: Tool dispatch thread wrapper (for pthread_create) */
+struct tool_dispatch_arg {
+    const char *session_id;
+    char *tool_name;
+    char *tool_args;
+    char **result_out;
+};
+
+static void *tool_dispatch_thread(void *arg) {
+    struct tool_dispatch_arg *a = (struct tool_dispatch_arg *)arg;
+    *a->result_out = registry_dispatch(a->tool_name, a->tool_args, a->session_id);
+    return NULL;
+}
 
 /* Convert tool registry to JSON for tool_choice */
 static json_node_t *tools_to_json(tool_registry_t *reg) {
@@ -316,39 +333,100 @@ char *agent_run_conversation(agent_state_t *state,
             llm_resp->reasoning);
         context_push(state, assistant_msg);
 
-        /* Execute each tool call (with security approval) */
-        for (int i = 0; i < llm_resp->tool_calls_count; i++) {
-            char *result = NULL;
+        /* P87: Parallel tool dispatch — execute independent tools concurrently */
+        int n_calls = llm_resp->tool_calls_count;
+        typedef struct {
+            int    index;
+            char  *tool_name;
+            char  *tool_args;
+            char  *tool_id;
+            int    approved;
+            char  *result;  /* output */
+        } tool_work_t;
 
-            /* Check security approval for dangerous operations */
-            int approved = approval_check(
+        tool_work_t *works = (tool_work_t *)calloc((size_t)n_calls, sizeof(tool_work_t));
+        if (!works) {
+            llm_response_free(llm_resp);
+            json_free(tools_json);
+            return strdup("Error: OOM for tool dispatch");
+        }
+
+        /* Phase 1: Security approval (sequential — approval_check may be stateful) */
+        for (int i = 0; i < n_calls; i++) {
+            works[i].index = i;
+            works[i].tool_name = strdup(llm_resp->tool_calls[i].name);
+            works[i].tool_args = strdup(llm_resp->tool_calls[i].arguments);
+            works[i].tool_id = strdup(llm_resp->tool_calls[i].id);
+            works[i].approved = approval_check(
                 llm_resp->tool_calls[i].name,
                 llm_resp->tool_calls[i].arguments);
+            works[i].result = NULL;
+        }
 
-            if (approved == 0) {
-                /* Denied by security */
+        /* Phase 2: Parallel execution via pthreads */
+#if defined(_WIN32) || defined(WIN32)
+        /* No pthreads on Windows — fallback to sequential */
+        for (int i = 0; i < n_calls; i++) {
+            if (works[i].approved) {
+                works[i].result = registry_dispatch(
+                    works[i].tool_name, works[i].tool_args, state->session_id);
+            } else {
                 char denied[1024];
                 snprintf(denied, sizeof(denied),
                     "{\"error\":\"Operation denied by security approval: "
                     "tool '%s' was blocked. Use /approve in interactive mode "
                     "to allow it.\"}",
-                    llm_resp->tool_calls[i].name);
-                result = strdup(denied);
-            } else {
-                /* Execute tool normally */
-                result = registry_dispatch(
-                    llm_resp->tool_calls[i].name,
-                    llm_resp->tool_calls[i].arguments,
-                    state->session_id);
+                    works[i].tool_name);
+                works[i].result = strdup(denied);
             }
-
-            /* Create tool result message */
-            message_t *tool_msg = message_new_tool(
-                llm_resp->tool_calls[i].id,
-                result ? result : "{\"error\":\"Tool returned NULL\"}");
-            context_push(state, tool_msg);
-            free(result);
         }
+#else
+        /* POSIX — parallel dispatch */
+        pthread_t *threads = (pthread_t *)calloc((size_t)n_calls, sizeof(pthread_t));
+        struct tool_dispatch_arg *args = (struct tool_dispatch_arg *)calloc(
+            (size_t)n_calls, sizeof(struct tool_dispatch_arg));
+
+        for (int i = 0; i < n_calls; i++) {
+            if (works[i].approved) {
+                args[i].session_id = state->session_id;
+                args[i].tool_name = works[i].tool_name;
+                args[i].tool_args = works[i].tool_args;
+                args[i].result_out = &works[i].result;
+                pthread_create(&threads[i], NULL, tool_dispatch_thread, &args[i]);
+            } else {
+                char denied[1024];
+                snprintf(denied, sizeof(denied),
+                    "{\"error\":\"Operation denied by security approval: "
+                    "tool '%s' was blocked.\"}",
+                    works[i].tool_name);
+                works[i].result = strdup(denied);
+            }
+        }
+
+        /* Join all threads */
+        for (int i = 0; i < n_calls; i++) {
+            if (works[i].approved) {
+                pthread_join(threads[i], NULL);
+            }
+        }
+
+        free(threads);
+        free(args);
+#endif
+
+        /* Phase 3: Create tool result messages (in original order) */
+        for (int i = 0; i < n_calls; i++) {
+            message_t *tool_msg = message_new_tool(
+                works[i].tool_id,
+                works[i].result ? works[i].result :
+                    "{\"error\":\"Tool returned NULL\"}");
+            context_push(state, tool_msg);
+            free(works[i].tool_name);
+            free(works[i].tool_args);
+            free(works[i].tool_id);
+            free(works[i].result);
+        }
+        free(works);
 
         llm_response_free(llm_resp);
         /* Loop back to LLM with tool results appended */

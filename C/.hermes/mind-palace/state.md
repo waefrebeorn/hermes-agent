@@ -26,11 +26,10 @@ Remaining: P71-P85 (providers), P86-P100 (agent loop), P101+ (gateway depth, del
 | Tests | 0.25% — 43/~17,000 | Barely started |
 
 ## Active Phase
-**P82: Credential pool** — multi-key rotation, rate-limit tracking, quota management.
+**P87: Tool call parallelism** — done. Independent tools execute via pthreads with fallback to sequential on Windows.
 
 ## Path Forward
-1. P82: credential pool ← NOW
-2. P83: fallback model routing
-3. P84: budget tracking
-4. P85: provider metadata
-5. P86-P100: agent loop depth
+1. P89: Interrupt handling — SIGINT handler, clean shutdown
+2. P90: Conversation history management — message eviction
+3. P91-P100: Agent loop depth (caching, prefill, checkpoints, compression)
+4. P101+: Gateway depth
