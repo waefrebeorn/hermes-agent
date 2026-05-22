@@ -95,6 +95,12 @@ struct mcp_server {
     /* P70: Workspace roots (server-to-client capability) */
     mcp_root_t roots[MAX_MCP_ROOTS];
     int        root_count;
+
+    /* C01-C03: Resource subscriptions */
+    char        subscriptions[MAX_MCP_ROOTS][512]; /* subscribed resource URIs */
+    int         subscription_count;
+    void      (*on_resource_change)(const char *server_name, const char *resource_uri, void *userdata);
+    void       *on_resource_change_data;
 };
 
 /* ================================================================
@@ -427,6 +433,44 @@ void mcp_server_set_roots(mcp_server_t *srv, const mcp_root_t *roots, int count)
         snprintf(srv->roots[i].name, sizeof(srv->roots[i].name), "%s", roots[i].name);
     }
     srv->root_count = n;
+}
+
+/* C08: Add a root dynamically */
+bool mcp_server_add_root(mcp_server_t *srv, const char *uri, const char *name) {
+    if (!srv || !uri || srv->root_count >= MAX_MCP_ROOTS) return false;
+    snprintf(srv->roots[srv->root_count].uri, sizeof(srv->roots[0].uri), "%s", uri);
+    if (name)
+        snprintf(srv->roots[srv->root_count].name, sizeof(srv->roots[0].name), "%s", name);
+    else
+        srv->roots[srv->root_count].name[0] = '\0';
+    srv->root_count++;
+    return true;
+}
+
+/* C09: Remove a root by URI */
+bool mcp_server_remove_root(mcp_server_t *srv, const char *uri) {
+    if (!srv || !uri) return false;
+    for (int i = 0; i < srv->root_count; i++) {
+        if (strcmp(srv->roots[i].uri, uri) == 0) {
+            /* Shift remaining roots */
+            for (int j = i; j < srv->root_count - 1; j++)
+                srv->roots[j] = srv->roots[j + 1];
+            srv->root_count--;
+            return true;
+        }
+    }
+    return false;
+}
+
+/* C10: Get root count */
+int mcp_server_root_count(mcp_server_t *srv) {
+    return srv ? srv->root_count : 0;
+}
+
+/* C10: Get root at index */
+const mcp_root_t *mcp_server_get_root(mcp_server_t *srv, int index) {
+    if (!srv || index < 0 || index >= srv->root_count) return NULL;
+    return &srv->roots[index];
 }
 
 /* Handle a roots/list request from a connected MCP server.
@@ -958,6 +1002,116 @@ void mcp_resource_content_free(mcp_resource_content_t *content) {
     free(content->text);
     free(content->blob);
     free(content);
+}
+
+/* C01: Subscribe to resource changes — sends resources/subscribe */
+bool mcp_server_subscribe_resource(mcp_server_t *srv, const char *resource_uri) {
+    if (!srv || !srv->initialized || !resource_uri) return false;
+
+    /* Check if already subscribed */
+    if (mcp_server_is_subscribed(srv, resource_uri)) return true;
+
+    if (srv->subscription_count >= MAX_MCP_ROOTS) {
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "Max subscriptions reached");
+        return false;
+    }
+
+    /* Send resources/subscribe request */
+    json_t *params = json_object();
+    json_set(params, "uri", json_string(resource_uri));
+
+    json_t *resp = send_request(srv, "resources/subscribe", params,
+                                 srv->tool_timeout * 1000);
+    json_free(params);
+
+    if (!resp) {
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "Subscribe request failed");
+        return false;
+    }
+
+    json_t *result = json_obj_get(resp, "result");
+    bool ok = (result != NULL);
+    json_free(resp);
+
+    if (ok) {
+        snprintf(srv->subscriptions[srv->subscription_count],
+                 sizeof(srv->subscriptions[0]), "%s", resource_uri);
+        srv->subscription_count++;
+    }
+    return ok;
+}
+
+/* C02: Unsubscribe from resource changes */
+bool mcp_server_unsubscribe_resource(mcp_server_t *srv, const char *resource_uri) {
+    if (!srv || !resource_uri) return false;
+
+    for (int i = 0; i < srv->subscription_count; i++) {
+        if (strcmp(srv->subscriptions[i], resource_uri) == 0) {
+            /* Send resources/unsubscribe */
+            json_t *params = json_object();
+            json_set(params, "uri", json_string(resource_uri));
+            json_t *resp = send_request(srv, "resources/unsubscribe", params,
+                                         srv->tool_timeout * 1000);
+            json_free(params);
+            json_free(resp); /* don't need the result */
+
+            /* Remove from local list */
+            for (int j = i; j < srv->subscription_count - 1; j++)
+                snprintf(srv->subscriptions[j], sizeof(srv->subscriptions[0]),
+                         "%s", srv->subscriptions[j + 1]);
+            srv->subscription_count--;
+            return true;
+        }
+    }
+    return false; /* not found */
+}
+
+/* C03 helper: Check if resource is subscribed */
+bool mcp_server_is_subscribed(mcp_server_t *srv, const char *resource_uri) {
+    if (!srv || !resource_uri) return false;
+    for (int i = 0; i < srv->subscription_count; i++) {
+        if (strcmp(srv->subscriptions[i], resource_uri) == 0)
+            return true;
+    }
+    return false;
+}
+
+/* C03: Set callback for resource change notifications */
+void mcp_server_set_resource_callback(mcp_server_t *srv,
+    void (*callback)(const char *server_name, const char *resource_uri, void *userdata),
+    void *userdata) {
+    if (!srv) return;
+    srv->on_resource_change = callback;
+    srv->on_resource_change_data = userdata;
+}
+
+/* C03: Handle incoming notifications — dispatches resource change events */
+bool mcp_server_handle_notification(mcp_server_t *srv, const char *method,
+                                     const char *params_json) {
+    if (!srv || !method) return false;
+
+    if (strcmp(method, "notifications/resources/list_changed") == 0 ||
+        strcmp(method, "notifications/resources/updated") == 0) {
+        /* Resource change notification */
+        const char *uri = NULL;
+        if (params_json && params_json[0]) {
+            json_t *params = json_parse(params_json, NULL);
+            if (params) {
+                uri = json_get_str(params, "uri", NULL);
+                json_free(params);
+            }
+        }
+
+        if (srv->on_resource_change) {
+            srv->on_resource_change(srv->name, uri ? uri : "*",
+                                     srv->on_resource_change_data);
+        }
+        return true;
+    }
+
+    return false; /* unknown notification */
 }
 
 /* ================================================================

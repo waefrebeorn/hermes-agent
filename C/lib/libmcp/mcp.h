@@ -204,10 +204,20 @@ typedef struct {
     char                name[256];    /* optional display name */
 } mcp_root_t;
 
-/* Set workspace roots for a server (server-to-client capability).
+/* P70: Set workspace roots for a server (server-to-client capability).
  * roots: array of mcp_root_t, count: number of roots.
  * Call before mcp_server_connect(). */
 void mcp_server_set_roots(mcp_server_t *srv, const mcp_root_t *roots, int count);
+
+/* C08-C10: Dynamic roots management. Add, remove, or list workspace roots. */
+/* Add a root URI. Returns true on success. */
+bool mcp_server_add_root(mcp_server_t *srv, const char *uri, const char *name);
+/* Remove a root by URI. Returns true if found and removed. */
+bool mcp_server_remove_root(mcp_server_t *srv, const char *uri);
+/* Get the root count. */
+int  mcp_server_root_count(mcp_server_t *srv);
+/* Get root at index. Returns NULL if out of range. */
+const mcp_root_t *mcp_server_get_root(mcp_server_t *srv, int index);
 
 /* Handle a roots/list request from the server.
  * Returns JSON-RPC response with root URIs. */
@@ -244,6 +254,24 @@ int  mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out
  * Returns NULL on error (check mcp_server_last_error). */
 mcp_resource_content_t *mcp_server_read_resource(mcp_server_t *srv,
                                                    const char *resource_uri);
+
+/* C01-C03: Resource subscriptions. Subscribe to resource change notifications. */
+/* Subscribe to resource changes. Returns true on success. */
+bool mcp_server_subscribe_resource(mcp_server_t *srv, const char *resource_uri);
+/* Unsubscribe from resource changes. Returns true on success. */
+bool mcp_server_unsubscribe_resource(mcp_server_t *srv, const char *resource_uri);
+/* Check if a resource URI is currently subscribed. */
+bool mcp_server_is_subscribed(mcp_server_t *srv, const char *resource_uri);
+/* Set callback for resource change notifications.
+ * The callback receives server_name, resource_uri, and userdata pointer. */
+void mcp_server_set_resource_callback(mcp_server_t *srv,
+    void (*callback)(const char *server_name, const char *resource_uri, void *userdata),
+    void *userdata);
+
+/* C03: Handle an incoming notification from the server.
+ * Dispatches to appropriate callback. Returns true if handled. */
+bool mcp_server_handle_notification(mcp_server_t *srv, const char *method,
+                                     const char *params_json);
 
 /* ================================================================
  *  P69: Prompt templates
