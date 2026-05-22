@@ -902,6 +902,100 @@ static char *mcp_resource_read_handler(const char *args_json, const char *task_i
 }
 
 /* ================================================================
+ *  P69: MCP prompt handlers
+ * ================================================================ */
+
+static char *mcp_prompt_list_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    (void)args_json;
+
+    json_t *result = json_object();
+    json_t *prompts_arr = json_array();
+
+    for (int si = 0; si < g_server_count; si++) {
+        mcp_server_t *srv = g_servers[si];
+        if (!mcp_server_is_connected(srv)) continue;
+        if (!mcp_server_capabilities(srv).supports_prompts) continue;
+
+        mcp_prompt_t *prompts = NULL;
+        int count = mcp_server_list_prompts(srv, &prompts);
+        if (count <= 0) continue;
+
+        for (int pi = 0; pi < count; pi++) {
+            json_t *p = json_object();
+            json_set(p, "server", json_string(mcp_server_name(srv)));
+            json_set(p, "name", json_string(prompts[pi].name));
+            if (prompts[pi].description[0])
+                json_set(p, "description", json_string(prompts[pi].description));
+            if (prompts[pi].arguments_schema[0])
+                json_set(p, "arguments", json_string(prompts[pi].arguments_schema));
+            json_append(prompts_arr, p);
+        }
+
+        mcp_prompt_list_free(prompts, count);
+    }
+
+    json_set(result, "prompts", prompts_arr);
+    json_set(result, "count", json_number((double)json_len(prompts_arr)));
+
+    char *s = json_serialize(result);
+    json_free(result);
+    return s;
+}
+
+static char *mcp_prompt_get_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"Invalid JSON arguments\"}");
+
+    const char *server_name = json_get_str(args, "server", "");
+    const char *prompt_name = json_get_str(args, "name", "");
+
+    if (!server_name[0] || !prompt_name[0]) {
+        json_free(args);
+        return strdup("{\"error\":\"server and name fields required\"}");
+    }
+
+    /* Find server */
+    mcp_server_t *srv = NULL;
+    for (int i = 0; i < g_server_count; i++) {
+        if (strcmp(mcp_server_name(g_servers[i]), server_name) == 0) {
+            srv = g_servers[i];
+            break;
+        }
+    }
+
+    if (!srv) {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Unknown MCP server: %s\"}", server_name);
+        return strdup(buf);
+    }
+
+    /* Get prompt arguments as JSON string (if any) */
+    json_t *prompt_args = json_obj_get(args, "arguments");
+    char *args_str = NULL;
+    if (prompt_args) {
+        args_str = json_serialize(prompt_args);
+    }
+
+    char *result = mcp_server_get_prompt(srv, prompt_name, args_str);
+    free(args_str);
+    json_free(args);
+
+    if (!result) {
+        const char *err = mcp_server_last_error(srv);
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Get prompt failed: %s\"}",
+                 err ? err : "unknown error");
+        return strdup(buf);
+    }
+
+    return result;
+}
+
+/* ================================================================
  *  Registry registration
  * ================================================================ */
 
@@ -985,4 +1079,31 @@ void registry_init_mcp(void) {
     );
 
     registry_set_timeout("mcp_resource_read", 60);
+
+    /* P69: MCP prompt tools */
+    registry_register(
+        "mcp_prompt_list",
+        "List all available prompt templates from connected MCP servers. "
+        "Returns prompt names, descriptions, and argument schemas.",
+        "{\"type\":\"object\",\"properties\":{}}",
+        mcp_prompt_list_handler
+    );
+
+    registry_register(
+        "mcp_prompt_get",
+        "Get a specific prompt template from an MCP server. "
+        "Use mcp_prompt_list first to discover available prompts.",
+        "{"
+          "\"type\":\"object\",\"properties\":{"
+            "\"server\":{\"type\":\"string\","
+              "\"description\":\"MCP server name\"},"
+            "\"name\":{\"type\":\"string\","
+              "\"description\":\"Prompt template name\"},"
+            "\"arguments\":{\"type\":\"object\","
+              "\"description\":\"Optional arguments for the prompt template\"}"
+          "},"
+          "\"required\":[\"server\",\"name\"]"
+        "}",
+        mcp_prompt_get_handler
+    );
 }

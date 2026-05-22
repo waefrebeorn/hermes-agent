@@ -129,6 +129,20 @@ void mcp_resource_list_free(mcp_resource_t *resources, int count);
 void mcp_resource_content_free(mcp_resource_content_t *content);
 
 /* ================================================================
+ *  Prompt types (P69)
+ * ================================================================ */
+
+/* An MCP prompt template discovered from a server */
+typedef struct {
+    char                name[128];
+    char                description[1024];
+    char                arguments_schema[4096]; /* JSON schema string */
+} mcp_prompt_t;
+
+/* Free a prompt list returned by mcp_server_list_prompts */
+void mcp_prompt_list_free(mcp_prompt_t *prompts, int count);
+
+/* ================================================================
  *  Server state
  * ================================================================ */
 
@@ -209,6 +223,20 @@ int  mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out
  * Returns NULL on error (check mcp_server_last_error). */
 mcp_resource_content_t *mcp_server_read_resource(mcp_server_t *srv,
                                                    const char *resource_uri);
+
+/* ================================================================
+ *  P69: Prompt templates
+ * ================================================================ */
+
+/* List prompt templates — returns array of available prompts.
+ * prompts_out: set to malloc'd array, caller must free with mcp_prompt_list_free().
+ * Returns number of prompts, or -1 on error. */
+int  mcp_server_list_prompts(mcp_server_t *srv, mcp_prompt_t **prompts_out);
+
+/* Get a specific prompt by name with optional arguments.
+ * Returns JSON string (malloc'd, caller frees), or NULL on error. */
+char *mcp_server_get_prompt(mcp_server_t *srv, const char *prompt_name,
+                              const char *args_json);
 
 /* ================================================================
  *  Error handling

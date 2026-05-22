@@ -906,6 +906,107 @@ void mcp_resource_content_free(mcp_resource_content_t *content) {
 }
 
 /* ================================================================
+ *  P69: Prompt protocol methods
+ * ================================================================ */
+
+int mcp_server_list_prompts(mcp_server_t *srv, mcp_prompt_t **prompts_out) {
+    if (!srv || !srv->initialized || !prompts_out) return -1;
+
+    if (!srv->caps.supports_prompts) {
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "Server does not support prompts");
+        return -1;
+    }
+
+    json_t *resp = send_request(srv, "prompts/list", NULL,
+                                 srv->tool_timeout * 1000);
+    if (!resp) return -1;
+
+    json_t *result = json_obj_get(resp, "result");
+    if (!result) {
+        json_free(resp);
+        return -1;
+    }
+
+    json_t *prompts_arr = json_obj_get(result, "prompts");
+    if (!prompts_arr) {
+        json_free(resp);
+        return 0;
+    }
+
+    size_t count = json_len(prompts_arr);
+    if (count == 0) {
+        json_free(resp);
+        *prompts_out = NULL;
+        return 0;
+    }
+
+    mcp_prompt_t *prompts = (mcp_prompt_t *)calloc(count, sizeof(mcp_prompt_t));
+    if (!prompts) { json_free(resp); return -1; }
+
+    for (size_t i = 0; i < count; i++) {
+        json_t *p = json_get(prompts_arr, i);
+        if (!p) continue;
+
+        const char *name = json_get_str(p, "name", "");
+        if (name) snprintf(prompts[i].name, sizeof(prompts[i].name), "%s", name);
+
+        const char *desc = json_get_str(p, "description", "");
+        if (desc) snprintf(prompts[i].description, sizeof(prompts[i].description), "%s", desc);
+
+        json_t *args_schema = json_obj_get(p, "arguments");
+        if (args_schema) {
+            char *schema_str = json_serialize(args_schema);
+            if (schema_str) {
+                snprintf(prompts[i].arguments_schema,
+                         sizeof(prompts[i].arguments_schema), "%s", schema_str);
+                free(schema_str);
+            }
+        }
+    }
+
+    json_free(resp);
+    *prompts_out = prompts;
+    return (int)count;
+}
+
+char *mcp_server_get_prompt(mcp_server_t *srv, const char *prompt_name,
+                              const char *args_json) {
+    if (!srv || !srv->initialized || !prompt_name) return NULL;
+
+    json_t *params = json_object();
+    json_set(params, "name", json_string(prompt_name));
+
+    if (args_json && args_json[0]) {
+        char *err = NULL;
+        json_t *args = json_parse(args_json, &err);
+        if (args) {
+            json_set(params, "arguments", args);
+        } else {
+            free(err);
+        }
+    }
+
+    json_t *resp = send_request(srv, "prompts/get", params,
+                                 srv->tool_timeout * 1000);
+    json_free(params);
+    if (!resp) return NULL;
+
+    json_t *result = json_obj_get(resp, "result");
+    char *out = NULL;
+    if (result) {
+        out = json_serialize(result);
+    }
+    json_free(resp);
+    return out;
+}
+
+void mcp_prompt_list_free(mcp_prompt_t *prompts, int count) {
+    (void)count;
+    free(prompts);
+}
+
+/* ================================================================
  *  P61: Server lifecycle
  * ================================================================ */
 
