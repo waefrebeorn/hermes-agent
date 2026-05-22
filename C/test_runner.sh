@@ -375,6 +375,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "web_tool (compilation failed)"
 fi
 
+# Terminal tool test (M29 — needs terminal.c + tool_config + json)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_terminal.c" \
+    "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_terminal -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (26 tests)"
+    else fail "terminal_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_terminal
+else skip "terminal_tool (compilation failed)"
+fi
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================
