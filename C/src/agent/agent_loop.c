@@ -19,6 +19,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <signal.h>
 #ifndef _WIN32
 #include <pthread.h>
 #endif
@@ -26,6 +27,21 @@
 /* ================================================================
  *  Agent initialization
  * ================================================================ */
+
+/* P89: Global state pointer for SIGINT handler */
+#ifndef _WIN32
+static agent_state_t *g_signal_state = NULL;
+
+static void sigint_handler(int sig) {
+    (void)sig;
+    if (g_signal_state) {
+        g_signal_state->interrupted = true;
+        /* Print message to stderr so it interrupts cleanly */
+        fprintf(stderr, "\n! Interrupted (SIGINT). Use /stop to force quit.\n");
+    }
+}
+#endif
+
 void agent_init(agent_state_t *state) {
     memset(state, 0, sizeof(*state));
     state->message_capacity = 64;
@@ -35,6 +51,14 @@ void agent_init(agent_state_t *state) {
     /* P86: Create budget tracker */
     state->budget = (budget_tracker_t *)calloc(1, sizeof(budget_tracker_t));
     if (state->budget) budget_tracker_init(state->budget);
+    /* P89: Register SIGINT handler */
+#ifndef _WIN32
+    g_signal_state = state;
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sigint_handler;
+    sigaction(SIGINT, &sa, NULL);
+#endif
     context_init(state);
     agent_generate_session_id(state);
     /* Register built-in LLM providers */
@@ -51,6 +75,13 @@ void agent_free(agent_state_t *state) {
     /* Free budget tracker */
     free(state->budget);
     state->budget = NULL;
+    /* P89: Unregister SIGINT handler */
+#ifndef _WIN32
+    if (g_signal_state == state) {
+        g_signal_state = NULL;
+        signal(SIGINT, SIG_DFL);
+    }
+#endif
 }
 
 void agent_generate_session_id(agent_state_t *state) {
