@@ -151,6 +151,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->provider_cfg.metadata[0] = '\0';
     cfg->provider_cfg.tool_choice[0] = '\0';
     cfg->provider_cfg.parallel_tool_calls = true;
+    cfg->provider_cfg.max_tool_calls = 0;
+    cfg->provider_cfg.n = 1;
 
     /* Agent config defaults */
     cfg->agent.max_iterations = 90;
@@ -530,6 +532,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     /* parallel_tool_calls: default true */
     cfg->provider_cfg.parallel_tool_calls =
         yaml_get_bool(doc, "agent.parallel_tool_calls", true);
+    /* max_tool_calls: 0 = unlimited */
+    int max_tc = yaml_get_int(doc, "agent.max_tool_calls", -1);
+    if (max_tc >= 0) cfg->provider_cfg.max_tool_calls = max_tc;
+    /* n: number of choices (default 1) */
+    int n_val = yaml_get_int(doc, "agent.n", 0);
+    if (n_val > 0) cfg->provider_cfg.n = n_val;
 
     /* Sync provider_cfg back to flat fields */
     snprintf(cfg->model, sizeof(cfg->model), "%s", cfg->provider_cfg.model);
@@ -1178,6 +1186,12 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     v = getenv("HERMES_PARALLEL_TOOL_CALLS");
     if (v) cfg->provider_cfg.parallel_tool_calls = (strcmp(v, "0") == 0 || strcasecmp(v, "false") == 0) ? false : true;
+
+    v = getenv("HERMES_MAX_TOOL_CALLS");
+    if (v) { int t = atoi(v); if (t >= 0) cfg->provider_cfg.max_tool_calls = t; }
+
+    v = getenv("HERMES_N");
+    if (v) { int t = atoi(v); if (t > 0) cfg->provider_cfg.n = t; }
 
     /* P2 env overrides (display) */
     v = getenv("HERMES_SKIN");
@@ -1883,6 +1897,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "model.metadata", def.provider_cfg.metadata, active->provider_cfg.metadata);
     diff_str(diff, "model.tool_choice", def.provider_cfg.tool_choice, active->provider_cfg.tool_choice);
     diff_bool(diff, "model.parallel_tool_calls", def.provider_cfg.parallel_tool_calls, active->provider_cfg.parallel_tool_calls);
+    diff_int(diff, "model.max_tool_calls", def.provider_cfg.max_tool_calls, active->provider_cfg.max_tool_calls);
+    diff_int(diff, "model.n", def.provider_cfg.n, active->provider_cfg.n);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
@@ -2048,6 +2064,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_str(f, "  metadata", cfg->provider_cfg.metadata);
     exp_str(f, "  tool_choice", cfg->provider_cfg.tool_choice);
     exp_bool(f, "  parallel_tool_calls", cfg->provider_cfg.parallel_tool_calls);
+    exp_int(f, "  max_tool_calls", cfg->provider_cfg.max_tool_calls);
+    exp_int(f, "  n", cfg->provider_cfg.n);
 
     fprintf(f, "\ndisplay:\n");
     exp_str(f, "  skin", cfg->display.skin);

@@ -35,9 +35,10 @@ make -j$(nproc) && bash test_runner.sh --verbose
 ### Session 2026-05-22
 - ✅ P0 #1: temp=0.0 fix
 - ✅ P0 #2: response_format + metadata 
+- ✅ P0 #5: tool_choice + parallel_tool_calls
 - ✅ Fixed streaming config forwarding gap
 - 🔄 P0 #3: F08 vision description → Python delegation (partial)
-- Next: P0 #3 remaining (F05-F07) or P0 #4 (B01-B03: 3 ACP providers)
+- Next: P0 #3 remaining (F05-F07 stubs), B08-B09 (max_tool_calls, n), or B01-B03 (ACP providers)
 
 ## Upstream
 - 125 commits since last sync, 52 Python

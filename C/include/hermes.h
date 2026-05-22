@@ -114,6 +114,8 @@ typedef struct {
     char  metadata[256];           /* key-value map JSON string */
     char  tool_choice[32];         /* "auto", "none", "required", or JSON for specific function */
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
+    int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
+    int   n;                       /* number of response choices (1 = single) */
 } llm_config_t;
 
 /* P95: Stream diagnostic — token-level timing and latency breakdown */
@@ -241,6 +243,8 @@ typedef struct {
     char  metadata[256];           /* key-value map JSON string */
     char  tool_choice[32];         /* "auto", "none", "required", or JSON for specific function */
     bool  parallel_tool_calls;     /* allow parallel tool calls (default: true) */
+    int   max_tool_calls;          /* max tool calls per turn (0 = unlimited) */
+    int   n;                       /* number of response choices (1 = single) */
 } provider_config_t;
 
 /* ================================================================

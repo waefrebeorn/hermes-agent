@@ -38,4 +38,6 @@
 - **P0 #1:** temperature=0.0 fix ✅ — s/>0.0f/>=0.0f/ × 9 providers
 - **P0 #2:** B04-B05 response_format + metadata ✅ — new fields wired through all 3 forwarding layers + config pipeline + all 9 providers
 - **P0 #3 partial:** F08 vision description — TODO replaced with Python delegation helper
+- **P0 #3 partial:** F01-F04 CDP tools already real (not stubs as originally stated)
+- **P0 #5:** B06-B07 tool_choice + parallel_tool_calls ✅ — wired through all layers + 9 providers
 - **Bug fix:** Streaming path in llm_client.c was missing config forwarding entirely (all params dropped) — now fixed with full forwarding block

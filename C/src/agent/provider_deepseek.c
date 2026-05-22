@@ -133,6 +133,12 @@ static char *deepseek_build_request_body(const provider_t *p,
     if (!p->config.parallel_tool_calls)
         json_object_set(root, "parallel_tool_calls", json_new_bool(false));
 
+    /* max_tool_calls */
+    if (p->config.max_tool_calls > 0)
+        json_object_set(root, "max_tool_calls", json_new_number(p->config.max_tool_calls));
+    if (p->config.n > 1)
+        json_object_set(root, "n", json_new_number(p->config.n));
+
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }
 
