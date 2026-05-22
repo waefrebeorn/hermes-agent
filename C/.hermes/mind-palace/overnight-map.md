@@ -8,7 +8,7 @@
 
 | Stream | What | Sessions |
 |--------|------|----------|
-| **P0a** | Fix temperature=0.0 bug (s/>= 0.0f) | 10 min |
+| **P0** | Fix temperature=0.0 bug — **FIXED ✅** | Done |
 | **P0b** | B04-B05: response_format + metadata | 1 |
 | **P0c** | F01-F08: 8 tool stubs → real | 3 |
 | **P0d** | B01-B03: 3 ACP providers | 4 |

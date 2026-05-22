@@ -23,6 +23,13 @@
 
 **Known bug:** temperature=0.0 — **FIXED ✅**
 
+### Session 2026-05-24 — Cron library test (test_cron_lib.c)
+
+- ✅ **test_cron_lib.c** — 51 assertions: parse specials, wildcards, specific, step (*/5, */2), ranges, month/day names, comma-separated, error cases (NULL/empty/too few/invalid name/negative step), match (wildcard/specific/weekday/step/date), null safety, next (hourly/daily/*/5/*/2), exact-skip, describe (Every minute/Cron:/At/invalid), cron_free null safety
+- ✅ **Know bug found:** cron_next stale tm_wday — dom/dow check before mktime means dow-specific schedules fail
+- ◀ **Suite: 87/0/0** (+1 test, 51 assertions; was 86/0/1)
+- ◀ Committed: `TBD`
+
 ### Session 2026-05-24 — Redact heap overflow fix + test
 
 - ✅ **Bugfix: heap overflow in hermes_redact** — `strndup` allocated exact-size buffer, but `redact_value` expansion (`***REDACTED***` = 15 chars vs shorter values) wrote past buffer. Fixed: `malloc(len + 512)`.
