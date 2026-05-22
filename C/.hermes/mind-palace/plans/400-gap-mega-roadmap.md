@@ -658,11 +658,11 @@ Oops, that's 36, not 32. Let me cap it at 32 by merging some. Actually let me ju
 | J. Stdlib | 5 | ⚠️ 30% |
 | K. Error handling | 0 | ✅ 100% (K01-K05 all implemented) |
 | L. Upstream drift | 12 | 🔵 New (125 commits behind) |
-| M. Tests | 39 | ⚠️ 57% (57 test files, 93/0/0) |
+| M. Tests | 37 | ⚠️ 60% (60 test files, 96/0/0) |
 | N. Cross-cutting | 4 | ✅ 100% |
 | O. Build/doc/security | 9 | ⚠️ 60% |
 
-| **Total** | **~370** | **~55% 1:1 parity** |
+| **Total** | **~355** | **~60% 1:1 parity** |
 
 ### Priority by effort
 | Tier | What | Count | Est. sessions |

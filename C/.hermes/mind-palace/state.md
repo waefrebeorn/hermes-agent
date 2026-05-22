@@ -1,6 +1,6 @@
 # State — Hermes C Translation (2026-05-26)
 
-## ~55% toward 1:1 Python parity (~370 gaps remaining)
+## ~60% toward 1:1 Python parity (~355 gaps remaining)
 
 ### Milestone Dashboard
 
