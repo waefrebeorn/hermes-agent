@@ -34,6 +34,7 @@ void provider_register_builtins(void) {
     provider_register(PROVIDER_GOOGLE, &PROVIDER_OPS_GOOGLE);
     provider_register(PROVIDER_OPENROUTER, &PROVIDER_OPS_OPENROUTER);
     provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_register(PROVIDER_XAI, &PROVIDER_OPS_XAI);
 }
 
 /* Find provider ops by name (case-insensitive) */
@@ -54,6 +55,7 @@ static const provider_ops_t *find_provider_ops(const char *name) {
         {"openrouter",  PROVIDER_OPENROUTER},
         {"groq",        PROVIDER_OPENAI},
         {"together",    PROVIDER_OPENAI},
+        {"xai",         PROVIDER_XAI},
         {"anthropic",   PROVIDER_ANTHROPIC},
         {"claude",      PROVIDER_ANTHROPIC},
         {"google",      PROVIDER_GOOGLE},

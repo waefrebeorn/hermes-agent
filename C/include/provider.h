@@ -32,6 +32,7 @@ typedef enum {
     PROVIDER_GOOGLE,       /* Google AI / Gemini */
     PROVIDER_OPENROUTER,   /* OpenRouter — model routing with preferences */
     PROVIDER_DEEPSEEK,     /* DeepSeek — context caching, FIM */
+    PROVIDER_XAI,          /* xAI — Grok API */
     PROVIDER_CUSTOM,       /* Custom provider */
 } provider_type_t;
 
@@ -141,6 +142,9 @@ extern const provider_ops_t PROVIDER_OPS_OPENROUTER;
 
 /* DeepSeek with context caching and FIM support */
 extern const provider_ops_t PROVIDER_OPS_DEEPSEEK;
+
+/* xAI (Grok) with native API support */
+extern const provider_ops_t PROVIDER_OPS_XAI;
 
 /* Anthropic API format */
 extern const provider_ops_t PROVIDER_OPS_ANTHROPIC;
