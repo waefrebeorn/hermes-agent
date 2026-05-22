@@ -157,6 +157,16 @@ static char *openrouter_build_request_body(const provider_t *p,
         json_free(eb);
     }
 
+    /* B43-B46: OpenRouter provider preferences — set "provider" field in request body */
+    if (p->config.openrouter_provider[0]) {
+        json_t *or_prov = json_parse(p->config.openrouter_provider, NULL);
+        if (or_prov && or_prov->type == JSON_OBJECT) {
+            json_object_set(root, "provider", or_prov);
+        } else {
+            json_free(or_prov);
+        }
+    }
+
     /* Messages */
     json_t *msgs = json_new_array();
     if (!msgs) { json_free(root); return NULL; }

@@ -177,6 +177,42 @@ else
     skip "azure_depth (compilation failed)"
 fi
 
+# OpenRouter provider depth test (B43-B46: provider preferences)
+echo ""; echo "=== OpenRouter Provider Depth Tests (B43-B46) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_openrouter_depth.c" \
+    "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_deepseek.c" \
+    "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_or_depth > /dev/null 2>&1; then ok "openrouter_depth (13 tests)"
+    else
+        echo "  OpenRouter depth test output:"
+        /tmp/hermes_test_or_depth 2>&1 | sed 's/^/    /'
+        fail "openrouter_depth (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_or_depth
+else
+    echo "  OpenRouter depth test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_openrouter_depth.c" \
+        "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_deepseek.c" \
+        "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "openrouter_depth (compilation failed)"
+fi
+
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_smoke.c" \
