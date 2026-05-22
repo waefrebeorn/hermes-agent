@@ -446,13 +446,13 @@ static char *bedrock_build_request_body(const provider_t *p,
     }
     if (p->config.metadata[0]) {
         json_t *md = json_parse(p->config.metadata, NULL);
-        if (md) { json_object_set(root, "metadata", md); json_free(md); }
+        if (md) { json_object_set(root, "metadata", json_copy(md)); json_free(md); }
     }
 
     /* tool_choice + parallel_tool_calls */
     if (p->config.tool_choice[0]) {
         json_t *tc = json_parse(p->config.tool_choice, NULL);
-        if (tc) { json_object_set(root, "tool_choice", tc); json_free(tc); }
+        if (tc) { json_object_set(root, "tool_choice", json_copy(tc)); json_free(tc); }
         else { json_object_set(root, "tool_choice", json_new_string(p->config.tool_choice)); }
     }
     if (!p->config.parallel_tool_calls)
@@ -531,9 +531,22 @@ static provider_response_t *bedrock_parse_response(const provider_t *p,
                         snprintf(resp->tool_calls[idx].name,
                                  sizeof(resp->tool_calls[idx].name), "%s",
                                  json_get_str(tu, "name", ""));
-                        snprintf(resp->tool_calls[idx].arguments,
-                                 sizeof(resp->tool_calls[idx].arguments), "%s",
-                                 json_get_str(tu, "input", "{}"));
+                        /* Serialize input object to JSON string */
+                        json_t *input = json_obj_get(tu, "input");
+                        if (input) {
+                            char *args_str = json_serialize(input);
+                            if (args_str) {
+                                snprintf(resp->tool_calls[idx].arguments,
+                                         sizeof(resp->tool_calls[idx].arguments), "%s", args_str);
+                                free(args_str);
+                            } else {
+                                snprintf(resp->tool_calls[idx].arguments,
+                                         sizeof(resp->tool_calls[idx].arguments), "{}");
+                            }
+                        } else {
+                            snprintf(resp->tool_calls[idx].arguments,
+                                     sizeof(resp->tool_calls[idx].arguments), "{}");
+                        }
                     }
                 }
                 if (total > 0) {
