@@ -77,6 +77,45 @@ typedef struct {
 } gw_session_entry_t;
 
 /* ================================================================
+ *  P103: Unified platform interface
+ * ================================================================ */
+
+/* Common platform vtable. Each platform module fills this in.
+ * Platforms that only need send (webhook-only) leave poll as NULL.
+ * Platforms that are push-based (weixin, yuanbao) leave poll as NULL,
+ * provide start/stop instead. */
+typedef struct {
+    const char *name;         /* "telegram", "discord", etc. */
+
+    /* Initialize platform from global config/env vars. Returns true on success. */
+    bool (*init)(void);
+
+    /* Send text to a chat_id. Returns true on success. */
+    bool (*send)(const char *chat_id, const char *text);
+
+    /* Send typing indicator (optional — can be NULL). */
+    void (*send_typing)(const char *chat_id);
+
+    /* Poll for new messages. Returns a JSON array of updates, or NULL.
+     * Each update must have at least "chat_id" and "text" fields.
+     * The caller frees the returned JSON. NULL = no updates or error. */
+    json_node_t *(*poll)(void);
+
+    /* Start the platform's own event loop (for push-based platforms).
+     * Called in a thread. Returns only when the platform stops. */
+    void (*start)(void);
+
+    /* Stop the platform's event loop (for push-based platforms). */
+    void (*stop)(void);
+
+    /* Shutdown and free resources */
+    void (*shutdown)(void);
+
+    /* Platform-specific state data (opaque) */
+    void *data;
+} gw_platform_t;
+
+/* ================================================================
  *  Gateway state (shared across platform modules)
  * ================================================================ */
 
@@ -114,6 +153,10 @@ typedef struct {
     int                  session_count;
     pthread_mutex_t      session_mutex;
     char                 session_db_path[GW_PATH_MAX];  /* where sessions are stored */
+
+    /* P103: Platform registry */
+    gw_platform_t        platform_defs[GW_MAX_PLATFORMS];
+    int                  platform_def_count;
 
     /* Per-platform HTTP clients (owned by thread functions) */
     http_client_t  *platform_http[GW_MAX_PLATFORMS];
@@ -369,6 +412,19 @@ void gw_pool_return_client(http_client_t *client, const char *endpoint);
 
 /* Close all idle connections in the pool */
 void gw_pool_cleanup(void);
+
+/* ================================================================
+ *  P103: Platform interface API
+ * ================================================================ */
+
+/* Register a platform implementation. Called at startup per platform type. */
+void gw_platform_register(const gw_platform_t *plat);
+
+/* Send a message on a registered platform. Returns platform's send result. */
+bool gw_platform_send(const char *platform_name, const char *chat_id, const char *text);
+
+/* Send typing indicator on a registered platform (no-op if not supported). */
+void gw_platform_send_typing(const char *platform_name, const char *chat_id);
 
 #endif /* HERMES_GATEWAY_H */
 

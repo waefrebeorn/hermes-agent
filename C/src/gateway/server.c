@@ -330,6 +330,11 @@ static void session_cleanup_idle(void) {
 static void gateway_send(const char *platform, const char *target, const char *text) {
     if (!platform || !target || !text) return;
 
+    /* P103: Try registered platform interface first */
+    if (gw_platform_send(platform, target, text))
+        return;
+
+    /* Legacy fallback for unregistered platforms */
     if (strcmp(platform, "telegram") == 0) {
         size_t len = strlen(text);
         if (len > 4000) {
@@ -351,10 +356,47 @@ static void gateway_send(const char *platform, const char *target, const char *t
 }
 
 static void gateway_send_typing(const char *platform, const char *target) {
+    if (!platform) return;
+
+    /* P103: Try registered platform interface first */
+    gw_platform_send_typing(platform, target);
+
+    /* Legacy fallback */
     if (strcmp(platform, "telegram") == 0)
         telegram_send_chat_action(g_gw.http, target, "typing");
     else if (strcmp(platform, "discord") == 0)
         discord_send_typing(g_gw.http);
+}
+
+/* ================================================================
+ *  P103: Platform interface implementation
+ * ================================================================ */
+
+void gw_platform_register(const gw_platform_t *plat) {
+    if (!plat || !plat->name) return;
+    if (g_gw.platform_def_count >= GW_MAX_PLATFORMS) return;
+    g_gw.platform_defs[g_gw.platform_def_count++] = *plat;
+}
+
+static gw_platform_t *gw_platform_find(const char *name) {
+    if (!name) return NULL;
+    for (int i = 0; i < g_gw.platform_def_count; i++) {
+        if (strcasecmp(g_gw.platform_defs[i].name, name) == 0)
+            return &g_gw.platform_defs[i];
+    }
+    return NULL;
+}
+
+bool gw_platform_send(const char *platform_name, const char *chat_id, const char *text) {
+    gw_platform_t *p = gw_platform_find(platform_name);
+    if (!p || !p->send) return false;
+    return p->send(chat_id, text);
+}
+
+void gw_platform_send_typing(const char *platform_name, const char *chat_id) {
+    gw_platform_t *p = gw_platform_find(platform_name);
+    if (p && p->send_typing)
+        p->send_typing(chat_id);
 }
 
 /* ================================================================
@@ -1003,6 +1045,10 @@ int hermes_gateway_main(int argc, char **argv) {
         {NULL, NULL, NULL, 0}
     };
 
+    /* P103: Register base platform interface adapters.
+     * Each polling-based platform gets its adapter populated from
+     * the individual static functions in the platform modules. */
+
     /* Build platform list:
      * 1. If --platform flag given, add that single one
      * 2. Otherwise, read from config.gateway_platforms (comma-separated)
@@ -1053,6 +1099,16 @@ int hermes_gateway_main(int argc, char **argv) {
                                      (strcmp(tok, "telegram") == 0) ? 30.0 :
                                      (strcmp(tok, "discord") == 0) ? 5.0 : 3.0;
                         gw_rate_limit_init(g_gw.platform_count, rps, rps * 3);
+                        /* P103: Register this platform in the interface registry */
+                        {
+                            gw_platform_t plat;
+                            memset(&plat, 0, sizeof(plat));
+                            plat.name = g_gw.platforms[g_gw.platform_count];
+                            /* All polling-based platforms: init=setup, send=poll-based functions */
+                            plat.init = all_platforms[i].setup;
+                            plat.shutdown = NULL; /* no-op for now */
+                            gw_platform_register(&plat);
+                        }
                         g_gw.platform_count++;
                     } else {
                         fprintf(stderr, "Error: Failed to create thread for %s\n", tok);
