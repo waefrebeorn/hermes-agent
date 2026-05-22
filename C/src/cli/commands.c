@@ -295,10 +295,13 @@ static void cmd_model(const char *args, agent_state_t *state) {
         printf("Model set to: %s\n", state->llm.model);
         return;
     }
-    printf("Model:    %s\n", state->llm.model);
-    printf("Provider: %s\n", state->llm.provider);
-    printf("Base URL: %s\n", state->llm.base_url);
-    printf("Max turns: %d\n", state->max_iterations);
+
+    /* Show current model */
+    printf("Model:        %s\n", state->llm.model);
+    printf("Provider:     %s\n", state->llm.provider[0] ? state->llm.provider : "(auto)");
+    printf("Base URL:     %s\n", state->llm.base_url[0] ? state->llm.base_url : "(default)");
+    printf("Max turns:    %d\n", state->max_iterations);
+    printf("Tools:        %zu available\n", state->tools.count);
 }
 
 static void cmd_sessions(const char *args, agent_state_t *state) {
@@ -370,12 +373,24 @@ static void cmd_stats(const char *args, agent_state_t *state) {
            est_tokens, state->message_count);
 }
 
-static void cmd_conv(const char *args, agent_state_t *state) {
-    (void)args;
-    size_t n = state->message_count;
-    size_t start = (n > 10) ? n - 10 : 0;
-    printf("Recent conversation (%zu-%zu of %zu):\n", start + 1, n, n);
-    for (size_t i = start; i < n; i++) {
+/* Helper: print messages with role filtering and count limit */
+static void print_messages(const agent_state_t *state, size_t start, size_t count,
+                           const char *filter_role, bool show_full) {
+    size_t printed = 0;
+    size_t skip_role = 0;
+    message_role_t filter = 255; /* no filter */
+    if (filter_role) {
+        if (strcmp(filter_role, "system") == 0 || strcmp(filter_role, "sys") == 0) filter = MSG_SYSTEM;
+        else if (strcmp(filter_role, "user") == 0 || strcmp(filter_role, "usr") == 0) filter = MSG_USER;
+        else if (strcmp(filter_role, "assistant") == 0 || strcmp(filter_role, "asm") == 0) filter = MSG_ASSISTANT;
+        else if (strcmp(filter_role, "tool") == 0) filter = MSG_TOOL;
+    }
+
+    for (size_t i = start; i < state->message_count && printed < count; i++) {
+        if (filter != 255 && state->messages[i]->role != filter) {
+            skip_role++;
+            continue;
+        }
         const char *role_str;
         switch (state->messages[i]->role) {
             case MSG_SYSTEM:    role_str = "sys";  break;
@@ -386,20 +401,54 @@ static void cmd_conv(const char *args, agent_state_t *state) {
         }
         const char *content = state->messages[i]->content;
         if (content) {
-            char preview[81];
-            size_t clen = strlen(content);
-            if (clen > 80) {
-                memcpy(preview, content, 77);
-                preview[77] = '.'; preview[78] = '.'; preview[79] = '.';
-                preview[80] = '\0';
+            if (show_full) {
+                printf("  [%s] %s\n", role_str, content);
             } else {
-                memcpy(preview, content, clen + 1);
+                char preview[81];
+                size_t clen = strlen(content);
+                if (clen > 80) {
+                    memcpy(preview, content, 77);
+                    preview[77] = '.'; preview[78] = '.'; preview[79] = '.';
+                    preview[80] = '\0';
+                } else {
+                    memcpy(preview, content, clen + 1);
+                }
+                printf("  [%s] %s\n", role_str, preview);
             }
-            printf("  [%s] %s\n", role_str, preview);
         } else {
             printf("  [%s] (no content)\n", role_str);
         }
+        printed++;
     }
+    if (printed == 0)
+        printf("  (no matching messages)\n");
+}
+
+static void cmd_conv(const char *args, agent_state_t *state) {
+    size_t n = state->message_count;
+    size_t show_n = 10;
+    const char *filter = NULL;
+
+    /* Basic args parsing: /conv [N] [-role <role>] */
+    if (args && args[0]) {
+        char arg_copy[256];
+        snprintf(arg_copy, sizeof(arg_copy), "%s", args);
+        const char *role_marker = strstr(arg_copy, "-role");
+        if (role_marker) {
+            filter = role_marker + 6;
+            while (*filter == ' ') filter++;
+            /* Truncate arg_copy at role_marker for count parsing */
+            ((char*)role_marker)[0] = '\0';
+        }
+        int parsed = atoi(arg_copy);
+        if (parsed > 0 && parsed <= (int)state->message_count)
+            show_n = (size_t)parsed;
+    }
+
+    size_t start = (n > show_n) ? n - show_n : 0;
+    printf("Recent conversation (%zu-%zu of %zu)%s:\n",
+           start + 1, n, n, filter ? " (filtered)" : "");
+    print_messages(state, start, show_n, filter, false);
 }
 
 static void cmd_new(const char *args, agent_state_t *state) {
@@ -443,14 +492,47 @@ static void cmd_undo(const char *args, agent_state_t *state) {
 }
 
 static void cmd_history(const char *args, agent_state_t *state) {
-    (void)args;
     size_t n = state->message_count;
     if (n == 0) {
         printf("No conversation history.\n");
         return;
     }
-    printf("Full conversation (%zu messages):\n", n);
-    for (size_t i = 0; i < n; i++) {
+
+    size_t show_n = n;
+    const char *filter = NULL;
+    const char *search_term = NULL;
+
+    if (args && args[0]) {
+        char arg_copy[256];
+        snprintf(arg_copy, sizeof(arg_copy), "%s", args);
+        /* Check for -role filter */
+        const char *role_marker = strstr(arg_copy, "-role");
+        if (role_marker) {
+            filter = role_marker + 6;
+            while (*filter == ' ') filter++;
+            ((char*)role_marker)[0] = '\0';
+        }
+        /* Check for -search */
+        const char *search_marker = strstr(arg_copy, "-search");
+        if (search_marker) {
+            search_term = search_marker + 8;
+            while (*search_term == ' ') search_term++;
+            ((char*)search_marker)[0] = '\0';
+        }
+        int parsed = atoi(arg_copy);
+        if (parsed > 0 && parsed <= (int)n)
+            show_n = (size_t)parsed;
+    }
+
+    printf("Full conversation (%zu messages)%s%s%s:\n", n,
+           filter ? " (filtered)" : "",
+           search_term ? " (searching)" : "",
+           show_n < n ? " (showing last)" : "");
+
+    size_t start = (show_n < n) ? n - show_n : 0;
+    size_t printed = 0;
+
+    for (size_t i = start; i < n && printed < show_n; i++) {
         const char *role_str;
         switch (state->messages[i]->role) {
             case MSG_SYSTEM:    role_str = "system";    break;
@@ -459,22 +541,28 @@ static void cmd_history(const char *args, agent_state_t *state) {
             case MSG_TOOL:      role_str = "tool";      break;
             default:            role_str = "?";         break;
         }
+
+        /* Role filter */
+        if (filter) {
+            if (strcmp(filter, "system") == 0 && state->messages[i]->role != MSG_SYSTEM) continue;
+            else if (strcmp(filter, "user") == 0 && state->messages[i]->role != MSG_USER) continue;
+            else if (strcmp(filter, "assistant") == 0 && state->messages[i]->role != MSG_ASSISTANT) continue;
+            else if (strcmp(filter, "tool") == 0 && state->messages[i]->role != MSG_TOOL) continue;
+        }
+
         const char *content = state->messages[i]->content;
         if (content) {
-            char preview[101];
-            size_t clen = strlen(content);
-            if (clen > 100) {
-                memcpy(preview, content, 97);
-                preview[97] = '.'; preview[98] = '.'; preview[99] = '.';
-                preview[100] = '\0';
-            } else {
-                memcpy(preview, content, clen + 1);
-            }
-            printf("  [%d] %s: %s\n", (int)i, role_str, preview);
+            /* Search filter */
+            if (search_term && !strstr(content, search_term)) continue;
+
+            printf("  [%s] %s\n", role_str, content);
         } else {
-            printf("  [%d] %s: (no content)\n", (int)i, role_str);
+            printf("  [%s] (no content)\n", role_str);
         }
+        printed++;
     }
+    if (printed == 0)
+        printf("  (no matching messages)\n");
 }
 
 static void cmd_topic(const char *args, agent_state_t *state) {
