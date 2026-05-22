@@ -123,6 +123,45 @@ static int cli_stream_cb(const char *token, void *userdata) {
  *  CLI main
  * ================================================================ */
 
+/* ──────────────────────────────────────────────
+ *  H14: JSON output helpers for --json mode
+ * ────────────────────────────────────────────── */
+
+/* Escape a string for JSON output (backslash, quote, newline, tab).
+ * Caller must free() the result. Returns NULL on allocation failure. */
+static char *cli_json_escape(const char *raw) {
+    if (!raw) return strdup("null");
+    size_t rlen = strlen(raw);
+    size_t cap = rlen * 2 + 3;
+    char *esc = (char *)malloc(cap);
+    if (!esc) return strdup("null");
+    size_t j = 0;
+    esc[j++] = '"';
+    for (size_t i = 0; i < rlen && j < cap - 4; i++) {
+        if (raw[i] == '\\') { esc[j++] = '\\'; esc[j++] = '\\'; }
+        else if (raw[i] == '"')  { esc[j++] = '\\'; esc[j++] = '"'; }
+        else if (raw[i] == '\n') { esc[j++] = '\\'; esc[j++] = 'n'; }
+        else if (raw[i] == '\t') { esc[j++] = '\\'; esc[j++] = 't'; }
+        else if ((unsigned char)raw[i] < 0x20) { esc[j++] = '\\'; esc[j++] = 'u'; 
+            snprintf(esc + j, cap - j, "%04x", (unsigned char)raw[i]); j += 4; }
+        else esc[j++] = raw[i];
+    }
+    esc[j++] = '"';
+    esc[j] = '\0';
+    return esc;
+}
+
+/* Print a JSON-formatted response to stdout.
+ * Fields: response, session_id, status (ok/error) */
+static void cli_json_respond(const char *response, const char *session_id, const char *status) {
+    char *esc_resp = cli_json_escape(response);
+    printf("{\"response\":%s,\"session_id\":\"%s\",\"status\":\"%s\"}\n",
+           esc_resp ? esc_resp : "null",
+           session_id && session_id[0] ? session_id : "",
+           status ? status : "ok");
+    free(esc_resp);
+}
+
 int hermes_cli_main(int argc, char **argv) {
     display_init();
     memset(&g_cli, 0, sizeof(g_cli));
@@ -306,29 +345,7 @@ int hermes_cli_main(int argc, char **argv) {
 
             char *resp = agent_chat(&g_cli.agent, msg);
             if (g_cli.json_output) {
-                /* JSON output: wrap in {response, session_id} */
-                char *json_esc = NULL;
-                if (resp) {
-                    /* Escape for JSON string */
-                    size_t rlen = strlen(resp);
-                    json_esc = (char *)malloc(rlen * 2 + 2);
-                    if (json_esc) {
-                        size_t j = 0;
-                        json_esc[j++] = '"';
-                        for (size_t i = 0; i < rlen && j < rlen * 2; i++) {
-                            if (resp[i] == '\\' || resp[i] == '"') { json_esc[j++] = '\\'; json_esc[j++] = resp[i]; }
-                            else if (resp[i] == '\n') { json_esc[j++] = '\\'; json_esc[j++] = 'n'; }
-                            else if (resp[i] == '\t') { json_esc[j++] = '\\'; json_esc[j++] = 't'; }
-                            else json_esc[j++] = resp[i];
-                        }
-                        json_esc[j++] = '"';
-                        json_esc[j] = '\0';
-                    }
-                }
-                printf("{\"response\":%s,\"session_id\":\"%s\"}\n",
-                       json_esc ? json_esc : "null",
-                       g_cli.agent.session_id[0] ? g_cli.agent.session_id : "");
-                free(json_esc);
+                cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
             } else {
                 printf("%s\n", resp ? resp : "(no response)");
             }
@@ -361,11 +378,20 @@ int hermes_cli_main(int argc, char **argv) {
             /* Check for slash commands */
             if (input[0] == '/') {
                 if (!commands_dispatch(input, &g_cli.agent)) {
-                    printf("Unknown command: %s\n", input);
+                    if (g_cli.json_output) {
+                        char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", input);
+                        cli_json_respond(err, g_cli.agent.session_id, "error");
+                    } else {
+                        printf("Unknown command: %s\n", input);
+                    }
                 }
             } else {
                 char *resp = agent_chat(&g_cli.agent, input);
-                printf("%s\n", resp ? resp : "(no response)");
+                if (g_cli.json_output) {
+                    cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
+                } else {
+                    printf("%s\n", resp ? resp : "(no response)");
+                }
                 free(resp);
             }
         }
@@ -409,7 +435,12 @@ int hermes_cli_main(int argc, char **argv) {
             if (commands_dispatch(input, &g_cli.agent))
                 continue;
             /* Unknown command */
-            printf("Unknown command: %s. Try /help\n", input);
+            if (g_cli.json_output) {
+                char err[512]; snprintf(err, sizeof(err), "Unknown command: %s. Try /help", input);
+                cli_json_respond(err, g_cli.agent.session_id, "error");
+            } else {
+                printf("Unknown command: %s. Try /help\n", input);
+            }
             continue;
         }
 
@@ -422,14 +453,26 @@ int hermes_cli_main(int argc, char **argv) {
              * Only print final newline and handle errors. */
             if (g_cli.interactive && g_cli.agent.stream_cb) {
                 printf("\n");
-                if (strncmp(resp, "Error:", 6) == 0)
+                if (g_cli.json_output) {
+                    cli_json_respond(resp, g_cli.agent.session_id,
+                                     strncmp(resp, "Error:", 6) == 0 ? "error" : "ok");
+                } else if (strncmp(resp, "Error:", 6) == 0) {
                     printf("%s\n", resp);
+                }
             } else {
-                printf("%s\n", resp);
+                if (g_cli.json_output) {
+                    cli_json_respond(resp, g_cli.agent.session_id, "ok");
+                } else {
+                    printf("%s\n", resp);
+                }
             }
             free(resp);
         } else {
-            printf("Error: No response\n");
+            if (g_cli.json_output) {
+                cli_json_respond("No response", g_cli.agent.session_id, "error");
+            } else {
+                printf("Error: No response\n");
+            }
         }
     }
 

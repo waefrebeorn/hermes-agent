@@ -100,6 +100,10 @@ run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
 run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
 
+# JSON output mode test (H14 — self-contained, no deps)
+echo ""; echo "=== JSON Output Mode Tests (H14) ==="
+run_lib_test "json_output" "tests/test_json_output.c" "." ""
+
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
