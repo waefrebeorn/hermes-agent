@@ -217,6 +217,8 @@ void budget_tracker_reset(budget_tracker_t *bt) {
     double max_cost = bt->max_cost_usd;
     int max_turns = bt->max_turns;
     double warn_at = bt->warn_at_pct;
+    int turn_limit = bt->max_tool_calls_per_turn;
+    bool hard = bt->hard_limit;
 
     memset(bt, 0, sizeof(*bt));
 
@@ -225,5 +227,45 @@ void budget_tracker_reset(budget_tracker_t *bt) {
     bt->max_cost_usd = max_cost;
     bt->max_turns = max_turns;
     bt->warn_at_pct = warn_at;
+    bt->max_tool_calls_per_turn = turn_limit;
+    bt->hard_limit = hard;
     /* reported_* flags intentionally NOT preserved — reset clears warning history */
+}
+
+/* G24: Increment per-turn tool call counter */
+int budget_tracker_increment_tool_call(budget_tracker_t *bt) {
+    if (!bt) return 0;
+    bt->turn_tool_calls++;
+    return bt->turn_tool_calls;
+}
+
+/* G24: Reset per-turn tool call counter at start of new turn */
+void budget_tracker_reset_turn_tools(budget_tracker_t *bt) {
+    if (!bt) return;
+    bt->turn_tool_calls = 0;
+}
+
+/* G24: Check if per-turn tool call limit is exceeded */
+bool budget_tracker_turn_exceeded(const budget_tracker_t *bt) {
+    if (!bt || bt->max_tool_calls_per_turn <= 0) return false;
+    return bt->turn_tool_calls >= bt->max_tool_calls_per_turn;
+}
+
+/* G24: Set per-turn tool call limit */
+void budget_tracker_set_per_turn_limit(budget_tracker_t *bt, int max_per_turn) {
+    if (!bt) return;
+    bt->max_tool_calls_per_turn = max_per_turn;
+}
+
+/* G26: Set hard limit mode */
+void budget_tracker_set_hard_limit(budget_tracker_t *bt, bool hard) {
+    if (!bt) return;
+    bt->hard_limit = hard;
+}
+
+/* G26: Should stop immediately (hard exceeded) vs allow grace call */
+bool budget_tracker_is_hard_exceeded(const budget_tracker_t *bt) {
+    if (!bt) return false;
+    if (!bt->hard_limit) return false;  /* soft mode — grace call will handle it */
+    return budget_tracker_is_exceeded(bt);
 }

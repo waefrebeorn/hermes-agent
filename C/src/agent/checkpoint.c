@@ -7,6 +7,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_agent.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -201,4 +202,52 @@ bool checkpoint_try_autosave(checkpoint_manager_t *mgr, agent_state_t *state) {
         return checkpoint_save(mgr, state, "__auto__");
     }
     return false;
+}
+
+/* G29: Generate a diff string between current messages and a checkpoint.
+ * Returns malloc'd string (caller must free), or NULL on error. */
+char *checkpoint_diff(const checkpoint_t *cp, const agent_state_t *state) {
+    if (!cp || !state) return NULL;
+
+    /* Build a simple text diff showing message count changes and content of first differing message */
+    char buf[4096];
+    int pos = 0;
+    pos += snprintf(buf + pos, sizeof(buf) - pos,
+        "Checkpoint: %s (%s)\n", cp->id, cp->label[0] ? cp->label : "(unnamed)");
+    pos += snprintf(buf + pos, sizeof(buf) - pos,
+        "Checkpoint had %zu messages, current has %zu messages\n",
+        cp->count, state->message_count);
+
+    /* Show messages that differ */
+    size_t min_count = cp->count < state->message_count ? cp->count : state->message_count;
+    for (size_t i = 0; i < min_count; i++) {
+        const char *c1 = cp->messages[i]->content ? cp->messages[i]->content : "";
+        const char *c2 = state->messages[i]->content ? state->messages[i]->content : "";
+        if (strcmp(c1, c2) != 0) {
+            pos += snprintf(buf + pos, sizeof(buf) - pos,
+                "Diff at message %zu:\n  Before: %.200s\n  After:  %.200s\n",
+                i, c1, c2);
+            break; /* Show first diff only */
+        }
+    }
+
+    if (pos == 0)
+        snprintf(buf, sizeof(buf), "No differences (identical state)\n");
+
+    return strdup(buf);
+}
+
+/* G30: Restore checkpoint and create a branch from that point.
+ * Returns true if successful. */
+bool checkpoint_branch_restore(checkpoint_manager_t *mgr, agent_state_t *state,
+                                const char *checkpoint_id, const char *new_session_id) {
+    if (!mgr || !state) return false;
+
+    /* Save current state as a branch before restoring */
+    if (state->db && new_session_id && new_session_id[0]) {
+        agent_session_branch(state, new_session_id, (int)state->message_count - 1);
+    }
+
+    /* Restore the checkpoint */
+    return checkpoint_restore(mgr, state, checkpoint_id);
 }

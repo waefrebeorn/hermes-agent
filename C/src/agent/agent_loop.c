@@ -11,6 +11,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_agent.h"
 #include "provider.h"
 #include "plugin.h"
 #include "budget_tracker.h"
@@ -22,6 +23,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <strings.h>
 #ifndef _WIN32
 #include <pthread.h>
 #endif
@@ -38,6 +40,8 @@ static void sigint_handler(int sig) {
     (void)sig;
     if (g_signal_state) {
         g_signal_state->interrupted = true;
+        /* G35: Force interrupt via SIGINT */
+        g_signal_state->interrupt_type = INTERRUPT_FORCE;
         /* Print message to stderr so it interrupts cleanly */
         fprintf(stderr, "\n! Interrupted (SIGINT). Use /stop to force quit.\n");
     }
@@ -69,6 +73,13 @@ void agent_init(agent_state_t *state) {
     compression_feedback_init(&state->compression_fb);
     /* P98: Initialize checkpoint manager */
     checkpoint_init(&state->checkpoints);
+
+    /* G21: Default compression strategy */
+    state->compression_strategy = COMPRESS_OLDEST_TOOL_FIRST;
+    /* G31: Default prefill as assistant message */
+    state->prefill_role = MSG_ASSISTANT;
+    /* G35: No interrupt */
+    state->interrupt_type = INTERRUPT_NONE;
 }
 
 /* P99: Initialize agent infrastructure from configuration.
@@ -127,6 +138,32 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
         snprintf(state->enabled_toolsets, sizeof(state->enabled_toolsets), "%s", cfg->tools.enabled_toolsets);
     if (cfg->tools.disabled_toolsets[0])
         snprintf(state->disabled_toolsets, sizeof(state->disabled_toolsets), "%s", cfg->tools.disabled_toolsets);
+
+    /* G21: Compression strategy from config */
+    if (strcasecmp(cfg->compression.strategy, "oldest_tool_first") == 0)
+        state->compression_strategy = EVICT_OLDEST_TOOL_FIRST;
+    else if (strcasecmp(cfg->compression.strategy, "oldest_user") == 0)
+        state->compression_strategy = EVICT_OLDEST_USER;
+    else if (strcasecmp(cfg->compression.strategy, "keep_recent_n") == 0)
+        state->compression_strategy = EVICT_KEEP_RECENT_N;
+
+    /* G23: Preserve attachment metadata during compression */
+    state->preserve_attachments = cfg->compression.preserve_system; /* reuse preserve_system flag */
+
+    /* G27: Wire checkpoint auto-save interval from config */
+    checkpoint_set_limits(&state->checkpoints,
+        cfg->checkpoints.max_checkpoints > 0 ? cfg->checkpoints.max_checkpoints : 10,
+        cfg->checkpoints.interval > 0 ? cfg->checkpoints.interval : 5);
+
+    /* G24: Per-turn tool call limit from guardrails config or agent config */
+    int per_turn = cfg->guardrails.max_tool_calls_per_turn;
+    if (per_turn <= 0) per_turn = cfg->agent.max_tool_calls_round;
+    if (state->budget)
+        budget_tracker_set_per_turn_limit(state->budget, per_turn);
+
+    /* G26: Budget hard limit mode */
+    if (state->budget)
+        budget_tracker_set_hard_limit(state->budget, false); /* soft by default */
 
     /* G20: Derive model family from model name */
     if (cfg->provider_cfg.model[0]) {
@@ -671,9 +708,9 @@ char *agent_run_conversation(agent_state_t *state,
     if (system_message && system_message[0])
         context_set_system(state, system_message);
 
-    /* P92: Inject prefill assistant message (before user message) */
+    /* P92: Inject prefill message (before user message) */
     if (state->prefill[0]) {
-        message_t *prefill_msg = message_new(MSG_ASSISTANT, state->prefill);
+        message_t *prefill_msg = message_new(state->prefill_role, state->prefill);
         if (prefill_msg) context_push(state, prefill_msg);
     }
 
@@ -687,13 +724,27 @@ char *agent_run_conversation(agent_state_t *state,
     /* G10: Set last activity on user message */
     state->last_activity_ts = time(NULL);
 
-    /* G11: Inject pending steer before LLM call if set */
-    if (state->pending_steer[0]) {
-        if (state->pending_steer[0] == '/') {
-            /* Treat as system prefill — inject as system message suffix */
-            /* (In practice, steers are applied as system messages or injected messages) */
+    /* G33-G34: Process steer queue — inject all queued steers in priority order */
+    if (state->steer_count > 0) {
+        for (int si = 0; si < state->steer_count && si < HERMES_MAX_STEERS; si++) {
+            if (state->steer_queue[si][0]) {
+                message_role_t role = state->steer_roles[si];
+                /* Map invalid/unknown roles to system message (default steer type) */
+                if (role != MSG_SYSTEM && role != MSG_USER && role != MSG_ASSISTANT)
+                    role = MSG_SYSTEM;
+                message_t *steer_msg = message_new(role, state->steer_queue[si]);
+                if (steer_msg) context_push(state, steer_msg);
+            }
         }
-        /* Clear after use — one-shot steer */
+        /* Clear queue after processing */
+        for (int si = 0; si < state->steer_count && si < HERMES_MAX_STEERS; si++)
+            state->steer_queue[si][0] = '\0';
+        state->steer_count = 0;
+    }
+    /* Backward compat: process single pending_steer if queue is empty */
+    else if (state->pending_steer[0]) {
+        message_t *steer_msg = message_new(MSG_SYSTEM, state->pending_steer);
+        if (steer_msg) context_push(state, steer_msg);
         state->pending_steer[0] = '\0';
     }
 
@@ -738,9 +789,16 @@ char *agent_run_conversation(agent_state_t *state,
         }
 
         /* Smart context compression: summarize old messages before dropping */
-        char *summary = llm_compress_context(state, HERMES_MAX_CTX_TOKENS,
+        /* G22: Use adaptive threshold from compression feedback */
+        float adaptive_threshold = compression_feedback_get_threshold(
+            &state->compression_fb, HERMES_MAX_CTX_TOKENS);
+        size_t adaptive_max = (size_t)(adaptive_threshold > 0 ?
+            adaptive_threshold : HERMES_MAX_CTX_TOKENS);
+        char *summary = llm_compress_context(state, adaptive_max,
                                               state->compress_enabled);
         if (summary) {
+            /* G22: Record positive feedback — compression was used successfully */
+            compression_feedback_positive(&state->compression_fb);
             /* Insert summary as a user message and truncate */
             message_t *summary_msg = message_new(MSG_USER, summary);
             if (summary_msg) {
@@ -763,6 +821,11 @@ char *agent_run_conversation(agent_state_t *state,
 
         /* Truncate context if too long (128K token budget) */
         llm_truncate_context(state, HERMES_MAX_CTX_TOKENS);
+
+        /* G21: Apply strategy-aware eviction if non-default strategy configured */
+        if (state->compression_strategy != COMPRESS_OLDEST_TOOL_FIRST && state->message_count > 20) {
+            context_evict_smart(state, 20, state->compression_strategy);
+        }
 
         /* Call LLM — use streaming if callback set */
         llm_response_t *llm_resp;
@@ -851,6 +914,8 @@ char *agent_run_conversation(agent_state_t *state,
                 agent_save_session(state);
                 agent_save_meta(state);
             }
+            /* G25: Reset budget on successful completion */
+            if (state->budget) budget_tracker_reset(state->budget);
             return result;
         }
 
@@ -866,6 +931,13 @@ char *agent_run_conversation(agent_state_t *state,
 
         /* P87: Parallel tool dispatch — execute independent tools concurrently */
         int n_calls = llm_resp->tool_calls_count;
+
+        /* G24: Reset per-turn tool call counter and check per-turn limit */
+        if (state->budget) budget_tracker_reset_turn_tools(state->budget);
+        if (state->budget && state->budget->max_tool_calls_per_turn > 0 &&
+            n_calls > state->budget->max_tool_calls_per_turn) {
+            n_calls = state->budget->max_tool_calls_per_turn;
+        }
         typedef struct {
             int    index;
             char  *tool_name;
@@ -947,14 +1019,19 @@ char *agent_run_conversation(agent_state_t *state,
 
         /* Phase 3: Create tool result messages (in original order) */
         for (int i = 0; i < n_calls; i++) {
+            /* G24: Track per-turn tool call count */
+            if (state->budget) budget_tracker_increment_tool_call(state->budget);
+
             message_t *tool_msg = message_new_tool(
                 works[i].tool_id,
                 works[i].result ? works[i].result :
                     "{\"error\":\"Tool returned NULL\"}");
             context_push(state, tool_msg);
             /* P93: Classify tool result — abort on fatal */
+            /* G35: Use typed interrupt for graceful vs force distinction */
             if (classify_tool_result(works[i].result, works[i].tool_name) == TOOL_RESULT_FATAL) {
                 state->interrupted = true;
+                state->interrupt_type = INTERRUPT_GRACEFUL;
                 /* G12: Set interrupt message with context */
                 snprintf(state->interrupt_message, sizeof(state->interrupt_message),
                          "Fatal tool result from '%s': %s",
@@ -979,8 +1056,20 @@ char *agent_run_conversation(agent_state_t *state,
     }
 
     json_free(tools_json);
-    if (state->interrupted)
+
+    /* G35-G36: Typed interrupt handling */
+    if (state->interrupt_type != INTERRUPT_NONE) {
+        state->interrupted = true;
+        if (state->interrupt_type == INTERRUPT_GRACEFUL && state->message_count > 0) {
+            /* G36: Partial results are preserved in context */
+            state->partial_results_saved = true;
+        }
         return strdup("Error: Interrupted");
+    }
+    /* G26: Hard budget limit — immediate stop, no grace call */
+    if (state->budget && budget_tracker_is_hard_exceeded(state->budget))
+        return strdup("Error: Hard budget limit exceeded (immediate stop)");
+    /* Soft budget exceeded */
     if (state->budget && budget_tracker_is_exceeded(state->budget))
         return strdup("Error: Budget exceeded (token/cost/turn limit reached)");
     return strdup("Error: Max iterations reached");

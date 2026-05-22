@@ -32,6 +32,13 @@ typedef struct budget_tracker_t {
     double    total_cost_usd;
     int       turn_count;
 
+    /* G24: Per-turn tool call tracking */
+    int   turn_tool_calls;         /* tool calls in the current turn */
+    int   max_tool_calls_per_turn; /* per-turn tool call cap (0=unlimited) */
+
+    /* G26: Budget enforcement mode */
+    bool  hard_limit;              /* true=immediate stop, false=grace call */
+
     /* ---- Alert state ---- */
     double    warn_at_pct;         /* fraction at which to warn (default 0.8) */
     bool      warned_input;
@@ -98,6 +105,24 @@ int       budget_tracker_remaining_turns(const budget_tracker_t *bt);
 double budget_tracker_estimate_cost(const char *model,
                                      long long input_tokens,
                                      long long output_tokens);
+
+/* G24: Increment per-turn tool call counter. Returns new count. */
+int budget_tracker_increment_tool_call(budget_tracker_t *bt);
+
+/* G24: Reset per-turn tool call counter at start of new turn. */
+void budget_tracker_reset_turn_tools(budget_tracker_t *bt);
+
+/* G24: Check if per-turn tool call limit is exceeded. */
+bool budget_tracker_turn_exceeded(const budget_tracker_t *bt);
+
+/* G24: Set per-turn tool call limit. Pass 0 for unlimited. */
+void budget_tracker_set_per_turn_limit(budget_tracker_t *bt, int max_per_turn);
+
+/* G26: Set hard limit mode — true=immediate stop, false=grace call. */
+void budget_tracker_set_hard_limit(budget_tracker_t *bt, bool hard);
+
+/* G26: Should stop immediately (hard exceeded) vs allow grace call. */
+bool budget_tracker_is_hard_exceeded(const budget_tracker_t *bt);
 
 /* Get stats as JSON string (malloc'd). Caller must free(). */
 char *budget_tracker_stats_json(const budget_tracker_t *bt);

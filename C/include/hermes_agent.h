@@ -83,6 +83,13 @@ size_t  checkpoint_list(const checkpoint_manager_t *mgr, char (*ids)[64], char (
 size_t  checkpoint_count(const checkpoint_manager_t *mgr);
 bool    checkpoint_try_autosave(checkpoint_manager_t *mgr, agent_state_t *state);
 
+/* G29: Generate diff between checkpoint and current state. Caller must free. */
+char    *checkpoint_diff(const checkpoint_t *cp, const agent_state_t *state);
+
+/* G30: Restore checkpoint and branch from that point. */
+bool    checkpoint_branch_restore(checkpoint_manager_t *mgr, agent_state_t *state,
+                                  const char *checkpoint_id, const char *new_session_id);
+
 /* === LLM Client (llm_client.c) === */
 llm_response_t *llm_chat_completion(llm_config_t *cfg,
                                      const message_t **messages,

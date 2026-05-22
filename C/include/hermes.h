@@ -249,7 +249,42 @@ typedef struct {
     bool parallel_tool_calls;  /* overrides llm.parallel_tool_calls */
     /* G20: Model family tracking for accurate pricing */
     char model_family[32];     /* e.g. "gpt-4", "claude-3", "deepseek-chat" */
+
+    /* G21: Selected compression strategy override (from config) */
+    int compression_strategy; /* 0=EVICT_OLDEST_TOOL_FIRST, 1=EVICT_OLDEST_USER, 2=EVICT_KEEP_RECENT_N */
+    /* G23: Preserve attachment metadata during compression (references to images/files) */
+    bool preserve_attachments;
+
+    /* G24: Per-turn tool call tracking for iteration budget */
+    int  tool_calls_this_turn;       /* tool calls executed in current turn */
+    int  max_tool_calls_per_turn;    /* per-turn tool call cap (0 = unlimited) */
+
+    /* G26: Budget enforcement mode — 0=soft (grace call), 1=hard (immediate stop) */
+    bool budget_hard_limit;
+
+    /* G31-G32: Prefill role variant — MSG_ASSISTANT (default) or MSG_SYSTEM */
+    message_role_t prefill_role;
+
+    /* G33-G34: Steer queue — up to 8 pending steering messages with type + priority */
+#define HERMES_MAX_STEERS 8
+    char steer_queue[HERMES_MAX_STEERS][4096];   /* steer message contents */
+    message_role_t steer_roles[HERMES_MAX_STEERS]; /* MSG_SYSTEM, MSG_ASSISTANT, or MSG_USER */
+    int steer_count;                              /* number of queued steers */
+
+    /* G35-G36: Typed interrupt */
+    int interrupt_type;         /* 0=NONE, 1=GRACEFUL, 2=FORCE */
+    bool partial_results_saved; /* G36: partial tool results preserved */
 } agent_state_t;
+
+/* Interrupt type constants (interrupt_type field) */
+#define INTERRUPT_NONE     0
+#define INTERRUPT_GRACEFUL 1
+#define INTERRUPT_FORCE    2
+
+/* Compression strategy constants (compression_strategy field) */
+#define COMPRESS_OLDEST_TOOL_FIRST 0
+#define COMPRESS_OLDEST_USER       1
+#define COMPRESS_KEEP_RECENT_N     2
 
 /* ================================================================
  *  Provider Config Sub-group (P1)
