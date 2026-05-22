@@ -520,6 +520,26 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "deepseek_fim (compilation failed)"
 fi
 
+# Discord interaction tests (M08 — tests JSON parsing of interactions, modals, components)
+echo ""; echo "=== Discord Interaction Tests (M08) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" \
+    -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
+    -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    "$CDIR/tests/test_discord_interactions.c" \
+    "$CDIR/src/gateway/platforms/discord.c" "$CDIR/src/tools/url_safety.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_discord_int -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_discord_int > /dev/null 2>&1; then ok "discord_interactions (31 tests)"
+    else
+        echo "  Discord interaction test output:"
+        /tmp/hermes_test_discord_int 2>&1 | sed 's/^/    /'
+        fail "discord_interactions (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_discord_int
+else skip "discord_interactions (compilation failed)"
+fi
+
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_smoke.c" \
