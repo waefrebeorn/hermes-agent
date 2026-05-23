@@ -232,7 +232,7 @@ void agent_generate_session_id(agent_state_t *state) {
 /* Open session database. Returns true on success. */
 bool agent_open_db(agent_state_t *state) {
     if (state->db) return true;
-    char db_dir[4096];
+    char db_dir[HERMES_PATH_MAX + 64];
     snprintf(db_dir, sizeof(db_dir), "%s/sessions", state->hermes_home[0] ?
              state->hermes_home : (getenv("HOME") ? getenv("HOME") : "/tmp"));
     /* Ensure directory exists */
@@ -361,11 +361,11 @@ bool agent_load_meta(agent_state_t *state, session_meta_t *meta) {
 /* Create a new session with generated ID and default metadata */
 bool agent_session_create(agent_state_t *state, const char *session_id) {
     if (!state->db) return false;
+    char new_id[64];
     if (!session_id || !*session_id) {
         /* Generate new session ID */
         time_t t = time(NULL);
         struct tm *tm = localtime(&t);
-        char new_id[64];
         snprintf(new_id, sizeof(new_id), "%04d%02d%02d_%02d%02d%02d",
                  tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
                  tm->tm_hour, tm->tm_min, tm->tm_sec);
@@ -480,7 +480,7 @@ bool agent_crash_recover(agent_state_t *state) {
     if (!state->db) return false;
 
     /* Determine sessions directory */
-    char dir_path[4096];
+    char dir_path[HERMES_PATH_MAX + 64];
     snprintf(dir_path, sizeof(dir_path), "%s/sessions",
              state->hermes_home[0] ? state->hermes_home :
              (getenv("HOME") ? getenv("HOME") : "/tmp"));
@@ -497,7 +497,7 @@ bool agent_crash_recover(agent_state_t *state) {
         size_t len = strlen(name);
         if (len > 4 && strcmp(name + len - 4, ".tmp") == 0) {
             /* Clean up orphaned .tmp files */
-            char tmp_path[4096];
+            char tmp_path[HERMES_PATH_MAX * 2];
             snprintf(tmp_path, sizeof(tmp_path), "%s/%s", dir_path, name);
             unlink(tmp_path);
             recovered = true;
