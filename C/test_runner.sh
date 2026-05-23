@@ -89,6 +89,20 @@ if gcc -O2 -Wall -Wextra \
 else skip "mcp_oauth (compilation failed)"
 fi
 
+echo ""; echo "=== FAL Common Library Tests (D80) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libfal_common" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \
+    "$CDIR/tests/test_fal_common.c" \
+    "$CDIR/lib/libfal_common/fal_common.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_fal_common -lssl -lcrypto -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_fal_common > /dev/null 2>&1; then ok "fal_common"
+    else fail "fal_common (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_fal_common
+else skip "fal_common (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
