@@ -90,6 +90,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_skills (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin Image Gen Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
+    "$CDIR/tests/test_plugin_image_gen.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_image_gen -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_image_gen > /dev/null 2>&1; then ok "plugin_image_gen (image generation)"
+    else fail "plugin_image_gen (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_image_gen
+else skip "plugin_image_gen (compilation failed)"
+fi
+
 echo ""; echo "=== Plugin Kanban (In-Memory Board) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
