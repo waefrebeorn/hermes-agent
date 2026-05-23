@@ -1,14 +1,14 @@
-# State — Hermes C Translation (2026-05-24, DA v36 — Session 5)
+# State — Hermes C Translation (2026-05-29, Session 8)
 
-**~42.2% parity — 211 of 500 gaps closed (battleship v3).**
+**~43.2% parity — 216 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
-| Agent | 37/115 | 32% | iteration_budget ported. +1 gap |
+| Agent | 38/115 | 33% | rate_limit_tracker.py ported |
 | CLI | 14/95 | 15% | /secrets command added |
-| Tools | 38/92 | 41% | 68 registered. tool_backend_helpers.py ported |
+| Tools | 41/92 | 45% | 68 registered + test_runner fixes |
 | Gateway | 22/64 | 34% | 19 platforms |
 | MCP | 2/11 | 18% | stdio + server done |
 | ACP | 1/9 | 11% | Basic server |
@@ -22,30 +22,17 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved |
 | Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **211/500** | **42.2%** | **289 gaps remaining** |
+| **Total** | **216/500** | **43.2%** | **284 gaps remaining** |
 
 ## Session Log
-- **DA v36 (May 24, Session 5):** tool_backend_helpers.py port — backend selection helpers (19 assertions). Suite: binary builds clean. Parity: 211/500 (42.2%).
-- **DA v35 (May 24, Session 4):** iteration_budget.py port — per-agent iteration counter with consume/refund (30 assertions). Suite: 190/0/0 ✅. Parity: 210/500 (42%).
-- **DA v34 (May 24, Session 3):** binary_extensions test coverage (57 assertions). Fixed .pdf classification parity. Suite: 189/0/0.
+- **Session 8 (May 29):** test_runner.sh fix — 4 skipped tests (skill_manage, managed_gateway, rate_limit, skill_mgmt_tool) fixed. Root causes: missing include dirs + wrong .c file linked. Suite: 195/0/0 (0 skipped). Parity: 216/500.
+- **DA v38 (May 24, Session 7):** managed_tool_gateway.py port — Nous vendor gateway helpers (12 assertions). Suite: binary builds clean. Parity: 214/500 (42.8%).
 
 ## Build Status
 ```
-Suite:  190/0/0     (145 tests, ~1005 assertions)
+Suite:  195/0/0     (145 tests, ~1005 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)
 CI:     c-build.yml (Linux x86_64 + Docker)
-
-## Session 2 Changes
-| Gap | Module | Files | Tests |
-|-----|--------|-------|-------|
-| credential_files.py | lib/libcredential/ | 3 | 19 |
-| schema_sanitizer.py | lib/libschemasanitizer/ | 3 | 15 |
-| fuzzy_match.py | lib/libfuzzymatch/ | 3 | 17 |
-| path_security.py | lib/libpath/ additions | 2 | 15 |
-| interrupt.py | lib/libinterrupt/ | 3 | 8 |
-| slash_confirm.py | lib/libslashconfirm/ | 3 | 21 |
-| file_state.py | lib/libfilestate/ | 3 | 10 |
-| ansi_strip.py | lib/libansi/ansi_strip | 3 | 40 |
-| **Total** | **8 gaps closed** | **23 files** | **145 new assertions** |
+```

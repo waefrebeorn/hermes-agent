@@ -27,7 +27,7 @@ echo ""; echo "=== Library Unit Tests ==="
 run_lib_test() {
     local name=$1 src=$2 inc=$3 libs=$4
     local bin="/tmp/hermes_test_${name}"
-    if gcc -O2 -Wall -Wextra -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
+    if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
         if "$bin" > /dev/null 2>&1; then ok "$name"
         else fail "$name (test binary returned non-zero)"
         fi
@@ -282,11 +282,13 @@ fi
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
-    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
     "$CDIR/tests/test_skill_manage.c" \
     "$CDIR/src/tools/registry.c" \
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libplugin/plugin.c" \
+    "$CDIR/lib/libskillusage/skill_provenance.c" \
+    "$CDIR/lib/libskillusage/skill_usage.c" \
     -o /tmp/hermes_test_skill_manage -ldl -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_skill_manage > /dev/null 2>&1; then ok "skill_manage (10 tests)"
     else fail "skill_manage (test binary returned non-zero)"; fi
@@ -489,7 +491,17 @@ run_lib_test "interrupt" "tests/test_interrupt.c" "lib/libinterrupt" "$CDIR/lib/
 run_lib_test "file_state" "tests/test_file_state.c" "lib/libfilestate" "$CDIR/lib/libfilestate/file_state.c -lpthread"
 run_lib_test "tool_backend" "tests/test_tool_backend.c" "lib/libtoolbackend" "$CDIR/lib/libtoolbackend/tool_backend.c -lm"
 run_lib_test "rate_limit" "tests/test_rate_limit.c" "lib/libratelimit" "$CDIR/lib/libratelimit/rate_limit.c -lm"
-run_lib_test "managed_gateway" "tests/test_managed_gateway.c" "lib/libmangateway" "$CDIR/lib/libmangateway/managed_gateway.c $CDIR/lib/libtoolbackend/tool_backend.c -lm"
+# Managed gateway test (needs mangateway + toolbackend includes)
+echo ""; echo "=== Managed Gateway Library Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libmangateway" -I"$CDIR/lib/libtoolbackend" \
+    "$CDIR/tests/test_managed_gateway.c" \
+    "$CDIR/lib/libmangateway/managed_gateway.c" "$CDIR/lib/libtoolbackend/tool_backend.c" \
+    -o /tmp/hermes_test_managed_gateway -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_managed_gateway > /dev/null 2>&1; then ok "managed_gateway"
+    else fail "managed_gateway (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_managed_gateway
+else skip "managed_gateway (compilation failed)"
+fi
 
 # datetime library test (J05 -- standalone, no deps)
 echo ""; echo "=== datetime Library Tests (J05) ==="
@@ -1509,10 +1521,10 @@ else
     skip "plugin_sandbox (T07: compilation failed)"
 fi
 
-# Rate limiter test (standalone — only needs rate_limit.c)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+# Rate limiter test (standalone — uses lib/libratelimit/rate_limit.c)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libratelimit" \
     "$CDIR/tests/test_rate_limit.c" \
-    "$CDIR/src/tools/rate_limit.c" \
+    "$CDIR/lib/libratelimit/rate_limit.c" \
     -o /tmp/hermes_test_rl -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_rl > /dev/null 2>&1; then ok "rate_limit (168 tests)"
     else fail "rate_limit (test binary returned non-zero)"; fi
@@ -1785,10 +1797,12 @@ fi
 
 # Skill management tool test (skill_view + skill_manage — needs skill_mgmt.c + json)
 echo ""; echo "=== Skill Management Tests ==="
-if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
     "$CDIR/tests/test_skill_mgmt.c" \
     "$CDIR/src/tools/skill_mgmt.c" \
     "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libskillusage/skill_provenance.c" \
+    "$CDIR/lib/libskillusage/skill_usage.c" \
     -o /tmp/hermes_test_skill_mgmt -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_skill_mgmt > /dev/null 2>&1; then ok "skill_mgmt_tool (9 tests)"
     else fail "skill_mgmt_tool (test binary returned non-zero)"; fi
