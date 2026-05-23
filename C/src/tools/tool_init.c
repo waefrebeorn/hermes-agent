@@ -35,6 +35,7 @@ void registry_init_browser(void);
 void registry_init_approval(void);
 void registry_init_voice(void);
 void registry_init_image_gen(void);
+void registry_init_video_gen(void);
 void registry_init_homeassistant(void);
 void registry_init_kanban(void);
 void registry_init_computer_use(void);
@@ -73,6 +74,7 @@ void tools_init_all(void) {
     registry_init_approval();
     registry_init_voice();
     registry_init_image_gen();
+    registry_init_video_gen();
     registry_init_homeassistant();
     registry_init_kanban();
     registry_init_computer_use();
@@ -116,6 +118,7 @@ void tools_init_all(void) {
     registry_set_toolset("voice_speak", "voice");
 
     registry_set_toolset("image_generate", "image_gen");
+    registry_set_toolset("video_generate", "video_gen");
     registry_set_toolset("cronjob", "cron");
     registry_set_toolset("cron_cmd", "cron");
     registry_set_toolset("memory", "memory");
