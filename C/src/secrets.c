@@ -265,6 +265,7 @@ char *hermes_secrets_resolve_string(const char *input, bool strict) {
             size_t left = strlen(p);
             if (left + 1 > remaining) break;
             memcpy(ow, p, left + 1);
+            ow += left;
             break;
         }
 
@@ -284,6 +285,7 @@ char *hermes_secrets_resolve_string(const char *input, bool strict) {
             size_t left = strlen(start);
             if (left + 1 > remaining) break;
             memcpy(ow, start, left + 1);
+            ow += left;
             break;
         }
 

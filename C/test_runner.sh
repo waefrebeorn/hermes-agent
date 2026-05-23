@@ -955,6 +955,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "fallback_routing (compilation failed)"
 fi
 
+# Secrets test (needs secrets.c + json lib)
+echo ""; echo "=== Secrets Resolution Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_secrets.c" \
+    "$CDIR/src/secrets.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_secrets -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_secrets > /dev/null 2>&1; then ok "secrets (11 tests, bugfix)"
+    else fail "secrets (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_secrets
+else skip "secrets (compilation failed)"
+fi
+
 # Gateway subsystem test (needs server.c + http + json + cron + plugin libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_gateway.c" \
