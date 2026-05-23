@@ -19,9 +19,17 @@
 || **Tests** | 34 | **66%** | **103 files, ~3,000+ assertions** (140/0/0 suite) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
-|| **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
-|| **Error types** | 0 | **100% ✅** | K01-K20: 58 error codes complete |
-### Session 2026-05-28 — J11 libtextwrap + fallback_routing test + google_meet wiring
+| **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
+| **Error types** | 0 | **100% ✅** | K01-K20: 58 error codes complete |
+|### Session 2026-05-29 — J18 libwebsocket: test + .a target + NULL ptr bugfix
+|- ✅ **J18: libwebsocket** — 14 tests covering ws_connect error paths (NULL/empty/http/invalid), ws_close NULL safety, ws_frame_free lifecycle, ws_send/ws_recv NULL safety. No network deps — tests exercise error-handling paths only.
+|- ✅ **Bugfix: ws_connect(NULL) SEGV** — parse_url called strncmp(NULL, "wss://", 6), crashing. Added !url check before parse_url.
+|- ✅ **Makefile** — libwebsocket.a added to LIB_A, build rules for .o + .a
+|- ✅ **test_runner.sh** — websocket test registered
+|- ◀ **Suite: 140/0/0 → 141/0/0** (+1)
+|- ◀ **Libs: 70% → 72%** (26 archives, J04-J18 done)
+|- ◀ 1 commit pushed: `test(lib): add J18 libwebsocket test + .a target`
+|### Session 2026-05-28 — J11 libtextwrap + fallback_routing test + google_meet wiring
 - ✅ **J11: libtextwrap** — textwrap_wrap, textwrap_fill, textwrap_dedent, textwrap_shorten (35 assertions, 133/0/0)
 - ✅ **P83: test_fallback_routing.c** — 93 assertions covering cool-off, advance, tick, stats, auth/rate-limit special handling
 - ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
