@@ -996,6 +996,31 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "cli_commands (compilation failed)"
 fi
 
+# CLI dispatch test (T02: tests commands_dispatch, commands_get_all, handlers)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cli_dispatch.c" \
+    "$CDIR/src/cli/commands.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cli_dispatch -lm \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_cli_dispatch > /dev/null 2>&1; then ok "cli_dispatch (T02: 108 tests)"
+    else
+        echo "  CLI dispatch test output:"
+        /tmp/hermes_test_cli_dispatch 2>&1 | sed 's/^/    /'
+        fail "cli_dispatch (T02: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cli_dispatch
+else
+    echo "  CLI dispatch test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_cli_dispatch.c" \
+        "$CDIR/src/cli/commands.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_cli_dispatch -lm \
+        -Wl,--unresolved-symbols=ignore-all 2>&1 | sed 's/^/    /'
+    skip "cli_dispatch (T02: compilation failed)"
+fi
+
 # Tool registry test (needs registry.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_tool_registry.c" \
