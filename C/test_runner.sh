@@ -397,6 +397,9 @@ run_lib_test "retry_utils" "tests/test_retry_utils.c" "include" "$CDIR/src/agent
 echo ""; echo "=== Trajectory Tests (B118) ==="
 run_lib_test "trajectory" "tests/test_trajectory.c" "include" "$CDIR/src/agent/trajectory.c $CDIR/lib/libjson/json.c"
 
+echo ""; echo "=== Portal Tags Tests (B119) ==="
+run_lib_test "portal_tags" "tests/test_portal_tags.c" "include" "$CDIR/src/agent/portal_tags.c"
+
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
