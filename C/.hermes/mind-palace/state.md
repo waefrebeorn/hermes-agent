@@ -43,6 +43,14 @@
 |- ◀ **Suite: 142/0/0 → 143/0/0** (+1)
 |- ◀ **Libs: 77%** (28 archives, J04-J19 done)
 |- ◀ 1 commit: `feat(lib): add J19 libtoml — minimal TOML v1.0 parser`
+|### Session 2026-05-29 — J22: libansi — ANSI terminal codes
+|- ✅ **lib/libansi/ansi.{h,c}** — ANSI constants (16 fg + 8 bg + 8 bright fg/bg + 9 styles + cursor + screen clear), ansi_wrap()/ansi_strip() helpers, ansi_supported(), ansi_term_width()/ansi_term_height()
+|- ✅ **18 tests** — constant values, wrap (fg/style/both/null/empty), strip (plain/single/multi/mixed/null), terminal detection
+|- ✅ **Makefile** — libansi.a added to LIB_A/LIB_INCS/LIB_OBJ + build rules
+|- ✅ **test_runner.sh** — ansi test registered
+|- ◀ **Suite: 143/0/0 → 144/0/0** (+1)
+|- ◀ **Libs: 77% → 82%** (29 archives, J04-J19+J22 done)
+|- ◀ 1 commit: `feat(lib): add J22 libansi — ANSI terminal codes library`
 |### Session 2026-05-29 — libprotobuf .a target in Makefile
 |- ✅ **libprotobuf.a** — Added to LIB_A list (source + test existed, missing standalone .a archive)
 |- ✅ **Makefile** — Build rules for protobuf.o + protobuf.a

@@ -1063,6 +1063,27 @@ if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "agent_loop_context (compilation failed)"
 fi
 
+# xAI Search test (needs x_search.c — tests only non-HTTP error paths)
+INCLUDES_ALL=()
+INCLUDES_ALL+=("-I$CDIR/include" "-I$CDIR/lib/libjson" "-I$CDIR/lib/libhttp" "-I$CDIR/lib/libplugin")
+INCLUDES_ALL+=("-I$CDIR/lib/libskin" "-I$CDIR/lib/libwebsocket" "-I$CDIR/lib/libprotobuf" "-I$CDIR/lib/libdb")
+INCLUDES_ALL+=("-I$CDIR/lib/libcrypto" "-I$CDIR/lib/libcron" "-I$CDIR/lib/libproc" "-I$CDIR/lib/libtui")
+INCLUDES_ALL+=("-I$CDIR/lib/libtemplate" "-I$CDIR/lib/libdotenv" "-I$CDIR/lib/libyaml" "-I$CDIR/lib/libmcp")
+INCLUDES_ALL+=("-I$CDIR/lib/libpath" "-I$CDIR/lib/libdatetime" "-I$CDIR/lib/libcsv" "-I$CDIR/lib/libhash")
+INCLUDES_ALL+=("-I$CDIR/lib/libuuid" "-I$CDIR/lib/libbase64" "-I$CDIR/lib/libhtml" "-I$CDIR/lib/libtextwrap")
+INCLUDES_ALL+=("-I$CDIR/lib/libglob" "-I$CDIR/lib/libsignal" "-I$CDIR/lib/libenum" "-I$CDIR/lib/libdifflib")
+INCLUDES_ALL+=("-I$CDIR/lib/libregex" "-I$CDIR/lib/libansi")
+if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
+    "$CDIR/tests/test_x_search.c" \
+    "$CDIR/src/tools/x_search.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_x_search -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_x_search > /dev/null 2>&1; then ok "x_search (4 error-path tests)"
+    else fail "x_search (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_x_search
+else skip "x_search (compilation failed)"
+fi
+
 # URL safety test (needs url_safety.c — scheme/blocklist tests, no DNS)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_url_safety.c" \
