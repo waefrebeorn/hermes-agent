@@ -1,71 +1,57 @@
 # WuBu Hermes C — Prestige Prompt (v11 — 2026-05-23)
 
 ## Identity
-1:1 reimplementation of Python hermes-agent in C. 144 source files (115 .c + 29 .h), 32 library archives, 10 plugins, 19 gateway platforms, ~148 CLI commands. 400 commits. Synced with upstream.
+1:1 C reimplementation of Python hermes-agent. 144 source files (115 .c + 29 .h), 30 library units, 68 tools, 19 gateways, 10 plugins, ~148 CLI commands. 400 C-specific commits. Synced upstream.
 
-## Real Current State (DA May 2026, source-verified counts)
-
-| Category | Status | Key Facts |
-|----------|--------|-----------|
-| **Config** | ✅ **98%** | ~322 YAML keys, profiles, `${VAR}`, `!include` |
-| **Providers** | ✅ **87%** | 9 ops + 10 provider .c files. 7 API quirks remain |
-| **MCP** | ✅ **100%** | Transport, tools, resources, prompts, subs, sampling, serve |
-| **Plugins** | ✅ **10/10** | 10 .so: honcho, kanban, spotify, disk-cleanup, file-memory, achievements, observability, skills, image_gen, google_meet |
-| **Gateway** | ✅ **100%** | 19 platform adapters |
-| **Tools** | ✅ **95%** | 28 registered tools. 6 CDP/plugin-blocked stubs |
-| **Agent** | ✅ **86%** | Budget, fallback, checkpoint, interrupt, retry |
-| **CLI** | ✅ **~148 commands** | Skin engine, spinner, TUI, `--json` output |
-| **Libs** | ✅ **100%** | 30 .a archives — all library ports complete |
-| **Tests** | ⚠️ **66%** | 116 files, ~573 assertions, **154/0/0 suite** |
-| **Build/doc** | ✅ **95%** | Docker, CI, cross-compile, man page, Doxygen |
-| **Error types** | ✅ **100%** | K01-K20: 58 error codes |
-| **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
-| **Upstream** | ✅ **Synced** | 183 commits merged — 0 behind origin/main |
+## Current State
+| Metric | Value |
+|--------|-------|
+| Suite | 154/0/0 (117 tests, ~573 assertions) |
+| Binary | 9.1MB dynamic ELF |
+| Tools registered | 68 |
+| Gateway platforms | 19 |
+| Plugins .so | 10 |
+| CLI commands | ~148 |
+| Config keys | ~322 |
+| Parity | 32% (161/500) |
+| Upstream | 0 behind, 400 ahead |
+| Bugs found | 16 (6 critical) |
+| C LOC | 75.5K (src) |
 
 ## Priority Queue
 
-### P0 — Hot New Upstream Gaps
-| # | Area | Why Now |
-|---|------|---------|
-| 1 | D75-D79 — computer_use backends (5 new files) | Unblocks key feature — heavily used in Python |
-| 2 | D81-D83 — skill_manager, skill_usage, transcription | Missing tool features |
-| 3 | D84 — SSH environment backend | Environment parity |
+### P0 — Stub Remediation (broken features)
+| # | ID | What | Why Now |
+|---|----|------|---------|
+| 1 | S01-S03 | computer_use real backend | 5 registered tools return errors |
+| 2 | S04-S06 | CDP browser backend | 5/11 browser tools non-functional |
+| 3 | U01-U02 | CI must pass + Docker fix | Gate to merge |
 
-### P1 — Impactful Next Gaps
-| # | Area | Why Now |
-|---|------|---------|
-| 4 | Test coverage (117→~160 test files) | Catch bugs before users do |
-| 5 | B108-B109 — Secrets subsystem (secret_sources/bitwarden) | Credential management depth |
-| 6 | Provider-specific API quirks (7) | Deep provider coverage |
-| 7 | CLI feel (autocomplete, rich formatting, secrets CLI) | User-facing polish |
+### P1 — Test Infrastructure
+| # | ID | What | Why Now |
+|---|----|------|---------|
+| 4 | T01 | Gateway per-platform integration tests | 19 platforms, 0 tests |
+| 5 | T02 | CLI command coverage >80% | Currently ~60% |
+| 6 | T07 | Plugin sandbox loading tests | Security boundary |
+| 7 | T09 | Valgrind/ASan leak detection | Memory safety |
 
-### P2 — Quality + Depth
-| # | Area | Notes |
-|---|------|-------|
-| 8 | O02 Windows build | MSVC/MinGW detection |
-| 9 | CDP browser tools | Unblocked by external CDP server |
-| 10 | J18-J22 — New plugin backends (fal, discord, openviking) | Plugin ecosystem |
+### P1 — Feature Depth
+| # | ID | What | Why Now |
+|---|----|------|---------|
+| 8 | S07 | image_gen real backend (Fal AI) | Plugin produces fake URLs |
+| 9 | S10 | TUI session browser | Placeholder UX |
+| 10 | D75-D79 | computer_use upstream backports | New from Python sync |
 
-## Known Blockers
-- computer_use — macOS-only (cua-driver), stubbed on WSL
-- CDP browser tools — need external CDP server (Camofox/Playwright)
-- Plugin backends needing live API tests
+### P2 — Polish
+| # | ID | What | Why Now |
+|---|----|------|---------|
+| 11 | U04 | ASan CI job | Catch memory bugs |
+| 12 | U05 | Cross-compilation matrix | Portability |
+| 13 | C91-C95 | CLI depth (autocomplete, rich formatting) | UX polish |
+| 14 | T08 | Fuzz testing | Input robustness |
 
-## Notable Bugfix History
-See `vault/bug-bounty.md` for full list (16 bugs).
-- temperature=0.0 silent drop (all 9 providers)
-- response_format UAF — json_object_set then json_free (all 9 providers)
-- NULL stream crash — strncmp before null check (6 providers)
-- Config validation NULL SEGV
-- cron_job_reset_retry(NULL), increment_retry(NULL) SEGV
-- cron_template_instantiate placeholder broken
-- title gen 6th word truncation
-- x_search auth header — literal `***` instead of `%s`
-- Redact heap overflow
-
-## DA Audit History
-- v6 (May 27): 339 gaps, ~60% structural parity
-- v8 (Jun 1): ~220 gaps, ~69% parity
-- v9 (May 23): 447 gaps, 161 closed = ~36% real parity (triple DA source survey)
-- v10 (May 23): Docs overhaul, slermes kill, vault restructure, battleship index
-- v11 (May 23): Upstream sync (183 commits), 468 gaps, 34% parity, battleship v2
+## Key Files
+- **Battleship:** `plans/battleship-v2.md` (full 500-gap roadmap)
+- **DA v11:** `da-audit-v11-500-goals.md` (stub hunt, CI fix, 500 expansion)
+- **State:** `state.md` (binary truth table)
+- **Bugs:** `vault/bug-bounty.md` (16 bugs)

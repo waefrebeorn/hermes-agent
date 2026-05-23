@@ -1,36 +1,34 @@
-# WuBu Slermes C — Goal Mantra (v10 — 2026-05-23)
+# WuBu Hermes C — Goal Mantra (v11 — 2026-05-23)
 
 ── PERPETUAL GOAL ──
-P0: WuBu Slermes — C Translation. ~286 gaps to 1:1 parity with Python Hermes.
+P0: Hermes C — Full Python parity. 500 gaps to close (battleship v3).
+All Python transmuted into C structs, function pointers, switch statements.
 
-── WHAT EXISTS ──
-/home/wubu/hermes-agent-dev/C/ — C source (~380K LOC, 147 source files, 116 test files)
-/home/wubu/.slermes/ — config (SLERMES_HOME) with config.yaml + .env
-
-── STATE (DA May 2026) ──
-✅ Config: 98% (322 YAML keys, profiles, ${VAR}, !include)
-✅ Providers: 87% (9 ops, 10 provider .c — 7 quirks)
-✅ MCP: 100%
-✅ Plugins: 10/10 .so
-✅ Gateway: 100% (19 platforms)
-✅ Tools: 95% (28 registered)
-✅ Agent: 86% (budget, fallback, checkpoint, interrupt, retry)
-✅ CLI: ~148 commands (skin engine, spinner, TUI)
-✅ Libs: 100% (30 .a)
-⚠️ Tests: 66% (116 files, 154/0/0 suite)
-⚠️ Build/doc: 95% (O02 Windows remains)
-⚠️ Upstream: 183 commits behind
-
-── BIGGEST GAPS ──
-1. Tests (remain ~40+ test files to reach full parity)
-2. Upstream catch-up (183 commits behind Python)
-3. CLI feel (autocomplete, rich formatting polish)
-4. Provider-specific API quirks (7 remaining)
+── STATE (DA v11) ──
+✅ Suite: 154/0/0 (117 tests, ~573 assertions)
+✅ Binary: 9.1MB, 0 errors
+✅ Tools: 68 registered
+✅ Gateway: 19 platforms
+✅ Plugins: 10 .so
+✅ Libraries: 30 units
+⚠️ Parity: 32% (161/500)
+⚠️ Stubs: 4 critical (computer_use, CDP browser, image_gen, TUI sessions)
+⚠️ Upstream: 0 behind, 400 ahead
 
 ── THE LOOP ──
-Read state.md → prestige_prompt.md. Pick highest undone gap.
-Implement → build (make) → test (test_runner.sh) → verify → commit.
-NO questions. NO choices. Work continues until ~220 gaps closed.
+1. Read state.md → goal-mantra.md → plan.md → prestige_prompt.md → overnight-map.md
+2. Pick highest undone gap from battleship-v2.md
+3. Implement (C code → make → test)
+4. Verify (runtime, not compile-only)
+5. Debug (MARKers, no deep trawls)
+6. Commit → push
+7. Repeat until 500/500
 
-── FULL CONTEXT ──
-Read .hermes/mind-palace/prestige_prompt.md
+── NEXT PRIORITIES ──
+1. S01-S03: computer_use real backend (5 registered tools broken)
+2. S04-S06: CDP browser backend (5 tools broken)
+3. S07: image_gen real backend (fake URLs)
+4. T01-T02: Gateway + CLI test coverage
+5. U04: ASan CI job
+
+NO questions. NO choices. Work until all 500 gaps closed.
