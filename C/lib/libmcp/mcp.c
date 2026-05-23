@@ -8,6 +8,7 @@
 #include "mcp.h"
 #include "../libjson/json.h"
 #include "../libhttp/http.h"
+#include "../libwebsocket/websocket.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +56,14 @@ typedef struct {
     bool    streaming;         /* SSE stream active */
 } mcp_sse_t;
 
+/* WebSocket transport state */
+typedef struct {
+    char    url[1024];
+    void   *ws;                /* ws_t * handle */
+    char    recv_buf[65536];   /* incoming message buffer */
+    size_t  recv_len;
+} mcp_ws_t;
+
 /* Server instance */
 struct mcp_server {
     char    name[64];
@@ -64,6 +73,7 @@ struct mcp_server {
     mcp_transport_type_t transport_type;
     mcp_stdio_t stdio;
     mcp_sse_t   sse;
+    mcp_ws_t    ws;
 
     /* Stdio config */
     char    command[256];
@@ -270,6 +280,14 @@ static bool transport_send(mcp_server_t *srv, const char *msg) {
         return ok;
     }
 
+    if (srv->transport_type == MCP_TRANSPORT_WEBSOCKET) {
+        if (!srv->ws.ws) {
+            snprintf(srv->last_error, sizeof(srv->last_error), "WebSocket not connected");
+            return false;
+        }
+        return ws_send((ws_t *)srv->ws.ws, WS_OP_TEXT, msg, strlen(msg)) > 0;
+    }
+
     snprintf(srv->last_error, sizeof(srv->last_error), "No transport");
     return false;
 }
@@ -376,6 +394,86 @@ static json_t *transport_read_response(mcp_server_t *srv, const char *request_id
         return NULL;
     }
 
+    if (srv->transport_type == MCP_TRANSPORT_WEBSOCKET) {
+        /* Read WebSocket frames until we find matching id */
+        int max_reads = 100;
+        while (max_reads-- > 0) {
+            /* Check recv buffer for complete JSON messages */
+            while (1) {
+                char *nl = (char *)memchr(srv->ws.recv_buf, '\n', srv->ws.recv_len);
+                if (nl) {
+                    size_t line_len = (size_t)(nl - srv->ws.recv_buf);
+                    srv->ws.recv_buf[line_len] = '\0';
+
+                    char *jerr = NULL;
+                    json_t *result = json_parse(srv->ws.recv_buf, &jerr);
+                    if (jerr) { free(jerr); }
+
+                    /* Shift buffer */
+                    size_t remaining = srv->ws.recv_len - line_len - 1;
+                    if (remaining > 0)
+                        memmove(srv->ws.recv_buf, nl + 1, remaining);
+                    srv->ws.recv_len = remaining;
+
+                    if (result) {
+                        const char *rid = json_get_str(result, "id", "");
+                        if (rid && strcmp(rid, request_id) == 0)
+                            return result;
+
+                        /* C04-C05: Queue incoming server→client requests */
+                        const char *method = json_get_str(result, "method", "");
+                        if (rid && rid[0] && method[0] && srv->incoming_count < MCP_MAX_INCOMING) {
+                            int idx = srv->incoming_count;
+                            snprintf(srv->incoming_ids[idx], sizeof(srv->incoming_ids[0]), "%s", rid);
+                            snprintf(srv->incoming_methods[idx], sizeof(srv->incoming_methods[0]), "%s", method);
+                            json_t *params = json_obj_get(result, "params");
+                            if (params) {
+                                char *pstr = json_serialize(params);
+                                snprintf(srv->incoming_params[idx], sizeof(srv->incoming_params[0]), "%s", pstr);
+                                free(pstr);
+                            } else {
+                                srv->incoming_params[idx][0] = '\0';
+                            }
+                            srv->incoming_count++;
+                        }
+                        json_free(result);
+                    }
+                    continue;
+                }
+
+                /* Need more data — read from WebSocket */
+                ws_frame_t frame;
+                int ret = ws_recv((ws_t *)srv->ws.ws, &frame, timeout_ms / 1000);
+                if (ret <= 0) {
+                    if (ret == 0)
+                        snprintf(srv->last_error, sizeof(srv->last_error),
+                                 "Read timeout (%dms)", timeout_ms);
+                    else
+                        snprintf(srv->last_error, sizeof(srv->last_error),
+                                 "WebSocket read error");
+                    return NULL;
+                }
+
+                if (frame.opcode == WS_OP_TEXT || frame.opcode == WS_OP_BIN) {
+                    size_t space = sizeof(srv->ws.recv_buf) - srv->ws.recv_len - 1;
+                    size_t copy = frame.len < space ? frame.len : space;
+                    memcpy(srv->ws.recv_buf + srv->ws.recv_len, frame.payload, copy);
+                    srv->ws.recv_len += copy;
+                    srv->ws.recv_buf[srv->ws.recv_len] = '\0';
+                } else if (frame.opcode == WS_OP_CLOSE) {
+                    snprintf(srv->last_error, sizeof(srv->last_error),
+                             "WebSocket closed by peer");
+                    ws_frame_free(&frame);
+                    return NULL;
+                }
+                ws_frame_free(&frame);
+            }
+        }
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "No matching response for id %s", request_id);
+        return NULL;
+    }
+
     return NULL;
 }
 
@@ -431,6 +529,12 @@ void mcp_server_set_sse(mcp_server_t *srv, const char *url) {
     if (!srv) return;
     srv->transport_type = MCP_TRANSPORT_SSE;
     if (url) snprintf(srv->sse.url, sizeof(srv->sse.url), "%s", url);
+}
+
+void mcp_server_set_websocket(mcp_server_t *srv, const char *url) {
+    if (!srv) return;
+    srv->transport_type = MCP_TRANSPORT_WEBSOCKET;
+    if (url) snprintf(srv->ws.url, sizeof(srv->ws.url), "%s", url);
 }
 
 void mcp_server_set_env(mcp_server_t *srv, char **env) {
@@ -699,6 +803,72 @@ bool mcp_server_connect(mcp_server_t *srv) {
         return true;
     }
 
+    if (srv->transport_type == MCP_TRANSPORT_WEBSOCKET) {
+        if (!srv->ws.url[0]) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "No URL configured for WebSocket transport");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Connect via WebSocket */
+        srv->ws.ws = ws_connect(srv->ws.url, srv->connect_timeout);
+        if (!srv->ws.ws) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "WebSocket connect failed");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Send initialize request */
+        json_t *init_params = json_object();
+        json_t *client_info = json_object();
+        json_set(client_info, "name", json_string("hermes-c"));
+        json_set(client_info, "version", json_string("0.14.1"));
+        json_set(init_params, "protocolVersion", json_string(MCP_PROTOCOL_VERSION));
+
+        json_t *caps = json_object();
+        if (srv->root_count > 0) {
+            json_t *roots_cap = json_object();
+            json_set(roots_cap, "listChanged", json_bool(false));
+            json_set(caps, "roots", roots_cap);
+        }
+        json_set(init_params, "capabilities", caps);
+        json_set(init_params, "clientInfo", client_info);
+
+        json_t *resp = send_request(srv, "initialize", init_params,
+                                     srv->connect_timeout * 1000);
+        if (!resp) {
+            ws_close((ws_t *)srv->ws.ws);
+            srv->ws.ws = NULL;
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Extract server capabilities */
+        json_t *server_caps = json_obj_get(json_obj_get(resp, "result"), "capabilities");
+        if (server_caps) {
+            srv->caps.supports_tools     = json_obj_get(server_caps, "tools") != NULL;
+            srv->caps.supports_resources = json_obj_get(server_caps, "resources") != NULL;
+            srv->caps.supports_prompts   = json_obj_get(server_caps, "prompts") != NULL;
+            srv->caps.supports_logging   = json_obj_get(server_caps, "logging") != NULL;
+            srv->caps.supports_sampling  = json_obj_get(server_caps, "sampling") != NULL;
+        }
+        json_free(resp);
+
+        /* Send initialized notification */
+        char *notif = build_notification("notifications/initialized", NULL);
+        if (notif) {
+            transport_send(srv, notif);
+            free(notif);
+        }
+
+        srv->initialized = true;
+        srv->status = MCP_STATUS_CONNECTED;
+        srv->reconnect_delay_ms = 1000;
+        return true;
+    }
+
     snprintf(srv->last_error, sizeof(srv->last_error),
              "No transport configured");
     srv->status = MCP_STATUS_FAILED;
@@ -728,6 +898,14 @@ void mcp_server_disconnect(mcp_server_t *srv) {
             srv->sse.http_post_client = NULL;
         }
         srv->sse.streaming = false;
+    }
+
+    if (srv->transport_type == MCP_TRANSPORT_WEBSOCKET) {
+        if (srv->ws.ws) {
+            ws_close((ws_t *)srv->ws.ws);
+            srv->ws.ws = NULL;
+        }
+        srv->ws.recv_len = 0;
     }
 
     srv->initialized = false;

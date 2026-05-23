@@ -11,7 +11,7 @@
 || Tools | 60/92 | 65% | 38 source + 44 lib modules |
 || Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
 || MCP | 4/11 | 36% | libmcp + libmcp_oauth + mcp_serve |
-|| ACP | 2/9 | 22% | Basic JSON-RPC server |
+|| ACP | 5/9 | 56% | tools/list, tools/call, session/delete added |
 || Cron | 3/3 | 100% | Done |
 || TUI | 4/8 | 50% | 2865-line ncurses impl |
 || Plugins | 10/26 | 38% | 10 .so, 16 to port |
@@ -26,6 +26,7 @@
 || **Total** | **~300/500** | **~60%** | **~200 gaps remaining (DA v13)** |
 
 ## Session Log
+- **Session 34 (Jun 1):** Added 3 new ACP protocol methods to `src/acp/server.c`: `tools/list` (enumerate all registered tools), `tools/call` (direct tool invocation by name with JSON args), `session/delete` (remove session + free agent state). ACP protocol methods now total 17 (up from 14). Verified at runtime: 8/8 ACP protocol tests pass (build: 0 errors, test binary passes). Parity updated: ACP sector ~5/9 (~56%) up from 22%. Commit `cc447245b`.
 - **Session 33 (Jun 1):** Added checkpoint persistence to `process.c` — `proc_save_checkpoint()` serializes running process state to `SLERMES_HOME/processes.json` on every state change (start/kill/signal/cleanup). `proc_load_checkpoint()` restores state on first dispatch after restart, enabling crash recovery for background processes across gateway restarts. Suite: 196/0/0. Build: 0 errors. Commit `c97b59474`.
 - **Session 32 (Jun 1):** DA v13 audit — comprehensive parity re-evaluation. All 4 critical stubs verified resolved. Parity revised to ~60% (300/500 gaps). State.md dashboard updated. New `da-audit-v13.md` written.
 - **Session 31 (Jun 1):** Added `submit` action to `process.c` — write + newline (Enter key) for interactive CLI prompts. Process tool now supports 11 actions: start, list, cleanup, poll, kill, wait, log, signal, write, submit, close. Suite: 196/0/0. Build: 0 errors. Commit `d886c966d`.

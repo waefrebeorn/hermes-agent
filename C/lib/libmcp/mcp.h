@@ -151,6 +151,7 @@ typedef enum {
     MCP_TRANSPORT_NONE,
     MCP_TRANSPORT_STDIO,
     MCP_TRANSPORT_SSE,
+    MCP_TRANSPORT_WEBSOCKET,
 } mcp_transport_type_t;
 
 /* Opaque server handle */
@@ -168,6 +169,9 @@ void mcp_server_set_stdio(mcp_server_t *srv, const char *command, char **args);
 
 /* Set SSE transport: connect to URL (P62+) */
 void mcp_server_set_sse(mcp_server_t *srv, const char *url);
+
+/* Set WebSocket transport: connect to ws:// or wss:// URL */
+void mcp_server_set_websocket(mcp_server_t *srv, const char *url);
 
 /* Set optional environment variables for stdio transport (NULL-terminated array) */
 void mcp_server_set_env(mcp_server_t *srv, char **env);
