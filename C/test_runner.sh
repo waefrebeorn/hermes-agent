@@ -138,6 +138,10 @@ run_lib_test "hash" "tests/test_hash.c" "lib/libhash" "$CDIR/lib/libhash/hash.c 
 echo ""; echo "=== UUID Library Tests (J08) ==="
 run_lib_test "uuid" "tests/test_uuid.c" "lib/libuuid" "$CDIR/lib/libuuid/uuid.c $CDIR/lib/libhash/hash.c -lssl -lcrypto"
 
+# Base64 library test (J09 — standalone, no deps)
+echo ""; echo "=== Base64 Library Tests (J09) ==="
+run_lib_test "base64" "tests/test_base64.c" "lib/libbase64" "$CDIR/lib/libbase64/base64.c"
+
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
 run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
