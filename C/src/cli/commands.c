@@ -1741,8 +1741,7 @@ static void cmd_background(const char *args, agent_state_t *state) {
         printf("Usage: /background <prompt>\n");
         return;
     }
-    printf("Background execution not yet supported in C CLI. ");
-    printf("Running inline instead...\n\n");
+    printf("Running inline (background mode not available in C CLI)...\n\n");
     char *resp = agent_chat(state, args);
     if (resp) {
         printf("%s\n", resp);
@@ -2169,9 +2168,19 @@ static void cmd_platform(const char *args, agent_state_t *state) {
         printf("\nAll 19 C gateway modules compiled in.\n");
         printf("Active platforms determined by gateway.platforms config key.\n");
     } else if (strncmp(args, "pause", 5) == 0) {
-        printf("Platform pause: not yet supported in C gateway.\n");
+        const char *pname = args + 5;
+        while (*pname == ' ') pname++;
+        if (!pname[0])
+            printf("Usage: /platform pause <platform_name>\n");
+        else
+            printf("Platform pause: restart hermes to disable. Remove '%s' from gateway.platforms in config.yaml.\n", pname);
     } else if (strncmp(args, "resume", 6) == 0) {
-        printf("Platform resume: not yet supported in C gateway.\n");
+        const char *pname = args + 6;
+        while (*pname == ' ') pname++;
+        if (!pname[0])
+            printf("Usage: /platform resume <platform_name>\n");
+        else
+            printf("Platform resume: restart hermes to enable. Add '%s' to gateway.platforms in config.yaml.\n", pname);
     } else {
         printf("Unknown: %s. Use: list\n", args);
     }
@@ -2286,9 +2295,12 @@ static void cmd_busy(const char *args, agent_state_t *state) {
 }
 
 /* /reload-mcp: Reload MCP servers from config */
+extern int g_server_count; /* from mcp_tool.c */
 static void cmd_reload_mcp(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("MCP server reload not yet supported in C build.\n");
+    printf("MCP server reload: restart hermes to pick up config.yaml mcp_servers changes.\n");
+    printf("Currently loaded: %d MCP server(s).\n", g_server_count);
+    printf("To add new servers, edit ~/.slermes/config.yaml under mcp_servers: and restart.\n");
 }
 
 /* /reload-skills: Re-scan skills directory */

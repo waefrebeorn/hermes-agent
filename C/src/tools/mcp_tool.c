@@ -25,7 +25,7 @@
 #define MAX_DYNAMIC_TOOLS 256
 
 static mcp_server_t *g_servers[MAX_MCP_SERVERS];
-static int g_server_count = 0;
+int g_server_count = 0; /* non-static — accessed by commands.c for /reload-mcp */
 
 /* P63-P64: Per-server auth config (parallel to g_servers array) */
 static mcp_auth_t g_server_auth[MAX_MCP_SERVERS];

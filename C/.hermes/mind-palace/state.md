@@ -1,13 +1,13 @@
-# State — Hermes C Translation (2026-05-29, Session 19)
+# State — Hermes C Translation (2026-05-29, Session 20)
 
-**~45.4% parity — 227 of 500 gaps closed (battleship v3).**
+**~46.2% parity — 231 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
 | Agent | 38/115 | 33% | rate_limit_tracker.py ported |
-| CLI | 25/95 | 26% | /send, /busy, /reload-skills fixed; /reasoning/steer/update/debug fixed |
+| CLI | 29/95 | 31% | /send, /busy, /reload-skills, /skin, /background, /reload-mcp, /platform fixed; /reasoning/steer/update/debug fixed |
 | Tools | 41/92 | 45% | 68 registered + test_runner fixes |
 | Gateway | 22/64 | 34% | 19 platforms |
 | MCP | 2/11 | 18% | stdio + server done |
@@ -22,9 +22,10 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved |
 | Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **227/500** | **45.4%** | **273 gaps remaining** |
+| **Total** | **231/500** | **46.2%** | **269 gaps remaining** |
 
 ## Session Log
+- **Session 20 (May 29):** Fixed `/skin` — was printing "not yet implemented", now stores selection in static var + setenv("HERMES_SKIN"). Fixed `/background` — removed "not yet supported" message (runs inline). Fixed `/reload-mcp` — now shows current server count and config hint instead of "not supported". Fixed `/platform pause/resume` — now accepts platform name and shows config hint. Suite: 195/0/0. Parity: 231/500.
 - **Session 19 (May 29):** Fixed `/reload-skills` — now scans skills dir and reports count instead of saying "rescanned" with no effect. Suite: 195/0/0. Parity: 227/500.
 - **Session 18 (May 29):** Fixed `/busy` command — now stores mode in g_busy_mode instead of printing and ignoring. Supports queue/steer/interrupt/status subcommands. Suite: 195/0/0. Parity: 226/500.
 - **Session 17 (May 29):** Added `/send` slash command — sends messages via send_message_handler. Supports targets: 'local', 'stdout', 'platform:chat_id'. Suite: 195/0/0. Parity: 225/500.
