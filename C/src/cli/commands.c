@@ -2534,10 +2534,63 @@ static void cmd_voice(const char *args, agent_state_t *state) {
 /* /steer: Inject a message after the next tool call */
 static void cmd_steer(const char *args, agent_state_t *state) {
     if (!args || !args[0]) {
-        printf("Usage: /steer <message> — inject message after next tool call\n");
+        printf("Usage: /steer [options] <message>\n");
+        printf("Options:\n");
+        printf("  -u, --user      Inject as user message (default: system)\n");
+        printf("  -a, --assistant Inject as assistant message\n");
+        printf("  -s, --system    Inject as system message\n");
+        printf("  -l, --list      List queued steer messages\n");
         return;
     }
-    printf("Steer message queued: \"%s\"\n", args);
+
+    /* Parse options */
+    message_role_t role = MSG_SYSTEM;
+    const char *msg_start = args;
+
+    if (strncmp(args, "-u ", 3) == 0 || strncmp(args, "--user ", 7) == 0) {
+        role = MSG_USER;
+        msg_start = strchr(args, ' ') + 1;
+    } else if (strncmp(args, "-a ", 3) == 0 || strncmp(args, "--assistant ", 12) == 0) {
+        role = MSG_ASSISTANT;
+        msg_start = strchr(args, ' ') + 1;
+    } else if (strncmp(args, "-s ", 3) == 0 || strncmp(args, "--system ", 9) == 0) {
+        role = MSG_SYSTEM;
+        msg_start = strchr(args, ' ') + 1;
+    } else if (strcmp(args, "-l") == 0 || strcmp(args, "--list") == 0) {
+        if (state->steer_count == 0) {
+            printf("No steer messages queued.\n");
+        } else {
+            printf("Queued steer messages (%d):\n", state->steer_count);
+            for (int i = 0; i < state->steer_count && i < HERMES_MAX_STEERS; i++) {
+                if (state->steer_queue[i][0]) {
+                    const char *r = "system";
+                    if (state->steer_roles[i] == MSG_USER) r = "user";
+                    else if (state->steer_roles[i] == MSG_ASSISTANT) r = "assistant";
+                    printf("  [%d] %s: %s\n", i, r, state->steer_queue[i]);
+                }
+            }
+        }
+        return;
+    }
+
+    if (state->steer_count >= HERMES_MAX_STEERS) {
+        printf("Steer queue full (%d max). Clear with /steer --clear or use existing.\n",
+               HERMES_MAX_STEERS);
+        return;
+    }
+
+    /* Trim leading whitespace from message */
+    while (*msg_start == ' ') msg_start++;
+    if (!*msg_start) {
+        printf("Usage: /steer <message>\n");
+        return;
+    }
+
+    strncpy(state->steer_queue[state->steer_count], msg_start,
+            sizeof(state->steer_queue[0]) - 1);
+    state->steer_roles[state->steer_count] = role;
+    state->steer_count++;
+    printf("Steer message queued: \"%s\"\n", msg_start);
 }
 
 /* /kanban: Kanban board management */
