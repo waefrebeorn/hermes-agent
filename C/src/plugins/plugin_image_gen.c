@@ -1,15 +1,18 @@
 /*
  * plugin_image_gen.c — Image generation plugin (PLUGIN_IMAGE_GEN).
  *
- * Provides image generation via configurable backend providers.
- * Supports prompt-to-image with configurable parameters (size, style, etc).
- * Delegates to external APIs (OpenAI, xAI) via HTTP if configured.
+ * Provides image generation via FAL.ai REST API.
+ * Supports prompt-to-image with configurable aspect ratio.
+ * Uses curl via popen() for HTTP — keeps plugin self-contained.
  *
  * Build:
  *   gcc -O2 -fPIC -shared -I ../../include -I ../../lib/libplugin \
  *       plugin_image_gen.c -o plugin_image_gen.so
+ *
+ * MIT License — WuBu Hermes Project
  */
 
+#define _GNU_SOURCE
 #include "plugin.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +29,7 @@
 #define API_KEY_MAX        256
 #define DEFAULT_SIZE       "1024x1024"
 #define MAX_GENERATIONS    64
+#define FAL_API_URL        "https://fal.run/fal-ai/flux-pro"
 
 /* Generation record */
 typedef struct {
@@ -42,10 +46,10 @@ static int g_history_count = 0;
 static int g_history_wrap = 0;
 
 /* Configured backend */
-static char g_provider[PROVIDER_KEY_MAX] = "openai";
+static char g_provider[PROVIDER_KEY_MAX] = "fal-ai";
 static char g_api_key[API_KEY_MAX] = "";
 static char g_default_size[32] = DEFAULT_SIZE;
-static char g_model[64] = "dall-e-3";
+static char g_model[64] = "flux-pro";
 
 /* ================================================================
  *  State persistence
@@ -133,6 +137,140 @@ static void state_load(void) {
 }
 
 /* ================================================================
+ *  JSON escape helper
+ * ================================================================ */
+
+static char *json_escape(const char *s) {
+    if (!s) return strdup("");
+    size_t cap = strlen(s) * 2 + 2;
+    char *out = (char *)malloc(cap);
+    if (!out) return strdup("");
+    size_t j = 0;
+    for (const char *sp = s; *sp && j < cap - 2; sp++) {
+        if (*sp == '"' || *sp == '\\') { out[j++] = '\\'; out[j++] = *sp; }
+        else if (*sp == '\n') { out[j++] = '\\'; out[j++] = 'n'; }
+        else if (*sp == '\t') { out[j++] = '\\'; out[j++] = 't'; }
+        else if (*sp == '\r') { out[j++] = '\\'; out[j++] = 'r'; }
+        else out[j++] = *sp;
+    }
+    out[j] = '\0';
+    return out;
+}
+
+/* ================================================================
+ *  FAL.ai REST API via curl popen
+ * ================================================================ */
+
+/* Extract a JSON string value by key from a string.
+ * Simple parser — finds "key":"value" patterns. */
+static const char *json_extract_str(const char *json, const char *key,
+                                     char *buf, size_t buf_sz) {
+    buf[0] = '\0';
+    if (!json || !key) return NULL;
+    char search[128];
+    snprintf(search, sizeof(search), "\"%s\"", key);
+    const char *p = strstr(json, search);
+    if (!p) return NULL;
+    p += strlen(search);
+    while (*p && *p != ':') p++;
+    if (*p) p++;
+    while (*p && *p != '"') p++;
+    if (*p) p++;
+    const char *end = strchr(p, '"');
+    if (!end) return NULL;
+    size_t len = (size_t)(end - p);
+    if (len >= buf_sz) len = buf_sz - 1;
+    memcpy(buf, p, len);
+    buf[len] = '\0';
+    return buf;
+}
+
+/* Call FAL.ai API via curl subprocess.
+ * Returns malloc'd response body, or NULL on error. */
+static char *fal_api_call(const char *json_body) {
+    /* Build temp file path for response */
+    char resp_path[256];
+    snprintf(resp_path, sizeof(resp_path),
+             "/tmp/fal_resp_%d_%ld.json", getpid(), (long)time(NULL));
+
+    /* Get API key */
+    const char *api_key = getenv("FAL_API_KEY");
+    if (!api_key || !*api_key)
+        api_key = getenv("SLERMES_FAL_KEY");
+    if (!api_key || !*api_key) {
+        return strdup("{\"error\":\"FAL_API_KEY not set. Get a key at https://fal.ai\"}");
+    }
+
+    /* Escape the JSON body for shell */
+    char *escaped = json_escape(json_body);
+    if (!escaped) return NULL;
+
+    /* Build curl command */
+    char cmd[32768];
+    int n = snprintf(cmd, sizeof(cmd),
+        "curl -s -w '\\n%%{http_code}' -X POST '%s' "
+        "-H 'Content-Type: application/json' "
+        "-H 'Authorization: Key %s' "
+        "-d '%s' > '%s' 2>/dev/null",
+        FAL_API_URL, api_key, escaped, resp_path);
+    free(escaped);
+
+    if (n < 0 || (size_t)n >= sizeof(cmd)) {
+        unlink(resp_path);
+        return strdup("{\"error\":\"command too long\"}");
+    }
+
+    int ret = system(cmd);
+    if (ret != 0) {
+        unlink(resp_path);
+        return strdup("{\"error\":\"curl command failed\"}");
+    }
+
+    /* Read the response + HTTP status code */
+    FILE *f = fopen(resp_path, "r");
+    if (!f) {
+        return strdup("{\"error\":\"failed to read response\"}");
+    }
+
+    /* Read file content */
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *resp_body = NULL;
+    if (fsize > 0 && fsize < 1024 * 1024) {
+        resp_body = (char *)malloc((size_t)fsize + 1);
+        if (resp_body) {
+            size_t nread = fread(resp_body, 1, (size_t)fsize, f);
+            resp_body[nread] = '\0';
+        }
+    }
+    fclose(f);
+    unlink(resp_path);
+
+    if (!resp_body) return strdup("{\"error\":\"empty response\"}");
+
+    /* Parse last line as HTTP status */
+    char *last_newline = strrchr(resp_body, '\n');
+    int http_status = 0;
+    if (last_newline) {
+        http_status = atoi(last_newline + 1);
+        *last_newline = '\0'; /* Trim status line */
+    }
+
+    if (http_status != 200) {
+        char *err = NULL;
+        if (asprintf(&err,
+            "{\"error\":\"FAL API returned HTTP %d: %s\"}",
+            http_status, resp_body) < 0) err = NULL;
+        free(resp_body);
+        return err ? err : strdup("{\"error\":\"OOM\"}");
+    }
+
+    return resp_body;
+}
+
+/* ================================================================
  *  Interface implementation
  * ================================================================ */
 
@@ -145,40 +283,111 @@ static void parse_size(const char *size_str, int *w, int *h) {
     }
 }
 
-/* Generate an image (local simulation — returns placeholder) */
+/* Generate an image via FAL.ai REST API */
 static char *impl_image_gen(const char *prompt, const char *params_json) {
     if (!prompt || prompt[0] == '\0')
         return strdup("{\"error\":\"empty prompt\"}");
 
-    /* Extract size from params */
-    const char *size_str = g_default_size;
+    /* Extract aspect ratio from params, default to 1:1 */
+    const char *ar = "1:1";
+    char ar_buf[16];
     if (params_json) {
-        const char *s = strstr(params_json, "\"size\"");
+        const char *s = strstr(params_json, "\"aspect_ratio\"");
         if (s) {
-            s += 6; while (*s && *s != '"') s++; if (*s) s++;
+            s += 14; while (*s && *s != '"') s++; if (*s) s++;
             const char *end = strchr(s, '"');
             if (end) {
-                static char sz_buf[32];
                 size_t len = (size_t)(end - s);
-                if (len > 0 && len < sizeof(sz_buf)) {
-                    memcpy(sz_buf, s, len);
-                    sz_buf[len] = '\0';
-                    size_str = sz_buf;
+                if (len > 0 && len < sizeof(ar_buf)) {
+                    memcpy(ar_buf, s, len);
+                    ar_buf[len] = '\0';
+                    ar = ar_buf;
                 }
             }
         }
     }
 
-    int w, h;
-    parse_size(size_str, &w, &h);
+    /* Build JSON body for FAL API */
+    char *esc_prompt = json_escape(prompt);
+    if (!esc_prompt) return strdup("{\"error\":\"OOM\"}");
+
+    char body[8192];
+    int b = snprintf(body, sizeof(body),
+        "{\"prompt\":\"%s\",\"aspect_ratio\":\"%s\"}",
+        esc_prompt, ar);
+    free(esc_prompt);
+    if (b < 0 || (size_t)b >= sizeof(body))
+        return strdup("{\"error\":\"prompt too long\"}");
+
+    /* Determine width/height from aspect ratio for history */
+    int w = 1024, h = 1024;
+    if (strcmp(ar, "16:9") == 0) { w = 1024; h = 576; }
+    else if (strcmp(ar, "9:16") == 0) { w = 576; h = 1024; }
+    else if (strcmp(ar, "4:3") == 0) { w = 1024; h = 768; }
+    else if (strcmp(ar, "3:2") == 0) { w = 1024; h = 683; }
+
+    /* Extract size from params for backward compatibility */
+    if (params_json) {
+        const char *s = strstr(params_json, "\"size\"");
+        if (s) {
+            s += 6; while (*s && *s != '"') s++; if (*s) s++;
+            const char *end = strchr(s, '"');
+            if (end && (size_t)(end - s) < 32) {
+                char sz_buf[32];
+                size_t len = (size_t)(end - s);
+                memcpy(sz_buf, s, len);
+                sz_buf[len] = '\0';
+                parse_size(sz_buf, &w, &h);
+            }
+        }
+    }
+
+    /* Call FAL API */
+    char *resp_body = fal_api_call(body);
+    if (!resp_body)
+        return strdup("{\"error\":\"API call failed\"}");
+
+    /* Check for error in response */
+    if (strstr(resp_body, "\"error\"")) {
+        /* Error from FAL — return as-is */
+        return resp_body;
+    }
+
+    /* Extract image URL from response */
+    char url_buf[2048] = "";
+    /* FAL returns: {"images":[{"url":"..."}], ...} */
+    const char *images_start = strstr(resp_body, "\"images\"");
+    if (images_start) {
+        /* Skip to first "url" after images */
+        const char *url_pos = strstr(images_start, "\"url\"");
+        if (url_pos) {
+            url_pos += 5;
+            while (*url_pos && *url_pos != '"') url_pos++;
+            if (*url_pos) url_pos++;
+            const char *url_end = strchr(url_pos, '"');
+            if (url_end) {
+                size_t ulen = (size_t)(url_end - url_pos);
+                if (ulen >= sizeof(url_buf)) ulen = sizeof(url_buf) - 1;
+                memcpy(url_buf, url_pos, ulen);
+                url_buf[ulen] = '\0';
+            }
+        }
+    } else {
+        /* Fallback: try "url" at top level */
+        json_extract_str(resp_body, "url", url_buf, sizeof(url_buf));
+    }
+
+    if (!url_buf[0]) {
+        /* No URL found — return raw response for debugging */
+        free(resp_body);
+        return strdup("{\"error\":\"No image URL in FAL response\"}");
+    }
 
     /* Add to history */
     gen_record_t *rec = &g_history[g_history_count % MAX_GENERATIONS];
     snprintf(rec->prompt, sizeof(rec->prompt), "%s", prompt);
     snprintf(rec->provider, sizeof(rec->provider), "%s", g_provider);
-    snprintf(rec->result_url, sizeof(rec->result_url),
-             "https://api.hermes.ai/image/%ld_%dx%d.png",
-             (long)time(NULL), w, h);
+    snprintf(rec->result_url, sizeof(rec->result_url), "%s", url_buf);
     rec->timestamp = (long)time(NULL);
     rec->width = w;
     rec->height = h;
@@ -187,13 +396,15 @@ static char *impl_image_gen(const char *prompt, const char *params_json) {
 
     state_save();
 
-    /* Return generation result */
-    char buf[2048];
-    snprintf(buf, sizeof(buf),
+    /* Build result */
+    char *result = NULL;
+    asprintf(&result,
         "{\"url\":\"%s\",\"provider\":\"%s\",\"model\":\"%s\","
         "\"width\":%d,\"height\":%d,\"revised_prompt\":\"%s\"}",
-        rec->result_url, g_provider, g_model, w, h, prompt);
-    return strdup(buf);
+        url_buf, g_provider, g_model, w, h, prompt);
+
+    free(resp_body);
+    return result ? result : strdup("{\"error\":\"OOM\"}");
 }
 
 /* ================================================================
@@ -233,7 +444,7 @@ static char *tool_list_generations(const char *args_json) {
         MAX_GENERATIONS, g_provider);
 
     int start = g_history_count <= MAX_GENERATIONS ? 0 :
-                (g_history_count % MAX_GENERATIONS);
+                (g_history_wrap % MAX_GENERATIONS);
     int count = g_history_count < MAX_GENERATIONS ? g_history_count : MAX_GENERATIONS;
     for (int i = 0; i < count; i++) {
         int idx = (start + i) % MAX_GENERATIONS;
@@ -306,7 +517,7 @@ const char *plugin_meta_name(void) {
 }
 
 const char *plugin_meta_version(void) {
-    return "1.0.0";
+    return "2.0.0";
 }
 
 const char *plugin_meta_type(void) {
@@ -314,7 +525,7 @@ const char *plugin_meta_type(void) {
 }
 
 const char *plugin_meta_description(void) {
-    return "Image generation — prompt-to-image with configurable providers, sizes, and history tracking";
+    return "Image generation via FAL.ai REST API — prompt-to-image with real HTTP backend, history tracking";
 }
 
 /* ================================================================
@@ -352,7 +563,9 @@ int plugin_init(void) {
     }
 
     /* Try to read API key from env */
-    const char *key = getenv("OPENAI_API_KEY");
+    const char *key = getenv("FAL_API_KEY");
+    if (!key) key = getenv("SLERMES_FAL_KEY");
+    if (!key) key = getenv("OPENAI_API_KEY");
     if (key) {
         snprintf(g_api_key, sizeof(g_api_key), "%s", key);
     }
