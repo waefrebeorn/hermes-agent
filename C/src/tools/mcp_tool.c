@@ -32,7 +32,18 @@ static mcp_auth_t g_server_auth[MAX_MCP_SERVERS];
 static char g_credential_store_path[HERMES_PATH_MAX] = "";
 
 /* P66: Per-server tool filter config (parallel to g_servers) */
-#define MAX_FILTER_PATTERNS 32
+#define MAX_FILTER_PATTERNS 16
+
+/* Per-server sampling config */
+typedef struct {
+    bool  enabled;
+    char  model[128];         /* override model (empty = use default) */
+    int   max_tokens_cap;     /* max tokens per request (0 = default) */
+    int   timeout_sec;        /* LLM call timeout */
+    int   max_rpm;            /* max requests per minute (0 = unlimited) */
+} mcp_sampling_cfg_t;
+
+static mcp_sampling_cfg_t g_server_sampling[MAX_MCP_SERVERS];
 typedef struct {
     char allow[MAX_FILTER_PATTERNS][128];  /* allowlist patterns */
     int  allow_count;
@@ -75,6 +86,11 @@ static char *mcp_dynamic_handler(const char *args_json, const char *task_id) {
  * ================================================================ */
 
 /* Connect an MCP server via SSE (HTTP/SSE) transport */
+/* Forward declarations */
+static bool mcp_sampling_handler(const char *server_name,
+                                  const mcp_sampling_params_t *params,
+                                  mcp_sampling_content_t *result,
+                                  void *userdata);
 static bool connect_sse_server(const char *name, const char *url, int timeout,
                                 const mcp_root_t *roots, int root_count) {
     if (g_server_count >= MAX_MCP_SERVERS) return false;
@@ -120,10 +136,17 @@ static bool connect_sse_server(const char *name, const char *url, int timeout,
         return false;
     }
 
+    /* Wire sampling callback if enabled */
+    if (g_server_sampling[aidx].enabled) {
+        mcp_server_set_sampling_callback(srv, mcp_sampling_handler,
+                                          &g_server_sampling[aidx]);
+        fprintf(stderr, "MCP: Sampling callback registered for '%s'\\n", name);
+    }
+
     g_servers[g_server_count++] = srv;
     int sidx = g_server_count - 1;
 
-    /* Discover and register tools — same pattern as connect_stdio_server */
+    /* Discover and register tools */
     mcp_tool_t *tools = NULL;
     int count = mcp_server_list_tools(srv, &tools);
     if (count > 0) {
@@ -179,6 +202,135 @@ static bool connect_sse_server(const char *name, const char *url, int timeout,
     return true;
 }
 
+
+/* ================================================================
+ *  MCP Sampling handler
+ * ================================================================ */
+
+/* Sampling callback: called when an MCP server sends sampling/createMessage.
+ * Calls the LLM and returns the response to the server. */
+static bool mcp_sampling_handler(const char *server_name,
+                                  const mcp_sampling_params_t *params,
+                                  mcp_sampling_content_t *result,
+                                  void *userdata) {
+    if (!params) return false;
+    mcp_sampling_cfg_t *cfg = (mcp_sampling_cfg_t *)userdata;
+    if (!cfg || !cfg->enabled) return false;
+
+    /* Build LLM config from sampling params */
+    llm_config_t llm_cfg;
+    memset(&llm_cfg, 0, sizeof(llm_cfg));
+
+    /* Use override model if configured, otherwise use server's hint */
+    if (cfg->model[0]) {
+        snprintf(llm_cfg.model, sizeof(llm_cfg.model), "%s", cfg->model);
+    } else if (params->model_preference[0]) {
+        snprintf(llm_cfg.model, sizeof(llm_cfg.model), "%s", params->model_preference);
+    } else {
+        snprintf(llm_cfg.model, sizeof(llm_cfg.model), "%s", "default");
+    }
+
+    if (cfg->max_tokens_cap > 0)
+        llm_cfg.max_tokens = cfg->max_tokens_cap;
+    else if (params->max_tokens > 0)
+        llm_cfg.max_tokens = params->max_tokens;
+    else
+        llm_cfg.max_tokens = 4096;
+
+    if (params->temperature > 0)
+        llm_cfg.temperature = (float)params->temperature;
+    else
+        llm_cfg.temperature = 1.0f;
+
+    /* Parse messages from JSON array */
+    message_t **msgs = NULL;
+    int msg_count = 0;
+
+    if (params->messages[0]) {
+        char *jerr = NULL;
+        json_t *json_msgs = json_parse(params->messages, &jerr);
+        if (json_msgs) {
+            size_t arr_len = json_len(json_msgs);
+            if (arr_len > 0) {
+                msgs = calloc(arr_len, sizeof(message_t *));
+                for (size_t i = 0; i < arr_len; i++) {
+                    json_t *m = json_get(json_msgs, i);
+                    if (!m) continue;
+                    const char *role_str = json_get_str(m, "role", "user");
+                    const char *content_str = json_get_str(m, "content", "");
+
+                    message_t *msg = calloc(1, sizeof(message_t));
+                    if (strcmp(role_str, "system") == 0)
+                        msg->role = MSG_SYSTEM;
+                    else if (strcmp(role_str, "assistant") == 0)
+                        msg->role = MSG_ASSISTANT;
+                    else
+                        msg->role = MSG_USER;
+                    msg->content = strdup(content_str ? content_str : "");
+                    msgs[msg_count++] = msg;
+                }
+            }
+            json_free(json_msgs);
+        }
+        if (jerr) free(jerr);
+    }
+
+    /* Add system prompt if present */
+    if (params->system_prompt[0]) {
+        message_t **new_msgs = calloc(msg_count + 1, sizeof(message_t *));
+        if (new_msgs) {
+            new_msgs[0] = calloc(1, sizeof(message_t));
+            if (new_msgs[0]) {
+                new_msgs[0]->role = MSG_SYSTEM;
+                new_msgs[0]->content = strdup(params->system_prompt);
+            }
+            for (int i = 0; i < msg_count; i++)
+                new_msgs[i + 1] = msgs[i];
+            free(msgs);
+            msgs = new_msgs;
+            msg_count++;
+        }
+    }
+
+    if (msg_count == 0) {
+        /* No valid messages -- send error */
+        snprintf(result->role, sizeof(result->role), "assistant");
+        snprintf(result->type, sizeof(result->type), "text");
+        snprintf(result->text, sizeof(result->text),
+                 "MCP sampling error: no valid messages");
+        free(msgs);
+        return false;
+    }
+
+    /* Call LLM */
+    llm_response_t *resp = llm_chat_completion(&llm_cfg,
+                                               (const message_t **)msgs,
+                                               msg_count, NULL);
+
+    /* Extract response */
+    snprintf(result->role, sizeof(result->role), "assistant");
+    snprintf(result->type, sizeof(result->type), "text");
+    if (resp && resp->content[0]) {
+        snprintf(result->text, sizeof(result->text), "%s", resp->content);
+    } else {
+        snprintf(result->text, sizeof(result->text),
+                 "MCP sampling: LLM returned empty response");
+    }
+
+    if (resp) llm_response_free(resp);
+
+    /* Free messages */
+    for (int i = 0; i < msg_count; i++) {
+        if (msgs[i]) {
+            free(msgs[i]->content);
+            free(msgs[i]);
+        }
+    }
+    free(msgs);
+
+    return true;
+}
+
 /* Connect an MCP server using Streamable HTTP transport */
 static bool connect_http_server(const char *name, const char *url, int timeout,
                                  const mcp_root_t *roots, int root_count) {
@@ -222,6 +374,13 @@ static bool connect_http_server(const char *name, const char *url, int timeout,
                 name, mcp_server_last_error(srv));
         mcp_server_free(srv);
         return false;
+    }
+
+    /* Wire sampling callback if enabled */
+    if (g_server_sampling[aidx].enabled) {
+        mcp_server_set_sampling_callback(srv, mcp_sampling_handler,
+                                          &g_server_sampling[aidx]);
+        fprintf(stderr, "MCP: Sampling callback registered for '%s'\\n", name);
     }
 
     g_servers[g_server_count++] = srv;
@@ -369,6 +528,13 @@ static bool connect_stdio_server(const char *name, const char *command,
                 name, mcp_server_last_error(srv));
         mcp_server_free(srv);
         return false;
+    }
+
+    /* Wire sampling callback if enabled */
+    if (g_server_sampling[aidx].enabled) {
+        mcp_server_set_sampling_callback(srv, mcp_sampling_handler,
+                                          &g_server_sampling[aidx]);
+        fprintf(stderr, "MCP:   Sampling callback registered for '%s'\n", name);
     }
 
     g_servers[g_server_count++] = srv;
@@ -766,6 +932,36 @@ void mcp_init_all(void) {
                 }
                 fprintf(stderr, "MCP: Filter for '%s' — block %d patterns\n",
                         dynamic_names[si], g_server_filters[aidx].block_count);
+            }
+
+            /* MCP sampling config */
+            memset(&g_server_sampling[aidx], 0, sizeof(mcp_sampling_cfg_t));
+            g_server_sampling[aidx].timeout_sec = 30;
+            {
+                char smp_key[256];
+                snprintf(smp_key, sizeof(smp_key), "mcp_servers.%s.sampling", dynamic_names[si]);
+                g_server_sampling[aidx].enabled = yaml_get_bool(doc, smp_key, false);
+
+                if (g_server_sampling[aidx].enabled) {
+                    char sk[256];
+                    snprintf(sk, sizeof(sk), "%s.model", smp_key);
+                    const char *smp_model = yaml_get_string(doc, sk);
+                    if (smp_model) snprintf(g_server_sampling[aidx].model,
+                                            sizeof(g_server_sampling[aidx].model), "%s", smp_model);
+
+                    snprintf(sk, sizeof(sk), "%s.max_tokens_cap", smp_key);
+                    g_server_sampling[aidx].max_tokens_cap = yaml_get_int(doc, sk, 0);
+
+                    snprintf(sk, sizeof(sk), "%s.timeout", smp_key);
+                    g_server_sampling[aidx].timeout_sec = yaml_get_int(doc, sk, 30);
+
+                    snprintf(sk, sizeof(sk), "%s.max_rpm", smp_key);
+                    g_server_sampling[aidx].max_rpm = yaml_get_int(doc, sk, 0);
+
+                    fprintf(stderr, "MCP: Sampling enabled for '%s' (model=%s)\n",
+                            dynamic_names[si],
+                            g_server_sampling[aidx].model[0] ? g_server_sampling[aidx].model : "default");
+                }
             }
 
             /* P70: Parse root directories config */
