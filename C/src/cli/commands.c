@@ -98,6 +98,10 @@ static void cmd_session_search(const char *args, agent_state_t *state);
 static void cmd_session_export(const char *args, agent_state_t *state);
 static void cmd_logs(const char *args, agent_state_t *state);
 static void cmd_dump(const char *args, agent_state_t *state);
+static void cmd_send(const char *args, agent_state_t *state);
+
+/* Forward declaration for send_message_handler from tools/send_message.c */
+extern char *send_message_handler(const char *args_json, const char *task_id);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -188,6 +192,7 @@ static const command_def_t COMMANDS[] = {
     {"/session-export", NULL, "Export session: /session-export <session_id> [json|markdown]", cmd_session_export},
     {"/logs", NULL, "View agent logs: /logs [errors|gateway] [-n N] [--level LEVEL]", cmd_logs},
     {"/dump", NULL, "Dump system debug info for support context", cmd_dump},
+    {"/send", NULL, "Send a message: /send [target] <message>", cmd_send},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -3240,4 +3245,77 @@ static void cmd_dump(const char *args, agent_state_t *state) {
     }
 
     printf("\n=== End Dump ===\n");
+}
+
+/* /send: Send a message to a platform */
+static void cmd_send(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /send [target] <message>\n");
+        printf("  target: 'local' (save), 'stdout' (print), or 'platform:chat_id' (e.g. telegram:-100123456)\n");
+        printf("  If target omitted, defaults to 'stdout'.\n");
+        return;
+    }
+
+    /* Parse: first word is target if it contains ':' or is 'local'/'stdout' */
+    char target[256];
+    const char *message;
+    target[0] = '\0';
+
+    const char *space = strchr(args, ' ');
+    if (space && (strncmp(args, "local", 5) == 0 || strncmp(args, "stdout", 6) == 0 ||
+                  strchr(args, ':') != NULL)) {
+        /* First word is a target */
+        size_t tlen = (size_t)(space - args);
+        if (tlen >= sizeof(target)) tlen = sizeof(target) - 1;
+        memcpy(target, args, tlen);
+        target[tlen] = '\0';
+        message = space + 1;
+        while (*message == ' ') message++;
+    } else {
+        strcpy(target, "stdout");
+        message = args;
+    }
+
+    /* Build JSON args for send_message_handler */
+    char json_args[8192];
+    char *escaped = malloc(strlen(message) * 2 + 1);
+    if (!escaped) { printf("Error: allocation failed\n"); return; }
+
+    size_t j = 0;
+    for (const char *p = message; *p && j < strlen(message) * 2; p++) {
+        if (*p == '"') { escaped[j++] = '\\'; escaped[j++] = '"'; }
+        else if (*p == '\\') { escaped[j++] = '\\'; escaped[j++] = '\\'; }
+        else if (*p == '\n') { escaped[j++] = '\\'; escaped[j++] = 'n'; }
+        else escaped[j++] = *p;
+    }
+    escaped[j] = '\0';
+
+    snprintf(json_args, sizeof(json_args),
+             "{\"target\":\"%s\",\"message\":\"%s\"}", target, escaped);
+    free(escaped);
+
+    char *result = send_message_handler(json_args, NULL);
+    if (result) {
+        /* Parse result JSON to extract meaningful output */
+        char *err = NULL;
+        json_node_t *r = json_parse(result, &err);
+        if (r) {
+            const char *status = json_object_get_string(r, "status", NULL);
+            const char *error = json_object_get_string(r, "error", NULL);
+            if (error && error[0])
+                printf("Error: %s\n", error);
+            else if (status)
+                printf("Sent: %s\n", status);
+            else
+                printf("Result: %s\n", result);
+            json_free(r);
+        } else {
+            printf("Result: %s\n", result);
+            free(err);
+        }
+        free(result);
+    } else {
+        printf("Error: send_message_handler returned NULL\n");
+    }
 }
