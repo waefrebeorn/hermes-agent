@@ -127,6 +127,20 @@ if gcc -O2 -Wall -Wextra \
 else skip "skill_provenance (compilation failed)"
 fi
 
+echo ""; echo "=== Camofox State Tests (browser_camofox_state) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libbrowser" -I"$CDIR/lib/libuuid" -I"$CDIR/lib/libhash" \
+    "$CDIR/tests/test_camofox_state.c" \
+    "$CDIR/lib/libbrowser/camofox_state.c" \
+    "$CDIR/lib/libuuid/uuid.c" \
+    "$CDIR/lib/libhash/hash.c" \
+    -o /tmp/hermes_test_camofox_state -lssl -lcrypto -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_camofox_state > /dev/null 2>&1; then ok "camofox_state"
+    else fail "camofox_state (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_camofox_state
+else skip "camofox_state (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \

@@ -1,6 +1,6 @@
 # State — Hermes C Translation (2026-05-23, DA v23)
 
-**~39% parity — 195 of 500 gaps closed (battleship v3).**
+**~39% parity — 196 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
@@ -22,9 +22,10 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 9/12 | 75% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T08: fuzz. T09: valgrind+ASan CI |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-||| **Total** | **194/500** | **39%** | **306 gaps remaining** |
+||| **Total** | **196/500** | **39%** | **304 gaps remaining** |
 
 ## Session Log
+- **DA v29 (May 23):** libcamofox_state + test — Camofox browser state helpers (tools/browser_camofox_state.py port). Deterministic UUID5-based user_id and session_key generation. 2 new files (h+c), 19 assertions. Tests: 19/19 ✅. Binary builds clean.
 - **DA v28 (May 23):** libskill_provenance + test — skill write-origin provenance tracking (tools/skill_provenance.py port). 3 new files (h+c+test), 18 assertions. Wired into skill_mgmt.c: skill_manage create checks provenance and marks agent-created skills for curator management. Tests: 18/18 ✅. Binary builds clean.
 - **DA v26 (May 23):** libfal_common + tests — FAL shared utilities (D80). Port of Python tools/fal_common.py. URL normalizer, HTTP status extractor, managed FAL queue client (fal_submit_request). 3 new files, 29 assertions. Tests: 29/29 ✅. Parity: 194/500 (39%).
 - **DA v25 (May 23):** libmcp_oauth + tests — MCP OAuth client + manager (D85+D86). Port of Python tools/mcp_oauth.py + mcp_oauth_manager.py (~1255 lines combined → ~1260 C). Token storage with 0o600 perms, PKCE (SHA256+base64url), callback server, metadata discovery, token exchange/refresh, browser open, per-server manager with mtime disk-watch. 2 new files + header, 58 assertions. Tests: 58/58 ✅. Parity: 193/500 (39%).
