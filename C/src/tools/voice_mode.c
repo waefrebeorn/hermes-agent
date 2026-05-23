@@ -8,6 +8,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "transcribe.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -208,7 +209,52 @@ void registry_init_voice(void) {
     registry_register("voice_speak",
         "Speak the given text using text-to-speech.",
         "{\"type\":\"object\",\"properties\":{"
-        "\"text\":{\"type\":\"string\"}"
-        "},\"required\":[\"text\"]}",
-        voice_speak_handler);
+        "\"text\":{\"type\":\"string\",\"description\":\"Text to speak\"}"
+        "},\"required\":[\"text\"]"
+        "}", voice_speak_handler);
+}
+
+/* ================================================================
+ *  Transcribe Audio tool — standalone transcription via API
+ * ================================================================ */
+
+static char *transcribe_audio_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+
+    json_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *file_path = json_get_str(args, "file_path", NULL);
+    const char *model = json_get_str(args, "model", NULL);
+
+    json_free(args);
+
+    if (!file_path || !*file_path)
+        return strdup("{\"error\":\"Missing file_path\"}");
+
+    char *result = transcribe_audio(file_path, model);
+    if (!result)
+        return strdup("{\"error\":\"Transcription failed\"}");
+
+    return result;
+}
+
+void registry_init_transcribe(void) {
+    registry_register("transcribe_audio",
+        "Transcribe an audio file to text. "
+        "Supports: mp3, wav, m4a, ogg, webm, flac, aac. "
+        "Providers: groq (default), openai, xai. "
+        "Max file size: 25 MB. "
+        "Set provider via model param: \"groq:whisper-large-v3-turbo\" or \"openai:whisper-1\".",
+        "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"file_path\":{\"type\":\"string\","
+            "\"description\":\"Absolute path to audio file\"},"
+          "\"model\":{\"type\":\"string\","
+            "\"description\":\"Provider:model override, e.g. groq:whisper-large-v3-turbo\"}"
+        "},"
+        "\"required\":[\"file_path\"]"
+        "}", transcribe_audio_handler);
 }

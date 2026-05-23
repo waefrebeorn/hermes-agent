@@ -34,6 +34,7 @@ void registry_init_x_search(void);
 void registry_init_browser(void);
 void registry_init_approval(void);
 void registry_init_voice(void);
+void registry_init_transcribe(void);
 void registry_init_image_gen(void);
 void registry_init_video_gen(void);
 void registry_init_homeassistant(void);
@@ -73,6 +74,7 @@ void tools_init_all(void) {
     registry_init_browser();
     registry_init_approval();
     registry_init_voice();
+    registry_init_transcribe();
     registry_init_image_gen();
     registry_init_video_gen();
     registry_init_homeassistant();
