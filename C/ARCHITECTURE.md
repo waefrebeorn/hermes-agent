@@ -2,32 +2,33 @@
 
 ## Overview
 
-Hermes C is a 1:1 C port of the Python [Hermes AI Agent](https://github.com/NousResearch/hermes-agent). It provides the same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — all in portable C with zero Python dependencies.
+Hermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        CLI / Gateway                         │
-│  (interactive shell, Telegram, Discord, Slack, 16+ others)  │
-├──────────────────────┬──────────────────────────────────────┤
-│     Agent Loop       │           Tool System                │
-│  (run_conversation)  │  (terminal, file, web, vision, TTS,  │
-│                      │   delegate, cron, MCP, memory, ...)  │
-├──────────────────────┴──────────────────────────────────────┤
-│                    Provider System                           │
-│  (OpenAI, Anthropic, Google, Azure, Bedrock, DeepSeek,      │
-│   xAI, OpenRouter, Custom + 31 aliases)                     │
-├──────────────────────┬──────────────────────────────────────┤
-│   Config System      │       Plugin System                   │
-│  (YAML + .env,       │  (.so plugins: kanban, honcho,       │
-│   profiles, diff)    │   spotify — 45 more backends planned)│
-├──────────────────────┴──────────────────────────────────────┤
-│                    Library Layer                              │
-│  libjson · libhttp · libyaml · libcrypto · libcron          │
-│  libproc · libdb · libplugin · libskin · libmcp              │
-│  libprotobuf · libdotenv · libtemplate · libtui              │
-│  libwebsocket                                                │
-└──────────────────────────────────────────────────────────────┘
+CLI / Gateway → Agent Loop → LLM Client → 9 Providers → HTTP/JSON
+                    ↓
+             Tool Registry (28 tools)
+                    ↓
+             Plugin Registry (10 .so)
+                    ↓
+             30 Library Archives (.a)
 ```
+
+## Module Overview
+
+| Module | Role | Files | Count |
+|--------|------|-------|-------|
+| **Core Loop** | Agent conversation | `src/agent/agent_loop.c` | 1 |
+| **LLM Client** | Provider abstraction | `src/agent/llm_client.c` | 1 |
+| **Providers** | LLM API implementations | `src/agent/provider_*.c` | 9 + metadata |
+| **CLI** | Interactive shell | `src/cli/*.c` | 9, ~148 commands |
+| **Tools** | Action handlers | `src/tools/*.c` | 37, 28 registered |
+| **Gateway** | Messaging platforms | `src/gateway/` | ~20, 19 platforms |
+| **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
+| **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
+| **Libraries** | Reusable C archives | `lib/*.a` | 30 |
+| **Tests** | Unit tests | `tests/test_*.c` | 116, 154/0/0 |
+| **Config** | YAML/env configuration | `~/.slermes/` | ~322 keys |
 
 ## Core Data Flow
 
@@ -40,124 +41,114 @@ User Input → CLI/Gateway → Agent Loop → LLM Provider → Response
 ```
 
 ### Startup Sequence
-
 1. `main()` parses CLI args, loads config (`~/.slermes/config.yaml` + `.env`)
-2. Provider system initializes (9 built-in providers + 31 aliases)
-3. Plugin system loads `.so` files from `~/.slermes/plugins/`
+2. Provider system initializes (9 built-in providers + 27 metadata aliases)
+3. Plugin system loads `.so` files
 4. Agent loop initializes with session state (SQLite-backed)
 5. Gateway starts polling configured platforms (if enabled)
 6. CLI enters interactive prompt (or runs one-shot command)
 
-## Module Architecture
+## Module Details
 
 ### Config System (`src/cli/config.c`)
-
-- **Structure:** `hermes_config_t` — flat struct with 322+ fields, no nested pointers
-- **Loading:** YAML file → defaults → env overrides (tiered: `HERMES_*` vars > YAML > hardcoded defaults)
-- **Features:** `${VAR:-default}` expansion, `!include` directive, named profiles, diff detection, export/import
-- **Notable:** `secure_parent_dir()` enforces 0700 on `~/.slermes/` at startup
+- **Structure:** `hermes_config_t` — flat struct with ~322 fields
+- **Loading:** YAML file → defaults → env overrides (tiered)
+- **Features:** `${VAR:-default}` expansion, `!include` directive, named profiles, diff detection
+- **Security:** `secure_parent_dir()` enforces 0700 on `~/.slermes/` at startup
 
 ### Provider System (`src/agent/provider_*.c`)
+Each provider implements `provider_ops_t` with 6 operations: build_url, build_headers, build_request_body, parse_response, parse_stream_chunk, free_response.
 
-Each provider implements `provider_ops_t`:
-
-| Operation | Purpose |
-|-----------|---------|
-| `build_url` | Construct API endpoint from base_url + model |
-| `build_headers` | Auth headers (Bearer token, x-api-key, SigV4) |
-| `build_request_body` | JSON request with all LLM params |
-| `parse_response` | Extract content/reasoning/tool_calls from response |
-| `parse_stream_chunk` | Incremental SSE chunk parsing |
-| `free_response` | Release parsed response memory |
-
-All providers share a common interface but implement different API formats:
-
-- **OpenAI-style:** OpenAI, DeepSeek, OpenRouter, xAI, Custom (+ 31 aliases)
-- **Anthropic:** Uses `content[]` blocks with `thinking`/`text`/`tool_use` variants
-- **Google Gemini:** `candidates[] → content → parts[]` with `functionCall`
-- **Azure OpenAI:** OpenAI-compatible with deployment ID routing + API version
-- **AWS Bedrock:** SigV4 auth, Converse API with `inferenceConfig`
+Provider categories:
+- **OpenAI-style:** OpenAI, DeepSeek, OpenRouter, xAI, Custom (+ 27 aliases)
+- **Anthropic:** `content[]` blocks with thinking/text/tool_use variants
+- **Google Gemini:** `candidates[] → content → parts[]` with functionCall
+- **Azure OpenAI:** OpenAI-compatible with deployment ID + API version
+- **AWS Bedrock:** SigV4 auth, Converse API with inferenceConfig
 
 ### Agent Loop (`src/agent/agent_loop.c`)
-
-The core conversation loop in `agent_run_conversation()`:
-
 1. Build message list (system + user/assistant/tool turns)
 2. Select provider (with fallback routing)
-3. Build request body with all LLM params (18 params wired)
+3. Build request body with 18 LLM params wired
 4. Send HTTP request (or stream)
 5. Parse response (content, tool calls, finish reason)
-6. If tool calls → execute each tool → append results → loop
-7. If text response → return to caller
-
-State tracking: session tokens (input/output/reasoning/cache/cost), user/tool turn counters, iteration budget, checkpoint/rollback.
+6. Tool calls → execute each tool → append results → loop
+7. Text response → return to caller
 
 ### Tool System (`src/tools/*.c`)
-
-- **Registry:** `registry_register()` + `registry_get()` — ~28 registered tools
-- **Discovery:** Tools auto-register at init time, filterable by toolset
-- **Execution:** Each tool implements a handler function `(args_json, state) → result_json`
+- **Registry:** 28 registered tools, auto-discovered at init time
+- **Execution:** Each tool implements `handler(args_json, state) → result_json`
 - **Key tools:** terminal, file, web, vision, TTS, delegate, cron, MCP, memory, kanban, skills, process, patch, clarify, exec_code, send_message, session CRUD, browser, image_gen
 
 ### Gateway (`src/gateway/server.c`)
-
 - **Architecture:** Multi-threaded: one poll thread per platform + main dispatch thread
-- **Platforms:** 19 platforms (Telegram, Discord, Slack, Matrix, Signal, WhatsApp, Email, SMS, Feishu, WeCom, DingTalk, QQBot, BlueBubbles, Webhook, HomeAssistant, Mattermost, Weixin, Yuanbao, MS Graph Webhook)
-- **Flow:** Poll → `get_text()`/`get_chat_id()` → `process_update()` → `gateway_agent_chat()` → response → `gateway_send()`
-- **Features:** Per-platform cooldown, exponential reconnect backoff, message dedup (TTL ring buffer), markdown→HTML conversion, MarkdownV2 escaping, message truncation
+- **19 platforms:** Telegram, Discord, Slack, Matrix, Signal, WhatsApp, Email, SMS, Feishu, WeCom, DingTalk, QQBot, BlueBubbles, Webhook, HomeAssistant, Mattermost, Weixin, Yuanbao, MS Graph Webhook
+- **Features:** Per-platform cooldown, exponential reconnect backoff, message dedup (TTL ring buffer), markdown→HTML conversion, message truncation
 
-### Plugin System (`src/plugins/plugin_*.c`, `lib/libplugin/`)
+### Plugin System (`src/plugins/plugin_*.c`)
+- **Interface:** 3 exported symbols per plugin (plugin_metadata, plugin_init, plugin_process)
+- **Lifecycle:** Load .so → resolve symbols → init → process → cleanup
+- **10 plugins:** kanban, honcho, spotify, disk-cleanup, file-memory, achievements, observability, skills, image_gen, google_meet
 
-- **Interface:** 3 exported symbols per plugin (`plugin_metadata`, `plugin_init`, `plugin_process`)
-- **Lifecycle:** Load `.so` → resolve symbols → `plugin_init()` → `plugin_process()` → `plugin_cleanup()`
-- **Current plugins:** kanban (in-memory board CRUD), honcho (in-memory memory store), spotify (Web API via curl popen)
-- **Planned:** 45+ Python plugin backends to port
+### Library Layer (`lib/*/`) — 30 .a Archives
 
-### Library Layer (`lib/*/`)
-
-| Library | Purpose | Dependencies |
-|---------|---------|-------------|
-| libjson | JSON parser + builder (C89) | none |
-| libhttp | Sync HTTP client (wraps libcurl) | libcurl, OpenSSL |
+| Library | Purpose | Deps |
+|---------|---------|------|
+| libjson | JSON parser + builder | none |
+| libjson5 | JSON5 preprocessor (comments, trailing commas) | libjson |
+| libhttp | Sync HTTP client (libcurl wrapper) | libcurl |
 | libyaml | Minimal YAML subset parser | none |
-| libcrypto | HMAC-SHA256, base64, hex | OpenSSL |
+| libcrypto | HMAC-SHA256, base64, hex helpers | OpenSSL |
 | libcron | Cron expression parsing + matching | none |
-| libproc | Subprocess execution (popen wrapper) | POSIX |
-| libdb | SQLite wrapper (session DB) | bundled sqlite3.c |
-| libplugin | Dynamic `.so` loader | dlfcn |
+| libproc | Subprocess execution | POSIX |
+| libdb | SQLite wrapper for session store | sqlite3.c |
+| libplugin | Dynamic .so loader | dlfcn |
 | libskin | ANSI color + theme engine | none |
 | libmcp | Model Context Protocol client | none |
 | libprotobuf | Protobuf varint encode/decode | none |
 | libdotenv | .env file parser | none |
-| libtemplate | Simple string template engine | libjson |
-| libtui | Terminal UI helpers | ncurses (optional) |
+| libtemplate | String template engine | libjson |
+| libtui | Terminal UI helpers | ncurses |
 | libwebsocket | WebSocket client | libcurl |
+| libpath | Path join/resolve/glob | none |
+| libdatetime | ISO-8601, date math, relative time | none |
+| libcsv | CSV parsing | none |
+| libhash | SHA-256/SHA-1/MD5/HMAC | OpenSSL |
+| libuuid | UUID v4/v5 generation | none |
+| libbase64 | RFC 4648 base64/url | none |
+| libhtml | HTML escape/unescape/strip | none |
+| libtextwrap | Text wrap/fill/dedent | none |
+| libglob | Recursive ** glob matching | none |
+| libsignal | Signal handling helpers | POSIX |
+| libenum | X-macro enum-to-string | none |
+| libdifflib | Unified diff, similarity ratio | none |
+| libregex | POSIX regex wrapper | POSIX |
+| libansi | ANSI terminal codes | none |
 
 ## Testing
-
-- **Test framework:** Standalone C test binaries (no framework dependency)
-- **Test runner:** `test_runner.sh` — compiles each test file with gcc, runs it, aggregates results
-- **Coverage:** 64+ test files, ~2,700+ assertions, 99% pass rate
-- **Pattern:** Each test is a standalone `int main(void)` that returns 0 on pass, 1 on fail
-- **Key test areas:** provider response parsing, gateway formatting, config load/validate/env, tool dispatch, plugin lifecycle, error handling, MCP protocol
+- **116 test files, 154/0/0 suite** (all passed, 0 failed, 0 skipped)
+- **Pattern:** Each test is `int main(void)` returning 0 on pass
+- **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
 ## Key Design Decisions
-
-1. **Flat structs, no inheritance** — C has no OOP; `provider_t` embeds `provider_ops_t` function pointer table
-2. **Calloc-based allocation** — All structs calloc'd to ensure zero-initialized; explicit free throughout
-3. **Synchronous I/O** — No async/await; HTTP calls block (thread-per-platform for gateway polling)
-4. **Bundled libraries** — Critical deps vendored under `lib/` for reproducibility; system deps (libcurl, OpenSSL) via pkg-config
-5. **Wl,--unresolved-symbols=ignore-all** — Test binaries use weakly-linked stubs for deps not needed by the test
-6. **No memory pool** — Direct malloc/free; ASan used during development; no leak detection in CI yet
+1. **Flat structs, function pointer tables** — no OOP, provider_t embeds provider_ops_t
+2. **Calloc-based allocation** — zero-initialized structs throughout
+3. **Synchronous I/O** — no async; thread-per-platform for gateway polling
+4. **Bundled libraries** — critical deps under lib/ for reproducibility
+5. **Direct malloc/free** — no memory pool; ASan during development
 
 ## Building
-
 ```bash
-make          # Phase 5: full binary
-make tui      # With ncurses TUI (if lib/libncurses/ exists)
-make test     # Build + run test suite
-make docs     # Doxygen HTML docs
-make plugins  # Build .so plugin files
+make -j$(nproc)         # Full binary
+bash test_runner.sh      # 154 tests
+make tui                 # With ncurses TUI
+make docs                # Doxygen HTML docs
+make plugins             # Build 10 .so plugins
 ```
 
-See `DEPENDENCIES.md` for system package requirements.
+## Current State
+- **Suite:** 154/0/0 — 116 test files
+- **Binary:** 9.2M dynamically linked
+- **Commits:** 392 C-specific
+- **Upstream:** 183 commits behind Python
+- **Parity:** ~36% (see `.hermes/mind-palace/plans/300-gap-roadmap-v1.md`)
