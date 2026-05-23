@@ -346,6 +346,29 @@ char *process_handler(const char *args_json, const char *task_id) {
                     json_object_set(result, "error", json_new_string("Process not running or no stdin"));
                 }
 
+            } else if (strcmp(action, "submit") == 0) {
+                /* Write data + newline to process stdin (for interactive prompts) */
+                const char *data = json_object_get_string(args, "data", "");
+                if (g_procs[slot].stdin_fd >= 0 && g_procs[slot].running) {
+                    /* Write data first */
+                    ssize_t total = 0;
+                    if (strlen(data) > 0) {
+                        ssize_t written = write(g_procs[slot].stdin_fd, data, strlen(data));
+                        if (written > 0) total += written;
+                    }
+                    /* Then write newline (Enter key) */
+                    ssize_t nl = write(g_procs[slot].stdin_fd, "\n", 1);
+                    if (nl > 0) total += nl;
+                    if (total > 0 || (strlen(data) == 0 && nl > 0)) {
+                        json_object_set(result, "written", json_new_number((double)total));
+                        json_object_set(result, "status", json_new_string("submitted"));
+                    } else {
+                        json_object_set(result, "error", json_new_string(strerror(errno)));
+                    }
+                } else {
+                    json_object_set(result, "error", json_new_string("Process not running or no stdin"));
+                }
+
             } else if (strcmp(action, "close") == 0) {
                 /* Close stdin (send EOF) */
                 if (g_procs[slot].stdin_fd >= 0) {
@@ -375,13 +398,13 @@ void registry_init_process(void) {
         "Manage background processes. Actions: start (run command in bg), "
         "list (list all processes), poll (check status), kill (terminate), "
         "wait (block until done), log (get output buffer), signal (send arbitrary signal), "
-        "write (write to stdin), close (close stdin/EOF), "
+        "write (write to stdin), submit (write + newline), close (close stdin/EOF), "
         "cleanup (remove finished processes). "
         "Supports env overrides, per-process timeout, and signal by name/number.",
         "{"
         "\"type\":\"object\","
         "\"properties\":{"
-          "\"action\":{\"type\":\"string\",\"description\":\"start | list | cleanup | poll | kill | wait | log | signal | write | close\"},"
+          "\"action\":{\"type\":\"string\",\"description\":\"start | list | cleanup | poll | kill | wait | log | signal | write | submit | close\"},"
           "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for start)\"},"
           "\"session_id\":{\"type\":\"number\",\"description\":\"Process session ID (required for poll/kill/wait/log/signal/write/close)\"},"
           "\"env\":{\"type\":\"string\",\"description\":\"Environment overrides as 'KEY=VALUE KEY2=VALUE2' (for start)\"},"
