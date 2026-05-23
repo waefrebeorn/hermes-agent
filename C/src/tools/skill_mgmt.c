@@ -598,7 +598,8 @@ static char *action_remove_file(json_node_t *args, const char *skills_dir) {
 /* Main skill_manage handler — routes to action */
 char *skill_manage_handler(const char *args_json, const char *task_id) {
     (void)task_id;
-    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    /* NULL args → default to listing all skills */
+    if (!args_json) args_json = "{}";
 
     char *err = NULL;
     json_node_t *args = json_parse(args_json, &err);
