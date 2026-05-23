@@ -106,6 +106,33 @@ else
     skip "skill_usage (compilation failed)"
 fi
 
+echo ""; echo "=== Skills Sync Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/lib/libskillsync" -I"$CDIR/lib/libhash" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_skills_sync.c" \
+    "$CDIR/lib/libskillsync/skills_sync.c" \
+    "$CDIR/lib/libhash/hash.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_skills_sync > /dev/null 2>&1; then ok "skills_sync (43 tests)"
+    else
+        echo "  Skills sync test output:"
+        /tmp/hermes_test_skills_sync 2>&1 | sed 's/^/    /'
+        fail "skills_sync (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_skills_sync
+else
+    echo "  Skills sync test compilation error:"
+    gcc -O2 -Wall -Wextra -Wno-format-truncation \
+        -I"$CDIR/lib/libskillsync" -I"$CDIR/lib/libhash" -I"$CDIR/lib/libjson" \
+        "$CDIR/tests/test_skills_sync.c" \
+        "$CDIR/lib/libskillsync/skills_sync.c" \
+        "$CDIR/lib/libhash/hash.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "skills_sync (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
