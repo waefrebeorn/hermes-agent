@@ -109,6 +109,51 @@ jobs:
         run: bash test_runner.sh --verbose 2>&1
         working-directory: C/
 
+  valgrind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev valgrind
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+          valgrind --version
+
+      - name: Build Hermes C (debug symbols)
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Valgrind leak check (hermes --help)
+        run: |
+          valgrind --leak-check=full --show-leak-kinds=all \
+            --track-origins=yes --error-exitcode=1 \
+            --errors-for-leak-kinds=all \
+            ./hermes --help 2>&1
+        working-directory: C/
+
+      - name: Valgrind leak check (test binaries)
+        run: |
+          # Run key test binaries under valgrind
+          for test_bin in /tmp/hermes_test_json /tmp/hermes_test_tokenizer /tmp/hermes_test_yaml; do
+            if [ -x "$test_bin" ]; then
+              echo "=== $test_bin ==="
+              valgrind --leak-check=full --show-leak-kinds=all \
+                --error-exitcode=1 --errors-for-leak-kinds=all \
+                "$test_bin" 2>&1 | tail -5
+            fi
+          done
+        working-directory: C/
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 10
