@@ -33,7 +33,7 @@ static const char *SCHEMA = "{"
       "\"pty\":{\"type\":\"boolean\",\"description\":\"Use pseudo-terminal for interactive commands\",\"default\":false},"
       "\"env\":{\"type\":\"string\",\"description\":\"Environment variables in KEY=VALUE KEY2=VALUE2 format\"},"
       "\"workdir\":{\"type\":\"string\",\"description\":\"Working directory for the command\"},"
-      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker\"},"
+      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, ssh\"},"
       "\"docker_image\":{\"type\":\"string\",\"description\":\"Docker image override for backend=docker\"}"
     "},"
     "\"required\":[\"command\"]"
@@ -218,6 +218,54 @@ static char *run_command_pty(const char *command, int timeout_sec) {
     return json_out;
 }
 #endif
+
+
+/* D84: SSH execution backend — run command on a remote host */
+static char *run_command_ssh(const char *command, int timeout_sec) {
+    if (!command) return strdup("{\"error\": \"No command provided\"}");
+
+    /* Read SSH config: tool_config → defaults */
+    const char *ssh_host = tool_config_get("terminal", "ssh_host");
+    const char *ssh_user = tool_config_get("terminal", "ssh_user");
+    int ssh_port = tool_config_get_int("terminal", "ssh_port", 22);
+    const char *ssh_key = tool_config_get("terminal", "ssh_key_path");
+
+    if (!ssh_host || !ssh_host[0])
+        return strdup("{\"error\": \"SSH host not configured\"}");
+    if (!ssh_user || !ssh_user[0])
+        ssh_user = getenv("USER");
+
+    char ssh_cmd[32768];
+    int n = 0;
+    size_t pos = 0;
+    size_t rem = sizeof(ssh_cmd);
+
+    n = snprintf(ssh_cmd + pos, rem,
+        "ssh -o ControlMaster=auto -o ControlPersist=300"
+        " -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
+        " -o BatchMode=yes");
+    if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+
+    if (ssh_port != 22) {
+        n = snprintf(ssh_cmd + pos, rem, " -p %d", ssh_port);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+    }
+
+    if (ssh_key && ssh_key[0]) {
+        n = snprintf(ssh_cmd + pos, rem, " -i \"%s\"", ssh_key);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+    }
+
+    n = snprintf(ssh_cmd + pos, rem, " %s@%s", ssh_user ? ssh_user : "", ssh_host);
+    if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+
+    /* Append command, shell-quoted via bash -c */
+    n = snprintf(ssh_cmd + pos, rem,
+        " \"bash -c '%s'\" 2>&1", command);
+    if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+
+    return run_command(ssh_cmd, timeout_sec);
+}
 
 /* F11: Docker execution backend — run command in a Docker container */
 static char *run_command_docker(const char *command, int timeout_sec,
@@ -511,6 +559,11 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 #else
         return run_command(full_command, timeout);
 #endif
+    }
+
+    /* D84: Route to SSH execution backend if configured */
+    if (backend && strcasecmp(backend, "ssh") == 0) {
+        return run_command_ssh(command, timeout);
     }
 
     /* F11: Route to Docker execution backend if configured */

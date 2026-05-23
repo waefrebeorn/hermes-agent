@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-05-23, DA v11)
+# State — Hermes C Translation (2026-05-23, DA v18)
 
-**~32% parity — 161 of 500 gaps closed (battleship v3).**
+**~36% parity — 178 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
@@ -21,10 +21,11 @@
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
-| CI/CD | 5/10 | 50% | U01-U04, U08 done. U05-U07, U09-U10 remaining |
-| **Total** | **177/500** | **35%** | **323 gaps remaining** |
+| CI/CD | 6/10 | 60% | U01-U04, U08, U09 done. U05-U07, U10 remaining |
+| **Total** | **178/500** | **36%** | **322 gaps remaining** |
 
 ## Session Log
+- **DA v18 (May 23):** U09 — CVE dependency scan (Trivy CI job added to c-build.yml). Suite: 165/0/0.
 - **DA v17 (May 23):** P02 — file_safety (write-deny + read-block path checks, 400-line C module, 26 tests).
 - **DA v16 (May 23):** B120 — markdown_tables (CJK-aware table realignment, 712-line C module, 35 tests).
 - **DA v16 (May 23):** B117 — retry_utils (jittered exponential backoff). B118 — trajectory (scratchpad conversion + JSONL save). B119 — portal_tags (Nous Portal request tags). 3 new agent modules. Suite: 163/0/0.
