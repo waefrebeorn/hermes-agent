@@ -15,6 +15,7 @@
 #include "provider.h"
 #include "plugin.h"
 #include "budget_tracker.h"
+#include "hermes_subdir_hints.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -738,6 +739,9 @@ char *agent_run_conversation(agent_state_t *state,
         if (prefill_msg) context_push(state, prefill_msg);
     }
 
+    /* Initialize subdirectory hint tracker */
+    subdir_hints_init(NULL);
+
     /* Add user message */
     message_t *user_msg = message_new(MSG_USER, user_message);
     if (!user_msg) return strdup("Error: OOM");
@@ -1206,6 +1210,22 @@ retry_done:
         for (int i = 0; i < n_calls; i++) {
             /* G24: Track per-turn tool call count */
             if (state->budget) budget_tracker_increment_tool_call(state->budget);
+
+            /* P177: Subdirectory hint discovery — append context from new dirs */
+            if (works[i].result) {
+                char *hints = subdir_hints_check(works[i].tool_name, works[i].tool_args);
+                if (hints) {
+                    /* Append hints to tool result */
+                    size_t old_len = strlen(works[i].result);
+                    size_t hints_len = strlen(hints);
+                    char *updated = (char *)realloc(works[i].result, old_len + hints_len + 1);
+                    if (updated) {
+                        memcpy(updated + old_len, hints, hints_len + 1);
+                        works[i].result = updated;
+                    }
+                    free(hints);
+                }
+            }
 
             message_t *tool_msg = message_new_tool(
                 works[i].tool_id,

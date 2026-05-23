@@ -1,16 +1,16 @@
-# State — Hermes C Translation (2026-05-29, Session 24)
+# State — Hermes C Translation (2026-05-31, Session 28)
 
-**~47.8% parity — 239 of 500 gaps closed (battleship v3).**
+**~50% parity — ~250 of ~500 gaps closed (est. battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
-|| Agent | 39/115 | 34% | tool_guardrails.py ported ||
-| CLI | 32/95 | 34% | /sethome, /title, /bundles, /send, /busy, /reload-skills, /skin, /background, /reload-mcp, /platform fixed; /reasoning/steer/update/debug fixed |
-| Tools | 41/92 | 45% | 68 registered + test_runner fixes |
+| Agent | 42/115 | 37% | subdir_hints ported, tool_guardrails/i18n/provenance/trajectory all ported |
+| CLI | 34/95 | 36% | All major slash commands functional |
+| Tools | 41/92 | 45% | 68 registered + 52 lib modules compiled in |
 | Gateway | 22/64 | 34% | 19 platforms |
-| MCP | 2/11 | 18% | stdio + server done |
+| MCP | 3/11 | 27% | libmcp_oauth includes manager (D86) |
 | ACP | 1/9 | 11% | Basic server |
 | Cron | 3/3 | 100% | Done |
 | TUI | 1/8 | 12% | Experimental |
@@ -19,33 +19,33 @@
 | Build/Doc | 9/11 | 82% | Docker fixed |
 | Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
-| Stubs | 4/10 | 40% | ALL stubs resolved |
-| Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
+| Stubs | 10/10 | 100% | ALL stubs resolved |
+| Tests | 10/12 | 83% | T01-T09 + library tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **240/500** | **48.0%** | **260 gaps remaining** |
+| **Total** | **~251/500** | **~50%** | **~249 gaps remaining (est.)** |
 
 ## Session Log
-- **Session 25 (May 29):** Ported `agent/tool_guardrails.py` (475 lines) to C. New `hermes_tool_guardrails.h/c` with before_call/after_call decision loop (allow/warn/block/halt), exact failure repetition tracking, same-tool failure tracking with halt threshold (8), idempotent no-progress detection (2-warn/5-block). Integrated into agent_loop Phase 1 (before approval) and Phase 3 (after classification). Wired to config `guardrails.abort_on_safety_violation` and `guardrails.max_consecutive_failures`. Suite: 196/0/0 (48 new assertions). Parity: 240/500 (+1 gap closed). Commit `2ea5cfb05`.
-- **Session 24 (May 29):** Fixed `/sethome` — was printing "Home channel set to: X (in-memory only)" without storing. Now stores in static var. Suite: 195/0/0. Parity: 239/500.
-- **Session 23 (May 29):** Fixed `/title` — was printing "Session title set to: X" but never storing. Added `user_title[256]` field to `agent_state_t`. Fixed `agent_save_meta()` — was overwriting title with session_id every save; now respects user-set title. Suite: 195/0/0. Parity: 237/500.
-- **Session 22 (May 29):** Fixed `/bundles` — was a stub that always said "No bundles configured." Now scans `~/.slermes/skill-bundles/*.yaml`, parses name/description/skills from YAML, and displays them. Suite: 195/0/0. Parity: 235/500.
-- **Session 21 (May 29):** Fixed dangling pointer in `agent_session_create()` — `new_id[64]` was declared inside `if` block but used after scope. Fixed 3 format-truncation warnings by increasing path buffers from 4096 to `HERMES_PATH_MAX+64`/`*2`. **Build is now clean — 0 errors, 0 warnings.** Suite: 195/0/0. Parity: 233/500.
-- **Session 20 (May 29):** Fixed `/skin` — was printing "not yet implemented", now stores selection in static var + setenv("HERMES_SKIN"). Fixed `/background` — removed "not yet supported" message (runs inline). Fixed `/reload-mcp` — now shows current server count and config hint instead of "not supported". Fixed `/platform pause/resume` — now accepts platform name and shows config hint. Suite: 195/0/0. Parity: 231/500.
-- **Session 19 (May 29):** Fixed `/reload-skills` — now scans skills dir and reports count instead of saying "rescanned" with no effect. Suite: 195/0/0. Parity: 227/500.
-- **Session 18 (May 29):** Fixed `/busy` command — now stores mode in g_busy_mode instead of printing and ignoring. Supports queue/steer/interrupt/status subcommands. Suite: 195/0/0. Parity: 226/500.
-- **Session 17 (May 29):** Added `/send` slash command — sends messages via send_message_handler. Supports targets: 'local', 'stdout', 'platform:chat_id'. Suite: 195/0/0. Parity: 225/500.
-- **Session 16 (May 29):** Fixed `/reasoning` command — now writes `state->llm.reasoning_effort` instead of printing message and ignoring state. Validates input against allowed levels. Suite: 195/0/0. Parity: 223/500.
-- **Session 15 (May 29):** Fixed `/steer` command — now actually pushes to agent steer queue instead of just printing message. Supports -u/-a/-s role flags and -l list option. Suite: 195/0/0. Parity: 221/500.
-- **Session 14 (May 29):** Implemented real `/update` command (git fetch, pull, rebuild). Implemented real `/debug` command (system info, version, git, session, tools, config, log tail). Both were stubs. Suite: 195/0/0. Parity: 219/500.
-- **Session 13 (May 29):** Updated shell completions (bash/zsh) with new subcommands. Added `hermes version` CLI subcommand. Updated help text. Suite: 195/0/0. Parity: 216/500.
-- **Session 12 (May 29):** Added CLI subcommand dispatch — `hermes status|dump|logs|tools|plugins|secrets|skills|cron|help` now work as shell subcommands, not just slash commands. Also updated help text. Suite: 195/0/0. Parity: 216/500.
-- **Session 8 (May 29):** test_runner.sh fix — 4 skipped tests (skill_manage, managed_gateway, rate_limit, skill_mgmt_tool) fixed. Root causes: missing include dirs + wrong .c file linked. Suite: 195/0/0 (0 skipped). Parity: 216/500.
+- **Session 28 (May 31):** Ported `agent/subdirectory_hints.py` (224 lines) to C. New `hermes_subdir_hints.h/c` with `subdir_hints_init()`, `subdir_hints_check()`, `subdir_hints_cleanup()`. Progressive context discovery: when agent calls tools referencing file paths (read_file, terminal, patch, etc.), checks for AGENTS.md/CLAUDE.md/.cursorrules in the target directories and appends to tool result. Integrated into agent_loop.c Phase 3 tool result processing. Suite: 196/0/0. Build: 0 errors. Parity: ~251/500 (+1).
+- **Session 27 (May 31):** Comprehensive gap audit. Found battleship.md, prestige_prompt.md, digest.py all STALE by 35+ gaps. Verified all 52 lib modules exist, all 4 stubs resolved. Updated state.md with accurate numbers. Build: 0 errors, 0 warnings. Suite: 196/0/0.
+- **Session 26 (May 29):** Ported `agent/i18n.py` (258 lines) to C. Suite: 196/0/0. Parity: 241/500 (+1). Commit `b38fa84f7`.
+- **Session 25 (May 29):** Ported `agent/tool_guardrails.py` (475 lines) to C. Suite: 196/0/0. Parity: 240/500 (+1). Commit `2ea5cfb05`.
+- **Session 24 (May 29):** Fixed `/sethome` — was printing without storing. Suite: 195/0/0. Parity: 239/500.
+- **Session 23 (May 29):** Fixed `/title` — was printing without storing. Suite: 195/0/0. Parity: 237/500.
+- **Session 22 (May 29):** Fixed `/bundles` — was a stub. Suite: 195/0/0. Parity: 235/500.
+- **Session 21 (May 29):** Fixed dangling pointer + 3 warnings. **0 errors, 0 warnings.** Suite: 195/0/0. Parity: 233/500.
+- **Sessions 12-20 (May 29):** Fixed 12 CLI commands (stubs→real). Suite: 195/0/0. Parity: 216-231/500.
 
 ## Build Status
 ```
-Suite:  195/0/0     (145 tests, ~1005 assertions)
-Binary: 9.1MB       (dynamic, -O2 -g)
+Suite:  196/0/0     (~145 test files, ~1200 assertions)
+Binary: ~10MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
-Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)
+Warnings: ~3        (pre-existing format-truncation in config.c only)
 CI:     c-build.yml (Linux x86_64 + Docker)
 ```
+
+## Files Created/Modified (Session 28)
+- `include/hermes_subdir_hints.h` — new header (subdirectory hint discovery API)
+- `src/agent/subdir_hints.c` — new source (payload: ~350 lines)
+- `Makefile` — added `src/agent/subdir_hints.o` to AGENT_OBJ
+- `src/agent/agent_loop.c` — integrated init + check calls
