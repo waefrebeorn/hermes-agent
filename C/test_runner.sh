@@ -141,6 +141,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "camofox_state (compilation failed)"
 fi
 
+echo ""; echo "=== Env Passthrough Library Tests (env_passthrough) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libenvpassthrough" \
+    "$CDIR/tests/test_env_passthrough.c" \
+    "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
+    -o /tmp/hermes_test_env_passthrough -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_env_passthrough > /dev/null 2>&1; then ok "env_passthrough"
+    else fail "env_passthrough (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_env_passthrough
+else skip "env_passthrough (compilation failed)"
+fi
+
 echo ""; echo "=== xAI HTTP Library Tests (xai_http) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libxai_http" \
