@@ -177,6 +177,20 @@ if gcc -O2 -Wall -Wextra \
 else skip "credential (compilation failed)"
 fi
 
+echo ""; echo "=== Schema Sanitizer Library Tests (schema_sanitizer) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libschemasanitizer" -I"$CDIR/lib/libjson" \
+    -I"$CDIR/include" \
+    "$CDIR/tests/test_schema_sanitizer.c" \
+    "$CDIR/lib/libschemasanitizer/schema_sanitizer.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_schema_sanitizer -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_schema_sanitizer > /dev/null 2>&1; then ok "schema_sanitizer"
+    else fail "schema_sanitizer (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_schema_sanitizer
+else skip "schema_sanitizer (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
