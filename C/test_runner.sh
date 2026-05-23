@@ -103,6 +103,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "fal_common (compilation failed)"
 fi
 
+echo ""; echo "=== Tool Output Limits Tests (tool_output_limits) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libtooloutput" -I"$CDIR/include" \
+    "$CDIR/tests/test_tool_output.c" \
+    "$CDIR/lib/libtooloutput/tool_output.c" \
+    -o /tmp/hermes_test_tool_output -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tool_output > /dev/null 2>&1; then ok "tool_output"
+    else fail "tool_output (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tool_output
+else skip "tool_output (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
