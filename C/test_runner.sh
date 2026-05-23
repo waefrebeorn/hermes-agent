@@ -936,6 +936,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "budget_tracker (compilation failed)"
 fi
 
+# Fallback routing test (needs fallback_routing.c + json lib)
+echo ""; echo "=== Fallback Routing Tests (P83) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_fallback_routing.c" \
+    "$CDIR/src/agent/fallback_routing.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_fallback -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_fallback > /dev/null 2>&1; then ok "fallback_routing (93 tests)"
+    else fail "fallback_routing (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_fallback
+else skip "fallback_routing (compilation failed)"
+fi
+
 # Gateway subsystem test (needs server.c + http + json + cron + plugin libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_gateway.c" \
