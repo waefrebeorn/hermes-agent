@@ -75,6 +75,13 @@ static json_node_t *build_messages_json(const message_t **msgs, size_t count) {
             json_object_set(msg, "tool_calls", tc_arr);
         }
 
+        /* Reasoning content echo-back (B32: DeepSeek/Kimi/MiMo thinking mode)
+         * Some providers (DeepSeek V4, Kimi/coding, Xiaomi MiMo) require
+         * reasoning_content on every assistant message for multi-turn thinking.
+         * Mirror of Python agent/conversation_loop.py reasoning_content copy. */
+        if (msgs[i]->role == MSG_ASSISTANT && msgs[i]->reasoning)
+            json_object_set(msg, "reasoning_content", json_new_string(msgs[i]->reasoning));
+
         json_array_append(arr, msg);
     }
     return arr;
