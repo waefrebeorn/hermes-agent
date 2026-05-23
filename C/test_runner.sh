@@ -141,6 +141,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "camofox_state (compilation failed)"
 fi
 
+echo ""; echo "=== xAI HTTP Library Tests (xai_http) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libxai_http" \
+    "$CDIR/tests/test_xai_http.c" \
+    "$CDIR/lib/libxai_http/xai_http.c" \
+    -o /tmp/hermes_test_xai_http -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_xai_http > /dev/null 2>&1; then ok "xai_http"
+    else fail "xai_http (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_xai_http
+else skip "xai_http (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
