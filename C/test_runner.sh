@@ -78,6 +78,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_observability (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin Skills Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
+    "$CDIR/tests/test_plugin_skills.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_skills -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_skills > /dev/null 2>&1; then ok "plugin_skills (skill management)"
+    else fail "plugin_skills (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_skills
+else skip "plugin_skills (compilation failed)"
+fi
+
 echo ""; echo "=== Plugin Kanban (In-Memory Board) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
