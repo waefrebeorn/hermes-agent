@@ -1,31 +1,26 @@
-# Overnight Map — 2026-05-23 (DA v21)
+# Overnight Map — 2026-05-23 (DA v25)
 
-## Active: 4 library ports done. 189/500 parity.
+## Active: mcp_oauth + mcp_oauth_manager ported. 193/500 parity.
 
-**Suite: 173/0/0** (137 tests, ~895 assertions)
-**Binary: 9.1MB dynamic**
-**~401 commits, 0 behind upstream**
+**Suite: test binary 58/58 ✅, make builds clean**
+**Binary: builds clean (~10MB dynamic)**
+**Commits: `58d71c10b` (D85), `80192742e` (D86) — both pushed to wubu remote**
 
 ## What Was Done (May 23)
-- **libdebug**: Port of Python `tools/debug_helpers.py` — debug session logging.
-  Per-tool DebugSession with env-var activation, call logging, JSON output.
-  3 new files (h+c+test), 24 assertions. Suite: 173/0/0.
-- **libwebsite**: Port of Python `tools/website_policy.py` — website access policy.
-  URL host extraction, fnmatch glob pattern matching, shared blocklist file loading.
-  3 new files (h+c+test), 43 assertions. Suite: 172/0/0.
-- **libosv**: Port of Python `tools/osv_check.py` — OSV malware check for MCP packages.
-  Infers ecosystem (npx→npm, uvx→PyPI), parses package names, queries OSV API.
-  3 new files (h+c+test), 25 assertions. Suite: 171/0/0.
-- **libbinary**: Port of Python `tools/binary_extensions.py` — binary extension detection via sorted array + bsearch.
-  3 new files (h+c+test), 134 assertions. Suite: 170/0/0.
+- **mcp_oauth (D85):** Port of Python `tools/mcp_oauth.py` (648 lines → ~900 C).
+  Token storage (JSON, 0o600 perms, atomic write), PKCE (SHA256+base64url),
+  callback HTTP server, metadata discovery (well-known endpoint),
+  token exchange (authorization_code grant), token refresh (refresh_token grant),
+  browser open (xdg-open/open/gnome-open/kde-open),
+  `build_oauth_auth()` high-level entry point.
+- **mcp_oauth_manager (D86):** Port of Python `tools/mcp_oauth_manager.py` (607 lines → ~300 C).
+  Per-server registry (32 max), mtime-based disk-change detection,
+  `manager_get_token()` (mtime→cached→refresh→full flow),
+  `manager_reauthorize()` (clear+re-auth).
 
 ## P0 Gaps (next session picks first)
-1. **D80**: fal_common.py — Fal shared utilities (~300 lines Python)
-2. **D81**: skill_manager_tool.py — Skill manager tool (931 lines)
-3. **D82**: skill_usage.py — Skill usage tracking + provenance (612 lines)
-4. **D83**: transcription_tools.py — Audio transcription (936 lines)
-5. **D85**: mcp_oauth.py — MCP OAuth client (649 lines)
-6. **D86**: mcp_oauth_manager.py — MCP OAuth manager
-7. **T09**: Memory leak detection (valgrind/asan CI pass)
-8. **S03**: computer_use Wayland fallback (partial — basic impl exists)
-9. **S08-S09**: image_gen local provider + caching
+1. **D80**: fal_common.py — Fal shared utilities (163 lines)
+2. **S03**: computer_use Wayland fallback
+3. **S08-S09**: image_gen local provider + caching
+4. **D75-D79**: computer_use upstream Python backports (already ✅ from earlier)
+5. **MCP sector (F)**: remaining 9 gaps in MCP/transports

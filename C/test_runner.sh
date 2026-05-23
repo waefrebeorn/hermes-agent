@@ -115,6 +115,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "tool_output (compilation failed)"
 fi
 
+echo ""; echo "=== Skill Provenance Tests (skill_provenance) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libskillusage" \
+    "$CDIR/tests/test_skill_provenance.c" \
+    "$CDIR/lib/libskillusage/skill_provenance.c" \
+    -o /tmp/hermes_test_skill_provenance -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_skill_provenance > /dev/null 2>&1; then ok "skill_provenance"
+    else fail "skill_provenance (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_skill_provenance
+else skip "skill_provenance (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \

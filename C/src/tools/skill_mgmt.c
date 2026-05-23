@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include "skill_provenance.h"
+#include "skill_usage.h"
 
 /* ================================================================
  *  Constants
@@ -273,6 +275,15 @@ static char *action_create(json_node_t *args, const char *skills_dir) {
         char sub[MAX_PATH];
         snprintf(sub, sizeof(sub), "%s/%s", skill_dir, ALLOWED_SUBDIRS[i]);
         mkdir(sub, 0755);
+    }
+
+    /* If background review fork, mark skill as agent-created for curator */
+    if (skill_provenance_is_background_review()) {
+        const char *home = getenv("HERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (home) {
+            skill_usage_mark_agent_created(home, name);
+        }
     }
 
     json_node_t *result = json_new_object();
