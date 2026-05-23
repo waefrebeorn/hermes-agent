@@ -19,6 +19,22 @@
 
 #define MAX_PROCESSES 32
 #define PROC_OUTPUT_BUF (64 * 1024)
+#define CHECKPOINT_FILE "processes.json"
+
+/* Checkpoint path buffer (lazily resolved) */
+static char g_checkpoint_path[4096] = {0};
+
+/* Build checkpoint file path from SLERMES_HOME or HOME */
+static const char *checkpoint_path(void) {
+    if (g_checkpoint_path[0] == '\0') {
+        const char *home = getenv("SLERMES_HOME");
+        if (!home || !home[0]) home = getenv("HOME");
+        if (!home || !home[0]) home = ".";
+        snprintf(g_checkpoint_path, sizeof(g_checkpoint_path),
+                 "%s/%s", home, CHECKPOINT_FILE);
+    }
+    return g_checkpoint_path;
+}
 
 typedef struct {
     pid_t   pid;
@@ -201,6 +217,106 @@ static int signal_name_to_number(const char *name) {
     return -1;
 }
 
+/* Save checkpoint: serialize running process state to JSON file */
+static void proc_save_checkpoint(void) {
+    const char *path = checkpoint_path();
+    json_node_t *root = json_new_object();
+    json_node_t *procs = json_new_array();
+    time_t now = time(NULL);
+
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (g_procs[i].pid == 0) continue;
+        json_node_t *p = json_new_object();
+        json_object_set(p, "session_id", json_new_number((double)g_procs[i].session_id));
+        json_object_set(p, "pid", json_new_number((double)g_procs[i].pid));
+        json_object_set(p, "command", json_new_string(g_procs[i].command));
+        json_object_set(p, "running", json_new_bool(g_procs[i].running));
+        json_object_set(p, "exit_code", json_new_number((double)g_procs[i].exit_code));
+        json_object_set(p, "start_time", json_new_number((double)g_procs[i].start_time));
+        json_object_set(p, "timeout_sec", json_new_number((double)g_procs[i].timeout_sec));
+        if (g_procs[i].output && g_procs[i].output_len > 0)
+            json_object_set(p, "output_preview", json_new_string(g_procs[i].output));
+        json_array_append(procs, p);
+    }
+    json_object_set(root, "processes", procs);
+    json_object_set(root, "saved_at", json_new_number((double)now));
+
+    char *json_str = json_serialize(root);
+    if (json_str) {
+        FILE *fp = fopen(path, "w");
+        if (fp) {
+            fputs(json_str, fp);
+            fclose(fp);
+        }
+        free(json_str);
+    }
+    json_free(root);
+}
+
+/* Load checkpoint: restore process state from JSON file, reap dead processes */
+static void proc_load_checkpoint(void) {
+    /* Only load once */
+    static bool loaded = false;
+    if (loaded) return;
+    loaded = true;
+
+    const char *path = checkpoint_path();
+    FILE *fp = fopen(path, "r");
+    if (!fp) return;
+
+    /* Read file */
+    fseek(fp, 0, SEEK_END);
+    long fsize = ftell(fp);
+    if (fsize <= 0) { fclose(fp); return; }
+    rewind(fp);
+    char *content = (char *)malloc((size_t)fsize + 1);
+    if (!content) { fclose(fp); return; }
+    size_t nread = fread(content, 1, (size_t)fsize, fp);
+    fclose(fp);
+    content[nread] = '\0';
+
+    char *err = NULL;
+    json_node_t *root = json_parse(content, &err);
+    free(content);
+    if (!root) { free(err); return; }
+
+    json_node_t *procs = json_obj_get(root, "processes");
+    if (!procs || procs->type != JSON_ARRAY) { json_free(root); return; }
+
+    for (size_t i = 0; i < json_len(procs); i++) {
+        json_node_t *p = json_get(procs, i);
+        if (!p || p->type != JSON_OBJECT) continue;
+
+        int slot = find_free_slot();
+        if (slot < 0) break;
+
+        double sid = json_get_num(p, "session_id", 0);
+        double pid = json_get_num(p, "pid", 0);
+
+        g_procs[slot].session_id = (int)sid;
+        g_procs[slot].pid = (pid_t)pid;
+        g_procs[slot].running = json_get_bool(p, "running", false);
+        g_procs[slot].exit_code = (int)json_get_num(p, "exit_code", -1);
+        g_procs[slot].start_time = (time_t)json_get_num(p, "start_time", 0);
+        g_procs[slot].timeout_sec = (int)json_get_num(p, "timeout_sec", 0);
+        g_procs[slot].stdin_fd = -1; /* stdin pipe lost after restart */
+        g_procs[slot].output = NULL;
+        g_procs[slot].output_len = 0;
+        g_procs[slot].output_cap = 0;
+
+        const char *cmd = json_get_str(p, "command", "");
+        snprintf(g_procs[slot].command, sizeof(g_procs[slot].command), "%s", cmd);
+
+        /* Track highest session ID */
+        if ((int)sid >= g_next_session)
+            g_next_session = (int)sid + 1;
+    }
+
+    /* Reap any processes that have exited since checkpoint was saved */
+    reap_children();
+    json_free(root);
+}
+
 char *process_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -211,6 +327,9 @@ char *process_handler(const char *args_json, const char *task_id) {
 
     const char *action = json_object_get_string(args, "action", "start");
     json_node_t *result = json_new_object();
+
+    /* Load checkpoint on first dispatch */
+    proc_load_checkpoint();
 
     if (strcmp(action, "list") == 0) {
         /* List all managed processes */
@@ -255,6 +374,7 @@ char *process_handler(const char *args_json, const char *task_id) {
         }
         json_object_set(result, "removed", json_new_number((double)removed));
         json_object_set(result, "running", json_new_number((double)kept_running));
+        proc_save_checkpoint();
 
     } else if (strcmp(action, "start") == 0) {
         const char *command = json_object_get_string(args, "command", NULL);
@@ -266,6 +386,7 @@ char *process_handler(const char *args_json, const char *task_id) {
             /* F36: Per-process timeout */
             int timeout_sec = (int)json_object_get_number(args, "timeout", 0);
             proc_start(command, env_str, timeout_sec, result);
+            proc_save_checkpoint();
         }
     } else {
         int session_id = (int)json_object_get_number(args, "session_id", 0);
@@ -292,6 +413,7 @@ char *process_handler(const char *args_json, const char *task_id) {
                 if (g_procs[slot].stdin_fd >= 0) close(g_procs[slot].stdin_fd);
                 g_procs[slot].stdin_fd = -1;
                 json_object_set(result, "status", json_new_string("killed"));
+                proc_save_checkpoint();
 
             } else if (strcmp(action, "wait") == 0) {
                 /* Wait for process to finish with optional timeout */
@@ -329,6 +451,7 @@ char *process_handler(const char *args_json, const char *task_id) {
                     json_object_set(result, "error", json_new_string(buf));
                 } else {
                     proc_signal(slot, signum, result);
+                    proc_save_checkpoint();
                 }
 
             } else if (strcmp(action, "write") == 0) {
