@@ -102,6 +102,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_image_gen (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin Google Meet Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
+    "$CDIR/tests/test_plugin_google_meet.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_google_meet -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_google_meet > /dev/null 2>&1; then ok "plugin_google_meet (Google Meet meetings)"
+    else fail "plugin_google_meet (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_google_meet
+else skip "plugin_google_meet (compilation failed)"
+fi
+
 echo ""; echo "=== Plugin Kanban (In-Memory Board) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
