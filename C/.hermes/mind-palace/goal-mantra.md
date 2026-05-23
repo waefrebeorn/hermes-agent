@@ -1,21 +1,21 @@
 ── PERPETUAL GOAL ──
 
-P0: WuBu Hermes C -- 1:1 Python Parity. ~380 gaps remaining. ~WuBu~ strives for more.
+P0: WuBu Hermes C -- 1:1 Python Parity. ~339 gaps remaining. ~WuBu~ strives for more.
 
-─ Real State (2026-05-24) ─
+─ Real State (2026-05-27) ─
 
-Config: 96%    Providers: 85%    MCP: 100% ✅    Gateway: 100% ✅
+Config: 98%    Providers: 87%    MCP: 100% ✅    Gateway: 100% ✅
 Tools: 95%     Agent: 86%       CLI: 87%         Plugins: 14%
-Tests: 56%     Build/doc: 55%   Error types: 0%
+Tests: 63%     Build/doc: 95%   Error types: 50% ✅  Libs: 38% ✅
 
 ALL P0 GAPS CLOSED ✅ (temp=0.0, response_format+metadata, 8 tool stubs, ACP)
 
 ── BIGGEST GAPS ──
 
 1. Plugin depth: 48/51 backends missing (45 individual, 14%)
-2. Provider-specific APIs: 25 per-provider quirks
-3. Test coverage: 40 gaps (components hard to isolate)
-4. Error types: 0% (foundational)
+2. Provider-specific APIs: ~15 per-provider quirks
+3. Test coverage: 35 gaps (components hard to isolate)
+4. Library ports: 12 Python libs remaining (J06-J17)
 
 ── WORK LOOP ──
 

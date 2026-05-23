@@ -1,27 +1,25 @@
 # Overnight Map — 2026-05-27
 
-## Active Session: O14 Sandbox Escape Detection ✅ CLOSED
+## Active Session: J05 datetime Library ✅ CLOSED
 
-**Build/doc: 90% → 95%** (1 gap remains: O02 Windows build)
-**Suite: 106/0/0** (+1 test file, 14 assertions)
+**Libs: 35% → 38%** (1/12 remaining gaps closed: J05)
+**Suite: 116/0/0** (+1 test file, 59 assertions)
 
 ## What Was Done
 
-- New sandbox_escape.c module: 48 escape patterns across 7 categories
-- Wired into terminal_handler() + exec_code_handler() — blocks escape before subprocess
-- sandbox_escape_check_path() for standalone path scanning
-- sandbox_escape_add_pattern() for custom patterns
-- test_sandbox_escape.c — 14 tests
-- Removed over-broad `&&`/`||`/`${` from default patterns
+- New lib/libdatetime/datetime.h + datetime.c: 20 public functions
+- Full ISO 8601 parsing (T/Z/space/offset/date-only), formatting, relative time, date math
+- tests/test_datetime.c — 59 assertions
+- Wired into Makefile + test_runner.sh
 
-## Remaining Build/doc gap
+## Remaining Libs gaps
 
-- **O02: Windows build support** — MSVC/MinGW detection, _WIN32 ifdefs. Big infra change.
+- 12 Python-equivalent library ports remaining (J06-J17)
 
-## P1 Gap Options (non-build)
+## P1 Gap Options
 
-1. **M09: Slack block formatting tests** — block kit serialization/deserialization
-2. **B33: DeepSeek context caching** — prefix caching API
-3. **H14: JSON output mode** — `--json` CLI flag
-4. **M10: WhatsApp message format tests** — template, interactive button tests
-5. **M32-M44: Per-tool tests** — delegate, vision, TTS, memory, cron, etc.
+1. **J06: libcsv** — CSV parsing (Python csv module) — used for data export
+2. **B34-B36: Remaining provider-specific API quirks** — check which are open
+3. **M32-M44: Per-tool tests** — browser, computer_use, file_batch, homeassistant, image_gen, result_storage, session_crud, session_search, voice_mode, x_search
+4. **Plugin depth** — 48 gaps, still 14%
+5. **O02: Windows build** — last build/doc gap

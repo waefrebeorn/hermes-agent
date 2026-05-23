@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-05-26)
+# State — Hermes C Translation (2026-05-27)
 
-## ~60% toward 1:1 Python parity (~355 gaps remaining)
+## ~62% toward 1:1 Python parity (~339 gaps remaining)
 
 ### Milestone Dashboard
 
@@ -14,15 +14,48 @@
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
-| **Libs** | 14 | 20% | libhttp/libcrypto/libcron ported |
+|| **Libs** | 12 | 38% | libpath + libdatetime ported (J04 + J05)
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 36 | 62% | **62 files, 2,050+ assertions** (103 pass, 0 fail, 0 skip) |
+|| **Tests** | 35 | 63% | **63 files, 2,109+ assertions** (116 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 || **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
 
-**Known bug:** temperature=0.0 — **FIXED ✅**
+### Session 2026-05-27 — libdatetime: C datetime library (J05)
+
+- ✅ **lib/libdatetime/datetime.{h,c}** — New standalone library porting Python's datetime:
+  - `datetime_now()`, `datetime_from_time_t()`, `datetime_from_time_t_utc()` — constructors
+  - `datetime_parse_iso8601()` — full ISO 8601 parsing (T/Z/space/offset/date-only)
+  - `datetime_format()` / `datetime_format_utc()` — strftime wrappers
+  - `datetime_describe()` — relative time description ("just now", "2 hours ago", "yesterday", "3 days ago", future)
+  - `datetime_age_seconds()` / `_minutes()` / `_hours()` / `_days()` — age queries
+  - `datetime_add_days()` / `_hours()` / `_seconds()` — date math
+  - `datetime_is_expired()` — TTL expiry check
+  - `datetime_is_today()` / `_is_yesterday()` / `_same_day()` / `_day_start()` — calendar queries
+  - `datetime_buffer()` — no-alloc ISO 8601 formatting
+- ✅ **tests/test_datetime.c** — 59 assertions covering all 20 public functions + edge cases
+- ✅ **Makefile** — libdatetime.a added to libs target (15 archives)
+- ✅ **test_runner.sh** — datetime test registered
+- ✅ Suite: **116/0/0** (+1 test file, 59 assertions; was 115/0/0)
+- ✅ Libs: **35%→38%** (1/12 remaining gaps closed: J05)
+
+### Session 2026-05-27 — libpath: C path manipulation library (J04)
+
+- ✅ **lib/libpath/path.{h,c}** — New standalone library porting Python pathlib:
+  - `path_join()`, `path_join_n()` — join path components with '/'
+  - `path_basename()`, `path_dirname()` — filename and parent extraction
+  - `path_stem()`, `path_suffix()`, `path_suffixes()` — extension handling
+  - `path_ext_swap()` — replace extension (with/without leading dot)
+  - `path_normalize()` — collapse ".", "..", double slashes
+  - `path_resolve()`, `path_abs()`, `path_is_absolute()` — path resolution
+  - `path_exists()`, `path_is_dir()`, `path_is_file()` — stat queries
+  - `path_glob()`, `path_fnmatch()` — pattern matching
+- ✅ **tests/test_path.c** — 76 assertions covering all 17 public functions + edge cases
+- ✅ **Makefile** — libpath.a static archive added to build + test-libs target
+- ✅ **test_runner.sh** — path test registered
+- ✅ Suite: **114/0/0** (+1 test file, 76 assertions; was 113/0/0)
+- ✅ Libs: **20%→35%** (1/14 gaps closed: J04)
 
 ### Session 2026-05-26 — File permission hardening (O15)
 

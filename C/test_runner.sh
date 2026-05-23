@@ -97,6 +97,10 @@ run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$C
 run_lib_test "path"     "tests/test_path.c"         "lib/libpath"            "$CDIR/lib/libpath/path.c"
 run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I$CDIR/lib/libjson $CDIR/lib/libskin/skin.c $CDIR/lib/libjson/json.c -lm"
 
+# datetime library test (J05 -- standalone, no deps)
+echo ""; echo "=== datetime Library Tests (J05) ==="
+run_lib_test "datetime" "tests/test_datetime.c" "lib/libdatetime" "$CDIR/lib/libdatetime/datetime.c"
+
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
 run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
