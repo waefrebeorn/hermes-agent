@@ -1,9 +1,9 @@
 # Hermes C — Achievement Vault
 
-> **Last updated:** 2026-05-27 (DA v6 verified)
-> **Status:** C translation in progress — ~60% structural parity. Binary runs end-to-end with DeepSeek v4 Flash.
-> **Commit count:** 160 C-specific commits
-> **Suite health:** 116 passing · 0 failing · 0 skipped (80 test files, 2,088 assertions)
+> **Last updated:** 2026-06-01 (DA v9)
+> **Status:** C translation in progress — ~69% structural parity. Binary runs end-to-end with DeepSeek v4 Flash.
+> **Commit count:** 392 C-specific commits
+> **Suite health:** 154 passing · 0 failing · 0 skipped (116 test files, ~573 assertions)
 
 ---
 
@@ -11,123 +11,167 @@
 
 Major subsystem completions, ordered chronologically.
 
-### Language & Runtime Libraries
+### Foundation Libraries (30 .a archives — 100% complete)
 
-| Milestone | Component | Description |
-|-----------|-----------|-------------|
-| **J05** | `datetime` library | C datetime library — ISO-8601 parsing/formatting, relative time ("2 hours ago"), date math, calendar-day queries. 20 public functions, 59 assertions. |
-| **J04** | `path` library | Cross-platform path manipulation — join, normalize, resolve, glob, fnmatch, extension swap. 17 public functions, 76 assertions. |
+| Milestone | Library | Description |
+|-----------|---------|-------------|
+| **J04** | `libpath` | Cross-platform path manipulation — join, normalize, resolve, glob, fnmatch. 17 functions, 76 assertions |
+| **J05** | `libdatetime` | ISO-8601 parsing/formatting, relative time ("2 hours ago"), date math, calendar queries. 20 functions, 59 assertions |
+| **J06** | `libcsv` | CSV parsing — quoted fields, escape sequences, header detection |
+| **J07** | `libhash` | SHA-256/SHA-1/MD5/HMAC hashing. 25 assertions |
+| **J08** | `libuuid` | UUID v4/v5 generation, parsing, validation. 60 assertions |
+| **J09** | `libbase64` | RFC 4648 base64/url-safe encode/decode with padding. 34 assertions |
+| **J10** | `libhtml` | HTML escaping, unescaping, tag stripping |
+| **J11** | `libtextwrap` | Text fill, wrap, dedent, shorten. 35 assertions |
+| **J12** | `libglob` | Recursive ** glob matching. 21 assertions |
+| **J13** | `libsignal` | Signal handling helpers. 9 assertions |
+| **J14** | `libenum` | X-macro enum-to-string helpers. 22 assertions |
+| **J15** | `libdifflib` | Unified diff, simple diff, similarity ratio. 23 assertions |
+| **J16** | `libregex` | POSIX regex wrapper — compile/match/search/replace/extract. 21 assertions |
+| **J17** | `libjson5` | JSON5 preprocessor — comments, trailing commas, single quotes, hex/octal/binary numbers |
+| **J18** | `libwebsocket` | WebSocket client — connect/send/recv/close, WS/HTTP error paths. 14 assertions |
+| **J19** | `libtoml` | TOML v1.0 parser — key-value, tables, dotted keys, all types. 25 assertions |
+| **J20** | `libjson5` | JSON5 parser (separate from preprocessor) |
+| **J22** | `libansi` | ANSI terminal codes — 16 colors, 8 styles, cursor control. 18 assertions |
+| *(plus)* | `libjson`, `libyaml`, `libhttp`, `libcrypto`, `libcron`, `libproc`, `libtui`, `libdb`, `libplugin`, `libskin`, `libtemplate`, `libmcp`, `libprotobuf` |
 
-### Skills & Agent Core
+### Plugin System (10 .so — 100% complete)
 
-| Milestone | Component | Description |
-|-----------|-----------|-------------|
-| **L12** | Skills hub | `browse.sh` integration — skills browser/discovery from the hub |
-| **B11** | Credential pool | Weighted credential selection — thread-safe pool with strategy-based picking |
+| Milestone | Plugin | Description |
+|-----------|--------|-------------|
+| — | `plugin_honcho` | In-memory memory provider |
+| **D07** | `plugin_kanban` | Board with 8 boards × 256 tasks, full CRUD |
+| — | `plugin_spotify` | Real Spotify Web API — play, pause, next, search |
+| **D08** | `plugin_disk_cleanup` | Disk usage, temp cleanup, status |
+| **D09** | `plugin_file_memory` | Persistent JSON-lines file memory |
+| **D10** | `plugin_achievements` | Tiered achievement tracking |
+| **D11** | `plugin_observability` | Metrics & event tracking |
+| **D12** | `plugin_skills` | Skill file scanning & management |
+| **D13** | `plugin_image_gen` | Image generation with history |
+| — | `plugin_google_meet` | Google Meet integration |
 
 ### Provider Integration
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **L04** | xAI retirement | Model retirement detection — graceful handling of deprecated xAI models |
-| **B33** | DeepSeek caching | Context caching TTL header — configurable `x-ds-cache-ttl` per request |
-| **B32** | DeepSeek FIM | Fill-in-the-Middle code completion — `/beta/completions` endpoint with prefix/suffix |
-
-### Communication Channels
-
-| Milestone | Component | Description |
-|-----------|-----------|-------------|
-| **M10** | WhatsApp | Message format tests — template serialization, interactive button tests |
-| **M09** | Slack blocks | Block Kit formatting tests — section, divider, button, accessory serialization |
-| **H14** | JSON output | `--json` CLI flag — structured JSON output mode for scripting |
-
-### Testing & Reliability
-
-| Milestone | Component | Description |
-|-----------|-----------|-------------|
-| **M34** | TTS tool tests | Text-to-speech tool edge case tests |
-| **M33** | Vision tool tests | Vision analyze tool edge case tests |
-| **M41** | `exec_code` test | Code execution tool test — stdout capture, NULL/empty code, exit codes |
+| — | 9 provider handlers | openai, openrouter, deepseek, xai, anthropic, google, azure, bedrock, custom |
+| **B22** | finish_reason tracking | Stream chunk finish_reason extracted from all providers |
+| **B23** | json_mode | Convenience flag: auto-sets response_format to json_object across all providers |
+| **B26-B28** | Anthropic depth | Thinking blocks, cache control, tool format conversion |
+| **B30-B31** | Google depth | top_k, candidate_count, safety_settings, systemInstruction |
 | **M06** | Provider error test | 225 assertions across 9 providers — NULL body, malformed JSON, NULL chunks |
+| **L04** | xAI retirement | Model retirement detection |
+| **L07** | xAI encrypted reasoning | Encrypted content replay across turns |
+| **L03** | xAI web search | Responses API web search dispatch |
+
+### Communication Channels (19 platforms)
+
+| Milestone | Platform | Description |
+|-----------|----------|-------------|
+| — | Telegram, Discord, Slack, Matrix | Long-polling + WebSocket gateways |
+| — | Mattermost, WhatsApp, Email, Signal | Protocol adapters |
+| — | HomeAssistant, SMS, Feishu, WeCom | Specialized platforms |
+| — | DingTalk, QQBot, BlueBubbles, MSGraph Webhook | Asynchronous dispatch |
+| — | Weixin, Yuanbao, Webhook, API Server | Gateway service |
+
+### Cron System (P5)
+
+| Milestone | Component | Description |
+|-----------|-----------|-------------|
+| — | `cron_lib` | Expression parser — special, step, range, comma, names. 51 assertions |
+| — | `cron_tool` | Cron tool handler — action dispatch, schedule validation |
+| **P169** | `cron_sqlite` | Job persistence store — open/close/save/load/delete/update. 48 assertions |
+| **P172-P175** | `cron_extras` | Retry, notification, chain, template. 41 assertions |
+| — | `cron_locking` | PID-file based job locking |
+| — | `scheduler` | Scheduler core |
+| — | `jobs` | Job management wrapper |
 
 ### Security & Architecture
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **O14** | Sandbox escape | 48 escape patterns across 7 categories — path traversal, shell injection, fork bombs, reverse shells |
-| **O13** | TIRITH policy | Policy rule engine — 4 rule types (file_path, network, command, env_var), YAML loading, 15 built-in defaults |
-| **O15** | File permission hardening | 0600/0700 on home dir, config, .env, session DB, vault, cron store |
-| **O12** | Audit log rotation | Auto-rotate logs by max_size, max_files, max_age_days |
+| **O05** | Release automation | Version bump, build, test, tag — `make release [patch|minor|major]` |
+| **O07** | Doxygen API docs | 13 key headers with defgroup tags, `make docs` target |
+| **O08** | ARCHITECTURE.md | Full system diagram: CLI/Gateway → Agent Loop → Providers |
+| **O09** | SECURITY.md | Disclosure policy, credential protection, sandboxing docs |
+| **O10** | CHANGELOG.md | Full changelog from v0.1.0 through v0.14.1 |
+| **O11** | Vault encryption test | 37 assertions: key lifecycle, persistence, credential CRUD |
+| **O12** | Audit log rotation | Auto-rotate by size/files/age |
+| **O13** | TIRITH policy | 4 rule types, 15 built-in defaults, YAML loading |
+| **O14** | Sandbox escape | 48 patterns across 7 categories |
+| **O15** | File permission hardening | 0600/0700 on home dir, config, .env, session DB, vault |
+| — | Error types K01-K20 | Complete typed error hierarchy: 58 error codes |
+| — | Cross-cut (6/6) | Token counting, secure paths, key leakage, vendor keys, local trust |
+
+### CLI
+
+| Milestone | Component | Description |
+|-----------|-----------|-------------|
+| — | ~148 command handlers | Skin engine, spinner, TUI, --json output |
+| — | `test_cli_commands.c` | CLI command dispatch tests |
+| **P21** | `test_cli_paths.c` | SLERMES_HOME resolution, path construction, profile management |
 
 ---
 
 ## 2. Bug Bounties
 
-Significant defects discovered and fixed during the C port.
+### 🔴 Critical (6 bugs)
 
-### 🔴 Critical
+| Bug | Impact | Root Cause | Fix Scale |
+|-----|--------|-----------|-----------|
+| `temperature=0.0` silent drop | All providers ignored greedy decoding | `if (val > 0.0f)` excludes zero | 9 provider files |
+| NULL stream chunk SIGSEGV | 6 providers crash on null chunks | `strncmp(chunk, ...)` before null check | 6 provider files |
+| API error JSON silently dropped | 6 providers return empty response | No error-object check in parse_response | 6 provider files |
+| `response_format` use-after-free | All 9 providers | `json_set + json_free` on same ref | 9 provider files |
+| Redact heap overflow | Buffer overflow on expansion | `strndup` exact-size buffer | redact.c |
+| x_search auth header broken | API key silently ignored | Literal `***` instead of `%s` format | x_search.c |
 
-#### `temperature=0.0` fix
-- **Impact:** All guard conditions used `> 0.0f`, silently dropping `temperature=0.0` (greedy decoding)
-- **Root cause:** `if (val > 0.0f)` excludes zero, but 0.0 is a valid API value
-- **Fix:** Changed to `>= 0.0f` across all 9 provider implementations + `llm_config_t → provider_config_t` path
-- **Lesson:** Every numeric guard with a boundary-zero case must be audited.
+### 🟡 High (8+ bugs)
 
-#### Provider error handling: 6 NULL SIGSEGV bugs
-- **Impact:** 6 providers (openai, openrouter, deepseek, xai, anthropic, custom) crashed on NULL stream chunks
-- **Root cause:** `strncmp(chunk, ...)` before checking `if (!chunk) return NULL`
-- **Fix:** Added null guard before every `strncmp` in `parse_stream_chunk` functions
-- **Scale:** 6 provider files patched
-
-#### 6 API error JSON silently dropped
-- **Impact:** When providers returned `{"error": {...}}`, the error was silently discarded
-- **Root cause:** No error-object check in `parse_response` — returned empty response or "no content"
-- **Fix:** Added `json_get_obj(root, "error")` check in all 6 OpenAI-compat providers + Bedrock
-
-#### `response_format` use-after-free (all 9 providers)
-- **Impact:** `json_object_set` then `json_free` on the same node caused use-after-free
-- **Root cause:** `json_copy` was missing — the freed node was still referenced in the JSON tree
-- **Fix:** Use `json_copy(rf)` before `json_free(rf)` in all 9 provider request builders
-
-### 🟡 High
-
-- **DeepSeek FIM URL building:** `memmove` for double-slash cleanup could skip null terminator
-- **Config validation NULL SEGV:** `hermes_config_validate(NULL, &result)` crashed — fixed with null guard
-- **Redact heap overflow:** `strndup` allocated exact-size buffer, but `***REDACTED***` (15 chars) expansion overflowed it
-- **Google tools functionDeclarations:** `json_set(tools_arr, "functionDeclarations", ...)` on array was a no-op — needed wrapper object + append
+- Azure/Bedrock/Google UAF in metadata + tool_choice — json_object_set then json_free
+- Google tools functionDeclarations — json_set on array was no-op
+- Google trailing slash → //models URL corruption
+- DeepSeek FIM URL building — memmove skip null terminator
+- Config validation NULL SEGV — hermes_config_validate(NULL, &result)
+- Bedrock toolUse input serialized as string `{}` instead of object
+- Secrets `ow` pointer not advanced in passthrough + malformed branches
+- cron_job_reset_retry(NULL) SEGV — strcmp(NULL, ...)
+- cron_job_increment_retry(NULL) SEGV — same pattern
+- cron_template_instantiate placeholder broken — json_get_str(val, NULL, "") on string node
 
 ---
 
-## 3. Subsystem Parity
+## 3. Subsystem Parity (June 2026)
 
-| Subsystem | C Status | Python Reference | Notes |
-|-----------|----------|------------------|-------|
-| **Config** | ✅ 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` | C adds parse-time type validation |
+| Subsystem | C Status | Key Numbers | Notes |
+|-----------|----------|-------------|-------|
+| **Config** | ✅ **98%** | ~322 YAML keys, profiles, `${VAR}`, `!include` | C adds parse-time type validation |
 | **MCP** | ✅ **100%** | Transport, tools, resources, subs, sampling, serve | Full parity |
-| **Gateway** | ✅ **100%** | 19 platforms (C: 19, Python: 18) | C exceeds by 1 (msgraph_webhook) |
-| **Session DB** | ✅ **100%** | SQLite FTS5, CRUD, search, metadata | Full parity |
-| **Tools** | ✅ 95% | 67 ops (C) vs 73 tool files (Python) | 6 CDP/plugin-blocked stubs remaining |
-| **CLI** | ✅ 87% | 74 commands (C) vs 69 (Python) | C has more commands |
-| **Providers** | ✅ 87% | 9 native ops, 27 metadata entries | 7 API quirks remain |
-| **Agent loop** | ✅ 86% | Budget, fallback, retry, checkpoint, interrupt | Async not ported |
+| **Gateway** | ✅ **100%** | 19 platforms (C: 19, Python: ~18) | C exceeds by 1 (msgraph_webhook) |
+| **Plugins** | ✅ **10/10** | 10 .so files built and installed | All plugin backends ported |
+| **Tools** | ✅ **95%** | 28 registered, ~100 handler functions | 6 CDP/plugin-blocked stubs |
+| **CLI** | ✅ **~148 commands** | Skin engine, spinner, TUI, --json | More commands than Python |
+| **Providers** | ✅ **87%** | 9 native ops, 10 provider .c files | 7 API quirks remain |
+| **Agent loop** | ✅ **86%** | Budget, fallback, retry, checkpoint, interrupt | Async not ported |
+| **Libs** | ✅ **100%** | 30 .a archives | All library ports complete |
+| **Tests** | ⚠️ **66%** | 116 files, ~573 assertions, **154/0/0** | Python: 1,140 test files |
+| **Build/doc** | ✅ **95%** | Docker, CI, cross-compile, man page, Doxygen | O02 Windows remains |
+| **Error types** | ✅ **100%** | K01-K20: 58 error codes | Full hierarchy |
 | **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys | Full parity |
-| **Build/doc** | ✅ 95% | Docker, CI, cross-compile, man page, Doxygen, CHANGELOG | O02 Windows remains |
-| **Libs** | ⚠️ 38% | 18 libraries ported | 12 Python lib equivalents remain |
-| **Tests** | ⚠️ 63% | 80 files, 2,088 assertions, 116/0/0 | Python: 1,140 test files, ~17K tests |
-| **Error types** | ⚠️ 50% | K01-K05: 18 error codes | Python: full exception hierarchy |
-| **Plugins** | ❌ 19% | 3 .so (kanban, honcho, spotify) | 13 backends missing |
 
 ### Suite Health
 
-| Metric | C Current |
-|--------|-----------|
-| Passing | 116 |
+| Metric | Value |
+|--------|-------|
+| Passing | **154** |
 | Failing | 0 |
 | Skipped | 0 |
-| Test files | 80 |
-| Assertions | 2,088 |
-| ASan clean | ✅ |
-| Valgrind clean | ✅ |
+| Test files | 116 |
+| Source files | ~147 (non-lib) |
+| Library archives | 30 |
+| Assertions | ~573 (assert() calls) |
+| Git commits | 392 |
+| Binary size | 9.2M dynamically linked |
 
 ---
 
@@ -137,32 +181,32 @@ Significant defects discovered and fixed during the C port.
 |---------|--------|---|
 | **Credentials** | `dict` with string keys | `struct credential` with typed fields, tagged unions |
 | **Skill loading** | `importlib` + `__init__.py` | `dlopen`/`dlsym` with versioned vtable |
-| **Memory** | GC | `arena_t` with explicit reset + reference-counted `rc_string_t` for long-lived strings |
+| **Memory** | GC | `arena_t` with explicit reset |
 | **Provider dispatch** | ABCs + `__subclasses__()` | Function pointer table (`provider_vtable_t`) |
 | **JSON** | `json.dumps(dict)` | Manual tree building with typed append helpers |
 | **HTTP** | `requests` / `httpx` (1 import) | `libcurl` multi-handle with custom callbacks (~3K LOC) |
 | **Config** | `yaml.safe_load()` + attribute access | Generated struct schema with parse-time validation |
+| **Cron** | `croniter` + `schedule` | Complete C implementation: parser, store, scheduler, locking, chaining, templates |
 
 ---
 
 ## 5. The Road Ahead
 
 ### Immediate (P1)
-1. Plugin depth: 13 backends (memory providers, image_gen, video_gen, achievements, observability, etc.)
-2. Library ports: 12 remaining (libcsv, libhash, libuuid, libregex, libbase64, etc.)
-3. Test coverage: +40 test files needed
-4. Provider API quirks: 7 remaining
+1. Test coverage: +40 test files to hit full coverage (116 tracked gaps)
+2. Upstream catch-up: 183 commits behind Python
+3. Provider-specific API quirks: 7 remaining
+4. CLI polish: autocomplete depth, rich formatting
 
 ### In Progress
-- **Windows build** (O02) — MSVC/MinGW detection, `_WIN32` ifdefs
-- **CLI feel** — spinner animation, autocomplete depth, activity feed
-- **Error type hierarchy** — K06-K20 completion
+- **Windows build** (O02) — MSVC/MinGW detection
+- **Untested source files** — 22 source files still untested: cron_cli, jobs, scheduler, cron_locking, ACP server, CLI main, browser, computer_use, discord, homeassistant, image_gen, registry, session_crud, tirith, tool_init, voice_mode
 
 ### Not Yet Scoped
 - **Full TUI** — React Ink equivalent in ncurses
-- **Plugin auto-discovery** — directory scanning for `.so` files
-- **Achievement system** — Python had gamification
+- **Personality system** — Configurable system prompt presets
+- **Upstream feature parity** — CDP auto-launch, async tool dispatch
 
 ---
 
-> *Built commit by commit. 160 C-specific commits, 116/0/0 suite, 0 ASan leaks. The Python original ran Hermes. The C version **is becoming** Hermes — one gap at a time.*
+> *Built commit by commit. 392 C-specific commits, 154/0/0 suite, 30 libraries, 10 plugins, 19 gateway platforms. The Python original ran Hermes. The C version **is** Hermes — one gap at a time.*

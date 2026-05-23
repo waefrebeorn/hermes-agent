@@ -1,47 +1,32 @@
-# Overnight Map — 2026-05-27 (Post-DA v6)
+# Overnight Map — 2026-06-01
 
-## Active: Triple DA Audit + Documentation Sweep ✅
+## Active: Documentation Sweep + DA Audit
 
-**Suite: 116/0/0** (unchanged — all existing tests pass)
-**Readmes updated, essay written, achievements vault created, DA v6 published.**
+**Suite: 154/0/0** (no regression)
+**Binary: 9.2M dynamically linked**
+**392 commits, 183 behind upstream**
 
-## What Was Done
+## What Was Done (June 1)
 
-- **Triple Devil's Advocate v6** — full source-code survey (not inherited from v5)
-  - Claim verification: all counts confirmed from `grep`/`ls`/`wc` on actual files
-  - DA-1: Source survey — 123K LOC, 310 files, 116/0/0, 74 commands, 19 platforms, 9 providers
-  - DA-2: Feel gap analysis — what compiles vs what "feels like Hermes"
-  - DA-3: Triple cross-check vs Python — 14 metrics compared
-- **Root README rewritten** — accurate stats, real parity table, fixed bug claims
-- **Essay written** — `.hermes/vault/translation-essay.md` (~1,300 words)
-- **Achievements vault created** — `.hermes/vault/achievements.md` (milestones, bugs, feats, parity)
-- **Prestige prompt v8** — updated to DA v6 state
-- **State.md updated** — J05 entry + dashboard refresh
-- **Goal-mantra updated** — new percentages
-- **Devil's Advocate v6 published** — plans/devils_advocate_v6.md
+- **P169: test_cron_sqlite.c** — 48 assertions covering open/close/save/load/delete/update/persistence/NULL safety
+- **P172-P175: test_cron_extras.c** — 41 assertions for retry/chain/template/notification
+- **3 bugfixes**: reset_retry(NULL) SEGV, increment_retry(NULL) SEGV, template placeholder replacement broken
+- **Suite: 152→154** (+2)
+- **Full DA documentation sweep**: state.md, goal-mantra.md, prestige_prompt.md, plan.md, overnight-map.md, README.md, vault essay
 
-## Key DA v6 Findings
+## P1 Gap Options (next session)
 
-1. **The "feel" gap is real but not critical** — CLI works, streaming works, all subsystems functional. Missing: animated spinner, autocomplete, rich formatting, plugin auto-discovery, personality presets.
-2. **Plugin gap (19%) is the iceberg** — 13 plugins at 19% coverage. This is the #1 structural gap.
-3. **Config, MCP, Gateway at 95-100%** — these subsystems are genuinely complete.
-4. **C actually exceeds Python** in some counts (74 commands vs 69, 19 platforms vs 18).
-5. **Root README was stale** — claimed 50%, temperature=0.0 bug still open (was fixed months ago).
-
-## P1 Gap Options
-
-1. **J06: libcsv** — CSV parsing (for data export, session dumps)
-2. **J07: libhash** — hashing/shasum (for cache keys, etags)
-3. **J08: libuuid** — UUID generation (for unique identifiers)
-4. **M32: browser tool test** — fill in browser tool coverage
-5. **O02: Windows build** — last build/doc gap
+1. **Cron test coverage** — cron_cli.c, jobs.c, scheduler.c, cron_locking.c (4 untested cron files)
+2. **Tool handler tests** — browser.c, computer_use.c, discord.c, homeassistant.c, image_gen.c, registry.c, session_crud.c, tirith.c, tool_init.c, voice_mode.c (11 untested tool files)
+3. **CLI tests** — cli.c, cli/main.c
+4. **ACP server test** — server.c
 
 ## Data Not to Re-Derive
 
-- DA v6 counts are from actual source grep, not inherited from v5
-- 339 is the structural gap count; ~400+ if counting full test parity
-- Root README is NOW authoritative and matches state.md dashboard
-- The essay and achievements vault are in .hermes/vault/ for posterity
+- Library count: 30 .a files (new: libtoml.a, missing: libncurses is system)
+- Suite: 154/0/0 (2 new from this session: cron_sqlite + cron_extras)
+- All mind-palace files bumped to v9 (June 1)
+- Assertion count: ~573 grep-count, actual functional test count higher
 
 ## Fallback
-If blocked on a task, read the next item from P1 above or write a new plan.
+Read plan.md and pick the next untested source file.

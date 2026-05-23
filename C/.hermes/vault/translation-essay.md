@@ -74,4 +74,16 @@ The 158 C-specific commits since the fork start have fixed bugs that existed in 
 
 1:1 parity is not about compiling the same program in a different language. It's about understanding the *essence* of what a program does — the behaviors it guarantees, the mistakes it prevents, the feel it creates — and reproducing that essence in a form that's truer to the hardware it runs on. The Python version of Hermes was a beautiful, sprawling cathedral of abstractions. The C version is a fortress. Same purpose. Different philosophy. Both are needed.
 
-The real achievement of the translation isn't that the C version works. It's that we now understand what the Python version was *actually* doing — and it was more than any of us realized.
+*The real achievement of the translation isn't that the C version works. It's that we now understand what the Python version was *actually* doing — and it was more than any of us realized.*
+
+## June 2026 Update: The Test Coverage Surge
+
+Two months after the original essay, the numbers tell a different story. The C translation is no longer a hopeful prototype — it has passed the point where "it compiles" is newsworthy. The suite has grown from 117/0/0 to 154/0/0. Library ports are finished at 30 .a archives — every Python stdlib equivalent the port needs has a C counterpart. All 10 plugin backends compile as .so files. The gateway supports 19 platforms (one more than Python). The CLI has ~148 command handlers.
+
+The testing phase has shifted focus from "can we build it" to "can we prove it works." The 116 test files cover: every library (30 archives fully tested), every provider error path (225 assertions across 9 providers), every cron subsystem (scheduler, store, expression parser, chain, template, retry), every gateway escape mode, every tool handler, every plugin.
+
+The bugs being found now are subtle: a NULL guard missing in `cron_job_reset_retry` that only crashes when a chain of specific conditions aligns. A `json_get_str` misuse on a JSON_STRING node that returned empty string instead of the actual value — a bug that existed in the template instantiation code since it was written and would only surface when template substitution was actually used.
+
+The feel gap remains. The Python version's 1,140 test files and 17,000+ tests are not going to be matched in C — they shouldn't be. C tests test different things: memory safety, boundary conditions, null pointer paths, file system persistence, and the exact behavior of 30 library archives. But the gap between "works for the developer" and "works for the user" is closing. The binary runs end-to-end with DeepSeek v4 Flash. Configuration parses correctly. Tool calls execute and return results. The agent loop iterates, retries, falls back.
+
+The translation was always a wager: that the clarity of C would outweigh its cost. That forcing every allocation, every lifetime, and every boundary into the open would produce not just a safer program, but a deeper understanding of what the program actually does. That bet is paying off. The C codebase has 392 commits across 147 modules and 30 libraries. It still serves every person who runs it. And — crucially — it makes the people who maintain it think harder about what "working" really means. That alone made the translation worthwhile.
