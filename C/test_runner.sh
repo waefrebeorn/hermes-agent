@@ -166,6 +166,20 @@ fi
 
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
+# cron sqlite store (needs json + cron_sqlite.c + libplugin includes)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cron_sqlite.c" \
+    "$CDIR/src/cron/cron_sqlite.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libcron/cron.c" \
+    -o /tmp/hermes_test_cron_sqlite -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron_sqlite > /dev/null 2>&1; then ok "cron_sqlite"
+    else fail "cron_sqlite (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cron_sqlite
+else
+    skip "cron_sqlite (compilation failed)"
+fi
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \
