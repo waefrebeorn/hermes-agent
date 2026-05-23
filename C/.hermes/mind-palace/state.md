@@ -7,7 +7,7 @@
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
 | Agent | 30/115 | 26% | Biggest sector |
-| CLI | 13/95 | 14% | Needs depth |
+| CLI | 14/95 | 15% | /secrets command added |
 | Tools | 32/92 | 35% | 68 registered, 4 stubs |
 | Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
 | MCP | 2/11 | 18% | stdio + server done |

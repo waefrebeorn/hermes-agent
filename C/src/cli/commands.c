@@ -64,6 +64,7 @@ static void cmd_toolsets(const char *args, agent_state_t *state);
 static void cmd_skills(const char *args, agent_state_t *state);
 static void cmd_cron(const char *args, agent_state_t *state);
 static void cmd_fast(const char *args, agent_state_t *state);
+static void cmd_secrets(const char *args, agent_state_t *state);
 static void cmd_reload(const char *args, agent_state_t *state);
 static void cmd_rollback(const char *args, agent_state_t *state);
 static void cmd_copy(const char *args, agent_state_t *state);
@@ -148,6 +149,7 @@ static const command_def_t COMMANDS[] = {
     {"/reasoning","/re",  "Manage reasoning effort and display",        cmd_reasoning},
     {"/toolsets",NULL,    "List available toolsets",                    cmd_toolsets},
     {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
+    {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
     {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
     {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
     {"/reload",  NULL,    "Reload .env variables into running session", cmd_reload},
@@ -2493,4 +2495,102 @@ static void cmd_session_export(const char *args, agent_state_t *state) {
     }
 
     json_free(root);
+}
+
+/* /secrets: Manage Bitwarden secrets */
+static void cmd_secrets(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || args[0] == '\0') {
+        printf("Usage: /secrets [list|get <name>|sync|status]\n");
+        printf("  list   - Show available secret references\n");
+        printf("  get    - Resolve and display a single secret\n");
+        printf("  sync   - Force re-fetch from Bitwarden\n");
+        printf("  status - Show Bitwarden integration status\n");
+        return;
+    }
+
+    /* Parse subcommand */
+    char subcmd[256];
+    const char *p = args;
+    while (*p == ' ') p++;
+    int i = 0;
+    while (*p && *p != ' ' && i < (int)sizeof(subcmd) - 1)
+        subcmd[i++] = *p++;
+    subcmd[i] = '\0';
+    while (*p == ' ') p++;
+    const char *param = (*p) ? p : NULL;
+
+    if (strcmp(subcmd, "status") == 0) {
+        const char *token = getenv("BWS_ACCESS_TOKEN");
+        if (!token) token = getenv("SLERMES_BWS_TOKEN");
+        printf("Bitwarden Secrets Manager status:\n");
+        printf("  Access token: %s\n", (token && token[0]) ? "configured" : "NOT SET");
+
+        const char *bsm_cfg = getenv("HERMES_SECRETS_ENABLED");
+        if (!bsm_cfg) bsm_cfg = getenv("SLERMES_SECRETS_ENABLED");
+        printf("  Integration: %s\n",
+               (bsm_cfg && strcmp(bsm_cfg, "false") != 0) ? "enabled" : "disabled");
+
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "which bws 2>/dev/null || echo 'not found'");
+        FILE *fp = popen(cmd, "r");
+        if (fp) {
+            char path[512] = "";
+            if (fgets(path, sizeof(path), fp)) {
+                size_t len = strlen(path);
+                if (len > 0 && path[len-1] == '\n') path[len-1] = '\0';
+                printf("  bws binary: %s\n", path);
+            }
+            pclose(fp);
+        }
+
+    } else if (strcmp(subcmd, "list") == 0) {
+        const char *token = getenv("BWS_ACCESS_TOKEN");
+        if (!token) token = getenv("SLERMES_BWS_TOKEN");
+        if (!token || !*token) {
+            printf("BWS_ACCESS_TOKEN not set.\n");
+            return;
+        }
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+                 "bws secret list 2>/dev/null | "
+                 "jq -r '.[] | \"\\(.key): \\(.id)\"' 2>/dev/null || "
+                 "bws secret list 2>/dev/null");
+        printf("Secrets:\n");
+        fflush(stdout);
+        FILE *fp = popen(cmd, "r");
+        if (fp) {
+            char line[1024];
+            int count = 0;
+            while (fgets(line, sizeof(line), fp)) {
+                printf("  %s", line);
+                count++;
+            }
+            int rc = pclose(fp);
+            if (count == 0)
+                printf("  (none — ensure bws is authenticated)\n");
+            (void)rc;
+        }
+
+    } else if (strcmp(subcmd, "get") == 0 && param) {
+        char ref[512];
+        snprintf(ref, sizeof(ref), "${BSM:%s}", param);
+        char *val = hermes_secrets_resolve(ref);
+        if (val) {
+            printf("%s: %s\n", param, val);
+            free(val);
+        } else {
+            printf("Secret '%s' not found.\n", param);
+        }
+
+    } else if (strcmp(subcmd, "sync") == 0) {
+        printf("Syncing secrets...\n");
+        if (hermes_secrets_init(NULL))
+            printf("Sync complete.\n");
+        else
+            printf("Sync failed.\n");
+
+    } else {
+        printf("Unknown subcommand '%s'. Use: list, get, sync, status\n", subcmd);
+    }
 }
