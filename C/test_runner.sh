@@ -59,6 +59,9 @@ if gcc -O2 -Wall -Wextra \
 else skip "osv (compilation failed)"
 fi
 
+# Error classifier (agent/error_classifier.py port)
+run_lib_test "error_classifier" "tests/test_error_classifier.c" "lib/liberrorclassifier" "$CDIR/lib/liberrorclassifier/error_classifier.c"
+
 echo ""; echo "=== Transcription Library Tests (D83) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libtranscribe" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \

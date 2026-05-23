@@ -1,12 +1,12 @@
-     1|     1|     1|     1|     1|# State — Hermes C Translation (2026-06-01, Session 50)
+     1|     1|     1|     1|     1|# State — Hermes C Translation (2026-06-01, Session 51)
      2|     2|     2|     2|
-     3|     3|     3|     3|**~64% parity — ~320 of ~500 gaps closed.**
+     3|     3|     3|     3|**~64% parity — ~322 of ~500 gaps closed.**
      4|     4|     4|     4|
      5|     5|     5|     5|## Dashboard
      6|     6|     6|     6||| Category | Done | % | Notes |
      7|     7|     7|     7|||----------|------|---|-------|
      8|     8|     8|     8||| Core | 12/16 | 75% | Solid |
-     9|     9|     9|     9||| Agent | 43/115 | 37% | ~25 SDK-specific not portable |
+     9|     9|     9|     9||| Agent | 44/115 | 38% | ~25 SDK-specific not portable |
     10|    10|    10|    10||| CLI | 79/95 | 83% | 79 commands registered |
     11|| Tools | 65/92 | 71% | +fal_common shared lib, refactored image_gen+video_gen |
     12|    12|    12|    12||| Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
@@ -15,7 +15,7 @@
     15|    15|    15|    15||| Cron | 3/3 | 100% | Done |
     16|    16|    16|    16||| TUI | 5/8 | 63% | +session search filtering |
     17|    17|    17|    17||| Plugins | 10/26 | 38% | 10 .so, 16 to port |
-    18|    18|    18|    18||| Config | 4/6 | 67% | 322 keys |
+    18|    18|    18|    18||| Config | 6/6 | 100% | 322 keys, +profile clone/delete |
     19|    19|    19|    19||| Build/Doc | 10/11 | 91% | Docker fixed |
     20|    20|    20|    20||| Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
     21|    21|    21|    21||| Provider | 11/18 | 61% | 9 native + metadata |
@@ -23,9 +23,12 @@
     23|    23|    23|    23||| Tests | 10/12 | 83% | T01-T09 + library tests |
     24|    24|    24|    24||| CI/CD | 10/10 | 100% | All U gaps closed |
     25|    25|    25|    25||| Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-| **Total** | **~320/500** | **~64%** | **~180 gaps remaining** |
+|| **Total** | **~323/500** | **~65%** | **~177 gaps remaining** |
     27|    27|    27|    27|
     28|    28|    28|    28|## Session Log
+- **Session 52 (Jun 7):** Ported `agent/error_classifier.py` (1134L) to C as `lib/liberrorclassifier/`. Full error classification pipeline: pattern-matching for billing/rate_limit/context_overflow/auth/timeout/SSL/disconnect errors, HTTP status code classification (401→FAILOVER_AUTH, 429→FAILOVER_RATE_LIMIT, 503→FAILOVER_OVERLOADED, etc.), 402 disambiguation (transient quota vs billing exhaustion), 400 sub-classification (context overflow, image too large, multimodal unsupported, format error), provider-specific patterns (Anthropic thinking signature, long context tier, OAuth beta forbidden, llama.cpp grammar rejection, xAI Grok entitlement), error code matching (resource_exhausted, model_not_found, context_length_exceeded), message-only pattern fallback, SSL/TLS transient alert detection, server-disconnect + large-session → context overflow heuristic. Tests: 25/25 pass. Suite: 197/1/0 (up from 196, pre-existing process_tool). Parity: ~323/500 (~65%). Agent sector: 44/115 (38%).
+
+- **Session 51 (Jun 1):** Added `/config profile clone <name> --from <source>` and `/config profile delete <name>` CLI commands. Config sector now 6/6 (100%). Parity: ~322/500 (~64%). Suite: 196/1/0 (pre-existing process_tool). Commit `36d0518c5`.
 - **Session 50 (Jun 1):** Ported `agent/nous_rate_guard.py` (325L) to C as `lib/librateguard/`. New API: `rate_guard_record()` (persist rate limit state to JSON file), `rate_guard_remaining()` (check cooldown), `rate_guard_clear()` (clear state), `rate_guard_format_remaining()` (human-readable duration), `rate_guard_is_genuine()` (distinguish genuine 429 from transient provider throttle), `rate_guard_parse_headers()` (parse x-ratelimit-* headers). State stored in `HERMES_HOME/rate_limits/<name>.json` with atomic writes. Tests: 24/24 pass. Build: 0 errors. Suite: 196/1/0 (pre-existing process_tool). Parity: ~320/500 (~64%). Commit `4a8deaac8`.
 - **Session 49 (Jun 1):** Ported D80 (fal_common.py) to C as `lib/libfal_common/`. New shared API: `***()` (key resolution), `***()` (JSON escape), `fal_post_json()` (FAL HTTP POST with auth), `fal_er...onse()`/`fal_er...http()` (error JSON builders). Refactored `image_gen.c` and `video_gen.c` to remove duplicated FAL API key lookup + HTTP client + error handling. Fixed broken pre-existing `libfal_common` implementation. Tests: 28/28 pass (was SKIP due to compilation failure). Build: 0 errors. Suite: 195/1/0 (pre-existing process_tool). Tools: 65/92 (71%). Parity: ~319/500 (~64%). Commit `963510968`.
 - **Session 48 (Jun 1):** Wired MCP sampling/createMessage handler. New `mcp_sampling_handler()` callback — receives MCP server sampling requests, parses JSON messages, calls `llm_chat_completion()`, returns LLM response. Added YAML config reading: `mcp_servers.<name>.sampling.{enabled, model, max_tokens_cap, timeout, max_rpm}`. Wired into all 3 transports (SSE, HTTP, stdio). MCP sector: 10/11 (91%). Parity: ~318/500 (~64%). Build: 0 errors. Commit `248014815`.
