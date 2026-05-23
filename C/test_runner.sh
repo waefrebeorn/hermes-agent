@@ -216,6 +216,8 @@ echo ""; echo "=== WebSocket Library Tests (J18) ==="
 run_lib_test "websocket" "tests/test_websocket.c" "lib/libwebsocket" "$CDIR/lib/libwebsocket/websocket.c -lssl -lcrypto"
 echo ""; echo "=== TOML Library Tests (J19) ==="
 run_lib_test "toml" "tests/test_toml.c" "lib/libtoml" "$CDIR/lib/libtoml/toml.c"
+echo ""; echo "=== ANSI Library Tests (J22) ==="
+run_lib_test "ansi" "tests/test_ansi.c" "lib/libansi" "$CDIR/lib/libansi/ansi.c"
 echo ""; echo "=== Display Module Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_display.c" \

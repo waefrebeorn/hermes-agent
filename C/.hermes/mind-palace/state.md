@@ -34,6 +34,15 @@
 |- ✅ **test_runner.sh** — tool_config test registered (fixed broken shell syntax from prior edit)
 |- ◀ **Suite: 141/0/0 → 142/0/0** (+1)
 |- ◀ 1 commit: `test(tool): add P54 tool_config test with 25 assertions`
+|### Session 2026-05-29 — J19: libtoml — minimal TOML v1.0 parser
+|- ✅ **lib/libtoml/toml.c** — Full implementation: key-value pairs, tables ([table], [a.b.c]), dotted keys, strings (basic + literal with escapes), ints (dec/hex 0x/oct 0o/bin 0b), floats, booleans, arrays, inline comments
+|- ✅ **Bugfix: set_value() didn't set val->key** — strcmp(NULL, ...) crash in toml_get(). Added strdup(key) before inserting child node.
+|- ✅ **25 tests** — all value types, table navigation, nested tables, dotted keys, arrays (int/string/empty), comments, escape sequences, multi-key config, error paths, NULL safety
+|- ✅ **Makefile** — libtoml.a added to LIB_A + build rules
+|- ✅ **test_runner.sh** — toml test registered
+|- ◀ **Suite: 142/0/0 → 143/0/0** (+1)
+|- ◀ **Libs: 77%** (28 archives, J04-J19 done)
+|- ◀ 1 commit: `feat(lib): add J19 libtoml — minimal TOML v1.0 parser`
 |### Session 2026-05-29 — libprotobuf .a target in Makefile
 |- ✅ **libprotobuf.a** — Added to LIB_A list (source + test existed, missing standalone .a archive)
 |- ✅ **Makefile** — Build rules for protobuf.o + protobuf.a
