@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-05-23, DA v19)
+# State — Hermes C Translation (2026-05-23, DA v22)
 
-**~38% parity — 188 of 500 gaps closed (battleship v3).**
+**~38% parity — 189 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
@@ -22,12 +22,12 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 9/12 | 75% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T08: fuzz. T09: valgrind+ASan CI |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-|| **Total** | **188/500** | **38%** | **312 gaps remaining** |
+||| **Total** | **189/500** | **38%** | **311 gaps remaining** |
 
 ## Session Log
-- **DA v19 (May 23):** libbinary + test — binary extension detection (has_binary_extension). 3 new files (h+c+test), 134 assertions. Suite: 170/0/0 ✅. Parity: 186/500 (37%).
-- **DA v20 (May 23):** libosv + test — OSV malware check (osv_check_package_for_malware). Port of tools/osv_check.py. 3 new files (h+c+test), 25 assertions. Suite: 171/0/0 ✅. Parity: 187/500 (37%).
+- **DA v22 (May 23):** libdebug + test — debug session logging (debug_helpers). Port of tools/debug_helpers.py. 3 new files (h+c+test), 24 assertions. Suite: 173/0/0 ✅. Parity: 189/500 (38%).
 - **DA v21 (May 23):** libwebsite + test — website access policy (website_check_access). Port of tools/website_policy.py. 3 new files (h+c+test), 43 assertions. Suite: 172/0/0 ✅. Parity: 188/500 (38%).
+- **DA v20 (May 23):** libosv + test — OSV malware check (osv_check_package_for_malware). Port of tools/osv_check.py. 3 new files (h+c+test), 25 assertions. Suite: 171/0/0 ✅. Parity: 187/500 (37%).
 - **DA v18 (May 23):** skill_preprocessing module, T08 (fuzz), U06 (release), U09 (CVE scan), U05 (cross-compile), D84 (SSH backend), system_prompt builder, tool_result_classification. Suite: 169/0/0 ✅. 185/500 (37%). CI/CD: 100%.
 - **DA v17 (May 23):** P02 — file_safety (write-deny + read-block path checks, 400-line C module, 26 tests).
 - **DA v16 (May 23):** B120 — markdown_tables (CJK-aware table realignment, 712-line C module, 35 tests).
@@ -43,7 +43,7 @@
 
 ## Build Status
 ```
-Suite:  172/0/0     (136 tests, ~871 assertions)
+Suite:  173/0/0     (137 tests, ~895 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)

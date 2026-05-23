@@ -1,12 +1,15 @@
 # Overnight Map — 2026-05-23 (DA v21)
 
-## Active: libbinary + libosv + libwebsite ports done. 188/500 parity.
+## Active: 4 library ports done. 189/500 parity.
 
-**Suite: 172/0/0** (136 tests, ~871 assertions)
+**Suite: 173/0/0** (137 tests, ~895 assertions)
 **Binary: 9.1MB dynamic**
 **~401 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
+- **libdebug**: Port of Python `tools/debug_helpers.py` — debug session logging.
+  Per-tool DebugSession with env-var activation, call logging, JSON output.
+  3 new files (h+c+test), 24 assertions. Suite: 173/0/0.
 - **libwebsite**: Port of Python `tools/website_policy.py` — website access policy.
   URL host extraction, fnmatch glob pattern matching, shared blocklist file loading.
   3 new files (h+c+test), 43 assertions. Suite: 172/0/0.
