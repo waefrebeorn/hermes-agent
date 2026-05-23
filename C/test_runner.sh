@@ -210,6 +210,7 @@ run_lib_test "glob" "tests/test_glob.c" "lib/libglob" "$CDIR/lib/libglob/glob.c"
 run_lib_test "signal" "tests/test_signal.c" "lib/libsignal" "$CDIR/lib/libsignal/hermes_signal.c"
 echo ""; echo "=== Enum Library Tests (J14, header-only) ==="
 run_lib_test "enum" "tests/test_enum.c" "lib/libenum" ""
+run_lib_test "difflib" "tests/test_difflib.c" "lib/libdifflib" "$CDIR/lib/libdifflib/difflib.c"
 
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
