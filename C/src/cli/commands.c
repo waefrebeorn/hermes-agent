@@ -2287,7 +2287,39 @@ static void cmd_reload_mcp(const char *args, agent_state_t *state) {
 /* /reload-skills: Re-scan skills directory */
 static void cmd_reload_skills(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("Skills directory rescanned.\n");
+    const char *home = getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    if (!home) { printf("Cannot determine home directory.\n"); return; }
+
+    char skills_dir[512];
+    snprintf(skills_dir, sizeof(skills_dir), "%s/.slermes/skills", home);
+
+    struct stat st;
+    if (stat(skills_dir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        printf("Skills directory not found: %s\n", skills_dir);
+        printf("Create it to install skills.\n");
+        return;
+    }
+
+    /* Count skill files */
+    DIR *dir = opendir(skills_dir);
+    if (!dir) { printf("Cannot open skills directory: %s\n", skills_dir); return; }
+
+    int count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_name[0] == '.') continue;
+        /* Check for .md or directory */
+        char full[1024];
+        snprintf(full, sizeof(full), "%s/%s", skills_dir, entry->d_name);
+        struct stat fst;
+        if (stat(full, &fst) == 0 && (S_ISDIR(fst.st_mode) || strstr(entry->d_name, ".md")))
+            count++;
+    }
+    closedir(dir);
+
+    printf("Skills directory scanned: %s\n", skills_dir);
+    printf("Found %d skill(s). Use /skills search-hub <query> to find more.\n", count);
 }
 
 /* /browser: Connect CDP browser */
