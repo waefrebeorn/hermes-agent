@@ -203,7 +203,7 @@ FILE_MAP = {
     "tools/binary_extensions.py":            ("lib/libbinary/binary", "Binary extension detection"),
     "tools/ansi_strip.py":                   ("lib/libansi/ansi", "ANSI stripping"),
     "tools/fuzzy_match.py":                  (".", "Fuzzy matching (not ported)"),
-    "tools/debug_helpers.py":                (".", "Debug helpers (not ported)"),
+    "tools/debug_helpers.py":                ("lib/libdebug/debug_helpers", "Debug session logging"),
     "tools/env_passthrough.py":              (".", "Env passthrough (not ported)"),
     "tools/interrupt.py":                    (".", "Interrupt (not ported)"),
     "tools/lazy_deps.py":                    (".", "Lazy deps (not ported)"),

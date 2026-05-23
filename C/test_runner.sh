@@ -70,6 +70,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "website_policy (compilation failed)"
 fi
 
+echo ""; echo "=== Debug Helpers Tests ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libdebug" \
+    "$CDIR/tests/test_debug_helpers.c" \
+    "$CDIR/lib/libdebug/debug_helpers.c" \
+    -o /tmp/hermes_test_debug_helpers -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_debug_helpers > /dev/null 2>&1; then ok "debug_helpers (24 tests)"
+    else fail "debug_helpers (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_debug_helpers
+else skip "debug_helpers (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
