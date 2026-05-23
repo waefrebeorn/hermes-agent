@@ -42,6 +42,7 @@ run_lib_test "http"      "tests/test_http.c"           "lib/libhttp"            
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
+run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \

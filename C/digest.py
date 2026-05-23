@@ -200,7 +200,7 @@ FILE_MAP = {
     "tools/credential_files.py":             ("secrets", "Credential files"),
     "tools/checkpoint_manager.py":           ("agent/checkpoint", "Checkpoint manager"),
     "tools/budget_config.py":                ("agent/budget_tracker", "Budget config"),
-    "tools/binary_extensions.py":            (".", "Binary extensions (not ported)"),
+    "tools/binary_extensions.py":            ("lib/libbinary/binary", "Binary extension detection"),
     "tools/ansi_strip.py":                   ("lib/libansi/ansi", "ANSI stripping"),
     "tools/fuzzy_match.py":                  (".", "Fuzzy matching (not ported)"),
     "tools/debug_helpers.py":                (".", "Debug helpers (not ported)"),

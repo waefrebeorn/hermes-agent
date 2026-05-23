@@ -1,14 +1,14 @@
-# State — Hermes C Translation (2026-05-23, DA v18)
+# State — Hermes C Translation (2026-05-23, DA v19)
 
-**~36% parity — 178 of 500 gaps closed (battleship v3).**
+**~37% parity — 186 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
-| Agent | 34/115 | 30% | +4 (retry_utils, trajectory, portal_tags, markdown_tables) |
+| Agent | 36/115 | 31% | system_prompt builder, tool_result_classification, skill_preprocessing |
 | CLI | 14/95 | 15% | /secrets command added |
-| Tools | 32/92 | 35% | 68 registered, 4 stubs |
+| Tools | 33/92 | 36% | 68 registered, SSH backend added |
 | Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
 | MCP | 2/11 | 18% | stdio + server done |
 | ACP | 1/9 | 11% | Basic server |
@@ -20,12 +20,13 @@
 | Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
-| Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
-| CI/CD | 6/10 | 60% | U01-U04, U08, U09 done. U05-U07, U10 remaining |
-| **Total** | **178/500** | **36%** | **322 gaps remaining** |
+| Tests | 9/12 | 75% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T08: fuzz. T09: valgrind+ASan CI |
+| CI/CD | 10/10 | 100% | All U gaps closed |
+|| **Total** | **186/500** | **37%** | **314 gaps remaining** |
 
 ## Session Log
-- **DA v18 (May 23):** U09 — CVE dependency scan (Trivy CI job added to c-build.yml). Suite: 165/0/0.
+- **DA v19 (May 23):** libbinary + test — binary extension detection (has_binary_extension). 3 new files (h+c+test), 134 assertions. Suite: 170/0/0 ✅. Parity: 186/500 (37%).
+- **DA v18 (May 23):** skill_preprocessing module, T08 (fuzz), U06 (release), U09 (CVE scan), U05 (cross-compile), D84 (SSH backend), system_prompt builder, tool_result_classification. Suite: 169/0/0 ✅. 185/500 (37%). CI/CD: 100%.
 - **DA v17 (May 23):** P02 — file_safety (write-deny + read-block path checks, 400-line C module, 26 tests).
 - **DA v16 (May 23):** B120 — markdown_tables (CJK-aware table realignment, 712-line C module, 35 tests).
 - **DA v16 (May 23):** B117 — retry_utils (jittered exponential backoff). B118 — trajectory (scratchpad conversion + JSONL save). B119 — portal_tags (Nous Portal request tags). 3 new agent modules. Suite: 163/0/0.
@@ -40,7 +41,7 @@
 
 ## Build Status
 ```
-Suite:  165/0/0     (131 tests, ~659 assertions)
+Suite:  170/0/0     (134 tests, ~803 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)

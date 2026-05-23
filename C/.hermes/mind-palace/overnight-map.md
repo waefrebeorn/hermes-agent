@@ -1,30 +1,22 @@
-# Overnight Map — 2026-05-23 (DA v13)
+# Overnight Map — 2026-05-23 (DA v19)
 
-## Active: T01+T02 done (172 new assertions). 168/500 parity.
+## Active: libbinary (binary_extensions port) done. 186/500 parity.
 
-**Suite: 154/0/0** (117 tests, ~573 assertions)
-**Binary: 9.3MB dynamic**
-**401 commits, 0 behind upstream**
+**Suite: 170/0/0** (134 tests, ~803 assertions)
+**Binary: 9.1MB dynamic**
+**~401 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
-- **T01**: Gateway per-platform tests — Telegram JSON parsing (is_mentioned, is_group, get_chat_id, get_text, get_update_type), Discord setters, Webhook HMAC + subscription CRUD. 64 assertions.
-- **T02**: CLI dispatch/handler tests — commands_get_all, commands_dispatch, /exit handler, /help output, count invariants, list_json validation. 108 assertions.
-- **Battleship cleanup**: D75-D79, U01, U02, U04 marked DONE (already implemented from prior sessions)
+- **libbinary**: Port of Python `tools/binary_extensions.py` — binary extension detection via sorted array + bsearch.
+  3 new files (h+c+test), 134 assertions. Suite: 170/0/0.
 
 ## P0 Gaps (next session picks first)
-1. ✅ T01-T02: Gateway + CLI test coverage
-2. ✅ ASan CI job (U04)
-3. **T07**: Plugin sandbox loading tests (P1 security)
-4. **T09**: Memory leak detection (valgrind/asan CI pass)
-5. **U03**: Attach binary to PR artifacts
-6. **U08**: Pre-commit hooks
-7. **S03**: computer_use Wayland fallback
-
-## Verified Numbers (don't re-derive)
-- Parity: 34% (168/500)
-- All 4 DA v11 stubs resolved
-- U01-U02, U04 CI gates already implemented
-- D75-D79 computer_use backports already done via S01-S02
-
-## Fallback
-Pick T07 (Plugin sandbox loading tests) — next highest P1 security gap.
+1. **D80**: fal_common.py — Fal shared utilities (~300 lines Python)
+2. **D81**: skill_manager_tool.py — Skill manager tool (931 lines)
+3. **D82**: skill_usage.py — Skill usage tracking + provenance (612 lines)
+4. **D83**: transcription_tools.py — Audio transcription (936 lines)
+5. **D85**: mcp_oauth.py — MCP OAuth client (649 lines)
+6. **D86**: mcp_oauth_manager.py — MCP OAuth manager
+7. **T09**: Memory leak detection (valgrind/asan CI pass)
+8. **S03**: computer_use Wayland fallback (partial — basic impl exists)
+9. **S08-S09**: image_gen local provider + caching
