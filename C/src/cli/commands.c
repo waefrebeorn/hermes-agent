@@ -2186,11 +2186,74 @@ static void cmd_platform(const char *args, agent_state_t *state) {
     }
 }
 
-/* /bundles: List skill bundles */
+/* /bundles: List skill bundles. Reads yaml files from skill-bundles dir. */
 static void cmd_bundles(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Skill bundles:\n");
-    printf("  (No bundles configured. Use config.yaml to define bundles.)\n");
+    (void)args;
+    const char *home = state->hermes_home[0] ? state->hermes_home : getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    if (!home) { printf("Cannot determine home directory.\n"); return; }
+
+    char bundles_dir[HERMES_PATH_MAX + 64];
+    snprintf(bundles_dir, sizeof(bundles_dir), "%s/skill-bundles", home);
+
+    DIR *dir = opendir(bundles_dir);
+    if (!dir) {
+        printf("No skill bundles found.\n");
+        printf("  Create YAML files in %s/skill-bundles/\n", home);
+        printf("  Format: { name, description, skills: [list] }\n");
+        return;
+    }
+
+    int count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        const char *name = entry->d_name;
+        size_t len = strlen(name);
+        if (len > 5 && strcmp(name + len - 5, ".yaml") == 0) {
+            count++;
+            char path[HERMES_PATH_MAX + 128];
+            snprintf(path, sizeof(path), "%s/%s", bundles_dir, name);
+
+            char *err = NULL;
+            yaml_doc_t *doc = yaml_parse_file(path, &err);
+            if (!doc) {
+                printf("  %s: (parse error: %s)\n", name, err ? err : "unknown");
+                free(err);
+                continue;
+            }
+
+            const char *bname = yaml_get_string(doc, "name");
+            const char *desc  = yaml_get_string(doc, "description");
+            printf("  %s\n", bname ? bname : name);
+            if (desc) printf("    Description: %s\n", desc);
+
+            /* List skills within the bundle */
+            size_t sc = yaml_list_count(doc, "skills");
+            if (sc > 0) {
+                printf("    Skills (%zu): ", sc);
+                int first_skill = 1;
+                for (size_t si = 0; si < sc && si < 50; si++) {
+                    const char *sk = yaml_list_get(doc, "skills", si);
+                    if (sk) {
+                        printf("%s%s", first_skill ? "" : ", ", sk);
+                        first_skill = 0;
+                    }
+                }
+                printf("\n");
+            }
+
+            yaml_free(doc);
+        }
+    }
+    closedir(dir);
+
+    if (count == 0) {
+        printf("No skill bundles found.\n");
+        printf("  Create YAML files in %s/skill-bundles/\n", home);
+        printf("  Format: { name, description, skills: [list] }\n");
+    } else {
+        printf("\n%d bundle(s) found in %s/skill-bundles/\n", count, home);
+    }
 }
 
 /* /curator: Background skill maintenance */
