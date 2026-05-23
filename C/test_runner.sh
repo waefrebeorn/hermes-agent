@@ -212,6 +212,8 @@ echo ""; echo "=== Enum Library Tests (J14, header-only) ==="
 run_lib_test "enum" "tests/test_enum.c" "lib/libenum" ""
 run_lib_test "difflib" "tests/test_difflib.c" "lib/libdifflib" "$CDIR/lib/libdifflib/difflib.c"
 run_lib_test "regex" "tests/test_regex.c" "lib/libregex" "$CDIR/lib/libregex/hermes_regex.c"
+echo ""; echo "=== WebSocket Library Tests (J18) ==="
+run_lib_test "websocket" "tests/test_websocket.c" "lib/libwebsocket" "$CDIR/lib/libwebsocket/websocket.c -lssl -lcrypto"
 echo ""; echo "=== Display Module Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_display.c" \

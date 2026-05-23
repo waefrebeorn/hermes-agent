@@ -9,18 +9,34 @@
      9|| **Config** | 2 depth | 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` |
 | **Providers** | 35 | 87% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
-| **Plugins** | 48 | **22%** | 6 .so: kanban + honcho + spotify + disk-cleanup + file-memory + achievements |
+|| **Plugins** | 48 | **22%** | 10 .so: kanban + honcho + spotify + disk-cleanup + file-memory + achievements + observability + skills + image_gen + google_meet |
 | **Gateway** | 63 | **100% ✅** | All 63 gaps closed |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 33 | 87% | Spinner implemented. Skin engine active. 74 commands |
-|| **Libs** | 8 | **52%** | libpath + libdatetime + libcsv + libhash + libuuid + libbase64 (J04-J09) |
+||| **Libs** | 8 | **70%** | libpath + libdatetime + libcsv + libhash + libuuid + libbase64 + libhtml + libtextwrap + libglob + libsignal + libenum + libdifflib + libregex (J04-J16) |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 34 | **66%** | **86 files, ~2,400+ assertions** (125/0/0 suite) |
+|| **Tests** | 34 | **66%** | **103 files, ~3,000+ assertions** (140/0/0 suite) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 || **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
-| **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
+|| **Error types** | 0 | **100% ✅** | K01-K20: 58 error codes complete |
+### Session 2026-05-28 — J11 libtextwrap + fallback_routing test + google_meet wiring
+- ✅ **J11: libtextwrap** — textwrap_wrap, textwrap_fill, textwrap_dedent, textwrap_shorten (35 assertions, 133/0/0)
+- ✅ **P83: test_fallback_routing.c** — 93 assertions covering cool-off, advance, tick, stats, auth/rate-limit special handling
+- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
+- ◀ **Suite: 126/0/0 → 133/0/0** (+7)
+- ◀ **Libs: 52% → 55%** (21 .a, J11 done: textwrap)
+- ◀ **Tests: 66% → 66%** (95 files, ~2,700 assertions)
+- ◀ 3 commits pushed: google_meet wiring, fallback_routing test, J11 libtextwrap
+- ◀ **Error types: 100% ✅** (K01-K20, 58 codes)
+- ◀ **Plugins: 22%** (10 .so)
+
+### Session 2026-05-28 — google_meet test wiring + state.md update
+- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
+- ◀ **Suite: 130/0/0 → 131/0/0** (+1)
+- ◀ 1 commit pushed: test(plugin): wire google_meet test in runner
+
 ### Session 2026-05-28 — Achievements plugin + test wiring (D10)
 - ✅ **D10: plugin_achievements** — Achievement tracking plugin: tiered achievements for tool usage, sessions, debugging feats (PLUGIN_ACHIEVEMENTS)
 - ✅ **tests/test_plugin_achievements.c** — 10 assertions covering defs, metrics, tier eval, secrets, persistence, tools

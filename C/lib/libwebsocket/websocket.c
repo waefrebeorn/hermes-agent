@@ -115,7 +115,7 @@ static int parse_url(const char *url, char *host, size_t host_sz,
 ws_t *ws_connect(const char *url, int timeout_sec) {
     char host[256], path[1024];
     int port;
-    if (parse_url(url, host, sizeof(host), &port, path, sizeof(path)) < 0)
+    if (!url || parse_url(url, host, sizeof(host), &port, path, sizeof(path)) < 0)
         return NULL;
 
     if (timeout_sec <= 0) timeout_sec = 30;
