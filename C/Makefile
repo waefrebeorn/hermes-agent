@@ -147,7 +147,7 @@ lib/libtextwrap/textwrap.o: lib/libtextwrap/textwrap.c lib/libtextwrap/textwrap.
 lib/libtextwrap.a: lib/libtextwrap/textwrap.o
 	$(AR) rcs $@ $^
 
-lib/libglob/glob.o: lib/libglob/glob.c lib/libglob/glob.h
+lib/libglob/glob.o: lib/libglob/glob.c lib/libglob/hermes_glob.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 lib/libglob.a: lib/libglob/glob.o

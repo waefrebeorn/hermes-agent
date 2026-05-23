@@ -1,5 +1,5 @@
 /* test_glob.c — J12: Python glob port tests (match, find, free). */
-#include "glob.h"
+#include "hermes_glob.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

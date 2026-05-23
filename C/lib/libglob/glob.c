@@ -4,7 +4,7 @@
  * Implements glob matching with ** for recursive directory traversal.
  */
 
-#include "glob.h"
+#include "hermes_glob.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

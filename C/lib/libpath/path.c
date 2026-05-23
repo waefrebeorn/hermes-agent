@@ -5,6 +5,7 @@
  * glob, resolve, normalize, and queries.
  */
 
+#define _GNU_SOURCE
 #include "path.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -40,7 +40,10 @@ jobs:
           make --version | head -1
 
       - name: Build Hermes C
-        run: make -j$(nproc) 2>&1 | tail -20
+        run: |
+          # Clean stale dependency files from prior builds
+          find . -name '*.d' -delete 2>/dev/null || true
+          make -j$(nproc) 2>&1 | tail -20
         working-directory: C/
 
       - name: Quick smoke test
@@ -61,7 +64,7 @@ jobs:
         working-directory: C/
 
       - name: Build plugins
-        run: make -C src/plugins 2>&1
+        run: make plugins 2>&1 | tail -10
         working-directory: C/
 
       - name: Upload artifacts on failure
