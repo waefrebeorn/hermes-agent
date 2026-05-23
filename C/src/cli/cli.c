@@ -317,6 +317,13 @@ int hermes_cli_main(int argc, char **argv) {
         printf("  --json             JSON output mode (for scripting)\n");
         printf("  gateway            Start the multi-platform gateway\n");
         printf("  cron               Run the cron scheduler\n");
+        printf("  status             Show session status\n");
+        printf("  dump               Dump system debug info\n");
+        printf("  logs               View agent log files\n");
+        printf("  tools              List registered tools\n");
+        printf("  plugins            List installed plugins\n");
+        printf("  secrets            Manage secrets\n");
+        printf("  skills             Manage installed skills\n");
         printf("  --tui              Start the terminal UI (requires ncurses)\n");
         printf("\nSlash commands (interactive mode): /help for full list\n");
         agent_free(&g_cli.agent);
@@ -336,6 +343,32 @@ int hermes_cli_main(int argc, char **argv) {
         /* Check for -e/--eval batch mode */
         if (arg_start < argc && (strcmp(argv[arg_start], "-e") == 0 || strcmp(argv[arg_start], "--eval") == 0)) {
             arg_start++; /* skip -e flag */
+        }
+
+        /* Check for known subcommands (dispatch as slash commands) */
+        if (arg_start < argc && argv[arg_start][0] != '-' && argv[arg_start][0] != '/') {
+            static const char *known_subcmds[] = {
+                "status", "dump", "logs", "tools", "plugins", "secrets",
+                "cron", "skills", "help", "commands", "model", "config",
+                "history", "sessions", "usage", "insights", "copy",
+                "version", "info", NULL
+            };
+            for (int i = 0; known_subcmds[i]; i++) {
+                if (strcmp(argv[arg_start], known_subcmds[i]) == 0) {
+                    /* Build full slash command string */
+                    char cmd_input[8192];
+                    snprintf(cmd_input, sizeof(cmd_input), "/%s", known_subcmds[i]);
+                    /* Append remaining args */
+                    for (int j = arg_start + 1; j < argc; j++) {
+                        size_t clen = strlen(cmd_input);
+                        snprintf(cmd_input + clen, sizeof(cmd_input) - clen, " %s", argv[j]);
+                    }
+                    commands_dispatch(cmd_input, &g_cli.agent);
+                    agent_close_db(&g_cli.agent);
+                    agent_free(&g_cli.agent);
+                    return 0;
+                }
+            }
         }
 
         if (arg_start < argc) {
