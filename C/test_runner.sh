@@ -489,6 +489,7 @@ run_lib_test "interrupt" "tests/test_interrupt.c" "lib/libinterrupt" "$CDIR/lib/
 run_lib_test "file_state" "tests/test_file_state.c" "lib/libfilestate" "$CDIR/lib/libfilestate/file_state.c -lpthread"
 run_lib_test "tool_backend" "tests/test_tool_backend.c" "lib/libtoolbackend" "$CDIR/lib/libtoolbackend/tool_backend.c -lm"
 run_lib_test "rate_limit" "tests/test_rate_limit.c" "lib/libratelimit" "$CDIR/lib/libratelimit/rate_limit.c -lm"
+run_lib_test "managed_gateway" "tests/test_managed_gateway.c" "lib/libmangateway" "$CDIR/lib/libmangateway/managed_gateway.c $CDIR/lib/libtoolbackend/tool_backend.c -lm"
 
 # datetime library test (J05 -- standalone, no deps)
 echo ""; echo "=== datetime Library Tests (J05) ==="
