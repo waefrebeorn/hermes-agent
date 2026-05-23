@@ -79,6 +79,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_spotify (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin Disk Cleanup Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
+    "$CDIR/tests/test_plugin_disk_cleanup.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_disk_cleanup -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_disk_cleanup > /dev/null 2>&1; then ok "plugin_disk_cleanup (disk cleanup utility)"
+    else fail "plugin_disk_cleanup (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_disk_cleanup
+else skip "plugin_disk_cleanup (compilation failed)"
+fi
+
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
