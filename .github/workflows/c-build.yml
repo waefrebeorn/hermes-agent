@@ -221,3 +221,28 @@ jobs:
           name: coverage-data-${{ github.sha }}
           path: C/coverage-filtered.info
           retention-days: 30
+
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          gcc --version | head -1
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Performance gate
+        run: make perf-gate 2>&1
+        working-directory: C/

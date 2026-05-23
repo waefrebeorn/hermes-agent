@@ -322,3 +322,9 @@ coverage:
 	genhtml coverage-filtered.info --output-directory coverage_html \
 		--rc lcov_branch_coverage=1 2>/dev/null
 	@echo "=== Coverage report: coverage_html/index.html ==="
+
+# U10: Performance gate — check binary size and startup time against baseline
+# Baseline stored in .perf-baseline.json (auto-created on first run)
+# Use --update-baseline to refresh baseline after intentional growth
+perf-gate: hermes
+	@python3 scripts/perf-gate.py
