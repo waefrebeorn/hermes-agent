@@ -21,7 +21,14 @@
 | **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
 | **Upstream** | ⚠️ **183 commits behind** | Python hermes-agent has ongoing changes |
 
-### Session 2026-06-01 — P169 cron_sqlite + P172-P175 cron_extras + 2 bugfixes
+### Session 2026-06-01 — Triple DA Python audit, 300-gap roadmap, digest.py overhaul, essay sequel
+- ✅ **Triple DA Python codebase**: Full source survey of origin/main — 603 core Python files, 876K LOC, 1,192 test files across 16 sectors
+- ✅ **300-gap-battleship-roadmap-v1.md**: Letter-number grid (A01-R18) — 447 total gaps, 161 complete, ~286 remaining. Real parity: ~36% (not 60% as previously claimed)
+- ✅ **digest.py**: FILE_MAP expanded from 27 entries to 250+ with accurate C file paths and porting status
+- ✅ **translation-essay-2.md**: "The Gap Reveal" — honest accounting essay with sector-by-sector analysis
+- ✅ **Suite: 154/0/0** (no regression)
+- ◀ 1 commit: roadmap + digest + essay
+
 - ✅ **P169: test_cron_sqlite.c** — 48 assertions: open/close/save/load/delete/update/persistence round-trip/NULL safety
 - ✅ **P172-P175: test_cron_extras.c** — 41 assertions: retry set/get/reset, notification channel, chain context/output, template create/instantiate with params/multi-placeholder/NULL safety
 - ✅ **Bugfix: cron_job_reset_retry(NULL) SEGV** — `strcmp(NULL, ...)` in reset_retry. Added NULL guard.
