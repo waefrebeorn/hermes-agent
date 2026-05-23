@@ -82,6 +82,30 @@ if gcc -O2 -Wall -Wextra \
 else skip "debug_helpers (compilation failed)"
 fi
 
+echo ""; echo "=== Skill Usage Telemetry Tests (D82) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libskillusage" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_skill_usage.c" \
+    "$CDIR/lib/libskillusage/skill_usage.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_skill_usage -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_skill_usage > /dev/null 2>&1; then ok "skill_usage (76 tests)"
+    else
+        echo "  Skill usage test output:"
+        /tmp/hermes_test_skill_usage 2>&1 | sed 's/^/    /'
+        fail "skill_usage (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_skill_usage
+else
+    echo "  Skill usage test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/lib/libskillusage" -I"$CDIR/lib/libjson" \
+        "$CDIR/tests/test_skill_usage.c" \
+        "$CDIR/lib/libskillusage/skill_usage.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_skill_usage -lm 2>&1 | sed 's/^/    /'
+    skip "skill_usage (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
