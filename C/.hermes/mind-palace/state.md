@@ -17,14 +17,15 @@
 | Plugins | 10/26 | 38% | 10 .so, 16 to port |
 | Config | 4/6 | 67% | 322 keys |
 | Build/Doc | 9/11 | 82% | Docker fixed |
-| Security | 6/10 | 60% | Sandbox, URL safety |
+| Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
 | CI/CD | 5/10 | 50% | U01-U04, U08 done. U05-U07, U09-U10 remaining |
-| **Total** | **176/500** | **35%** | **324 gaps remaining** |
+| **Total** | **177/500** | **35%** | **323 gaps remaining** |
 
 ## Session Log
+- **DA v17 (May 23):** P02 — file_safety (write-deny + read-block path checks, 400-line C module, 26 tests).
 - **DA v16 (May 23):** B120 — markdown_tables (CJK-aware table realignment, 712-line C module, 35 tests).
 - **DA v16 (May 23):** B117 — retry_utils (jittered exponential backoff). B118 — trajectory (scratchpad conversion + JSONL save). B119 — portal_tags (Nous Portal request tags). 3 new agent modules. Suite: 163/0/0.
 - **DA v15 (May 23):** U10 — Performance gate. `scripts/perf-gate.py` + Makefile target + CI job. Checks binary size (9.3MB baseline, 10% tolerance) and startup time (1ms, 500ms tolerance). 4 files, 163 lines.
@@ -38,7 +39,7 @@
 
 ## Build Status
 ```
-Suite:  164/0/0     (130 tests, ~633 assertions)
+Suite:  165/0/0     (131 tests, ~659 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)
