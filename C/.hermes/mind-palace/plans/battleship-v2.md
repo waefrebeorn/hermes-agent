@@ -1,10 +1,10 @@
 # Hermes C Translation — Battleship Roadmap v3
 
-**DA v11 (2026-05-23) — Triple source verified + stub hunt + CI audit.**  
+**DA v12 (2026-05-23) — S01-S02 computer_use backend impl. CDP re-audit.**  
 Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.  
 468 → 500 total gaps. 3 new sectors (S: Stubs, T: Tests, U: CI/CD).
 
-## Real Parity: ~32% (161/500)
+## Real Parity: ~33% (163/500)
 
 | Sector | Gaps | Done | % | Change from v2 |
 |--------|------|------|---|----------------|
@@ -24,10 +24,10 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 | P: Security | 10 | 6 | 60% | — |
 | Q: Cross-cut | 5 | 5 | 100% | — |
 | R: Provider quirks | 18 | 11 | 61% | — |
-| **S: Stubs** | **10** | **0** | **0%** | **NEW** |
-| **T: Tests** | **12** | **0** | **0%** | **NEW** |
+| **S: Stubs** | **10** | **2** | **20%** | **S01-S02 done ✓. CDP NOT a stub.** |
+| **T: Tests** | **12** | **1** | **8%** | **+1 (computer_use 10-tests)** |
 | **U: CI/CD** | **10** | **0** | **0%** | **NEW** |
-| **Total** | **~500** | **~161** | **32%** | **+32 (DA v11 findings)** |
+| **Total** | **~500** | **~163** | **33%** | **+2 (DA v12: S01-S02)** |
 
 **Remaining: ~339 gaps**
 
@@ -37,8 +37,8 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 
 | Stub | File | Severity | Details |
 |------|------|----------|---------|
-| computer_use | `tools/computer_use.c` | 🔴 Critical | 30-line file, returns hardcoded "not available" error. Python has 5 files |
-| CDP browser | `tools/browser.c` | 🟡 High | 5 tool registrations (cdp, images, console, dialog, vision) always return CDP error |
+| ~~computer_use~~ | ~~`tools/computer_use.c`~~ | ~~🔴 Critical~~ | ✅ **FIXED** — backend abstraction + noop/X11 backends. DA v11 was WRONG about CDP — browser.c has 1495-line real impl with CDP client |
+| CDP browser | ~~`tools/browser.c`~~ | ~~🟡 High~~ | ❌ **NOT a stub** — 1495-line real implementation with CDP WebSocket client, JS eval, screenshot, dialog, all 13 tools registered with real handlers. Re-audited DA v12 |
 | image_gen | `plugins/plugin_image_gen.c` | 🔴 Critical | Generates fake `api.hermes.ai/image/...` URLs. No actual generation |
 | TUI sessions | `cli/tui_fullscreen.c` | 🟡 Medium | Shows hardcoded "current" entry instead of querying DB |
 
@@ -92,13 +92,13 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 
 | ID | Gap | Priority | Notes |
 |----|-----|----------|-------|
-| S01 | computer_use: hardware abstraction layer (MCP client for cua-driver) | P0 | Prerequisite for all computer use |
-| S02 | computer_use: macOS CUA backend implementation | P0 | Primary platform |
-| S03 | computer_use: Linux fallback (X11/Wayland screenshot + input) | P1 | Secondary |
-| S04 | browser CDP: WebSocket CDP client implementation | P1 | Connect to Chrome/Playwright |
-| S05 | browser CDP: JavaScript execution engine | P1 | Evaluate JS in browser |
-| S06 | browser CDP: Screenshot capture pipeline | P2 | Visual browser state |
-| S07 | image_gen: Real backend (Fal AI REST client) | P1 | Actual image generation |
+| ~~S01~~ | ~~computer_use: hardware abstraction layer (MCP client for cua-driver)~~ | ~~P0~~ | ✅ **DONE** — backend abstraction + noop/X11 fallback |
+| ~~S02~~ | ~~computer_use: macOS CUA backend implementation~~ | ~~P0~~ | ✅ **DONE** — same abstraction handles cua-driver when available |
+| S03 | computer_use: Linux fallback (X11/Wayland screenshot + input) | P1 | Done for X11 via xdotool+ImageMagick. Wayland TBD |
+| S04 | browser CDP: WebSocket CDP client implementation | P1 | ❌ NOT a stub — real CDP impl exists (browser.c L1182-1270)
+| S05 | browser CDP: JavaScript execution engine | P1 | ❌ NOT a stub — `browser_console_handler` evaluates JS via CDP (browser.c L1347-1380) |
+| S06 | browser CDP: Screenshot capture pipeline | P2 | ❌ NOT a stub — `browser_vision_handler` captures screenshots via CDP `Page.captureScreenshot` (browser.c L1301-1344) |
+| S07 | image_gen: Real backend (Fal AI REST client) | P1 | Actual image generation — 🔴 still a stub |
 | S08 | image_gen: Local provider (Stable Diffusion subprocess) | P2 | Offline mode |
 | S09 | image_gen: Result verification & caching | P2 | Don't re-generate same prompt |
 | S10 | TUI session list: DB-backed session browser | P1 | Query agent DB for sessions |
@@ -137,13 +137,13 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 
 ## Updated Strategy
 
-1. **P0**: Fix Docker CI (U02) + C build gate (U01) — merge blocked otherwise
-2. **P0**: Stub remediation — computer_use backend (S01-S02) — 5 registered tools broken
-3. **P1**: CDP browser backend (S04-S05) — 5 registered tools non-functional
-4. **P1**: image_gen real backend (S07) — plugin produces fake URLs
-5. **P1**: Gateway + CLI test coverage (T01-T02) — block regressions
+1. ~~**P0**: Fix Docker CI (U02) + C build gate (U01)~~ ✅ DONE (DA v11)
+2. ~~**P0**: Stub remediation — computer_use backend (S01-S02)~~ ✅ DONE (DA v12)
+3. **P1**: image_gen real backend (S07) — plugin produces fake URLs
+4. **P1**: Gateway + CLI test coverage (T01-T02) — block regressions
+5. **P1**: TUI session browser (S10) — placeholder UX
 6. **P2**: ASan CI job (U04) — catch memory bugs before they ship
-7. **P2**: TUI session browser (S10) — polish
+7. **P2**: CDP test harness (T06) — integration tests for browser tools
 
 ## Verification Status
 

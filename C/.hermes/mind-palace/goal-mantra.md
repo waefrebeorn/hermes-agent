@@ -4,7 +4,7 @@
 P0: Hermes C — Full Python parity. 500 gaps to close (battleship v3).
 All Python transmuted into C structs, function pointers, switch statements.
 
-── STATE (DA v11) ──
+── STATE (DA v12) ──
 ✅ Suite: 154/0/0 (117 tests, ~573 assertions)
 ✅ Binary: 9.1MB, 0 errors
 ✅ Tools: 68 registered

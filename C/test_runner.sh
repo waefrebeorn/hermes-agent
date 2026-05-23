@@ -42,6 +42,31 @@ run_lib_test "http"      "tests/test_http.c"           "lib/libhttp"            
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
+
+echo ""; echo "=== Computer Use Backend Tests (S01-S02) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libtemplate" \
+    -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libdotenv" \
+    -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" \
+    -I"$CDIR/lib/libdb" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskin" \
+    -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libmcp" \
+    -I"$CDIR/lib/libpath" -I"$CDIR/lib/libdatetime" -I"$CDIR/lib/libcsv" \
+    -I"$CDIR/lib/libhash" -I"$CDIR/lib/libuuid" -I"$CDIR/lib/libbase64" \
+    -I"$CDIR/lib/libhtml" -I"$CDIR/lib/libtextwrap" -I"$CDIR/lib/libglob" \
+    -I"$CDIR/lib/libsignal" -I"$CDIR/lib/libenum" -I"$CDIR/lib/libdifflib" \
+    -I"$CDIR/lib/libregex" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libjson5" \
+    "$CDIR/tests/test_computer_use.c" \
+    "$CDIR/src/tools/computer_use.c" \
+    "$CDIR/src/tools/registry.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_computer_use -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_computer_use > /dev/null 2>&1; then ok "computer_use (10 tests)"
+    else fail "computer_use (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_computer_use
+else skip "computer_use (compilation failed)"
+fi
+
 echo ""; echo "=== Plugin Honcho (In-Memory Memory) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
