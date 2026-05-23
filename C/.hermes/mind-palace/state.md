@@ -61,6 +61,13 @@
 - ◀ **Libs: 82% → 85%** (30 archives, J04-J22+J20 done)
 - ◀ 1 commit: `feat(lib): add J20 libjson5 - JSON5 parser`
 
+### Session 2026-06-01 — P21: CLI paths test coverage
+- ✅ **test_cli_paths.c** — 15 assertions covering: SLERMES_HOME resolution (env var set/unset), config/data/cache/log subdirectory construction, resolve_path (with/without/NULL subpath), profile management (set/get/clear/NULL), buffer size safety, display_home smoke test
+- ✅ **test_runner.sh** — cli_paths test registered
+- ◀ **Suite: 146/0/0 → 147/0/0** (+1)
+- ◀ **CLI: 87%** (paths coverage verified)
+- ◀ 1 commit: `test(cli): add P21 CLI paths test with 15 assertions`
+
 ### Session 2026-05-29 — x_search auth header bugfix + test
 |- ✅ **Bugfix: x_search.c auth header broken** — `"Authorization: Bearer ***"` used literal `***` instead of `%s` format specifier. API key was silently ignored. Fixed to `"Authorization: Bearer %s"` with api_key argument.
 |- ✅ **test_x_search.c** — 4 tests: missing API key, NULL args, bad JSON, missing query (non-HTTP error paths)
