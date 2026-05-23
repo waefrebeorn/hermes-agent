@@ -109,6 +109,10 @@ run_lib_test "csv" "tests/test_csv.c" "lib/libcsv" "$CDIR/lib/libcsv/csv.c"
 echo ""; echo "=== Hash Library Tests (J07) ==="
 run_lib_test "hash" "tests/test_hash.c" "lib/libhash" "$CDIR/lib/libhash/hash.c -lssl -lcrypto"
 
+# UUID library test (J08 — needs libhash for v5 + OpenSSL)
+echo ""; echo "=== UUID Library Tests (J08) ==="
+run_lib_test "uuid" "tests/test_uuid.c" "lib/libuuid" "$CDIR/lib/libuuid/uuid.c $CDIR/lib/libhash/hash.c -lssl -lcrypto"
+
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
 run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
