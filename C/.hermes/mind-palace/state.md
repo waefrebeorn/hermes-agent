@@ -28,22 +28,28 @@
 |- ✅ **test_runner.sh** — websocket test registered
 |- ◀ **Suite: 140/0/0 → 141/0/0** (+1)
 |- ◀ **Libs: 70% → 72%** (26 archives, J04-J18 done)
-|- ◀ 1 commit pushed: `test(lib): add J18 libwebsocket test + .a target`
-|### Session 2026-05-28 — J11 libtextwrap + fallback_routing test + google_meet wiring
-- ✅ **J11: libtextwrap** — textwrap_wrap, textwrap_fill, textwrap_dedent, textwrap_shorten (35 assertions, 133/0/0)
-- ✅ **P83: test_fallback_routing.c** — 93 assertions covering cool-off, advance, tick, stats, auth/rate-limit special handling
-- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
-- ◀ **Suite: 126/0/0 → 133/0/0** (+7)
-- ◀ **Libs: 52% → 55%** (21 .a, J11 done: textwrap)
-- ◀ **Tests: 66% → 66%** (95 files, ~2,700 assertions)
-- ◀ 3 commits pushed: google_meet wiring, fallback_routing test, J11 libtextwrap
-- ◀ **Error types: 100% ✅** (K01-K20, 58 codes)
-- ◀ **Plugins: 22%** (10 .so)
+|- ◀ 2 commits pushed: J18 websocket test, protobuf .a target
+### Session 2026-05-29 — libprotobuf .a target in Makefile
+|- ✅ **libprotobuf.a** — Added to LIB_A list (source + test existed, missing standalone .a archive)
+|- ✅ **Makefile** — Build rules for protobuf.o + protobuf.a
+|- ◀ **Suite: 141/0/0** (no regression)
+|- ◀ **Libs: 74%** (27 archives)
+|- ◀ 2 commits: J18 websocket test + protobuf .a target
+### Session 2026-05-28 — J11 libtextwrap + fallback_routing test + google_meet wiring
+|- ✅ **J11: libtextwrap** — textwrap_wrap, textwrap_fill, textwrap_dedent, textwrap_shorten (35 assertions, 133/0/0)
+|- ✅ **P83: test_fallback_routing.c** — 93 assertions covering cool-off, advance, tick, stats, auth/rate-limit special handling
+|- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
+|- ◀ **Suite: 126/0/0 → 133/0/0** (+7)
+|- ◀ **Libs: 52% → 55%** (21 .a, J11 done: textwrap)
+|- ◀ **Tests: 66% → 66%** (95 files, ~2,700 assertions)
+|- ◀ 3 commits pushed: google_meet wiring, fallback_routing test, J11 libtextwrap
+|- ◀ **Error types: 100% ✅** (K01-K20, 58 codes)
+|- ◀ **Plugins: 22%** (10 .so)
 
 ### Session 2026-05-28 — google_meet test wiring + state.md update
-- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
-- ◀ **Suite: 130/0/0 → 131/0/0** (+1)
-- ◀ 1 commit pushed: test(plugin): wire google_meet test in runner
+|- ✅ **test_plugin_google_meet.c wired** — Google Meet plugin test (6 assertions) registered in runner
+|- ◀ **Suite: 130/0/0 → 131/0/0** (+1)
+|- ◀ 1 commit pushed: test(plugin): wire google_meet test in runner
 
 ### Session 2026-05-28 — Achievements plugin + test wiring (D10)
 - ✅ **D10: plugin_achievements** — Achievement tracking plugin: tiered achievements for tool usage, sessions, debugging feats (PLUGIN_ACHIEVEMENTS)

@@ -272,6 +272,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
 else skip "redact (compilation failed)"
 fi
 
+# Tool config test (P54 — self-contained, no deps)
+echo ""; echo "=== Tool Config Tests (P54) ==="
+run_lib_test "tool_config" "tests/test_tool_config.c" "include" "$CDIR/src/tools/tool_config.c"
+
 # Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \
