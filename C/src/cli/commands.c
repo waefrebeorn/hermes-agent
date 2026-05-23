@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -2266,19 +2267,259 @@ static void cmd_browser(const char *args, agent_state_t *state) {
     printf("Unknown browser command: %s\n", args);
 }
 
-/* /update: Update Hermes Agent */
+/* /update: Update Hermes Agent — git pull + rebuild */
 static void cmd_update(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("Update: git pull origin main && python3 C/digest.py\n");
-    printf("Auto-update not implemented. Run commands manually.\n");
+    printf("Updating Hermes Agent...\n");
+
+    /* Determine repo root: walk up from CWD until .git found */
+    char cwd[4096];
+    char repo_root[4096] = "";
+    if (getcwd(cwd, sizeof(cwd))) {
+        strncpy(repo_root, cwd, sizeof(repo_root) - 1);
+        while (repo_root[0]) {
+            char git_dir[4096];
+            snprintf(git_dir, sizeof(git_dir), "%s/.git", repo_root);
+            struct stat st;
+            if (stat(git_dir, &st) == 0 && S_ISDIR(st.st_mode))
+                break;
+            /* Go up one directory */
+            char *slash = strrchr(repo_root, '/');
+            if (!slash || slash == repo_root) { repo_root[0] = '\0'; break; }
+            *slash = '\0';
+        }
+    }
+
+    if (!repo_root[0]) {
+        printf("Error: not inside a git repository.\n");
+        return;
+    }
+
+    /* Fetch latest */
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd), "cd '%s' && git fetch --quiet origin 2>&1", repo_root);
+        FILE *fp = popen(cmd, "r");
+        if (fp) {
+            char err[1024];
+            size_t n = 0;
+            while (fgets(err, sizeof(err), fp)) {
+                if (n == 0) printf("  Fetch: ");
+                printf("%s", err);
+                n++;
+            }
+            int rc = pclose(fp);
+            if (rc != 0) {
+                printf("  Git fetch failed (exit %d). Aborting.\n", rc);
+                return;
+            }
+        }
+    }
+
+    /* Check if behind */
+    char behind_buf[64] = "0";
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+                 "cd '%s' && git rev-list --count HEAD..origin/$(git rev-parse --abbrev-ref HEAD 2>/dev/null) 2>/dev/null || echo 0",
+                 repo_root);
+        FILE *fp = popen(cmd, "r");
+        if (fp) {
+            if (!fgets(behind_buf, sizeof(behind_buf), fp)) behind_buf[0] = '0';
+            size_t blen = strlen(behind_buf);
+            if (blen > 0 && behind_buf[blen-1] == '\n') behind_buf[blen-1] = '\0';
+            pclose(fp);
+        }
+    }
+
+    int behind = atoi(behind_buf);
+    if (behind == 0) {
+        printf("  Already up to date (%s).\n", repo_root);
+        return;
+    }
+    printf("  %d commit(s) behind. Pulling...\n", behind);
+
+    /* Get current commit before pull */
+    char old_commit[128] = "(unknown)";
+    {
+        FILE *fp = popen("git rev-parse --short=8 HEAD 2>/dev/null", "r");
+        if (fp) {
+            if (!fgets(old_commit, sizeof(old_commit), fp)) old_commit[0] = '\0';
+            size_t olen = strlen(old_commit);
+            if (olen > 0 && old_commit[olen-1] == '\n') old_commit[olen-1] = '\0';
+            pclose(fp);
+        }
+    }
+
+    /* Pull */
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd), "cd '%s' && git pull --ff-only origin 2>&1", repo_root);
+        FILE *fp = popen(cmd, "r");
+        if (fp) {
+            char line[1024];
+            while (fgets(line, sizeof(line), fp))
+                printf("  %s", line);
+            int rc = pclose(fp);
+            if (rc != 0) {
+                printf("  Git pull failed (exit %d). Resolve conflicts manually.\n", rc);
+                return;
+            }
+        }
+    }
+
+    /* Get new commit */
+    char new_commit[128] = "(unknown)";
+    {
+        FILE *fp = popen("git rev-parse --short=8 HEAD 2>/dev/null", "r");
+        if (fp) {
+            if (!fgets(new_commit, sizeof(new_commit), fp)) new_commit[0] = '\0';
+            size_t nlen = strlen(new_commit);
+            if (nlen > 0 && new_commit[nlen-1] == '\n') new_commit[nlen-1] = '\0';
+            pclose(fp);
+        }
+    }
+    printf("  %s -> %s\n", old_commit, new_commit);
+
+    /* Rebuild */
+    printf("  Rebuilding...\n");
+    {
+        FILE *fp = popen("make -j$(nproc) 2>&1", "r");
+        if (fp) {
+            char line[1024];
+            while (fgets(line, sizeof(line), fp)) {
+                /* Only print errors and final line */
+                if (strstr(line, "error:") || strstr(line, "Error:") ||
+                    strstr(line, "Phase 5 complete"))
+                    printf("  %s", line);
+            }
+            int rc = pclose(fp);
+            if (rc == 0)
+                printf("  Update complete! Binary rebuilt.\n");
+            else
+                printf("  Build failed (exit %d).\n", rc);
+        }
+    }
 }
 
-/* /debug: Upload debug report */
+/* /debug: Generate debug report */
 static void cmd_debug(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Debug report generation not implemented in C build.\n");
-    printf("Check %s/logs/ for log files.\n",
-           state->hermes_home[0] ? state->hermes_home : "~/.slermes");
+    (void)args;
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    char time_buf[64];
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_info);
+
+    printf("=== Hermes C Debug Report ===\n");
+    printf("Generated: %s\n\n", time_buf);
+
+    /* System info */
+    {
+        struct utsname un;
+        if (uname(&un) == 0)
+            printf("Kernel:     %s %s %s %s\n", un.sysname, un.nodename, un.release, un.machine);
+        else
+            printf("Kernel:     (unknown)\n");
+    }
+    {
+        long nproc = sysconf(_SC_NPROCESSORS_ONLN);
+        if (nproc > 0) printf("CPUs:       %ld\n", nproc);
+    }
+    {
+        long pages = sysconf(_SC_PHYS_PAGES);
+        long psize = sysconf(_SC_PAGE_SIZE);
+        if (pages > 0 && psize > 0)
+            printf("Memory:     %ld MB total\n", (pages * psize) / (1024 * 1024));
+    }
+
+    /* Version info */
+    printf("\n-- Version --\n");
+    printf("Version:    %s\n", HERMES_VERSION);
+    printf("Build:      %s %s\n", __DATE__, __TIME__);
+
+    /* Git info */
+    char buf[256];
+    FILE *fp = popen("git rev-parse --short=8 HEAD 2>/dev/null", "r");
+    if (fp) {
+        if (fgets(buf, sizeof(buf), fp)) {
+            size_t blen = strlen(buf);
+            if (blen > 0 && buf[blen-1] == '\n') buf[blen-1] = '\0';
+            printf("Git commit: %s\n", buf);
+        }
+        pclose(fp);
+    } else {
+        printf("Git commit: (unknown)\n");
+    }
+    fp = popen("git rev-parse --abbrev-ref HEAD 2>/dev/null", "r");
+    if (fp) {
+        if (fgets(buf, sizeof(buf), fp)) {
+            size_t blen = strlen(buf);
+            if (blen > 0 && buf[blen-1] == '\n') buf[blen-1] = '\0';
+            printf("Git branch: %s\n", buf);
+        }
+        pclose(fp);
+    }
+
+    /* Uptime */
+    fp = popen("uptime 2>/dev/null", "r");
+    if (fp) {
+        if (fgets(buf, sizeof(buf), fp)) {
+            size_t blen = strlen(buf);
+            if (blen > 0 && buf[blen-1] == '\n') buf[blen-1] = '\0';
+            printf("Uptime:     %s\n", buf);
+        }
+        pclose(fp);
+    }
+
+    /* Session info */
+    printf("\n-- Session --\n");
+    printf("Messages:   %zu\n", state->message_count);
+    printf("Iterations: %d/%d\n", state->iteration_count, state->max_iterations);
+    printf("Session ID: %s\n", state->session_id[0] ? state->session_id : "(none)");
+
+    /* Tools registered */
+    printf("\n-- Tools --\n");
+    {
+        int n = (int)registry_count();
+        printf("Registered: %d\n", n);
+    }
+
+    /* Config */
+    printf("\n-- Config --\n");
+    printf("Provider:   %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+    printf("Model:      %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+
+    /* Log files tail */
+    {
+        char log_dir[512] = "";
+        const char *home = state->hermes_home[0] ? state->hermes_home :
+                           getenv("SLERMES_HOME");
+        if (home) snprintf(log_dir, sizeof(log_dir), "%s/logs", home);
+
+        if (log_dir[0]) {
+            printf("\n-- Recent Logs --\n");
+            const char *log_files[] = {"agent.log", "errors.log", NULL};
+            for (int i = 0; log_files[i]; i++) {
+                char logpath[1024];
+                snprintf(logpath, sizeof(logpath), "%s/%s", log_dir, log_files[i]);
+                struct stat st;
+                if (stat(logpath, &st) == 0) {
+                    char cmd[2048];
+                    snprintf(cmd, sizeof(cmd), "tail -20 '%s' 2>/dev/null", logpath);
+                    FILE *lfp = popen(cmd, "r");
+                    if (lfp) {
+                        printf("\n%s (last 20 lines, %ld bytes):\n", log_files[i], (long)st.st_size);
+                        char line[1024];
+                        while (fgets(line, sizeof(line), lfp))
+                            printf("  %s", line);
+                        pclose(lfp);
+                    }
+                }
+            }
+        }
+    }
+
+    printf("\n--- End Debug Report ---\n");
 }
 
 /* /voice: Toggle voice input/output mode */

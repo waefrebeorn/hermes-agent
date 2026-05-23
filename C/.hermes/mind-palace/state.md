@@ -1,13 +1,13 @@
-# State — Hermes C Translation (2026-05-29, Session 8)
+# State — Hermes C Translation (2026-05-29, Session 14)
 
-**~43.2% parity — 216 of 500 gaps closed (battleship v3).**
+**~43.8% parity — 219 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
 | Agent | 38/115 | 33% | rate_limit_tracker.py ported |
-| CLI | 14/95 | 15% | /secrets command added |
+| CLI | 17/95 | 18% | /update, /debug real impls (were stubs) |
 | Tools | 41/92 | 45% | 68 registered + test_runner fixes |
 | Gateway | 22/64 | 34% | 19 platforms |
 | MCP | 2/11 | 18% | stdio + server done |
@@ -22,13 +22,13 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved |
 | Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **216/500** | **43.2%** | **284 gaps remaining** |
+| **Total** | **219/500** | **43.8%** | **281 gaps remaining** |
 
 ## Session Log
+- **Session 14 (May 29):** Implemented real `/update` command (git fetch, pull, rebuild). Implemented real `/debug` command (system info, version, git, session, tools, config, log tail). Both were stubs. Suite: 195/0/0. Parity: 219/500.
 - **Session 13 (May 29):** Updated shell completions (bash/zsh) with new subcommands. Added `hermes version` CLI subcommand. Updated help text. Suite: 195/0/0. Parity: 216/500.
 - **Session 12 (May 29):** Added CLI subcommand dispatch — `hermes status|dump|logs|tools|plugins|secrets|skills|cron|help` now work as shell subcommands, not just slash commands. Also updated help text. Suite: 195/0/0. Parity: 216/500.
 - **Session 8 (May 29):** test_runner.sh fix — 4 skipped tests (skill_manage, managed_gateway, rate_limit, skill_mgmt_tool) fixed. Root causes: missing include dirs + wrong .c file linked. Suite: 195/0/0 (0 skipped). Parity: 216/500.
-- **DA v38 (May 24, Session 7):** managed_tool_gateway.py port — Nous vendor gateway helpers (12 assertions). Suite: binary builds clean. Parity: 214/500 (42.8%).
 
 ## Build Status
 ```
