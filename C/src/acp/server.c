@@ -12,6 +12,7 @@
 #include "acp/edit_approval.h"
 #include "acp/events.h"
 #include "acp/permissions.h"
+#include "acp/resource.h"
 #include "hermes_json.h"
 #include "hermes_agent.h"   /* agent_init, agent_state_t, tool registry */
 #include <stdio.h>
@@ -860,12 +861,12 @@ static json_node_t *handle_user_message(const char *id, json_node_t *params, acp
     if (!sess)
         return acp_make_error(id, -32000, "Session not found", NULL);
 
-    /* Extract text content (support both string and array-of-parts) */
-    const char *text = NULL;
-    if (content_node->type == JSON_STRING)
-        text = content_node->str_val;
-    if (!text || !*text)
+    /* Extract text content (support string, array-of-parts, and resource links) */
+    char *resolved_text = acp_content_to_text(content_node);
+    if (!resolved_text || !*resolved_text) {
+        free(resolved_text);
         return acp_make_error(id, -32602, "Empty content", NULL);
+    }
 
     /* Set up streaming callback */
     sess->agent.stream_cb = acp_stream_cb;
@@ -873,8 +874,9 @@ static json_node_t *handle_user_message(const char *id, json_node_t *params, acp
 
     /* Run the agent */
     sess->message_count++;
-    fprintf(stderr, "[acp] Running agent for session %s: %s\n", session_id, text);
-    char *response = agent_run_conversation(&sess->agent, text, NULL);
+    fprintf(stderr, "[acp] Running agent for session %s: %s\n", session_id, resolved_text);
+    char *response = agent_run_conversation(&sess->agent, resolved_text, NULL);
+    free(resolved_text);
     sess->agent.stream_cb = NULL;
     sess->agent.stream_data = NULL;
 
