@@ -55,6 +55,12 @@ void yaml_iterate(const yaml_doc_t *doc,
                   void (*fn)(const char *key, const char *value, void *user),
                   void *user);
 
+/* Get list of key names at a nested map path (e.g. "mcp_servers").
+ * Returns malloc'd array of string pointers. *count set to number of keys.
+ * Caller must free each key string and the array itself.
+ * Returns NULL if path doesn't exist or isn't a map. */
+char **yaml_map_keys(const yaml_doc_t *doc, const char *path, size_t *count);
+
 /* Free document */
 void yaml_free(yaml_doc_t *doc);
 

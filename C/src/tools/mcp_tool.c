@@ -476,32 +476,57 @@ void mcp_init_all(void) {
     }
 
     /* Get list of server names under mcp_servers */
-    /* yaml has limited iteration — try known server names by checking
-     * mcp_servers.<name>.command or mcp_servers.<name>.url.
-     * For now, iterate through potential indices. */
+    /* Support both list and object config formats:
+     *   mcp_servers: [ { name: "...", command: "..." } ]   OR
+     *   mcp_servers: { name: { command: "..." } }          */
     size_t server_count = yaml_list_count(doc, "mcp_servers");
 
-    if (server_count == 0) {
-        /* Try checking if mcp_servers is an object (map) vs list.
-         * The Python config uses: mcp_servers: { name: { command: ... } }
-         * We iterate by checking common prefixes. */
-        const char *known_servers[] = {"filesystem", "github", "searxng",
-                                        "slack", "git", "puppeteer",
-                                        "playwright", "memory", NULL};
+    /* Collect server names either from list items or map keys */
+    char *dynamic_names[MAX_MCP_SERVERS];
+    int dynamic_count = 0;
 
-        /* Check each known server name */
-        for (int si = 0; known_servers[si]; si++) {
-            char key[256];
-            snprintf(key, sizeof(key), "mcp_servers.%s.command", known_servers[si]);
-            const char *cmd = yaml_get_string(doc, key);
+    if (server_count > 0) {
+        /* List format: each item has a "name" key */
+        for (size_t i = 0; i < server_count && dynamic_count < MAX_MCP_SERVERS; i++) {
+            char name_key[256];
+            snprintf(name_key, sizeof(name_key), "mcp_servers.%zu.name", i);
+            const char *name = yaml_get_string(doc, name_key);
+            if (name) {
+                dynamic_names[dynamic_count] = strdup(name);
+                if (dynamic_names[dynamic_count]) dynamic_count++;
+            }
+        }
+    }
+
+    /* If no list items found, try object (map) format */
+    if (dynamic_count == 0) {
+        size_t map_count = 0;
+        char **keys = yaml_map_keys(doc, "mcp_servers", &map_count);
+        if (keys && map_count > 0) {
+            for (size_t i = 0; i < map_count && dynamic_count < MAX_MCP_SERVERS; i++) {
+                dynamic_names[dynamic_count] = strdup(keys[i]);
+                if (dynamic_names[dynamic_count]) dynamic_count++;
+                free(keys[i]);
+            }
+            free(keys);
+        }
+    }
+
+    /* Connect each discovered server */
+    for (int si = 0; si < dynamic_count; si++) {
+        const char *server_name = dynamic_names[si];
+        (void)server_name; /* suppress null warning */
+        char key[256];
+        snprintf(key, sizeof(key), "mcp_servers.%s.command", dynamic_names[si]);
+        const char *cmd = yaml_get_string(doc, key);
             if (!cmd) {
                 /* Check for URL instead */
-                snprintf(key, sizeof(key), "mcp_servers.%s.url", known_servers[si]);
+                snprintf(key, sizeof(key), "mcp_servers.%s.url", dynamic_names[si]);
                 const char *url = yaml_get_string(doc, key);
                 if (!url) continue;
 
                 /* SSE transport — wire via HTTP/SSE */
-                connect_sse_server(known_servers[si], url, 120, NULL, 0);
+                connect_sse_server(dynamic_names[si], url, 120, NULL, 0);
                 continue;
             }
 
@@ -511,7 +536,7 @@ void mcp_init_all(void) {
 
             /* Count args */
             char args_key[256];
-            snprintf(args_key, sizeof(args_key), "mcp_servers.%s.args", known_servers[si]);
+            snprintf(args_key, sizeof(args_key), "mcp_servers.%s.args", dynamic_names[si]);
             size_t acount = yaml_list_count(doc, args_key);
             if (acount > 0) {
                 args = (char **)calloc(acount + 1, sizeof(char *));
@@ -525,12 +550,12 @@ void mcp_init_all(void) {
             }
 
             /* Get timeout */
-            snprintf(key, sizeof(key), "mcp_servers.%s.timeout", known_servers[si]);
+            snprintf(key, sizeof(key), "mcp_servers.%s.timeout", dynamic_names[si]);
             int timeout = yaml_get_int(doc, key, 120);
 
             /* P63-P64: Parse auth config for this server */
             char auth_key[256];
-            snprintf(auth_key, sizeof(auth_key), "mcp_servers.%s.auth", known_servers[si]);
+            snprintf(auth_key, sizeof(auth_key), "mcp_servers.%s.auth", dynamic_names[si]);
             int aidx = g_server_count; /* parallel to g_servers */
             memset(&g_server_auth[aidx], 0, sizeof(mcp_auth_t));
 
@@ -588,7 +613,7 @@ void mcp_init_all(void) {
                 }
 
                 fprintf(stderr, "MCP: Auth enabled for '%s' (type=%s)\n",
-                        known_servers[si], auth_type);
+                        dynamic_names[si], auth_type);
             }
 
             /* P66: Parse tool filter config for this server */
@@ -597,7 +622,7 @@ void mcp_init_all(void) {
             /* Parse allow_tools list */
             char filter_key[256];
             snprintf(filter_key, sizeof(filter_key), "mcp_servers.%s.allow_tools",
-                     known_servers[si]);
+                     dynamic_names[si]);
             size_t ac = yaml_list_count(doc, filter_key);
             if (ac > 0) {
                 for (size_t fi = 0; fi < ac && g_server_filters[aidx].allow_count < MAX_FILTER_PATTERNS; fi++) {
@@ -609,12 +634,12 @@ void mcp_init_all(void) {
                     }
                 }
                 fprintf(stderr, "MCP: Filter for '%s' — allow %d patterns\n",
-                        known_servers[si], g_server_filters[aidx].allow_count);
+                        dynamic_names[si], g_server_filters[aidx].allow_count);
             }
 
             /* Parse block_tools list */
             snprintf(filter_key, sizeof(filter_key), "mcp_servers.%s.block_tools",
-                     known_servers[si]);
+                     dynamic_names[si]);
             size_t bc = yaml_list_count(doc, filter_key);
             if (bc > 0) {
                 for (size_t fi = 0; fi < bc && g_server_filters[aidx].block_count < MAX_FILTER_PATTERNS; fi++) {
@@ -626,7 +651,7 @@ void mcp_init_all(void) {
                     }
                 }
                 fprintf(stderr, "MCP: Filter for '%s' — block %d patterns\n",
-                        known_servers[si], g_server_filters[aidx].block_count);
+                        dynamic_names[si], g_server_filters[aidx].block_count);
             }
 
             /* P70: Parse root directories config */
@@ -635,7 +660,7 @@ void mcp_init_all(void) {
             int root_count = 0;
 
             snprintf(root_key, sizeof(root_key), "mcp_servers.%s.roots",
-                     known_servers[si]);
+                     dynamic_names[si]);
             size_t roots_in_yaml = yaml_list_count(doc, root_key);
             if (roots_in_yaml > 0) {
                 for (size_t ri = 0; ri < roots_in_yaml && root_count < MAX_MCP_ROOTS; ri++) {
@@ -649,17 +674,19 @@ void mcp_init_all(void) {
                                      "file://%s", root_path);
                         }
                         snprintf(roots[root_count].name, sizeof(roots[0].name),
-                                 "%s-root", known_servers[si]);
+                                 "%s-root", dynamic_names[si]);
                         root_count++;
                     }
                 }
                 fprintf(stderr, "MCP: Roots for '%s' — %d directories\n",
-                        known_servers[si], root_count);
+                        dynamic_names[si], root_count);
             }
 
-            connect_stdio_server(known_servers[si], cmd, args, timeout,
+            connect_stdio_server(dynamic_names[si], cmd, args, timeout,
                                  root_count > 0 ? roots : NULL, root_count);
-        }
+
+        /* Free dynamic server names */
+        free(dynamic_names[si]);
     }
 
     yaml_free(doc);

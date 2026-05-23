@@ -431,6 +431,29 @@ void yaml_iterate(const yaml_doc_t *doc,
     }
 }
 
+char **yaml_map_keys(const yaml_doc_t *doc, const char *path, size_t *count) {
+    if (count) *count = 0;
+    if (!doc || !path) return NULL;
+    yaml_entry_t *e = navigate(doc, path);
+    if (!e || e->type != YVAL_MAP) return NULL;
+
+    size_t n = e->child_count;
+    char **keys = (char **)malloc(n * sizeof(char *));
+    if (!keys) return NULL;
+
+    size_t out = 0;
+    for (size_t i = 0; i < n; i++) {
+        if (e->children[i]->key) {
+            keys[out] = strdup(e->children[i]->key);
+            if (keys[out]) out++;
+        }
+    }
+
+    if (out == 0) { free(keys); return NULL; }
+    if (count) *count = out;
+    return keys;
+}
+
 void yaml_free(yaml_doc_t *doc) {
     if (!doc) return;
     if (doc->root) free_entry(doc->root);
