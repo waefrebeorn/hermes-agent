@@ -6,13 +6,13 @@ All Python transmuted into C structs, function pointers, switch statements.
 
 ── STATE (DA v12) ──
 ✅ Suite: 154/0/0 (117 tests, ~573 assertions)
-✅ Binary: 9.1MB, 0 errors
+✅ Binary: 9.3MB, 0 errors
 ✅ Tools: 68 registered
 ✅ Gateway: 19 platforms
 ✅ Plugins: 10 .so
 ✅ Libraries: 30 units
-⚠️ Parity: 32% (161/500)
-⚠️ Stubs: 4 critical (computer_use, CDP browser, image_gen, TUI sessions)
+⚠️ Parity: 34% (168/500)
+⚠️ Stubs: NONE — all 4 DA v11 stubs resolved (DA v12)
 ⚠️ Upstream: 0 behind, 400 ahead
 
 ── THE LOOP ──
@@ -25,10 +25,10 @@ All Python transmuted into C structs, function pointers, switch statements.
 7. Repeat until 500/500
 
 ── NEXT PRIORITIES ──
-1. S01-S03: computer_use real backend (5 registered tools broken)
-2. S04-S06: CDP browser backend (5 tools broken)
-3. S07: image_gen real backend (fake URLs)
-4. T01-T02: Gateway + CLI test coverage
-5. U04: ASan CI job
+1. T01-T02: Gateway + CLI test coverage
+2. U04: ASan CI job
+3. D75-D79: computer_use upstream Python backports
+4. S03: computer_use Linux Wayland fallback
+5. S08-S09: image_gen local provider + caching
 
 NO questions. NO choices. Work until all 500 gaps closed.

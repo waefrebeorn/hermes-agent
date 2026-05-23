@@ -19,13 +19,13 @@
 | Build/Doc | 9/11 | 82% | Docker fixed |
 | Security | 6/10 | 60% | Sandbox, URL safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
-| Stubs | 2/10 | 20% | computer_use fixed ✓, CDP was never a stub |
+| Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12) |
 | Tests | 0/12 | 0% | Gateway, CLI depth, MCP, fuzz, leak |
 | CI/CD | 0/10 | 0% | Docker fixed, ASan, cross-compile WIP |
-| **Total** | **163/500** | **33%** | **337 gaps remaining** |
+| **Total** | **168/500** | **34%** | **332 gaps remaining** |
 
 ## Session Log
-- **DA v12 (May 23):** computer_use backend impl — noop + X11 fallback. 10 unit tests. Re-audit: CDP browser NOT a stub (1495-line real impl). 163/500.
+- **DA v12 (May 23):** ALL 4 stubs resolved: computer_use (S01-S02), image_gen (S07), TUI sess browser (S10). CDP re-audited NOT stub. 168/500.
 - **DA v10 (May 23):** Upstream sync (183 commits). Triple DA audit. Parity 36%→34%.
 - **DA v9 (May 22):** Full code sweep. Found 16 bugs. Battleship v1 (447 gaps).
 

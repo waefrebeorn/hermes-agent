@@ -74,6 +74,41 @@ jobs:
           path: C/
           retention-days: 3
 
+  asan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+
+      - name: Build with AddressSanitizer
+        run: |
+          # Clean stale objects first
+          find . -name '*.o' -delete 2>/dev/null || true
+          make -j$(nproc) asan 2>&1
+        working-directory: C/
+
+      - name: Sanitizer smoke test
+        run: |
+          ./hermes --help
+        working-directory: C/
+
+      - name: Run test suite under ASan
+        run: bash test_runner.sh --verbose 2>&1
+        working-directory: C/
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 10

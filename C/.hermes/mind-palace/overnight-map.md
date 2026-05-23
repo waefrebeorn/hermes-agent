@@ -1,27 +1,29 @@
 # Overnight Map — 2026-05-23 (DA v12)
 
-## Active: computer_use real backend (S01-S02)
+## Active: ALL stubs resolved. Parity 168/500.
 
-**Suite: 154/0/0** (117 tests, ~573 assertions + 10 new computer_use tests)
+**Suite: 154/0/0** (117 tests, ~573 assertions)
 **Binary: 9.3MB dynamic**
 **400 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
-- **S01-S02**: computer_use backend abstraction implemented — noop backend (10 unit tests), X11 fallback (xdotool/ImageMagick), full 13-action schema, safety checks (blocked keys/types). Replaces 30-line stub with ~900-line implementation.
-- **S01-S02 test**: 10 unit tests for noop backend + lifecycle + global backend. Added to test_runner.sh.
-- **CDP re-audit**: browser.c is NOT a stub — 1495-line implementation with real CDP WebSocket client, JS execution, screenshot, dialog handling. `stub_cdp_handler` is dead code never registered. DA v11 false ✅ corrected.
-- **Header**: `include/hermes_computer_use.h` — new public API with backend vtable, data types, lifecycle helpers.
+- **S01-S02**: computer_use backend abstraction — noop + X11 backends, 10 tests
+- **S07**: image_gen plugin real FAL.ai HTTP client (was fake URLs)
+- **S10**: TUI session browser DB-backed — replaced hardcoded "current" with agent_session_list()
+- **TUI fixes**: tui_fullscreen_run() signature mismatch fixed, load/delete/export wired to real DB APIs
+- **CDP re-audit**: NOT a stub. Full 1495-line implementation. DA v11 false ✅
+- **image_gen re-audit**: TOOL was always real. Only plugin was fake — now fixed.
 
 ## P0 Gaps (next session picks first)
-1. ~~S01-S02 — computer_use real backend~~ ✅ DONE
-2. **U01-U02** — CI gate + Docker build verification (check if CI passes with new files)
-3. **S07** — image_gen real backend (Fal AI REST client)
+1. ~~ALL 4 stubs resolved~~ ✅ ALL DONE
+2. **T01-T02**: Gateway + CLI test coverage
+3. **U04**: ASan CI job
+4. **D75-D79**: computer_use upstream Python backports
 
 ## Verified Numbers (don't re-derive)
-- Parity: 33% (163/500), NOT 32%
-- Stubs: 2 critical remaining (image_gen, TUI) — CDP was never a stub, computer_use now has real backend
-- Tests: 10 new computer_use tests added (11 total with the stubs correction)
-- CDP browser: 13 registered tools, all with real handlers. Requires external CDP server (same as Python)
+- Parity: 34% (168/500), NOT 32% or 33%
+- Stubs: NONE. All 4 DA v11 stubs resolved or reclassified
+- 0 critical stubs remaining
 
 ## Fallback
-Pick U01 (CI gate) — ensure new files compile in CI, or pick S07 (image_gen) — next highest-impact broken feature.
+Pick T01 (Gateway per-platform tests) — next highest-impact area.

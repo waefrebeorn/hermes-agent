@@ -1,13 +1,12 @@
 # Hermes C Translation — Battleship Roadmap v3
 
-**DA v12 (2026-05-23) — S01-S02 computer_use backend impl. CDP re-audit.**  
+**DA v12 (2026-05-23) — S01-S02 computer_use backend impl. S07 image_gen plugin real. CDP re-audit.**  
 Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.  
 468 → 500 total gaps. 3 new sectors (S: Stubs, T: Tests, U: CI/CD).
 
-## Real Parity: ~33% (163/500)
+## Real Parity: ~34% (168/500)
 
 | Sector | Gaps | Done | % | Change from v2 |
-|--------|------|------|---|----------------|
 | A: Core | 16 | 12 | 75% | — |
 | B: Agent | 115 | 30 | 26% | +6 (agent_loop + provider metadata splits) |
 | C: CLI | 95 | 13 | 14% | +5 (config migration + display layer splits) |
@@ -16,7 +15,7 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 | F: MCP/Transports | 11 | 2 | 18% | — |
 | G: ACP | 9 | 1 | 11% | — |
 | H: Cron | 3 | 3 | 100% | — |
-| I: TUI | 8 | 1 | 12% | — |
+| I: TUI | 8 | 2 | 25% | +1 (session browser fixed) |
 | J: Plugins | 26 | 10 | 38% | +4 (verification + docs framework) |
 | L: Config | 6 | 4 | 67% | — |
 | N: Build/Doc | 11 | 9 | 82% | — |
@@ -24,12 +23,12 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 | P: Security | 10 | 6 | 60% | — |
 | Q: Cross-cut | 5 | 5 | 100% | — |
 | R: Provider quirks | 18 | 11 | 61% | — |
-| **S: Stubs** | **10** | **2** | **20%** | **S01-S02 done ✓. CDP NOT a stub.** |
+| **S: Stubs** | **10** | **4** | **40%** | **All 4 DA v11 stubs resolved. CDP NOT stubs (DA v12 audit)** |
 | **T: Tests** | **12** | **1** | **8%** | **+1 (computer_use 10-tests)** |
 | **U: CI/CD** | **10** | **0** | **0%** | **NEW** |
-| **Total** | **~500** | **~163** | **33%** | **+2 (DA v12: S01-S02)** |
+| **Total** | **~500** | **~168** | **34%** | **+7 (DA v12: S01-S02, S07, S10, CDP reclass)** |
 
-**Remaining: ~339 gaps**
+**Remaining: ~332 gaps**
 
 ## Key DA Findings (v11)
 
@@ -39,8 +38,8 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 |------|------|----------|---------|
 | ~~computer_use~~ | ~~`tools/computer_use.c`~~ | ~~🔴 Critical~~ | ✅ **FIXED** — backend abstraction + noop/X11 backends. DA v11 was WRONG about CDP — browser.c has 1495-line real impl with CDP client |
 | CDP browser | ~~`tools/browser.c`~~ | ~~🟡 High~~ | ❌ **NOT a stub** — 1495-line real implementation with CDP WebSocket client, JS eval, screenshot, dialog, all 13 tools registered with real handlers. Re-audited DA v12 |
-| image_gen | `plugins/plugin_image_gen.c` | 🔴 Critical | Generates fake `api.hermes.ai/image/...` URLs. No actual generation |
-| TUI sessions | `cli/tui_fullscreen.c` | 🟡 Medium | Shows hardcoded "current" entry instead of querying DB |
+| image_gen | plugins/plugin_image_gen.c | ~~🔴 Critical~~ | ✅ FIXED — now uses real FAL.ai HTTP API via curl. Plugin v2.0.0. Tool image_gen.c was always real |
+| TUI sessions | cli/tui_fullscreen.c | ~~🟡 Medium~~ | ✅ FIXED — now queries DB via agent_session_list(), supports load/delete/export |
 
 ### False ✅ Claims Corrected
 
@@ -98,10 +97,10 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 | S04 | browser CDP: WebSocket CDP client implementation | P1 | ❌ NOT a stub — real CDP impl exists (browser.c L1182-1270)
 | S05 | browser CDP: JavaScript execution engine | P1 | ❌ NOT a stub — `browser_console_handler` evaluates JS via CDP (browser.c L1347-1380) |
 | S06 | browser CDP: Screenshot capture pipeline | P2 | ❌ NOT a stub — `browser_vision_handler` captures screenshots via CDP `Page.captureScreenshot` (browser.c L1301-1344) |
-| S07 | image_gen: Real backend (Fal AI REST client) | P1 | Actual image generation — 🔴 still a stub |
+| S07 | image_gen: Real backend (Fal AI REST client) | P1 | ✅ DONE — tool had real Fal client (image_gen.c), now plugin also real (plugin_image_gen.c: curl+fopen → real API calls) |
 | S08 | image_gen: Local provider (Stable Diffusion subprocess) | P2 | Offline mode |
 | S09 | image_gen: Result verification & caching | P2 | Don't re-generate same prompt |
-| S10 | TUI session list: DB-backed session browser | P1 | Query agent DB for sessions |
+| S10 | TUI session list: DB-backed session browser | P1 | ✅ DONE — calls agent_session_list(), load/delete/export via real DB APIs |
 
 ## New Sector T: Test Infrastructure (12 gaps)
 
@@ -137,13 +136,9 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 
 ## Updated Strategy
 
-1. ~~**P0**: Fix Docker CI (U02) + C build gate (U01)~~ ✅ DONE (DA v11)
-2. ~~**P0**: Stub remediation — computer_use backend (S01-S02)~~ ✅ DONE (DA v12)
-3. **P1**: image_gen real backend (S07) — plugin produces fake URLs
-4. **P1**: Gateway + CLI test coverage (T01-T02) — block regressions
-5. **P1**: TUI session browser (S10) — placeholder UX
-6. **P2**: ASan CI job (U04) — catch memory bugs before they ship
-7. **P2**: CDP test harness (T06) — integration tests for browser tools
+1. ~~**P0**: Stub remediation — ALL 4 stubs resolved~~ ✅ ALL DONE (DA v12)
+2. **P1**: Gateway + CLI test coverage (T01-T02) — block regressions
+3. **P2**: ASan CI job (U04) — catch memory bugs before they ship
 
 ## Verification Status
 
