@@ -165,6 +165,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "xai_http (compilation failed)"
 fi
 
+echo ""; echo "=== Credential Files Library Tests (credential) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libcredential" \
+    "$CDIR/tests/test_credential.c" \
+    "$CDIR/lib/libcredential/credential.c" \
+    -o /tmp/hermes_test_credential -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_credential > /dev/null 2>&1; then ok "credential"
+    else fail "credential (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_credential
+else skip "credential (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
