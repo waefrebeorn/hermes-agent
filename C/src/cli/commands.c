@@ -1666,38 +1666,41 @@ static void cmd_plugins(const char *args, agent_state_t *state) {
     printf("Plugin system status:\n");
     printf("  Directory: %s\n", plugins_dir);
 
-    /* Check for .so files */
-    char cmd[HERMES_PATH_MAX + 32];
-    snprintf(cmd, sizeof(cmd), "ls %s/*.so 2>/dev/null | wc -l", plugins_dir);
-    FILE *fp = popen(cmd, "r");
-    if (fp) {
-        char count[16] = "0";
-        if (fgets(count, sizeof(count), fp)) {
-            int n = atoi(count);
-            printf("  Loaded plugins: %d\n", n);
-            if (n > 0) {
-                snprintf(cmd, sizeof(cmd), "ls %s/*.so 2>/dev/null", plugins_dir);
-                FILE *lp = popen(cmd, "r");
-                if (lp) {
-                    char line[256];
-                    while (fgets(line, sizeof(line), lp))
-                        printf("    %s", line);
-                    pclose(lp);
-                }
-            }
-        }
-        pclose(fp);
+    /* Scan .so files and load metadata via plugin API */
+    DIR *d = opendir(plugins_dir);
+    if (!d) {
+        printf("  Error: cannot open plugins directory\n");
+        return;
     }
 
-    /* Try loading a plugin to verify system */
-    void *handle = dlopen("libhello_plugin.so", RTLD_NOW | RTLD_LOCAL);
-    if (handle) {
-        printf("  Plugin API: verified (hello_plugin.so loaded)\n");
-        dlclose(handle);
-    } else {
-        printf("  Plugin API: %s\n", dlerror());
+    int count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(d)) != NULL) {
+        if (entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
+        const char *dot = strrchr(entry->d_name, '.');
+        if (!dot || strcmp(dot, ".so") != 0) continue;
+
+        char full_path[HERMES_PATH_MAX];
+        snprintf(full_path, sizeof(full_path), "%s/%s", plugins_dir, entry->d_name);
+
+        plugin_t *p = plugin_load(full_path);
+        if (p) {
+            const plugin_version_t *ver = plugin_version(p);
+            char ver_buf[32];
+            plugin_version_str(ver, ver_buf, sizeof(ver_buf));
+            printf("  %s v%s (%s) — %s\n",
+                   plugin_name(p), ver_buf,
+                   plugin_type_str(plugin_type(p)),
+                   plugin_description(p) ? plugin_description(p) : "no description");
+            plugin_unload(p);
+        } else {
+            printf("  %s — (unloadable: %s)\n", entry->d_name, plugin_error());
+        }
+        count++;
     }
-    printf("  Config: %s/plugins section or plugin.dirs\n", home);
+    closedir(d);
+    printf("  Total plugins: %d\n", count);
+    printf("  Plugin directory: %s\n", plugins_dir);
 }
 
 /* /platforms: Show gateway platform status */
