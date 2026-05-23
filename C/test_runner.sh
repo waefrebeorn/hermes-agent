@@ -218,6 +218,8 @@ echo ""; echo "=== TOML Library Tests (J19) ==="
 run_lib_test "toml" "tests/test_toml.c" "lib/libtoml" "$CDIR/lib/libtoml/toml.c"
 echo ""; echo "=== ANSI Library Tests (J22) ==="
 run_lib_test "ansi" "tests/test_ansi.c" "lib/libansi" "$CDIR/lib/libansi/ansi.c"
+echo ""; echo "=== JSON5 Library Tests (J20) ==="
+run_lib_test "json5" "tests/test_json5.c" "lib/libjson5" "$CDIR/lib/libjson5/json5.c -I $CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 echo ""; echo "=== Display Module Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_display.c" \
