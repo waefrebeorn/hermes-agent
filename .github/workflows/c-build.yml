@@ -66,6 +66,16 @@ jobs:
         run: make plugins 2>&1
         working-directory: C/
 
+      - name: Upload artifacts (always)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: hermes-c-binaries-${{ github.sha }}
+          path: |
+            C/hermes
+            C/hermes-tui
+            C/src/plugins/*.so
+          retention-days: 7
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
