@@ -2,6 +2,8 @@
 slermes
 slermes_test
 hermes
+hermes-tui
+hermes-fuzz
 *.o
 *.a
 *.so

@@ -43,7 +43,7 @@ PHASE4_OBJ = $(PHASE3_OBJ) $(GATEWAY_OBJ)
 PHASE5_OBJ = $(PHASE4_OBJ) $(CRON_OBJ)
 
 .PHONY: all clean phase1 phase2 phase3 phase4 phase5 test digest \
-        upstream-sync upstream-merge what-changed test-libs tui docs
+        upstream-sync upstream-merge what-changed test-libs tui docs asan fuzz
 
 all: phase5
 
@@ -71,6 +71,19 @@ tui: $(PHASE5_OBJ) $(TUI_OBJ) src/main.o $(LIB_OBJ)
 	$(CC) $(CFLAGS) -DHAS_NCURSES_TUI -o hermes-tui $^ $(LDFLAGS) $(LIBS) \
 		-L lib/libncurses/lib -lncursesw -ltinfo
 	@echo "hermes-tui built with ncurses TUI support"
+
+# AddressSanitizer build (U04)
+asan: CFLAGS += -fsanitize=address -fno-omit-frame-pointer -O1
+asan: LDFLAGS += -fsanitize=address
+asan: clean
+	$(MAKE) all
+	@echo "ASan build complete — run with: ./hermes"
+
+# Fuzz test harness (T08)
+fuzz: CFLAGS += -DFUZZ_TESTING -O1 -g
+fuzz: tests/fuzz_harness.o $(LIB_OBJ)
+	$(CC) $(CFLAGS) $(LIB_INCS) -o hermes-fuzz tests/fuzz_harness.o $(LIB_OBJ) $(LDFLAGS) $(LIBS)
+	@echo "Fuzz harness built — run with: ./hermes-fuzz"
 
 # Pattern rule for .c files
 src/%.o: src/%.c include/hermes.h
