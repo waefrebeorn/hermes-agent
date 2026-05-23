@@ -1,6 +1,6 @@
 # State — Hermes C Translation (2026-05-27)
 
-## ~62% toward 1:1 Python parity (~339 gaps remaining)
+## ~63% toward 1:1 Python parity (~338 gaps remaining)
 
 ### Milestone Dashboard
 
@@ -14,9 +14,9 @@
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
-|| **Libs** | 12 | 38% | libpath + libdatetime ported (J04 + J05)
+|| **Libs** | 11 | **41%** | libpath + libdatetime + libcsv ported (J04 + J05 + J06)
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 35 | 63% | **63 files, 2,109+ assertions** (116 pass, 0 fail, 0 skip) |
+|| **Tests** | 34 | **64%** | **64 files, 2,142+ assertions** (117 pass, 0 fail, 0 skip) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 || **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
