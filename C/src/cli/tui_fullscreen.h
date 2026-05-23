@@ -30,7 +30,7 @@ extern "C" {
 /* === Core API === */
 
 /* Initialize and run the full-screen TUI. Returns 0 on success. */
-int tui_fullscreen_run(void *agent_state);
+int tui_fullscreen_run(agent_state_t *state);
 
 /* === Display API (called from agent/gateway) === */
 

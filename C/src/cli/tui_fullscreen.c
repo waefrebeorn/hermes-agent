@@ -1633,23 +1633,42 @@ static int tui_session_browser_handle(int ch) {
             if (tui.sessions.selected >= 0 && tui.sessions.selected < tui.sessions.count) {
                 /* Load session */
                 if (tui.agent) {
-                    /* agent_session_load(tui.agent, sessions.sessions[selected]); */
-                    tui_history_add(MSG_ROLE_INFO, "Session load requested", false);
+                    if (strcmp(tui.sessions.sessions[tui.sessions.selected], "(no sessions)") != 0) {
+                        agent_load_session(tui.agent,
+                            tui.sessions.sessions[tui.sessions.selected]);
+                        tui_history_add(MSG_ROLE_INFO, "Session loaded", false);
+                    }
                 }
             }
             tui.modal_mode = MODE_NORMAL;
             tui_redraw_history();
             return 1;
-        
+
         case 'd':
             if (tui.sessions.selected >= 0 && tui.sessions.selected < tui.sessions.count) {
-                tui_history_add(MSG_ROLE_INFO, "Session delete requested", false);
+                if (strcmp(tui.sessions.sessions[tui.sessions.selected], "(no sessions)") != 0) {
+                    if (tui.agent && tui.agent->db) {
+                        agent_session_delete(tui.agent,
+                            tui.sessions.sessions[tui.sessions.selected]);
+                    }
+                    tui_history_add(MSG_ROLE_INFO, "Session deleted", false);
+                    /* Refresh list */
+                    tui_fullscreen_session_browse();
+                    return 1;
+                }
             }
             break;
-        
+
         case 'e':
             if (tui.sessions.selected >= 0 && tui.sessions.selected < tui.sessions.count) {
-                tui_history_add(MSG_ROLE_INFO, "Session export requested", false);
+                if (strcmp(tui.sessions.sessions[tui.sessions.selected], "(no sessions)") != 0) {
+                    char *json = agent_session_export_json(
+                        tui.agent, tui.sessions.sessions[tui.sessions.selected]);
+                    if (json) {
+                        tui_history_add(MSG_ROLE_INFO, json, false);
+                        free(json);
+                    }
+                }
             }
             break;
         
@@ -1681,9 +1700,24 @@ void tui_fullscreen_session_browse(void) {
     /* Populate session list from database */
     tui.sessions.count = 0;
     if (tui.agent && tui.agent->db) {
-        /* session_entry_t *list = agent_session_list(&count, NULL, 256); */
-        /* For now, show placeholder */
-        strncpy(tui.sessions.sessions[0], "current", sizeof(tui.sessions.sessions[0]) - 1);
+        size_t count = 0;
+        session_entry_t *list = agent_session_list(&count, NULL, SESSION_LIST_MAX);
+        if (list && count > 0) {
+            int max_sessions = count < SESSION_LIST_MAX ? (int)count : SESSION_LIST_MAX;
+            for (int i = 0; i < max_sessions; i++) {
+                strncpy(tui.sessions.sessions[i], list[i].id,
+                        sizeof(tui.sessions.sessions[0]) - 1);
+                tui.sessions.count++;
+            }
+            /* Free the list — each entry's meta doesn't need deep free
+             * since session_meta_t has no heap allocations. */
+            free(list);
+        }
+    }
+    /* If no DB or no sessions, show a single placeholder */
+    if (tui.sessions.count == 0) {
+        strncpy(tui.sessions.sessions[0], "(no sessions)",
+                sizeof(tui.sessions.sessions[0]) - 1);
         tui.sessions.count = 1;
     }
 }
