@@ -55,6 +55,10 @@ typedef struct budget_tracker_t {
     long long last_output_tokens;
     double    last_cost_usd;
     char      last_model[128];     /* model used for this turn */
+
+    /* ---- Iteration budget (per-agent API call counter) ---- */
+    int       max_iterations;       /* per-agent iteration cap (0=unlimited) */
+    int       iterations_used;      /* iterations consumed so far */
 } budget_tracker_t;
 
 /* ================================================================
@@ -129,6 +133,26 @@ char *budget_tracker_stats_json(const budget_tracker_t *bt);
 
 /* Reset all totals and warnings (start a new session). */
 void budget_tracker_reset(budget_tracker_t *bt);
+
+/* ---- Iteration budget (port of Python agent/iteration_budget.py) ---- */
+
+/* Set per-agent iteration limit. Pass 0 for unlimited (default).
+ * Parent agents typically use 90, subagents use 50. */
+void budget_tracker_set_iteration_limit(budget_tracker_t *bt, int max_iterations);
+
+/* Try to consume one iteration. Returns true if under budget (iteration allowed).
+ * Returns false if budget exhausted — caller should stop making API calls. */
+bool budget_tracker_consume_iteration(budget_tracker_t *bt);
+
+/* Refund one iteration (e.g. for execute_code turns that don't count).
+ * Safe to call even at 0 — won't go negative. */
+void budget_tracker_refund_iteration(budget_tracker_t *bt);
+
+/* Get number of iterations used so far. */
+int budget_tracker_iterations_used(const budget_tracker_t *bt);
+
+/* Get remaining iterations. Returns -1 if unlimited. */
+int budget_tracker_iterations_remaining(const budget_tracker_t *bt);
 
 #ifdef __cplusplus
 }

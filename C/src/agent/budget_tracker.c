@@ -21,7 +21,7 @@ void budget_tracker_init(budget_tracker_t *bt) {
     if (!bt) return;
     memset(bt, 0, sizeof(*bt));
     bt->warn_at_pct = 0.8;
-    /* All limits default to 0 = unlimited */
+    /* All limits default to 0 = unlimited; max_iterations = 0 = unlimited */
 }
 
 void budget_tracker_set_limits(budget_tracker_t *bt,
@@ -86,6 +86,8 @@ bool budget_tracker_is_exceeded(const budget_tracker_t *bt) {
     if (bt->max_cost_usd > 0.0 && bt->total_cost_usd >= bt->max_cost_usd)
         return true;
     if (bt->max_turns > 0 && bt->turn_count >= bt->max_turns)
+        return true;
+    if (bt->max_iterations > 0 && bt->iterations_used >= bt->max_iterations)
         return true;
     return false;
 }
@@ -192,7 +194,12 @@ char *budget_tracker_stats_json(const budget_tracker_t *bt) {
         json_set(limits, "max_cost_usd", json_number(bt->max_cost_usd));
     if (bt->max_turns > 0)
         json_set(limits, "max_turns", json_number(bt->max_turns));
+    if (bt->max_iterations > 0)
+        json_set(limits, "max_iterations", json_number(bt->max_iterations));
     json_set(root, "limits", limits);
+
+    /* Iterations */
+    json_set(root, "iterations_used", json_number(bt->iterations_used));
 
     /* Warnings */
     json_node_t *warn = json_object();
@@ -219,6 +226,7 @@ void budget_tracker_reset(budget_tracker_t *bt) {
     double warn_at = bt->warn_at_pct;
     int turn_limit = bt->max_tool_calls_per_turn;
     bool hard = bt->hard_limit;
+    int iter_limit = bt->max_iterations;
 
     memset(bt, 0, sizeof(*bt));
 
@@ -229,6 +237,7 @@ void budget_tracker_reset(budget_tracker_t *bt) {
     bt->warn_at_pct = warn_at;
     bt->max_tool_calls_per_turn = turn_limit;
     bt->hard_limit = hard;
+    bt->max_iterations = iter_limit;
     /* reported_* flags intentionally NOT preserved — reset clears warning history */
 }
 
@@ -268,4 +277,37 @@ bool budget_tracker_is_hard_exceeded(const budget_tracker_t *bt) {
     if (!bt) return false;
     if (!bt->hard_limit) return false;  /* soft mode — grace call will handle it */
     return budget_tracker_is_exceeded(bt);
+}
+
+/* ================================================================
+ *  Iteration budget (port of Python agent/iteration_budget.py)
+ * ================================================================ */
+
+void budget_tracker_set_iteration_limit(budget_tracker_t *bt, int max_iterations) {
+    if (!bt) return;
+    bt->max_iterations = max_iterations;
+}
+
+bool budget_tracker_consume_iteration(budget_tracker_t *bt) {
+    if (!bt) return false;
+    if (bt->max_iterations > 0 && bt->iterations_used >= bt->max_iterations)
+        return false;
+    bt->iterations_used++;
+    return true;
+}
+
+void budget_tracker_refund_iteration(budget_tracker_t *bt) {
+    if (!bt) return;
+    if (bt->iterations_used > 0)
+        bt->iterations_used--;
+}
+
+int budget_tracker_iterations_used(const budget_tracker_t *bt) {
+    if (!bt) return 0;
+    return bt->iterations_used;
+}
+
+int budget_tracker_iterations_remaining(const budget_tracker_t *bt) {
+    if (!bt || bt->max_iterations <= 0) return -1;  /* unlimited */
+    return bt->max_iterations - bt->iterations_used;
 }

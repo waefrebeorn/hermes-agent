@@ -1340,6 +1340,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "budget_tracker (compilation failed)"
 fi
 
+echo ""; echo "=== Iteration Budget Tests (agent/iteration_budget.py) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_iteration_budget.c" \
+    "$CDIR/src/agent/budget_tracker.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_iteration_budget -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_iteration_budget > /dev/null 2>&1; then ok "iteration_budget (30 tests)"
+    else fail "iteration_budget (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_iteration_budget
+else skip "iteration_budget (compilation failed)"
+fi
+
 # Fallback routing test (needs fallback_routing.c + json lib)
 echo ""; echo "=== Fallback Routing Tests (P83) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
