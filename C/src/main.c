@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/* Forward declaration for startup initialization */
+extern void mcp_init_all(void);
+
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
     printf("C Translation — Phase 5 target\n");
@@ -133,6 +136,9 @@ int main(int argc, char **argv) {
             }
         }
 
+        /* Initialize MCP server connections from config */
+        mcp_init_all();
+
         memcpy(agent_state.llm.base_url, cfg.base_url, sizeof(agent_state.llm.base_url));
         memcpy(agent_state.llm.api_key, cfg.api_key, sizeof(agent_state.llm.api_key));
         memcpy(agent_state.llm.model, cfg.model, sizeof(agent_state.llm.model));
@@ -180,6 +186,9 @@ int main(int argc, char **argv) {
         return ret;
     }
 #endif
+
+    /* Initialize MCP server connections from config before CLI starts */
+    mcp_init_all();
 
     return hermes_cli_main(argc, argv);
 }
