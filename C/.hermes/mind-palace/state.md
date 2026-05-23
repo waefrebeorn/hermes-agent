@@ -44,3 +44,12 @@ Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)
 Docker: Fixed       (was broken — wrong WORKDIR)
 CI:     c-build.yml (Linux x86_64 + Docker)
+
+## DA v16 Changes (This Session)
+| Gap | Module | Files | Tests |
+|-----|--------|-------|-------|
+| B117 | retry_utils (jittered backoff) | 3 new (h+c+test) | 17 |
+| B118 | trajectory (scratchpad + JSONL) | 3 new (h+c+test) | 16 |
+| B119 | portal_tags (Nous Portal tags) | 3 new (h+c+test) | 8 |
+| B120 | markdown_tables (CJK realign) | 3 new (h+c+test) | 35 |
+| **Total** | **4 gaps closed, +928 LOC** | **12 files** | **76 new assertions** |
