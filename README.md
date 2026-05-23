@@ -7,11 +7,11 @@ One-binary replacement for the [Python hermes-agent](https://github.com/waefrebe
 Binary:     hermes (~9.1MB ELF, debug symbols, dynamically linked)
 C LOC:      ~56K src/ + ~43K lib/ + ~18K tests/ + ~5K other = ~123K total
 Source:     208 .c + 102 .h = 310 files
-Tests:      80 test files, 2,088 assertions, suite 116/0/0
+Tests:      81 test files, 2,142 assertions, suite 117/0/0
 Gateway:    19 platform adapters (one more than Python)
 Tools:      37 handler files, 67 registered operations
 Commands:   74 slash commands (5 more than Python)
-Libraries:  18 standalone C libs (libjson, libyaml, libhttp, libcrypto, libmcp, etc.)
+Libraries:  19 standalone C libs (16 .a archives — libjson, libyaml, libhttp, libcrypto, libmcp, libpath, libdatetime, libcsv, etc.)
 Providers:  9 native + 27 metadata-registered (7 provider-specific API quirks remain)
 Plugins:    3 real .so (kanban, honcho, spotify) — 13 remaining to port
 Config:     322/322 YAML keys supported — profiles, `${VAR}`, `!include`, env override
@@ -25,7 +25,7 @@ Config:     322/322 YAML keys supported — profiles, `${VAR}`, `!include`, env 
 cd C/
 make -j$(nproc)          # Build full hermes binary (phase5)
 ./hermes --version       # "WuBu Hermes v0.14.1"
-bash test_runner.sh      # 116 suites, 2,088 assertions
+bash test_runner.sh      # 117 suites, 2,142 assertions
 echo "/tools" | ./hermes # List registered tools
 ```
 
@@ -42,7 +42,7 @@ export SLERMES_HOME=~/.slermes
 ## Build Targets
 
 ```bash
-make phase1        # 18 standalone libraries (.a archives)
+make phase1        # 19 standalone libraries (.a archives)
 make phase2        # Agent + CLI + 9 LLM providers
 make phase3        # All 37 tools (67 ops)
 make phase4        # 19 gateway platforms
@@ -64,7 +64,7 @@ bash test_runner.sh --verbose    # PASS/FAIL per test with output
 make test-libs                   # Standalone library tests (no binary needed)
 ```
 
-**Current: 116 passed, 0 failed, 0 skipped.** ~63% of target test coverage.
+**Current: 117 passed, 0 failed, 0 skipped.** ~64% of target test coverage.
 Tests run under ASan-clean conditions — heap overflows, UAF, and NULL-derefs are caught.
 
 ---
@@ -122,14 +122,14 @@ Advanced:  /undo-clear, /show-reasoning, /background, /command, /goal
 | **CLI** | ✅ 87% | 74 commands, skin engine, `--json` output, tab completions |
 | **Tools** | ✅ 95% | 37 files, 67 ops. 6 CDP/plugin-blocked stubs |
 | **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
-| **Libs** | ⚠️ 38% | 18 libraries. libpath + libdatetime ported. 12 Python libs remain |
-| **Tests** | ⚠️ 63% | 80 files, 2,088 assertions, 116/0/0. Target: 17K+ |
+| **Libs** | ⚠️ **41%** | 16 archives. libpath + libdatetime + libcsv ported. 11 Python libs remain |
+| **Tests** | ⚠️ **64%** | 81 files, 2,142 assertions, 117/0/0. Target: 17K+ |
 | **Error types** | ⚠️ 50% | K01-K05 codes (ValueError, TypeError, RuntimeError, OSError, TimeoutError) |
 | **Plugins** | ❌ 19% | 3 real .so (kanban, honcho, spotify). 13 plugin backends missing |
 | **Build/doc** | ✅ 95% | Docker, CI, cross-compile, man page, Doxygen, CHANGELOG, SECURITY, ARCHITECTURE. O02 Windows remains |
 
-**Overall structural parity: ~60%** (counting all subsystems equally).
-**Full feature parity including plugins + test depth: ~40%.**
+**Overall structural parity: ~63%** (counting all subsystems equally).
+**Full feature parity including plugins + test depth: ~42%.**
 
 ---
 
