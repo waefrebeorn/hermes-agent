@@ -1862,15 +1862,47 @@ static void cmd_agents(const char *args, agent_state_t *state) {
     printf("No active subagents (delegation runs inline in C build).\n");
 }
 
-/* /reasoning: Toggle reasoning effort */
+/* /reasoning: Manage reasoning effort */
 static void cmd_reasoning(const char *args, agent_state_t *state) {
-    (void)state;
     if (!args || !args[0]) {
-        printf("Usage: /reasoning [on|off|auto]\n");
-        printf("Current reasoning: auto (managed by provider)\n");
+        printf("Usage: /reasoning [level|show|hide]\n");
+        printf("Levels: none, minimal, low, medium, high, xhigh, on, off\n");
+        printf("Current: %s\n",
+               state->llm.reasoning_effort[0] ? state->llm.reasoning_effort : "(default)");
         return;
     }
-    printf("Reasoning set to: %s\n", args);
+
+    /* Handle special commands */
+    if (strcmp(args, "show") == 0) {
+        printf("Current reasoning effort: %s\n",
+               state->llm.reasoning_effort[0] ? state->llm.reasoning_effort : "(not set, provider default)");
+        return;
+    }
+    if (strcmp(args, "hide") == 0) {
+        printf("Reasoning display hidden (content still sent to provider if configured).\n");
+        return;
+    }
+
+    /* Map common aliases to canonical values */
+    const char *value = args;
+    if (strcmp(args, "on") == 0) value = "medium";
+    else if (strcmp(args, "off") == 0) value = "none";
+
+    /* Validate value */
+    static const char *valid[] = {"none", "minimal", "low", "medium", "high", "xhigh", NULL};
+    bool ok = false;
+    for (int i = 0; valid[i]; i++) {
+        if (strcmp(value, valid[i]) == 0) { ok = true; break; }
+    }
+    if (!ok) {
+        printf("Invalid reasoning level: %s\n", args);
+        printf("Valid: none, minimal, low, medium, high, xhigh, on, off\n");
+        return;
+    }
+
+    strncpy(state->llm.reasoning_effort, value, sizeof(state->llm.reasoning_effort) - 1);
+    state->llm.reasoning_effort[sizeof(state->llm.reasoning_effort) - 1] = '\0';
+    printf("Reasoning effort set to: %s\n", value);
 }
 
 /* /toolsets: List available toolsets */
