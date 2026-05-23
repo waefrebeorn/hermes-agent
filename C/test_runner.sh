@@ -211,6 +211,16 @@ run_lib_test "signal" "tests/test_signal.c" "lib/libsignal" "$CDIR/lib/libsignal
 echo ""; echo "=== Enum Library Tests (J14, header-only) ==="
 run_lib_test "enum" "tests/test_enum.c" "lib/libenum" ""
 run_lib_test "difflib" "tests/test_difflib.c" "lib/libdifflib" "$CDIR/lib/libdifflib/difflib.c"
+echo ""; echo "=== Display Module Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_display.c" \
+    "$CDIR/src/cli/display.c" "$CDIR/src/cli/display_core.c" \
+    -o /tmp/hermes_test_display -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_display > /dev/null 2>&1; then ok "display (24 tests)"
+    else fail "display (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_display
+else skip "display (compilation failed)"
+fi
 
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
