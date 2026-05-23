@@ -91,6 +91,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_disk_cleanup (compilation failed)"
 fi
 
+echo ""; echo "=== Plugin File Memory Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
+    "$CDIR/tests/test_plugin_file_memory.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_file_memory -ldl -lm > /dev/null 2>&1; then
+    if HERMES_HOME=/tmp/hermes_test_fm_home /tmp/hermes_test_plugin_file_memory > /dev/null 2>&1; then ok "plugin_file_memory (persistent memory store)"
+    else fail "plugin_file_memory (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_file_memory
+    rm -rf /tmp/hermes_test_fm_home
+else skip "plugin_file_memory (compilation failed)"
+fi
+
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
