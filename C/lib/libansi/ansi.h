@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "ansi_strip.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,10 +110,6 @@ extern "C" {
 /* Wrap text in ANSI codes. Caller must free the returned string.
  * Example: ansi_wrap("hello", ANSI_RED, ANSI_BOLD) = "\033[31m\033[1mhello\033[0m" */
 char *ansi_wrap(const char *text, const char *fg, const char *style);
-
-/* Strip ANSI escape sequences from a string, returning plain text.
- * Caller must free the returned string. */
-char *ansi_strip(const char *text);
 
 /* Check if the terminal supports ANSI codes (checks TERM env var). */
 bool ansi_supported(void);

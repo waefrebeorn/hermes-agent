@@ -27,26 +27,6 @@ char *ansi_wrap(const char *text, const char *fg, const char *style) {
     return out;
 }
 
-char *ansi_strip(const char *text) {
-    if (!text) return NULL;
-    size_t len = strlen(text);
-    char *out = malloc(len + 1);
-    if (!out) return NULL;
-    size_t w = 0;
-    for (size_t i = 0; i < len; i++) {
-        if (text[i] == '\033' && text[i + 1] == '[') {
-            i += 2; /* skip \033[ */
-            while (i < len && !((text[i] >= 'A' && text[i] <= 'Z') ||
-                                (text[i] >= 'a' && text[i] <= 'z')))
-                i++;
-            continue; /* skip the final letter too */
-        }
-        out[w++] = text[i];
-    }
-    out[w] = '\0';
-    return out;
-}
-
 bool ansi_supported(void) {
     const char *term = getenv("TERM");
     if (!term || !term[0]) return false;
