@@ -460,6 +460,115 @@ else
     skip "google_full (compilation failed)"
 fi
 
+# ==============================================
+# These tests exist but were never wired into test_runner:
+# test_finish_reason.c (B22), test_google_depth.c, test_json_mode.c
+# ==============================================
+
+# B22: finish_reason tracking (standalone — needs all providers + json + http)
+echo ""; echo "=== Finish Reason Tracking Tests (B22) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_finish_reason.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (12 tests)"
+    else
+        echo "  Finish reason test output:"
+        /tmp/hermes_test_finish_reason 2>&1 | sed 's/^/    /'
+        fail "finish_reason (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_finish_reason
+else
+    echo "  Finish reason test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_finish_reason.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "finish_reason (compilation failed)"
+fi
+
+# Google depth tests (B30-B31: top_k + candidate_count + systemInstruction)
+echo ""; echo "=== Google Provider Depth Tests (B30-B31) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_google_depth.c" \
+    "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (7 tests)"
+    else
+        echo "  Google depth test output:"
+        /tmp/hermes_test_google_depth 2>&1 | sed 's/^/    /'
+        fail "google_depth (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_google_depth
+else
+    echo "  Google depth test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_google_depth.c" \
+        "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "google_depth (compilation failed)"
+fi
+
+# JSON mode + response_format UAF test (B23 — standalone, needs all providers)
+echo ""; echo "=== JSON Mode Tests (B23) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_json_mode.c" \
+    "$CDIR/src/agent/provider.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+    "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (10 tests)"
+    else
+        echo "  JSON mode test output:"
+        /tmp/hermes_test_json_mode 2>&1 | sed 's/^/    /'
+        fail "json_mode (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_json_mode
+else
+    echo "  JSON mode test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+        "$CDIR/tests/test_json_mode.c" \
+        "$CDIR/src/agent/provider.c" \
+        "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
+        "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
+        "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
+        "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
+        "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+    skip "json_mode (compilation failed)"
+fi
+
 # Bedrock provider comprehensive tests
 echo ""; echo "=== Bedrock Provider Comprehensive Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
