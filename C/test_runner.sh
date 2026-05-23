@@ -394,6 +394,9 @@ fi
 echo ""; echo "=== Retry Utils Tests (B117) ==="
 run_lib_test "retry_utils" "tests/test_retry_utils.c" "include" "$CDIR/src/agent/retry_utils.c"
 
+echo ""; echo "=== Trajectory Tests (B118) ==="
+run_lib_test "trajectory" "tests/test_trajectory.c" "include" "$CDIR/src/agent/trajectory.c $CDIR/lib/libjson/json.c"
+
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
