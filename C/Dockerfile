@@ -17,11 +17,11 @@ WORKDIR /build
 COPY . .
 
 # Build default (no TUI — saves ~800KB)
-RUN make -j$(nproc) hermes
+RUN cd C && make -j$(nproc) hermes
 
 # Strip debug symbols, reduce size
-RUN cp hermes hermes-full && \
-    strip --strip-all hermes
+RUN cp C/hermes C/hermes-full && \
+    strip --strip-all C/hermes
 
 # === Stage 2: Runtime ===
 FROM debian:bookworm-slim
@@ -37,8 +37,8 @@ RUN apt-get update -qq && apt-get install -y -qq \
 ENV SLERMES_HOME=/etc/hermes
 
 # Copy binary (stripped) and any needed data
-COPY --from=builder /build/hermes /usr/local/bin/hermes
-COPY --from=builder /build/hermes-full /usr/local/bin/hermes-full
+COPY --from=builder /build/C/hermes /usr/local/bin/hermes
+COPY --from=builder /build/C/hermes-full /usr/local/bin/hermes-full
 
 # Default entry
 ENTRYPOINT ["/usr/local/bin/hermes"]
