@@ -487,6 +487,7 @@ run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I
 run_lib_test "path_security" "tests/test_path_security.c" "lib/libpath" "$CDIR/lib/libpath/path.c"
 run_lib_test "interrupt" "tests/test_interrupt.c" "lib/libinterrupt" "$CDIR/lib/libinterrupt/interrupt.c -lpthread"
 run_lib_test "file_state" "tests/test_file_state.c" "lib/libfilestate" "$CDIR/lib/libfilestate/file_state.c -lpthread"
+run_lib_test "tool_backend" "tests/test_tool_backend.c" "lib/libtoolbackend" "$CDIR/lib/libtoolbackend/tool_backend.c -lm"
 
 # datetime library test (J05 -- standalone, no deps)
 echo ""; echo "=== datetime Library Tests (J05) ==="
