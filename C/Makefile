@@ -305,3 +305,20 @@ valgrind: hermes
 		./hermes --help 2>&1
 	@echo ""
 	@echo "=== Valgrind: hermes binary OK ==="
+
+# U07: Code coverage target — build with gcov flags, run tests, generate lcov report
+# Requires: sudo apt-get install lcov
+coverage:
+	$(MAKE) CFLAGS="-O0 -g --coverage -Wall -Wextra -Wpedantic -I include $(LIB_INCS)" \
+		LDFLAGS="--coverage -lssl -lcrypto -ldl -lpthread $(LIBS)" \
+		clean all
+	@echo "=== Coverage: Running test suite ==="
+	./test_runner.sh
+	@echo "=== Coverage: Generating report ==="
+	lcov --capture --directory . --output-file coverage.info \
+		--rc lcov_branch_coverage=1 2>/dev/null
+	lcov --remove coverage.info '/usr/*' '*/lib/libdb/*' '*/tests/*' \
+		--output-file coverage-filtered.info --rc lcov_branch_coverage=1 2>/dev/null
+	genhtml coverage-filtered.info --output-directory coverage_html \
+		--rc lcov_branch_coverage=1 2>/dev/null
+	@echo "=== Coverage report: coverage_html/index.html ==="
