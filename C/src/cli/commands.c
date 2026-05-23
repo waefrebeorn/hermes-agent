@@ -2245,12 +2245,36 @@ static void cmd_footer(const char *args, agent_state_t *state) {
 }
 
 /* /busy: Control Enter behavior */
+/* Busy behavior mode: 0=queue (default), 1=steer, 2=interrupt */
+static int g_busy_mode = 0;
+
 static void cmd_busy(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
-        printf("Busy behavior: queue (enter queues prompt while working)\n");
+        const char *modes[] = {"queue", "steer", "interrupt"};
+        printf("Busy behavior: %s\n", g_busy_mode >= 0 && g_busy_mode < 3 ? modes[g_busy_mode] : "queue");
+        printf("Usage: /busy [queue|steer|interrupt|status]\n");
+        printf("  queue     - Enter queues prompt while working (default)\n");
+        printf("  steer     - Enter queues as steer message\n");
+        printf("  interrupt - Enter sends interrupt\n");
         return;
     }
+
+    if (strcmp(args, "status") == 0) {
+        const char *modes[] = {"queue", "steer", "interrupt"};
+        printf("Busy behavior: %s\n", g_busy_mode >= 0 && g_busy_mode < 3 ? modes[g_busy_mode] : "queue");
+        return;
+    }
+
+    if (strcmp(args, "queue") == 0) { g_busy_mode = 0; }
+    else if (strcmp(args, "steer") == 0) { g_busy_mode = 1; }
+    else if (strcmp(args, "interrupt") == 0) { g_busy_mode = 2; }
+    else {
+        printf("Unknown busy mode: %s\n", args);
+        printf("Valid: queue, steer, interrupt, status\n");
+        return;
+    }
+
     printf("Busy behavior set to: %s\n", args);
 }
 
