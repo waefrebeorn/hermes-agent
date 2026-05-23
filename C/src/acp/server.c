@@ -11,6 +11,7 @@
 #include "acp/server.h"
 #include "acp/edit_approval.h"
 #include "acp/events.h"
+#include "acp/permissions.h"
 #include "hermes_json.h"
 #include "hermes_agent.h"   /* agent_init, agent_state_t, tool registry */
 #include <stdio.h>
@@ -47,6 +48,10 @@ struct acp_server_t {
     int             next_id;            /* session ID counter */
     acp_session_t   sessions[ACP_MAX_SESSIONS];
     acp_approval_request_t pending_approval;  /* single pending edit approval */
+    char            pending_permission_command[2048];  /* command awaiting permission response */
+    char            pending_permission_desc[512];       /* description for pending cmd */
+    bool            permission_pending;                  /* true while awaiting response */
+    char            pending_permission_session_id[64];
 };
 
 /* ================================================================
@@ -547,6 +552,83 @@ static json_node_t *handle_set_auto_approve(const char *id, json_node_t *params,
     return acp_make_response(id, result);
 }
 
+/* --- ACP Permission request --- */
+
+static json_node_t *handle_request_permission(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
+    const char *command = json_object_get_string(params, "command", NULL);
+    const char *description = json_object_get_string(params, "description", "");
+    bool allow_permanent = json_object_get_bool(params, "allow_permanent", true);
+
+    if (!session_id || !command)
+        return acp_make_error(id, -32602, "Missing session_id or command", NULL);
+
+    /* Check if another permission request is pending */
+    if (srv->permission_pending)
+        return acp_make_error(id, -32000, "Permission request already pending", NULL);
+
+    /* Store pending state */
+    snprintf(srv->pending_permission_command, sizeof(srv->pending_permission_command), "%s", command);
+    snprintf(srv->pending_permission_desc, sizeof(srv->pending_permission_desc), "%s", description);
+    snprintf(srv->pending_permission_session_id, sizeof(srv->pending_permission_session_id), "%s", session_id);
+    srv->permission_pending = true;
+
+    /* Build permission tool call */
+    json_node_t *tool_call = acp_build_permission_tool_call(command, description);
+
+    /* Build permission options */
+    json_node_t *options = acp_build_permission_options(allow_permanent);
+
+    /* Send permission_request notification */
+    json_node_t *notif = json_new_object();
+    json_object_set(notif, "jsonrpc", json_new_string("2.0"));
+    json_object_set(notif, "method", json_new_string("permission_request"));
+    json_node_t *np = json_new_object();
+    json_object_set(np, "session_id", json_new_string(session_id));
+    json_object_set(np, "tool_call", tool_call);
+    json_object_set(np, "options", options);
+    json_object_set(notif, "params", np);
+    acp_write_message(notif);
+    json_free(notif);
+
+    return acp_make_response(id, NULL);
+}
+
+/* --- ACP Permission response --- */
+
+static json_node_t *handle_permission_response(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *option_id = json_object_get_string(params, "option_id", NULL);
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
+
+    if (!srv->permission_pending) {
+        return acp_make_error(id, -32000, "No pending permission request", NULL);
+    }
+
+    if (!option_id) {
+        srv->permission_pending = false;
+        return acp_make_error(id, -32602, "Missing option_id", NULL);
+    }
+
+    /* Build allowed option IDs list for validation */
+    char allowed_ids[512] = "allow_once,allow_session,allow_always,deny,deny_always";
+
+    /* Map outcome to Hermes approval string */
+    const char *hermes_result = acp_map_outcome_to_hermes(option_id, allowed_ids);
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "status", json_new_string("ok"));
+    json_object_set(result, "command", json_new_string(srv->pending_permission_command));
+    json_object_set(result, "hermes_result", json_new_string(hermes_result));
+    json_object_set(result, "option_id", json_new_string(option_id));
+    if (session_id)
+        json_object_set(result, "session_id", json_new_string(session_id));
+
+    /* Clear pending state */
+    srv->permission_pending = false;
+
+    return acp_make_response(id, result);
+}
+
 /* --- Session: fork --- */
 
 static json_node_t *handle_fork_session(const char *id, json_node_t *params, acp_server_t *srv) {
@@ -860,6 +942,10 @@ static json_node_t *dispatch_request(const char *method, const char *id,
         return handle_edit_approval_response(id, params, srv);
     if (strcmp(method, "set_auto_approve") == 0)
         return handle_set_auto_approve(id, params, srv);
+    if (strcmp(method, "request_permission") == 0)
+        return handle_request_permission(id, params, srv);
+    if (strcmp(method, "permission_response") == 0)
+        return handle_permission_response(id, params, srv);
 
     return acp_make_error(id, -32601, "Method not found", NULL);
 }
