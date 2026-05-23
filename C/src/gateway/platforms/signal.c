@@ -42,7 +42,7 @@ bool signal_check_available(void) {
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * Shell-escape a string for use inside double quotes in a shell command.
  * Replaces " with \", backticks with \`, and $ with \$.
  * Returns a pointer to a static buffer (not thread-safe but sufficient
@@ -62,7 +62,7 @@ static const char *shell_escape(const char *s) {
     return buf;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * Basic single-message send (original API)
  * ------------------------------------------------------------------ */
 bool signal_send_message(http_client_t *http, const char *to, const char *text) {
@@ -79,7 +79,7 @@ bool signal_send_message(http_client_t *http, const char *to, const char *text) 
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * P108: Send a message to a Signal group
  * Uses signal-cli's -g <group_id> flag instead of a recipient number.
  * ------------------------------------------------------------------ */
@@ -99,7 +99,7 @@ bool signal_send_group_message(http_client_t *http,
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * P108: Send an emoji reaction to a specific message
  * Uses signal-cli's send-reaction subcommand:
  *   signal-cli -a <number> send-reaction -e <emoji> \
@@ -126,7 +126,7 @@ bool signal_send_reaction(http_client_t *http,
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * P108: Send a quoted reply to a specific message
  * Uses signal-cli's --quote-timestamp and --quote-author flags:
  *   signal-cli -a <number> send --quote-timestamp <ts> \
@@ -153,7 +153,7 @@ bool signal_send_quote_reply(http_client_t *http,
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * P108: Send a message with a file/image attachment
  * Uses signal-cli's -a <file_path> flag:
  *   signal-cli -a <number> send -a <file_path> -m "<text>" <recipient>
@@ -183,7 +183,7 @@ bool signal_send_attachment(http_client_t *http,
     return system(cmd) == 0;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * Helper: extract a string field from a nested JSON path.
  * Keys is a NULL-terminated array of field names to traverse.
  * Returns the string value at the leaf, or def on failure.
@@ -198,7 +198,7 @@ static const char *json_nested_str(const json_t *root, const char * const *keys,
     return json_get_str(cur, "", def);
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * Helper: extract a nested JSON object.
  * Returns NULL if any key in the path is missing.
  * ------------------------------------------------------------------ */
@@ -211,7 +211,7 @@ static json_t *json_nested_obj(json_t *root, const char * const *keys) {
     return cur;
 }
 
-/* ------------------------------------------------------------------ 
+/* ------------------------------------------------------------------
  * Poll for incoming Signal messages using signal-cli receive
  * P108: Extended to extract group_id, reaction info, and attachment
  * paths from incoming messages.

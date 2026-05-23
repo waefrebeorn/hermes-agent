@@ -20,7 +20,7 @@ def main():
     local_path = image
     is_url = image.startswith("http://") or image.startswith("https://")
     cleanup = False
-    
+
     if is_url:
         try:
             import urllib.request
@@ -49,13 +49,13 @@ def main():
         if not os.path.exists(hermes_bin):
             # Fallback to PATH
             hermes_bin = "hermes"
-        
+
         result = subprocess.run(
             [hermes_bin, "chat", "-q", question, "--image", local_path],
             capture_output=True, text=True,
             timeout=120  # 2 min for vision analysis
         )
-        
+
         # Return last 5000 chars of output
         output = result.stdout.strip() or result.stderr.strip()
         if len(output) > 5000:

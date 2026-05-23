@@ -332,7 +332,7 @@ toml_doc_t *toml_parse(const char *input) {
                 toml_node_t *child = NULL;
                 /* Look for existing */
                 for (int j = 0; j < current_table->child_count; j++) {
-                    if (current_table->children[j] && 
+                    if (current_table->children[j] &&
                         strcmp(current_table->children[j]->key, keys[i]) == 0) {
                         child = current_table->children[j];
                         break;
@@ -393,7 +393,7 @@ toml_doc_t *toml_parse(const char *input) {
                 for (int i = 0; i < nk - 1; i++) {
                     toml_node_t *child = NULL;
                     for (int j = 0; j < target->child_count; j++) {
-                        if (target->children[j] && 
+                        if (target->children[j] &&
                             strcmp(target->children[j]->key, keys[i]) == 0) {
                             child = target->children[j];
                             break;

@@ -96,7 +96,7 @@ int main(void) {
     {
         char *res = send_message_handler("{\"target\":\"local\",\"message\":\"test save\"}", NULL);
         char *status = json_get_field(res, "status");
-        TEST("local saves to file", 
+        TEST("local saves to file",
              (status && strcmp(status, "saved") == 0) || !status);
         if (status && strcmp(status, "saved") == 0) {
             char *path = json_get_field(res, "path");

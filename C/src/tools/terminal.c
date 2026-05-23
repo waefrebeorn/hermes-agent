@@ -464,7 +464,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     const char *backend = backend_arg;
     if (!backend || !backend[0])
         backend = tool_config_get("terminal", "backend");
-    
+
     /* F11: Docker image override */
     const char *docker_raw = json_object_get_string(args, "docker_image", NULL);
     char docker_buf[1024] = "";

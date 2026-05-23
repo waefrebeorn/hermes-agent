@@ -2,7 +2,7 @@
  * @defgroup hermes_db Database
  * @brief SQLite session store.
  *
- * 
+ *
 Session persistence via embedded SQLite. Supports create,
 read, update, delete, and FTS5 full-text search across
 conversation history.

@@ -2,7 +2,7 @@
  * @defgroup hermes_crypto Cryptography
  * @brief Cryptographic utilities.
  *
- * 
+ *
 Base64 encoding/decoding, SHA-256 hashing, HMAC-SHA256
 signing. Lightweight wrappers around OpenSSL EVP API.
  *

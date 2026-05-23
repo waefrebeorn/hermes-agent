@@ -1,29 +1,30 @@
-# Overnight Map — 2026-05-23 (DA v12)
+# Overnight Map — 2026-05-23 (DA v13)
 
-## Active: ALL stubs resolved. Parity 168/500.
+## Active: T01+T02 done (172 new assertions). 168/500 parity.
 
 **Suite: 154/0/0** (117 tests, ~573 assertions)
 **Binary: 9.3MB dynamic**
-**400 commits, 0 behind upstream**
+**401 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
-- **S01-S02**: computer_use backend abstraction — noop + X11 backends, 10 tests
-- **S07**: image_gen plugin real FAL.ai HTTP client (was fake URLs)
-- **S10**: TUI session browser DB-backed — replaced hardcoded "current" with agent_session_list()
-- **TUI fixes**: tui_fullscreen_run() signature mismatch fixed, load/delete/export wired to real DB APIs
-- **CDP re-audit**: NOT a stub. Full 1495-line implementation. DA v11 false ✅
-- **image_gen re-audit**: TOOL was always real. Only plugin was fake — now fixed.
+- **T01**: Gateway per-platform tests — Telegram JSON parsing (is_mentioned, is_group, get_chat_id, get_text, get_update_type), Discord setters, Webhook HMAC + subscription CRUD. 64 assertions.
+- **T02**: CLI dispatch/handler tests — commands_get_all, commands_dispatch, /exit handler, /help output, count invariants, list_json validation. 108 assertions.
+- **Battleship cleanup**: D75-D79, U01, U02, U04 marked DONE (already implemented from prior sessions)
 
 ## P0 Gaps (next session picks first)
-1. ~~ALL 4 stubs resolved~~ ✅ ALL DONE
-2. **T01-T02**: Gateway + CLI test coverage
-3. **U04**: ASan CI job
-4. **D75-D79**: computer_use upstream Python backports
+1. ✅ T01-T02: Gateway + CLI test coverage
+2. ✅ ASan CI job (U04)
+3. **T07**: Plugin sandbox loading tests (P1 security)
+4. **T09**: Memory leak detection (valgrind/asan CI pass)
+5. **U03**: Attach binary to PR artifacts
+6. **U08**: Pre-commit hooks
+7. **S03**: computer_use Wayland fallback
 
 ## Verified Numbers (don't re-derive)
-- Parity: 34% (168/500), NOT 32% or 33%
-- Stubs: NONE. All 4 DA v11 stubs resolved or reclassified
-- 0 critical stubs remaining
+- Parity: 34% (168/500)
+- All 4 DA v11 stubs resolved
+- U01-U02, U04 CI gates already implemented
+- D75-D79 computer_use backports already done via S01-S02
 
 ## Fallback
-Pick T01 (Gateway per-platform tests) — next highest-impact area.
+Pick T07 (Plugin sandbox loading tests) — next highest P1 security gap.

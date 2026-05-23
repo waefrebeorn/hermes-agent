@@ -2,7 +2,7 @@
  * @defgroup hermes_yaml YAML Parser
  * @brief YAML configuration parser.
  *
- * 
+ *
 Thin wrapper over libyaml for reading hermes config files.
 Supports key-value pairs, nested objects, arrays, and
 environment variable expansion.

@@ -8,7 +8,7 @@
  * @defgroup hermes_error Error Types
  * @brief Typed error system (K01-K05).
  *
- * 
+ *
 ValueError, TypeError, RuntimeError, OSError,
 TimeoutError with structured error info.
  *

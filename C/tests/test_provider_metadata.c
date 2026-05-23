@@ -154,7 +154,7 @@ int main(void) {
     TEST("unknown model uses fallback pricing",
          cost > 0.002 && cost < 0.004);
 
-    /* --- Test 6: Metadata listing */ 
+    /* --- Test 6: Metadata listing */
     printf("\n[P85] JSON listing:\n");
 
     char *json;

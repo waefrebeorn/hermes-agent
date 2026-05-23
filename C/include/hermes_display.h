@@ -2,7 +2,7 @@
  * @defgroup hermes_display Display
  * @brief Terminal output formatting.
  *
- * 
+ *
 ANSI color, spinner/progress display, structured output.
 Used by CLI and TUI for status messages and activity
 feedback.

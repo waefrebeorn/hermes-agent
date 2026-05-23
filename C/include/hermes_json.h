@@ -13,7 +13,7 @@
 
 /*
  * hermes_json.h — Compatibility shim: maps old hermes JSON API → libjson.
- * 
+ *
  * Old API used json_node_t / json_new_* / json_object_* etc.
  * New libjson uses json_t / json_* / json_obj_* etc.
  * This header provides backward-compatible typedefs + macros.

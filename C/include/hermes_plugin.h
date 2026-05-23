@@ -2,7 +2,7 @@
  * @defgroup hermes_plugin Plugin System
  * @brief Dynamic .so plugin loading and lifecycle.
  *
- * 
+ *
 Plugin interface definition (metadata, init, dispatch,
 cleanup), discovery via directory scan, and hot-reload
 support.

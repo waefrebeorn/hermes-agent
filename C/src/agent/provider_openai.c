@@ -35,7 +35,7 @@ static char *openai_build_url(const provider_t *p, const char *base_url) {
     /* Default: append /chat/completions */
     char *url = (char *)malloc(len + 20);
     if (!url) return NULL;
-    snprintf(url, len + 20, "%s/chat/completions", 
+    snprintf(url, len + 20, "%s/chat/completions",
              base_url[len-1] == '/' ? base_url : base_url);
     /* Remove double slash */
     char *double_slash = strstr(url, "//");

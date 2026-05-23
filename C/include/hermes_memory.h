@@ -2,7 +2,7 @@
  * @defgroup hermes_memory Memory
  * @brief In-memory and plugin-backed memory store.
  *
- * 
+ *
 Interface for memory_store/search/clear operations.
 Backed by the honcho plugin (in-memory array store).
  *

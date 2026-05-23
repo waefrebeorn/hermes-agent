@@ -2195,7 +2195,7 @@ bool hermes_config_validate(const hermes_config_t *cfg, config_validation_t *res
     /* --- Terminal --- */
     if (cfg->terminal.timeout < 1 || cfg->terminal.timeout > 86400)
         add_issue(result, "terminal.timeout", "unreasonable %d", cfg->terminal.timeout);
-    if (cfg->terminal.backend[0] && 
+    if (cfg->terminal.backend[0] &&
         strcmp(cfg->terminal.backend, "local") != 0 &&
         strcmp(cfg->terminal.backend, "ssh") != 0 &&
         strcmp(cfg->terminal.backend, "docker") != 0 &&

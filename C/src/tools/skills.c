@@ -146,7 +146,7 @@ static char *extract_frontmatter(const char *content) {
 
     /* Check for leading --- */
     if (strncmp(content, "---", 3) != 0) return NULL;
-    
+
     /* Find closing --- */
     const char *p = content + 3;
     /* Skip whitespace-only lines after opening --- */
@@ -209,7 +209,7 @@ static void scan_add_skill(skill_list_t *list, const char *name, const char *ful
                 if (v) snprintf(m->description, sizeof(m->description), "%s", v);
                 v = yaml_get_string(yaml, "category");
                 if (v) snprintf(m->category, sizeof(m->category), "%s", v);
-                
+
                 /* Tags */
                 size_t ntags = yaml_list_count(yaml, "tags");
                 if (ntags > 0) {
@@ -520,14 +520,14 @@ bool skill_sync_from_hub(const char *hub_url, const char *branch, char *log_out,
     if (dir_exists(git_dir)) {
         /* Pull latest from existing clone */
         if (log) fprintf(log, "Pulling from %s (branch: %s)...\n", hub_url, branch ? branch : "main");
-        
+
         char cmd[8192];
         if (branch && *branch) {
             snprintf(cmd, sizeof(cmd), "cd '%s' && git pull origin '%s' 2>&1", hub_dir, branch);
         } else {
             snprintf(cmd, sizeof(cmd), "cd '%s' && git pull origin main 2>&1", hub_dir);
         }
-        
+
         FILE *fp = popen(cmd, "r");
         if (!fp) {
             if (log) fprintf(log, "ERROR: Failed to run git pull\n");
@@ -545,7 +545,7 @@ bool skill_sync_from_hub(const char *hub_url, const char *branch, char *log_out,
     } else {
         /* Fresh clone */
         if (log) fprintf(log, "Cloning from %s (branch: %s)...\n", hub_url, branch ? branch : "main");
-        
+
         char cmd[8192];
         if (branch && *branch) {
             snprintf(cmd, sizeof(cmd), "cd '%s' && git clone --depth=1 --branch '%s' '%s' . 2>&1",
@@ -554,7 +554,7 @@ bool skill_sync_from_hub(const char *hub_url, const char *branch, char *log_out,
             snprintf(cmd, sizeof(cmd), "cd '%s' && git clone --depth=1 '%s' . 2>&1",
                      hub_dir, hub_url);
         }
-        
+
         FILE *fp = popen(cmd, "r");
         if (!fp) {
             if (log) fprintf(log, "ERROR: Failed to run git clone\n");
@@ -575,7 +575,7 @@ bool skill_sync_from_hub(const char *hub_url, const char *branch, char *log_out,
 
     /* Copy skills from hub_dir to skills dir */
     if (log) fprintf(log, "Copying skills from hub...\n");
-    
+
     DIR *dir = opendir(hub_dir);
     if (dir) {
         struct dirent *entry;
@@ -587,7 +587,7 @@ bool skill_sync_from_hub(const char *hub_url, const char *branch, char *log_out,
 
             char src_path[HERMES_PATH_MAX];
             snprintf(src_path, sizeof(src_path), "%s/%s", hub_dir, entry->d_name);
-            
+
             struct stat st;
             if (stat(src_path, &st) != 0 || !S_ISDIR(st.st_mode))
                 continue;

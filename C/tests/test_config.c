@@ -356,11 +356,11 @@ static void test_retry_config(void) {
     TEST_STR_EQ("llm.fallback_providers default=empty", llm.fallback_providers, "");
 
     /* Struct size sanity — fields exist at the right offsets */
-    TEST_INT_EQ("llm.max_retries field present", 
+    TEST_INT_EQ("llm.max_retries field present",
         (int)sizeof(llm.max_retries), (int)sizeof(int));
-    TEST_INT_EQ("llm.fallback_model field size", 
+    TEST_INT_EQ("llm.fallback_model field size",
         (int)sizeof(llm.fallback_model), 128);
-    TEST_INT_EQ("llm.fallback_providers field size", 
+    TEST_INT_EQ("llm.fallback_providers field size",
         (int)sizeof(llm.fallback_providers), 1024);
 }
 

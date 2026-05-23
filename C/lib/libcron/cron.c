@@ -61,7 +61,7 @@ static bool parse_field(const char *str, cron_field_t *f, int min, int max) {
         return true;
     }
 
-    /* Check for step: */ 
+    /* Check for step: */
     if (str[0] == '*' && str[1] == '/') {
         int step = atoi(str + 2);
         if (step <= 0) return false;

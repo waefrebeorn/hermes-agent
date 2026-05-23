@@ -143,7 +143,7 @@ static char *cli_json_escape(const char *raw) {
         else if (raw[i] == '"')  { esc[j++] = '\\'; esc[j++] = '"'; }
         else if (raw[i] == '\n') { esc[j++] = '\\'; esc[j++] = 'n'; }
         else if (raw[i] == '\t') { esc[j++] = '\\'; esc[j++] = 't'; }
-        else if ((unsigned char)raw[i] < 0x20) { esc[j++] = '\\'; esc[j++] = 'u'; 
+        else if ((unsigned char)raw[i] < 0x20) { esc[j++] = '\\'; esc[j++] = 'u';
             snprintf(esc + j, cap - j, "%04x", (unsigned char)raw[i]); j += 4; }
         else esc[j++] = raw[i];
     }

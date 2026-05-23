@@ -2,7 +2,7 @@
  * @defgroup hermes_tokenizer Tokenizer
  * @brief Model-aware token counting.
  *
- * 
+ *
 Heuristic token counter supporting 9 model families
 with configurable chars-per-token ratio, context window
 sizes, and cost rate estimation.

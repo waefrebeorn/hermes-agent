@@ -1,7 +1,7 @@
 /*
  * provider.h — Abstract provider interface for Hermes C.
  * Phase 101-110: Multi-provider support.
- * 
+ *
  * Each provider implements:
  *  - build_url: construct the API endpoint URL
  *  - build_headers: construct auth + content-type headers

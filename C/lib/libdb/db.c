@@ -138,14 +138,14 @@ static char *meta_to_json(const session_meta_t *meta) {
         sz += strlen(meta->tags[i]) + 8;
     char *buf = (char *)malloc(sz);
     if (!buf) return NULL;
-    
+
     char time_created[32], time_updated[32];
     struct tm *tm;
     tm = localtime(&meta->created_at);
     strftime(time_created, sizeof(time_created), "%Y-%m-%dT%H:%M:%S", tm);
     tm = localtime(&meta->updated_at);
     strftime(time_updated, sizeof(time_updated), "%Y-%m-%dT%H:%M:%S", tm);
-    
+
     char tags_json[1024] = "";
     if (meta->tag_count > 0) {
         strcat(tags_json, "[");
@@ -165,8 +165,8 @@ static char *meta_to_json(const session_meta_t *meta) {
     } else {
         strcat(tags_json, "[]");
     }
-    
-    snprintf(buf, sz, 
+
+    snprintf(buf, sz,
         "{"
         "\"schema_version\":%d,"
         "\"title\":\"%s\","
@@ -191,7 +191,7 @@ static char *meta_to_json(const session_meta_t *meta) {
         tags_json,
         meta->parent_id,
         meta->branch_point);
-    
+
     return buf;
 }
 
@@ -199,27 +199,27 @@ static char *meta_to_json(const session_meta_t *meta) {
 static bool json_to_meta(const char *json_str, session_meta_t *meta) {
     if (!json_str || !meta) return false;
     memset(meta, 0, sizeof(*meta));
-    
+
     meta->schema_version = json_extract_int(json_str, "schema_version");
     if (meta->schema_version == 0) meta->schema_version = SESSION_SCHEMA_VERSION;
-    
+
     char *val;
     val = json_extract_str(json_str, "title");
     if (val) { snprintf(meta->title, sizeof(meta->title), "%s", val); free(val); }
-    
+
     val = json_extract_str(json_str, "model");
     if (val) { snprintf(meta->model, sizeof(meta->model), "%s", val); free(val); }
-    
+
     meta->token_count = json_extract_int(json_str, "token_count");
     meta->message_count = json_extract_int(json_str, "message_count");
     meta->created_at = (time_t)json_extract_num(json_str, "created_at");
     meta->updated_at = (time_t)json_extract_num(json_str, "updated_at");
-    
+
     val = json_extract_str(json_str, "parent_id");
     if (val) { snprintf(meta->parent_id, sizeof(meta->parent_id), "%s", val); free(val); }
-    
+
     meta->branch_point = json_extract_int(json_str, "branch_point");
-    
+
     /* Parse tags array */
     const char *tags_start = strstr(json_str, "\"tags\":");
     if (tags_start) {
@@ -249,7 +249,7 @@ static bool json_to_meta(const char *json_str, session_meta_t *meta) {
             }
         }
     }
-    
+
     return true;
 }
 
@@ -374,35 +374,35 @@ void db_meta_init(session_meta_t *meta) {
 
 bool db_save_meta(db_t *db, const char *session_id, const session_meta_t *meta) {
     if (!db || !session_id || !meta) return false;
-    
+
     char *json = meta_to_json(meta);
     if (!json) return false;
-    
+
     char meta_path[4096];
     make_meta_path(db, session_id, meta_path, sizeof(meta_path));
-    
+
     char tmp_path[4096];
     snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", meta_path);
-    
+
     FILE *f = fopen(tmp_path, "wb");
     if (!f) { free(json); return false; }
-    
+
     size_t len = strlen(json);
     size_t written = fwrite(json, 1, len, f);
     fclose(f);
-    
+
     if (written != len) {
         unlink(tmp_path);
         free(json);
         return false;
     }
-    
+
     if (rename(tmp_path, meta_path) != 0) {
         unlink(tmp_path);
         free(json);
         return false;
     }
-    
+
     free(json);
     db->dirty = true;
     return true;
@@ -410,10 +410,10 @@ bool db_save_meta(db_t *db, const char *session_id, const session_meta_t *meta) 
 
 bool db_load_meta(const db_t *db, const char *session_id, session_meta_t *meta) {
     if (!db || !session_id || !meta) return false;
-    
+
     char meta_path[4096];
     make_meta_path(db, session_id, meta_path, sizeof(meta_path));
-    
+
     char *json = read_file(meta_path);
     if (!json) {
         /* Return default metadata */
@@ -421,7 +421,7 @@ bool db_load_meta(const db_t *db, const char *session_id, session_meta_t *meta) 
         snprintf(meta->title, sizeof(meta->title), "%s", session_id);
         return false;
     }
-    
+
     bool ok = json_to_meta(json, meta);
     free(json);
     return ok;
@@ -533,7 +533,7 @@ int db_prune_by_age(db_t *db, int retention_days) {
     for (size_t i = 0; i < count; i++) {
         session_meta_t meta;
         bool has_meta = db_load_meta(db, ids[i], &meta);
-        
+
         bool should_prune = false;
         if (has_meta && meta.updated_at > 0) {
             if (meta.updated_at < cutoff)
@@ -572,7 +572,7 @@ char *db_export_json(db_t *db, const char *session_id) {
     session_meta_t meta;
     db_load_meta(db, session_id, &meta);
     char *meta_json = meta_to_json(&meta);
-    
+
     char *result = NULL;
     if (meta_json) {
         size_t sz = strlen(data) + strlen(meta_json) + 128;
@@ -602,13 +602,13 @@ char *db_export_markdown(db_t *db, const char *session_id) {
     /* Build markdown by parsing JSON message array */
     char *result = (char *)malloc(65536);
     if (!result) { free(data); return NULL; }
-    
+
     char *pos = result;
     char *end = result + 65536;
-    
+
     pos += snprintf(pos, (size_t)(end - pos),
         "# Session: %s\n\n", session_id);
-    
+
     if (meta.title[0])
         pos += snprintf(pos, (size_t)(end - pos), "**Title:** %s  \n", meta.title);
     if (meta.model[0])
@@ -628,14 +628,14 @@ char *db_export_markdown(db_t *db, const char *session_id) {
             if (!obj_start) break;
             const char *obj_end = strchr(obj_start + 1, '}');
             if (!obj_end) break;
-            
+
             /* Extract role and content */
             size_t obj_len = (size_t)(obj_end - obj_start + 1);
             char *obj = strndup(obj_start, obj_len);
-            
+
             char *role = json_extract_str(obj, "role");
             char *content = json_extract_str(obj, "content");
-            
+
             if (role && content) {
                 msg_idx++;
                 pos += snprintf(pos, (size_t)(end - pos),
@@ -647,11 +647,11 @@ char *db_export_markdown(db_t *db, const char *session_id) {
                     "### Message %d (%s)\n\n*(no content)*\n\n",
                     msg_idx, role);
             }
-            
+
             free(role);
             free(content);
             free(obj);
-            
+
             p = obj_end + 1;
         }
     }
