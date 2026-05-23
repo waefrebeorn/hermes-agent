@@ -211,7 +211,7 @@ FILE_MAP = {
     "tools/microsoft_graph_auth.py":         (".", "MS Graph auth (not ported)"),
     "tools/microsoft_graph_client.py":       (".", "MS Graph client (not ported)"),
     "tools/path_security.py":                ("tools/url_safety", "Path security"),
-    "tools/website_policy.py":               (".", "Website policy (not ported)"),
+    "tools/website_policy.py":               ("lib/libwebsite/website_policy", "Website access policy"),
     "tools/xai_http.py":                     (".", "xAI HTTP (not ported)"),
 
     # === Gateway ===

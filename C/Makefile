@@ -19,10 +19,10 @@ else
 endif
 
 # Standalone library directories
-LIB_DIRS = lib/libbinary lib/libosv lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5
-LIB_INCS = $(addprefix -I, lib/libbinary lib/libosv lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5)
-LIB_OBJ  = lib/libbinary/binary.o lib/libosv/osv.o lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o lib/libdb/sqlite3.o lib/libplugin/plugin.o lib/libskin/skin.o lib/libwebsocket/websocket.o lib/libprotobuf/protobuf.o lib/libmcp/mcp.o lib/libpath/path.o lib/libdatetime/datetime.o lib/libcsv/csv.o lib/libhash/hash.o lib/libuuid/uuid.o lib/libbase64/base64.o lib/libhtml/html.o lib/libtextwrap/textwrap.o lib/libglob/glob.o lib/libsignal/hermes_signal.o lib/libdifflib/difflib.o lib/libregex/hermes_regex.o lib/libansi/ansi.o lib/libjson5/json5.o
-LIB_A    = lib/libbinary.a lib/libosv.a lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a lib/libplugin.a lib/libskin.a lib/libmcp.a lib/libpath.a lib/libdatetime.a lib/libcsv.a lib/libhash.a lib/libuuid.a lib/libbase64.a lib/libhtml.a lib/libtextwrap.a lib/libglob.a lib/libdifflib.a lib/libregex.a lib/libsignal.a lib/libwebsocket.a lib/libprotobuf.a lib/libtoml.a lib/libansi.a lib/libjson5.a
+LIB_DIRS = lib/libbinary lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5
+LIB_INCS = $(addprefix -I, lib/libbinary lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5)
+LIB_OBJ  = lib/libbinary/binary.o lib/libosv/osv.o lib/libwebsite/website_policy.o lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o lib/libdb/sqlite3.o lib/libplugin/plugin.o lib/libskin/skin.o lib/libwebsocket/websocket.o lib/libprotobuf/protobuf.o lib/libmcp/mcp.o lib/libpath/path.o lib/libdatetime/datetime.o lib/libcsv/csv.o lib/libhash/hash.o lib/libuuid/uuid.o lib/libbase64/base64.o lib/libhtml/html.o lib/libtextwrap/textwrap.o lib/libglob/glob.o lib/libsignal/hermes_signal.o lib/libdifflib/difflib.o lib/libregex/hermes_regex.o lib/libansi/ansi.o lib/libjson5/json5.o
+LIB_A    = lib/libbinary.a lib/libosv.a lib/libwebsite.a lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a lib/libplugin.a lib/libskin.a lib/libmcp.a lib/libpath.a lib/libdatetime.a lib/libcsv.a lib/libhash.a lib/libuuid.a lib/libbase64.a lib/libhtml.a lib/libtextwrap.a lib/libglob.a lib/libdifflib.a lib/libregex.a lib/libsignal.a lib/libwebsocket.a lib/libprotobuf.a lib/libtoml.a lib/libansi.a lib/libjson5.a
 
 # Include standalone library headers in build
 CFLAGS += $(LIB_INCS)
@@ -85,6 +85,9 @@ lib/libbinary.a: lib/libbinary/binary.o
 	$(AR) rcs $@ $^
 
 lib/libosv.a: lib/libosv/osv.o
+	$(AR) rcs $@ $^
+
+lib/libwebsite.a: lib/libwebsite/website_policy.o
 	$(AR) rcs $@ $^
 
 lib/libjson.a: lib/libjson/json.o

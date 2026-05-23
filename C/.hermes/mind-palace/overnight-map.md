@@ -1,12 +1,15 @@
-# Overnight Map — 2026-05-23 (DA v19)
+# Overnight Map — 2026-05-23 (DA v21)
 
-## Active: libbinary + libosv ports done. 187/500 parity.
+## Active: libbinary + libosv + libwebsite ports done. 188/500 parity.
 
-**Suite: 171/0/0** (135 tests, ~828 assertions)
+**Suite: 172/0/0** (136 tests, ~871 assertions)
 **Binary: 9.1MB dynamic**
 **~401 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
+- **libwebsite**: Port of Python `tools/website_policy.py` — website access policy.
+  URL host extraction, fnmatch glob pattern matching, shared blocklist file loading.
+  3 new files (h+c+test), 43 assertions. Suite: 172/0/0.
 - **libosv**: Port of Python `tools/osv_check.py` — OSV malware check for MCP packages.
   Infers ecosystem (npx→npm, uvx→PyPI), parses package names, queries OSV API.
   3 new files (h+c+test), 25 assertions. Suite: 171/0/0.

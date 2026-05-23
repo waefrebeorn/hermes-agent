@@ -58,6 +58,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "osv (compilation failed)"
 fi
 
+echo ""; echo "=== Website Policy Tests (P1 Security) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libwebsite" \
+    "$CDIR/tests/test_website_policy.c" \
+    "$CDIR/lib/libwebsite/website_policy.c" \
+    -o /tmp/hermes_test_website_policy -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_website_policy > /dev/null 2>&1; then ok "website_policy (43 tests)"
+    else fail "website_policy (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_website_policy
+else skip "website_policy (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
