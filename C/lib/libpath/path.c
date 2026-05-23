@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <glob.h>
 #include <fnmatch.h>
+#include <errno.h>
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 
@@ -349,4 +350,67 @@ char *path_normalize(const char *path) {
 
     free(copy);
     return result;
+}
+
+/* ─── Security ──────────────────────────────────────────────── */
+
+char *path_within_dir(const char *path, const char *root) {
+    if (!path || !root) return strdup("Path or root is NULL");
+    if (!*path || !*root) return strdup("Path or root is empty");
+
+    char *resolved_path = realpath(path, NULL);
+    if (!resolved_path) {
+        char *err = NULL;
+        if (asprintf(&err, "Cannot resolve path '%s': %s", path, strerror(errno)) < 0)
+            return strdup("Cannot resolve path");
+        return err;
+    }
+
+    char *resolved_root = realpath(root, NULL);
+    if (!resolved_root) {
+        free(resolved_path);
+        char *err = NULL;
+        if (asprintf(&err, "Cannot resolve root '%s': %s", root, strerror(errno)) < 0)
+            return strdup("Cannot resolve root");
+        return err;
+    }
+
+    /* Check containment: resolved_path must start with resolved_root + '/' */
+    size_t root_len = strlen(resolved_root);
+    bool within = false;
+
+    if (strncmp(resolved_path, resolved_root, root_len) == 0) {
+        if (resolved_path[root_len] == '\0' || resolved_path[root_len] == '/') {
+            within = true;
+        }
+    }
+
+    free(resolved_path);
+    free(resolved_root);
+
+    if (!within) {
+        return strdup("Path escapes allowed directory");
+    }
+    return NULL;  /* safe */
+}
+
+bool path_has_traversal(const char *path) {
+    if (!path || !*path) return false;
+
+    char *copy = strdup(path);
+    if (!copy) return false;
+
+    bool found = false;
+    char *save = NULL;
+    char *tok = strtok_r(copy, "/", &save);
+    while (tok) {
+        if (strcmp(tok, "..") == 0) {
+            found = true;
+            break;
+        }
+        tok = strtok_r(NULL, "/", &save);
+    }
+
+    free(copy);
+    return found;
 }

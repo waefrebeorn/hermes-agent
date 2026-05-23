@@ -95,6 +95,18 @@ bool path_fnmatch(const char *pattern, const char *path);
  *  Caller free(). */
 char *path_normalize(const char *path);
 
+/* ─── Security ───────────────────────────────────────────── */
+
+/** path_within_dir(path, root) — Check if resolved path is within root.
+ *  Resolves both paths via realpath(), then checks containment.
+ *  Returns NULL if safe, malloc'd error string if path escapes root.
+ *  Caller must free() the returned error string. */
+char *path_within_dir(const char *path, const char *root);
+
+/** path_has_traversal(path) — True if path contains ".." traversal
+ *  components. Pure string check, no filesystem access. */
+bool path_has_traversal(const char *path);
+
 #ifdef __cplusplus
 }
 #endif
