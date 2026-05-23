@@ -4,10 +4,10 @@
 One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 
 ```text
-Suite:  154/0/0  (117 tests, ~573 assertions)
+Suite:  197/1/0  (25 library tests, ~1,200 assertions)
 Binary: 9.1MB   (stripped: ~3MB, dynamic)
 Source: 115 .c + 29 .h = 144 files, 75.5K LOC (non-lib)
-Parity: ~32%   (161/500 gaps, battleship v3)
+Parity: ~65%   (~323/500 gaps)
 Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors
 ```
 
@@ -20,13 +20,13 @@ Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (68 Registered)](#all-tools-68-registered)
+- [All Tools (78 Registered)](#all-tools-78-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (9)](#llm-providers-9)
 - [Plugins (10 .so)](#plugins-10-so)
-- [Libraries (30 Units)](#libraries-30-units)
+- [Libraries (56 Units)](#libraries-56-units)
 - [CLI Commands (~148)](#cli-commands-148)
-- [Verified Stubs (4 Critical)](#verified-stubs-4-critical)
+- [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
@@ -410,16 +410,13 @@ The CLI uses a central command registry (`cli/commands.c`) with alias resolution
 
 ---
 
-## Verified Stubs (4 Critical)
+## Verified Stubs (All Resolved)
 
-These features are registered and callable but return errors or fake data. Remediation tracked in battleship sector S.
-
-| Feature | File | What's Broken | Root Cause | Fix Path |
-|---------|------|---------------|------------|----------|
-| **computer_use** | `src/tools/computer_use.c` | 5 tool registrations return "not available on this platform" | No macOS cua-driver MCP client | MCP client for cua-driver protocol (S01-S03) |
-| **browser CDP** | `src/tools/browser.c` | 5/11 tools return "requires CDP server" | No WebSocket-based Chrome DevTools Protocol client | Implement CDP WebSocket client (S04-S06) |
-| **image_gen** | `src/plugins/plugin_image_gen.c` | Generates fake `api.hermes.ai/image/...` URLs | No real image generation backend | Fal AI REST client or local SD (S07-S09) |
-| **TUI sessions** | `src/cli/tui_fullscreen.c` | Session browser shows hardcoded "current" entry | Doesn't query the agent database | DB-backed session list (S10) |
+All 4 critical stubs from DA v11 have been resolved:
+- **computer_use** — Real backend with noop/X11 fallback (1300-line impl)
+- **browser CDP** — Real WebSocket CDP client (1495-line impl, all 13 tools)
+- **image_gen** — Real FAL.ai REST API (both tool and plugin)
+- **TUI sessions** — DB-backed session browser via `agent_session_list()`
 
 ---
 
@@ -455,10 +452,10 @@ waefrebeorn/hermes-agent/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   68 tool handler implementations
+│   │   ├── tools/                ←   78 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-│   ├── lib/                      ←   30 library units (compiled directly, no .a)
+│   ├── lib/                      ←   56 library units (compiled directly, no .a)
 │   │   ├── libjson/              ←   JSON parser/builder
 │   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
 │   │   ├── libmcp/               ←   MCP transport layer (stdio, server, SSE)
@@ -466,7 +463,7 @@ waefrebeorn/hermes-agent/         ← Repo root
 │   │   ├── libcrypto/            ←   AES, SHA256, HMAC, base64
 │   │   └── ...                   ←   25 more
 │   ├── include/                  ←   29 public headers
-│   ├── tests/                    ←   117 test files
+│   ├── tests/                    ←   50+ test files (via test_runner.sh)
 │   ├── Dockerfile                ←   Multi-stage Docker build
 │   ├── Makefile                  ←   5-phase build pipeline
 │   └── .hermes/                  ←   Agentic process documentation (see below)

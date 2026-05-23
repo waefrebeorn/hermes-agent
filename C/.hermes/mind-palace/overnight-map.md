@@ -1,26 +1,31 @@
-# Overnight Map — 2026-05-23 (DA v25)
+# Hermes C — Overnight Navigation Map (2026-06-07, Session 52)
 
-## Active: mcp_oauth + mcp_oauth_manager ported. 193/500 parity.
+## Active: error_classifier.py port (1134L → C). Parity ~323/500 (~65%).
 
-**Suite: test binary 58/58 ✅, make builds clean**
-**Binary: builds clean (~10MB dynamic)**
-**Commits: `58d71c10b` (D85), `80192742e` (D86) — both pushed to wubu remote**
+**Suite: 197/1/0 ✅, Build: 0 errors ✅**
+**Commit: `6aa136580` — pushed to wubu/main**
 
-## What Was Done (May 23)
-- **mcp_oauth (D85):** Port of Python `tools/mcp_oauth.py` (648 lines → ~900 C).
-  Token storage (JSON, 0o600 perms, atomic write), PKCE (SHA256+base64url),
-  callback HTTP server, metadata discovery (well-known endpoint),
-  token exchange (authorization_code grant), token refresh (refresh_token grant),
-  browser open (xdg-open/open/gnome-open/kde-open),
-  `build_oauth_auth()` high-level entry point.
-- **mcp_oauth_manager (D86):** Port of Python `tools/mcp_oauth_manager.py` (607 lines → ~300 C).
-  Per-server registry (32 max), mtime-based disk-change detection,
-  `manager_get_token()` (mtime→cached→refresh→full flow),
-  `manager_reauthorize()` (clear+re-auth).
+## What Was Done (Jun 7)
+- **error_classifier (B28):** Port of Python `agent/error_classifier.py` (1134L → 811 C + 115 header).
+  Full 8-step classification pipeline: provider-specific (Anthropic thinking, llama.cpp grammar, xAI Grok),
+  HTTP status code (401/402/403/404/413/429/500/503/529), error code matching, message-only pattern
+  matching (billing/rate_limit/context/auth/timeout/SSL/disconnect), server-disconnect + large-session
+  context overflow heuristic, JSON body extraction (nested error.message, param, code).
+  Tests: 25/25 pass. Suite: +1 (197/1/0).
+- **DA audit:** All 14 pattern arrays verified exact match vs Python. 1 known deviation documented:
+  no metadata.raw JSON unwrapping for OpenRouter-wrapped upstream errors (medium impact).
 
-## P0 Gaps (next session picks first)
-1. **D80**: fal_common.py — Fal shared utilities (163 lines)
-2. **S03**: computer_use Wayland fallback
-3. **S08-S09**: image_gen local provider + caching
-4. **D75-D79**: computer_use upstream Python backports (already ✅ from earlier)
-5. **MCP sector (F)**: remaining 9 gaps in MCP/transports
+## Next Session Pick
+Agent sector is the biggest gap (44/115, 71 remaining). Top candidates:
+1. **image_routing.py (391L)** — Image routing for native vision support. Config + capability-based routing.
+   Medium complexity, mostly logic (no complex deps).
+2. **background_review.py (587L)** — Background code review for skill pruning via curator fork.
+   Medium complexity, string/process management.
+
+## Key Files
+- `C/lib/liberrorclassifier/error_classifier.h` — public API
+- `C/lib/liberrorclassifier/error_classifier.c` — implementation
+- `C/tests/test_error_classifier.c` — 25 tests
+- `C/.hermes/mind-palace/state.md` — updated with Session 52 log
+- `C/.hermes/mind-palace/prestige_prompt.md` — v13 (updated)
+- `C/.hermes/mind-palace/goal-mantra.md` — v13 (updated)

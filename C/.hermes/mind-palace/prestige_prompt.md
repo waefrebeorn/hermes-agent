@@ -1,57 +1,79 @@
-# WuBu Hermes C — Prestige Prompt (v12 — 2026-05-23)
+# WuBu Hermes C — Prestige Prompt (v13 — 2026-06-07)
 
 ## Identity
-1:1 C reimplementation of Python hermes-agent. 144 source files (115 .c + 29 .h), 30 library units, 68 tools, 19 gateways, 10 plugins, ~148 CLI commands. 400 C-specific commits. Synced upstream.
+1:1 C reimplementation of Python hermes-agent. 144 source files (115 .c + 29 .h), 56 library units, 78 tools, 19 gateways, 10 plugins, ~148 CLI commands. ~410 C-specific commits. Synced upstream.
 
 ## Current State
 | Metric | Value |
 |--------|-------|
-| Suite | 154/0/0 (117 tests, ~573 assertions) |
-| Binary | 9.3MB dynamic ELF |
-| Tools registered | 68 |
+| Suite | 197/1/0 (50+ test files, ~1,200 assertions) |
+| Binary | 9.1MB dynamic ELF |
+| Tools registered | 78 |
 | Gateway platforms | 19 |
 | Plugins .so | 10 |
 | CLI commands | ~148 |
 | Config keys | ~322 |
-| Parity | 34% (168/500) |
-| Upstream | 0 behind, 400 ahead |
-| Bugs found | 16 (6 critical) |
+| Parity | ~65% (~323/500) |
+| Upstream | 0 behind, 400+ ahead |
+| Stubs | 0 — ALL resolved |
 | C LOC | 75.5K (src) |
 
-## Priority Queue
+## Agent Sector
+| Module | Status | Notes |
+|--------|--------|-------|
+| agent_loop | ✅ Complete | Core conversation loop |
+| llm_client | ✅ Complete | Chat completions + streaming |
+| provider adapters (9) | ✅ Complete | OpenAI, Anthropic, DeepSeek, xAI, Google, Azure, Bedrock, OpenRouter, Custom |
+| tool_guardrails | ✅ Complete | 475L file_safety + tool_call guardrails |
+| i18n | ✅ Complete | 258L internationalization |
+| subdir_hints | ✅ Complete | 224L subdirectory hints |
+| onboarding | ✅ Complete | 193L onboarding flow |
+| rate_limit_tracker | ✅ Complete | as libratelimit |
+| fallback_routing | ✅ Complete | Provider failover routing |
+| credential_pool | ✅ Complete | Credential rotation pool |
+| budget_tracker | ✅ Complete | Iteration budget tracking |
+| error_classifier | ✅ NEW (Jun 7) | 1134L → C, 25 failover reasons, all pattern lists ported |
+| checkpoint | ✅ Complete | Session checkpoint/resume |
+| context | ✅ Complete | Context window management |
+| system_prompt | ✅ Complete | System prompt builder |
+| audit | ✅ Complete | DA audit engine |
+| retry_utils | ✅ Complete | Retry with backoff |
+| vault | ✅ Complete | Vault documentation engine |
+| tool_dispatch_helpers | ✅ Complete | as libtooldispatch |
+| rate_guard | ✅ Complete | as librateguard |
+| agent_init (1638L) | ❌ | Complex Python SDK deps |
+| agent_runtime_helpers (2189L) | ❌ | Runtime helpers |
+| auxiliary_client (5289L) | ❌ | Large, Python async |
+| insights (930L) | ❌ | Session analytics |
+| usage_pricing (877L) | ❌ | Cost estimation |
+| error_classifier (1134L) | ✅ | Ported |
+| +40 more agent modules | ❌ | Various sizes |
 
-### P0 — Stub Remediation (broken features)
-| # | ID | What | Why Now |
-|---|----|------|---------|
-| ~~1~~ | ~~S01-S02~~ | ~~computer_use~~ | ✅ DONE |
-| ~~2~~ | ~~S07~~ | ~~image_gen plugin~~ | ✅ DONE — plugin v2.0.0 real API |
-| ~~3~~ | ~~S10~~ | ~~TUI session browser~~ | ✅ DONE — DB-backed agent_session_list() |
-| | | **ALL 4 DA v11 stubs resolved.** |
+## Priority Queue — Remaining Gaps (177)
 
-### P1 — Test Infrastructure
-| # | ID | What | Why Now |
-|---|----|------|---------|
-| 1 | T01 | Gateway per-platform integration tests | 19 platforms, 0 tests |
-| 2 | T02 | CLI command coverage >80% | Currently ~60% |
-| 3 | T07 | Plugin sandbox loading tests | Security boundary |
-| 4 | T09 | Valgrind/ASan leak detection | Memory safety |
+### P0 — None (all critical stubs resolved)
 
-### P1 — Feature Depth
-| # | ID | What | Why Now |
-|---|----|------|---------|
-| 4 | D75-D79 | computer_use upstream backports | New from Python sync |
-| 5 | U01-U02 | CI gate + Docker build verify | Gate to merge
+### P1 — Largest Sectors
+| # | Sector | Done | Remaining | Next Gap |
+|---|--------|------|-----------|----------|
+| 1 | Agent | 44/115 | **71** | image_routing.py (391L), background_review.py (587L) |
+| 2 | Gateway | 22/64 | **42** | Per-platform tests, helpers |
+| 3 | Tools | 66/92 | **26** | skill_manager_tool.py (931L), skills_guard.py (1007L) |
+| 4 | CLI | 79/95 | **16** | Autocomplete, rich formatting |
+| 5 | Plugins | 10/26 | **16** | Provider plugins |
 
-### P2 — Polish
-| # | ID | What | Why Now |
-|---|----|------|---------|
-| 11 | U04 | ASan CI job | Catch memory bugs |
-| 12 | U05 | Cross-compilation matrix | Portability |
-| 13 | C91-C95 | CLI depth (autocomplete, rich formatting) | UX polish |
-| 14 | T08 | Fuzz testing | Input robustness |
+### P2 — Feature Depth
+| # | ID | What | Effort |
+|---|----|------|--------|
+| 1 | image_routing.py | Image routing for native vision support | 391L, medium |
+| 2 | background_review.py | Background code review for skills | 587L, medium |
+| 3 | skill_manager_tool.py | Skill CRUD + curator | 931L, large |
+| 4 | account_usage.py | Provider account usage API | 326L, medium |
+| 5 | insights.py | Session analytics from DB | 930L, large |
+| 6 | usage_pricing.py | Token cost estimation | 877L, large |
 
 ## Key Files
-- **Battleship:** `plans/battleship-v2.md` (full 500-gap roadmap)
-- **DA v11:** `da-audit-v11-500-goals.md` (stub hunt, CI fix, 500 expansion)
 - **State:** `state.md` (binary truth table)
-- **Bugs:** `vault/bug-bounty.md` (16 bugs)
+- **Battleship:** `plans/battleship-v2.md`
+- **DA v13:** `da-audit-v13.md` (latest full audit)
+- **Bugs:** `vault/bug-bounty.md`

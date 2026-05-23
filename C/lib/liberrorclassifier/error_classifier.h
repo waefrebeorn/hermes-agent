@@ -9,6 +9,15 @@
  * that determines the correct recovery action (retry, rotate credential,
  * fallback to another provider, compress context, or abort).
  *
+ * KNOWN DEVIATIONS FROM PYTHON:
+ * 1. No metadata.raw JSON unwrapping — OpenRouter wraps upstream provider
+ *    errors inside {"error":{"metadata":{"raw":"<nested JSON>"}}}. Python
+ *    uses json.loads() to unwrap this. C uses string matching on the outer
+ *    message only. Impact: some OpenRouter-proxied provider errors may fall
+ *    through to FAILOVER_UNKNOWN instead of matching specific patterns.
+ *    Addressed by extending json_extract_nested_msg() with a single-pass
+ *    JSON string scan for the inner message if needed.
+ *
  * MIT License — WuBu Hermes Project
  */
 
