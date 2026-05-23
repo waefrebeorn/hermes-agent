@@ -1,4 +1,4 @@
-# Hermes C — Index (v9 — 2026-06-01)
+# Hermes C — Index (v10 — 2026-05-23)
 
 ## Walkway (read order for new session bot)
 | File | Purpose |
@@ -24,7 +24,13 @@
 ## Vault
 | File | Purpose |
 |------|---------|
+| `plans/battleship-index.md` | Quick-reference dashboard — per-sector parity, active gaps, key files (read this first) |
+| `plans/300-gap-roadmap-v1.md` | Full 447-gap breakdown with letter-number coordinates (A01-R18) |
+| `plans/devils_advocate_v6.md` | DA v6 full audit — source of current numbers |
+| `vault/bug-bounty.md` | All 16 bugs found (6 critical, 10 high) — consolidated |
 | `vault/achievements.md` | All milestones, bug bounties, subsystem parity (up to date) |
+| `vault/credits.md` | PBS-style usage credits: $69.32, 60K requests, 10.4B tokens |
+| `vault/legacy-plans-archive.md` | 14 historical plans archived (May 20-24) |
 | `vault/translation-essay.md` | Philosophical essay on the translation (with May 2026 update) |
 | `vault/translation-essay-2.md` | "The Gap Reveal" — honest accounting sequel (5/23) |
 

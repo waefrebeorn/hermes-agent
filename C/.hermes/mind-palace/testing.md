@@ -1,4 +1,4 @@
-# Hermes C — Testing (v9 — 2026-06-01)
+# Hermes C — Testing (v10 — 2026-05-23)
 
 Testing is consolidated in `test_runner.sh` at the project root.
 

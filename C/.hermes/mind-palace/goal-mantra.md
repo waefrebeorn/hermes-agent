@@ -1,7 +1,7 @@
-# WuBu Slermes C — Goal Mantra (v9 — 2026-06-01)
+# WuBu Slermes C — Goal Mantra (v10 — 2026-05-23)
 
 ── PERPETUAL GOAL ──
-P0: WuBu Slermes — C Translation. ~220 gaps to 1:1 parity with Python Hermes.
+P0: WuBu Slermes — C Translation. ~286 gaps to 1:1 parity with Python Hermes.
 
 ── WHAT EXISTS ──
 /home/wubu/hermes-agent-dev/C/ — C source (~380K LOC, 147 source files, 116 test files)

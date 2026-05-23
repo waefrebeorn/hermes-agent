@@ -1,32 +1,37 @@
-# Overnight Map — 2026-06-01
+# Overnight Map — 2026-05-23
 
-## Active: Documentation Sweep + DA Audit
+## Active: Docs Restructure + Vault Reorg
 
-**Suite: 154/0/0** (no regression)
+**Suite: 154/0/0**
 **Binary: 9.2M dynamically linked**
-**392 commits, 183 behind upstream**
+**396 commits, 183 behind upstream**
 
-## What Was Done (June 1)
+## What Was Done (May 23)
 
-- **P169: test_cron_sqlite.c** — 48 assertions covering open/close/save/load/delete/update/persistence/NULL safety
-- **P172-P175: test_cron_extras.c** — 41 assertions for retry/chain/template/notification
-- **3 bugfixes**: reset_retry(NULL) SEGV, increment_retry(NULL) SEGV, template placeholder replacement broken
-- **Suite: 152→154** (+2)
-- **Full DA documentation sweep**: state.md, goal-mantra.md, prestige_prompt.md, plan.md, overnight-map.md, README.md, vault essay
-
-## P1 Gap Options (next session)
-
-1. **Cron test coverage** — cron_cli.c, jobs.c, scheduler.c, cron_locking.c (4 untested cron files)
-2. **Tool handler tests** — browser.c, computer_use.c, discord.c, homeassistant.c, image_gen.c, registry.c, session_crud.c, tirith.c, tool_init.c, voice_mode.c (11 untested tool files)
-3. **CLI tests** — cli.c, cli/main.c
-4. **ACP server test** — server.c
+- **slermes/ removed** — stale duplicate of C/, 159 files deleted
+- **All dates fixed**: CHANGELOG, essays, vault, mind-palace — May not June
+- **Human time estimates removed**: no "18 months", "4 tests/week"
+- **vault restructured**: bug-bounty.md (16 bugs), credits.md ($69.32 usage), legacy-plans-archive.md
+- **Mind-palace cleaned**: legacy/ dir removed (14 files → 1 archive)
+- **state.md, prestige_prompt.md, overnight-map.md** updated with v10 DA recalc
+- **Root docs updated**: README (36% parity), slermes/DEPENDENCIES/GAP_ANALYSIS/digestion
+- **Caveman skill updated** — C translation workflow patterns
 
 ## Data Not to Re-Derive
 
-- Library count: 30 .a files (new: libtoml.a, missing: libncurses is system)
-- Suite: 154/0/0 (2 new from this session: cron_sqlite + cron_extras)
-- All mind-palace files bumped to v9 (June 1)
-- Assertion count: ~573 grep-count, actual functional test count higher
+- Real parity: 36% (161/447), NOT 69% — DA v9 verified against actual Python source
+- Bug count: 16 total (6 critical, 10 high) — see vault/bug-bounty.md
+- Library count: 30 .a files
+- Suite: 154/0/0 (116 files)
+- Binary: 9.2M dynamically linked
+- Upstream: 183 commits behind
+- Project name: "slermes" is dead, code in C/
+
+## P1 Gaps (next session)
+
+1. Cron test coverage — cron_cli.c, jobs.c, scheduler.c, cron_locking.c (4 untested cron files)
+2. Tool handler tests — browser.c, computer_use.c, discord.c, homeassistant.c, image_gen.c, registry.c, session_crud.c, tirith.c, tool_init.c, voice_mode.c (11 untested)
+3. CLI/ACP server tests
 
 ## Fallback
 Read plan.md and pick the next untested source file.

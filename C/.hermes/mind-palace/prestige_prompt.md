@@ -1,7 +1,7 @@
-# WuBu Hermes C — Prestige Prompt (v9 — 2026-06-01)
+# WuBu Hermes C — Prestige Prompt (v10 — 2026-05-23)
 
 ## Identity
-1:1 reimplementation of Python hermes-agent in C. Every feature, handler, and API quirk has a C equivalent. 147 source files (non-lib), 30 library archives, 10 plugins, 19 gateway platforms, ~148 CLI commands. 392 commits.
+1:1 reimplementation of Python hermes-agent in C. 147 source files (non-lib), 30 library archives, 10 plugins, 19 gateway platforms, ~148 CLI commands. 396 commits, 183 behind upstream.
 
 ## Real Current State (DA May 2026, source-verified counts)
 
@@ -25,12 +25,12 @@
 ## Priority Queue
 
 ### P1 — Impactful Next Gaps
-| # | Area | Est. sessions | Why Now |
-|---|------|---------------|---------|
-| 1 | Test coverage (116→~160 test files) | 15 | Catch bugs before users do |
-| 2 | Upstream catch-up (183 commits) | 6 | Feature parity erosion |
-| 3 | Provider-specific API quirks (7) | 4 | Deep provider coverage |
-| 4 | CLI feel (autocomplete, rich formatting) | 3 | User-facing polish |
+| # | Area | Est. effort | Why Now |
+|---|------|-------------|---------|
+| 1 | Test coverage (116→~160 test files) | Large | Catch bugs before users do |
+| 2 | Upstream catch-up (183 commits) | Large | Feature parity erosion |
+| 3 | Provider-specific API quirks (7) | Medium | Deep provider coverage |
+| 4 | CLI feel (autocomplete, rich formatting) | Medium | User-facing polish |
 
 ### P2 — Quality + Depth
 | # | Area | Notes |
@@ -49,14 +49,19 @@
 - Plugin backends needing live API tests
 
 ## Notable Bugfix History
-- temperature=0.0 silent drop (all providers) — guard was `> 0.0f` not `>= 0.0f`
-- response_format UAF — json_object_set then json_free on same node (all 9 providers)
-- Provider NULL stream crash — strncmp before null check (6 providers)
-- cron_job_reset_retry(NULL) SEGV — strcmp on NULL pointer
-- cron_template_instantiate placeholder broken — json_get_str on string node
-- title gen 6th word truncation — `words < 6` checked at wrong point
-- x_search auth header — literal `***` instead of `%s` format specifier
+See `vault/bug-bounty.md` for full list (16 bugs).
+- temperature=0.0 silent drop (all 9 providers)
+- response_format UAF — json_object_set then json_free (all 9 providers)
+- NULL stream crash — strncmp before null check (6 providers)
+- Config validation NULL SEGV
+- cron_job_reset_retry(NULL), increment_retry(NULL) SEGV
+- cron_template_instantiate placeholder broken
+- title gen 6th word truncation
+- x_search auth header — literal `***` instead of `%s`
+- Redact heap overflow
 
 ## DA Audit History
-- v6 (May 27): Full source survey — 339 gaps, ~60% structural parity
-- v8 (June 1): Updated — ~220 gaps, ~69% parity. Libs 100%, Plugins 100%, Suite 154/0/0
+- v6 (May 27): 339 gaps, ~60% structural parity
+- v8 (Jun 1): ~220 gaps, ~69% parity
+- v9 (May 23): 447 gaps, 161 closed = ~36% real parity (triple DA source survey)
+- v10 (May 23): Docs overhaul, slermes kill, vault restructure, battleship index

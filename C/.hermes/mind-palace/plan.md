@@ -1,4 +1,4 @@
-# Plan — Hermes C Translation (v9 — 2026-06-01)
+# Plan — Hermes C Translation (v10 — 2026-05-23)
 
 ## Phase Completion
 

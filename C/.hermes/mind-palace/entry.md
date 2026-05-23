@@ -1,4 +1,4 @@
-# Hermes C — Entry (v9 — 2026-06-01)
+# Hermes C — Entry (v10 — 2026-05-23)
 
 ## Build & Run
 ```bash

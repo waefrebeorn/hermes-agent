@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-06-01)
+# State — Hermes C Translation (2026-05-23)
 
-## ~69% toward 1:1 Python parity (~220 gaps remaining)
+## ~36% toward 1:1 Python parity (161 of 447 gaps closed, DA v9 verified)
 
 ### Milestone Dashboard
 
@@ -21,35 +21,44 @@
 | **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
 | **Upstream** | ⚠️ **183 commits behind** | Python hermes-agent has ongoing changes |
 
-### Session 2026-06-01 — Triple DA Python audit, 300-gap roadmap, digest.py overhaul, essay sequel
-- ✅ **Triple DA Python codebase**: Full source survey of origin/main — 603 core Python files, 876K LOC, 1,192 test files across 16 sectors
-- ✅ **300-gap-battleship-roadmap-v1.md**: Letter-number grid (A01-R18) — 447 total gaps, 161 complete, ~286 remaining. Real parity: ~36% (not 60% as previously claimed)
-- ✅ **digest.py**: FILE_MAP expanded from 27 entries to 250+ with accurate C file paths and porting status
-- ✅ **translation-essay-2.md**: "The Gap Reveal" — honest accounting essay with sector-by-sector analysis
+### Session 2026-05-23 — Docs overhaul, slermes kill, vault restructuring, PBS credits
+- ✅ **Docs: all dates fixed (June→May)** — CHANGELOG, essays, vault, mind-palace, root README
+- ✅ **Human time estimates removed** — SECURITY.md, essay-2 (no "18 months", no "4 tests/week")
+- ✅ **slermes/ directory removed** — stale duplicate of C/, was confusing new bots (159 files, 50K LOC)
+- ✅ **All stale docs updated**: root README (36% real parity, not 69%), slermes/README/DEPENDENCIES/GAP_ANALYSIS/digestion
+- ✅ **Legacy plans archived to vault** — 14 stale plan files (3K LOC) → single `vault/legacy-plans-archive.md`
+- ✅ **vault/bug-bounty.md** — consolidated all 16 bugs found (6 critical, 10 high), with root cause analysis
+- ✅ **vault/credits.md** — PBS-style usage credits: $69.32, 60K requests, 10.4B tokens
+- ✅ **Caveman skill updated** — C translation workflow section added
+- ✅ **300-gap battleship index** — triple DA source verification, sector parity table
 - ✅ **Suite: 154/0/0** (no regression)
-- ◀ 1 commit: roadmap + digest + essay
+- ◀ All commits pushed
 
-- ✅ **P169: test_cron_sqlite.c** — 48 assertions: open/close/save/load/delete/update/persistence round-trip/NULL safety
-- ✅ **P172-P175: test_cron_extras.c** — 41 assertions: retry set/get/reset, notification channel, chain context/output, template create/instantiate with params/multi-placeholder/NULL safety
-- ✅ **Bugfix: cron_job_reset_retry(NULL) SEGV** — `strcmp(NULL, ...)` in reset_retry. Added NULL guard.
-- ✅ **Bugfix: cron_job_increment_retry(NULL) SEGV** — same pattern. Added NULL guard.
-- ✅ **Bugfix: cron_template_instantiate placeholder replacement broken** — `json_get_str(val, NULL, "")` treats string node as object, returns empty. Fixed: `val->str_val`
-- ◀ **Suite: 152/0/0 → 154/0/0** (+2)
-- ◀ 2 commits: cron_sqlite test + cron_extras test + bugfixes
+### Session 2026-05-23 (prior) — Triple DA audit, 300-gap roadmap, cron tests
+- ✅ **Triple DA Python codebase**: 603 core Python files, 876K LOC, 1,192 test files across 16 sectors
+- ✅ **300-gap-battleship-roadmap-v1.md**: Letter-number grid — 447 total gaps, 161 complete, 286 remaining
+- ✅ **digest.py**: FILE_MAP 27→250+ entries
+- ✅ **translation-essay-2.md**: "The Gap Reveal"
+- ✅ **P169: test_cron_sqlite.c** — 48 assertions
+- ✅ **P172-P175: test_cron_extras.c** — 41 assertions
+- ✅ **3 bugfixes**: cron_job_reset_retry(NULL) SEGV, increment_retry(NULL) SEGV, template placeholder
+- ✅ **Suite: 152/0/0 → 154/0/0**
 
 ### Prior Sessions Summary (May 2026)
-- **J18-J22**: libwebsocket (14 tests), libtoml (25 tests), libansi (18 tests), libjson5 (60 tests) — all 32 libraries now at 100%
-- **M06**: Provider error handling — 225 assertions across 9 providers, NULL SIGSEGV fixes in 6 parse_stream_chunk, API error JSON in 6 parse_response
-- **B22-B31**: finish_reason tracking, json_mode + response_format UAF fix, Google provider depth (top_k, candidate_count, systemInstruction)
-- **J04-J11**: libpath (76), libdatetime (59), libcsv, libhash (25), libuuid (60), libbase64 (34), libhtml, libtextwrap (35) — foundation libraries
+- **J18-J22**: libwebsocket, libtoml, libansi, libjson5 — all 32 libraries at 100%
+- **M06**: Provider error handling — 225 assertions, NULL SIGSEGV fixes in 6 providers, API error JSON in 6
+- **B22-B31**: finish_reason tracking, json_mode, UAF fix, Google depth
+- **J04-J11**: libpath(76), libdatetime(59), libcsv, libhash(25), libuuid(60), libbase64(34), libhtml, libtextwrap(35)
 - **D08-D13**: Plugins: disk-cleanup, file-memory, achievements, observability, skills, image_gen, google_meet
-- **O05-O15**: Release automation, audit log rotation, vault encryption test, file permission hardening, sandbox escape detection
-- **M23-M41**: Config env priority, config validation edge cases, exec_code tool test, x_search auth bugfix
-- **K06-K20**: Complete typed error hierarchy (58 error codes, 48 new)
+- **O05-O15**: Release auto, audit rotation, vault encryption, file hardening, sandbox escape
+- **K06-K20**: Complete error hierarchy (58 error codes)
 
 ### Session Stats
-- Total commits: 392
+- Total commits: 396
 - Source/header LOC: ~380K (src + lib, includes sqlite3 amalgamation)
 - Test LOC: ~24.8K
 - Binary: 9.2M dynamically linked
-- Suite progression: 82→116→133→140→146→151→154 (over 4 weeks of work)
+- Suite progression: 82→116→133→140→146→151→154→154 (over 2-3 days of work)
+
+### Active Gaps (from 300-gap roadmap)
+Next P1 gaps: cron_cli tests, tool handler tests (11 untested tool files), CLI tests, ACP server test

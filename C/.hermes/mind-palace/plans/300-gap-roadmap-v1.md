@@ -1,4 +1,4 @@
-# Hermes C Translation — 300-Gap Battleship Roadmap (v1 — 2026-06-01)
+# Hermes C Translation — 300-Gap Battleship Roadmap (v1 — 2026-05-23)
 
 **Format:** `SECTOR##` — e.g., A01, B12, C05. Each cell is a discrete porting task.
 **Legend:** ❌ Not started | 🔄 In progress | ✅ Complete
