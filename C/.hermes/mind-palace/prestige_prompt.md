@@ -1,68 +1,76 @@
-# WuBu Hermes C — Prestige Prompt (v7 — 2026-05-24)
+# WuBu Hermes C — Prestige Prompt (v8 — 2026-05-27)
 
 ## Identity
-1:1 reimplementation of Python hermes-agent in C. Python maintainers try C — can't tell the difference. Every feature, every handler, every API quirk has a C equivalent.
+1:1 reimplementation of Python hermes-agent in C. Python maintainers try C — can't tell the difference. Every feature, every handler, every API quirk has a C equivalent. 310 source files, 123K LOC, 9.1MB binary. 158 C-specific commits.
 
 ## Core Principles
-- Count capability surface, not function count
-- Internal Python helpers ≠ features
+- Count capability surface, not function count — 74 CLI commands vs Python's 69
+- Internal Python helpers ≠ features — 18 C libraries replace Python stdlib
 - Cleaner C approach that handles same behavior = parity
-- Triple-check own counts. Delegation is lazy. ~WuBu~ strives for more.
+- Triple-check own counts. Delegation is lazy for audits. ~WuBu~ strives for more.
 
 ---
 
-## Real Current State (2026-05-24)
+## Real Current State (2026-05-27, DA v6 verified)
 
-| Category | Progress | Key Facts |
-|----------|----------|-----------|
-| Config | 96% | 322/322 keys, profiles auto-load |
-| Providers | 85% | 9 ops, 31 aliases, 18/18 LLM params |
-| MCP | 100% ✅ | Transport, tools, resources, subs, sampling, serve |
-| Plugins | 14% | 3 real .so: kanban/honcho/spotify |
-| Gateway | 100% ✅ | 63 gaps all closed |
-| Tools | 95% | 28 reg'd, 1:1 browser/memory/kanban |
-| Agent | 86% | G01-G36 agent state all done |
-| CLI | 87% | 70 slash commands, skin engine |
-| Tests | 56% | 50 files, 2,374 assertions, 88/0/0 ✅ |
-| Build/doc | 55% | Docker, CI, cross-compile, man page |
-| **Plugins** | **14%** | **Biggest structural gap — 48/51 missing** |
-| **Provider APIs** | **~50%** | **25 specific API quirks** |
+| Category | Status | Key Facts |
+|----------|--------|-----------|
+| **Config** | ✅ **98%** | 322/322 YAML keys, profiles, `${VAR}`, `!include` |
+| **Providers** | ✅ 87% | 9 ops + 27 metadata providers. 7 API quirks remain |
+| **MCP** | ✅ **100%** | Transport, tools, resources, subs, sampling, serve |
+| **Plugins** | ❌ 19% | 3 .so: kanban/honcho/spotify. 13 remaining |
+| **Gateway** | ✅ **100%** | 19 platforms — one more than Python |
+| **Tools** | ✅ 95% | 37 files, 67 ops. 6 CDP/plugin-blocked stubs |
+| **Agent** | ✅ 86% | Budget, fallback, checkpoint, interrupt, retry |
+| **CLI** | ✅ 87% | 74 commands, skin engine, `--json` |
+| **Libs** | ⚠️ 38% | 18 libs. libpath + libdatetime ported. 12 to go |
+| **Tests** | ⚠️ 63% | 80 files, 2,088 assertions, 116/0/0 |
+| **Build/doc** | ✅ 95% | Docker, CI, cross-compile, man page, Doxygen. O02 Windows remains |
+| **Error types** | ⚠️ 50% | K01-K05: 18 error codes |
+| **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
+
+**Overall structural parity: ~60%**
+**Full parity (counting plugins + tests): ~40%** — the "feel" gap is real.
 
 ## Priority Queue
 
-### P0 — None remaining. All done:
-- temperature=0.0 fix ✅
-- B04-B05: response_format + metadata ✅
-- F01-F08: 8 tool stubs → real ✅
-- B01-B03: ACP providers ✅
+### P0 — All foundational gaps closed
+- temperature=0.0 fix ✅ | response_format UAF fix ✅ | Provider NULL crashes ✅
+- Config 322/322 ✅ | MCP 100% ✅ | Gateway 100% ✅
 
-### P1 — Feature Depth (pick highest impact)
-| # | Area | Gaps | Est. sessions | Notes |
-|---|------|------|---------------|-------|
-| 1 | Provider-specific APIs (B22-B46) | 25 | 8 | Per-provider quirks most impactful |
-| 2 | Test coverage (M01-M53) | 40 | 10 | Many need integration framework |
-| 3 | CLI depth (H01-H34) | 33 | 8 | Slash commands, shell integration |
-| 4 | Plugin depth (D01-D51) | 48 | 20 | Huge but 14% done; 45 backends |
+### P1 — Impactful Next Gaps
+| # | Area | Est. sessions | Why Now |
+|---|------|---------------|---------|
+| 1 | Plugin depth (13 backends) | 20 | Biggest structural hole (19%) |
+| 2 | Library ports (J06-J17) | 6 | libcsv, libhash, libuuid, libdatetime (done ✅) |
+| 3 | Test coverage (+40 files) | 10 | Catch bugs before users do |
+| 4 | CLI feel (spinner, autocomplete) | 4 | The "Hermes feel" — spinner, activity feed |
 
-### P2 — Quality + Docs
-| # | Area | Gaps | Notes |
-|---|------|------|-------|
-| 5 | Error types | ~20 | 0% — add typed error hierarchy |
-| 6 | Build/doc | 10 | Cross-compile, Windows, API docs |
-| 7 | Upstream catch-up | 12 | 125 commits behind |
-| 8 | Cross-cut depth | 6 | Token counting, secure paths |
+### P2 — Quality + Depth
+| # | Area | Notes |
+|---|------|-------|
+| 5 | Error types K06-K20 | Complete typed error hierarchy |
+| 6 | O02 Windows build | MSVC/MinGW detection |
+| 7 | Upstream catch-up | ~125 commits behind Python |
 
-### P3 — Porting
-| # | Area | Gaps | Notes |
-|---|------|------|-------|
-| 9 | Python lib ports | 14 | Jinja2, rich, httpx equivalents |
+### P3 — Stretch
+| # | Area | Notes |
+|---|------|-------|
+| 8 | TUI depth | React Ink equivalent in ncurses |
+| 9 | Personality system | Configurable system prompt presets |
+| 10 | Achievement system | Gamification (was in Python) |
 
 ## Known Blockers
-- computer_use — macOS-only (cua-driver), platform stubbed on WSL
+- computer_use — macOS-only (cua-driver), stubbed on WSL
 - CDP browser tools — need external CDP server (Camofox/Playwright)
-- memory_sqlite — needs libsqlite3 integration
-- Plugin depth — 45 backends, each needs test + config + lifecycle
-- Most provider-specific API features need live API keys for testing
+- Plugin depth — 13 backends, each needs config + lifecycle + test
+- Most plugin backends need live API tests
 
-## Guidance for next session
-Read state.md for latest session log. The 400-gap-mega-roadmap.md is stale from May 22 — don't trust its checkmarks. The state.md dashboard table is the authoritative source.
+## DA Audit History
+- v4 (May 15): Initial comprehensive audit — found 400+ gaps
+- v5 (May 22): Updated counts — 340 gaps, 55% parity
+- v6 (May 27): Triple cross-check vs Python source — 339 gaps, 60% structural parity. Essay + achievements vault created.
+
+## Updated Guidance
+Read state.md for latest session log. The DA v6 document has the only verified counts. 
+Root README is now authoritative — matches state.md dashboard.

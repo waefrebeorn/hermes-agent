@@ -1,25 +1,47 @@
-# Overnight Map — 2026-05-27
+# Overnight Map — 2026-05-27 (Post-DA v6)
 
-## Active Session: J05 datetime Library ✅ CLOSED
+## Active: Triple DA Audit + Documentation Sweep ✅
 
-**Libs: 35% → 38%** (1/12 remaining gaps closed: J05)
-**Suite: 116/0/0** (+1 test file, 59 assertions)
+**Suite: 116/0/0** (unchanged — all existing tests pass)
+**Readmes updated, essay written, achievements vault created, DA v6 published.**
 
 ## What Was Done
 
-- New lib/libdatetime/datetime.h + datetime.c: 20 public functions
-- Full ISO 8601 parsing (T/Z/space/offset/date-only), formatting, relative time, date math
-- tests/test_datetime.c — 59 assertions
-- Wired into Makefile + test_runner.sh
+- **Triple Devil's Advocate v6** — full source-code survey (not inherited from v5)
+  - Claim verification: all counts confirmed from `grep`/`ls`/`wc` on actual files
+  - DA-1: Source survey — 123K LOC, 310 files, 116/0/0, 74 commands, 19 platforms, 9 providers
+  - DA-2: Feel gap analysis — what compiles vs what "feels like Hermes"
+  - DA-3: Triple cross-check vs Python — 14 metrics compared
+- **Root README rewritten** — accurate stats, real parity table, fixed bug claims
+- **Essay written** — `.hermes/vault/translation-essay.md` (~1,300 words)
+- **Achievements vault created** — `.hermes/vault/achievements.md` (milestones, bugs, feats, parity)
+- **Prestige prompt v8** — updated to DA v6 state
+- **State.md updated** — J05 entry + dashboard refresh
+- **Goal-mantra updated** — new percentages
+- **Devil's Advocate v6 published** — plans/devils_advocate_v6.md
 
-## Remaining Libs gaps
+## Key DA v6 Findings
 
-- 12 Python-equivalent library ports remaining (J06-J17)
+1. **The "feel" gap is real but not critical** — CLI works, streaming works, all subsystems functional. Missing: animated spinner, autocomplete, rich formatting, plugin auto-discovery, personality presets.
+2. **Plugin gap (19%) is the iceberg** — 13 plugins at 19% coverage. This is the #1 structural gap.
+3. **Config, MCP, Gateway at 95-100%** — these subsystems are genuinely complete.
+4. **C actually exceeds Python** in some counts (74 commands vs 69, 19 platforms vs 18).
+5. **Root README was stale** — claimed 50%, temperature=0.0 bug still open (was fixed months ago).
 
 ## P1 Gap Options
 
-1. **J06: libcsv** — CSV parsing (Python csv module) — used for data export
-2. **B34-B36: Remaining provider-specific API quirks** — check which are open
-3. **M32-M44: Per-tool tests** — browser, computer_use, file_batch, homeassistant, image_gen, result_storage, session_crud, session_search, voice_mode, x_search
-4. **Plugin depth** — 48 gaps, still 14%
+1. **J06: libcsv** — CSV parsing (for data export, session dumps)
+2. **J07: libhash** — hashing/shasum (for cache keys, etags)
+3. **J08: libuuid** — UUID generation (for unique identifiers)
+4. **M32: browser tool test** — fill in browser tool coverage
 5. **O02: Windows build** — last build/doc gap
+
+## Data Not to Re-Derive
+
+- DA v6 counts are from actual source grep, not inherited from v5
+- 339 is the structural gap count; ~400+ if counting full test parity
+- Root README is NOW authoritative and matches state.md dashboard
+- The essay and achievements vault are in .hermes/vault/ for posterity
+
+## Fallback
+If blocked on a task, read the next item from P1 above or write a new plan.
