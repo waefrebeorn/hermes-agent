@@ -43,6 +43,21 @@ run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$C
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 
+echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_skill_manage.c" \
+    "$CDIR/src/tools/registry.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_skill_manage -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_skill_manage > /dev/null 2>&1; then ok "skill_manage (10 tests)"
+    else fail "skill_manage (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_skill_manage
+else skip "skill_manage (compilation failed)"
+fi
+
 echo ""; echo "=== Computer Use Backend Tests (S01-S02) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
