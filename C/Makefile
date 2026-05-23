@@ -19,10 +19,10 @@ else
 endif
 
 # Standalone library directories
-LIB_DIRS = lib/libbinary lib/libbrowser lib/libdebug lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5 lib/libskillusage lib/libskillsync lib/libtranscribe lib/libmcp_oauth lib/libfal_common lib/libtooloutput lib/libxai_http lib/libenvpassthrough lib/libcredential lib/libschemasanitizer lib/libfuzzymatch lib/libinterrupt
-LIB_INCS = $(addprefix -I, lib/libbinary lib/libbrowser lib/libdebug lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5 lib/libskillusage lib/libskillsync lib/libtranscribe lib/libmcp_oauth lib/libfal_common lib/libtooloutput lib/libxai_http lib/libenvpassthrough lib/libcredential lib/libschemasanitizer lib/libfuzzymatch lib/libinterrupt)
-LIB_OBJ  = lib/libbinary/binary.o lib/libbrowser/camofox_state.o lib/libdebug/debug_helpers.o lib/libosv/osv.o lib/libwebsite/website_policy.o lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o lib/libdb/sqlite3.o lib/libplugin/plugin.o lib/libskin/skin.o lib/libwebsocket/websocket.o lib/libprotobuf/protobuf.o lib/libmcp/mcp.o lib/libpath/path.o lib/libdatetime/datetime.o lib/libcsv/csv.o lib/libhash/hash.o lib/libuuid/uuid.o lib/libbase64/base64.o lib/libhtml/html.o lib/libtextwrap/textwrap.o lib/libglob/glob.o lib/libsignal/hermes_signal.o lib/libdifflib/difflib.o lib/libregex/hermes_regex.o lib/libansi/ansi.o lib/libjson5/json5.o lib/libskillusage/skill_usage.o lib/libskillusage/skill_provenance.o lib/libskillsync/skills_sync.o lib/libtranscribe/transcribe.o lib/libmcp_oauth/mcp_oauth.o lib/libfal_common/fal_common.o lib/libtooloutput/tool_output.o lib/libxai_http/xai_http.o lib/libenvpassthrough/env_passthrough.o lib/libcredential/credential.o lib/libschemasanitizer/schema_sanitizer.o lib/libfuzzymatch/fuzzy_match.o lib/libinterrupt/interrupt.o
-LIB_A    = lib/libbinary.a lib/libbrowser.a lib/libdebug.a lib/libosv.a lib/libwebsite.a lib/libenvpassthrough.a lib/libxai_http.a lib/libcredential.a lib/libschemasanitizer.a lib/libfuzzymatch.a lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a lib/libplugin.a lib/libskin.a lib/libmcp.a lib/libpath.a lib/libdatetime.a lib/libcsv.a lib/libhash.a lib/libuuid.a lib/libbase64.a lib/libhtml.a lib/libtextwrap.a lib/libglob.a lib/libdifflib.a lib/libregex.a lib/libsignal.a lib/libwebsocket.a lib/libprotobuf.a lib/libtoml.a lib/libansi.a lib/libjson5.a lib/libskillusage.a lib/libskillsync.a lib/libtranscribe.a lib/libmcp_oauth.a lib/libfal_common.a lib/libtooloutput.a lib/libinterrupt.a
+LIB_DIRS = lib/libbinary lib/libbrowser lib/libdebug lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5 lib/libskillusage lib/libskillsync lib/libtranscribe lib/libmcp_oauth lib/libfal_common lib/libtooloutput lib/libxai_http lib/libenvpassthrough lib/libcredential lib/libschemasanitizer lib/libfuzzymatch lib/libinterrupt lib/libfilestate
+LIB_INCS = $(addprefix -I, lib/libbinary lib/libbrowser lib/libdebug lib/libosv lib/libwebsite lib/libjson lib/libhttp lib/libtemplate lib/libyaml lib/libcrypto lib/libdotenv lib/libcron lib/libproc lib/libtui lib/libdb lib/libplugin lib/libskin lib/libwebsocket lib/libprotobuf lib/libmcp lib/libpath lib/libdatetime lib/libcsv lib/libhash lib/libuuid lib/libbase64 lib/libhtml lib/libtextwrap lib/libglob lib/libsignal lib/libenum lib/libdifflib lib/libregex lib/libansi lib/libjson5 lib/libskillusage lib/libskillsync lib/libtranscribe lib/libmcp_oauth lib/libfal_common lib/libtooloutput lib/libxai_http lib/libenvpassthrough lib/libcredential lib/libschemasanitizer lib/libfuzzymatch lib/libinterrupt lib/libfilestate)
+LIB_OBJ  = lib/libbinary/binary.o lib/libbrowser/camofox_state.o lib/libdebug/debug_helpers.o lib/libosv/osv.o lib/libwebsite/website_policy.o lib/libjson/json.o lib/libhttp/http.o lib/libtemplate/template.o lib/libyaml/yaml.o lib/libcrypto/crypto.o lib/libdotenv/dotenv.o lib/libcron/cron.o lib/libproc/proc.o lib/libtui/tui.o lib/libdb/db.o lib/libdb/sqlite3.o lib/libplugin/plugin.o lib/libskin/skin.o lib/libwebsocket/websocket.o lib/libprotobuf/protobuf.o lib/libmcp/mcp.o lib/libpath/path.o lib/libdatetime/datetime.o lib/libcsv/csv.o lib/libhash/hash.o lib/libuuid/uuid.o lib/libbase64/base64.o lib/libhtml/html.o lib/libtextwrap/textwrap.o lib/libglob/glob.o lib/libsignal/hermes_signal.o lib/libdifflib/difflib.o lib/libregex/hermes_regex.o lib/libansi/ansi.o lib/libjson5/json5.o lib/libskillusage/skill_usage.o lib/libskillusage/skill_provenance.o lib/libskillsync/skills_sync.o lib/libtranscribe/transcribe.o lib/libmcp_oauth/mcp_oauth.o lib/libfal_common/fal_common.o lib/libtooloutput/tool_output.o lib/libxai_http/xai_http.o lib/libenvpassthrough/env_passthrough.o lib/libcredential/credential.o lib/libschemasanitizer/schema_sanitizer.o lib/libfuzzymatch/fuzzy_match.o lib/libinterrupt/interrupt.o lib/libfilestate/file_state.o
+LIB_A    = lib/libbinary.a lib/libbrowser.a lib/libdebug.a lib/libosv.a lib/libwebsite.a lib/libenvpassthrough.a lib/libxai_http.a lib/libcredential.a lib/libschemasanitizer.a lib/libfuzzymatch.a lib/libjson.a lib/libhttp.a lib/libtemplate.a lib/libyaml.a lib/libcrypto.a lib/libdotenv.a lib/libcron.a lib/libproc.a lib/libtui.a lib/libdb.a lib/libplugin.a lib/libskin.a lib/libmcp.a lib/libpath.a lib/libdatetime.a lib/libcsv.a lib/libhash.a lib/libuuid.a lib/libbase64.a lib/libhtml.a lib/libtextwrap.a lib/libglob.a lib/libdifflib.a lib/libregex.a lib/libsignal.a lib/libwebsocket.a lib/libprotobuf.a lib/libtoml.a lib/libansi.a lib/libjson5.a lib/libskillusage.a lib/libskillsync.a lib/libtranscribe.a lib/libmcp_oauth.a lib/libfal_common.a lib/libtooloutput.a lib/libinterrupt.a lib/libfilestate.a
 
 # Include standalone library headers in build
 CFLAGS += $(LIB_INCS)
@@ -72,13 +72,6 @@ tui: $(PHASE5_OBJ) $(TUI_OBJ) src/main.o $(LIB_OBJ)
 		-L lib/libncurses/lib -lncursesw -ltinfo
 	@echo "hermes-tui built with ncurses TUI support"
 
-# AddressSanitizer build (U04)
-asan: CFLAGS += -fsanitize=address -fno-omit-frame-pointer -O1
-asan: LDFLAGS += -fsanitize=address
-asan: clean
-	$(MAKE) all
-	@echo "ASan build complete — run with: ./hermes"
-
 # Fuzz test harness (T08)
 fuzz: CFLAGS += -DFUZZ_TESTING -O1 -g
 fuzz: tests/fuzz_harness.o $(LIB_OBJ)
@@ -116,6 +109,9 @@ lib/libfuzzymatch.a: lib/libfuzzymatch/fuzzy_match.o
 	$(AR) rcs $@ $^
 
 lib/libinterrupt.a: lib/libinterrupt/interrupt.o
+	$(AR) rcs $@ $^
+
+lib/libfilestate.a: lib/libfilestate/file_state.o
 	$(AR) rcs $@ $^
 
 lib/libbrowser.a: lib/libbrowser/camofox_state.o
