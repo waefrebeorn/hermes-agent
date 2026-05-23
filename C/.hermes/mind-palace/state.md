@@ -20,13 +20,13 @@
 | Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved |
-| Tests | 10/12 | 83% | T01-T09 + ansi_strip tests added |
+| Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **208/500** | **42%** | **292 gaps remaining** |
+| **Total** | **209/500** | **42%** | **291 gaps remaining** |
 
 ## Session Log
-- **DA v33 (May 24, Session 2):** 8 gaps closed. credential_files, schema_sanitizer, fuzzy_match, path_security, interrupt, slash_confirm, file_state, ansi_strip. Full ECMA-48 ANSI state machine replacing basic CSI-only stripper. Suite: 188/0/0 ✅. Parity: 208/500 (42%).
-- **DA v32 (May 23, Session 1):** libenv_passthrough + tests, libxai_http + tests, Anthropic prompt_caching port, libcamofox_state, libskill_provenance, libfal_common (D80), libmcp_oauth + manager (D85+D86). Parity: 199/500.
+- **DA v34 (May 24, Session 3):** binary_extensions test coverage (57 assertions). Fixed .pdf classification parity (Python excludes .pdf as text, C now matches). Suite: 189/0/0 ✅. Parity: 209/500 (42%).
+- **DA v33 (May 24, Session 2):** 8 gaps closed. credential_files, schema_sanitizer, fuzzy_match, path_security, interrupt, slash_confirm, file_state, ansi_strip. Suite: 188/0/0.
 
 ## Build Status
 ```
