@@ -212,7 +212,51 @@ char *process_handler(const char *args_json, const char *task_id) {
     const char *action = json_object_get_string(args, "action", "start");
     json_node_t *result = json_new_object();
 
-    if (strcmp(action, "start") == 0) {
+    if (strcmp(action, "list") == 0) {
+        /* List all managed processes */
+        reap_children();
+        json_node_t *procs = json_new_array();
+        time_t now = time(NULL);
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+            if (g_procs[i].pid == 0) continue;
+            json_node_t *p = json_new_object();
+            json_object_set(p, "session_id", json_new_number((double)g_procs[i].session_id));
+            json_object_set(p, "pid", json_new_number((double)g_procs[i].pid));
+            json_object_set(p, "command", json_new_string(g_procs[i].command));
+            json_object_set(p, "running", json_new_bool(g_procs[i].running));
+            if (!g_procs[i].running)
+                json_object_set(p, "exit_code", json_new_number((double)g_procs[i].exit_code));
+            /* Uptime in seconds */
+            double uptime = (double)(now - g_procs[i].start_time);
+            json_object_set(p, "uptime_sec", json_new_number(uptime));
+            json_array_append(procs, p);
+        }
+        json_object_set(result, "processes", procs);
+        json_object_set(result, "count", json_new_number((double)json_len(procs)));
+
+    } else if (strcmp(action, "cleanup") == 0) {
+        /* Remove finished processes older than N seconds (default 1800 = 30min) */
+        reap_children();
+        int max_age = (int)json_object_get_number(args, "max_age_sec", 1800);
+        time_t now = time(NULL);
+        int removed = 0;
+        int kept_running = 0;
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+            if (g_procs[i].pid == 0) continue;
+            if (g_procs[i].running) {
+                kept_running++;
+                continue;
+            }
+            if ((now - g_procs[i].start_time) >= max_age) {
+                free(g_procs[i].output);
+                memset(&g_procs[i], 0, sizeof(g_procs[i]));
+                removed++;
+            }
+        }
+        json_object_set(result, "removed", json_new_number((double)removed));
+        json_object_set(result, "running", json_new_number((double)kept_running));
+
+    } else if (strcmp(action, "start") == 0) {
         const char *command = json_object_get_string(args, "command", NULL);
         if (!command) {
             json_object_set(result, "error", json_new_string("Missing command"));
@@ -329,20 +373,22 @@ done:
 void registry_init_process(void) {
     registry_register("process",
         "Manage background processes. Actions: start (run command in bg), "
-        "poll (check status), kill (terminate), wait (block until done), "
-        "log (get output buffer), signal (send arbitrary signal), "
-        "write (write to stdin), close (close stdin/EOF). "
+        "list (list all processes), poll (check status), kill (terminate), "
+        "wait (block until done), log (get output buffer), signal (send arbitrary signal), "
+        "write (write to stdin), close (close stdin/EOF), "
+        "cleanup (remove finished processes). "
         "Supports env overrides, per-process timeout, and signal by name/number.",
         "{"
         "\"type\":\"object\","
         "\"properties\":{"
-          "\"action\":{\"type\":\"string\",\"description\":\"start | poll | kill | wait | log | signal | write | close\"},"
+          "\"action\":{\"type\":\"string\",\"description\":\"start | list | cleanup | poll | kill | wait | log | signal | write | close\"},"
           "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for start)\"},"
           "\"session_id\":{\"type\":\"number\",\"description\":\"Process session ID (required for poll/kill/wait/log/signal/write/close)\"},"
           "\"env\":{\"type\":\"string\",\"description\":\"Environment overrides as 'KEY=VALUE KEY2=VALUE2' (for start)\"},"
           "\"timeout\":{\"type\":\"number\",\"description\":\"Auto-kill timeout in seconds (for start/wait)\"},"
           "\"signal\":{\"type\":\"string\",\"description\":\"Signal name/number: SIGTERM, SIGKILL, SIGINT, 9, etc. (for signal action)\"},"
-          "\"data\":{\"type\":\"string\",\"description\":\"Data to write to stdin (for write action)\"}"
+          "\"data\":{\"type\":\"string\",\"description\":\"Data to write to stdin (for write action)\"},"
+          "\"max_age_sec\":{\"type\":\"number\",\"description\":\"Max age in seconds for cleanup (default 1800)\"}"
         "},"
         "\"required\":[\"action\"]"
         "}", process_handler);
