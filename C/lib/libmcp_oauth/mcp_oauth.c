@@ -1008,3 +1008,254 @@ bool mcp_oauth_remove_tokens(const char *server_name) {
     mcp_oauth_storage_free(s);
     return true;
 }
+
+/* ================================================================
+ *  Manager layer (D86) — per-server registry with disk-change detection
+ * ================================================================ */
+
+#define MCP_OAUTH_MAX_SERVERS 32
+
+typedef struct {
+    char   server_name[128];
+    time_t last_mtime;     /* last-seen st_mtime of tokens file, 0 = uninitialized */
+    char   cached_token_json[8192]; /* last returned token JSON */
+    bool   has_cached;
+} mcp_oauth_entry_t;
+
+static mcp_oauth_entry_t g_oauth_entries[MCP_OAUTH_MAX_SERVERS];
+static int g_oauth_entry_count = 0;
+
+/* Find or allocate a per-server entry */
+static mcp_oauth_entry_t *get_or_create_entry(const char *server_name) {
+    if (!server_name) return NULL;
+
+    /* Look for existing */
+    for (int i = 0; i < g_oauth_entry_count; i++) {
+        if (strcmp(g_oauth_entries[i].server_name, server_name) == 0)
+            return &g_oauth_entries[i];
+    }
+
+    /* Allocate new */
+    if (g_oauth_entry_count >= MCP_OAUTH_MAX_SERVERS)
+        return NULL;
+
+    mcp_oauth_entry_t *e = &g_oauth_entries[g_oauth_entry_count++];
+    memset(e, 0, sizeof(*e));
+    snprintf(e->server_name, sizeof(e->server_name), "%s", server_name);
+    return e;
+}
+
+/* Get the current mtime of a server's tokens file */
+static time_t get_token_file_mtime(const char *server_name) {
+    mcp_oauth_storage_t *s = mcp_oauth_storage_new(server_name);
+    if (!s) return 0;
+
+    /* Construct the tokens path */
+    char safe[128];
+    safe_filename(server_name, safe, sizeof(safe));
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/%s.json", get_token_dir(), safe);
+
+    struct stat st;
+    time_t mtime = 0;
+    if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+        mtime = st.st_mtime;
+
+    mcp_oauth_storage_free(s);
+    return mtime;
+}
+
+/* Try to get a cached access token from storage (no OAuth flow). Returns NULL if fails. */
+static char *cached_access_token(const char *server_name,
+                                  const char *server_url) {
+    (void)server_url;  /* kept for API symmetry */
+    mcp_oauth_storage_t *s = mcp_oauth_storage_new(server_name);
+    if (!s) return NULL;
+
+    char *tokens = mcp_oauth_storage_get_tokens(s);
+    if (!tokens) { mcp_oauth_storage_free(s); return NULL; }
+
+    json_t *j = json_parse(tokens, NULL);
+    free(tokens);
+    if (!j) { mcp_oauth_storage_free(s); return NULL; }
+
+    const char *access = json_get_str(j, "access_token", NULL);
+    const char *token_type = json_get_str(j, "token_type", NULL);
+    double expires_in = json_get_num(j, "expires_in", 0);
+    double expires_at = json_get_num(j, "expires_at", 0);
+
+    char *result = NULL;
+
+    /* Check expiry */
+    bool expired = false;
+    if (expires_at > 0) {
+        expired = (time(NULL) >= (time_t)expires_at);
+    }
+
+    if (access && *access && !expired) {
+        json_t *rj = json_object();
+        json_set(rj, "success", json_bool(true));
+        json_set(rj, "access_token", json_string(access));
+        if (token_type) json_set(rj, "token_type", json_string(token_type));
+        json_set(rj, "expires_in", json_number(expires_in));
+        result = json_serialize(rj);
+        json_free(rj);
+    } else if (access && *access && expired) {
+        /* Try refresh */
+        const char *refresh = json_get_str(j, "refresh_token", NULL);
+        if (refresh && *refresh) {
+            char *meta = mcp_oauth_storage_get_metadata(s);
+            if (meta) {
+                json_t *mj = json_parse(meta, NULL);
+                free(meta);
+                if (mj) {
+                    const char *token_url = json_get_str(mj, "token_endpoint", NULL);
+                    if (token_url) {
+                        const char *client_id = NULL;
+                        /* Try to load client_id from stored client info */
+                        char *ci = mcp_oauth_storage_get_client_info(s);
+                        if (ci) {
+                            json_t *cij = json_parse(ci, NULL);
+                            free(ci);
+                            if (cij) {
+                                client_id = json_get_str(cij, "client_id", NULL);
+                                json_free(cij);
+                            }
+                        }
+                        char *new_tokens = mcp_oauth_refresh_token(token_url, client_id, refresh);
+                        if (new_tokens) {
+                            json_t *ntj = json_parse(new_tokens, NULL);
+                            if (ntj) {
+                                const char *new_access = json_get_str(ntj, "access_token", NULL);
+                                if (new_access && *new_access) {
+                                    /* Store with updated expires_at */
+                                    double new_expires = json_get_num(ntj, "expires_in", 0);
+                                    if (new_expires > 0) {
+                                        json_set((json_t *)ntj, "expires_at",
+                                                 json_number(time(NULL) + new_expires));
+                                    }
+                                    char *updated = json_serialize(ntj);
+                                    mcp_oauth_storage_set_tokens(s, updated);
+                                    free(updated);
+
+                                    const char *new_type = json_get_str(ntj, "token_type", NULL);
+                                    json_t *rj = json_object();
+                                    json_set(rj, "success", json_bool(true));
+                                    json_set(rj, "access_token", json_string(new_access));
+                                    if (new_type)
+                                        json_set(rj, "token_type", json_string(new_type));
+                                    json_set(rj, "expires_in", json_number(new_expires));
+                                    json_set(rj, "refreshed", json_bool(true));
+                                    result = json_serialize(rj);
+                                    json_free(rj);
+                                }
+                                json_free(ntj);
+                            }
+                            free(new_tokens);
+                        }
+                    }
+                    json_free(mj);
+                }
+            }
+        }
+    }
+
+    json_free(j);
+    mcp_oauth_storage_free(s);
+    return result;
+}
+
+char *mcp_oauth_manager_get_token(const char *server_name,
+                                   const char *server_url,
+                                   const char *oauth_config_json) {
+    if (!server_name || !server_url) {
+        json_t *j = json_object();
+        json_set(j, "success", json_bool(false));
+        json_set(j, "error", json_string("server_name and server_url are required"));
+        char *r = json_serialize(j);
+        json_free(j);
+        return r;
+    }
+
+    mcp_oauth_entry_t *entry = get_or_create_entry(server_name);
+    if (!entry) {
+        json_t *j = json_object();
+        json_set(j, "success", json_bool(false));
+        json_set(j, "error", json_string("Max MCP OAuth servers reached"));
+        char *r = json_serialize(j);
+        json_free(j);
+        return r;
+    }
+
+    /* Check if token file mtime changed (external refresh) */
+    time_t current_mtime = get_token_file_mtime(server_name);
+    bool disk_changed = (current_mtime != entry->last_mtime);
+
+    /* If disk changed or no cached token, try storage */
+    if (disk_changed || !entry->has_cached) {
+        entry->last_mtime = current_mtime;
+
+        char *token_result = cached_access_token(server_name, server_url);
+        if (token_result) {
+            /* Cache the result */
+            json_t *j = json_parse(token_result, NULL);
+            if (j) {
+                snprintf(entry->cached_token_json, sizeof(entry->cached_token_json),
+                         "%s", token_result);
+                entry->has_cached = true;
+                json_free(j);
+            }
+            return token_result;
+        }
+
+        /* No cached token — run full OAuth flow */
+        char *auth_result = mcp_oauth_build_auth(server_name, server_url,
+                                                   oauth_config_json);
+        if (auth_result) {
+            json_t *j = json_parse(auth_result, NULL);
+            if (j) {
+                bool success = json_get_bool(j, "success", false);
+                if (success) {
+                    snprintf(entry->cached_token_json, sizeof(entry->cached_token_json),
+                             "%s", auth_result);
+                    entry->has_cached = true;
+                    /* Update mtime since we just wrote tokens */
+                    entry->last_mtime = get_token_file_mtime(server_name);
+                }
+                json_free(j);
+            }
+        }
+        return auth_result;
+    }
+
+    /* Disk unchanged and we have cached token — return it */
+    char *copy = strdup(entry->cached_token_json);
+    return copy;
+}
+
+char *mcp_oauth_manager_reauthorize(const char *server_name,
+                                     const char *server_url,
+                                     const char *oauth_config_json) {
+    if (!server_name) {
+        json_t *j = json_object();
+        json_set(j, "success", json_bool(false));
+        json_set(j, "error", json_string("server_name is required"));
+        char *r = json_serialize(j);
+        json_free(j);
+        return r;
+    }
+
+    /* Clear storage */
+    mcp_oauth_remove_tokens(server_name);
+
+    /* Clear cached state */
+    mcp_oauth_entry_t *entry = get_or_create_entry(server_name);
+    if (entry) {
+        entry->has_cached = false;
+        entry->last_mtime = 0;
+        entry->cached_token_json[0] = '\0';
+    }
+
+    /* Run full OAuth flow */
+    return mcp_oauth_build_auth(server_name, server_url, oauth_config_json);
+}

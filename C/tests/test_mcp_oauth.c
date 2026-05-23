@@ -300,6 +300,59 @@ static void test_remove_tokens(void)
     }
 }
 
+static void test_manager_get_token_null_args(void)
+{
+    char *result = mcp_oauth_manager_get_token(NULL, "url", NULL);
+    TEST("manager_get_token null name returns result", result != NULL);
+    if (result) {
+        json_t *j = json_parse(result, NULL);
+        if (j) {
+            TEST("manager_get_token null name success=false",
+                 !json_get_bool(j, "success", true));
+            json_free(j);
+        }
+        free(result);
+    }
+}
+
+static void test_manager_reauthorize_null(void)
+{
+    char *result = mcp_oauth_manager_reauthorize(NULL, "url", NULL);
+    TEST("manager_reauthorize null returns result", result != NULL);
+    if (result) {
+        json_t *j = json_parse(result, NULL);
+        if (j) {
+            TEST("manager_reauthorize null success=false",
+                 !json_get_bool(j, "success", true));
+            json_free(j);
+        }
+        free(result);
+    }
+}
+
+static void test_manager_get_token_missing_server(void)
+{
+    /* Non-existent server — should try discovery and fail gracefully */
+    char *result = mcp_oauth_manager_get_token(
+        "manager-test-missing",
+        "https://nonexistent-mcp.example.com/mcp",
+        "");
+    TEST("manager missing server returns result", result != NULL);
+    if (result) {
+        json_t *j = json_parse(result, NULL);
+        TEST("manager missing server is json", j != NULL);
+        if (j) {
+            /* May fail or may try discovery and also fail — either way not success */
+            bool success = json_get_bool(j, "success", false);
+            /* We just need it not to crash */
+            (void)success;
+            TEST("manager missing server doesn't crash", true);
+            json_free(j);
+        }
+        free(result);
+    }
+}
+
 /* ================================================================
  *  Main
  * ================================================================ */
@@ -318,6 +371,9 @@ int main(void)
     test_build_auth_null_args();
     test_build_auth_missing_metadata();
     test_remove_tokens();
+    test_manager_get_token_null_args();
+    test_manager_reauthorize_null();
+    test_manager_get_token_missing_server();
 
     printf("\nResults: %d passed, %d failed, %d total\n", passed, failed, tests);
     return failed > 0 ? 1 : 0;

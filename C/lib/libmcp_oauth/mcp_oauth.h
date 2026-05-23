@@ -166,6 +166,39 @@ char *mcp_oauth_build_auth(const char *server_name,
 /* Remove stored OAuth tokens for a server */
 bool mcp_oauth_remove_tokens(const char *server_name);
 
+/* ================================================================
+ *  Manager layer (D86) — per-server registry with disk-change detection
+ * ================================================================ */
+
+/*
+ * Get an access token for a server, with mtime-based disk-change detection.
+ *
+ * On first call for a server: reads cached tokens from disk and returns
+ * access_token if valid. If no cached tokens, runs the full OAuth flow
+ * (discovery → callback → exchange).
+ *
+ * On subsequent calls: stats the token file. If mtime differs from the
+ * last known (external refresh detected), re-reads tokens and refreshes
+ * if expired. If mtime unchanged, returns cached token.
+ *
+ * server_name: server identifier (used for token file naming).
+ * server_url: MCP server URL (for metadata discovery if needed).
+ * oauth_config_json: JSON string with OAuth config (may be "").
+ *
+ * Returns malloc'd JSON: {"success":true, "access_token":"...",
+ * "token_type":"...", "expires_in":N}
+ * On failure: {"success":false, "error":"..."}
+ * Caller free()s.
+ */
+char *mcp_oauth_manager_get_token(const char *server_name,
+                                   const char *server_url,
+                                   const char *oauth_config_json);
+
+/* Force a full OAuth re-authorization for a server (clear cache + re-auth) */
+char *mcp_oauth_manager_reauthorize(const char *server_name,
+                                     const char *server_url,
+                                     const char *oauth_config_json);
+
 #ifdef __cplusplus
 }
 #endif
