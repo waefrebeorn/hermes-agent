@@ -105,6 +105,10 @@ run_lib_test "datetime" "tests/test_datetime.c" "lib/libdatetime" "$CDIR/lib/lib
 echo ""; echo "=== CSV Library Tests (J06) ==="
 run_lib_test "csv" "tests/test_csv.c" "lib/libcsv" "$CDIR/lib/libcsv/csv.c"
 
+# Hash library test (J07 — needs OpenSSL)
+echo ""; echo "=== Hash Library Tests (J07) ==="
+run_lib_test "hash" "tests/test_hash.c" "lib/libhash" "$CDIR/lib/libhash/hash.c -lssl -lcrypto"
+
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
 run_lib_test "slack_blocks" "tests/test_slack_blocks.c" "lib/libjson" "$CDIR/lib/libjson/json.c"
