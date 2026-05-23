@@ -25,8 +25,8 @@
 | **Total** | **216/500** | **43.2%** | **284 gaps remaining** |
 
 ## Session Log
+- **Session 13 (May 29):** Updated shell completions (bash/zsh) with new subcommands. Added `hermes version` CLI subcommand. Updated help text. Suite: 195/0/0. Parity: 216/500.
 - **Session 12 (May 29):** Added CLI subcommand dispatch — `hermes status|dump|logs|tools|plugins|secrets|skills|cron|help` now work as shell subcommands, not just slash commands. Also updated help text. Suite: 195/0/0. Parity: 216/500.
-- **Session 11 (May 29):** Ported `hermes_cli/dump.py` → C `/dump` CLI command. Shows version, git commit, hostname, config home, provider/model, session, tokens, tools (76), gateway (19), plugins (10), source stats, CLI commands (78), config keys, upstream. Suite: 195/0/0. Parity: 216/500.
 - **Session 8 (May 29):** test_runner.sh fix — 4 skipped tests (skill_manage, managed_gateway, rate_limit, skill_mgmt_tool) fixed. Root causes: missing include dirs + wrong .c file linked. Suite: 195/0/0 (0 skipped). Parity: 216/500.
 - **DA v38 (May 24, Session 7):** managed_tool_gateway.py port — Nous vendor gateway helpers (12 assertions). Suite: binary builds clean. Parity: 214/500 (42.8%).
 

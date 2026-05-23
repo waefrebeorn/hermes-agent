@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
                 printf("# hermes bash completion — source: . <(hermes completions bash)\n");
                 printf("_hermes_completions() {\n");
                 printf("    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
-                printf("    local opts=\"--help -h --version -v --session gateway cron --tui completions\"\n");
+                printf("    local opts=\"--help -h --version -v --session gateway cron --tui completions status dump logs tools plugins secrets skills model config history sessions usage insights copy\"\n");
                 printf("    if [[ $COMP_CWORD -eq 1 ]]; then\n");
                 printf("        COMPREPLY=($(compgen -W \"$opts\" -- \"$cur\"))\n");
                 printf("    fi\n");
@@ -59,6 +59,17 @@ int main(int argc, char **argv) {
                 printf("        '--session[Attach to session]:session:'\n");
                 printf("        'gateway:Start gateway:->gateway'\n");
                 printf("        'cron:Run scheduler:->cron'\n");
+                printf("        'status:Show session status'\n");
+                printf("        'dump:Dump system debug info'\n");
+                printf("        'logs:View agent log files'\n");
+                printf("        'tools:List registered tools'\n");
+                printf("        'plugins:List installed plugins'\n");
+                printf("        'secrets:Manage secrets'\n");
+                printf("        'skills:Manage installed skills'\n");
+                printf("        'model:Show current model'\n");
+                printf("        'config:Show configuration'\n");
+                printf("        'sessions:List sessions'\n");
+                printf("        'usage:Show token usage'\n");
                 printf("        '--tui[Start TUI]'\n");
                 printf("        'completions:Generate completions:->completions'\n");
                 printf("    )\n");

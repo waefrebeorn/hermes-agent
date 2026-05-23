@@ -347,11 +347,18 @@ int hermes_cli_main(int argc, char **argv) {
 
         /* Check for known subcommands (dispatch as slash commands) */
         if (arg_start < argc && argv[arg_start][0] != '-' && argv[arg_start][0] != '/') {
+            /* Special case: version prints banner */
+            if (strcmp(argv[arg_start], "version") == 0) {
+                printf("WuBu Hermes v%s\n", HERMES_VERSION);
+                printf("C Translation — Phase 5 target\n");
+                printf("Build: %s %s\n", __DATE__, __TIME__);
+                agent_free(&g_cli.agent);
+                return 0;
+            }
             static const char *known_subcmds[] = {
                 "status", "dump", "logs", "tools", "plugins", "secrets",
                 "cron", "skills", "help", "commands", "model", "config",
-                "history", "sessions", "usage", "insights", "copy",
-                "version", "info", NULL
+                "history", "sessions", "usage", "insights", "copy", NULL
             };
             for (int i = 0; known_subcmds[i]; i++) {
                 if (strcmp(argv[arg_start], known_subcmds[i]) == 0) {
