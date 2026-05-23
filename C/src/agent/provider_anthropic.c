@@ -330,6 +330,37 @@ static char *anthropic_build_request_body(const provider_t *p,
         }
     }
 
+    /* CACHE: system_and_3 strategy — mark last 3 non-system messages for cache.
+     * Python prompt_caching.py apply_anthropic_cache_control().
+     * We already marked the last user message above, so we scan backwards
+     * and mark up to 2 more (indices 2 and 3 from end). */
+    {
+        int breakpoints = 0;
+        int n_msgs = (int)json_len(msgs);
+        for (int i = n_msgs - 2; i >= 0 && breakpoints < 2; i--) {
+            json_t *msg = json_get(msgs, i);
+            const char *r = json_get_str(msg, "role", "");
+            if (strcmp(r, "system") == 0) continue; /* system handled separately */
+            breakpoints++;
+
+            json_t *content = json_obj_get(msg, "content");
+            if (!content || json_len(content) == 0) continue;
+
+            if (strcmp(r, "tool") == 0) {
+                /* Tool messages: cache_control at message level */
+                json_t *cc = json_object();
+                json_set(cc, "type", json_string("ephemeral"));
+                json_set(msg, "cache_control", cc);
+            } else {
+                /* User/assistant: cache_control on last content block */
+                json_t *last_block = json_get(content, json_len(content) - 1);
+                json_t *cc = json_object();
+                json_set(cc, "type", json_string("ephemeral"));
+                json_set(last_block, "cache_control", cc);
+            }
+        }
+    }
+
     if (json_len(msgs) == 0) {
         json_free(msgs);
         /* At minimum, add a "hello" user message */
