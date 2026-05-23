@@ -1555,11 +1555,28 @@ static void tui_draw_session_browser(void) {
     /* Separator */
     mvwhline(win, 3, 0, ACS_HLINE, w_cols - 1);
 
-    /* Session list */
+    /* Session list with search filtering */
     int y = 4;
+    int search_len = tui.sessions.search[0] ? (int)strlen(tui.sessions.search) : 0;
     for (int i = tui.sessions.scroll_offset;
          i < tui.sessions.count && y < w_rows - 2;
          i++) {
+
+        /* Apply search filter: case-insensitive substring match */
+        if (search_len > 0) {
+            const char *sid = tui.sessions.sessions[i];
+            bool match = false;
+            for (const char *p = sid; *p; p++) {
+                if (tolower((unsigned char)*p) == tolower((unsigned char)tui.sessions.search[0])) {
+                    if (strncasecmp(p, tui.sessions.search, (size_t)search_len) == 0) {
+                        match = true;
+                        break;
+                    }
+                }
+            }
+            if (!match)
+                continue;
+        }
 
         bool selected = (i == tui.sessions.selected);
         if (selected)
