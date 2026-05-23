@@ -29,7 +29,12 @@
 |- ◀ **Suite: 140/0/0 → 141/0/0** (+1)
 |- ◀ **Libs: 70% → 72%** (26 archives, J04-J18 done)
 |- ◀ 2 commits pushed: J18 websocket test, protobuf .a target
-### Session 2026-05-29 — libprotobuf .a target in Makefile
+|### Session 2026-05-29 — P54: tool_config test (25 assertions)
+|- ✅ **test_tool_config.c** — 25 tests: runtime overrides (set/get/update/clear), convenience wrappers (api_key/base_url/token fallback chain), int/bool coercion, NULL safety, env var resolution
+|- ✅ **test_runner.sh** — tool_config test registered (fixed broken shell syntax from prior edit)
+|- ◀ **Suite: 141/0/0 → 142/0/0** (+1)
+|- ◀ 1 commit: `test(tool): add P54 tool_config test with 25 assertions`
+|### Session 2026-05-29 — libprotobuf .a target in Makefile
 |- ✅ **libprotobuf.a** — Added to LIB_A list (source + test existed, missing standalone .a archive)
 |- ✅ **Makefile** — Build rules for protobuf.o + protobuf.a
 |- ◀ **Suite: 141/0/0** (no regression)

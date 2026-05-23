@@ -214,6 +214,8 @@ run_lib_test "difflib" "tests/test_difflib.c" "lib/libdifflib" "$CDIR/lib/libdif
 run_lib_test "regex" "tests/test_regex.c" "lib/libregex" "$CDIR/lib/libregex/hermes_regex.c"
 echo ""; echo "=== WebSocket Library Tests (J18) ==="
 run_lib_test "websocket" "tests/test_websocket.c" "lib/libwebsocket" "$CDIR/lib/libwebsocket/websocket.c -lssl -lcrypto"
+echo ""; echo "=== TOML Library Tests (J19) ==="
+run_lib_test "toml" "tests/test_toml.c" "lib/libtoml" "$CDIR/lib/libtoml/toml.c"
 echo ""; echo "=== Display Module Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_display.c" \
