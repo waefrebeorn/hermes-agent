@@ -1,12 +1,12 @@
-# State — Hermes C Translation (2026-05-31, Session 28)
+# State — Hermes C Translation (2026-05-31, Session 29)
 
-**~50% parity — ~250 of ~500 gaps closed (est. battleship v3).**
+**~50% parity — ~252 of ~500 gaps closed (est. battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
-| Agent | 42/115 | 37% | subdir_hints ported, tool_guardrails/i18n/provenance/trajectory all ported |
+| Agent | 43/115 | 37% | onboarding + subdir_hints both ported |
 | CLI | 34/95 | 36% | All major slash commands functional |
 | Tools | 41/92 | 45% | 68 registered + 52 lib modules compiled in |
 | Gateway | 22/64 | 34% | 19 platforms |
@@ -22,18 +22,15 @@
 | Stubs | 10/10 | 100% | ALL stubs resolved |
 | Tests | 10/12 | 83% | T01-T09 + library tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **~251/500** | **~50%** | **~249 gaps remaining (est.)** |
+| **Total** | **~252/500** | **~50%** | **~248 gaps remaining (est.)** |
 
 ## Session Log
-- **Session 28 (May 31):** Ported `agent/subdirectory_hints.py` (224 lines) to C. New `hermes_subdir_hints.h/c` with `subdir_hints_init()`, `subdir_hints_check()`, `subdir_hints_cleanup()`. Progressive context discovery: when agent calls tools referencing file paths (read_file, terminal, patch, etc.), checks for AGENTS.md/CLAUDE.md/.cursorrules in the target directories and appends to tool result. Integrated into agent_loop.c Phase 3 tool result processing. Suite: 196/0/0. Build: 0 errors. Parity: ~251/500 (+1).
-- **Session 27 (May 31):** Comprehensive gap audit. Found battleship.md, prestige_prompt.md, digest.py all STALE by 35+ gaps. Verified all 52 lib modules exist, all 4 stubs resolved. Updated state.md with accurate numbers. Build: 0 errors, 0 warnings. Suite: 196/0/0.
-- **Session 26 (May 29):** Ported `agent/i18n.py` (258 lines) to C. Suite: 196/0/0. Parity: 241/500 (+1). Commit `b38fa84f7`.
-- **Session 25 (May 29):** Ported `agent/tool_guardrails.py` (475 lines) to C. Suite: 196/0/0. Parity: 240/500 (+1). Commit `2ea5cfb05`.
-- **Session 24 (May 29):** Fixed `/sethome` — was printing without storing. Suite: 195/0/0. Parity: 239/500.
-- **Session 23 (May 29):** Fixed `/title` — was printing without storing. Suite: 195/0/0. Parity: 237/500.
-- **Session 22 (May 29):** Fixed `/bundles` — was a stub. Suite: 195/0/0. Parity: 235/500.
-- **Session 21 (May 29):** Fixed dangling pointer + 3 warnings. **0 errors, 0 warnings.** Suite: 195/0/0. Parity: 233/500.
-- **Sessions 12-20 (May 29):** Fixed 12 CLI commands (stubs→real). Suite: 195/0/0. Parity: 216-231/500.
+- **Session 29 (May 31):** Ported `agent/onboarding.py` (193 lines) to C. New `hermes_onboarding.h/c` with hint text generators, JSON-based state persistence (onboarding.json), and OpenClaw residue detection. OpenClaw residue check integrated into agent_run_conversation(). Suite: 196/0/0. Build: 0 errors. Parity: ~252/500 (+1).
+- **Session 28 (May 31):** Ported `agent/subdirectory_hints.py` (224 lines) to C. Suite: 196/0/0. Parity: ~251/500 (+1). Commit `627fc2d92`.
+- **Session 27 (May 31):** Comprehensive gap audit — found all walkway files stale by 35+ gaps. Verified 52 lib modules. Updated state.md.
+- **Session 26 (May 29):** Ported `agent/i18n.py` (258 lines) to C. Commit `b38fa84f7`.
+- **Session 25 (May 29):** Ported `agent/tool_guardrails.py` (475 lines) to C. Commit `2ea5cfb05`.
+- **Sessions 12-24 (May 29):** Fixed 14 CLI commands (stubs→real) + dangling pointer + warnings fix.
 
 ## Build Status
 ```
@@ -44,8 +41,8 @@ Warnings: ~3        (pre-existing format-truncation in config.c only)
 CI:     c-build.yml (Linux x86_64 + Docker)
 ```
 
-## Files Created/Modified (Session 28)
-- `include/hermes_subdir_hints.h` — new header (subdirectory hint discovery API)
-- `src/agent/subdir_hints.c` — new source (payload: ~350 lines)
-- `Makefile` — added `src/agent/subdir_hints.o` to AGENT_OBJ
-- `src/agent/agent_loop.c` — integrated init + check calls
+## Files Created/Modified (Session 29)
+- `include/hermes_onboarding.h` — new header (onboarding API)
+- `src/agent/onboarding.c` — new source (hint text + JSON state persistence)
+- `Makefile` — added `src/agent/onboarding.o` to AGENT_OBJ
+- `src/agent/agent_loop.c` — integrated OpenClaw residue check at conversation init

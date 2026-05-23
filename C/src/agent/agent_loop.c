@@ -16,6 +16,7 @@
 #include "plugin.h"
 #include "budget_tracker.h"
 #include "hermes_subdir_hints.h"
+#include "hermes_onboarding.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -737,6 +738,18 @@ char *agent_run_conversation(agent_state_t *state,
     if (state->prefill[0]) {
         message_t *prefill_msg = message_new(state->prefill_role, state->prefill);
         if (prefill_msg) context_push(state, prefill_msg);
+    }
+
+    /* Onboarding: check for OpenClaw residue on first conversation */
+    {
+        char *opath = onboarding_default_path();
+        if (opath && !onboarding_is_seen(opath, ONBOARDING_OPENCLAW_RESIDUE_FLAG)) {
+            if (onboarding_detect_openclaw_residue()) {
+                printf("%s\n", onboarding_openclaw_residue_hint_cli());
+                onboarding_mark_seen(opath, ONBOARDING_OPENCLAW_RESIDUE_FLAG);
+            }
+        }
+        free(opath);
     }
 
     /* Initialize subdirectory hint tracker */
