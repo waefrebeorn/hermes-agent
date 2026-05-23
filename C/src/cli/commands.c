@@ -2124,13 +2124,16 @@ static void cmd_subgoal(const char *args, agent_state_t *state) {
 }
 
 /* /sethome: Set home channel */
+static char g_home_channel[256] = "";
 static void cmd_sethome(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
-        printf("Usage: /sethome <channel>\n");
+        printf("Current home channel: %s\n", g_home_channel[0] ? g_home_channel : "(not set)");
+        printf("Usage: /sethome <platform:chat_id>\n");
         return;
     }
-    printf("Home channel set to: %s (in-memory only)\n", args);
+    snprintf(g_home_channel, sizeof(g_home_channel), "%s", args);
+    printf("Home channel set to: %s\n", g_home_channel);
 }
 
 /* /handoff: Hand off session to messaging platform */
