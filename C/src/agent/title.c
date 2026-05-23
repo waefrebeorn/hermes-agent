@@ -21,17 +21,18 @@ char *agent_generate_title(llm_config_t *cfg, const char *first_message) {
     int words = 0;
     bool in_word = false;
 
-    for (const char *p = first_message; *p && words < 6 && pos < sizeof(buf) - 3; p++) {
+    for (const char *p = first_message; *p && pos < sizeof(buf) - 3; p++) {
         unsigned char c = (unsigned char)*p;
         if (isspace(c) || c == '\n' || c == '\r') {
             if (in_word) {
                 in_word = false;
-                if (words < 5) buf[pos++] = ' ';
+                if (words < 6) buf[pos++] = ' ';
             }
         } else if (isprint(c)) {
             if (!in_word) {
                 in_word = true;
                 words++;
+                if (words > 6) break; /* Stop after reading all of word 6 */
             }
             buf[pos++] = (char)c;
         }
