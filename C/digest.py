@@ -192,7 +192,7 @@ FILE_MAP = {
     "tools/neutts_synth.py":                 (".", "Neural TTS (not ported)"),
     "tools/mixture_of_agents_tool.py":       (".", "MoA tool (not ported)"),
     "tools/openrouter_client.py":            (".", "OpenRouter client (not ported)"),
-    "tools/osv_check.py":                    (".", "OSV check (not ported)"),
+    "tools/osv_check.py":                     ("lib/libosv/osv", "OSV malware check"),
     "tools/process_registry.py":             ("tools/process", "Process management"),
     "tools/schema_sanitizer.py":             (".", "Schema sanitizer (not ported)"),
     "tools/skill_provenance.py":             (".", "Skill provenance (not ported)"),

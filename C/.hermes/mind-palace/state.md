@@ -1,6 +1,6 @@
 # State — Hermes C Translation (2026-05-23, DA v19)
 
-**~37% parity — 186 of 500 gaps closed (battleship v3).**
+**~37% parity — 187 of 500 gaps closed (battleship v3).**
 
 ## Dashboard
 | Category | Done | % | Notes |
@@ -22,10 +22,11 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 9/12 | 75% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T08: fuzz. T09: valgrind+ASan CI |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-|| **Total** | **186/500** | **37%** | **314 gaps remaining** |
+|| **Total** | **187/500** | **37%** | **313 gaps remaining** |
 
 ## Session Log
 - **DA v19 (May 23):** libbinary + test — binary extension detection (has_binary_extension). 3 new files (h+c+test), 134 assertions. Suite: 170/0/0 ✅. Parity: 186/500 (37%).
+- **DA v20 (May 23):** libosv + test — OSV malware check (osv_check_package_for_malware). Port of tools/osv_check.py. 3 new files (h+c+test), 25 assertions. Suite: 171/0/0 ✅. Parity: 187/500 (37%).
 - **DA v18 (May 23):** skill_preprocessing module, T08 (fuzz), U06 (release), U09 (CVE scan), U05 (cross-compile), D84 (SSH backend), system_prompt builder, tool_result_classification. Suite: 169/0/0 ✅. 185/500 (37%). CI/CD: 100%.
 - **DA v17 (May 23):** P02 — file_safety (write-deny + read-block path checks, 400-line C module, 26 tests).
 - **DA v16 (May 23):** B120 — markdown_tables (CJK-aware table realignment, 712-line C module, 35 tests).
@@ -41,7 +42,7 @@
 
 ## Build Status
 ```
-Suite:  170/0/0     (134 tests, ~803 assertions)
+Suite:  171/0/0     (135 tests, ~828 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)

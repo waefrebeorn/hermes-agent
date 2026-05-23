@@ -1,12 +1,15 @@
 # Overnight Map — 2026-05-23 (DA v19)
 
-## Active: libbinary (binary_extensions port) done. 186/500 parity.
+## Active: libbinary + libosv ports done. 187/500 parity.
 
-**Suite: 170/0/0** (134 tests, ~803 assertions)
+**Suite: 171/0/0** (135 tests, ~828 assertions)
 **Binary: 9.1MB dynamic**
 **~401 commits, 0 behind upstream**
 
 ## What Was Done (May 23)
+- **libosv**: Port of Python `tools/osv_check.py` — OSV malware check for MCP packages.
+  Infers ecosystem (npx→npm, uvx→PyPI), parses package names, queries OSV API.
+  3 new files (h+c+test), 25 assertions. Suite: 171/0/0.
 - **libbinary**: Port of Python `tools/binary_extensions.py` — binary extension detection via sorted array + bsearch.
   3 new files (h+c+test), 134 assertions. Suite: 170/0/0.
 

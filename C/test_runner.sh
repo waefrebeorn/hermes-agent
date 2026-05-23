@@ -44,6 +44,20 @@ run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$C
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 
+echo ""; echo "=== OSV Malware Check Tests (D85) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libosv" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \
+    "$CDIR/tests/test_osv.c" \
+    "$CDIR/lib/libosv/osv.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_osv -lssl -lcrypto -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_osv > /dev/null 2>&1; then ok "osv (25 tests)"
+    else fail "osv (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_osv
+else skip "osv (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Manage CRUD Tests (D81) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" \
