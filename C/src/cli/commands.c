@@ -95,6 +95,7 @@ static void cmd_steer(const char *args, agent_state_t *state);
 static void cmd_kanban(const char *args, agent_state_t *state);
 static void cmd_session_search(const char *args, agent_state_t *state);
 static void cmd_session_export(const char *args, agent_state_t *state);
+static void cmd_logs(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -183,6 +184,7 @@ static const command_def_t COMMANDS[] = {
     {"/debug",   NULL,    "Upload debug report and get shareable link",     cmd_debug},
     {"/session-search", NULL, "Search sessions: /session-search <query> [--limit N]", cmd_session_search},
     {"/session-export", NULL, "Export session: /session-export <session_id> [json|markdown]", cmd_session_export},
+    {"/logs", NULL, "View agent logs: /logs [errors|gateway] [-n N] [--level LEVEL]", cmd_logs},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -2642,4 +2644,134 @@ static void cmd_secrets(const char *args, agent_state_t *state) {
     } else {
         printf("Unknown subcommand '%s'. Use: list, get, sync, status\n", subcmd);
     }
+}
+
+/* ================================================================
+ *  /logs — View agent logs
+ * ================================================================ */
+static void cmd_logs(const char *args, agent_state_t *state) {
+    const char *logname = "agent";  /* default */
+    int n_lines = 20;
+    const char *level_filter = NULL;
+    char buf[512];  /* for strtok parsing — must outlive level_filter pointer */
+
+    /* Parse args */
+    if (args && args[0]) {
+        strncpy(buf, args, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+
+        char *token = strtok(buf, " \t");
+        while (token) {
+            if (token[0] == '-' && token[1] == 'n' && token[2] == '\0') {
+                token = strtok(NULL, " \t");
+                if (token) n_lines = atoi(token);
+            } else if (strcmp(token, "--level") == 0 || strcmp(token, "-l") == 0) {
+                token = strtok(NULL, " \t");
+                if (token) level_filter = token;
+            } else if (strcmp(token, "agent") == 0 ||
+                       strcmp(token, "errors") == 0 ||
+                       strcmp(token, "error") == 0 ||
+                       strcmp(token, "gateway") == 0) {
+                logname = token;
+            }
+            token = strtok(NULL, " \t");
+        }
+    }
+
+    if (n_lines <= 0) n_lines = 20;
+    if (n_lines > 1000) n_lines = 1000;
+
+    /* Map log name to filename */
+    const char *filename = "agent.log";
+    if (strcmp(logname, "errors") == 0 || strcmp(logname, "error") == 0)
+        filename = "errors.log";
+    else if (strcmp(logname, "gateway") == 0)
+        filename = "gateway.log";
+
+    /* Build path: <hermes_home>/logs/<filename> */
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/logs/%s",
+             state->hermes_home[0] ? state->hermes_home : "~/.slermes",
+             filename);
+
+    printf("=== %s ===\n", filename);
+
+    FILE *fp = fopen(path, "r");
+    if (!fp) {
+        printf("No log file found at: %s\n", path);
+        printf("Hermes may not have been run yet, or logs are stored elsewhere.\n");
+        return;
+    }
+
+    /* Read all lines into a ring buffer */
+    char **lines = NULL;
+    int count = 0;
+    char line[4096];
+
+    while (fgets(line, sizeof(line), fp)) {
+        /* Strip trailing newline */
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] == '\n') line[len - 1] = '\0';
+
+        /* Apply level filter if set */
+        if (level_filter) {
+            /* Parse level from standard Hermes log format:
+             * "2026-04-05 22:35:00,123 INFO  ..." */
+            char *level_start = NULL;
+            for (size_t i = 0; line[i]; i++) {
+                if (line[i] == ' ' && i + 5 < strlen(line)) {
+                    /* Check for known level after timestamp pattern */
+                    const char *p = line + i + 1;
+                    if (strncmp(p, "DEBUG", 5) == 0 ||
+                        strncmp(p, "INFO", 4) == 0 ||
+                        strncmp(p, "WARNING", 7) == 0 ||
+                        strncmp(p, "ERROR", 5) == 0 ||
+                        strncmp(p, "CRITICAL", 8) == 0) {
+                        level_start = line + i + 1;
+                        break;
+                    }
+                }
+            }
+            if (level_start) {
+                /* Extract level string */
+                char lvl[16];
+                int lvl_len = 0;
+                while (level_start[lvl_len] && level_start[lvl_len] != ' ' &&
+                       level_start[lvl_len] != '\t' && lvl_len < 15) {
+                    lvl[lvl_len] = level_start[lvl_len];
+                    lvl_len++;
+                }
+                lvl[lvl_len] = '\0';
+
+                if (strcasecmp(lvl, level_filter) != 0)
+                    continue;  /* skip non-matching lines */
+            } else {
+                /* Unparseable line — include it anyway */
+            }
+        }
+
+        /* Store line in ring buffer */
+        char **new_lines = realloc(lines, sizeof(char *) * (count + 1));
+        if (!new_lines) break;
+        lines = new_lines;
+        lines[count] = strdup(line);
+        if (!lines[count]) break;
+        count++;
+    }
+    fclose(fp);
+
+    /* Print last n_lines */
+    int start = count > n_lines ? count - n_lines : 0;
+    for (int i = start; i < count; i++) {
+        printf("%s\n", lines[i]);
+        free(lines[i]);
+    }
+    free(lines);
+
+    if (count == 0)
+        printf("(empty)\n");
+    else if (count <= n_lines)
+        printf("\n(%d lines, total)\n", count);
+    else
+        printf("\n(%d lines, showing last %d of %d)\n", n_lines < count ? n_lines : count, n_lines, count);
 }
