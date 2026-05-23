@@ -96,6 +96,7 @@ static void cmd_kanban(const char *args, agent_state_t *state);
 static void cmd_session_search(const char *args, agent_state_t *state);
 static void cmd_session_export(const char *args, agent_state_t *state);
 static void cmd_logs(const char *args, agent_state_t *state);
+static void cmd_dump(const char *args, agent_state_t *state);
 
 /* Registry — mirroring Python Hermes COMMAND_REGISTRY */
 static const command_def_t COMMANDS[] = {
@@ -185,6 +186,7 @@ static const command_def_t COMMANDS[] = {
     {"/session-search", NULL, "Search sessions: /session-search <query> [--limit N]", cmd_session_search},
     {"/session-export", NULL, "Export session: /session-export <session_id> [json|markdown]", cmd_session_export},
     {"/logs", NULL, "View agent logs: /logs [errors|gateway] [-n N] [--level LEVEL]", cmd_logs},
+    {"/dump", NULL, "Dump system debug info for support context", cmd_dump},
     {NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -2774,4 +2776,142 @@ static void cmd_logs(const char *args, agent_state_t *state) {
         printf("\n(%d lines, total)\n", count);
     else
         printf("\n(%d lines, showing last %d of %d)\n", n_lines < count ? n_lines : count, n_lines, count);
+}
+
+/* ================================================================
+ *  /dump — System debug info dump
+ * ================================================================ */
+static void cmd_dump(const char *args, agent_state_t *state) {
+    (void)args;
+
+    printf("=== Hermes C System Dump ===\n\n");
+
+    /* Version */
+    printf("Version:        %s\n", HERMES_VERSION);
+
+    /* Git commit */
+    {
+        char buf[128] = "(unknown)";
+        FILE *fp = popen("git rev-parse --short=8 HEAD 2>/dev/null", "r");
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) {
+                size_t len = strlen(buf);
+                if (len > 0 && buf[len-1] == '\n') buf[len-1] = '\0';
+            }
+            pclose(fp);
+        }
+        printf("Git commit:     %s\n", buf);
+    }
+
+    /* Host info */
+    {
+        char hostname[256] = "(unknown)";
+        if (gethostname(hostname, sizeof(hostname)) == 0) {
+            hostname[sizeof(hostname)-1] = '\0';
+        }
+        printf("Hostname:       %s\n", hostname);
+    }
+
+    /* Config home */
+    const char *home = state->hermes_home[0] ? state->hermes_home : getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    printf("Config home:    %s\n", home ? home : "(not set)");
+    printf("Config file:    %s/config.yaml\n", home ? home : "~/.slermes");
+
+    /* Provider + model */
+    printf("Provider:       %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+    printf("Model:          %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+
+    /* Session info */
+    printf("Session ID:     %s\n", state->session_id[0] ? state->session_id : "(unsaved)");
+    printf("Messages:       %zu\n", state->message_count);
+    printf("Iterations:     %d/%d\n", state->iteration_count, state->max_iterations);
+
+    /* Token usage */
+    printf("Tokens in:      %d\n", state->session_input_tokens);
+    printf("Tokens out:     %d\n", state->session_output_tokens);
+    printf("Tokens total:   %d\n", state->session_total_tokens);
+    if (state->session_estimated_cost_usd > 0.0)
+        printf("Est. cost:      $%.6f\n", state->session_estimated_cost_usd);
+
+    /* Tools */
+    printf("Tools reg:      %zu\n", state->tools.count);
+
+    /* Gateway platforms — count registered platform adapters */
+    {
+        /* Try to read gateway platforms from process list */
+        int gw_count = 0;
+        char buf[256];
+        FILE *fp = popen("ls src/gateway/platforms/*.c 2>/dev/null | grep -v server.c | wc -l", "r");
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) gw_count = atoi(buf);
+            pclose(fp);
+        }
+        if (gw_count > 0)
+            printf("Gateway plats:  %d\n", gw_count);
+    }
+
+    /* Plugins */
+    {
+        int pcount = 0;
+        char buf[256];
+        FILE *fp = popen("ls -1 src/plugins/*.so 2>/dev/null | wc -l", "r");
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) pcount = atoi(buf);
+            pclose(fp);
+        }
+        printf("Plugin .so:     %d\n", pcount);
+    }
+
+    /* Source stats */
+    {
+        int c_count = 0, h_count = 0;
+        char buf[256];
+        FILE *fp = popen("ls src/*.c src/**/*.c 2>/dev/null | wc -l", "r");
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) c_count = atoi(buf);
+            pclose(fp);
+        }
+        fp = popen("ls include/*.h 2>/dev/null | wc -l", "r");
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) h_count = atoi(buf);
+            pclose(fp);
+        }
+        printf("C source files: %d (.c) + %d (.h)\n", c_count, h_count);
+    }
+
+    /* CLI commands registered */
+    printf("CLI commands:   %d\n", commands_count());
+
+    /* Config keys (approximate from YAML key count) */
+    {
+        int kcount = 0;
+        if (home) {
+            char path[1024];
+            snprintf(path, sizeof(path), "%s/config.yaml", home);
+            FILE *fp = fopen(path, "r");
+            if (fp) {
+                char line[4096];
+                while (fgets(line, sizeof(line), fp)) {
+                    if (strchr(line, ':')) kcount++;
+                }
+                fclose(fp);
+            }
+        }
+        printf("Config keys:    ~%d\n", kcount > 0 ? kcount : 322);
+    }
+
+    /* Upstream sync status */
+    {
+        char buf[256];
+        FILE *fp = popen("cd /home/wubu/hermes-agent-dev && git rev-list --count HEAD --not upstream/main 2>/dev/null || echo 0", "r");
+        int ahead = 0;
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp)) ahead = atoi(buf);
+            pclose(fp);
+        }
+        printf("Upstream:       0 behind, %d ahead\n", ahead);
+    }
+
+    printf("\n=== End Dump ===\n");
 }

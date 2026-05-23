@@ -25,8 +25,8 @@
 | **Total** | **216/500** | **43.2%** | **284 gaps remaining** |
 
 ## Session Log
+- **Session 11 (May 29):** Ported `hermes_cli/dump.py` → C `/dump` CLI command. Shows version, git commit, hostname, config home, provider/model, session, tokens, tools (76), gateway (19), plugins (10), source stats, CLI commands (78), config keys, upstream. Suite: 195/0/0. Parity: 216/500.
 - **Session 10 (May 29):** Ported `hermes_cli/logs.py` → C `/logs` slash command. Supports `[errors|gateway]`, `-n N`, `--level LEVEL` filtering. Suite: 195/0/0. Parity: 216/500.
-- **Session 9 (May 29):** reasoning_content echo-back fix — `build_messages_json()` now serializes `reasoning_content` for assistant messages. Fixes DeepSeek thinking mode HTTP 400 on multi-turn tool calls. Parity: 216/500. Suite: 195/0/0.
 - **Session 8 (May 29):** test_runner.sh fix — 4 skipped tests (skill_manage, managed_gateway, rate_limit, skill_mgmt_tool) fixed. Root causes: missing include dirs + wrong .c file linked. Suite: 195/0/0 (0 skipped). Parity: 216/500.
 - **DA v38 (May 24, Session 7):** managed_tool_gateway.py port — Nous vendor gateway helpers (12 assertions). Suite: binary builds clean. Parity: 214/500 (42.8%).
 
