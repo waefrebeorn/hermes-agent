@@ -43,7 +43,6 @@ run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$C
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
-run_lib_test "path_security" "tests/test_path_security.c" "lib/libpath" "$CDIR/lib/libpath/path.c"
 
 echo ""; echo "=== OSV Malware Check Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
@@ -484,6 +483,8 @@ run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$C
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 run_lib_test "path"     "tests/test_path.c"         "lib/libpath"            "$CDIR/lib/libpath/path.c"
 run_lib_test "skin"     "tests/test_skin.c"         "lib/libskin"            "-I$CDIR/lib/libjson $CDIR/lib/libskin/skin.c $CDIR/lib/libjson/json.c -lm"
+run_lib_test "path_security" "tests/test_path_security.c" "lib/libpath" "$CDIR/lib/libpath/path.c"
+run_lib_test "interrupt" "tests/test_interrupt.c" "lib/libinterrupt" "$CDIR/lib/libinterrupt/interrupt.c -lpthread"
 
 # datetime library test (J05 -- standalone, no deps)
 echo ""; echo "=== datetime Library Tests (J05) ==="
