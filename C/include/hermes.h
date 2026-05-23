@@ -26,6 +26,9 @@
 /* Forward declarations for agent subsystem types */
 typedef struct budget_tracker_t budget_tracker_t;
 
+/* Tool call loop guardrails controller */
+#include "hermes_tool_guardrails.h"
+
 /* Typed error system (K01-K05) */
 #include "hermes_error.h"
 #include "hermes_tokenizer.h"
@@ -306,6 +309,9 @@ typedef struct {
     /* G35-G36: Typed interrupt */
     int interrupt_type;         /* 0=NONE, 1=GRACEFUL, 2=FORCE */
     bool partial_results_saved; /* G36: partial tool results preserved */
+
+    /* G28-G30: Tool call loop guardrails controller */
+    tool_guardrail_controller_t guardrails_ctrl;
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */

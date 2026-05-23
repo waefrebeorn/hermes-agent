@@ -104,6 +104,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "fal_common (compilation failed)"
 fi
 
+echo ""; echo "=== Tool Call Guardrails Tests (G28-G30) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/include" -I"$CDIR/src/agent" \
+    "$CDIR/tests/test_tool_guardrails.c" \
+    "$CDIR/src/agent/tool_guardrails.c" \
+    -o /tmp/hermes_test_guardrails -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_guardrails > /dev/null 2>&1; then ok "tool_guardrails (48 tests)"
+    else fail "tool_guardrails (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_guardrails
+else skip "tool_guardrails (compilation failed)"
+fi
+
 echo ""; echo "=== Tool Output Limits Tests (tool_output_limits) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libtooloutput" -I"$CDIR/include" \

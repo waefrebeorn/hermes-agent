@@ -174,6 +174,14 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     if (state->budget)
         budget_tracker_set_per_turn_limit(state->budget, per_turn);
 
+    /* G28-G30: Initialize tool call loop guardrails from config */
+    tool_guardrail_init(&state->guardrails_ctrl);
+    if (cfg->guardrails.max_consecutive_failures > 0) {
+        state->guardrails_ctrl.exact_failure_block_after = cfg->guardrails.max_consecutive_failures;
+        state->guardrails_ctrl.same_tool_failure_halt_after = cfg->guardrails.max_consecutive_failures + 3;
+    }
+    state->guardrails_ctrl.hard_stop_enabled = cfg->guardrails.abort_on_safety_violation;
+
     /* G26: Budget hard limit mode */
     if (state->budget)
         budget_tracker_set_hard_limit(state->budget, false); /* soft by default */
@@ -1095,6 +1103,10 @@ retry_done:
             n_calls > state->budget->max_tool_calls_per_turn) {
             n_calls = state->budget->max_tool_calls_per_turn;
         }
+
+        /* G28: Reset guardrail controller for this turn */
+        tool_guardrail_reset(&state->guardrails_ctrl);
+
         typedef struct {
             int    index;
             char  *tool_name;
@@ -1111,7 +1123,7 @@ retry_done:
             return strdup("Error: OOM for tool dispatch");
         }
 
-        /* Phase 1: Security approval (sequential — approval_check may be stateful) */
+        /* Phase 1: Security approval + guardrail check (sequential) */
         for (int i = 0; i < n_calls; i++) {
             works[i].index = i;
             works[i].tool_name = strdup(llm_resp->tool_calls[i].name);
@@ -1120,7 +1132,23 @@ retry_done:
             works[i].approved = approval_check(
                 llm_resp->tool_calls[i].name,
                 llm_resp->tool_calls[i].arguments);
-            works[i].result = NULL;
+
+            /* G29: Guardrail before_call — block tools that are in a loop */
+            if (works[i].approved) {
+                tool_guardrail_decision_t gd = tool_guardrail_before_call(
+                    &state->guardrails_ctrl,
+                    llm_resp->tool_calls[i].name,
+                    llm_resp->tool_calls[i].arguments);
+                if (gd.action == GUARDRAIL_BLOCK || gd.action == GUARDRAIL_HALT) {
+                    works[i].approved = 0;
+                    works[i].result = tool_guardrail_synthetic_result(&gd);
+                    fprintf(stderr, "[guardrail] Blocked %s: %s\n",
+                            gd.tool_name, gd.code);
+                }
+            }
+
+            if (!works[i].result)
+                works[i].result = NULL;
         }
 
         /* Phase 2: Parallel execution via pthreads */
@@ -1186,7 +1214,8 @@ retry_done:
             context_push(state, tool_msg);
             /* P93: Classify tool result — abort on fatal */
             /* G35: Use typed interrupt for graceful vs force distinction */
-            if (classify_tool_result(works[i].result, works[i].tool_name) == TOOL_RESULT_FATAL) {
+            bool tool_failed = (classify_tool_result(works[i].result, works[i].tool_name) == TOOL_RESULT_FATAL);
+            if (tool_failed) {
                 state->interrupted = true;
                 state->interrupt_type = INTERRUPT_GRACEFUL;
                 /* G12: Set interrupt message with context */
@@ -1194,6 +1223,32 @@ retry_done:
                          "Fatal tool result from '%s': %s",
                          works[i].tool_name,
                          works[i].result ? works[i].result : "unknown error");
+            }
+
+            /* G30: Guardrail after_call — track tool results for loop detection */
+            {
+                tool_guardrail_decision_t gd = tool_guardrail_after_call(
+                    &state->guardrails_ctrl,
+                    works[i].tool_name,
+                    works[i].tool_args,
+                    works[i].result,
+                    tool_failed);
+                if (gd.action == GUARDRAIL_HALT) {
+                    state->interrupted = true;
+                    state->interrupt_type = INTERRUPT_GRACEFUL;
+                    snprintf(state->interrupt_message, sizeof(state->interrupt_message),
+                             "Guardrail halt: %s", gd.message);
+                    fprintf(stderr, "[guardrail] Halt: %s\n", gd.code);
+                } else if (gd.action == GUARDRAIL_WARN) {
+                    /* Append warning to tool result */
+                    char *updated = tool_guardrail_append_guidance(
+                        works[i].result ? works[i].result : "", &gd);
+                    if (updated) {
+                        free(works[i].result);
+                        works[i].result = updated;
+                    }
+                    fprintf(stderr, "[guardrail] Warn: %s\n", gd.code);
+                }
             }
             free(works[i].tool_name);
             free(works[i].tool_args);
