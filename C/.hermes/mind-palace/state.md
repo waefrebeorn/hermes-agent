@@ -25,6 +25,8 @@
 | **Total** | **168/500** | **34%** | **332 gaps remaining** |
 
 ## Session Log
+- **DA v15 (May 23):** U10 — Performance gate. `scripts/perf-gate.py` + Makefile target + CI job. Checks binary size (9.3MB baseline, 10% tolerance) and startup time (1ms, 500ms tolerance). 4 files, 163 lines.
+- **DA v15 (May 23):** U07 — Code coverage pipeline + C50 skill_mgmt fix.
 - **DA v14 (May 23):** T07 — Plugin sandbox loading tests (NULL-safety, invalid input, type/enum/version/registry boundary checks). 73 assertions. 3 commits: T01, T02, T07.
 - **DA v13 (May 23):** T01 — Gateway per-platform tests (Telegram JSON parsing + Discord setters + Webhook HMAC + subscriptions). 64 new assertions.
 - **DA v13 (May 23):** T02 — CLI dispatch/handler tests (dispatch, get_all, count invariants, help/exit handlers, list_json validation). 108 new assertions.
@@ -34,7 +36,7 @@
 
 ## Build Status
 ```
-Suite:  154/0/0     (117 tests, ~573 assertions)
+Suite:  160/0/0     (126 tests, ~582 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)

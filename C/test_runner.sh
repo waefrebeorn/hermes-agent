@@ -391,7 +391,10 @@ else
 fi
 
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
-echo ""; echo "=== File Permission Hardening Tests (O15) ==="
+echo ""; echo "=== Retry Utils Tests (B117) ==="
+run_lib_test "retry_utils" "tests/test_retry_utils.c" "include" "$CDIR/src/agent/retry_utils.c"
+
+# File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
     -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" \
