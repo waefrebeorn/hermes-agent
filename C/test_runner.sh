@@ -72,6 +72,23 @@ if gcc -O2 -Wall -Wextra \
 else skip "transcription (compilation failed)"
 fi
 
+echo ""; echo "=== MCP OAuth Tests (D85) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libmcp_oauth" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+    -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libbase64" -I"$CDIR/include" \
+    "$CDIR/tests/test_mcp_oauth.c" \
+    "$CDIR/lib/libmcp_oauth/mcp_oauth.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libcrypto/crypto.c" \
+    "$CDIR/lib/libbase64/base64.c" \
+    -o /tmp/hermes_test_mcp_oauth -lssl -lcrypto -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_mcp_oauth > /dev/null 2>&1; then ok "mcp_oauth"
+    else fail "mcp_oauth (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_mcp_oauth
+else skip "mcp_oauth (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
