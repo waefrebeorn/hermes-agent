@@ -104,6 +104,19 @@ if gcc -O2 -Wall -Wextra \
 else skip "fal_common (compilation failed)"
 fi
 
+echo ""; echo "=== Rate Guard Library Tests (nous_rate_guard) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/librateguard" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libpath" -I"$CDIR/include" \
+    "$CDIR/tests/test_rate_guard.c" \
+    "$CDIR/lib/librateguard/rate_guard.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_rate_guard -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_rate_guard > /dev/null 2>&1; then ok "rate_guard"
+    else fail "rate_guard (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_rate_guard
+else skip "rate_guard (compilation failed)"
+fi
+
 echo ""; echo "=== Tool Call Guardrails Tests (G28-G30) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/include" -I"$CDIR/src/agent" \
