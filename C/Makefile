@@ -296,3 +296,12 @@ asan:
 	$(MAKE) CFLAGS="-O1 -g -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -I include $(LIB_INCS)" \
 		LDFLAGS="-fsanitize=address -lssl -lcrypto -ldl -lpthread $(LIBS)" \
 		clean all
+
+# Valgrind leak check target — build with debug symbols, run under valgrind
+valgrind: hermes
+	@echo "=== Valgrind: Basic memory check ==="
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
+		--error-exitcode=1 --errors-for-leak-kinds=all \
+		./hermes --help 2>&1
+	@echo ""
+	@echo "=== Valgrind: hermes binary OK ==="
