@@ -25,7 +25,8 @@
 | File | Purpose |
 |------|---------|
 | `plans/battleship-index.md` | Quick-reference dashboard — per-sector parity, active gaps, key files (read this first) |
-| `plans/300-gap-roadmap-v1.md` | Full 447-gap breakdown with letter-number coordinates (A01-R18) |
+| `plans/battleship-v2.md` | Updated roadmap (DA v10) — 468 gaps, 21 new from upstream sync |
+| `plans/300-gap-roadmap-v1.md` | Full 447-gap breakdown with letter-number coordinates (superseded by v2) |
 | `plans/devils_advocate_v6.md` | DA v6 full audit — source of current numbers |
 | `vault/bug-bounty.md` | All 16 bugs found (6 critical, 10 high) — consolidated |
 | `vault/achievements.md` | All milestones, bug bounties, subsystem parity (up to date) |

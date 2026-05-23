@@ -19,9 +19,16 @@
 | **Build/doc** | ✅ **95%** | Docker, CI, cross-compile, man page, Doxygen. O02 Windows remains |
 | **Error types** | ✅ **100%** | K01-K20: 58 error codes |
 | **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys, local trust |
-| **Upstream** | ⚠️ **183 commits behind** | Python hermes-agent has ongoing changes |
+| **Upstream** | ✅ **Synced** | 183 commits merged — 0 behind origin/main |
 
-### Session 2026-05-23 — Docs overhaul, slermes kill, vault restructuring, PBS credits
+### Session 2026-05-23 — Upstream sync, triple DA v10, battleship v2
+- ✅ **Upstream sync**: 183 commits merged from origin/main (NousResearch) — 313 files changed, 17K lines
+- ✅ **0 behind origin/main** — fully caught up for the first time
+- ✅ **Triple DA v10**: source-audited 115 .c files, 117 tests, 32 libs, 10 plugins
+- ✅ **Battleship v2**: 447→468 gaps (21 new from upstream), parity 36%→34%
+- ✅ **New gaps catalogued**: computer_use backends (5), Fal AI (2), Discord plugin (2), secrets subsystem (2), parallel test runner, transcription, SSH env, MCP OAuth
+- ✅ **Documentation**: battleship-index.md, state.md, prestige_prompt.md all v11
+- ✅ **Suite: 154/0/0** (no regression from merge)
 - ✅ **Docs: all dates fixed (June→May)** — CHANGELOG, essays, vault, mind-palace, root README
 - ✅ **Human time estimates removed** — SECURITY.md, essay-2 (no "18 months", no "4 tests/week")
 - ✅ **slermes/ directory removed** — stale duplicate of C/, was confusing new bots (159 files, 50K LOC)
