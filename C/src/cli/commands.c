@@ -1199,6 +1199,100 @@ static void cmd_config(const char *args, agent_state_t *state) {
             if (count == 0) printf("  (none)\n");
             return;
         }
+
+        /* profile clone <name> --from <source> */
+        if (strncmp(profile_name, "clone ", 6) == 0) {
+            const char *clone_name = profile_name + 6;
+            const char *from_name = NULL;
+            /* Parse --from <source> */
+            const char *from_arg = strstr(clone_name, " --from ");
+            char clone_buf[256] = "";
+            if (from_arg) {
+                from_name = from_arg + 8;
+                /* Terminate clone_name at --from */
+                size_t len = (size_t)(from_arg - clone_name);
+                if (len >= sizeof(clone_buf)) len = sizeof(clone_buf) - 1;
+                memcpy(clone_buf, clone_name, len);
+                clone_buf[len] = '\0';
+                clone_name = clone_buf;
+            }
+
+            if (!clone_name || !clone_name[0]) {
+                printf("Usage: /config profile clone <name> --from <source>\n");
+                return;
+            }
+
+            char profiles_dir[HERMES_PATH_MAX];
+            hermes_resolve_path("profiles", profiles_dir, sizeof(profiles_dir));
+
+            /* Determine source profile */
+            const char *src = from_name ? from_name : "default";
+            char src_path[HERMES_PATH_MAX];
+            snprintf(src_path, sizeof(src_path), "%s/%s.yaml", profiles_dir, src);
+
+            /* Check source exists */
+            struct stat st;
+            if (stat(src_path, &st) != 0) {
+                printf("Source profile '%s' not found at %s\n", src, src_path);
+                return;
+            }
+
+            /* Check target doesn't already exist */
+            char dst_path[HERMES_PATH_MAX];
+            snprintf(dst_path, sizeof(dst_path), "%s/%s.yaml", profiles_dir, clone_name);
+            if (stat(dst_path, &st) == 0) {
+                printf("Profile '%s' already exists. Delete it first or use a different name.\n", clone_name);
+                return;
+            }
+
+            /* Copy the file */
+            FILE *src_f = fopen(src_path, "r");
+            if (!src_f) {
+                printf("Failed to read source profile '%s'\n", src);
+                return;
+            }
+            FILE *dst_f = fopen(dst_path, "w");
+            if (!dst_f) {
+                fclose(src_f);
+                printf("Failed to create profile '%s'\n", clone_name);
+                return;
+            }
+            char buf[8192];
+            size_t n;
+            while ((n = fread(buf, 1, sizeof(buf), src_f)) > 0) {
+                fwrite(buf, 1, n, dst_f);
+            }
+            fclose(src_f);
+            fclose(dst_f);
+            printf("Profile '%s' cloned from '%s'.\n", clone_name, src);
+            return;
+        }
+
+        /* profile delete <name> */
+        if (strncmp(profile_name, "delete ", 7) == 0) {
+            const char *del_name = profile_name + 7;
+            if (!del_name || !del_name[0]) {
+                printf("Usage: /config profile delete <name>\n");
+                return;
+            }
+            char profiles_dir[HERMES_PATH_MAX];
+            hermes_resolve_path("profiles", profiles_dir, sizeof(profiles_dir));
+            char del_path[HERMES_PATH_MAX];
+            snprintf(del_path, sizeof(del_path), "%s/%s.yaml", profiles_dir, del_name);
+
+            struct stat st;
+            if (stat(del_path, &st) != 0) {
+                printf("Profile '%s' not found.\n", del_name);
+                return;
+            }
+            if (unlink(del_path) != 0) {
+                printf("Failed to delete profile '%s'.\n", del_name);
+                return;
+            }
+            printf("Profile '%s' deleted.\n", del_name);
+            return;
+        }
+
         /* Load named profile */
         hermes_config_t pcfg;
         if (!hermes_config_load_profile(&pcfg, profile_name, state->hermes_home)) {
@@ -1261,7 +1355,7 @@ static void cmd_config(const char *args, agent_state_t *state) {
         return;
     }
 
-    printf("Usage: /config [validate|diff|export|migrate|groups|schema|profile <name>|profile list|show <group>|get <key>|set <key>=<value>]\n");
+    printf("Usage: /config [validate|diff|export|migrate|groups|schema|profile <name>|profile list|profile clone <name> --from <source>|profile delete <name>|show <group>|get <key>|set <key>=<value>]\n");
 }
 
 static void cmd_commands(const char *args, agent_state_t *state) {

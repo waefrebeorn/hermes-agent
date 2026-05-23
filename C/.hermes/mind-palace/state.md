@@ -1,6 +1,6 @@
-     1|     1|     1|     1|     1|# State — Hermes C Translation (2026-06-01, Session 49)
+     1|     1|     1|     1|     1|# State — Hermes C Translation (2026-06-01, Session 50)
      2|     2|     2|     2|
-     3|     3|     3|     3|**~64% parity — ~319 of ~500 gaps closed.**
+     3|     3|     3|     3|**~64% parity — ~320 of ~500 gaps closed.**
      4|     4|     4|     4|
      5|     5|     5|     5|## Dashboard
      6|     6|     6|     6||| Category | Done | % | Notes |
@@ -23,10 +23,11 @@
     23|    23|    23|    23||| Tests | 10/12 | 83% | T01-T09 + library tests |
     24|    24|    24|    24||| CI/CD | 10/10 | 100% | All U gaps closed |
     25|    25|    25|    25||| Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-| **Total** | **~319/500** | **~64%** | **~181 gaps remaining** |
+| **Total** | **~320/500** | **~64%** | **~180 gaps remaining** |
     27|    27|    27|    27|
     28|    28|    28|    28|## Session Log
-- **Session 49 (Jun 1):** Ported D80 (fal_common.py) to C as `lib/libfal_common/`. New shared API: `fal_get_api_key()` (key resolution), `fal_escape_json()` (JSON escape), `fal_post_json()` (FAL HTTP POST with auth), `fal_error_response()`/`fal_error_from_http()` (error JSON builders). Refactored `image_gen.c` and `video_gen.c` to remove duplicated FAL API key lookup + HTTP client + error handling. Fixed broken pre-existing `libfal_common` implementation. Tests: 28/28 pass (was SKIP due to compilation failure). Build: 0 errors. Suite: 195/1/0 (pre-existing process_tool). Tools: 65/92 (71%). Parity: ~319/500 (~64%). Commit `963510968`.
+- **Session 50 (Jun 1):** Ported `agent/nous_rate_guard.py` (325L) to C as `lib/librateguard/`. New API: `rate_guard_record()` (persist rate limit state to JSON file), `rate_guard_remaining()` (check cooldown), `rate_guard_clear()` (clear state), `rate_guard_format_remaining()` (human-readable duration), `rate_guard_is_genuine()` (distinguish genuine 429 from transient provider throttle), `rate_guard_parse_headers()` (parse x-ratelimit-* headers). State stored in `HERMES_HOME/rate_limits/<name>.json` with atomic writes. Tests: 24/24 pass. Build: 0 errors. Suite: 196/1/0 (pre-existing process_tool). Parity: ~320/500 (~64%). Commit `4a8deaac8`.
+- **Session 49 (Jun 1):** Ported D80 (fal_common.py) to C as `lib/libfal_common/`. New shared API: `***()` (key resolution), `***()` (JSON escape), `fal_post_json()` (FAL HTTP POST with auth), `fal_er...onse()`/`fal_er...http()` (error JSON builders). Refactored `image_gen.c` and `video_gen.c` to remove duplicated FAL API key lookup + HTTP client + error handling. Fixed broken pre-existing `libfal_common` implementation. Tests: 28/28 pass (was SKIP due to compilation failure). Build: 0 errors. Suite: 195/1/0 (pre-existing process_tool). Tools: 65/92 (71%). Parity: ~319/500 (~64%). Commit `963510968`.
 - **Session 48 (Jun 1):** Wired MCP sampling/createMessage handler. New `mcp_sampling_handler()` callback — receives MCP server sampling requests, parses JSON messages, calls `llm_chat_completion()`, returns LLM response. Added YAML config reading: `mcp_servers.<name>.sampling.{enabled, model, max_tokens_cap, timeout, max_rpm}`. Wired into all 3 transports (SSE, HTTP, stdio). MCP sector: 10/11 (91%). Parity: ~318/500 (~64%). Build: 0 errors. Commit `248014815`.
 - **Session 47 (Jun 1):** Added Streamable HTTP transport to libmcp (MCP_TRANSPORT_HTTP). New API `mcp_server_set_http(srv, url)` — connects to MCP servers via HTTP POST JSON-RPC to a single URL. Full connect/send/recv/disconnect lifecycle with auth headers, workspace roots, and tool discovery. New `connect_http_server()` in mcp_tool.c — wired into config.yaml loading. When a server has `url` but no `command`, defaults to HTTP transport. Explicit `transport: sse` preserves SSE behavior. MCP sector: 9/11 (82%). Parity: ~317/500 (~63%). Build: 0 errors. Commit `b19172342`.
 - **Session 46 (Jun 1):** Added dynamic MCP server name discovery from config.yaml. Replaced hardcoded `known_servers[8]` array with `yaml_map_keys()` — new libyaml API that retrieves key names from nested YAML maps. Any custom server name in `mcp_servers: {name: ...}` now works instead of only 8 hardcoded names. Added `yaml_map_keys()` to libyaml.h/c. Verified: custom server name "my-custom-server" discovered correctly. Build: 0 errors. MCP sector: 8/11 (73%). Parity: ~316/500 (~63%). Commit `b2d94148e`.
