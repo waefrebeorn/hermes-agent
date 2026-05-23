@@ -1763,14 +1763,21 @@ void commands_set_verbose(int level) { g_verbose = level; }
 int commands_get_verbose(void) { return g_verbose; }
 
 /* /skin: Show or change the display skin/theme */
+static char g_current_skin[64] = "";
 static void cmd_skin(const char *args, agent_state_t *state) {
     (void)state;
     if (args && args[0]) {
-        printf("Skin selection not yet implemented in C. Use config.yaml display.skin.\n");
+        if (strlen(args) >= sizeof(g_current_skin)) {
+            printf("Skin name too long (max %zu chars).\n", sizeof(g_current_skin) - 1);
+            return;
+        }
+        snprintf(g_current_skin, sizeof(g_current_skin), "%s", args);
+        setenv("HERMES_SKIN", args, 1);
+        printf("Skin set to: %s\n", args);
         return;
     }
-    const char *skin_env = getenv("HERMES_SKIN");
-    printf("Current skin: %s\n", skin_env && skin_env[0] ? skin_env : "(default)");
+    const char *skin = g_current_skin[0] ? g_current_skin : getenv("HERMES_SKIN");
+    printf("Current skin: %s\n", skin && skin[0] ? skin : "(default)");
 }
 
 /* /personality: Set a predefined personality system message */
