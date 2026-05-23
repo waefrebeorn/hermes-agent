@@ -73,6 +73,11 @@ const char *json_get_str(const json_t *obj, const char *key, const char *def);
 double  json_get_num(const json_t *obj, const char *key, double def);
 bool    json_get_bool(const json_t *obj, const char *key, bool def);
 
+/* Check if key exists in object */
+static inline bool json_has(const json_t *obj, const char *key) {
+    return obj && obj->type == JSON_OBJECT && json_obj_get(obj, key) != NULL;
+}
+
 /* === Serialization === */
 char   *json_serialize(const json_t *node);
 char   *json_serialize_pretty(const json_t *node, int indent);

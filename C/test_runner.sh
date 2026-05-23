@@ -58,6 +58,20 @@ if gcc -O2 -Wall -Wextra \
 else skip "osv (compilation failed)"
 fi
 
+echo ""; echo "=== Transcription Library Tests (D83) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libtranscribe" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \
+    "$CDIR/tests/test_transcription.c" \
+    "$CDIR/lib/libtranscribe/transcribe.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_transcribe -lssl -lcrypto -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcription"
+    else fail "transcription (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_transcribe
+else skip "transcription (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
