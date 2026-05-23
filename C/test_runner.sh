@@ -191,6 +191,18 @@ if gcc -O2 -Wall -Wextra \
 else skip "schema_sanitizer (compilation failed)"
 fi
 
+echo ""; echo "=== Fuzzy Match Library Tests (fuzzy_match) ==="
+if gcc -O2 -Wall -Wextra \
+    -I"$CDIR/lib/libfuzzymatch" \
+    "$CDIR/tests/test_fuzzy_match.c" \
+    "$CDIR/lib/libfuzzymatch/fuzzy_match.c" \
+    -o /tmp/hermes_test_fuzzy_match -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_fuzzy_match > /dev/null 2>&1; then ok "fuzzy_match"
+    else fail "fuzzy_match (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_fuzzy_match
+else skip "fuzzy_match (compilation failed)"
+fi
+
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libwebsite" \
