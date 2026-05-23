@@ -8,12 +8,15 @@
 #include "hermes.h"
 #include "plugin.h"
 #include "acp/server.h"
+#include "hermes_mcp_serve.h"
 #include "hermes_secrets.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Forward declaration for startup initialization */
 extern void mcp_init_all(void);
+extern void tools_init_all(void);
 
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
@@ -93,6 +96,45 @@ int main(int argc, char **argv) {
             acp_server_run(srv);
             acp_server_free(srv);
         }
+        return 0;
+    }
+
+    if (argc > 1 && (strcmp(argv[1], "mcp-serve") == 0 || strcmp(argv[1], "mcp_serve") == 0)) {
+        /* MCP serve mode — expose Hermes tools as MCP HTTP server */
+        int port = 9100;
+        if (argc > 2) {
+            char *end = NULL;
+            long p = strtol(argv[2], &end, 10);
+            if (end && *end == '\0' && p > 0 && p < 65536)
+                port = (int)p;
+        }
+
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        hermes_secrets_init(&cfg);
+
+        tools_init_all();
+        mcp_init_all();
+        mcp_serve_set_port(port);
+
+        fprintf(stderr, "[mcp-serve] Starting MCP HTTP server on port %d...\n", port);
+        if (!mcp_serve_start()) {
+            fprintf(stderr, "[mcp-serve] Failed to start server\n");
+            return 1;
+        }
+
+        fprintf(stderr, "[mcp-serve] Server running. Press Ctrl+C to stop.\n");
+        fprintf(stderr, "[mcp-serve] Endpoint: POST http://localhost:%d/mcp\n", port);
+
+        /* Wait until interrupted */
+        while (mcp_serve_is_running()) {
+            sleep(1);
+        }
+
+        mcp_serve_stop();
+        fprintf(stderr, "[mcp-serve] Server stopped.\n");
         return 0;
     }
 
