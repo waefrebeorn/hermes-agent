@@ -50,13 +50,13 @@ static char *truncate_result(const char *input) {
         return strdup(input);
     }
 
-    char *result = (char *)malloc(MAX_RESULT_SIZE + 64);
+    char *result = (char *)malloc(MAX_RESULT_SIZE + 128);
     if (!result) return NULL;
 
     memcpy(result, input, MAX_RESULT_SIZE / 2);
-    snprintf(result + MAX_RESULT_SIZE / 2, 64,
-             "\n\n[... TRUNCATED: %zu bytes total, showing first %zu ...]\n",
-             len, MAX_RESULT_SIZE / 2);
+    snprintf(result + MAX_RESULT_SIZE / 2, 128,
+             "\n\n[... TRUNCATED: %zu bytes total, showing first %u ...]\n",
+             len, (unsigned int)(MAX_RESULT_SIZE / 2));
 
     return result;
 }
@@ -105,14 +105,22 @@ static char *redact_env_vars(const char *input) {
                                     strlen(val_end) + 1);
                             p = result + vstart_off + rlen;
                         } else {
-                            /* Just shift and replace */
+                            /* Replacement is longer — realloc to fit */
                             char temp[4096];
                             snprintf(temp, sizeof(temp), "%.*s%s%s",
                                      (int)(val_start - result), result,
                                      replacement, val_end);
                             size_t tlen = strlen(temp);
-                            if (tlen < len * 2) {
-                                strcpy(result, temp);
+                            if (tlen > len) {
+                                char *new_result = (char *)realloc(result, tlen + 64);
+                                if (!new_result) return result;
+                                /* Recalculate offset in new buffer */
+                                size_t old_start_off = (size_t)(val_start - result);
+                                result = new_result;
+                                memcpy(result, temp, tlen + 1);
+                                p = result + old_start_off + rlen;
+                            } else {
+                                memcpy(result, temp, tlen + 1);
                                 p = result + vstart_off + rlen;
                             }
                         }
