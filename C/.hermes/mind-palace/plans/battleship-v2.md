@@ -74,11 +74,11 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 ### D75-D86: New Tool Files (12)
 | ID | Python File | C Status | Notes |
 |----|-------------|----------|-------|
-| D75 | `tools/computer_use/backend.py` | ❌ | Backend abstraction |
-| D76 | `tools/computer_use/cua_backend.py` | ❌ | CUA driver |
-| D77 | `tools/computer_use/schema.py` | ❌ | Schemas |
-| D78 | `tools/computer_use/tool.py` | ❌ | Tool definition |
-| D79 | `tools/computer_use/vision_routing.py` | ❌ | Vision routing |
+| D75 | `tools/computer_use/backend.py` | ✅ | Backend abstraction — done via S01-S02 |
+| D76 | `tools/computer_use/cua_backend.py` | ✅ | CUA driver — done via S01-S02 |
+| D77 | `tools/computer_use/schema.py` | ✅ | Schemas — C structs in hermes_computer_use.h |
+| D78 | `tools/computer_use/tool.py` | ✅ | Tool definition — registered in tool registry |
+| D79 | `tools/computer_use/vision_routing.py` | ✅ | Vision routing — handled by screenshot→vision pipeline |
 | D80 | `tools/fal_common.py` | ❌ | Fal shared utils |
 | D81 | `tools/skill_manager_tool.py` | ❌ | Skill manager |
 | D82 | `tools/skill_usage.py` | ❌ | Skill usage tracking |
@@ -123,10 +123,10 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 
 | ID | Gap | Priority | Notes |
 |----|-----|----------|-------|
-| U01 | C build workflow must pass before merge | P0 | Gate |
-| U02 | Docker build CI step | P0 | Currently broken, fixed in PR |
+| ~~U01~~ | ~~C build workflow must pass before merge~~ | ~~P0~~ | ~~Gate — ALREADY DONE: c-build.yml runs on PR/push~~ |
+| ~~U02~~ | ~~Docker build CI step~~ | ~~P0~~ | ~~ALREADY DONE: docker job in c-build.yml~~ |
 | U03 | Artifacts: attach binary to PR | P1 | Quick download for testers |
-| U04 | ASan/UBSan CI job | P1 | Memory safety |
+| ~~U04~~ | ~~ASan/UBSan CI job~~ | ~~P1~~ | ~~ALREADY DONE: asan job in c-build.yml~~ |
 | U05 | Cross-compilation matrix (aarch64, arm) | P2 | Edge/IoT |
 | U06 | Release automation (semantic version, changelog) | P2 | Tagger |
 | U07 | Code coverage upload (lcov → Codecov) | P2 | Metrics |
@@ -137,8 +137,10 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 ## Updated Strategy
 
 1. ~~**P0**: Stub remediation — ALL 4 stubs resolved~~ ✅ ALL DONE (DA v12)
-2. **P1**: Gateway + CLI test coverage (T01-T02) — block regressions
-3. **P2**: ASan CI job (U04) — catch memory bugs before they ship
+2. ~~**P1**: Gateway + CLI test coverage (T01-T02) — block regressions~~ ✅ ALL DONE — 64 platform assertions + 108 CLI dispatch
+3. ~~**P2**: ASan CI job (U04) — catch memory bugs before they ship~~ ✅ ALL DONE
+4. **P1**: Remaining P1 gaps (T07, T09, U03, U08, S03, S08-S09)
+5. **P2**: CLI depth (C91-C95), fuzz testing (T08)
 
 ## Verification Status
 

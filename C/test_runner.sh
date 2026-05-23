@@ -1190,6 +1190,28 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else skip "plugin_system (compilation failed)"
 fi
 
+# Plugin sandbox loading tests (T07: NULL-safety, invalid input, security boundary)
+echo ""; echo "=== Plugin Sandbox Loading Tests (T07) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_plugin_sandbox.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_sandbox -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_sandbox > /dev/null 2>&1; then ok "plugin_sandbox (T07: 73 tests)"
+    else
+        echo "  Plugin sandbox test output:"
+        /tmp/hermes_test_plugin_sandbox 2>&1 | sed 's/^/    /'
+        fail "plugin_sandbox (T07: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_plugin_sandbox
+else
+    echo "  Plugin sandbox test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_plugin_sandbox.c" \
+        "$CDIR/lib/libplugin/plugin.c" \
+        -o /tmp/hermes_test_plugin_sandbox -ldl -lm 2>&1 | sed 's/^/    /'
+    skip "plugin_sandbox (T07: compilation failed)"
+fi
+
 # Rate limiter test (standalone — only needs rate_limit.c)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_rate_limit.c" \
