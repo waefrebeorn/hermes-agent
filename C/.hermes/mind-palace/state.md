@@ -10,7 +10,7 @@
     10|    10|    10|    10||| CLI | 79/95 | 83% | 79 commands registered |
     11|| Tools | 64/92 | 70% | +transcribe_audio tool |
     12|    12|    12|    12||| Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
-| MCP | 9/11 | 82% | +Streamable HTTP transport + connect_http_server |
+| MCP | 10/11 | 91% | +sampling/createMessage handler + YAML config |
     14|    14|    14|    14||| ACP | 9/9 | 100% | +permissions bridge (request_permission, permission_response) |
     15|    15|    15|    15||| Cron | 3/3 | 100% | Done |
     16|    16|    16|    16||| TUI | 5/8 | 63% | +session search filtering |
@@ -23,9 +23,10 @@
     23|    23|    23|    23||| Tests | 10/12 | 83% | T01-T09 + library tests |
     24|    24|    24|    24||| CI/CD | 10/10 | 100% | All U gaps closed |
     25|    25|    25|    25||| Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-| **Total** | **~317/500** | **~63%** | **~183 gaps remaining** |
+| **Total** | **~318/500** | **~64%** | **~182 gaps remaining** |
     27|    27|    27|    27|
     28|    28|    28|    28|## Session Log
+- **Session 48 (Jun 1):** Wired MCP sampling/createMessage handler. New `mcp_sampling_handler()` callback — receives MCP server sampling requests, parses JSON messages, calls `llm_chat_completion()`, returns LLM response. Added YAML config reading: `mcp_servers.<name>.sampling.{enabled, model, max_tokens_cap, timeout, max_rpm}`. Wired into all 3 transports (SSE, HTTP, stdio). MCP sector: 10/11 (91%). Parity: ~318/500 (~64%). Build: 0 errors. Commit `248014815`.
 - **Session 47 (Jun 1):** Added Streamable HTTP transport to libmcp (MCP_TRANSPORT_HTTP). New API `mcp_server_set_http(srv, url)` — connects to MCP servers via HTTP POST JSON-RPC to a single URL. Full connect/send/recv/disconnect lifecycle with auth headers, workspace roots, and tool discovery. New `connect_http_server()` in mcp_tool.c — wired into config.yaml loading. When a server has `url` but no `command`, defaults to HTTP transport. Explicit `transport: sse` preserves SSE behavior. MCP sector: 9/11 (82%). Parity: ~317/500 (~63%). Build: 0 errors. Commit `b19172342`.
 - **Session 46 (Jun 1):** Added dynamic MCP server name discovery from config.yaml. Replaced hardcoded `known_servers[8]` array with `yaml_map_keys()` — new libyaml API that retrieves key names from nested YAML maps. Any custom server name in `mcp_servers: {name: ...}` now works instead of only 8 hardcoded names. Added `yaml_map_keys()` to libyaml.h/c. Verified: custom server name "my-custom-server" discovered correctly. Build: 0 errors. MCP sector: 8/11 (73%). Parity: ~316/500 (~63%). Commit `b2d94148e`.
 - **Session 45 (Jun 1):** Added `hermes mcp-serve [port]` CLI subcommand to start MCP HTTP server. mcp_serve.c was compiled but unreachable — `mcp_serve_start()` was never callable. Now `hermes mcp-serve 9104` starts an HTTP server on the given port that serves all 78 Hermes tools over the MCP JSON-RPC protocol. Verified: health endpoint returns OK, initialize returns capabilities, tools/list returns 78 tools. Build: 0 errors. Commit `069b3f9e4`.

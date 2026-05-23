@@ -1,6 +1,6 @@
 /*
  * test_fal_common.c — Tests for libfal_common (FAL shared utilities).
- * Tests: URL normalization, HTTP status extraction, managed client.
+ * Tests: API key resolution, JSON escaping, error response builders.
  */
 
 #include "fal_common.h"
@@ -24,148 +24,148 @@ static int failed = 0;
 } while(0)
 
 /* ================================================================
- *  URL normalizer tests
+ *  fal_get_api_key tests
  * ================================================================ */
 
-static void test_url_normalize_basic(void)
+static void test_api_key_missing(void)
 {
-    char *r = fal_queue_url_normalize("https://queue.fal.run");
-    TEST("basic url not null", r != NULL);
-    if (r) {
-        TEST("basic url has trailing slash", strcmp(r, "https://queue.fal.run/") == 0);
-        free(r);
+    /* Unset both env vars */
+    unsetenv("FAL_API_KEY");
+    unsetenv("SLERMES_FAL_KEY");
+    const char *key = fal_get_api_key();
+    TEST("returns NULL when no env vars set", key == NULL);
+}
+
+static void test_api_key_fal_key(void)
+{
+    unsetenv("SLERMES_FAL_KEY");
+    setenv("FAL_API_KEY", "test-fal-key-123", 1);
+    const char *key = fal_get_api_key();
+    TEST("returns FAL_API_KEY when set", key != NULL);
+    if (key) {
+        TEST("FAL_API_KEY value correct", strcmp(key, "test-fal-key-123") == 0);
     }
 }
 
-static void test_url_normalize_trailing_slash(void)
+static void test_api_key_slermes_key(void)
 {
-    char *r = fal_queue_url_normalize("https://queue.fal.run/");
-    TEST("trailing slash url not null", r != NULL);
-    if (r) {
-        TEST("trailing slash deduped", strcmp(r, "https://queue.fal.run/") == 0);
-        free(r);
+    setenv("SLERMES_FAL_KEY", "test-slermes-key-456", 1);
+    unsetenv("FAL_API_KEY");
+    const char *key = fal_get_api_key();
+    TEST("returns SLERMES_FAL_KEY when set", key != NULL);
+    if (key) {
+        TEST("SLERMES_FAL_KEY value correct", strcmp(key, "test-slermes-key-456") == 0);
     }
 }
 
-static void test_url_normalize_whitespace(void)
+static void test_api_key_priority(void)
 {
-    char *r = fal_queue_url_normalize("  https://queue.fal.run  ");
-    TEST("whitespace url not null", r != NULL);
-    if (r) {
-        TEST("whitespace trimmed", strcmp(r, "https://queue.fal.run/") == 0);
-        free(r);
-    }
-}
-
-static void test_url_normalize_null(void)
-{
-    char *r = fal_queue_url_normalize(NULL);
-    TEST("null url returns NULL", r == NULL);
-}
-
-static void test_url_normalize_empty(void)
-{
-    char *r = fal_queue_url_normalize("");
-    TEST("empty url returns NULL", r == NULL);
-}
-
-/* ================================================================
- *  HTTP status extraction tests
- * ================================================================ */
-
-static void test_extract_http_status_basic(void)
-{
-    int s = fal_extract_http_status("HTTP 401: Unauthorized");
-    TEST("http 401", s == 401);
-}
-
-static void test_extract_http_status_429(void)
-{
-    int s = fal_extract_http_status("HTTP 429: Too Many Requests");
-    TEST("http 429", s == 429);
-}
-
-static void test_extract_http_status_json_status_code(void)
-{
-    int s = fal_extract_http_status("{\"error\": {\"status_code\": 503}}");
-    TEST("json status_code 503", s == 503);
-}
-
-static void test_extract_http_status_json_status(void)
-{
-    int s = fal_extract_http_status("{\"status\": 429}");
-    TEST("json status 429", s == 429);
-}
-
-static void test_extract_http_status_no_match(void)
-{
-    int s = fal_extract_http_status("Connection refused");
-    TEST("no match returns 0", s == 0);
-}
-
-static void test_extract_http_status_null(void)
-{
-    int s = fal_extract_http_status(NULL);
-    TEST("null returns 0", s == 0);
-}
-
-static void test_extract_http_status_empty(void)
-{
-    int s = fal_extract_http_status("");
-    TEST("empty returns 0", s == 0);
-}
-
-/* ================================================================
- *  Managed client tests (no-network)
- * ================================================================ */
-
-static void test_submit_request_null_args(void)
-{
-    fal_request_handle_t *h = fal_submit_request(NULL, NULL, NULL, NULL, NULL, 0);
-    TEST("submit null args not null", h != NULL);
-    if (h) {
-        TEST("submit null args not success", !h->success);
-        TEST("submit null args has error", strlen(h->error) > 0);
-        fal_handle_free(h);
-    }
-}
-
-static void test_submit_request_empty_args(void)
-{
-    fal_request_handle_t *h = fal_submit_request("", "", "", "{}", "", 10);
-    TEST("submit empty args not null", h != NULL);
-    if (h) {
-        TEST("submit empty args not success", !h->success);
-        fal_handle_free(h);
-    }
-}
-
-static void test_submit_request_missing_api_key(void)
-{
-    fal_request_handle_t *h = fal_submit_request(NULL, "https://queue.fal.run",
-                                                   "fal-ai/flux", "{\"key\":\"val\"}", "", 10);
-    TEST("submit missing key not null", h != NULL);
-    if (h) {
-        TEST("submit missing key not success", !h->success);
-        fal_handle_free(h);
+    /* Both set — FAL_API_KEY should win */
+    setenv("FAL_API_KEY", "primary-key", 1);
+    setenv("SLERMES_FAL_KEY", "fallback-key", 1);
+    const char *key = fal_get_api_key();
+    TEST("FAL_API_KEY takes priority", key != NULL);
+    if (key) {
+        TEST("priority value correct", strcmp(key, "primary-key") == 0);
     }
 }
 
 /* ================================================================
- *  Client field access test (struct layout)
+ *  fal_escape_json tests
  * ================================================================ */
 
-static void test_handle_struct(void)
+static void test_escape_json_empty(void)
 {
-    fal_request_handle_t h;
-    memset(&h, 0, sizeof(h));
-    TEST("handle request_id array size", sizeof(h.request_id) >= 64);
-    TEST("handle response_url array size", sizeof(h.response_url) >= 128);
-    TEST("handle status_url array size", sizeof(h.status_url) >= 128);
-    TEST("handle cancel_url array size", sizeof(h.cancel_url) >= 128);
-    TEST("handle error array size", sizeof(h.error) >= 128);
-    TEST("handle has success field", sizeof(h.success) == 1 || sizeof(h.success) == sizeof(bool));
-    TEST("handle has http_status field", sizeof(h.http_status) == sizeof(int));
+    char out[64];
+    size_t n = fal_escape_json("", out, sizeof(out));
+    TEST("empty input returns 0", n == 0);
+    TEST("empty output is empty string", out[0] == '\0');
+}
+
+static void test_escape_json_plain(void)
+{
+    char out[64];
+    size_t n = fal_escape_json("hello", out, sizeof(out));
+    TEST("plain text length correct", n == 5);
+    TEST("plain text unchanged", strcmp(out, "hello") == 0);
+}
+
+static void test_escape_json_quotes(void)
+{
+    char out[64];
+    size_t n = fal_escape_json("say \"hi\"", out, sizeof(out));
+    TEST("quote escaping length correct", n == 10);
+    TEST("quote escaping correct", strcmp(out, "say \\\"hi\\\"") == 0);
+}
+
+static void test_escape_json_backslash(void)
+{
+    char out[64];
+    size_t n = fal_escape_json("a\\b", out, sizeof(out));
+    TEST("backslash escaping correct", n == 4);
+    TEST("backslash escaped", strcmp(out, "a\\\\b") == 0);
+}
+
+static void test_escape_json_newline(void)
+{
+    char out[64];
+    size_t n = fal_escape_json("line1\nline2", out, sizeof(out));
+    TEST("newline escaping correct", n == 12);
+    TEST("newline as \\n", strcmp(out, "line1\\nline2") == 0);
+}
+
+static void test_escape_json_tab(void)
+{
+    char out[64];
+    size_t n = fal_escape_json("a\tb", out, sizeof(out));
+    TEST("tab escaping correct", n == 4);
+    TEST("tab as \\t", strcmp(out, "a\\tb") == 0);
+}
+
+static void test_escape_json_null_input(void)
+{
+    char out[64];
+    size_t n = fal_escape_json(NULL, out, sizeof(out));
+    TEST("null input returns 0", n == 0);
+}
+
+static void test_escape_json_null_output(void)
+{
+    size_t n = fal_escape_json("test", NULL, 10);
+    TEST("null output returns 0", n == 0);
+}
+
+static void test_escape_json_truncation(void)
+{
+    char out[8];
+    size_t n = fal_escape_json("abcdefghijklmnop", out, sizeof(out));
+    TEST("truncation length <= max-1", n <= 7);
+}
+
+/* ================================================================
+ *  fal_error_response tests
+ * ================================================================ */
+
+static void test_error_response_simple(void)
+{
+    char *err = fal_error_response("something went wrong");
+    TEST("error response not null", err != NULL);
+    if (err) {
+        TEST("error response contains error key", strstr(err, "\"error\"") != NULL);
+        TEST("error response contains message", strstr(err, "something went wrong") != NULL);
+        TEST("error response has success false", strstr(err, "\"success\":false") != NULL);
+        free(err);
+    }
+}
+
+static void test_error_response_format(void)
+{
+    char *err = fal_error_response("HTTP %d: %s", 500, "Internal Server Error");
+    TEST("formatted error not null", err != NULL);
+    if (err) {
+        TEST("formatted error contains values", strstr(err, "HTTP 500") != NULL);
+        free(err);
+    }
 }
 
 /* ================================================================
@@ -176,23 +176,27 @@ int main(void)
 {
     printf("=== FAL Common Library Tests ===\n");
 
-    test_url_normalize_basic();
-    test_url_normalize_trailing_slash();
-    test_url_normalize_whitespace();
-    test_url_normalize_null();
-    test_url_normalize_empty();
-    test_extract_http_status_basic();
-    test_extract_http_status_429();
-    test_extract_http_status_json_status_code();
-    test_extract_http_status_json_status();
-    test_extract_http_status_no_match();
-    test_extract_http_status_null();
-    test_extract_http_status_empty();
-    test_submit_request_null_args();
-    test_submit_request_empty_args();
-    test_submit_request_missing_api_key();
-    test_handle_struct();
+    /* API key tests */
+    test_api_key_missing();
+    test_api_key_fal_key();
+    test_api_key_slermes_key();
+    test_api_key_priority();
 
-    printf("\nResults: %d passed, %d failed, %d total\n", passed, failed, tests);
+    /* JSON escaping tests */
+    test_escape_json_empty();
+    test_escape_json_plain();
+    test_escape_json_quotes();
+    test_escape_json_backslash();
+    test_escape_json_newline();
+    test_escape_json_tab();
+    test_escape_json_null_input();
+    test_escape_json_null_output();
+    test_escape_json_truncation();
+
+    /* Error response tests */
+    test_error_response_simple();
+    test_error_response_format();
+
+    printf("Tests: %d  Passed: %d  Failed: %d\n", tests, passed, failed);
     return failed > 0 ? 1 : 0;
 }

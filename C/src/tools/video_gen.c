@@ -1,7 +1,7 @@
 /*
  * video_gen.c — Video generation tool for Hermes C.
  * Uses FAL.ai REST API for text-to-video, image-to-video, and video editing.
- * Reads FAL_API_KEY from config/env (shared with image_gen).
+ * Reads FAL_API_KEY from config/env via libfalcommon (shared with image_gen).
  *
  * Mirrors Python tools/video_generation_tool.py with a single unified
  * tool that dispatches to FAL.ai video endpoints.
@@ -10,6 +10,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include "fal_common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,13 +36,10 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
     if (!args)
         return strdup("{\"success\":false,\"error\":\"Invalid JSON arguments\"}");
 
-    /* Get API key (shared with image_gen) */
-    const char *api_key = getenv("FAL_API_KEY");
-    if (!api_key || !*api_key)
-        api_key = getenv("SLERMES_FAL_KEY");
-    if (!api_key || !*api_key) {
+    /* Get API key from shared helper */
+    if (!fal_get_api_key()) {
         json_free(args);
-        return strdup("{\"success\":false,\"error\":\"FAL_API_KEY not set. Get a key at https://fal.ai\"}");
+        return fal_error_response("%s", "FAL_API_KEY not set. Get a key at https://fal.ai");
     }
 
     /* Extract params */
@@ -59,7 +57,7 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
     /* Prompt is required for generate */
     if (strcmp(operation, "generate") == 0 && (!prompt || !*prompt)) {
         json_free(args);
-        return strdup("{\"success\":false,\"error\":\"Missing 'prompt' for generate operation\"}");
+        return fal_error_response("Missing 'prompt' for generate operation");
     }
 
     /* Determine API endpoint */
@@ -77,17 +75,13 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
     n = snprintf(body + pos, rem, "{\"prompt\":\"");
     if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
 
-    /* Escape prompt string */
-    for (const char *sp = prompt; *sp && rem > 4; sp++) {
-        if (*sp == '"' || *sp == '\\') {
-            body[pos++] = '\\'; body[pos++] = *sp; rem -= 2;
-        } else if (*sp == '\n') {
-            body[pos++] = '\\'; body[pos++] = 'n'; rem -= 2;
-        } else {
-            body[pos++] = *sp; rem--;
-        }
+    /* Use shared JSON escape helper */
+    {
+        char esc_prompt[4096];
+        fal_escape_json(prompt, esc_prompt, sizeof(esc_prompt));
+        n = snprintf(body + pos, rem, "%s", esc_prompt);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
     }
-    body[pos] = '\0';
 
     n = snprintf(body + pos, rem, "\",\"aspect_ratio\":\"%s\"", aspect_ratio);
     if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
@@ -132,40 +126,25 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
     n = snprintf(body + pos, rem, "}");
     if (n >= 0 && (size_t)n < rem) { pos += n; }
 
-    /* Create HTTP client and make POST request */
-    http_t *h = http_new(120);  /* Video gen can take 60-120s */
-    if (!h) {
-        json_free(args);
-        return strdup("{\"success\":false,\"error\":\"Failed to create HTTP client\"}");
-    }
-
-    char auth_hdr[256];
-    snprintf(auth_hdr, sizeof(auth_hdr), "Authorization: Key %s\r\n", api_key);
-
-    http_resp_t *resp = http_post_json_auth(h, api_url, body, auth_hdr);
+    /* Use shared FAL POST helper with 120s timeout (video gen is slow) */
+    http_resp_t *resp = fal_post_json(api_url, body, 120);
 
     if (!resp) {
-        http_free(h);
         json_free(args);
         return strdup("{\"success\":false,\"error\":\"Failed to connect to FAL API\"}");
     }
 
     if (resp->status != 200) {
-        char err[1536];
-        snprintf(err, sizeof(err),
-            "{\"success\":false,\"error\":\"FAL video API returned HTTP %d: %s\"}",
-            resp->status, resp->body ? resp->body : "unknown");
+        char *err = fal_error_from_http(resp);
         http_resp_free(resp);
-        http_free(h);
         json_free(args);
-        return strdup(err);
+        return err;
     }
 
     /* Parse response */
     char *parse_err = NULL;
     json_t *result = json_parse(resp->body, &parse_err);
     http_resp_free(resp);
-    http_free(h);
 
     if (!result) {
         char err[1024];

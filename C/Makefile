@@ -93,35 +93,6 @@ lib/libbinary.a: lib/libbinary/binary.o
 lib/libosv.a: lib/libosv/osv.o
 	$(AR) rcs $@ $^
 
-	$(AR) rcs $@ $^
-	$(AR) rcs $@ $^
-lib/libenvpassthrough.a: lib/libenvpassthrough/env_passthrough.o
-
-lib/libxai_http.a: lib/libxai_http/xai_http.o
-
-lib/libcredential.a: lib/libcredential/credential.o
-	$(AR) rcs $@ $^
-
-lib/libschemasanitizer.a: lib/libschemasanitizer/schema_sanitizer.o
-	$(AR) rcs $@ $^
-
-lib/libfuzzymatch.a: lib/libfuzzymatch/fuzzy_match.o
-	$(AR) rcs $@ $^
-
-lib/libinterrupt.a: lib/libinterrupt/interrupt.o
-	$(AR) rcs $@ $^
-
-lib/libtoolbackend.a: lib/libtoolbackend/tool_backend.o
-	$(AR) rcs $@ $^
-
-lib/libratelimit.a: lib/libratelimit/rate_limit.o
-	$(AR) rcs $@ $^
-
-lib/libmangateway.a: lib/libmangateway/managed_gateway.o
-	$(AR) rcs $@ $^
-
-lib/libfilestate.a: lib/libfilestate/file_state.o
-	$(AR) rcs $@ $^
 
 lib/libbrowser.a: lib/libbrowser/camofox_state.o
 	$(AR) rcs $@ $^
@@ -256,6 +227,84 @@ lib/libjson5/json5.o: lib/libjson5/json5.c lib/libjson5/json5.h lib/libjson/json
 	$(CC) $(CFLAGS) -I lib/libjson -c $< -o $@
 
 lib/libjson5.a: lib/libjson5/json5.o
+	$(AR) rcs $@ $^
+
+lib/libfal_common/fal_common.o: lib/libfal_common/fal_common.c lib/libfal_common/fal_common.h lib/libjson/json.h lib/libhttp/http.h
+	$(CC) $(CFLAGS) -I lib/libjson -I lib/libhttp -c $< -o $@
+
+lib/libfal_common.a: lib/libfal_common/fal_common.o
+	$(AR) rcs $@ $^
+
+lib/libtooloutput/tool_output.o: lib/libtooloutput/tool_output.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libtooloutput.a: lib/libtooloutput/tool_output.o
+	$(AR) rcs $@ $^
+
+lib/libxai_http/xai_http.o: lib/libxai_http/xai_http.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libxai_http.a: lib/libxai_http/xai_http.o
+	$(AR) rcs $@ $^
+
+lib/libenvpassthrough/env_passthrough.o: lib/libenvpassthrough/env_passthrough.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libenvpassthrough.a: lib/libenvpassthrough/env_passthrough.o
+	$(AR) rcs $@ $^
+
+lib/libcredential/credential.o: lib/libcredential/credential.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libcredential.a: lib/libcredential/credential.o
+	$(AR) rcs $@ $^
+
+lib/libschemasanitizer/schema_sanitizer.o: lib/libschemasanitizer/schema_sanitizer.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libschemasanitizer.a: lib/libschemasanitizer/schema_sanitizer.o
+	$(AR) rcs $@ $^
+
+lib/libfuzzymatch/fuzzy_match.o: lib/libfuzzymatch/fuzzy_match.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libfuzzymatch.a: lib/libfuzzymatch/fuzzy_match.o
+	$(AR) rcs $@ $^
+
+lib/libinterrupt/interrupt.o: lib/libinterrupt/interrupt.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libinterrupt.a: lib/libinterrupt/interrupt.o
+	$(AR) rcs $@ $^
+
+lib/libtoolbackend/tool_backend.o: lib/libtoolbackend/tool_backend.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libtoolbackend.a: lib/libtoolbackend/tool_backend.o
+	$(AR) rcs $@ $^
+
+lib/libmangateway/managed_gateway.o: lib/libmangateway/managed_gateway.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libmangateway.a: lib/libmangateway/managed_gateway.o
+	$(AR) rcs $@ $^
+
+lib/libratelimit/rate_limit.o: lib/libratelimit/rate_limit.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libratelimit.a: lib/libratelimit/rate_limit.o
+	$(AR) rcs $@ $^
+
+lib/libfilestate/file_state.o: lib/libfilestate/file_state.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libfilestate.a: lib/libfilestate/file_state.o
+	$(AR) rcs $@ $^
+
+lib/libtooldispatch/tool_dispatch_helpers.o: lib/libtooldispatch/tool_dispatch_helpers.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib/libtooldispatch.a: lib/libtooldispatch/tool_dispatch_helpers.o
 	$(AR) rcs $@ $^
 
 # Build all standalone libs

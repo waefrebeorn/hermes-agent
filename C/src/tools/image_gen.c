@@ -1,12 +1,13 @@
 /*
  * image_gen.c — Image generation tool for Hermes C.
  * Uses FAL.ai REST API: POST to fal-ai/flux-pro with prompt.
- * Reads FAL_API_KEY from config/env.
+ * Reads FAL_API_KEY from config/env via libfalcommon.
  */
 
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include "fal_common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,11 +28,8 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     const char *prompt = json_get_str(args, "prompt", "");
     const char *aspect_ratio = json_get_str(args, "aspect_ratio", "1:1");
 
-    /* Get API key from environment */
-    const char *api_key = getenv("FAL_API_KEY");
-    if (!api_key || !*api_key)
-        api_key = getenv("SLERMES_FAL_KEY");
-    if (!api_key || !*api_key) {
+    /* Get API key from shared helper (checks FAL_API_KEY, then SLERMES_FAL_KEY) */
+    if (!fal_get_api_key()) {
         json_free(args);
         return strdup("{\"success\":false,\"error\":\"FAL_API_KEY not set. Get a key at https://fal.ai\"}");
     }
@@ -43,14 +41,7 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
 
     /* Escape prompt for JSON */
     char esc_prompt[4096];
-    size_t ei = 0;
-    for (const char *sp = prompt; *sp && ei < sizeof(esc_prompt) - 4; sp++) {
-        if (*sp == '"' || *sp == '\\') { esc_prompt[ei++] = '\\'; esc_prompt[ei++] = *sp; }
-        else if (*sp == '\n') { esc_prompt[ei++] = '\\'; esc_prompt[ei++] = 'n'; }
-        else if (*sp == '\t') { esc_prompt[ei++] = '\\'; esc_prompt[ei++] = 't'; }
-        else esc_prompt[ei++] = *sp;
-    }
-    esc_prompt[ei] = '\0';
+    fal_escape_json(prompt, esc_prompt, sizeof(esc_prompt));
 
     /* Build request body */
     char body[8192];
@@ -58,40 +49,25 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
         "{\"prompt\":\"%s\",\"aspect_ratio\":\"%s\"}",
         esc_prompt, aspect_ratio);
 
-    /* Create HTTP client and make POST request */
-    http_t *h = http_new(60);
-    if (!h) {
-        json_free(args);
-        return strdup("{\"success\":false,\"error\":\"Failed to create HTTP client\"}");
-    }
-
-    char auth_hdr[256];
-    snprintf(auth_hdr, sizeof(auth_hdr), "Authorization: Key %s\r\n", api_key);
-
-    http_resp_t *resp = http_post_json_auth(h, FAL_API_BASE, body, auth_hdr);
+    /* Use shared FAL POST helper */
+    http_resp_t *resp = fal_post_json(FAL_API_BASE, body, 60);
 
     if (!resp) {
-        http_free(h);
         json_free(args);
         return strdup("{\"success\":false,\"error\":\"Failed to connect to FAL API\"}");
     }
 
     if (resp->status != 200) {
-        char err[1024];
-        snprintf(err, sizeof(err),
-            "{\"success\":false,\"error\":\"FAL API returned HTTP %d: %s\"}",
-            resp->status, resp->body ? resp->body : "unknown");
+        char *err = fal_error_from_http(resp);
         http_resp_free(resp);
-        http_free(h);
         json_free(args);
-        return strdup(err);
+        return err;
     }
 
     /* Parse response */
     char *parse_err = NULL;
     json_t *result = json_parse(resp->body, &parse_err);
     http_resp_free(resp);
-    http_free(h);
 
     if (!result) {
         char err[1024];
