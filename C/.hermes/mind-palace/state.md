@@ -14,9 +14,9 @@
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
 | **CLI** | 33 | 87% | Spinner implemented. Skin engine active. 74 commands |
-||| **Libs** | 8 | **70%** | libpath + libdatetime + libcsv + libhash + libuuid + libbase64 + libhtml + libtextwrap + libglob + libsignal + libenum + libdifflib + libregex (J04-J16) |
+||| **Libs** | 5 | **85%** | libpath + libdatetime + libcsv + libhash + libuuid + libbase64 + libhtml + libtextwrap + libglob + libsignal + libenum + libdifflib + libregex + libjson5 + libwebsocket + libtoml + libansi (J04-J22, 30 archives) |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 34 | **66%** | **103 files, ~3,000+ assertions** (140/0/0 suite) |
+|| **Tests** | 34 | **66%** | **81 files, ~3,000+ assertions** (146/0/0 suite) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 | **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
@@ -49,8 +49,24 @@
 |- ✅ **Makefile** — libansi.a added to LIB_A/LIB_INCS/LIB_OBJ + build rules
 |- ✅ **test_runner.sh** — ansi test registered
 |- ◀ **Suite: 143/0/0 → 144/0/0** (+1)
-|- ◀ **Libs: 77% → 82%** (29 archives, J04-J19+J22 done)
+| ◀ **Libs: 77% → 82%** (29 archives, J04-J19+J22 done)
 |- ◀ 1 commit: `feat(lib): add J22 libansi — ANSI terminal codes library`
+
+### Session 2026-06-01 — J20: libjson5 — JSON5 preprocessor parser
+- ✅ **lib/libjson5/json5.{h,c}** — Preprocesses JSON5 into standard JSON, then delegates to json_parse(). Supports: // and block comments, trailing commas, single-quoted strings, unquoted object keys, 0x/0o/0b numbers, leading/trailing decimals (.5, 1.), explicit + sign
+- ✅ **60 tests** — standard JSON passthrough, single/multi-line comments (preserved in strings), trailing commas in objects/arrays/nested, single-quoted keys+values+escapes, unquoted keys ($/_/nested), hex/octal/bin numbers (upper+lower prefixes), leading/trailing decimals, + prefix, mixed features, error paths, edge cases (empty/whitespace/NULL)
+- ✅ **Makefile** — libjson5.a in LIB_DIRS/LIB_INCS/LIB_OBJ/LIB_A, explicit build rule with libjson include dep
+- ✅ **test_runner.sh** — json5 test registered
+- ◀ **Suite: 145/0/0 → 146/0/0** (+1)
+- ◀ **Libs: 82% → 85%** (30 archives, J04-J22+J20 done)
+- ◀ 1 commit: `feat(lib): add J20 libjson5 - JSON5 parser`
+
+### Session 2026-05-29 — x_search auth header bugfix + test
+|- ✅ **Bugfix: x_search.c auth header broken** — `"Authorization: Bearer ***"` used literal `***` instead of `%s` format specifier. API key was silently ignored. Fixed to `"Authorization: Bearer %s"` with api_key argument.
+|- ✅ **test_x_search.c** — 4 tests: missing API key, NULL args, bad JSON, missing query (non-HTTP error paths)
+|- ✅ **test_runner.sh** — x_search test added with bash array for all include dirs
+|- ◀ **Suite: 144/0/0 → 145/0/0** (+1)
+|- ◀ 1 commit: `fix(tool): x_search auth header bug + add error-path tests`
 |### Session 2026-05-29 — libprotobuf .a target in Makefile
 |- ✅ **libprotobuf.a** — Added to LIB_A list (source + test existed, missing standalone .a archive)
 |- ✅ **Makefile** — Build rules for protobuf.o + protobuf.a
