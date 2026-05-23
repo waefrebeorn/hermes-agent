@@ -180,6 +180,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "cron_sqlite (compilation failed)"
 fi
+# cron extras test (retry, chain, template — P172-P175; needs json + libplugin includes)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cron_extras.c" \
+    "$CDIR/src/cron/cron_extras.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cron_extras -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron_extras > /dev/null 2>&1; then ok "cron_extras"
+    else fail "cron_extras (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cron_extras
+else
+    skip "cron_extras (compilation failed)"
+fi
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \

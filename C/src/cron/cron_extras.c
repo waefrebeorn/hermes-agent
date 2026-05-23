@@ -65,6 +65,7 @@ int cron_job_get_max_retries(const char *job_name) {
 
 /* Increment retry counter. Returns true if should retry, false if exhausted. */
 bool cron_job_increment_retry(const char *job_name) {
+    if (!job_name) return false;
     for (int i = 0; i < g_retry_count; i++) {
         if (strcmp(g_retry_state[i].job_name, job_name) == 0) {
             g_retry_state[i].current_retry++;
@@ -82,6 +83,7 @@ bool cron_job_increment_retry(const char *job_name) {
 }
 
 void cron_job_reset_retry(const char *job_name) {
+    if (!job_name) return;
     for (int i = 0; i < g_retry_count; i++) {
         if (strcmp(g_retry_state[i].job_name, job_name) == 0) {
             g_retry_state[i].current_retry = 0;
@@ -292,10 +294,10 @@ bool cron_template_instantiate(const char *template_name,
             snprintf(cmd, sizeof(cmd), "%s", t->command);
 
             /* Simple placeholder replacement */
-            size_t len = json_len(params);
+            size_t len = params->c.count;
             for (size_t i = 0; i < len; i++) {
                 const char *key = params->c.keys ? params->c.keys[i] : NULL;
-                json_t *val = json_get(params, i);
+                json_t *val = params->c.items[i];
                 if (key && val && val->type == JSON_STRING) {
                     /* Build {{key}} placeholder */
                     char placeholder[128];
@@ -305,7 +307,7 @@ bool cron_template_instantiate(const char *template_name,
                     char temp[4096];
                     char *pos = strstr(cmd, placeholder);
                     while (pos) {
-                        const char *replacement = json_get_str(val, NULL, "");
+                        const char *replacement = val->str_val ? val->str_val : "";
                         size_t pre_len = (size_t)(pos - cmd);
                         size_t rep_len = strlen(replacement);
                         size_t rest = strlen(pos + strlen(placeholder)) + 1;
