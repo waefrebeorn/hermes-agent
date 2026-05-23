@@ -314,6 +314,103 @@ static json_node_t *handle_resume_session(const char *id, json_node_t *params, a
     return acp_make_response(id, result);
 }
 
+/* --- Session: delete --- */
+
+static json_node_t *handle_delete_session(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
+    if (!session_id)
+        return acp_make_error(id, -32602, "Missing session_id", NULL);
+
+    acp_session_t *sess = find_session(srv, session_id);
+    if (!sess)
+        return acp_make_error(id, -32000, "Session not found", NULL);
+
+    agent_free(&sess->agent);
+    memset(sess, 0, sizeof(acp_session_t));
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "ok", json_new_bool(true));
+    return acp_make_response(id, result);
+}
+
+/* --- Tools: list (first-class ACP protocol method) --- */
+
+static json_node_t *handle_tools_list(const char *id, json_node_t *params, acp_server_t *srv) {
+    (void)params;
+    (void)srv;
+
+    json_node_t *result = json_new_object();
+    json_node_t *tools_arr = json_new_array();
+
+    tool_registry_t *reg = registry_get();
+    if (reg) {
+        for (size_t i = 0; i < reg->count; i++) {
+            json_node_t *t = json_new_object();
+            json_object_set(t, "name", json_new_string(reg->tools[i].name));
+            json_object_set(t, "description", json_new_string(reg->tools[i].description));
+            if (reg->tools[i].schema_json[0])
+                json_object_set(t, "schema", json_new_string(reg->tools[i].schema_json));
+            json_object_set(t, "available", json_new_bool(reg->tools[i].available));
+            if (reg->tools[i].toolset[0])
+                json_object_set(t, "toolset", json_new_string(reg->tools[i].toolset));
+            json_array_append(tools_arr, t);
+        }
+    }
+    json_object_set(result, "tools", tools_arr);
+    return acp_make_response(id, result);
+}
+
+/* --- Tools: call (invoke tool handler directly) --- */
+
+static json_node_t *handle_tools_call(const char *id, json_node_t *params, acp_server_t *srv) {
+    (void)srv;
+    const char *tool_name = json_object_get_string(params, "name", NULL);
+    json_node_t *args_node = json_object_get(params, "args");
+
+    if (!tool_name)
+        return acp_make_error(id, -32602, "Missing tool name", NULL);
+
+    tool_t *tool = registry_find(tool_name);
+    if (!tool)
+        return acp_make_error(id, -32602, "Tool not found", NULL);
+    if (!tool->handler)
+        return acp_make_error(id, -32000, "Tool has no handler", NULL);
+
+    const char *task_id = json_object_get_string(params, "task_id", NULL);
+
+    /* Serialize args to JSON string for tool handler */
+    char *args_json = NULL;
+    if (args_node) {
+        args_json = json_serialize(args_node);
+    } else {
+        args_json = strdup("{}");
+    }
+    if (!args_json)
+        return acp_make_error(id, -32000, "Failed to serialize args", NULL);
+
+    /* Invoke tool handler */
+    char *handler_result = tool->handler(args_json, task_id);
+    free(args_json);
+
+    json_node_t *result = json_new_object();
+    if (handler_result) {
+        /* Try to parse result as JSON for structured response */
+        char *parse_err = NULL;
+        json_node_t *parsed = json_parse(handler_result, &parse_err);
+        if (parsed && !parse_err) {
+            json_object_set(result, "result", json_copy(parsed));
+            json_free(parsed);
+        } else {
+            json_object_set(result, "result", json_new_string(handler_result));
+        }
+        free(parse_err);
+        free(handler_result);
+    } else {
+        json_object_set(result, "result", json_new_null());
+    }
+    return acp_make_response(id, result);
+}
+
 /* --- Session: fork --- */
 
 static json_node_t *handle_fork_session(const char *id, json_node_t *params, acp_server_t *srv) {
@@ -615,6 +712,12 @@ static json_node_t *dispatch_request(const char *method, const char *id,
         return handle_user_message(id, params, srv);
     if (strcmp(method, "authenticate") == 0)
         return handle_authenticate(id, params, srv);
+    if (strcmp(method, "tools/list") == 0)
+        return handle_tools_list(id, params, srv);
+    if (strcmp(method, "tools/call") == 0)
+        return handle_tools_call(id, params, srv);
+    if (strcmp(method, "session/delete") == 0)
+        return handle_delete_session(id, params, srv);
 
     return acp_make_error(id, -32601, "Method not found", NULL);
 }
