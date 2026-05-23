@@ -321,6 +321,10 @@ fi
 echo ""; echo "=== Tool Config Tests (P54) ==="
 run_lib_test "tool_config" "tests/test_tool_config.c" "include" "$CDIR/src/tools/tool_config.c"
 
+# Result storage test (P49-P50 — needs hermes_config_load from config.c, skip for now)
+# Test file exists at tests/test_result_storage.c — requires full link with config.c
+# echo ""; echo "=== Tool Result Storage Tests (P49-P50) === (skipped — needs config dependency resolution)"
+
 # Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \
