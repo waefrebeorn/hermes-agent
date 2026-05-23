@@ -187,6 +187,20 @@ static const char *json_extract_str(const char *json, const char *key,
 
 /* Call FAL.ai API via curl subprocess.
  * Returns malloc'd response body, or NULL on error. */
+/* ================================================================
+ *  Testing support — mock replaces fal_api_call in tests
+ * ================================================================ */
+#ifdef TEST_MODE
+/* Mock FAL API call — returns canned success without network */
+static char *fal_api_call(const char *json_body) {
+    (void)json_body;  /* unused in mock */
+    return strdup("{\"images\":[{\"url\":\"https://fal.ai/media/test.png\"}]}\n200");
+}
+#else
+/* ================================================================
+ *  Real FAL API call via curl
+ * ================================================================ */
+
 static char *fal_api_call(const char *json_body) {
     /* Build temp file path for response */
     char resp_path[256];
@@ -269,6 +283,7 @@ static char *fal_api_call(const char *json_body) {
 
     return resp_body;
 }
+#endif /* TEST_MODE */
 
 /* ================================================================
  *  Interface implementation

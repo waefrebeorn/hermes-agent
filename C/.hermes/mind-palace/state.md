@@ -20,8 +20,8 @@
 | Security | 6/10 | 60% | Sandbox, URL safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12) |
-| Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI dispatch. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
-| CI/CD | 0/10 | 0% | Docker fixed, ASan, cross-compile WIP |
+| Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
+| CI/CD | 5/10 | 50% | U01-U04, U08 done. U05-U07, U09-U10 remaining |
 | **Total** | **168/500** | **34%** | **332 gaps remaining** |
 
 ## Session Log

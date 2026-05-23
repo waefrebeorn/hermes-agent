@@ -125,12 +125,12 @@ Stub hunt found 4 verified stubs, 2 false ✅ claims, and 32 new gaps.
 |----|-----|----------|-------|
 | ~~U01~~ | ~~C build workflow must pass before merge~~ | ~~P0~~ | ~~Gate — ALREADY DONE: c-build.yml runs on PR/push~~ |
 | ~~U02~~ | ~~Docker build CI step~~ | ~~P0~~ | ~~ALREADY DONE: docker job in c-build.yml~~ |
-| U03 | Artifacts: attach binary to PR | P1 | Quick download for testers |
+| ~~U03~~ | ~~Artifacts: attach binary to PR~~ | ~~P1~~ | ~~ALREADY DONE: always-run upload in c-build.yml~~ |
 | ~~U04~~ | ~~ASan/UBSan CI job~~ | ~~P1~~ | ~~ALREADY DONE: asan job in c-build.yml~~ |
 | U05 | Cross-compilation matrix (aarch64, arm) | P2 | Edge/IoT |
 | U06 | Release automation (semantic version, changelog) | P2 | Tagger |
 | U07 | Code coverage upload (lcov → Codecov) | P2 | Metrics |
-| U08 | Pre-commit hooks (format, lint, minimal build) | P1 | Developer experience |
+| ~~U08~~ | ~~Pre-commit hooks (format, lint, minimal build)~~ | ~~P1~~ | ~~ALREADY DONE: .pre-commit-config.yaml, 5 hooks~~ |
 | U09 | Dependency vulnerability scanning (CVE check) | P2 | Supply chain |
 | U10 | Performance gate (binary size, startup time) | P3 | Regression detection |
 

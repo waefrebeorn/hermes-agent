@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
+/* Enable TEST_MODE to mock FAL API calls — no network needed */
+#define TEST_MODE
 #include "../src/plugins/plugin_image_gen.c"
 
 static int tests_run = 0, tests_passed = 0, tests_failed = 0;
