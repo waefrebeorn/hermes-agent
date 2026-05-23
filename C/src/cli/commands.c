@@ -4,6 +4,7 @@
  */
 
 #include "hermes.h"
+#include "hermes_secrets.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +66,7 @@ static void cmd_skills(const char *args, agent_state_t *state);
 static void cmd_cron(const char *args, agent_state_t *state);
 static void cmd_fast(const char *args, agent_state_t *state);
 static void cmd_secrets(const char *args, agent_state_t *state);
+static void cmd_completions(const char *args, agent_state_t *state);
 static void cmd_reload(const char *args, agent_state_t *state);
 static void cmd_rollback(const char *args, agent_state_t *state);
 static void cmd_copy(const char *args, agent_state_t *state);
@@ -150,6 +152,7 @@ static const command_def_t COMMANDS[] = {
     {"/toolsets",NULL,    "List available toolsets",                    cmd_toolsets},
     {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
     {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
+    {"/completions", NULL, "Generate shell completions: /completions [bash|zsh|fish]", cmd_completions},
     {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
     {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
     {"/reload",  NULL,    "Reload .env variables into running session", cmd_reload},
@@ -2495,6 +2498,49 @@ static void cmd_session_export(const char *args, agent_state_t *state) {
     }
 
     json_free(root);
+}
+
+/* /completions: Generate shell completion scripts */
+static void cmd_completions(const char *args, agent_state_t *state) {
+    (void)state;
+    if (args && (strcmp(args, "fish") == 0 || strcmp(args, "zsh") == 0)) {
+        printf("#compdef hermes\n");
+        printf("_hermes_commands() {\n");
+        printf("  local -a commands\n");
+        const command_def_t *cmd = COMMANDS;
+        while (cmd->name && cmd->handler) {
+            printf("  commands+=( \"%s:%s\" )\n", cmd->name, cmd->description);
+            cmd++;
+        }
+        printf("  _describe 'hermes commands' commands\n");
+        printf("}\n");
+        printf("_hermes() {\n");
+        printf("  _arguments -C \\\n");
+        printf("    '1: :->command' \\\n");
+        printf("    '*: :->args'\n");
+        printf("  case $state in\n");
+        printf("    (command) _hermes_commands ;;\n");
+        printf("    (args) _hermes_commands ;;\n");
+        printf("  esac\n");
+        printf("}\n");
+        printf("compdef _hermes hermes\n");
+    } else {
+        /* Default: bash completions */
+        printf("_hermes_completions() {\n");
+        printf("  local cur=${COMP_WORDS[COMP_CWORD]}\n");
+        printf("  COMPREPLY=( $(compgen -W \"");
+        const command_def_t *cmd = COMMANDS;
+        int count = 0;
+        while (cmd->name && cmd->handler) {
+            if (count > 0) printf(" ");
+            printf("%s", cmd->name);
+            cmd++; count++;
+        }
+        printf("\" -- \"$cur\") )\n");
+        printf("  return 0\n");
+        printf("}\n");
+        printf("complete -F _hermes_completions hermes\n");
+    }
 }
 
 /* /secrets: Manage Bitwarden secrets */
