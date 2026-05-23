@@ -9,6 +9,7 @@
  */
 
 #include "acp/server.h"
+#include "acp/edit_approval.h"
 #include "hermes_json.h"
 #include "hermes_agent.h"   /* agent_init, agent_state_t, tool registry */
 #include <stdio.h>
@@ -31,6 +32,7 @@ typedef struct {
     int             message_count;
     char            model[128];
     char            mode[32];         /* "plan" | "act" */
+    char            auto_approve_policy[32]; /* "ask" | "session" | "workspace_session" */
 } acp_session_t;
 
 /* ================================================================
@@ -43,6 +45,7 @@ struct acp_server_t {
     bool            initialized;        /* true after initialize handshake */
     int             next_id;            /* session ID counter */
     acp_session_t   sessions[ACP_MAX_SESSIONS];
+    acp_approval_request_t pending_approval;  /* single pending edit approval */
 };
 
 /* ================================================================
@@ -362,13 +365,79 @@ static json_node_t *handle_tools_list(const char *id, json_node_t *params, acp_s
 
 /* --- Tools: call (invoke tool handler directly) --- */
 
+/* --- Tools: call (invoke tool handler directly) with edit approval --- */
+
+/* Lookup auto-approve policy for a session */
+static const char *get_session_auto_approve_policy(acp_server_t *srv, const char *session_id) {
+    if (!session_id || !*session_id)
+        return "ask";
+    acp_session_t *sess = find_session(srv, session_id);
+    if (!sess || !sess->active)
+        return "ask";
+    return sess->auto_approve_policy;
+}
+
 static json_node_t *handle_tools_call(const char *id, json_node_t *params, acp_server_t *srv) {
-    (void)srv;
     const char *tool_name = json_object_get_string(params, "name", NULL);
     json_node_t *args_node = json_object_get(params, "args");
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
 
     if (!tool_name)
         return acp_make_error(id, -32602, "Missing tool name", NULL);
+
+    /* === Edit approval check === */
+    if (args_node) {
+        acp_edit_proposal_t proposal;
+        char *build_err = NULL;
+
+        if (acp_build_edit_proposal(tool_name, args_node, &proposal, &build_err)) {
+            /* Check auto-approve policy */
+            const char *policy = get_session_auto_approve_policy(srv, session_id);
+
+            /* Check for cached approval (previously approved by client) */
+            bool has_cached_approval = false;
+            if (srv->pending_approval.status == ACP_APPROVAL_GRANTED &&
+                strcmp(srv->pending_approval.proposal.path, proposal.path) == 0 &&
+                strcmp(srv->pending_approval.proposal.tool_name, proposal.tool_name) == 0)
+            {
+                has_cached_approval = true;
+            }
+
+            if (!has_cached_approval && !acp_should_auto_approve_edit(&proposal, policy, NULL)) {
+                /* Need approval — notify client and return pending */
+                /* Set pending approval state */
+                acp_approval_request_begin(&srv->pending_approval, &proposal, 120.0);
+
+                /* Send notification with proposal details */
+                json_node_t *notif = json_new_object();
+                json_object_set(notif, "jsonrpc", json_new_string("2.0"));
+                json_object_set(notif, "method", json_new_string("edit_proposal"));
+                json_node_t *notif_params = json_new_object();
+                json_object_set(notif_params, "proposal_id", json_new_string(srv->pending_approval.proposal_id));
+                json_object_set(notif_params, "tool_name", json_new_string(proposal.tool_name));
+                json_object_set(notif_params, "path", json_new_string(proposal.path));
+                if (proposal.old_text)
+                    json_object_set(notif_params, "old_text", json_new_string(proposal.old_text));
+                json_object_set(notif_params, "new_text", json_new_string(proposal.new_text));
+                json_object_set(notif_params, "arguments", json_new_string(proposal.arguments_json));
+                json_object_set(notif, "params", notif_params);
+                acp_write_message(notif);
+                json_free(notif);
+
+                acp_edit_proposal_free(&proposal);
+                return acp_make_error(id, -32998,
+                    "Edit approval required for file mutation", NULL);
+            }
+
+            acp_edit_proposal_free(&proposal);
+
+            /* If we had a cached approval, clear it now that it's consumed */
+            if (has_cached_approval) {
+                srv->pending_approval.status = ACP_APPROVAL_PENDING;
+            }
+        }
+        free(build_err);
+    }
 
     tool_t *tool = registry_find(tool_name);
     if (!tool)
@@ -408,6 +477,70 @@ static json_node_t *handle_tools_call(const char *id, json_node_t *params, acp_s
     } else {
         json_object_set(result, "result", json_new_null());
     }
+    return acp_make_response(id, result);
+}
+
+/* --- ACP Edit approval response --- */
+
+static json_node_t *handle_edit_approval_response(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *proposal_id = json_object_get_string(params, "proposal_id", NULL);
+    if (!proposal_id)
+        return acp_make_error(id, -32602, "Missing proposal_id", NULL);
+
+    /* Verify proposal_id matches pending approval */
+    if (srv->pending_approval.status != ACP_APPROVAL_PENDING ||
+        strcmp(srv->pending_approval.proposal_id, proposal_id) != 0) {
+        return acp_make_error(id, -32000, "No pending approval for this proposal_id", NULL);
+    }
+
+    bool approved = json_object_get_bool(params, "approved", false);
+    acp_approval_request_resolve(&srv->pending_approval, approved);
+    (void)id; /* Notification — no response needed */
+
+    /* If approved, store the decision so the next tools/call re-execution auto-approves */
+    json_node_t *result = json_new_object();
+    json_object_set(result, "status", json_new_string(approved ? "approved" : "denied"));
+    json_object_set(result, "proposal_id", json_new_string(proposal_id));
+
+    /* Send result notification confirming the resolution */
+    json_node_t *notif = json_new_object();
+    json_object_set(notif, "jsonrpc", json_new_string("2.0"));
+    json_object_set(notif, "method", json_new_string("edit_proposal_result"));
+    json_node_t *nr = json_new_object();
+    json_object_set(nr, "proposal_id", json_new_string(proposal_id));
+    json_object_set(nr, "status", json_new_string(approved ? "approved" : "denied"));
+    json_object_set(notif, "params", nr);
+    acp_write_message(notif);
+    json_free(notif);
+
+    return acp_make_response(id, result);
+}
+
+/* --- ACP Set auto-approve policy --- */
+
+static json_node_t *handle_set_auto_approve(const char *id, json_node_t *params, acp_server_t *srv) {
+    const char *session_id = json_object_get_string(params, "session_id", NULL);
+    const char *policy = json_object_get_string(params, "policy", "ask");
+
+    if (!session_id || !*session_id)
+        return acp_make_error(id, -32602, "Missing session_id", NULL);
+
+    /* Validate policy */
+    if (strcmp(policy, "ask") != 0 && strcmp(policy, "session") != 0 &&
+        strcmp(policy, "workspace_session") != 0) {
+        return acp_make_error(id, -32602, "Invalid policy: must be ask, session, or workspace_session", NULL);
+    }
+
+    acp_session_t *sess = find_session(srv, session_id);
+    if (!sess || !sess->active)
+        return acp_make_error(id, -32000, "Session not found", NULL);
+
+    snprintf(sess->auto_approve_policy, sizeof(sess->auto_approve_policy), "%s", policy);
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "status", json_new_string("ok"));
+    json_object_set(result, "policy", json_new_string(policy));
+    json_object_set(result, "session_id", json_new_string(session_id));
     return acp_make_response(id, result);
 }
 
@@ -718,6 +851,10 @@ static json_node_t *dispatch_request(const char *method, const char *id,
         return handle_tools_call(id, params, srv);
     if (strcmp(method, "session/delete") == 0)
         return handle_delete_session(id, params, srv);
+    if (strcmp(method, "edit_approval_response") == 0)
+        return handle_edit_approval_response(id, params, srv);
+    if (strcmp(method, "set_auto_approve") == 0)
+        return handle_set_auto_approve(id, params, srv);
 
     return acp_make_error(id, -32601, "Method not found", NULL);
 }
