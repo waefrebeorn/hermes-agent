@@ -10,7 +10,7 @@
     10|    10|    10|    10||| CLI | 79/95 | 83% | 79 commands registered |
     11|| Tools | 64/92 | 70% | +transcribe_audio tool |
     12|    12|    12|    12||| Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
-| MCP | 7/11 | 64% | +mcp-serve CLI subcommand (hermes mcp-serve [port]) |
+| MCP | 8/11 | 73% | +dynamic server name discovery from YAML |
     14|    14|    14|    14||| ACP | 9/9 | 100% | +permissions bridge (request_permission, permission_response) |
     15|    15|    15|    15||| Cron | 3/3 | 100% | Done |
     16|    16|    16|    16||| TUI | 5/8 | 63% | +session search filtering |
@@ -23,9 +23,10 @@
     23|    23|    23|    23||| Tests | 10/12 | 83% | T01-T09 + library tests |
     24|    24|    24|    24||| CI/CD | 10/10 | 100% | All U gaps closed |
     25|    25|    25|    25||| Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-| **Total** | **~314/500** | **~63%** | **~186 gaps remaining** |
+| **Total** | **~316/500** | **~63%** | **~184 gaps remaining** |
     27|    27|    27|    27|
     28|    28|    28|    28|## Session Log
+- **Session 46 (Jun 1):** Added dynamic MCP server name discovery from config.yaml. Replaced hardcoded `known_servers[8]` array with `yaml_map_keys()` — new libyaml API that retrieves key names from nested YAML maps. Any custom server name in `mcp_servers: {name: ...}` now works instead of only 8 hardcoded names. Added `yaml_map_keys()` to libyaml.h/c. Verified: custom server name "my-custom-server" discovered correctly. Build: 0 errors. MCP sector: 8/11 (73%). Parity: ~316/500 (~63%). Commit `b2d94148e`.
 - **Session 45 (Jun 1):** Added `hermes mcp-serve [port]` CLI subcommand to start MCP HTTP server. mcp_serve.c was compiled but unreachable — `mcp_serve_start()` was never callable. Now `hermes mcp-serve 9104` starts an HTTP server on the given port that serves all 78 Hermes tools over the MCP JSON-RPC protocol. Verified: health endpoint returns OK, initialize returns capabilities, tools/list returns 78 tools. Build: 0 errors. Commit `069b3f9e4`.
     29|- **Session 44 (Jun 1):** Ported `transcription_tools.py` standalone `transcribe_audio` tool. New `registry_init_transcribe()` in voice_mode.c wraps existing `transcribe_audio()` from libtranscribe. Supports Groq, OpenAI, xAI providers. Previously transcription only accessible via voice_listen (mic+transcribe combo). Now `transcribe_audio` tool allows transcribing any audio file. Build: 0 errors. Suite: 195/1/0. Commit `1c1f86ce4`.
     30|    29|- **Session 43 (Jun 1):** Wired mcp_init_all() into main.c startup. MCP server connections from config.yaml `mcp_servers` were never initialized — the function compiled but was never called. Added call to both TUI mode and default CLI mode startup paths. Build: 0 errors. Binary boots clean. MCP sector: 6/11 (55%). Commit `e73e6c51c`.

@@ -64,6 +64,16 @@ typedef struct {
     size_t  recv_len;
 } mcp_ws_t;
 
+/* Streamable HTTP transport state */
+typedef struct {
+    char    url[1024];          /* full HTTP URL for POST */
+    char    headers[2048];      /* HTTP headers (Authorization, etc.) */
+    void   *http_client;        /* http_t * handle (created on connect) */
+    char    recv_buf[65536];    /* response buffer for last POST */
+    size_t  recv_len;           /* bytes in recv_buf */
+    bool    connected;          /* HTTP client is initialized */
+} mcp_http_t;
+
 /* Server instance */
 struct mcp_server {
     char    name[64];
@@ -74,6 +84,7 @@ struct mcp_server {
     mcp_stdio_t stdio;
     mcp_sse_t   sse;
     mcp_ws_t    ws;
+    mcp_http_t  http;
 
     /* Stdio config */
     char    command[256];
@@ -288,6 +299,43 @@ static bool transport_send(mcp_server_t *srv, const char *msg) {
         return ws_send((ws_t *)srv->ws.ws, WS_OP_TEXT, msg, strlen(msg)) > 0;
     }
 
+    if (srv->transport_type == MCP_TRANSPORT_HTTP) {
+        if (!srv->http.connected || !srv->http.http_client) {
+            snprintf(srv->last_error, sizeof(srv->last_error), "HTTP not connected");
+            return false;
+        }
+        /* POST JSON-RPC to URL, capture response in recv_buf */
+        http_resp_t *resp;
+        if (srv->http.headers[0]) {
+            resp = http_post_json_auth(
+                (http_t *)srv->http.http_client,
+                srv->http.url, srv->http.headers, msg);
+        } else {
+            resp = http_post_json(
+                (http_t *)srv->http.http_client,
+                srv->http.url, msg);
+        }
+        if (!resp) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "HTTP POST failed");
+            return false;
+        }
+
+        /* Store response body for later read */
+        srv->http.recv_len = 0;
+        if (resp->body) {
+            size_t blen = strlen(resp->body);
+            size_t copy_len = blen < sizeof(srv->http.recv_buf) - 1
+                              ? blen : sizeof(srv->http.recv_buf) - 1;
+            memcpy(srv->http.recv_buf, resp->body, copy_len);
+            srv->http.recv_buf[copy_len] = '\0';
+            srv->http.recv_len = copy_len;
+        }
+        bool ok = (resp->status >= 200 && resp->status < 300);
+        http_resp_free(resp);
+        return ok;
+    }
+
     snprintf(srv->last_error, sizeof(srv->last_error), "No transport");
     return false;
 }
@@ -474,6 +522,54 @@ static json_t *transport_read_response(mcp_server_t *srv, const char *request_id
         return NULL;
     }
 
+    if (srv->transport_type == MCP_TRANSPORT_HTTP) {
+        /* Response was already captured in http.recv_buf during transport_send */
+        if (srv->http.recv_len == 0) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "No HTTP response data");
+            return NULL;
+        }
+
+        char *jerr = NULL;
+        json_t *result = json_parse(srv->http.recv_buf, &jerr);
+        if (jerr) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "HTTP response parse error: %s", jerr);
+            free(jerr);
+            return NULL;
+        }
+
+        if (result) {
+            const char *rid = json_get_str(result, "id", "");
+            if (rid && strcmp(rid, request_id) == 0) {
+                srv->http.recv_len = 0;  /* consumed */
+                return result;
+            }
+            /* Queue incoming server→client requests */
+            const char *method = json_get_str(result, "method", "");
+            if (rid && rid[0] && method[0] && srv->incoming_count < MCP_MAX_INCOMING) {
+                int idx = srv->incoming_count;
+                snprintf(srv->incoming_ids[idx], sizeof(srv->incoming_ids[0]), "%s", rid);
+                snprintf(srv->incoming_methods[idx], sizeof(srv->incoming_methods[0]), "%s", method);
+                json_t *params = json_obj_get(result, "params");
+                if (params) {
+                    char *pstr = json_serialize(params);
+                    snprintf(srv->incoming_params[idx], sizeof(srv->incoming_params[0]), "%s", pstr);
+                    free(pstr);
+                } else {
+                    srv->incoming_params[idx][0] = '\0';
+                }
+                srv->incoming_count++;
+            }
+            json_free(result);
+        }
+
+        srv->http.recv_len = 0;  /* consumed */
+        snprintf(srv->last_error, sizeof(srv->last_error),
+                 "No matching response for id %s in HTTP response", request_id);
+        return NULL;
+    }
+
     return NULL;
 }
 
@@ -537,6 +633,12 @@ void mcp_server_set_websocket(mcp_server_t *srv, const char *url) {
     if (url) snprintf(srv->ws.url, sizeof(srv->ws.url), "%s", url);
 }
 
+void mcp_server_set_http(mcp_server_t *srv, const char *url) {
+    if (!srv) return;
+    srv->transport_type = MCP_TRANSPORT_HTTP;
+    if (url) snprintf(srv->http.url, sizeof(srv->http.url), "%s", url);
+}
+
 void mcp_server_set_env(mcp_server_t *srv, char **env) {
     if (!srv) return;
     srv->env = env;
@@ -555,7 +657,13 @@ void mcp_server_set_max_retries(mcp_server_t *srv, int max_retries) {
 }
 
 void mcp_server_set_headers(mcp_server_t *srv, const char *headers) {
-    if (srv && headers) snprintf(srv->sse.headers, sizeof(srv->sse.headers), "%s", headers);
+    if (!srv || !headers) return;
+    /* Also set on HTTP transport */
+    if (srv->transport_type == MCP_TRANSPORT_HTTP) {
+        snprintf(srv->http.headers, sizeof(srv->http.headers), "%s", headers);
+    } else {
+        snprintf(srv->sse.headers, sizeof(srv->sse.headers), "%s", headers);
+    }
 }
 
 /* P70: Set workspace roots for a server */
@@ -869,6 +977,125 @@ bool mcp_server_connect(mcp_server_t *srv) {
         return true;
     }
 
+    /* Streamable HTTP transport: POST JSON-RPC to URL */
+    if (srv->transport_type == MCP_TRANSPORT_HTTP) {
+        if (!srv->http.url[0]) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "No URL configured for HTTP transport");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Create HTTP client */
+        srv->http.http_client = http_new(srv->connect_timeout);
+        if (!srv->http.http_client) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "Failed to create HTTP client");
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Send initialize via POST */
+        bool init_ok = false;
+        json_t *init_params = json_object();
+        json_t *http_client_info = json_object();
+        json_set(http_client_info, "name", json_string("hermes-c"));
+        json_set(http_client_info, "version", json_string("0.14.1"));
+        json_set(init_params, "protocolVersion", json_string(MCP_PROTOCOL_VERSION));
+        {
+            json_t *http_caps = json_object();
+            if (srv->root_count > 0) {
+                json_t *roots_cap = json_object();
+                json_set(roots_cap, "listChanged", json_bool(false));
+                json_set(http_caps, "roots", roots_cap);
+            }
+            json_set(init_params, "capabilities", http_caps);
+        }
+        json_set(init_params, "clientInfo", http_client_info);
+
+        char *init_req = build_request("init-1", "initialize", init_params);
+        if (init_req) {
+            /* Build full headers with auth if configured */
+            char full_headers[2048] = "";
+            if (srv->http.headers[0])
+                snprintf(full_headers, sizeof(full_headers), "%s", srv->http.headers);
+
+            /* POST to URL */
+            http_resp_t *init_resp;
+            if (full_headers[0]) {
+                init_resp = http_post_json_auth(
+                    (http_t *)srv->http.http_client,
+                    srv->http.url, full_headers, init_req);
+            } else {
+                init_resp = http_post_json(
+                    (http_t *)srv->http.http_client,
+                    srv->http.url, init_req);
+            }
+            free(init_req);
+
+            if (init_resp && init_resp->status == 200 && init_resp->body) {
+                /* Store response body for later reads */
+                size_t blen = strlen(init_resp->body);
+                size_t copy_len = blen < sizeof(srv->http.recv_buf) - 1 ? blen : sizeof(srv->http.recv_buf) - 1;
+                memcpy(srv->http.recv_buf, init_resp->body, copy_len);
+                srv->http.recv_buf[copy_len] = '\0';
+                srv->http.recv_len = copy_len;
+
+                char *jerr = NULL;
+                json_t *resp = json_parse(init_resp->body, &jerr);
+                if (resp) {
+                    json_t *result = json_obj_get(resp, "result");
+                    if (result) {
+                        json_t *server_caps = json_obj_get(result, "capabilities");
+                        if (server_caps) {
+                            srv->caps.supports_tools     = json_obj_get(server_caps, "tools") != NULL;
+                            srv->caps.supports_resources = json_obj_get(server_caps, "resources") != NULL;
+                            srv->caps.supports_prompts   = json_obj_get(server_caps, "prompts") != NULL;
+                            srv->caps.supports_logging   = json_obj_get(server_caps, "logging") != NULL;
+                            srv->caps.supports_sampling  = json_obj_get(server_caps, "sampling") != NULL;
+                        }
+                        init_ok = true;
+                    }
+                    json_free(resp);
+                }
+                if (jerr) free(jerr);
+            }
+            if (init_resp) http_resp_free(init_resp);
+        }
+
+        if (!init_ok) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "HTTP initialize failed");
+            http_free((http_t *)srv->http.http_client);
+            srv->http.http_client = NULL;
+            srv->status = MCP_STATUS_FAILED;
+            return false;
+        }
+
+        /* Send initialized notification */
+        srv->http.connected = true;
+        char *http_notif = build_notification("notifications/initialized", NULL);
+        if (http_notif) {
+            if (srv->http.headers[0]) {
+                http_resp_t *r = http_post_json_auth(
+                    (http_t *)srv->http.http_client,
+                    srv->http.url, srv->http.headers, http_notif);
+                if (r) http_resp_free(r);
+            } else {
+                http_resp_t *r = http_post_json(
+                    (http_t *)srv->http.http_client,
+                    srv->http.url, http_notif);
+                if (r) http_resp_free(r);
+            }
+            free(http_notif);
+        }
+
+        srv->initialized = true;
+        srv->status = MCP_STATUS_CONNECTED;
+        srv->reconnect_delay_ms = 1000;
+        return true;
+    }
+
     snprintf(srv->last_error, sizeof(srv->last_error),
              "No transport configured");
     srv->status = MCP_STATUS_FAILED;
@@ -906,6 +1133,15 @@ void mcp_server_disconnect(mcp_server_t *srv) {
             srv->ws.ws = NULL;
         }
         srv->ws.recv_len = 0;
+    }
+
+    if (srv->transport_type == MCP_TRANSPORT_HTTP) {
+        if (srv->http.http_client) {
+            http_free((http_t *)srv->http.http_client);
+            srv->http.http_client = NULL;
+        }
+        srv->http.connected = false;
+        srv->http.recv_len = 0;
     }
 
     srv->initialized = false;

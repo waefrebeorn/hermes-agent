@@ -175,7 +175,111 @@ static bool connect_sse_server(const char *name, const char *url, int timeout,
         mcp_tool_list_free(tools, count);
     }
 
-    fprintf(stderr, "MCP: SSE server '%s' connected (%d tools)\\n", name, count);
+    fprintf(stderr, "MCP: SSE server '%s' connected (%d tools)\\\\n", name, count);
+    return true;
+}
+
+/* Connect an MCP server using Streamable HTTP transport */
+static bool connect_http_server(const char *name, const char *url, int timeout,
+                                 const mcp_root_t *roots, int root_count) {
+    if (g_server_count >= MAX_MCP_SERVERS) return false;
+
+    mcp_server_t *srv = mcp_server_new(name);
+    if (!srv) return false;
+
+    mcp_server_set_http(srv, url);
+    mcp_server_set_timeout(srv, timeout > 0 ? timeout : 120);
+    mcp_server_set_connect_timeout(srv, 60);
+
+    /* Initialize credential store path */
+    if (g_credential_store_path[0] == 0) {
+        hermes_get_home(g_credential_store_path, sizeof(g_credential_store_path));
+        strncat(g_credential_store_path, "/mcp_auth.json",
+                sizeof(g_credential_store_path) - strlen(g_credential_store_path) - 1);
+    }
+
+    int aidx = g_server_count;
+    /* P63: Inject auth headers for HTTP transport */
+    if (g_server_auth[aidx].type[0] &&
+        strcmp(g_server_auth[aidx].type, "header") == 0 &&
+        g_server_auth[aidx].header_name[0] &&
+        g_server_auth[aidx].token[0]) {
+        char hdr[1024];
+        snprintf(hdr, sizeof(hdr), "%s: %s", g_server_auth[aidx].header_name,
+                 g_server_auth[aidx].token);
+        mcp_server_set_headers(srv, hdr);
+        fprintf(stderr, "MCP: Auth header set for '%s'\\n", name);
+    }
+
+    /* Set workspace roots before connect */
+    if (roots && root_count > 0) {
+        mcp_server_set_roots(srv, roots, root_count);
+        fprintf(stderr, "MCP: Roots set for '%s' (%d roots)\\n", name, root_count);
+    }
+
+    if (!mcp_server_connect(srv)) {
+        fprintf(stderr, "MCP: Failed to connect HTTP server '%s': %s\\n",
+                name, mcp_server_last_error(srv));
+        mcp_server_free(srv);
+        return false;
+    }
+
+    g_servers[g_server_count++] = srv;
+    int sidx = g_server_count - 1;
+
+    /* Discover and register tools */
+    mcp_tool_t *tools = NULL;
+    int count = mcp_server_list_tools(srv, &tools);
+    if (count > 0 && tools) {
+        int registered = 0;
+                for (int i = 0; i < count; i++) {
+            char reg_name[256];
+            snprintf(reg_name, sizeof(reg_name), "mcp_%s_%s", name, tools[i].name);
+
+            if (registry_find(reg_name)) {
+                fprintf(stderr, "MCP:   WARNING -- tool '%s' already registered, "
+                        "skipping duplicate from '%s'\n", reg_name, name);
+                continue;
+            }
+
+            /* Apply filter */
+            bool filtered = false;
+            if (g_server_filters[sidx].allow_count > 0) {
+                bool allowed = false;
+                for (int fi = 0; fi < g_server_filters[sidx].allow_count; fi++) {
+                    if (registry_name_matches(tools[i].name,
+                            g_server_filters[sidx].allow[fi])) {
+                        allowed = true; break;
+                    }
+                }
+                if (!allowed) filtered = true;
+            }
+            if (!filtered && g_server_filters[sidx].block_count > 0) {
+                for (int fi = 0; fi < g_server_filters[sidx].block_count; fi++) {
+                    if (registry_name_matches(tools[i].name,
+                            g_server_filters[sidx].block[fi])) {
+                        filtered = true; break;
+                    }
+                }
+            }
+            if (filtered) continue;
+
+            registry_register(reg_name, tools[i].description,
+                tools[i].input_schema[0] ? tools[i].input_schema : NULL,
+                mcp_dynamic_handler);
+
+            if (g_dynamic_count < MAX_DYNAMIC_TOOLS) {
+                snprintf(g_dynamic_tools[g_dynamic_count].server_name,
+                         sizeof(g_dynamic_tools[0].server_name), "%s", name);
+                snprintf(g_dynamic_tools[g_dynamic_count].tool_name,
+                         sizeof(g_dynamic_tools[0].tool_name), "%s", tools[i].name);
+                g_dynamic_count++;
+            }
+        }
+        fprintf(stderr, "MCP: HTTP server '%s' connected (%d tools)\\n", name, registered);
+        mcp_tool_list_free(tools, count);
+    }
+
     return true;
 }
 
@@ -525,8 +629,18 @@ void mcp_init_all(void) {
                 const char *url = yaml_get_string(doc, key);
                 if (!url) continue;
 
-                /* SSE transport — wire via HTTP/SSE */
-                connect_sse_server(dynamic_names[si], url, 120, NULL, 0);
+                /* Check if explicit transport type is specified */
+                snprintf(key, sizeof(key), "mcp_servers.%s.transport", dynamic_names[si]);
+                const char *transport_type = yaml_get_string(doc, key);
+                bool use_sse = (transport_type && strcmp(transport_type, "sse") == 0);
+
+                if (use_sse) {
+                    /* SSE transport — wire via HTTP/SSE */
+                    connect_sse_server(dynamic_names[si], url, 120, NULL, 0);
+                } else {
+                    /* Default: Streamable HTTP transport (POST JSON-RPC to URL) */
+                    connect_http_server(dynamic_names[si], url, 120, NULL, 0);
+                }
                 continue;
             }
 

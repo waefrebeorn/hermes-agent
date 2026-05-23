@@ -152,6 +152,7 @@ typedef enum {
     MCP_TRANSPORT_STDIO,
     MCP_TRANSPORT_SSE,
     MCP_TRANSPORT_WEBSOCKET,
+    MCP_TRANSPORT_HTTP,  /* Streamable HTTP transport (POST JSON-RPC to URL) */
 } mcp_transport_type_t;
 
 /* Opaque server handle */
@@ -172,6 +173,9 @@ void mcp_server_set_sse(mcp_server_t *srv, const char *url);
 
 /* Set WebSocket transport: connect to ws:// or wss:// URL */
 void mcp_server_set_websocket(mcp_server_t *srv, const char *url);
+
+/* Set Streamable HTTP transport: POST JSON-RPC messages to URL (MCP 2025-03-26) */
+void mcp_server_set_http(mcp_server_t *srv, const char *url);
 
 /* Set optional environment variables for stdio transport (NULL-terminated array) */
 void mcp_server_set_env(mcp_server_t *srv, char **env);
