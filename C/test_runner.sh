@@ -412,6 +412,9 @@ run_lib_test "system_prompt" "tests/test_system_prompt.c" "include" "-I$CDIR/lib
 echo ""; echo "=== Tool Result Classification Tests ==="
 run_lib_test "tool_result" "tests/test_tool_result.c" "include" "-I$CDIR/lib/libjson $CDIR/src/tools/tool_result.c $CDIR/lib/libjson/json.c"
 
+echo ""; echo "=== Fuzz Tests (T08) ==="
+run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
+
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
