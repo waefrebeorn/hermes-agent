@@ -22,9 +22,10 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12). Wayland backend added |
 | Tests | 8/12 | 67% | T01: 64 gateway. T02: 108 CLI. T07: 73 plugin sandbox. T09: valgrind+ASan CI |
 | CI/CD | 5/10 | 50% | U01-U04, U08 done. U05-U07, U09-U10 remaining |
-| **Total** | **168/500** | **34%** | **332 gaps remaining** |
+| **Total** | **171/500** | **34%** | **329 gaps remaining** |
 
 ## Session Log
+- **DA v16 (May 23):** B117 — retry_utils (jittered exponential backoff). B118 — trajectory (scratchpad conversion + JSONL save). B119 — portal_tags (Nous Portal request tags). 3 new agent modules. Suite: 163/0/0.
 - **DA v15 (May 23):** U10 — Performance gate. `scripts/perf-gate.py` + Makefile target + CI job. Checks binary size (9.3MB baseline, 10% tolerance) and startup time (1ms, 500ms tolerance). 4 files, 163 lines.
 - **DA v15 (May 23):** U07 — Code coverage pipeline + C50 skill_mgmt fix.
 - **DA v14 (May 23):** T07 — Plugin sandbox loading tests (NULL-safety, invalid input, type/enum/version/registry boundary checks). 73 assertions. 3 commits: T01, T02, T07.
@@ -36,7 +37,7 @@
 
 ## Build Status
 ```
-Suite:  160/0/0     (126 tests, ~582 assertions)
+Suite:  163/0/0     (129 tests, ~598 assertions)
 Binary: 9.1MB       (dynamic, -O2 -g)
 Errors: 0           (make -j$(nproc))
 Warnings: ~40       (Wformat-truncation, -Wpedantic, unused params)

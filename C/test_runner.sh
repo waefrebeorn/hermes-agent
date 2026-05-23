@@ -400,6 +400,9 @@ run_lib_test "trajectory" "tests/test_trajectory.c" "include" "$CDIR/src/agent/t
 echo ""; echo "=== Portal Tags Tests (B119) ==="
 run_lib_test "portal_tags" "tests/test_portal_tags.c" "include" "$CDIR/src/agent/portal_tags.c"
 
+echo ""; echo "=== Markdown Tables Tests (B120) ==="
+run_lib_test "markdown_tables" "tests/test_markdown_tables.c" "include" "$CDIR/src/agent/markdown_tables.c"
+
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
