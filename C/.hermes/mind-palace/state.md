@@ -9,18 +9,32 @@
 | **Config** | 2 depth | 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` |
 | **Providers** | 35 | 87% | 9 ops + 31 aliases + **18/18 LLM params** fully wired |
 | **MCP** | 16 | **100% ✅** | Transport, tools, resources, prompts, subs, sampling, serve |
-| **Plugins** | 48 | 14% | 3 .so plugins: kanban + honcho + spotify (all real, 90 tests) |
+| **Plugins** | 48 | **19%** | 5 .so: kanban + honcho + spotify + disk-cleanup + file-memory |
 | **Gateway** | 63 | **100% ✅** | All 63 gaps closed |
 | **Tools** | 24 | 95% | 28 reg'd, browser/memory/kanban 1:1. 6 CDP/plugin-blocked stubs |
 | **Agent** | 31 | 86% | 23 state fields, 18 session DB, G01-G36 all filled |
-| **CLI** | 33 | 87% | 70 slash commands, skin/theme engine. H14 --json, H31-H32 |
-|| **Libs** | 11 | **41%** | libpath + libdatetime + libcsv ported (J04 + J05 + J06)
+| **CLI** | 33 | 87% | Spinner implemented. Skin engine active. 74 commands |
+|| **Libs** | 8 | **52%** | libpath + libdatetime + libcsv + libhash + libuuid + libbase64 (J04-J09) |
 | **Stdlib** | 5 | 30% | libproc/libcrypto basics |
-|| **Tests** | 34 | **64%** | **64 files, 2,142+ assertions** (117 pass, 0 fail, 0 skip) |
+|| **Tests** | 34 | **66%** | **86 files, ~2,400+ assertions** (125/0/0 suite) |
 | **Upstream** | 1 | new | L02 remains (CDP auto-launch, blocked) (125 commits behind) |
 || **Cross-cut** | 4 | **100% (6/6) ✅** | Token counting, secure parent dir, key leakage, vendor key derivation, local trust |
 || **Build/doc** | 1 | **95%** | O14 sandbox escape detection done. O02 Windows build remains. |
 | **Error types** | 0 | **50% ✅** | K01-K05: ValueError, TypeError, RuntimeError, OSError, TimeoutError |
+
+### Session 2026-05-28 — libhash + libuuid + libbase64 + plugins + test wiring (J07-J09, D08-D09)
+
+- ✅ **J07: libhash** — SHA-256/SHA-1/MD5/HMAC hashing (25 assertions, 118/0/0)
+- ✅ **J08: libuuid** — UUID v4/v5 generation, parsing, validation (60 assertions, 119/0/0)
+- ✅ **Tests: 3 orphan tests wired** — test_finish_reason, test_google_depth, test_json_mode (now active, +3, 122/0/0)
+- ✅ **D08: plugin_disk_cleanup** — Disk cleanup utility plugin: disk_usage, disk_clean_temp, disk_status (PLUGIN_DISK_CLEANUP)
+- ✅ **D09: plugin_file_memory** — Persistent file-backed memory provider: store/search/clear with JSON-lines file (PLUGIN_MEMORY)
+- ✅ **J09: libbase64** — RFC 4648 base64/url encode/decode with padding, validation (34 assertions, 125/0/0)
+- ◀ **Suite: 117/0/0 → 125/0/0** (+8 over previous 117)
+- ◀ **Plugins: 14% → 19%** (5 .so, 2 new: disk-cleanup + file-memory)
+- ◀ **Libs: 41% → 52%** (19 archives, 3 new: hash + uuid + base64)
+- ◀ **Tests: 64% → 66%** (86 test files, ~2,400 assertions)
+- ◀ 5 commits pushed to waefrebeorn/hermes-agent main
 
 ### Session 2026-05-27 — libdatetime: C datetime library (J05)
 

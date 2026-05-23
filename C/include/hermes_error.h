@@ -57,6 +57,77 @@ typedef enum {
     HERMES_ERR_TIMEOUT,         /* General timeout */
     HERMES_ERR_NETWORK_TIMEOUT, /* Network request timed out */
     HERMES_ERR_LLM_TIMEOUT,     /* LLM response timed out */
+
+    /* K06: Configuration errors */
+    HERMES_ERR_CONFIG,          /* General configuration error */
+    HERMES_ERR_MISSING_KEY,     /* Required config key missing */
+
+    /* K07: Connection errors */
+    HERMES_ERR_CONNECTION,      /* General connection failure */
+    HERMES_ERR_CONN_REFUSED,    /* Connection refused */
+    HERMES_ERR_CONN_RESET,      /* Connection reset */
+
+    /* K08: Authentication errors */
+    HERMES_ERR_AUTH,            /* General authentication failure */
+    HERMES_ERR_INVALID_KEY,     /* Invalid API key */
+    HERMES_ERR_EXPIRED_KEY,     /* Expired API key */
+
+    /* K09: Authorization errors */
+    HERMES_ERR_FORBIDDEN,       /* Permission denied */
+    HERMES_ERR_RATE_LIMITED,    /* Rate limited / quota exceeded */
+
+    /* K10: Validation errors */
+    HERMES_ERR_VALIDATION,      /* General validation failure */
+    HERMES_ERR_INVALID_FORMAT,  /* Invalid data format */
+
+    /* K11: Quota errors */
+    HERMES_ERR_QUOTA,           /* General quota exceeded */
+    HERMES_ERR_QUOTA_TOKENS,    /* Token quota exhausted */
+    HERMES_ERR_QUOTA_REQUESTS,  /* Request quota exhausted */
+
+    /* K12: Model errors */
+    HERMES_ERR_MODEL,           /* General model error */
+    HERMES_ERR_MODEL_UNAVAIL,   /* Model unavailable */
+    HERMES_ERR_CONTEXT_LEN,     /* Context length exceeded */
+
+    /* K13: Tool errors */
+    HERMES_ERR_TOOL,            /* General tool error */
+    HERMES_ERR_TOOL_NOT_FOUND,  /* Tool not registered */
+    HERMES_ERR_TOOL_TIMEOUT,    /* Tool execution timed out */
+
+    /* K14: Plugin errors */
+    HERMES_ERR_PLUGIN,          /* General plugin error */
+    HERMES_ERR_PLUGIN_LOAD,     /* Plugin load failure */
+    HERMES_ERR_PLUGIN_INIT,     /* Plugin init failure */
+
+    /* K15: Gateway errors */
+    HERMES_ERR_GATEWAY,         /* General gateway error */
+    HERMES_ERR_GATEWAY_SEND,    /* Gateway send failure */
+    HERMES_ERR_PLATFORM,        /* Platform-specific error */
+
+    /* K16: Session errors */
+    HERMES_ERR_SESSION,         /* General session error */
+    HERMES_ERR_SESSION_LOST,    /* Session not found / expired */
+
+    /* K17: Serialization errors */
+    HERMES_ERR_SERIALIZE,       /* General serialization error */
+    HERMES_ERR_DESERIALIZE,     /* Deserialization failure */
+    HERMES_ERR_ENCODE,          /* Encoding failure */
+
+    /* K18: Internal errors */
+    HERMES_ERR_INTERNAL,        /* General internal error */
+    HERMES_ERR_ASSERTION,       /* Internal assertion failure */
+    HERMES_ERR_MEMORY,          /* Memory allocation failure */
+
+    /* K19: Abort errors */
+    HERMES_ERR_ABORT,           /* General abort */
+    HERMES_ERR_CANCELLED,       /* Operation cancelled */
+    HERMES_ERR_INTERRUPTED,     /* Interrupted by user */
+
+    /* K20: I/O extended */
+    HERMES_ERR_STREAM,          /* Stream error */
+    HERMES_ERR_PIPE,            /* Pipe error */
+    HERMES_ERR_PROTOCOL,        /* Protocol violation */
 } hermes_error_code_t;
 
 /* Human-readable error code names */

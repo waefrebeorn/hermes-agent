@@ -84,10 +84,33 @@ int main(void) {
     /* K05: LLMTimeout */
     {
         hermes_error_t e = hermes_error(HERMES_ERR_LLM_TIMEOUT, "LLM did not respond within 30s");
-        TEST("llm timeout name", strcmp(hermes_error_name(HERMES_ERR_LLM_TIMEOUT), "LLMTimeoutError") == 0);
+        TEST("K05 LLMTimeoutError name", strcmp(hermes_error_name(HERMES_ERR_LLM_TIMEOUT), "LLMTimeoutError") == 0);
     }
 
-    /* Error with context */
+    /* K06-K20: Extended error types */
+    TEST("K06 ConfigError name", strcmp(hermes_error_name(HERMES_ERR_CONFIG), "ConfigError") == 0);
+    TEST("K06 MissingKeyError name", strcmp(hermes_error_name(HERMES_ERR_MISSING_KEY), "MissingKeyError") == 0);
+    TEST("K07 ConnectionError name", strcmp(hermes_error_name(HERMES_ERR_CONNECTION), "ConnectionError") == 0);
+    TEST("K07 ConnectionRefusedError name", strcmp(hermes_error_name(HERMES_ERR_CONN_REFUSED), "ConnectionRefusedError") == 0);
+    TEST("K07 ConnectionResetError name", strcmp(hermes_error_name(HERMES_ERR_CONN_RESET), "ConnectionResetError") == 0);
+    TEST("K08 AuthenticationError name", strcmp(hermes_error_name(HERMES_ERR_AUTH), "AuthenticationError") == 0);
+    TEST("K08 InvalidKeyError name", strcmp(hermes_error_name(HERMES_ERR_INVALID_KEY), "InvalidKeyError") == 0);
+    TEST("K08 ExpiredKeyError name", strcmp(hermes_error_name(HERMES_ERR_EXPIRED_KEY), "ExpiredKeyError") == 0);
+    TEST("K09 ForbiddenError name", strcmp(hermes_error_name(HERMES_ERR_FORBIDDEN), "ForbiddenError") == 0);
+    TEST("K09 RateLimitedError name", strcmp(hermes_error_name(HERMES_ERR_RATE_LIMITED), "RateLimitedError") == 0);
+    TEST("K10 ValidationError name", strcmp(hermes_error_name(HERMES_ERR_VALIDATION), "ValidationError") == 0);
+    TEST("K11 QuotaError name", strcmp(hermes_error_name(HERMES_ERR_QUOTA), "QuotaError") == 0);
+    TEST("K12 ModelError name", strcmp(hermes_error_name(HERMES_ERR_MODEL), "ModelError") == 0);
+    TEST("K13 ToolError name", strcmp(hermes_error_name(HERMES_ERR_TOOL), "ToolError") == 0);
+    TEST("K14 PluginError name", strcmp(hermes_error_name(HERMES_ERR_PLUGIN), "PluginError") == 0);
+    TEST("K15 GatewayError name", strcmp(hermes_error_name(HERMES_ERR_GATEWAY), "GatewayError") == 0);
+    TEST("K16 SessionError name", strcmp(hermes_error_name(HERMES_ERR_SESSION), "SessionError") == 0);
+    TEST("K17 SerializationError name", strcmp(hermes_error_name(HERMES_ERR_SERIALIZE), "SerializationError") == 0);
+    TEST("K18 InternalError name", strcmp(hermes_error_name(HERMES_ERR_INTERNAL), "InternalError") == 0);
+    TEST("K19 AbortError name", strcmp(hermes_error_name(HERMES_ERR_ABORT), "AbortError") == 0);
+    TEST("K20 ProtocolError name", strcmp(hermes_error_name(HERMES_ERR_PROTOCOL), "ProtocolError") == 0);
+
+    /* Error creation with context */
     {
         hermes_error_t e = hermes_error_ctx(HERMES_ERR_OUT_OF_RANGE, "temperature 2.5", "config.c:847");
         TEST("context stored", strcmp(e.context, "config.c:847") == 0);
