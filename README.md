@@ -1,6 +1,6 @@
 # C/ — Hermes Agent in C
 
-**HONEST STATUS: ~69% structural parity toward 1:1 Python replacement (~220 gaps).**
+**HONEST STATUS: ~36% real parity toward 1:1 Python replacement (161 of 447 gaps closed per DA v9, see `.hermes/mind-palace/plans/300-gap-roadmap-v1.md`).**
 One-binary replacement for the [Python hermes-agent](https://github.com/waefrebeorn/hermes-agent). Zero runtime dependencies beyond libc + libssl.
 
 ```
@@ -64,7 +64,7 @@ bash test_runner.sh                    # Full suite — 116 test files
 bash test_runner.sh --verbose          # Detailed output per test
 ```
 
-Suite: **154 passed, 0 failed, 0 skipped** (2026-06-01)
+Suite: **154 passed, 0 failed, 0 skipped** (2026-05-23)
 
 Test coverage areas:
 - **Libraries**: json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display
@@ -121,7 +121,7 @@ C/
 
 ## Upstream
 
-183 commits behind Python hermes-agent at HEAD.
+183 commits behind Python hermes-agent at HEAD (Python's origin/main has 396 fewer C commits but 183 newer Python changes not yet ported).
 
 ## License
 
