@@ -222,6 +222,49 @@ jobs:
           path: C/coverage-filtered.info
           retention-days: 30
 
+  cve-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y -qq wget apt-transport-https gnupg
+          wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq trivy
+
+      - name: Scan system packages for CVEs
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            --ignore-unfixed /usr/lib/x86_64-linux-gnu/ 2>&1 | head -60
+
+      - name: Scan vendored C libraries
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            lib/ 2>&1 | head -60
+
+      - name: Scan binary for embedded dependencies
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            hermes 2>&1 | head -60
+
   perf:
     runs-on: ubuntu-latest
     timeout-minutes: 10
