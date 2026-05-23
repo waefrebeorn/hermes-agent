@@ -76,9 +76,9 @@ The 158 C-specific commits since the fork start have fixed bugs that existed in 
 
 *The real achievement of the translation isn't that the C version works. It's that we now understand what the Python version was *actually* doing — and it was more than any of us realized.*
 
-## June 2026 Update: The Test Coverage Surge
+## May 2026 Update: The Test Coverage Surge
 
-Two months after the original essay, the numbers tell a different story. The C translation is no longer a hopeful prototype — it has passed the point where "it compiles" is newsworthy. The suite has grown from 117/0/0 to 154/0/0. Library ports are finished at 30 .a archives — every Python stdlib equivalent the port needs has a C counterpart. All 10 plugin backends compile as .so files. The gateway supports 19 platforms (one more than Python). The CLI has ~148 command handlers.
+Days after the original essay, the numbers tell a different story. The C translation is no longer a hopeful prototype — it has passed the point where "it compiles" is newsworthy. The suite has grown from 117/0/0 to 154/0/0. Library ports are finished at 30 .a archives — every Python stdlib equivalent the port needs has a C counterpart. All 10 plugin backends compile as .so files. The gateway supports 19 platforms (one more than Python). The CLI has ~148 command handlers.
 
 The testing phase has shifted focus from "can we build it" to "can we prove it works." The 116 test files cover: every library (30 archives fully tested), every provider error path (225 assertions across 9 providers), every cron subsystem (scheduler, store, expression parser, chain, template, retry), every gateway escape mode, every tool handler, every plugin.
 

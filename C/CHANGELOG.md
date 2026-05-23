@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] — 2026-06-01
+## [Unreleased] — 2026-05-23
 
 ### Added
 - **300-gap battleship roadmap**: 16-sector Python→C gap analysis, 447 gaps cataloged
@@ -17,7 +17,7 @@
 ### Suite
 - 154/0/0 — 116 test files, ~573 assertions
 
-## [v0.14.1] — 2026-05-29
+## [v0.14.1] — 2026-05-23
 
 ### Added
 - J18 libwebsocket: 14 tests, .a target
@@ -30,7 +30,7 @@
 ### Suite
 - 152/0/0
 
-## [v0.14.0] — 2026-05-26
+## [v0.14.0] — 2026-05-22
 
 ### Added
 - Provider test suite: Anthropic (80), Google (40), Bedrock (35), Azure (45)
@@ -59,7 +59,7 @@
 ### Suite
 - 96/0/0 → 117/0/0
 
-## [v0.12.0] — 2026-05-24
+## [v0.12.0] — 2026-05-22
 
 ### Added
 - A03: `${VAR:-default}` env expansion in config

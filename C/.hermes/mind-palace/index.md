@@ -25,8 +25,8 @@
 | File | Purpose |
 |------|---------|
 | `vault/achievements.md` | All milestones, bug bounties, subsystem parity (up to date) |
-| `vault/translation-essay.md` | Philosophical essay on the translation (5/27 with June 2026 update) |
-| `vault/translation-essay-2.md` | "The Gap Reveal" — honest accounting sequel (6/1) |
+| `vault/translation-essay.md` | Philosophical essay on the translation (with May 2026 update) |
+| `vault/translation-essay-2.md` | "The Gap Reveal" — honest accounting sequel (5/23) |
 
 ## Root-Level Docs
 | File | Purpose |

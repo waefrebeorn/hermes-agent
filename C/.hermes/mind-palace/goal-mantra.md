@@ -7,7 +7,7 @@ P0: WuBu Slermes — C Translation. ~220 gaps to 1:1 parity with Python Hermes.
 /home/wubu/hermes-agent-dev/C/ — C source (~380K LOC, 147 source files, 116 test files)
 /home/wubu/.slermes/ — config (SLERMES_HOME) with config.yaml + .env
 
-── STATE (DA June 2026) ──
+── STATE (DA May 2026) ──
 ✅ Config: 98% (322 YAML keys, profiles, ${VAR}, !include)
 ✅ Providers: 87% (9 ops, 10 provider .c — 7 quirks)
 ✅ MCP: 100%

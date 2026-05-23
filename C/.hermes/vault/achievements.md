@@ -1,7 +1,7 @@
 # Hermes C — Achievement Vault
 
-> **Last updated:** 2026-06-01 (DA v9)
-> **Status:** C translation in progress — ~69% structural parity. Binary runs end-to-end with DeepSeek v4 Flash.
+> **Last updated:** 2026-05-23 (DA v9)
+> **Status:** C translation in progress — ~36% real parity (447 gaps, 161 closed). Binary runs end-to-end with DeepSeek v4 Flash.
 > **Commit count:** 392 C-specific commits
 > **Suite health:** 154 passing · 0 failing · 0 skipped (116 test files, ~573 assertions)
 
@@ -141,7 +141,7 @@ Major subsystem completions, ordered chronologically.
 
 ---
 
-## 3. Subsystem Parity (June 2026)
+## 3. Subsystem Parity (May 2026)
 
 | Subsystem | C Status | Key Numbers | Notes |
 |-----------|----------|-------------|-------|

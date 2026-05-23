@@ -24,8 +24,7 @@ You should receive an acknowledgment within 72 hours. If not, follow up.
 
 ### Disclosure Timeline
 - Confirmation within **3 business days**
-- Fix typically within **7–14 days** depending on severity
-- Public disclosure **30 days after fix release**, or earlier if a fix is already public
+- Fix and public disclosure timeline depends on severity — coordinated disclosure preferred
 
 ## Known Security Features
 

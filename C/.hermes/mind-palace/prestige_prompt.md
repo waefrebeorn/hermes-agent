@@ -3,7 +3,7 @@
 ## Identity
 1:1 reimplementation of Python hermes-agent in C. Every feature, handler, and API quirk has a C equivalent. 147 source files (non-lib), 30 library archives, 10 plugins, 19 gateway platforms, ~148 CLI commands. 392 commits.
 
-## Real Current State (DA June 2026, source-verified counts)
+## Real Current State (DA May 2026, source-verified counts)
 
 | Category | Status | Key Facts |
 |----------|--------|-----------|
