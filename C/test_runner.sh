@@ -44,7 +44,7 @@ run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$C
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 echo ""; echo "=== Plugin Honcho (In-Memory Memory) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
-    -DPLUGIN_DIR='"'"$CDIR/src/plugins"'"' \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
     "$CDIR/tests/test_plugin_honcho.c" \
     "$CDIR/lib/libplugin/plugin.c" \
     -o /tmp/hermes_test_plugin_honcho -ldl -lm > /dev/null 2>&1; then
@@ -52,6 +52,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_honcho (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_honcho
 else skip "plugin_honcho (compilation failed)"
+fi
+
+echo ""; echo "=== Plugin Achievements Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -DPLUGIN_DIR='"'$CDIR/src/plugins'"' \
+    "$CDIR/tests/test_plugin_achievements.c" \
+    "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_plugin_achievements -ldl -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_plugin_achievements > /dev/null 2>&1; then ok "plugin_achievements (achievement tracking)"
+    else fail "plugin_achievements (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_plugin_achievements
+else skip "plugin_achievements (compilation failed)"
 fi
 
 echo ""; echo "=== Plugin Kanban (In-Memory Board) Tests ==="
