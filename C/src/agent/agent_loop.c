@@ -337,7 +337,10 @@ bool agent_save_meta(agent_state_t *state) {
     db_load_meta(state->db, state->session_id, &meta);
 
     /* Update fields from current state */
-    snprintf(meta.title, sizeof(meta.title), "%s", state->session_id);
+    if (state->user_title[0])
+        snprintf(meta.title, sizeof(meta.title), "%s", state->user_title);
+    else
+        snprintf(meta.title, sizeof(meta.title), "%s", state->session_id);
     if (state->llm.model[0])
         snprintf(meta.model, sizeof(meta.model), "%s", state->llm.model);
     meta.message_count = (int)state->message_count;

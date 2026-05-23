@@ -227,6 +227,7 @@ typedef struct {
     int               iteration_count;
     bool              interrupted;
     char              session_id[64];
+    char              user_title[256]; /* user-set session title (via /title) */
     char              hermes_home[HERMES_PATH_MAX];
     db_t             *db;           /* session database (optional) */
     llm_token_cb_t    stream_cb;   /* streaming token callback (optional) */

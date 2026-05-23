@@ -1617,10 +1617,13 @@ static void cmd_deny(const char *args, agent_state_t *state) {
 static void cmd_title(const char *args, agent_state_t *state) {
     if (!args || !args[0]) {
         printf("Usage: /title <session title>\n");
+        printf("Current title: %s\n", state->user_title[0] ? state->user_title : "(auto: session ID)");
         return;
     }
-    /* Store title in session metadata (currently just prints) */
-    printf("Session title set to: %s\n", args);
+    snprintf(state->user_title, sizeof(state->user_title), "%s", args);
+    /* Save to DB immediately */
+    if (state->db) agent_save_meta(state);
+    printf("Session title set to: %s\n", state->user_title);
 }
 
 /* /resume: Resume a previously-named session */
@@ -2297,14 +2300,21 @@ static void cmd_insights(const char *args, agent_state_t *state) {
     printf("  Iterations used:  %d/%d\n", state->iteration_count, state->max_iterations);
 }
 
-/* /indicator: Pick TUI indicator style */
+/* /indicator: Pick TUI indicator style — stores in static var */
+static char g_indicator_style[32] = "default";
 static void cmd_indicator(const char *args, agent_state_t *state) {
     (void)state;
     if (!args || !args[0]) {
-        printf("Current indicator: default. Options: default, dots, bar, face\n");
+        printf("Current indicator: %s Options: default, dots, bar, face\n", g_indicator_style);
         return;
     }
-    printf("Indicator set to: %s\n", args);
+    if (strcmp(args, "default") == 0 || strcmp(args, "dots") == 0 ||
+        strcmp(args, "bar") == 0 || strcmp(args, "face") == 0) {
+        snprintf(g_indicator_style, sizeof(g_indicator_style), "%s", args);
+        printf("Indicator set to: %s\n", args);
+    } else {
+        printf("Unknown indicator: %s Options: default, dots, bar, face\n", args);
+    }
 }
 
 /* /statusbar: Toggle status bar */
