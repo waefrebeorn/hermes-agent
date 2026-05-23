@@ -265,6 +265,45 @@ jobs:
           trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
             hermes 2>&1 | head -60
 
+  crosscompile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install cross-compilation toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            gcc-aarch64-linux-gnu \
+            gcc-arm-linux-gnueabihf \
+            libssl-dev
+
+      - name: Cross-compile for linux-aarch64
+        run: |
+          bash scripts/cross-compile.sh linux-aarch64 2>&1
+          test -f hermes-aarch64
+          file hermes-aarch64 | grep -q aarch64 || echo "WARNING: binary may not be aarch64"
+
+      - name: Cross-compile for linux-armv7
+        run: |
+          bash scripts/cross-compile.sh linux-armv7 2>&1
+          test -f hermes-armv7
+
+      - name: Upload cross-compiled artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: hermes-crosscompile-${{ github.sha }}
+          path: |
+            C/hermes-aarch64
+            C/hermes-armv7
+          retention-days: 7
+
   perf:
     runs-on: ubuntu-latest
     timeout-minutes: 10
