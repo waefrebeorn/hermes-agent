@@ -20,11 +20,12 @@
 | Security | 6/10 | 60% | Sandbox, URL safety |
 | Provider | 11/18 | 61% | 9 native + metadata |
 | Stubs | 4/10 | 40% | ALL stubs resolved ✓. CDP was never a stub (DA v12) |
-| Tests | 0/12 | 0% | Gateway, CLI depth, MCP, fuzz, leak |
+| Tests | 2/12 | 17% | Gateway, CLI depth, MCP, fuzz, leak. T01: 64 per-platform tests added |
 | CI/CD | 0/10 | 0% | Docker fixed, ASan, cross-compile WIP |
 | **Total** | **168/500** | **34%** | **332 gaps remaining** |
 
 ## Session Log
+- **DA v13 (May 23):** T01 — Gateway per-platform tests (Telegram JSON parsing + Discord setters + Webhook HMAC + subscriptions). 64 new assertions.
 - **DA v12 (May 23):** ALL 4 stubs resolved: computer_use (S01-S02), image_gen (S07), TUI sess browser (S10). CDP re-audited NOT stub. 168/500.
 - **DA v10 (May 23):** Upstream sync (183 commits). Triple DA audit. Parity 36%→34%.
 - **DA v9 (May 22):** Full code sweep. Found 16 bugs. Battleship v1 (447 gaps).

@@ -1099,6 +1099,61 @@ else
     skip "gateway_escape (M07: compilation failed)"
 fi
 
+# Gateway per-platform integration tests (T01): Telegram + Discord parsers
+# Tests JSON parsing, state management without HTTP.
+echo ""; echo "=== Gateway Per-Platform Tests (T01) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_gateway_platforms.c" \
+    "$CDIR/src/gateway/platforms/telegram.c" "$CDIR/src/gateway/platforms/discord.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_gw_platforms -lm \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 39 tests)"
+    else
+        echo "  Gateway platform test output:"
+        /tmp/hermes_test_gw_platforms 2>&1 | sed 's/^/    /'
+        fail "gateway_platforms (T01: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_gw_platforms
+else
+    echo "  Gateway platform test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_gateway_platforms.c" \
+        "$CDIR/src/gateway/platforms/telegram.c" "$CDIR/src/gateway/platforms/discord.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_gw_platforms -lm \
+        -Wl,--unresolved-symbols=ignore-all 2>&1 | sed 's/^/    /'
+    skip "gateway_platforms (T01: compilation failed)"
+fi
+
+# Gateway per-platform webhook tests (T01): HMAC + subscription management
+# Needs crypto library for HMAC verification.
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    -DWEBHOOK_TESTS \
+    "$CDIR/tests/test_gateway_platforms.c" \
+    "$CDIR/src/gateway/platforms/webhook.c" \
+    "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_gw_wh -lm -lssl -lcrypto \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_gw_wh > /dev/null 2>&1; then ok "gateway_webhook (T01: 25 tests)"
+    else
+        echo "  Gateway webhook test output:"
+        /tmp/hermes_test_gw_wh 2>&1 | sed 's/^/    /'
+        fail "gateway_webhook (T01: test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_gw_wh
+else
+    echo "  Gateway webhook test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+        -DWEBHOOK_TESTS \
+        "$CDIR/tests/test_gateway_platforms.c" \
+        "$CDIR/src/gateway/platforms/webhook.c" \
+        "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_gw_wh -lm -lssl -lcrypto \
+        -Wl,--unresolved-symbols=ignore-all 2>&1 | sed 's/^/    /'
+    skip "gateway_webhook (T01: compilation failed)"
+fi
+
 # Plugin system test (needs plugin lib + dlfcn)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_plugins.c" \
