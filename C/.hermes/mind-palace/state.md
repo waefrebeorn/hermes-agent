@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-06-01, Session 32)
+# State — Hermes C Translation (2026-06-01, Session 35)
 
-**~60% parity — ~300 of ~500 gaps closed (DA v13).**
+**~61% parity — ~304 of ~500 gaps closed.**
 
 ## Dashboard
 || Category | Done | % | Notes |
@@ -10,7 +10,7 @@
 || CLI | 79/95 | 83% | 79 commands registered |
 || Tools | 60/92 | 65% | 38 source + 44 lib modules |
 || Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
-|| MCP | 4/11 | 36% | libmcp + libmcp_oauth + mcp_serve |
+|| MCP | 5/11 | 45% | +WebSocket transport |
 || ACP | 5/9 | 56% | tools/list, tools/call, session/delete added |
 || Cron | 3/3 | 100% | Done |
 || TUI | 4/8 | 50% | 2865-line ncurses impl |
@@ -23,9 +23,10 @@
 || Tests | 10/12 | 83% | T01-T09 + library tests |
 || CI/CD | 10/10 | 100% | All U gaps closed |
 || Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-|| **Total** | **~300/500** | **~60%** | **~200 gaps remaining (DA v13)** |
+|| **Total** | **~304/500** | **~61%** | **~196 gaps remaining** |
 
 ## Session Log
+- **Session 35 (Jun 1):** Added WebSocket transport to MCP library (`lib/libmcp/mcp.c/h`). New API `mcp_server_set_websocket()` enables connecting to MCP servers via `ws://` or `wss://` URLs. Implements WebSocket send via `ws_send()`, receive via `ws_recv()` with buffer accumulation, JSON-RPC id matching, and incoming server→client request queuing. Cleanup via `ws_close()` on disconnect. Verified at runtime: 9/9 tests pass (graceful failure on bad URL, empty URL, unreachable port, NULL-free safety). Build: 0 errors, 0 warnings. MCP sector: 5/11 (~45%) up from 36%. Commit `95e07cfdf`.
 - **Session 34 (Jun 1):** Added 3 new ACP protocol methods to `src/acp/server.c`: `tools/list` (enumerate all registered tools), `tools/call` (direct tool invocation by name with JSON args), `session/delete` (remove session + free agent state). ACP protocol methods now total 17 (up from 14). Verified at runtime: 8/8 ACP protocol tests pass (build: 0 errors, test binary passes). Parity updated: ACP sector ~5/9 (~56%) up from 22%. Commit `cc447245b`.
 - **Session 33 (Jun 1):** Added checkpoint persistence to `process.c` — `proc_save_checkpoint()` serializes running process state to `SLERMES_HOME/processes.json` on every state change (start/kill/signal/cleanup). `proc_load_checkpoint()` restores state on first dispatch after restart, enabling crash recovery for background processes across gateway restarts. Suite: 196/0/0. Build: 0 errors. Commit `c97b59474`.
 - **Session 32 (Jun 1):** DA v13 audit — comprehensive parity re-evaluation. All 4 critical stubs verified resolved. Parity revised to ~60% (300/500 gaps). State.md dashboard updated. New `da-audit-v13.md` written.
