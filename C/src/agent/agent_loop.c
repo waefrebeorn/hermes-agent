@@ -1166,6 +1166,12 @@ retry_done:
 
             if (!works[i].result)
                 works[i].result = NULL;
+
+            /* Fire tool.started event for approved tools */
+            if (works[i].approved && state->tool_event_cb) {
+                state->tool_event_cb("tool.started", works[i].tool_name,
+                                     works[i].tool_args, state->tool_event_data);
+            }
         }
 
         /* Phase 2: Parallel execution via pthreads */
@@ -1282,6 +1288,13 @@ retry_done:
                     }
                     fprintf(stderr, "[guardrail] Warn: %s\n", gd.code);
                 }
+            }
+
+            /* Fire tool.completed event */
+            if (state->tool_event_cb) {
+                const char *completed_type = tool_failed ? "tool.failed" : "tool.completed";
+                state->tool_event_cb(completed_type, works[i].tool_name,
+                                     works[i].result, state->tool_event_data);
             }
             free(works[i].tool_name);
             free(works[i].tool_args);

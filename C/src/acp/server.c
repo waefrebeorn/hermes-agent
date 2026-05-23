@@ -10,6 +10,7 @@
 
 #include "acp/server.h"
 #include "acp/edit_approval.h"
+#include "acp/events.h"
 #include "hermes_json.h"
 #include "hermes_agent.h"   /* agent_init, agent_state_t, tool registry */
 #include <stdio.h>
@@ -255,6 +256,8 @@ static json_node_t *handle_new_session(const char *id, json_node_t *params, acp_
 
     /* Initialize agent state with tools */
     agent_init(&sess->agent);
+    sess->agent.tool_event_cb = acp_tool_event_cb;
+    sess->agent.tool_event_data = (void *)sess;
     if (!sess->agent.tools.tools) {
         /* First session: init tools */
         extern void tools_init_all(void);
@@ -569,6 +572,8 @@ static json_node_t *handle_fork_session(const char *id, json_node_t *params, acp
 
     /* Copy agent state from source */
     agent_init(&sess->agent);
+    sess->agent.tool_event_cb = acp_tool_event_cb;
+    sess->agent.tool_event_data = (void *)sess;
     if (src->agent.tools.tools)
         sess->agent.tools = src->agent.tools;
 

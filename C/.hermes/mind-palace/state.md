@@ -1,6 +1,6 @@
-# State — Hermes C Translation (2026-06-01, Session 38)
+# State — Hermes C Translation (2026-06-01, Session 39)
 
-**~62% parity — ~306 of ~500 gaps closed.**
+**~62% parity — ~307 of ~500 gaps closed.**
 
 ## Dashboard
 || Category | Done | % | Notes |
@@ -11,7 +11,7 @@
 || Tools | 62/92 | 67% | +tool_dispatch_helpers |
 || Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
 || MCP | 5/11 | 45% | +WebSocket transport |
-|| ACP | 6/9 | 67% | +edit_approval_response, set_auto_approve, edit_proposal |
+|| ACP | 7/9 | 78% | +events bridge (tool start/complete, plan update) |
 || Cron | 3/3 | 100% | Done |
 || TUI | 5/8 | 63% | +session search filtering |
 || Plugins | 10/26 | 38% | 10 .so, 16 to port |
@@ -23,10 +23,10 @@
 || Tests | 10/12 | 83% | T01-T09 + library tests |
 || CI/CD | 10/10 | 100% | All U gaps closed |
 || Upstream | 3/3 | 100% | Secrets ported (secrets.c) |
-|| **Total** | **~305/500** | **~61%** | **~195 gaps remaining** |
+|| **Total** | **~307/500** | **~61%** | **~193 gaps remaining** |
 
 ## Session Log
-- **Session 38 (Jun 1):** Ported ACP edit_approval module (`acp_adapter/edit_approval.py` → `src/acp/edit_approval.c` + `include/acp/edit_approval.h`). Added 2 new ACP methods: `edit_approval_response` (client resolves pending edit approval) and `set_auto_approve` (per-session auto-approval policy: ask/session/workspace_session). Core logic: `acp_build_edit_proposal()` builds edit proposals for write_file/patch tools, `acp_should_auto_approve_edit()` checks auto-approve policies with sensitive-path detection (.git/, .ssh/, .env, id_rsa), `acp_is_sensitive_path()` blocks auto-approve on security-sensitive files. Integrated into `handle_tools_call()` in server.c — when a file-mutation tool call is detected, sends `edit_proposal` notification to client and returns error code -32998. Client sends `edit_approval_response` to approve/deny, with cached approval consumed on retry. ACP sector: 6/9 (~67%) up from 56%. Build: 0 errors, 0 warnings. Suite: 195/1/0 (pre-existing process_tool failure).
+- **Session 39 (Jun 1):** Ported ACP events module (`acp_adapter/events.py` → `src/acp/events.c` + `include/acp/events.h`). Added `tool_event_cb_t` callback type and `tool_event_cb`/`tool_event_data` fields to `agent_state_t` in hermes.h. Instrumented agent_loop.c to fire `tool.started`/`tool.completed`/`tool.failed` events around tool dispatch (Phase 1 / Phase 3). Created ACP notification bridge: `acp_tool_event_cb()` converts tool events into `session_update` notifications (ToolCallStart, ToolCallComplete, ToolCallFailed) over ACP stdio JSON-RPC. Added `acp_build_plan_update_notification()` — translates Hermes todo tool results into ACP plan_update entries for IDE integration (VS Code, Zed). Tool call IDs tracked per (session_id, tool_name) pair with FIFO ordering for parallel dispatch. Wired into ACP server at session creation (handle_new_session, handle_fork_session). ACP sector: 7/9 (~78%) up from 67%. Build: 0 errors, 0 warnings. Suite: 195/1/0 (pre-existing process_tool failure).
 - **Session 36 (Jun 1):** Ported `agent/tool_dispatch_helpers.py` (350 lines) to C. New `lib/libtooldispatch/` library with 5 stateless utility functions: `is_destructive_command()` (heuristic for terminal commands that modify files — rm, cp, mv, sed -i, git reset/clean/checkout, output redirects), `extract_error_preview()` (one-line error summary from tool results with JSON error field extraction), `extract_file_mutation_targets()` (file path extraction from write_file/patch args, supports replace mode and V4A multi-file patch headers), `is_multimodal_tool_result()` (multimodal envelope detection), and `paths_overlap()` (filesystem subtree overlap). All functions thread-safe. Verified at runtime: 43/43 tests pass. Build: 0 errors, 0 new warnings. Tools sector: +2 (62/92). Commit `91b2d8735`.
 - **Session 35 (Jun 1):** Added WebSocket transport to MCP library (`lib/libmcp/mcp.c/h`). New API `mcp_server_set_websocket()` enables connecting to MCP servers via `ws://` or `wss://` URLs. Verified at runtime: 9/9 tests pass. MCP sector: 5/11 (~45%) up from 36%. Commit `95e07cfdf`.
 - **Session 34 (Jun 1):** Added 3 new ACP protocol methods to `src/acp/server.c`: `tools/list` (enumerate all registered tools), `tools/call` (direct tool invocation by name with JSON args), `session/delete` (remove session + free agent state). ACP protocol methods now total 17 (up from 14). Verified at runtime: 8/8 ACP protocol tests pass (build: 0 errors, test binary passes). Parity updated: ACP sector ~5/9 (~56%) up from 22%. Commit `cc447245b`.

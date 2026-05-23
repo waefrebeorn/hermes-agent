@@ -189,6 +189,15 @@ typedef struct db_t db_t;
  * Return non-zero to abort. */
 typedef int (*llm_token_cb_t)(const char *token, void *userdata);
 
+/* Tool event callback. Called before/after tool dispatch operations.
+ * event_type: "tool.started" | "tool.completed" | "tool.failed"
+ * tool_name: the name of the tool
+ * args_json: serialized arguments (for started) or result (for completed/failed)
+ * userdata: opaque user pointer.
+ * Return non-zero to allow event, zero to suppress. */
+typedef int (*tool_event_cb_t)(const char *event_type, const char *tool_name,
+                                const char *args_json, void *userdata);
+
 /* P97: Compression feedback — user-rated quality, adaptive threshold */
 typedef struct {
     int   total_compressions;    /* number of compression events tracked */
@@ -235,6 +244,8 @@ typedef struct {
     db_t             *db;           /* session database (optional) */
     llm_token_cb_t    stream_cb;   /* streaming token callback (optional) */
     void             *stream_data; /* userdata for stream callback */
+    tool_event_cb_t   tool_event_cb;   /* tool event callback (optional) */
+    void             *tool_event_data; /* userdata for tool event callback */
     void             *plugin_reg;  /* plugin registry (optional, opaque) */
     bool              compress_enabled; /* smart context compression via LLM */
     /* P28: Undo snapshot — copy of messages before last modification */
