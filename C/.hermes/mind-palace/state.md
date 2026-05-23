@@ -6,7 +6,7 @@
 | Category | Done | % | Notes |
 |----------|------|---|-------|
 | Core | 12/16 | 75% | Solid |
-| Agent | 38/115 | 33% | rate_limit_tracker.py ported |
+|| Agent | 39/115 | 34% | tool_guardrails.py ported ||
 | CLI | 32/95 | 34% | /sethome, /title, /bundles, /send, /busy, /reload-skills, /skin, /background, /reload-mcp, /platform fixed; /reasoning/steer/update/debug fixed |
 | Tools | 41/92 | 45% | 68 registered + test_runner fixes |
 | Gateway | 22/64 | 34% | 19 platforms |
@@ -22,9 +22,10 @@
 | Stubs | 4/10 | 40% | ALL stubs resolved |
 | Tests | 10/12 | 83% | T01-T09 + ansi_strip + binary_extensions tests |
 | CI/CD | 10/10 | 100% | All U gaps closed |
-| **Total** | **239/500** | **47.8%** | **261 gaps remaining** |
+| **Total** | **240/500** | **48.0%** | **260 gaps remaining** |
 
 ## Session Log
+- **Session 25 (May 29):** Ported `agent/tool_guardrails.py` (475 lines) to C. New `hermes_tool_guardrails.h/c` with before_call/after_call decision loop (allow/warn/block/halt), exact failure repetition tracking, same-tool failure tracking with halt threshold (8), idempotent no-progress detection (2-warn/5-block). Integrated into agent_loop Phase 1 (before approval) and Phase 3 (after classification). Wired to config `guardrails.abort_on_safety_violation` and `guardrails.max_consecutive_failures`. Suite: 196/0/0 (48 new assertions). Parity: 240/500 (+1 gap closed). Commit `2ea5cfb05`.
 - **Session 24 (May 29):** Fixed `/sethome` — was printing "Home channel set to: X (in-memory only)" without storing. Now stores in static var. Suite: 195/0/0. Parity: 239/500.
 - **Session 23 (May 29):** Fixed `/title` — was printing "Session title set to: X" but never storing. Added `user_title[256]` field to `agent_state_t`. Fixed `agent_save_meta()` — was overwriting title with session_id every save; now respects user-set title. Suite: 195/0/0. Parity: 237/500.
 - **Session 22 (May 29):** Fixed `/bundles` — was a stub that always said "No bundles configured." Now scans `~/.slermes/skill-bundles/*.yaml`, parses name/description/skills from YAML, and displays them. Suite: 195/0/0. Parity: 235/500.
