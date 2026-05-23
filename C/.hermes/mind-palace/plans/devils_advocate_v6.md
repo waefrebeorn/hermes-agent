@@ -159,6 +159,46 @@
 **Survey method:** All counts verified from actual source code (grep, wc -l, ls) on 2026-05-27.
 **Not inherited from v5.** Previous DA document's counts not used as starting numbers.
 **Remaining gaps:** ~339 (from structural parity). ~400+ when counting tests at full Python parity.
-**Next audit trigger:** After next 10 phase completions or at user request.
+| **Next audit trigger:** After next 10 phase completions or at user request.
+
+---
+
+## Appendix: Delegation Verification Audit
+
+Delegated tasks were triple-checked after commit. Findings:
+
+### Delegate 1: README Analysis ✅
+- Claimed root and C/README.md are identical content (both are the same file via symlink)
+- **Verified:** md5sum matches. C/README.md → ../README.md symlink confirmed.
+
+### Delegate 2: Python Counts ❌ (4 of 6 wrong)
+| Metric | Delegate Claim | Actual (DA v6 verified) | Verdict |
+|--------|---------------|------------------------|---------|
+| Provider adapter files | 6 | 6 | ✅ |
+| CLI command count | 69 | 69 (CommandDef) | ✅ |
+| Gateway platforms | 18 | 20 (including api_server, msgraph_webhook) | ❌ -2 |
+| Config keys | 59 | 108+ top-level and sub-config dict keys | ❌ -49 |
+| Plugin directories | 16 | 17 | ❌ -1 |
+| Tool files | 73 | 70 | ❌ +3 |
+
+### Delegate 3: Essay (translation-essay.md) ❌
+- **"9.1MB static binary"** — WRONG. Binary is dynamically linked (libssl, libcrypto, libc). Fixed to "dynamically linked, libssl+libc only." ✅ Fixed post-commit.
+
+### Delegate 4: Achievements Vault (achievements.md) ❌ Multiple:
+1. **"C translation complete"** — WRONG. ~60% structural parity. Fixed to "in progress."
+2. **Provider parity map invents Groq, Together, Mistral, Cohere** — These are metadata-only entries, NOT native providers. The C port has only 9 native providers: OpenAI, Anthropic, Google, DeepSeek, OpenRouter, xAI, Azure, Bedrock, Custom. The delegate fabricated implementation status for providers that don't have C adapters.
+3. **Claims FIM for Together** — Only DeepSeek has FIM. Together has no FIM implementation.
+4. **Coverage numbers made up** — "~72% Python, ~81% C" — no coverage tooling exists. Fabricated.
+5. **"Suite health: Python passing 58"** — Misleading. Python has 1,140 test files, not 58 tests. 58 was the old C suite count, not Python's.
+6. **Stretch goals invented** — WASM runtime, formal verification, `no_std` embedded — none appear in any roadmap or plan.
+7. **Date stamp wrong** — claimed "Last updated 2026-05-22" but created on 2026-05-27.
+8. **False ASan claim** — Python's test suite doesn't run ASan (it's Python). Claiming "ASan clean: ❌" for Python is category error.
+
+**All above fixed.** Achievements vault rewritten from scratch with verified claims.
+
+### Key Lesson
+Delegate 2 (Python counts) missed 49 config keys, 2 gateway platforms, 1 plugin dir. Delegate 4 fabricated an entire provider parity map. The essay had 1 factual error. The README analysis was the only accurate delegate.
+
+**Rule confirmed: Never delegate qualitative analysis. Delegation loses receipts.**
 
 *~WuBu~ strives for more.*

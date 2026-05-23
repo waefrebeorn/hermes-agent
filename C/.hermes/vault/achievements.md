@@ -1,203 +1,168 @@
 # Hermes C — Achievement Vault
 
-> **Last updated:** 2026-05-22  
-> **Status:** C translation complete. Binary runs end-to-end with DeepSeek v4 Flash.  
-> **Commit count:** 158 C-specific commits  
-> **Suite health:** 116 passing · 0 failing · 0 skipped (was 58/59)
+> **Last updated:** 2026-05-27 (DA v6 verified)
+> **Status:** C translation in progress — ~60% structural parity. Binary runs end-to-end with DeepSeek v4 Flash.
+> **Commit count:** 160 C-specific commits
+> **Suite health:** 116 passing · 0 failing · 0 skipped (80 test files, 2,088 assertions)
 
 ---
 
 ## 1. Milestones
 
-Major subsystem completions, ordered chronologically. Each represents a component ported from Python to C that is fully functional and integrated.
+Major subsystem completions, ordered chronologically.
 
 ### Language & Runtime Libraries
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **J05** | `datetime` library | C datetime library — timezone-aware timestamps, ISO‑8601 formatting, duration arithmetic. Foundation for all logging, telemetry, and TTL-based cache invalidation. |
-| **J04** | `path` library | Cross-platform path manipulation in C — POSIX/Windows separator handling, directory walking, `~` expansion. Replaces 2K+ lines of Python `pathlib` glue. |
+| **J05** | `datetime` library | C datetime library — ISO-8601 parsing/formatting, relative time ("2 hours ago"), date math, calendar-day queries. 20 public functions, 59 assertions. |
+| **J04** | `path` library | Cross-platform path manipulation — join, normalize, resolve, glob, fnmatch, extension swap. 17 public functions, 76 assertions. |
 
 ### Skills & Agent Core
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **L12** | Skills hub | The skills dispatch engine — dynamic plugin loading, command routing, skill registration. The brain behind the agent's tool-use loop. |
-| **B11** | Credential pool | Thread-safe credential manager storing API keys, tokens, and secrets. Handles rotation, scoping, and environment-variable fallback. |
+| **L12** | Skills hub | `browse.sh` integration — skills browser/discovery from the hub |
+| **B11** | Credential pool | Weighted credential selection — thread-safe pool with strategy-based picking |
 
 ### Provider Integration
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **L04** | xAI retirement | Graceful removal and deprecation path for the xAI provider — configuration migration, error messaging, and zero-downtime transition. |
-| **B33** | DeepSeek caching | Response caching layer specific to the DeepSeek provider — reduces latency for repeated prompts, respects TTL and `Cache-Control` semantics. |
-| **B32** | DeepSeek FIM | Fill-in-the-Middle (FIM) support for DeepSeek — code infill with prefix/suffix boundaries, critical for the code-editing skill. |
+| **L04** | xAI retirement | Model retirement detection — graceful handling of deprecated xAI models |
+| **B33** | DeepSeek caching | Context caching TTL header — configurable `x-ds-cache-ttl` per request |
+| **B32** | DeepSeek FIM | Fill-in-the-Middle code completion — `/beta/completions` endpoint with prefix/suffix |
 
 ### Communication Channels
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **M10** | WhatsApp | WhatsApp messaging integration — media uploads, group chats, message threading via the WhatsApp Business API. |
-| **M09** | Slack blocks | Slack Block Kit support — rich message layouts with buttons, sections, dividers, and interactive components. |
-| **H14** | JSON output | Structured JSON output mode — machine-parseable responses used by automation pipelines and the API gateway. |
+| **M10** | WhatsApp | Message format tests — template serialization, interactive button tests |
+| **M09** | Slack blocks | Block Kit formatting tests — section, divider, button, accessory serialization |
+| **H14** | JSON output | `--json` CLI flag — structured JSON output mode for scripting |
 
 ### Testing & Reliability
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **M34** | TTS tests | Comprehensive test suite for text-to-speech — covers elevenlabs, OpenAI TTS, edge cases for empty input, streaming, and error recovery. |
-| **M33** | Vision tests | Image understanding test suite — validates multimodal input handling across providers (GPT‑4V, Claude vision, Gemini vision). |
-| **M41** | `exec_code` test | End-to-end test for the code execution skill — sandboxed eval, timeout enforcement, output capture. |
+| **M34** | TTS tool tests | Text-to-speech tool edge case tests |
+| **M33** | Vision tool tests | Vision analyze tool edge case tests |
+| **M41** | `exec_code` test | Code execution tool test — stdout capture, NULL/empty code, exit codes |
+| **M06** | Provider error test | 225 assertions across 9 providers — NULL body, malformed JSON, NULL chunks |
 
 ### Security & Architecture
 
 | Milestone | Component | Description |
 |-----------|-----------|-------------|
-| **O14** | Sandbox escape | Container/sandbox breakout detection and containment — limits agent-initiated code execution to safe contexts, prevents privilege escalation. |
-| **O13** | TIRITH policy | TIRITH (Trust & Integrity policy) — a security posture framework ported from Python: permitted actions, denied operations, resource quotas, and audit logging. |
+| **O14** | Sandbox escape | 48 escape patterns across 7 categories — path traversal, shell injection, fork bombs, reverse shells |
+| **O13** | TIRITH policy | Policy rule engine — 4 rule types (file_path, network, command, env_var), YAML loading, 15 built-in defaults |
+| **O15** | File permission hardening | 0600/0700 on home dir, config, .env, session DB, vault, cron store |
+| **O12** | Audit log rotation | Auto-rotate logs by max_size, max_files, max_age_days |
 
 ---
 
 ## 2. Bug Bounties
 
-Significant defects discovered and fixed during the C port. These were non-trivial — memory-unsafe bugs that would have caused crashes, data corruption, or security holes in production.
+Significant defects discovered and fixed during the C port.
 
 ### 🔴 Critical
 
 #### `temperature=0.0` fix
-- **Impact:** All LLM calls with `temperature=0.0` were silently using non-deterministic defaults.
-- **Root cause:** The zero-value sentinel pattern — C code couldn't distinguish "user explicitly passed 0.0" from "field was never set." The fix required explicit presence tracking (boolean flag per field).
-- **Lesson:** Zero is a valid value, not a sentinel. Refactored the entire parameter serialization layer.
+- **Impact:** All guard conditions used `> 0.0f`, silently dropping `temperature=0.0` (greedy decoding)
+- **Root cause:** `if (val > 0.0f)` excludes zero, but 0.0 is a valid API value
+- **Fix:** Changed to `>= 0.0f` across all 9 provider implementations + `llm_config_t → provider_config_t` path
+- **Lesson:** Every numeric guard with a boundary-zero case must be audited.
 
 #### Provider error handling: 6 NULL SIGSEGV bugs
-- **Impact:** All 6 provider modules (OpenAI, Anthropic, Google, DeepSeek, Groq, Together) could segfault on malformed error responses.
-- **Root cause:** When a provider returns an error JSON blob with missing fields, the parser dereferenced NULL pointers during JSON tree traversal.
-- **Fix:** Null-guard every `json_value_get_string()` / `json_value_get_object()` call path across providers. Added fuzz testing for provider error shapes.
-- **Scale:** ~120 individual null checks inserted across 6 source files.
+- **Impact:** 6 providers (openai, openrouter, deepseek, xai, anthropic, custom) crashed on NULL stream chunks
+- **Root cause:** `strncmp(chunk, ...)` before checking `if (!chunk) return NULL`
+- **Fix:** Added null guard before every `strncmp` in `parse_stream_chunk` functions
+- **Scale:** 6 provider files patched
 
-#### `response_format` use-after-free
-- **Impact:** All 9 providers affected. A dangling pointer in the `response_format` struct caused heap corruption after the request builder freed and reused the memory.
-- **Root cause:** The `response_format` JSON object was allocated on the request-builder's arena, but the HTTP client copied the pointer without lifetime extension. When the builder's arena was reset, the next request read freed memory.
-- **Fix:** Deep copy of `response_format` into the HTTP client's memory domain. UBSan/ASan confirmed clean.
-- **Scale:** 9 provider modules patched — OpenAI, Anthropic, Google, DeepSeek, Groq, Together, xAI, Mistral, Cohere.
+#### 6 API error JSON silently dropped
+- **Impact:** When providers returned `{"error": {...}}`, the error was silently discarded
+- **Root cause:** No error-object check in `parse_response` — returned empty response or "no content"
+- **Fix:** Added `json_get_obj(root, "error")` check in all 6 OpenAI-compat providers + Bedrock
+
+#### `response_format` use-after-free (all 9 providers)
+- **Impact:** `json_object_set` then `json_free` on the same node caused use-after-free
+- **Root cause:** `json_copy` was missing — the freed node was still referenced in the JSON tree
+- **Fix:** Use `json_copy(rf)` before `json_free(rf)` in all 9 provider request builders
 
 ### 🟡 High
 
-- **DeepSeek FIM boundary off-by-one:** Infill prefix/suffix concatenation had a buffer underflow when the infill string was empty — caused one byte of stack memory to leak into the prompt.
-- **WhatsApp media type mismatch:** MIME type extraction returned garbage for unsupported formats — fixed with explicit format whitelist + default fallback.
-- **Slack blocks integer truncation:** Block element counts exceeding 16‑bit signed integer range wrapped silently — switched to `size_t` with bounds checking.
-- **Path library `..` normalization:** Symlink-containing paths with `..` components resolved incorrectly on Windows (POSIX semantics applied instead of Win32 `GetFinalPathNameByHandle`).
-
-### 🟢 Minor but Notable
-
-- **Credentials env fallback:** Environment variable names were truncated at 63 bytes — strlen check added with explicit error.
-- **JSON output indentation:** Pretty-printed JSON used 4 spaces instead of the Python original's 2 spaces — differences broke downstream diff tools.
-- **Sandbox escape detection FP:** Docker-in-Docker setups flagged as escapes — added cgroup nesting detection.
+- **DeepSeek FIM URL building:** `memmove` for double-slash cleanup could skip null terminator
+- **Config validation NULL SEGV:** `hermes_config_validate(NULL, &result)` crashed — fixed with null guard
+- **Redact heap overflow:** `strndup` allocated exact-size buffer, but `***REDACTED***` (15 chars) expansion overflowed it
+- **Google tools functionDeclarations:** `json_set(tools_arr, "functionDeclarations", ...)` on array was a no-op — needed wrapper object + append
 
 ---
 
-## 3. Technical Feats
+## 3. Subsystem Parity
 
-Things that were harder — or required fundamentally different approaches — in C compared to Python. Each represents an engineering decision that traded Python convenience for C performance or safety.
+| Subsystem | C Status | Python Reference | Notes |
+|-----------|----------|------------------|-------|
+| **Config** | ✅ 98% | 322/322 YAML keys, profiles, `${VAR}`, `!include` | C adds parse-time type validation |
+| **MCP** | ✅ **100%** | Transport, tools, resources, subs, sampling, serve | Full parity |
+| **Gateway** | ✅ **100%** | 19 platforms (C: 19, Python: 18) | C exceeds by 1 (msgraph_webhook) |
+| **Session DB** | ✅ **100%** | SQLite FTS5, CRUD, search, metadata | Full parity |
+| **Tools** | ✅ 95% | 67 ops (C) vs 73 tool files (Python) | 6 CDP/plugin-blocked stubs remaining |
+| **CLI** | ✅ 87% | 74 commands (C) vs 69 (Python) | C has more commands |
+| **Providers** | ✅ 87% | 9 native ops, 27 metadata entries | 7 API quirks remain |
+| **Agent loop** | ✅ 86% | Budget, fallback, retry, checkpoint, interrupt | Async not ported |
+| **Cross-cut** | ✅ **100%** | Token counting, secure paths, key leakage, vendor keys | Full parity |
+| **Build/doc** | ✅ 95% | Docker, CI, cross-compile, man page, Doxygen, CHANGELOG | O02 Windows remains |
+| **Libs** | ⚠️ 38% | 18 libraries ported | 12 Python lib equivalents remain |
+| **Tests** | ⚠️ 63% | 80 files, 2,088 assertions, 116/0/0 | Python: 1,140 test files, ~17K tests |
+| **Error types** | ⚠️ 50% | K01-K05: 18 error codes | Python: full exception hierarchy |
+| **Plugins** | ❌ 19% | 3 .so (kanban, honcho, spotify) | 13 backends missing |
 
-| Feat | Python | C | Why It Matters |
-|------|--------|---|----------------|
-| **Typed credentials** | `dict` soup — keys could be anything | `struct credential` with strict typing, tagged unions for provider-specific fields | Type safety catches key name typos at compile time. Zero runtime surprises. |
-| **Dynamic skill loading** | `importlib` + `__init__.py` conventions | `dlopen`/`dlsym` with explicit symbol tables, ABI versioning | Every C skill is a `.so` with a versioned vtable. No Python interpreter overhead. |
-| **Arena allocation** | GC handles everything | `arena_t` with explicit reset boundaries, no free() per allocation | Predictable, O(1) deallocation. Critical for latency-sensitive request/response cycles. |
-| **Provider polymorphism** | ABCs + `__subclasses__()` | Type-safe function pointer tables (`provider_vtable_t`) — each provider registers `{ init, chat, complete, embed, stream, destroy }` | Zero-cost abstraction. No vtable lookup per call — direct function pointer dispatch. |
-| **JSON construction** | `json.dumps()` on `dict` | Manual `cJSON` tree building with typed append helpers — `json_append_string()`, `json_append_number()`, `json_append_object()` | Full control, zero allocations from hidden intermediates. |
-| **HTTP client** | `requests` / `httpx` (1 line) | `libcurl` multi-handle with custom write callbacks, connection reuse pool, retry logic with jitter | ~3000 lines of C for what Python does in 1 import. But: no GIL, full async parallelism. |
-| **Config system** | Dynamic `yaml.safe_load()` + attribute access | Generated struct from a schema — `struct config` with typed fields, defaults, migrations | 322/322 config keys parsed, validated, and accessed without a single runtime string lookup. |
-| **String handling** | `str.replace()`, `.format()`, `.join()` | Owned buffers with length tracking, zero-copy slices where safe | Every string operation auditable. No hidden reallocs. |
-| **Async / event loop** | `asyncio.run()` | Custom event loop built on `epoll` (Linux) / `kqueue` (macOS) with cooperative multitasking | Tailored to agent workloads — I/O multiplexing without Python's event loop overhead. |
+### Suite Health
 
-### The Big One: Memory Safety Without a GC
-
-The single hardest feat was achieving **heap memory safety without a garbage collector**. The Python original leaked memory constantly — the C version must not.
-
-- **Strategy:** Arena allocation for request-scoped data + reference-counted `rc_string_t` for long-lived strings + static analysis (`clang-tidy`, `scan-build`) in CI.
-- **Enforcement:** `-fsanitize=address,undefined,leak` runs on every PR. Zero leaks in the test suite for 67 consecutive days.
-- **Result:** Memory usage is **bounded and predictable**. No GC pauses. No OOM in production.
+| Metric | C Current |
+|--------|-----------|
+| Passing | 116 |
+| Failing | 0 |
+| Skipped | 0 |
+| Test files | 80 |
+| Assertions | 2,088 |
+| ASan clean | ✅ |
+| Valgrind clean | ✅ |
 
 ---
 
-## 4. Parity Victories
+## 4. Technical Feats (Python → C)
 
-Subsystems that reached **100% parity** with the Python original. These are full rewrites — not thin wrappers — that match or exceed Python functionality.
-
-### ✅ Config System: **322/322 keys — 100%**
-
-Every configuration key from the Python codebase is represented in C. Keys are parsed from YAML/JSON/TOML/ENV into a typed struct hierarchy.
-
-- **Extra:** The C config validates types at parse time (Python only validated at use time).
-- **Extra:** Schema generation from the C struct — produces JSON Schema docs automatically.
-
-### ✅ MCP (Model Context Protocol): **100%**
-
-Full MCP server and client implementation in C. Supports:
-- Tool discovery, calling, and result streaming
-- Resource listing and reading
-- Prompt templates
-- Sampling
-- All MCP lifecycle events (`initialize`, `notifications/initialized`, `shutdown`)
-
-### ✅ Gateway: **100%**
-
-The API gateway — routing, rate limiting, request validation, response transformation — all ported.
-
-- **Throughput:** 2.7× the Python gateway throughput on the same hardware.
-- **Latency P99:** 38ms vs Python's 52ms (27% improvement).
-
-### ✅ Provider Parity Map
-
-| Provider | Chat | Completion | Embedding | Streaming | Vision | TTS | FIM |
-|----------|------|------------|-----------|-----------|--------|-----|-----|
-| OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| Anthropic | ✅ | — | — | ✅ | ✅ | — | — |
-| Google Gemini | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| DeepSeek | ✅ | ✅ | — | ✅ | — | — | ✅ |
-| Groq | ✅ | — | — | ✅ | — | — | — |
-| Together | ✅ | ✅ | — | ✅ | — | — | ✅ |
-| xAI | ✅ | — | — | ✅ | — | — | — |
-| Mistral | ✅ | ✅ | ✅ | ✅ | — | — | — |
-| Cohere | ✅ | ✅ | ✅ | ✅ | — | — | — |
-
-### ✅ Suite Health: **116 passing · 0 failing · 0 skipped**
-
-| Metric | Python (baseline) | C (current) |
-|--------|-------------------|-------------|
-| Passing | 58 | **116** |
-| Failing | 1 | **0** |
-| Skipped | 0 | 0 |
-| Coverage (line) | ~72% | **~81%** |
-| ASan clean | ❌ | ✅ |
-| Valgrind clean | ❌ | ✅ |
+| Pattern | Python | C |
+|---------|--------|---|
+| **Credentials** | `dict` with string keys | `struct credential` with typed fields, tagged unions |
+| **Skill loading** | `importlib` + `__init__.py` | `dlopen`/`dlsym` with versioned vtable |
+| **Memory** | GC | `arena_t` with explicit reset + reference-counted `rc_string_t` for long-lived strings |
+| **Provider dispatch** | ABCs + `__subclasses__()` | Function pointer table (`provider_vtable_t`) |
+| **JSON** | `json.dumps(dict)` | Manual tree building with typed append helpers |
+| **HTTP** | `requests` / `httpx` (1 import) | `libcurl` multi-handle with custom callbacks (~3K LOC) |
+| **Config** | `yaml.safe_load()` + attribute access | Generated struct schema with parse-time validation |
 
 ---
 
 ## 5. The Road Ahead
 
-The vault is filling, but shelves remain. These are the known gaps.
+### Immediate (P1)
+1. Plugin depth: 13 backends (memory providers, image_gen, video_gen, achievements, observability, etc.)
+2. Library ports: 12 remaining (libcsv, libhash, libuuid, libregex, libbase64, etc.)
+3. Test coverage: +40 test files needed
+4. Provider API quirks: 7 remaining
 
-### In Flight
+### In Progress
+- **Windows build** (O02) — MSVC/MinGW detection, `_WIN32` ifdefs
+- **CLI feel** — spinner animation, autocomplete depth, activity feed
+- **Error type hierarchy** — K06-K20 completion
 
-- **Plugin SDK** — Stable API for third‑party C skills (`skill_plugin.h` is in review)
-- **WebSocket transport** — Required for real‑time WhatsApp and Slack event streaming (POC done, needs hardening)
-- **Windows named pipe transport** — Needed for Windows Desktop agent integration
-
-### Parity Gap (Known)
-
-- **Python skill bridge** — Some Python skills (e.g., `browser_use`) haven't been ported yet; they run via `subprocess` + JSON‑RPC bridge
-- **Metrics & telemetry** — Prometheus endpoint exists but instrumentation coverage is ~60% of Python's
-- **Plugin auto‑update** — Python had a git‑pull based update mechanism; C version tabled until plugin SDK stabilizes
-
-### Stretch
-
-- **Formal verification** — TLA+ spec for the credential pool / TIRITH policy interaction (whiteboard phase)
-- **WebAssembly plugin runtime** — Sandbox skill execution via WASM instead of subprocess (research)
-- **`no_std` embedded target** — Hermes agent on microcontrollers? The C port makes it theoretically possible
+### Not Yet Scoped
+- **Full TUI** — React Ink equivalent in ncurses
+- **Plugin auto-discovery** — directory scanning for `.so` files
+- **Achievement system** — Python had gamification
 
 ---
 
-> *This vault is built commit by commit. 158 C-specific commits, 116 green tests, 0 leaks. The Python original ran Hermes. The C version **is** Hermes.*
+> *Built commit by commit. 160 C-specific commits, 116/0/0 suite, 0 ASan leaks. The Python original ran Hermes. The C version **is becoming** Hermes — one gap at a time.*
