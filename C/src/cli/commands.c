@@ -2424,6 +2424,8 @@ static void cmd_insights(const char *args, agent_state_t *state) {
             long long hist_messages = 0;
             time_t now = time(NULL);
             int recent_7d = 0, recent_30d = 0;
+            int daily_counts[7] = {0,0,0,0,0,0,0};
+            double total_duration = 0.0;
             int model_count = 0;
             char models[64][128];
             int model_uses[64];
@@ -2438,6 +2440,16 @@ static void cmd_insights(const char *args, agent_state_t *state) {
                 double age_days = difftime(now, entries[i].meta.created_at) / 86400.0;
                 if (age_days <= 7) recent_7d++;
                 if (age_days <= 30) recent_30d++;
+
+                /* Duration */
+                if (entries[i].meta.updated_at > entries[i].meta.created_at)
+                    total_duration += difftime(entries[i].meta.updated_at, entries[i].meta.created_at);
+
+                /* Daily bucket (0=today) */
+                if (age_days <= 7) {
+                    int day_idx = (int)age_days;
+                    if (day_idx >= 0 && day_idx < 7) daily_counts[day_idx]++;
+                }
 
                 /* Track model distribution */
                 if (entries[i].meta.model[0]) {
@@ -2460,8 +2472,28 @@ static void cmd_insights(const char *args, agent_state_t *state) {
 
             printf("    Total tokens:   %lld\n", hist_tokens);
             printf("    Total messages: %lld\n", hist_messages);
+            printf("    Avg duration:   %s\n",
+                   usage_pricing_format_duration(
+                       session_count > 0 ? total_duration / session_count : 0.0));
             printf("    Last 7 days:    %d sessions\n", recent_7d);
             printf("    Last 30 days:   %d sessions\n", recent_30d);
+
+            /* Daily bar chart (last 7 days) */
+            if (recent_7d > 0) {
+                printf("  Activity (last 7 days):\n");
+                int peak = daily_counts[0];
+                for (int d = 1; d < 7; d++)
+                    if (daily_counts[d] > peak) peak = daily_counts[d];
+                if (peak < 1) peak = 1;
+                const char *day_names[] = {"today","d-1","d-2","d-3","d-4","d-5","d-6"};
+                for (int d = 0; d < 7; d++) {
+                    int bar_len = daily_counts[d] * 20 / peak;
+                    if (bar_len < 1 && daily_counts[d] > 0) bar_len = 1;
+                    printf("    %s ", day_names[d]);
+                    for (int b = 0; b < bar_len; b++) printf("\xe2\x96\x88");
+                    printf(" %d\n", daily_counts[d]);
+                }
+            }
 
             if (model_count > 0) {
                 printf("  Models used:\n");
