@@ -683,6 +683,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "registry (compilation failed)"
 fi
 
+# Home Assistant tool test (needs json lib + http lib for unresolved symbols)
+echo ""; echo "=== Home Assistant Tool Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_homeassistant.c" \
+    "$CDIR/src/tools/homeassistant.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_homeassistant -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_homeassistant > /dev/null 2>&1; then ok "homeassistant (13 tests)"
+    else fail "homeassistant (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_homeassistant
+else skip "homeassistant (compilation failed)"
+fi
+
 # Result storage test (P49-P50 — needs hermes_config_load from config.c, skip for now)
 # Test file exists at tests/test_result_storage.c — requires full link with config.c
 # echo ""; echo "=== Tool Result Storage Tests (P49-P50) === (skipped — needs config dependency resolution)"
