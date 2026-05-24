@@ -10,6 +10,7 @@
 #include "hermes_json.h"
 #include "hermes_xai_retirement.h"
 #include "plugin.h"
+#include "line_edit.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,44 @@ typedef struct {
     bool json_output;        /* H14: --json flag for JSON output mode */
     char session_arg[64];  /* --session id */
 } cli_state_t;
+
+/* Line editor instance (NULL in non-interactive mode) */
+static line_edit_t *g_le = NULL;
+
+/* Tab completion callback for line editor */
+static char **cli_complete(const char *partial, void *user_data) {
+    (void)user_data;
+    int count = 0;
+    int cap = 64;
+    char **matches = malloc(sizeof(char*) * cap);
+    if (!matches) return NULL;
+    const command_def_t *cmd = commands_get_all();
+    size_t plen = strlen(partial);
+    for (int i = 0; cmd && cmd[i].name; i++) {
+        const char *name = cmd[i].name;
+        if (*name == '/') name++;
+        if (strncmp(name, partial, plen) == 0) {
+            if (count + 2 >= cap) {
+                cap *= 2;
+                char **tmp = realloc(matches, sizeof(char*) * cap);
+                if (!tmp) { for (int j = 0; j < count; j++) free(matches[j]); free(matches); return NULL; }
+                matches = tmp;
+            }
+            matches[count++] = strdup(cmd[i].name);
+        }
+        if (cmd[i].alias && strncmp(cmd[i].alias + 1, partial, plen) == 0) {
+            if (count + 2 >= cap) {
+                cap *= 2;
+                char **tmp = realloc(matches, sizeof(char*) * cap);
+                if (!tmp) { for (int j = 0; j < count; j++) free(matches[j]); free(matches); return NULL; }
+                matches = tmp;
+            }
+            matches[count++] = strdup(cmd[i].alias);
+        }
+    }
+    matches[count] = NULL;
+    return matches;
+}
 
 static cli_state_t g_cli;
 
@@ -555,16 +594,35 @@ int hermes_cli_main(int argc, char **argv) {
     }
 
     char input[65536];
+    /* Initialize line editor for interactive mode */
+    if (g_cli.interactive) {
+        g_le = line_edit_create(cli_complete, NULL);
+        if (g_le) {
+            char hist_path[1024];
+            snprintf(hist_path, sizeof(hist_path), "%s/.hermes_history",
+                     g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : getenv("HOME") ?: ".");
+            line_edit_load_history(g_le, hist_path);
+        }
+    }
+
     while (g_cli.running) {
         /* P19: Check SIGHUP-based config reload before each input */
         hermes_config_check_reload(&g_cli.config, NULL);
 
-        if (g_cli.interactive)
-            display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
-                           "\nhermes> ");
-        fflush(stdout);
-
-        if (!fgets(input, sizeof(input), stdin)) break;
+        if (g_cli.interactive && g_le) {
+            /* Use line editor with tab completion and history */
+            char *line = line_edit_read(g_le, "\nhermes> ");
+            if (!line) break;  /* EOF/Ctrl-D/Ctrl-C */
+            strncpy(input, line, sizeof(input) - 1);
+            input[sizeof(input) - 1] = '\0';
+            free(line);
+        } else {
+            if (g_cli.interactive)
+                display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
+                               "\nhermes> ");
+            fflush(stdout);
+            if (!fgets(input, sizeof(input), stdin)) break;
+        }
 
         /* Strip trailing newline */
         size_t len = strlen(input);
