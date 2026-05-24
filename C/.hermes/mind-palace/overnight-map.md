@@ -1,31 +1,38 @@
-# Hermes C — Overnight Navigation Map (2026-06-07, Session 52)
+# Hermes C — Overnight Navigation Map (2026-05-23, Session 53)
 
-## Active: error_classifier.py port (1134L → C). Parity ~323/500 (~65%).
+## Active: image_routing.py port (391L → C). Parity ~324/500 (~65%).
 
 **Suite: 197/1/0 ✅, Build: 0 errors ✅**
-**Commit: `6aa136580` — pushed to wubu/main**
+**Commit: `22c4ffb56` — pushed to wubu/main**
 
-## What Was Done (Jun 7)
-- **error_classifier (B28):** Port of Python `agent/error_classifier.py` (1134L → 811 C + 115 header).
-  Full 8-step classification pipeline: provider-specific (Anthropic thinking, llama.cpp grammar, xAI Grok),
-  HTTP status code (401/402/403/404/413/429/500/503/529), error code matching, message-only pattern
-  matching (billing/rate_limit/context/auth/timeout/SSL/disconnect), server-disconnect + large-session
-  context overflow heuristic, JSON body extraction (nested error.message, param, code).
-  Tests: 25/25 pass. Suite: +1 (197/1/0).
-- **DA audit:** All 14 pattern arrays verified exact match vs Python. 1 known deviation documented:
-  no metadata.raw JSON unwrapping for OpenRouter-wrapped upstream errors (medium impact).
+## What Was Done (May 23)
+- **image_routing (B29):** Port of Python `agent/image_routing.py` (391L → ~350 C + header).
+  New module `src/agent/image_routing.c` + `include/image_routing.h`. Functions ported:
+  - `decide_image_input_mode()` — config-aware decision (auto|native|text), reads `agent.image_input_mode`
+    from config.yaml. In auto mode: checks `auxiliary.vision.provider` override, then
+    `model_supports_vision()` from provider_metadata.
+  - `build_native_content_parts()` — builds OpenAI-style JSON content array with text parts plus
+    `image_url` data URL parts. Includes `[Image attached at: path]` hints in text.
+  - MIME sniffing from magic bytes: PNG, JPEG, GIF, WebP, BMP, HEIC/HEIF (all common formats).
+  - `file_to_data_url()` — reads file, detects MIME, base64 encodes, builds `data:mime;base64,...` URL.
+  - `guess_mime()` — suffix-based fallback with magic byte override.
+  - New config field: `agent.image_input_mode` (char[16]) added to `agent_config_t` in hermes.h,
+    loaded from YAML `agent.image_input_mode` with default "auto".
+  Tests: 34/34 pass. Suite: +0 (no new integration tests added for full binary). Build: 0 errors.
 
 ## Next Session Pick
-Agent sector is the biggest gap (44/115, 71 remaining). Top candidates:
-1. **image_routing.py (391L)** — Image routing for native vision support. Config + capability-based routing.
-   Medium complexity, mostly logic (no complex deps).
-2. **background_review.py (587L)** — Background code review for skill pruning via curator fork.
-   Medium complexity, string/process management.
+Agent sector is still the biggest gap (45/115, 70 remaining). Top candidates:
+1. **background_review.py (587L)** — Background code review for skill pruning via curator fork.
+   Medium complexity. Ports: LLM calling pattern (background review loop), string/process management.
+2. **skill_manager_tool.py (931L)** — Skill CRUD + curator + hub syncing. Larger but higher impact.
+   Ports: tool registration, file operations, curator API calls.
 
 ## Key Files
-- `C/lib/liberrorclassifier/error_classifier.h` — public API
-- `C/lib/liberrorclassifier/error_classifier.c` — implementation
-- `C/tests/test_error_classifier.c` — 25 tests
-- `C/.hermes/mind-palace/state.md` — updated with Session 52 log
-- `C/.hermes/mind-palace/prestige_prompt.md` — v13 (updated)
-- `C/.hermes/mind-palace/goal-mantra.md` — v13 (updated)
+- `C/src/agent/image_routing.c` — implementation
+- `C/include/image_routing.h` — public API
+- `C/include/hermes.h` — agent_config_t: added image_input_mode field
+- `C/src/cli/config.c` — YAML + env loading for image_input_mode
+- `C/tests/test_image_routing.c` — 34 tests
+- `C/.hermes/mind-palace/goal-mantra.md` — v14 (updated)
+- `C/.hermes/mind-palace/prestige_prompt.md` — v14 (updated)
+- `C/.hermes/mind-palace/state.md` — updated with Session 53 log
