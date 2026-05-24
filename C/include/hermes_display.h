@@ -131,6 +131,17 @@ void display_tool_activity(const char *tool_name, const char *preview,
 /* Print a box/panel around text (with word-wrap) */
 void display_panel(const char *title, const char *content, display_color_t color);
 
+/* Print an ASCII table with headers and aligned columns.
+ * columns: number of columns
+ * headers: array of column header strings (NULL for no header)
+ * rows: array of strings, each containing tab-separated column values
+ * num_rows: number of rows
+ * color: color for borders and headers
+ */
+void display_table(int columns, const char **headers,
+                   const char **rows, int num_rows,
+                   display_color_t color);
+
 /* Word-wrap text to max_width columns. Returns malloc'd string (caller free). */
 char *display_word_wrap(const char *text, int max_width);
 

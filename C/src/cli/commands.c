@@ -17,6 +17,7 @@
 
 #include "skill_bundles.h"
 #include "usage_pricing.h"
+#include "hermes_display.h"
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -1363,13 +1364,40 @@ static void cmd_config(const char *args, agent_state_t *state) {
 
 static void cmd_commands(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("All slash commands (%zu total):\n", sizeof(COMMANDS) / sizeof(COMMANDS[0]));
-    for (int i = 0; COMMANDS[i].name; i++) {
-        printf("  %s", COMMANDS[i].name);
-        if (COMMANDS[i].alias)
-            printf(" (%s)", COMMANDS[i].alias);
-        printf("\n");
+    /* Count commands */
+    int count = 0;
+    while (COMMANDS[count].name) count++;
+
+    /* Build rows array */
+    const char **rows = malloc(count * sizeof(char *));
+    if (!rows) {
+        printf("All slash commands (%d total):\n", count);
+        for (int i = 0; COMMANDS[i].name; i++) {
+            printf("  %s", COMMANDS[i].name);
+            if (COMMANDS[i].alias)
+                printf(" (%s)", COMMANDS[i].alias);
+            printf("\n");
+        }
+        return;
     }
+
+    for (int i = 0; i < count; i++) {
+        char *buf = malloc(128);
+        if (!buf) { rows[i] = ""; continue; }
+        snprintf(buf, 128, "%s\t%s\t%s",
+                 COMMANDS[i].name,
+                 COMMANDS[i].alias ? COMMANDS[i].alias : "",
+                 COMMANDS[i].description);
+        rows[i] = buf;
+    }
+
+    const char *headers[] = {"Command", "Alias", "Description"};
+    display_table(3, headers, (const char **)rows, count, DISPLAY_CYAN);
+
+    for (int i = 0; i < count; i++) {
+        if (rows[i] && rows[i][0]) free((void *)rows[i]);
+    }
+    free(rows);
 }
 
 static void cmd_tools(const char *args, agent_state_t *state) {

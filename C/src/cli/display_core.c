@@ -700,6 +700,112 @@ void display_hr(display_color_t color) {
 }
 
 /* ================================================================
+ *  ASCII Table
+ * ================================================================ */
+
+void display_table(int columns, const char **headers,
+                   const char **rows, int num_rows,
+                   display_color_t color) {
+    if (columns < 1) return;
+
+    /* Calculate max column widths */
+    int *widths = calloc(columns, sizeof(int));
+    if (!widths) return;
+
+    /* Measure headers */
+    for (int c = 0; c < columns && headers; c++) {
+        int len = (int)strlen(headers[c] ? headers[c] : "");
+        if (len > widths[c]) widths[c] = len;
+    }
+
+    /* Measure rows — split by tab */
+    for (int r = 0; r < num_rows; r++) {
+        const char *p = rows[r];
+        for (int c = 0; c < columns; c++) {
+            const char *next = strchr(p, '\t');
+            int len = next ? (int)(next - p) : (int)strlen(p);
+            if (len > widths[c]) widths[c] = len;
+            p = next ? next + 1 : p + strlen(p);
+        }
+    }
+
+    /* Clamp to terminal width */
+    int term_w = display_width();
+    int total = 1; /* left border */
+    for (int c = 0; c < columns; c++) {
+        if (widths[c] > 40) widths[c] = 40;
+        total += widths[c] + 3; /* padding + border */
+        if (total > term_w - 4) {
+            /* Shrink proportionally — simple approach: clamp last */
+            widths[c] = term_w - total + 40 - 3;
+            if (widths[c] < 5) widths[c] = 5;
+            break;
+        }
+    }
+
+    /* Top border */
+    display_printf(color, DISPLAY_BOLD, "\xE2\x94\x8C");
+    for (int c = 0; c < columns; c++) {
+        for (int i = 0; i < widths[c] + 2; i++)
+            printf("\xE2\x94\x80");
+        if (c < columns - 1)
+            printf("\xE2\x94\xAC");
+    }
+    display_printf(color, DISPLAY_BOLD, "\xE2\x94\x90\n");
+
+    /* Header row */
+    if (headers) {
+        display_printf(color, DISPLAY_BOLD, "\xE2\x94\x82");
+        for (int c = 0; c < columns; c++) {
+            const char *h = headers[c] ? headers[c] : "";
+            int hlen = (int)strlen(h);
+            printf(" %s", h);
+            for (int p = hlen; p < widths[c]; p++) printf(" ");
+            printf(" \xE2\x94\x82");
+        }
+        printf("\n");
+
+        /* Header separator */
+        display_printf(color, DISPLAY_BOLD, "\xE2\x94\x9C");
+        for (int c = 0; c < columns; c++) {
+            for (int i = 0; i < widths[c] + 2; i++)
+                printf("\xE2\x94\x80");
+            if (c < columns - 1)
+                printf("\xE2\x94\xBC");
+        }
+        display_printf(color, DISPLAY_BOLD, "\xE2\x94\xA4\n");
+    }
+
+    /* Data rows */
+    for (int r = 0; r < num_rows; r++) {
+        display_printf(color, DISPLAY_NORMAL, "\xE2\x94\x82");
+        const char *p = rows[r];
+        for (int c = 0; c < columns; c++) {
+            const char *next = strchr(p, '\t');
+            int len = next ? (int)(next - p) : (int)strlen(p);
+            printf(" ");
+            if (len > 0) printf("%.*s", len, p);
+            for (int pad = len; pad < widths[c]; pad++) printf(" ");
+            printf(" \xE2\x94\x82");
+            p = next ? next + 1 : p + len;
+        }
+        printf("\n");
+    }
+
+    /* Bottom border */
+    display_printf(color, DISPLAY_BOLD, "\xE2\x94\x94");
+    for (int c = 0; c < columns; c++) {
+        for (int i = 0; i < widths[c] + 2; i++)
+            printf("\xE2\x94\x80");
+        if (c < columns - 1)
+            printf("\xE2\x94\xB4");
+    }
+    display_printf(color, DISPLAY_BOLD, "\xE2\x94\x98\n");
+
+    free(widths);
+}
+
+/* ================================================================
  *  Utility
  * ================================================================ */
 
