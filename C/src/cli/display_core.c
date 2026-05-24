@@ -60,6 +60,25 @@ void display_set_bg(display_color_t color) {
     fflush(stdout);
 }
 
+/* Truecolor (24-bit) support */
+void display_set_fg_rgb(int r, int g, int b) {
+    if (!is_tty) return;
+    if (r < 0) r = 0; if (r > 255) r = 255;
+    if (g < 0) g = 0; if (g > 255) g = 255;
+    if (b < 0) b = 0; if (b > 255) b = 255;
+    printf(ANSI_ESC "38;2;%d;%d;%dm", r, g, b);
+    fflush(stdout);
+}
+
+void display_set_bg_rgb(int r, int g, int b) {
+    if (!is_tty) return;
+    if (r < 0) r = 0; if (r > 255) r = 255;
+    if (g < 0) g = 0; if (g > 255) g = 255;
+    if (b < 0) b = 0; if (b > 255) b = 255;
+    printf(ANSI_ESC "48;2;%d;%d;%dm", r, g, b);
+    fflush(stdout);
+}
+
 void display_set_style(display_style_t style) {
     if (!is_tty) return;
     if (style & DISPLAY_BOLD)
@@ -89,25 +108,43 @@ void display_printf(display_color_t color, display_style_t style,
         return;
     }
 
-    /* Apply style */
-    if (style & DISPLAY_BOLD)    printf(ANSI_ESC "1m");
-    if (style & DISPLAY_DIM)     printf(ANSI_ESC "2m");
-    if (style & DISPLAY_ITALIC)  printf(ANSI_ESC "3m");
-
-    /* Set foreground color */
-    if (color == DISPLAY_DEFAULT)
-        printf(ANSI_ESC "39m");
-    else
-        printf(ANSI_ESC "9%dm", (int)color);
-
+    display_set_fg(color);
+    display_set_style(style);
     va_list args;
     va_start(args, fmt);
     vprintf(fmt, args);
     va_end(args);
+    display_reset();
+}
 
-    /* Reset */
-    printf(ANSI_ESC "0m");
-    fflush(stdout);
+/* Print with 24-bit truecolor foreground */
+void display_printf_hex(const char *hex_fg, display_style_t style,
+                         const char *fmt, ...)
+{
+    if (!is_tty || !hex_fg) {
+        va_list args;
+        va_start(args, fmt);
+        vprintf(fmt, args);
+        va_end(args);
+        fflush(stdout);
+        return;
+    }
+    int r, g, b;
+    if (!ansi_parse_hex(hex_fg, &r, &g, &b)) {
+        va_list args;
+        va_start(args, fmt);
+        vprintf(fmt, args);
+        va_end(args);
+        fflush(stdout);
+        return;
+    }
+    display_set_fg_rgb(r, g, b);
+    display_set_style(style);
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+    display_reset();
 }
 
 /* ================================================================

@@ -77,14 +77,42 @@ static void cli_skin_init(void) {
 
 static void print_banner(void) {
     if (!g_cli.interactive) return;
-    display_printf(cli_skin_color("colors.banner", DISPLAY_CYAN), DISPLAY_BOLD,
-                   "WuBu Hermes v%s — C Translation\n", HERMES_VERSION);
-    display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
-                   "  Model: %s  Provider: %s\n",
-                   g_cli.config.model[0] ? g_cli.config.model : "(default)",
-                   g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
-    display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM,
-                   "  Type /help for commands, /exit to quit\n");
+
+    /* ASCII art logo: OSSIFRAG in block letters with gradient */
+    const char *logo_lines[] = {
+        " █████╗ ██████╗ ███████╗███████╗       █████╗  ██████╗ ███████╗███╗   ██╗████████╗",
+        "██╔══██╗██╔══██╗██╔════╝██╔════╝      ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝",
+        "███████║██████╔╝█████╗  ███████╗█████╗███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║",
+        "██╔══██║██╔══██╗██╔══╝  ╚════██║╚════╝██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║",
+        "██║  ██║██║  ██║███████╗███████║      ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║",
+        "╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝      ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝",
+    };
+    /* Gold-to-red gradient (Python: #A3261F → #EB6C32) */
+    int gradients[6][3] = {
+        {163, 38, 31},  /* #A3261F */
+        {183, 49, 34},  /* #B73122 */
+        {201, 60, 36},  /* #C93C24 */
+        {216, 74, 40},  /* #D84A28 */
+        {225, 90, 45},  /* #E15A2D */
+        {235, 108, 50}, /* #EB6C32 */
+    };
+    for (int i = 0; i < 6; i++) {
+        display_set_fg_rgb(gradients[i][0], gradients[i][1], gradients[i][2]);
+        display_set_style(DISPLAY_BOLD);
+        printf("%s", logo_lines[i]);
+        display_reset();
+        printf("\n");
+    }
+
+    /* Agent info line */
+    display_printf_hex("#FFD700", DISPLAY_BOLD,
+        "  WuBu Hermes v%s — C Translation\n", HERMES_VERSION);
+    display_printf_hex("#A0A0A0", DISPLAY_DIM,
+        "  Model: %s  Provider: %s\n",
+        g_cli.config.model[0] ? g_cli.config.model : "(default)",
+        g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
+    display_printf_hex("#A0A0A0", DISPLAY_DIM,
+        "  Type /help for commands, /exit to quit\n");
 
     /* Auto-load goal from mind-palace */
     if (g_cli.interactive) {

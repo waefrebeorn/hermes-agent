@@ -59,6 +59,25 @@ extern "C" {
 #define ANSI_BRIGHT_WHITE   "\033[97m"
 
 /* ================================================================
+ *  Truecolor (24-bit) foreground support
+ *  Use: printf(ANSI_FG_RGB(255, 200, 0) "text" ANSI_RESET);
+ * ================================================================ */
+#define ANSI_FG_RGB(r,g,b)  "\033[38;2;" #r ";" #g ";" #b "m"
+#define ANSI_BG_RGB(r,g,b)  "\033[48;2;" #r ";" #g ";" #b "m"
+
+/* Convenience: parse hex color string (#RRGGBB) to RGB components.
+ * Returns false if the string is not a valid 6-digit hex color. */
+bool ansi_parse_hex(const char *hex, int *r, int *g, int *b);
+
+/* Build a formatted truecolor ANSI escape for foreground.
+ * Returns malloc'd string, caller must free. */
+char *ansi_fg_hex(const char *hex);
+
+/* Build a formatted truecolor ANSI escape for background.
+ * Returns malloc'd string, caller must free. */
+char *ansi_bg_hex(const char *hex);
+
+/* ================================================================
  *  Background colors (4-bit standard)
  * ================================================================ */
 #define ANSI_BG_BLACK       "\033[40m"

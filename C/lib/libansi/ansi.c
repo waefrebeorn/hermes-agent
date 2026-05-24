@@ -64,3 +64,43 @@ int ansi_term_height(void) {
     }
     return 24;
 }
+
+/* ── Truecolor helpers ──────────────────────────────────────── */
+
+bool ansi_parse_hex(const char *hex, int *r, int *g, int *b) {
+    if (!hex || !r || !g || !b) return false;
+    /* Skip leading # if present */
+    if (hex[0] == '#') hex++;
+    if (strlen(hex) != 6) return false;
+    char buf[3];
+    buf[0] = hex[0]; buf[1] = hex[1]; buf[2] = '\0';
+    char *end = NULL;
+    long rv = strtol(buf, &end, 16);
+    if (end && *end) return false;
+    buf[0] = hex[2]; buf[1] = hex[3];
+    long gv = strtol(buf, &end, 16);
+    if (end && *end) return false;
+    buf[0] = hex[4]; buf[1] = hex[5];
+    long bv = strtol(buf, &end, 16);
+    if (end && *end) return false;
+    *r = (int)rv; *g = (int)gv; *b = (int)bv;
+    return true;
+}
+
+char *ansi_fg_hex(const char *hex) {
+    int r, g, b;
+    if (!ansi_parse_hex(hex, &r, &g, &b)) return NULL;
+    char *out = (char *)malloc(24); /* "\033[38;2;255;255;255m" max */
+    if (!out) return NULL;
+    snprintf(out, 24, "\033[38;2;%d;%d;%dm", r, g, b);
+    return out;
+}
+
+char *ansi_bg_hex(const char *hex) {
+    int r, g, b;
+    if (!ansi_parse_hex(hex, &r, &g, &b)) return NULL;
+    char *out = (char *)malloc(24);
+    if (!out) return NULL;
+    snprintf(out, 24, "\033[48;2;%d;%d;%dm", r, g, b);
+    return out;
+}

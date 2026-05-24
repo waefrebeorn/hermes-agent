@@ -57,6 +57,14 @@ void display_set_bg(display_color_t color);
 void display_set_style(display_style_t style);
 void display_reset(void);
 
+/* Set truecolor (24-bit) foreground/background */
+void display_set_fg_rgb(int r, int g, int b);
+void display_set_bg_rgb(int r, int g, int b);
+
+/* Print formatted text with truecolor foreground */
+void display_printf_hex(const char *hex_fg, display_style_t style,
+                        const char *fmt, ...);
+
 /* Print colored text */
 void display_printf(display_color_t color, display_style_t style,
                     const char *fmt, ...);
