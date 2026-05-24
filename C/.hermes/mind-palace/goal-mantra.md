@@ -1,44 +1,27 @@
-# WuBu Hermes C — Goal Mantra (v14 — 2026-05-23)
+# WuBu Hermes C — Goal Mantra (2026-05-23, Post-DA v14)
 
 ── PERPETUAL GOAL ──
 P0: Hermes C — Full Python parity. ~324/500 gaps closed (~65%).
-Every Python library, provider, tool, config key transmuted into C structs, function pointers, switch statements.
+All Python structs, classes, functions transmuted into C.
 
-── STATE (Session 53) ──
-✅ Suite: 197/1/0 (~1,200 assertions across 50+ test files)
-✅ Binary: 29.8MB ELF, 0 errors
-✅ Tools: 78 registered (0 stubs — all resolved)
-✅ Gateway: 19 platforms
-✅ Plugins: 10 .so (16 more to port)
-✅ Libraries: 56 units
-✅ Config: 322+ keys, all sectors covered
-⚠️ Parity: ~65% (~324/500)
-⚠️ Agent: 45/115 (39%, biggest gap — 70 remaining)
-⚠️ Gateway: 22/64 (34%, 42 remaining)
-⚠️ Tools: 66/92 (72%, 26 remaining)
-⚠️ Upstream: 0 behind, 400+ commits ahead
+── DA v14 FINDINGS ──
+✅ Build: 0 errors, 68K LOC, 56 libraries, 10 plugins, 84 tools
+✅ CLI: Pure synchronous loop — NO HTTP polling (that was Python side)
+✅ Stubs: 1 real stub (browser_cdp dead code), 1 unused enum
+🟡 Real parity: 12 major gaps verified (see battleship-v1.md)
 
-── THE LOOP ──
-1. Read state.md → goal-mantra.md → plan.md → prestige_prompt.md → overnight-map.md
-2. Pick highest undone gap from prestige_prompt priority queue
-3. Implement (C code → make → test)
-4. Verify (runtime, not compile-only)
-5. Debug (MARKers, no deep trawls)
-6. Commit → push
-7. Repeat until 500/500
+── FRESH BATTLESHIP (v1, 2026-05-23) ──
+Battleship: `.hermes/mind-palace/plans/battleship-v1.md`
+Sectors: AG (70), GW (42), TL (26), CL (16), PL (16), PR (7), TUI (3), SC (3), MC (1) = ~176
 
-── NEXT GAPS (highest impact first) ──
-1. Agent: background_review.py (587L) — background code review for skills
-2. Tools: skill_manager_tool.py (931L) — skill CRUD + curator
-3. Gateway: per-platform tests, portal helpers
-4. Plugins: 16 remaining .so provider ports
-5. TUI: session browser (hardcoded "current" → DB query)
+── ARCHIVED TO VAULT ──
+Old achievements: `.hermes/mind-palace/vault/completed-milestones.md`
+Includes all 30+ agent modules, 30 tool ports, 4 DA audits
 
-── RECENT WINS ──
-- Session 53 (May 23): Ported image_routing.py (391L) → C. 34 tests. +1 gap.
-- Session 52 (Jun 7): Ported error_classifier.py (1134L) → C. 25 tests. +1 gap.
-- Session 51 (Jun 1): Profile clone/delete CLI. Config 100%.
-- Session 50 (Jun 1): librateguard — cross-session rate limit guard. 24 tests.
+── NEXT ──
+1. **P0-S01**: Wire browser_cdp tool to real CDP handler (dead code fix)
+2. **P4-A01f**: background_review.py (587L) — next agent module
+3. **P1-F01**: Feishu doc + drive tools (569L Python, 0C)
+4. Then per battleship-v1.md priority order
 
 NO questions. NO choices. Work until all gaps closed.
-Exhaust only: "awaiting direction."
