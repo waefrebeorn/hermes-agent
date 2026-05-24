@@ -6,6 +6,7 @@
 
 #include "hermes_display.h"
 #include "hermes_json.h"
+#include "ansi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
