@@ -1,34 +1,34 @@
-# Hermes C — Overnight Navigation Map (DA v15 reset)
+# Hermes C — Overnight Navigation Map (2026-05-27)
 
-## Active: Battleship reset complete. Fresh gap survey done. All mind palace files rewritten.
+## Active: Test suite parallelization (T01) — phase 1 done. Phase 2 next.
 
-## Fresh Findings (2026-05-27 — code survey update)
-- Old DA v15 claim of "197 stub commands" was stale — commands.c has 79 real cmds (3702 lines)
-- Browser CDP handler (S01) already fixed — real handler registered, not stub
-- CLI gap is MODULE depth (8 .c vs 88 .py files), not command stubs
-- 1 true gap closed this session: /paste now reads WSL clipboard via powershell.exe
-- **Real gap count: ~200 (down from ~270)**
+## Session 55 Completed
+- Added `--parallel` flag to test_runner.sh: run_lib_test compilations parallelized with `&`
+- File-backed ok/fail/skip counters for subshell-safe result collection in parallel mode
+- Summary() aggregates from temp files in parallel mode
+- Fixed `/paste` with WSL clipboard support (powershell.exe Get-Clipboard)
+- Corrected battleship stale claims: CLI has 79 real cmds (0 stubs), S01/CDP already fixed
+- Updated all walkway files with corrected numbers (~200 gaps, not ~270)
+
+## Remaining for T01
+- Parallelize 111 `if gcc ...` test blocks (currently serial)
+- Approach: generate parallel Makefile targets for all test binaries, or wrap blocks in background subshells
+- Expected: full suite under 60s with parallel compilation
 
 ## Key Paths
 - Source: `/home/wubu/hermes-agent-dev/C/src/`
 - Tests: `/home/wubu/hermes-agent-dev/C/tests/test_*.c`
-- Test runner: `bash /home/wubu/hermes-agent-dev/C/test_runner.sh`
+- Test runner: `bash /home/wubu/hermes-agent-dev/C/test_runner.sh --parallel`
 - Battleship v4: `.hermes/mind-palace/plans/battleship-v4.md`
 - DA v15: `.hermes/mind-palace/da-audit-v15.md`
 
-## Workstreams (pick one)
-**A — CLI Depth** [P0]: Fix 197 stub commands in commands.c (biggest impact)
-**B — Agent Ports** [P0]: Port agent_init.py, agent_runtime_helpers.py, prompt_builder.py
-**C — Provider Plugins** [P1]: Port 19 missing provider plugins
-**D — Gateway** [P1]: Port api_server, wecom helpers, feishu_comment
+## Next Workstreams
+**A — T01 phase 2:** Parallelize 111 `if gcc` test blocks (make -j targets)
+**B — CLI module depth:** Port small Python hermes_cli/ modules to C
+**C — Provider plugins:** Pick smallest missing provider (nous = 44 lines Python)
 
 ## Data Not to Re-Derive
-- Python has 432 config keys, C has ~322
-- Python has 77 agent .py files, C has 44 .c
-- Python has 88 CLI .py files, C has 8 .c
-- Python has 28 provider plugin dirs, C has 9 native
-- Browser CDP: 300+ lines real code in browser.c, but registration still points to stub_cdp_handler()
-- CLI stubs: grep '(void)state' src/cli/commands.c to find all 197 stubs
-
-## Fallback
-If all workstreams blocked: update battleship-v4 with more granular gaps, or verify the state.md numbers by running the test suite.
+- CLI commands.c: 79 real cmds (3702 lines), 0 stubs
+- S01 (browser CDP): already fixed — registered to real handler
+- Total gaps: ~200 (down from ~270)
+- 175 test blocks in test_runner.sh: 64 run_lib_test + 111 if gcc blocks
