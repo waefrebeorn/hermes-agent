@@ -1,6 +1,6 @@
 #!/bin/bash
 # Hermes C Test Runner
-# Usage: ./test_runner.sh [--verbose]
+# Usage: ./test_runner.sh [--verbose] [--parallel]
 # Runs all tests: library unit tests + plugin tests + integration smoke tests.
 # No set -e — explicit error handling throughout.
 
@@ -9,15 +9,61 @@ PASS=0
 FAIL=0
 SKIP=0
 VERBOSE=false
+PARALLEL=false
+PARALLEL_JOBS=$(nproc)
 
-[[ "$1" == "--verbose" ]] && VERBOSE=true
+for arg in "$@"; do
+    case "$arg" in
+        --verbose|-v) VERBOSE=true ;;
+        --parallel|-j|-p) PARALLEL=true ;;
+        --jobs=*) PARALLEL_JOBS="${arg#*=}" ;;
+    esac
+done
+
+# In parallel mode, use file-backed result counters (survive subprocesses)
+TMPDIR=""
+if $PARALLEL; then
+    TMPDIR=$(mktemp -d /tmp/hermes_test_results.XXXXXX)
+    trap "rm -rf '$TMPDIR'" EXIT
+fi
 
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
-ok()   { PASS=$((PASS+1)); [[ "$VERBOSE" == true ]] && echo -e "  ${GREEN}PASS${NC}: $1"; }
-fail() { FAIL=$((FAIL+1)); echo -e "  ${RED}FAIL${NC}: $1"; }
-skip() { SKIP=$((SKIP+1)); echo -e "  ${YELLOW}SKIP${NC}: $1"; }
-summary() { echo ""; echo "=============================================="; echo "  Results: ${PASS} passed, ${FAIL} failed, ${SKIP} skipped"; echo "=============================================="; return $FAIL; }
+ok() {
+    if $PARALLEL; then
+        touch "$TMPDIR/ok.$1"
+    else
+        PASS=$((PASS+1))
+    fi
+    [[ "$VERBOSE" == true ]] && echo -e "  ${GREEN}PASS${NC}: $1"
+}
+fail() {
+    if $PARALLEL; then
+        touch "$TMPDIR/fail.$1"
+    else
+        FAIL=$((FAIL+1))
+    fi
+    echo -e "  ${RED}FAIL${NC}: $1"
+}
+skip() {
+    if $PARALLEL; then
+        touch "$TMPDIR/skip.$1"
+    else
+        SKIP=$((SKIP+1))
+    fi
+    echo -e "  ${YELLOW}SKIP${NC}: $1"
+}
+summary() {
+    if $PARALLEL && [[ -n "$TMPDIR" && -d "$TMPDIR" ]]; then
+        PASS=$(ls "$TMPDIR"/ok.* 2>/dev/null | wc -l)
+        FAIL=$(ls "$TMPDIR"/fail.* 2>/dev/null | wc -l)
+        SKIP=$(ls "$TMPDIR"/skip.* 2>/dev/null | wc -l)
+    fi
+    echo ""; echo "=============================================="
+    echo "  Results: ${PASS} passed, ${FAIL} failed, ${SKIP} skipped"
+    echo "=============================================="
+    return $FAIL
+}
 
 # ==============================================
 # 1. Library unit tests
@@ -27,12 +73,24 @@ echo ""; echo "=== Library Unit Tests ==="
 run_lib_test() {
     local name=$1 src=$2 inc=$3 libs=$4
     local bin="/tmp/hermes_test_${name}"
-    if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
-        if "$bin" > /dev/null 2>&1; then ok "$name"
-        else fail "$name (test binary returned non-zero)"
+    if $PARALLEL; then
+        (
+        if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
+            if "$bin" > /dev/null 2>&1; then ok "$name"
+            else fail "$name (test binary returned non-zero)"
+            fi
+            rm -f "$bin"
+        else skip "$name (compilation failed)"
         fi
-        rm -f "$bin"
-    else skip "$name (compilation failed)"
+        ) &
+    else
+        if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
+            if "$bin" > /dev/null 2>&1; then ok "$name"
+            else fail "$name (test binary returned non-zero)"
+            fi
+            rm -f "$bin"
+        else skip "$name (compilation failed)"
+        fi
     fi
 }
 
@@ -44,6 +102,9 @@ run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$C
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
+
+# Wait for parallel library tests
+$PARALLEL && wait
 
 echo ""; echo "=== Image Routing Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/image_routing.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libjson/json.c" \
