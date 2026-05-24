@@ -263,6 +263,18 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
     c->ssl_ctx = NULL;
     c->ssl_init = false;
     c->proxy[0] = '\0';
+
+    /* Auto-detect proxy from environment (HTTPS_PROXY > HTTP_PROXY > ALL_PROXY) */
+    const char *env_keys[] = {"HTTPS_PROXY", "https_proxy", "HTTP_PROXY",
+                              "http_proxy", "ALL_PROXY", "all_proxy", NULL};
+    for (int i = 0; env_keys[i]; i++) {
+        const char *val = getenv(env_keys[i]);
+        if (val && val[0]) {
+            snprintf(c->proxy, sizeof(c->proxy), "%s", val);
+            break;
+        }
+    }
+
     return c;
 }
 
