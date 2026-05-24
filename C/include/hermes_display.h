@@ -92,13 +92,41 @@ void display_progress_done(display_progress_t *bar);
 /* Spinner */
 typedef struct {
     int   frame;
+    int   frame_count;
     char *label;
+    char *face;           /* current kawaii face string (malloc'd) */
     bool  active;
 } display_spinner_t;
 
 void display_spinner_start(display_spinner_t *sp, const char *label);
 void display_spinner_tick(display_spinner_t *sp);
 void display_spinner_stop(display_spinner_t *sp, const char *done_msg);
+
+/* Kawaii spinner with animated face cycles */
+typedef struct {
+    int    frame;
+    char  *label;
+    char   face[64];       /* current face emoji/kaomoji */
+    bool   active;
+    bool   thinking;       /* true=thinking faces, false=waiting faces */
+    double start_time;     /* seconds since epoch */
+} display_kawaii_t;
+
+void display_kawaii_start(display_kawaii_t *sp, const char *label, bool thinking);
+void display_kawaii_tick(display_kawaii_t *sp);
+void display_kawaii_stop(display_kawaii_t *sp, const char *done_msg);
+
+/* Tool activity feed — build one-line preview from tool name + args JSON */
+/* Returns malloc'd string (caller free) or NULL if no preview possible. */
+char *display_tool_preview(const char *tool_name, const char *args_json);
+
+/* Render a unified diff with ANSI color for inline display */
+/* Returns malloc'd string (caller free). */
+char *display_inline_diff(const char *diff_text);
+
+/* Print a tool activity line with ┊ prefix, emoji, tool name, preview */
+void display_tool_activity(const char *tool_name, const char *preview,
+                           display_color_t color);
 
 /* Print a box/panel around text */
 void display_panel(const char *title, const char *content, display_color_t color);

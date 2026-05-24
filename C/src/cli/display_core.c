@@ -5,12 +5,15 @@
  */
 
 #include "hermes_display.h"
+#include "hermes_json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
+#include <time.h>
 
 /* ================================================================
  *  State
@@ -224,7 +227,9 @@ static const char SPINNER_CHARS[] = {'|', '/', '-', '\\'};
 void display_spinner_start(display_spinner_t *sp, const char *label) {
     if (!sp) return;
     sp->frame = 0;
+    sp->frame_count = 0;
     sp->active = true;
+    sp->face = NULL;
     if (label) {
         sp->label = strdup(label);
     } else {
@@ -237,6 +242,7 @@ void display_spinner_tick(display_spinner_t *sp) {
     printf("\r%c %s", SPINNER_CHARS[sp->frame % 4],
            sp->label ? sp->label : "");
     sp->frame++;
+    sp->frame_count++;
     fflush(stdout);
 }
 
@@ -251,7 +257,291 @@ void display_spinner_stop(display_spinner_t *sp, const char *done_msg) {
     }
     free(sp->label);
     sp->label = NULL;
+    free(sp->face);
+    sp->face = NULL;
     fflush(stdout);
+}
+
+/* ================================================================
+ *  Kawaii Spinner — animated faces for LLM wait
+ * ================================================================ */
+
+static const char *KAWAII_WAITING[] = {
+    "(｡◕‿◕｡)", "(◕‿◕✿)", "٩(◕‿◕｡)۶", "(✿◠‿◠)", "( ˘▽˘)っ",
+    "♪(´ε` )", "(◕ᴗ◕✿)", "ヾ(＾∇＾)", "(≧◡≦)", "(★ω★)",
+};
+static const int N_WAITING = 10;
+
+static const char *KAWAII_THINKING[] = {
+    "(｡•́︿•̀｡)", "(◔_◔)", "(¬‿¬)", "( •_•)>⌐■-■", "(⌐■_■)",
+    "(´･_･`)", "◉_◉", "(°ロ°)", "( ˘⌣˘)♡", "ヽ(>∀<☆)☆",
+    "٩(๑❛ᴗ❛๑)۶", "(⊙_⊙)", "(¬_¬)", "( ͡° ͜ʖ ͡°)", "ಠ_ಠ",
+};
+static const int N_THINKING = 15;
+
+void display_kawaii_start(display_kawaii_t *k, const char *label, bool thinking) {
+    if (!k) return;
+    k->frame = 0;
+    k->active = true;
+    k->thinking = thinking;
+    k->face[0] = '\0';
+    k->label = label ? strdup(label) : NULL;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    k->start_time = (double)tv.tv_sec + (double)tv.tv_usec / 1e6;
+    /* Print initial state */
+    if (thinking)
+        snprintf(k->face, sizeof(k->face), "%s", KAWAII_THINKING[0]);
+    else
+        snprintf(k->face, sizeof(k->face), "%s", KAWAII_WAITING[0]);
+    printf("\r%s  %s", k->face, k->label ? k->label : "");
+    fflush(stdout);
+}
+
+void display_kawaii_tick(display_kawaii_t *k) {
+    if (!k || !k->active || !is_tty) return;
+    k->frame++;
+    int idx = k->frame;
+    const char *face;
+    if (k->thinking) {
+        face = KAWAII_THINKING[idx % N_THINKING];
+    } else {
+        face = KAWAII_WAITING[idx % N_WAITING];
+    }
+    snprintf(k->face, sizeof(k->face), "%s", face);
+    printf("\r%s  %s", face, k->label ? k->label : "");
+    fflush(stdout);
+}
+
+void display_kawaii_stop(display_kawaii_t *k, const char *done_msg) {
+    if (!k) return;
+    k->active = false;
+    int idx = k->frame;
+    const char *face;
+    if (k->thinking)
+        face = KAWAII_THINKING[idx % N_THINKING];
+    else
+        face = KAWAII_WAITING[idx % N_WAITING];
+    if (is_tty) {
+        printf("\r%s  ", face);
+        if (done_msg) {
+            display_printf(DISPLAY_GREEN, DISPLAY_NORMAL, "✓ ");
+            printf("%s\n", done_msg);
+        } else {
+            display_printf(DISPLAY_GREEN, DISPLAY_NORMAL, "✓ ");
+            printf("%s\n", k->label ? k->label : "done");
+        }
+    }
+    free(k->label);
+    k->label = NULL;
+    fflush(stdout);
+}
+
+/* ================================================================
+ *  Tool preview builder — extract primary arg from tool call JSON
+ * ================================================================ */
+
+char *display_tool_preview(const char *tool_name, const char *args_json) {
+    if (!tool_name || !args_json) return NULL;
+
+    /* Parse JSON args */
+    json_t *args = json_parse(args_json, NULL);
+    if (!args || args->type != JSON_OBJECT) {
+        json_free(args);
+        return NULL;
+    }
+
+    const char *preview = NULL;
+    char buf[512];
+
+    /* Primary arg key per tool */
+    if (strcmp(tool_name, "terminal") == 0)
+        preview = json_get_str(args, "command", NULL);
+    else if (strcmp(tool_name, "web_search") == 0)
+        preview = json_get_str(args, "query", NULL);
+    else if (strcmp(tool_name, "read_file") == 0 || strcmp(tool_name, "write_file") == 0
+             || strcmp(tool_name, "patch") == 0)
+        preview = json_get_str(args, "path", NULL);
+    else if (strcmp(tool_name, "search_files") == 0)
+        preview = json_get_str(args, "pattern", NULL);
+    else if (strcmp(tool_name, "execute_code") == 0)
+        preview = json_get_str(args, "code", NULL);
+    else if (strcmp(tool_name, "delegate_task") == 0)
+        preview = json_get_str(args, "goal", NULL);
+    else if (strcmp(tool_name, "vision_analyze") == 0)
+        preview = json_get_str(args, "question", NULL);
+    else if (strcmp(tool_name, "image_generate") == 0 || strcmp(tool_name, "text_to_speech") == 0)
+        preview = json_get_str(args, "prompt", NULL);
+    else if (strcmp(tool_name, "cronjob") == 0)
+        preview = json_get_str(args, "action", NULL);
+    else if (strcmp(tool_name, "memory") == 0)
+        preview = json_get_str(args, "action", NULL);
+    else if (strcmp(tool_name, "session_search") == 0)
+        preview = json_get_str(args, "query", NULL);
+    else if (strcmp(tool_name, "skill_view") == 0)
+        preview = json_get_str(args, "name", NULL);
+    else if (strcmp(tool_name, "send_message") == 0) {
+        preview = json_get_str(args, "target", NULL);
+        if (preview) {
+            snprintf(buf, sizeof(buf), "→ %s", preview);
+            preview = buf;
+        }
+    } else if (strcmp(tool_name, "todo") == 0) {
+        json_t *todos = json_obj_get(args, "todos");
+        if (todos && todos->type == JSON_ARRAY) {
+            snprintf(buf, sizeof(buf), "%zu tasks", json_len(todos));
+        } else {
+            preview = json_get_str(args, "merge", NULL);
+            if (preview && strcmp(preview, "true") == 0)
+                snprintf(buf, sizeof(buf), "updating tasks");
+            else
+                snprintf(buf, sizeof(buf), "planning");
+        }
+        preview = buf;
+    } else if (strcmp(tool_name, "process") == 0) {
+        preview = json_get_str(args, "action", NULL);
+    } else if (strcmp(tool_name, "clarify") == 0) {
+        preview = json_get_str(args, "question", NULL);
+    } else if (strcmp(tool_name, "skill_manage") == 0) {
+        preview = json_get_str(args, "name", NULL);
+        if (!preview) preview = json_get_str(args, "action", NULL);
+    } else if (strcmp(tool_name, "browser_navigate") == 0) {
+        preview = json_get_str(args, "url", NULL);
+    } else if (strcmp(tool_name, "browser_click") == 0) {
+        preview = json_get_str(args, "ref", NULL);
+    } else if (strcmp(tool_name, "browser_type") == 0) {
+        preview = json_get_str(args, "text", NULL);
+    }
+
+    if (!preview) {
+        /* Fallback: try common keys */
+        const char *fallbacks[] = {"query", "text", "command", "path", "name", "prompt", "code", "goal", "message", "content", "action", NULL};
+        for (int i = 0; fallbacks[i]; i++) {
+            preview = json_get_str(args, fallbacks[i], NULL);
+            if (preview) break;
+        }
+    }
+
+    char *result = NULL;
+    if (preview) {
+        /* Collapse whitespace, truncate */
+        char cleaned[128];
+        int j = 0;
+        int last_space = 0;
+        for (int i = 0; preview[i] && j < (int)sizeof(cleaned) - 4; i++) {
+            if (preview[i] == ' ' || preview[i] == '\t' || preview[i] == '\n') {
+                if (!last_space) { cleaned[j++] = ' '; last_space = 1; }
+            } else {
+                cleaned[j++] = preview[i];
+                last_space = 0;
+            }
+        }
+        /* Truncate with ... */
+        if (j > 60) {
+            j = 57;
+            cleaned[j++] = '.';
+            cleaned[j++] = '.';
+            cleaned[j++] = '.';
+        }
+        cleaned[j] = '\0';
+        result = strdup(cleaned);
+    }
+
+    json_free(args);
+    return result;
+}
+
+/* ================================================================
+ *  Tool activity line — ┊ prefix + emoji + tool_name + preview
+ * ================================================================ */
+
+void display_tool_activity(const char *tool_name, const char *preview,
+                           display_color_t color) {
+    if (!tool_name) return;
+
+    /* Emoji map */
+    const char *emoji = "⚡"; /* default */
+    if (strcmp(tool_name, "terminal") == 0) emoji = "$ ";
+    else if (strcmp(tool_name, "write_file") == 0) emoji = "📝";
+    else if (strcmp(tool_name, "read_file") == 0) emoji = "📖";
+    else if (strcmp(tool_name, "patch") == 0) emoji = "🩹";
+    else if (strcmp(tool_name, "web_search") == 0) emoji = "🔍";
+    else if (strcmp(tool_name, "search_files") == 0) emoji = "🔎";
+    else if (strcmp(tool_name, "execute_code") == 0) emoji = "🐍";
+    else if (strcmp(tool_name, "delegate_task") == 0) emoji = "📋";
+    else if (strcmp(tool_name, "vision_analyze") == 0) emoji = "👁️";
+    else if (strcmp(tool_name, "image_generate") == 0) emoji = "🎨";
+    else if (strcmp(tool_name, "text_to_speech") == 0) emoji = "🔊";
+    else if (strcmp(tool_name, "send_message") == 0) emoji = "📤";
+    else if (strcmp(tool_name, "memory") == 0) emoji = "🧠";
+    else if (strcmp(tool_name, "session_search") == 0) emoji = "📚";
+    else if (strcmp(tool_name, "skill_view") == 0 || strcmp(tool_name, "skill_manage") == 0) emoji = "🛠️";
+    else if (strcmp(tool_name, "cronjob") == 0) emoji = "⏰";
+    else if (strcmp(tool_name, "todo") == 0) emoji = "✅";
+    else if (strcmp(tool_name, "clarify") == 0) emoji = "❓";
+    else if (strcmp(tool_name, "browser_navigate") == 0 || strcmp(tool_name, "browser_click") == 0
+             || strcmp(tool_name, "browser_type") == 0) emoji = "🌐";
+
+    printf("  %s ", emoji);
+    display_printf(color, DISPLAY_BOLD, "%s", tool_name);
+    if (preview) {
+        printf(" ");
+        display_printf(DISPLAY_DEFAULT, DISPLAY_DIM, "%s", preview);
+    }
+    printf("\n");
+    fflush(stdout);
+}
+
+/* ================================================================
+ *  Inline diff rendering — colored unified diff
+ * ================================================================ */
+
+char *display_inline_diff(const char *diff_text) {
+    if (!diff_text) return NULL;
+
+    /* Calculate output buffer size (diff_text can be up to ~50KB) */
+    size_t in_len = strlen(diff_text);
+    size_t cap = in_len * 3 + 4096; /* ANSI expansion */
+    char *out = (char *)malloc(cap);
+    if (!out) return NULL;
+    size_t pos = 0;
+
+    const char *p = diff_text;
+    const char *nl;
+    while ((nl = strchr(p, '\n')) != NULL) {
+        size_t line_len = (size_t)(nl - p);
+        char line[4096];
+        size_t lcpy = line_len < sizeof(line) - 1 ? line_len : sizeof(line) - 1;
+        memcpy(line, p, lcpy);
+        line[lcpy] = '\0';
+
+        if (line_len > 0 && line[0] == '+') {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;255;255;255;48;2;20;90;20m%s\033[0m\n", line);
+        } else if (line_len > 0 && line[0] == '-') {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;255;255;255;48;2;120;20;20m%s\033[0m\n", line);
+        } else if (line_len > 1 && line[0] == '@' && line[1] == '@') {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;120;120;140m%s\033[0m\n", line);
+        } else if (line_len > 3 && strncmp(line, "+++ ", 4) == 0) {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;180;160;255m%s\033[0m\n", line);
+        } else if (line_len > 3 && strncmp(line, "--- ", 4) == 0) {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;180;160;255m%s\033[0m\n", line);
+        } else if (line_len > 0 && line[0] == ' ') {
+            pos += snprintf(out + pos, cap - pos, "\033[38;2;150;150;150m%s\033[0m\n", line);
+        } else {
+            pos += snprintf(out + pos, cap - pos, "%s\n", line);
+        }
+
+        if (pos >= cap - 256) break; /* safety */
+        p = nl + 1;
+    }
+
+    /* Handle last line without trailing newline */
+    if (*p) {
+        pos += snprintf(out + pos, cap - pos, "\033[38;2;150;150;150m%s\033[0m\n", p);
+    }
+
+    if (pos == 0) { free(out); return NULL; }
+    return out;
 }
 
 /* ================================================================

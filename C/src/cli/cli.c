@@ -7,6 +7,7 @@
 #include "hermes_agent.h"
 #include "hermes_display.h"
 #include "hermes_skin.h"
+#include "hermes_json.h"
 #include "hermes_xai_retirement.h"
 #include "plugin.h"
 #include <stdio.h>
@@ -69,6 +70,64 @@ static void cli_skin_init(void) {
     }
     if (!g_skin)
         g_skin = skin_default();
+}
+
+/* ================================================================
+ *  Tool event callback — wired to agent_loop for visual feedback
+ * ================================================================ */
+
+/* Tool event callback attached to agent_state_t.
+ * Called by agent_loop for tool.started, tool.completed, tool.failed.
+ * Returns non-zero to continue event propagation. */
+static int cli_tool_event_cb(const char *event_type, const char *tool_name,
+                              const char *args_or_result, void *userdata) {
+    (void)userdata;
+    if (!tool_name) return 1;
+
+    if (strcmp(event_type, "tool.started") == 0) {
+        /* Build preview from JSON args */
+        char *preview = display_tool_preview(tool_name, args_or_result);
+        display_tool_activity(tool_name, preview, DISPLAY_CYAN);
+        free(preview);
+    } else if (strcmp(event_type, "tool.completed") == 0) {
+        /* Quick result summary */
+        display_printf(DISPLAY_GREEN, DISPLAY_DIM, "  ┊ ✓ %s", tool_name);
+        /* Check if result has a compact success indicator */
+        if (args_or_result) {
+            json_t *res = json_parse(args_or_result, NULL);
+            if (res && res->type == JSON_OBJECT) {
+                const char *summary = json_get_str(res, "success", NULL);
+                if (!summary) summary = json_get_str(res, "output", NULL);
+                if (summary) {
+                    char truncated[80];
+                    snprintf(truncated, sizeof(truncated), "%.77s", summary);
+                    if (strlen(summary) > 77) strcat(truncated, "...");
+                    printf(" %s", truncated);
+                }
+            }
+            json_free(res);
+        }
+        printf("\n");
+        fflush(stdout);
+    } else if (strcmp(event_type, "tool.failed") == 0) {
+        display_printf(DISPLAY_RED, DISPLAY_DIM, "  ┊ ✗ %s", tool_name);
+        if (args_or_result) {
+            json_t *res = json_parse(args_or_result, NULL);
+            if (res && res->type == JSON_OBJECT) {
+                const char *err = json_get_str(res, "error", NULL);
+                if (err) {
+                    char truncated[80];
+                    snprintf(truncated, sizeof(truncated), " %.77s", err);
+                    printf("%s", truncated);
+                }
+            }
+            json_free(res);
+        }
+        printf("\n");
+        fflush(stdout);
+    }
+
+    return 1; /* continue propagation */
 }
 
 /* ================================================================
@@ -233,6 +292,9 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Initialize agent */
     agent_init(&g_cli.agent);
+    /* Wire tool event callback for activity feed — after agent_init (memset) */
+    g_cli.agent.tool_event_cb = cli_tool_event_cb;
+    g_cli.agent.tool_event_data = &g_cli;
     /* Set streaming callback for interactive mode */
     if (g_cli.interactive) {
         g_cli.agent.stream_cb = cli_stream_cb;
