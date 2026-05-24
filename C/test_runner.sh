@@ -827,6 +827,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_bundles.c" "$CDIR/src/agent/ski
 else skip "skill_bundles (compilation failed)"
 fi
 
+echo ""; echo "=== i18n Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_i18n.c" "$CDIR/src/agent/i18n.c" \
+    -I"$CDIR/include" -I"$CDIR/src/agent" \
+    -o /tmp/hermes_test_i18n -lm 2>/dev/null && [[ -x /tmp/hermes_test_i18n ]]; then
+    if /tmp/hermes_test_i18n > /dev/null 2>&1; then
+        ok "i18n"
+    else fail "i18n (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_i18n
+else skip "i18n (compilation failed)"
+fi
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
