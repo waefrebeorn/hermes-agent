@@ -20,7 +20,7 @@
 | Config | ~322 keys | 432 nested keys | ~75% | Needs exact audit |
 | Security | 7 modules | — | ~70% | url_safety, file_safety, rate_limit done |
 || Stubs | **0** | — | **All fixed** ✅ |
-| Tests | 173 .c files | ~28K py tests | — | Timeout at 120s |
+|| Tests | 173 .c files | ~28K py tests | — | **210/0/0 in <60s** ✅ (parallelized) |
 
 ## Build Status
 
