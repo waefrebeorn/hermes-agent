@@ -787,6 +787,9 @@ run_lib_test "retry_utils" "tests/test_retry_utils.c" "include" "$CDIR/src/agent
 echo ""; echo "=== Trajectory Tests (B118) ==="
 run_lib_test "trajectory" "tests/test_trajectory.c" "include" "$CDIR/src/agent/trajectory.c $CDIR/lib/libjson/json.c"
 
+echo ""; echo "=== Context Engine Tests (B15) ==="
+run_lib_test "context_engine" "tests/test_context_engine.c" "include" "$CDIR/src/agent/context_engine.c $CDIR/lib/libjson/json.c -lm"
+
 echo ""; echo "=== Portal Tags Tests (B119) ==="
 run_lib_test "portal_tags" "tests/test_portal_tags.c" "include" "$CDIR/src/agent/portal_tags.c"
 
