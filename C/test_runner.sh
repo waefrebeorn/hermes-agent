@@ -597,8 +597,10 @@ echo ""; echo "=== JSON5 Library Tests (J20) ==="
 run_lib_test "json5" "tests/test_json5.c" "lib/libjson5" "$CDIR/lib/libjson5/json5.c -I $CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 echo ""; echo "=== Display Module Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libansi" -I"$CDIR/lib/libjson" \
     "$CDIR/tests/test_display.c" \
     "$CDIR/src/cli/display.c" "$CDIR/src/cli/display_core.c" \
+    "$CDIR/lib/libansi/ansi.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_display -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_display > /dev/null 2>&1; then ok "display (24 tests)"
     else fail "display (test binary returned non-zero)"; fi
