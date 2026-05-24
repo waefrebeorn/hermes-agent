@@ -16,6 +16,7 @@
 #include <sys/utsname.h>
 
 #include "skill_bundles.h"
+#include "usage_pricing.h"
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -2485,6 +2486,19 @@ static void cmd_insights(const char *args, agent_state_t *state) {
     printf("    Chars:     %zu\n", total_chars);
     printf("    Est. tokens: ~%zu\n", (total_chars + 3) / 4);
     printf("    Iterations: %d/%d\n", state->iteration_count, state->max_iterations);
+
+    /* Cost estimate using model name */
+    if (state->llm.model[0]) {
+        usage_counts_t uc;
+        memset(&uc, 0, sizeof(uc));
+        uc.input_tokens = (long long)((total_chars + 3) / 4 / 2); /* ~half input */
+        uc.output_tokens = (long long)((total_chars + 3) / 4 / 2);
+        usage_cost_t est = usage_pricing_estimate(state->llm.model, &uc);
+        if (est.has_pricing) {
+            printf("    Est. cost:  %s (%s)\n",
+                   usage_pricing_format_cost(est.total_cost), est.label);
+        }
+    }
 }
 
 /* /indicator: Pick TUI indicator style — stores in static var */
