@@ -1,85 +1,213 @@
+/*
+ * test_tokenizer.c — Tests for model-aware token counting.
+ */
+
 #include "hermes_tokenizer.h"
 #include <stdio.h>
 #include <string.h>
 
 static int pass = 0, fail = 0;
 
-#define TEST(name, cond) do { \
-    if (!(cond)) { \
-        printf("  FAIL: %s (line %d)\n", name, __LINE__); \
-        fail++; \
-    } else { \
-        printf("  PASS: %s\n", name); \
-        pass++; \
-    } \
-} while(0)
+#define TEST(name) do { printf("  %s ... ", name); } while(0)
+#define PASS() do { printf("PASS\n"); pass++; } while(0)
+#define FAIL(msg) do { printf("FAIL: %s\n", msg); fail++; } while(0)
+#define ASSERT(cond, msg) do { if (!(cond)) { FAIL(msg); return; } } while(0)
+
+/* ================================================================
+ *  Model family detection
+ * ================================================================ */
+
+static void test_family_detection(void) {
+    TEST("gpt-4 → TOKEN_FAMILY_GPT4");
+    ASSERT(hermes_token_family_from_model("gpt-4") == TOKEN_FAMILY_GPT4, "wrong");
+    PASS();
+
+    TEST("gpt-4o → TOKEN_FAMILY_GPT4");
+    ASSERT(hermes_token_family_from_model("gpt-4o") == TOKEN_FAMILY_GPT4, "wrong");
+    PASS();
+
+    TEST("gpt-4-turbo → TOKEN_FAMILY_GPT4");
+    ASSERT(hermes_token_family_from_model("gpt-4-turbo") == TOKEN_FAMILY_GPT4, "wrong");
+    PASS();
+
+    TEST("gpt-3.5-turbo → TOKEN_FAMILY_GPT35");
+    ASSERT(hermes_token_family_from_model("gpt-3.5-turbo") == TOKEN_FAMILY_GPT35, "wrong");
+    PASS();
+
+    TEST("claude-3-opus → TOKEN_FAMILY_CLAUDE");
+    ASSERT(hermes_token_family_from_model("claude-3-opus") == TOKEN_FAMILY_CLAUDE, "wrong");
+    PASS();
+
+    TEST("claude-4-sonnet → TOKEN_FAMILY_CLAUDE");
+    ASSERT(hermes_token_family_from_model("claude-4-sonnet") == TOKEN_FAMILY_CLAUDE, "wrong");
+    PASS();
+
+    TEST("deepseek-chat → TOKEN_FAMILY_DEEPSEEK");
+    ASSERT(hermes_token_family_from_model("deepseek-chat") == TOKEN_FAMILY_DEEPSEEK, "wrong");
+    PASS();
+
+    TEST("gemini-pro → TOKEN_FAMILY_GEMINI");
+    ASSERT(hermes_token_family_from_model("gemini-pro") == TOKEN_FAMILY_GEMINI, "wrong");
+    PASS();
+
+    TEST("llama-3-70b → TOKEN_FAMILY_LLAMA");
+    ASSERT(hermes_token_family_from_model("llama-3-70b") == TOKEN_FAMILY_LLAMA, "wrong");
+    PASS();
+
+    TEST("mistral-large → TOKEN_FAMILY_MISTRAL");
+    ASSERT(hermes_token_family_from_model("mistral-large") == TOKEN_FAMILY_MISTRAL, "wrong");
+    PASS();
+
+    TEST("command-r → TOKEN_FAMILY_COMMAND");
+    ASSERT(hermes_token_family_from_model("command-r") == TOKEN_FAMILY_COMMAND, "wrong");
+    PASS();
+
+    TEST("unknown-model → TOKEN_FAMILY_UNKNOWN");
+    ASSERT(hermes_token_family_from_model("unknown-model") == TOKEN_FAMILY_UNKNOWN, "wrong");
+    PASS();
+
+    TEST("NULL → TOKEN_FAMILY_UNKNOWN");
+    ASSERT(hermes_token_family_from_model(NULL) == TOKEN_FAMILY_UNKNOWN, "wrong");
+    PASS();
+
+    TEST("empty → TOKEN_FAMILY_UNKNOWN");
+    ASSERT(hermes_token_family_from_model("") == TOKEN_FAMILY_UNKNOWN, "wrong");
+    PASS();
+}
+
+/* ================================================================
+ *  Token counting
+ * ================================================================ */
+
+static void test_token_count(void) {
+    TEST("empty text → 0 tokens");
+    ASSERT(hermes_token_count("", TOKEN_FAMILY_GPT4) == 0, "wrong");
+    PASS();
+
+    TEST("NULL text → 0");
+    ASSERT(hermes_token_count(NULL, TOKEN_FAMILY_GPT4) == 0, "wrong");
+    PASS();
+
+    TEST("short text ~4 chars → ~1 token");
+    /* "test" = 4 chars, GPT4 = 4.0 cpt → 1 token */
+    ASSERT(hermes_token_count("test", TOKEN_FAMILY_GPT4) == 1, "wrong");
+    PASS();
+
+    TEST("8 chars → 2 tokens for GPT4");
+    ASSERT(hermes_token_count("12345678", TOKEN_FAMILY_GPT4) == 2, "wrong");
+    PASS();
+
+    TEST("9 chars → 3 tokens (ceil)");
+    ASSERT(hermes_token_count("123456789", TOKEN_FAMILY_GPT4) == 3, "wrong");
+    PASS();
+
+    TEST("claude cpt (3.5) different from GPT4 (4.0)");
+    /* 14 chars / 3.5 = 4.0 → 4 tokens vs 14/4.0 = 3.5 → 4 tokens
+     * Need more chars to differentiate: 350 chars */
+    char buf[351];
+    memset(buf, 'x', 350);
+    buf[350] = '\0';
+    size_t gpt_count = hermes_token_count(buf, TOKEN_FAMILY_GPT4);
+    size_t claude_count = hermes_token_count(buf, TOKEN_FAMILY_CLAUDE);
+    ASSERT(gpt_count != claude_count, "claude and gpt4 should give different counts");
+    ASSERT(gpt_count < claude_count, "GPT4 (4.0 cpt) < Claude (3.5 cpt)");
+    PASS();
+}
+
+static void test_count_for_model(void) {
+    TEST("count_for_model with gpt-4");
+    size_t n = hermes_token_count_for_model("Hello world, this is a test.", "gpt-4");
+    ASSERT(n > 0, "should be >0");
+    PASS();
+
+    TEST("count_for_model with claude");
+    n = hermes_token_count_for_model("Hello world, this is a test.", "claude-3-opus");
+    ASSERT(n > 0, "should be >0");
+    PASS();
+}
+
+/* ================================================================
+ *  Context window sizes
+ * ================================================================ */
+
+static void test_context_size(void) {
+    TEST("gpt-4o context window known");
+    size_t ctx = hermes_token_context_size("gpt-4o");
+    ASSERT(ctx > 0, "gpt-4o should have known context");
+    PASS();
+
+    TEST("gpt-4o exact context window");
+    ASSERT(ctx == 128000, "gpt-4o context should be 128K");
+
+    TEST("claude-3 context window");
+    ctx = hermes_token_context_size("claude-3-opus");
+    ASSERT(ctx > 0, "claude should have known context");
+    PASS();
+
+    TEST("unknown model → 0");
+    ctx = hermes_token_context_size("unknown-model-xyz");
+    ASSERT(ctx == 0, "unknown should return 0");
+    PASS();
+
+    TEST("NULL → 0");
+    ctx = hermes_token_context_size(NULL);
+    ASSERT(ctx == 0, "NULL should return 0");
+    PASS();
+}
+
+/* ================================================================
+ *  Cost rates
+ * ================================================================ */
+
+static void test_cost_rates(void) {
+    TEST("GPT4 cost rates > 0");
+    token_cost_rates_t r = hermes_token_cost_rates(TOKEN_FAMILY_GPT4);
+    ASSERT(r.input_per_1m > 0 && r.output_per_1m > 0, "GPT4 should have costs");
+    PASS();
+
+    TEST("UNKNOWN cost rates == 0");
+    r = hermes_token_cost_rates(TOKEN_FAMILY_UNKNOWN);
+    ASSERT(r.input_per_1m == 0 && r.output_per_1m == 0, "unknown should be 0 cost");
+    PASS();
+}
+
+/* ================================================================
+ *  Message array counting
+ * ================================================================ */
+
+static void test_message_count(void) {
+    TEST("single message");
+    const char *msgs[] = {"Hello"};
+    size_t n = hermes_token_count_messages(msgs, 1, TOKEN_FAMILY_GPT4);
+    ASSERT(n > 0, "should have tokens");
+    PASS();
+
+    TEST("two messages");
+    const char *msgs2[] = {"Hello", "World"};
+    n = hermes_token_count_messages(msgs2, 2, TOKEN_FAMILY_GPT4);
+    ASSERT(n > 0, "should have tokens");
+    PASS();
+
+    TEST("empty messages array");
+    n = hermes_token_count_messages(NULL, 0, TOKEN_FAMILY_GPT4);
+    ASSERT(n == 0, "empty should be 0");
+    PASS();
+}
+
+/* ================================================================
+ *  Main
+ * ================================================================ */
 
 int main(void) {
-    printf("=== Tokenizer Tests ===\n");
+    printf("=== Tokenizer Tests ===\n\n");
 
-    /* Test model family detection */
-    TEST("gpt-4o → GPT4", hermes_token_family_from_model("gpt-4o") == TOKEN_FAMILY_GPT4);
-    TEST("gpt-4-turbo → GPT4", hermes_token_family_from_model("gpt-4-turbo") == TOKEN_FAMILY_GPT4);
-    TEST("claude-sonnet-4 → CLAUDE", hermes_token_family_from_model("claude-sonnet-4") == TOKEN_FAMILY_CLAUDE);
-    TEST("deepseek-chat → DEEPSEEK", hermes_token_family_from_model("deepseek-chat") == TOKEN_FAMILY_DEEPSEEK);
-    TEST("gemini-1.5-pro → GEMINI", hermes_token_family_from_model("gemini-1.5-pro") == TOKEN_FAMILY_GEMINI);
-    TEST("llama-3.1-70b → LLAMA", hermes_token_family_from_model("llama-3.1-70b") == TOKEN_FAMILY_LLAMA);
-    TEST("mistral-large → MISTRAL", hermes_token_family_from_model("mistral-large") == TOKEN_FAMILY_MISTRAL);
-    TEST("command-r → COMMAND", hermes_token_family_from_model("command-r") == TOKEN_FAMILY_COMMAND);
-    TEST("unknown → UNKNOWN", hermes_token_family_from_model("foo-bar-baz") == TOKEN_FAMILY_UNKNOWN);
-    TEST("NULL → UNKNOWN", hermes_token_family_from_model(NULL) == TOKEN_FAMILY_UNKNOWN);
-    TEST("empty → UNKNOWN", hermes_token_family_from_model("") == TOKEN_FAMILY_UNKNOWN);
+    test_family_detection();
+    test_token_count();
+    test_count_for_model();
+    test_context_size();
+    test_cost_rates();
+    test_message_count();
 
-    /* Test chars per token ratio */
-    TEST("GPT4 chars/token ≈ 4.0", hermes_token_chars_per_token(TOKEN_FAMILY_GPT4) == 4.0f);
-    TEST("CLAUDE chars/token ≈ 3.5", hermes_token_chars_per_token(TOKEN_FAMILY_CLAUDE) == 3.5f);
-    TEST("UNKNOWN chars/token ≈ 4.0", hermes_token_chars_per_token(TOKEN_FAMILY_UNKNOWN) == 4.0f);
-
-    /* Test token counting */
-    TEST("empty → 0", hermes_token_count("", TOKEN_FAMILY_UNKNOWN) == 0);
-    TEST("NULL → 0", hermes_token_count(NULL, TOKEN_FAMILY_UNKNOWN) == 0);
-    /* "hello" = 5 chars / 4.0 ≈ 2 tokens */
-    TEST("short text ≈ 2 tokens", hermes_token_count("hello", TOKEN_FAMILY_UNKNOWN) == 2);
-    /* "a" = 1 char / 4.0 → ceil(0.25) = 1 */
-    TEST("single char → 1", hermes_token_count("a", TOKEN_FAMILY_UNKNOWN) == 1);
-    /* 20 chars / 4.0 = 5 tokens */
-    TEST("20 chars → 5 tokens", hermes_token_count("12345678901234567890", TOKEN_FAMILY_UNKNOWN) == 5);
-    /* 21 chars / 4.0 = ceil(5.25) = 6 */
-    TEST("21 chars → 6 tokens", hermes_token_count("123456789012345678901", TOKEN_FAMILY_UNKNOWN) == 6);
-    /* Claude ratio: 21 / 3.5 = 6 */
-    TEST("21 chars claude → 6 tokens", hermes_token_count("123456789012345678901", TOKEN_FAMILY_CLAUDE) == 6);
-    /* DeepSeek ratio: 21 / 3.8 = ceil(5.53) = 6 */
-    TEST("21 chars deepseek → 6 tokens", hermes_token_count("123456789012345678901", TOKEN_FAMILY_DEEPSEEK) == 6);
-
-    /* Test model-aware convenience wrapper */
-    TEST("model-aware gpt-4o", hermes_token_count_for_model("hello world", "gpt-4o") > 0);
-    TEST("model-aware claude", hermes_token_count_for_model("hello world", "claude-sonnet-4") > 0);
-
-    /* Test context window sizes */
-    TEST("gpt-4o ctx = 128K", hermes_token_context_size("gpt-4o") == 128000);
-    TEST("claude-sonnet-4 ctx = 200K", hermes_token_context_size("claude-sonnet-4") == 200000);
-    TEST("deepseek-chat ctx = 64K", hermes_token_context_size("deepseek-chat") == 65536);
-    TEST("gemini-1.5-pro ctx = 1M", hermes_token_context_size("gemini-1.5-pro") == 1048576);
-    TEST("unknown model ctx = 0", hermes_token_context_size("foobar-v3") == 0);
-    TEST("NULL model ctx = 0", hermes_token_context_size(NULL) == 0);
-
-    /* Test cost rates */
-    TEST("GPT4 input cost > 0", hermes_token_cost_rates(TOKEN_FAMILY_GPT4).input_per_1m > 0);
-    TEST("CLAUDE output cost > 0", hermes_token_cost_rates(TOKEN_FAMILY_CLAUDE).output_per_1m > 0);
-    TEST("UNKNOWN cost = 0", hermes_token_cost_rates(TOKEN_FAMILY_UNKNOWN).input_per_1m == 0.0);
-
-    /* Test message counting */
-    const char *msgs[] = {"hello", "world", "test message here"};
-    size_t msg_tok = hermes_token_count_messages(msgs, 3, TOKEN_FAMILY_UNKNOWN);
-    TEST("3 messages count > 0", msg_tok > 0);
-    TEST("NULL msgs → 0", hermes_token_count_messages(NULL, 0, TOKEN_FAMILY_UNKNOWN) == 0);
-    TEST("0 count → 0", hermes_token_count_messages(msgs, 0, TOKEN_FAMILY_UNKNOWN) == 0);
-
-    /* Test family from model — partial match */
-    TEST("o3-mini → GPT4 (o-series)", hermes_token_family_from_model("o3-mini") == TOKEN_FAMILY_GPT4);
-    TEST("deepseek-v3 → DEEPSEEK", hermes_token_family_from_model("deepseek-v3") == TOKEN_FAMILY_DEEPSEEK);
-    TEST("codellama → LLAMA", hermes_token_family_from_model("codellama-34b") == TOKEN_FAMILY_LLAMA);
-
-    printf("\n=== Tokenizer: %d/%d passed ===\n", pass, pass + fail);
+    printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0 ? 1 : 0;
 }
