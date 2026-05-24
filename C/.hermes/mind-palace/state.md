@@ -1,13 +1,14 @@
-# State — Hermes C Translation (2026-05-24, DA v15 — Battleship Reset)
+# State — Hermes C Translation (2026-05-27 — Code Survey)
 
-**~60% estimated parity — ~270 gaps remaining (fresh count).**
+**~63% estimated parity — ~200 gaps remaining.**  
+**Big update: CLI cmds are 79 real (not 197 stubs). CDP stub fixed. /paste improved.**
 
 ## Dashboard
 
 | Category | C | Python | % | Notes |
 |----------|---|--------|---|-------|
 | Agent | 44 .c files | 77 .py files | 57% | 33 of 77 ported |
-| CLI | 8 .c files | 88 .py files | **9%** | 40 real cmd_, 197 stubs |
+|| CLI | 8 .c files, **79 real cmds** | 88 .py files | 9% module depth | **0 stubs** — all cmd_ real |
 | Tools | 31 init funcs, ~83 reg | 75 .py files, ~68 reg | — | C registers more tool variants |
 | Gateway | 19 platform .c | 31 platform modules | 61% | Missing api_server + 12 helpers |
 | MCP | 1 .c + lib | 1 module | ~90% | Sampling, transports done |
@@ -18,7 +19,7 @@
 | Provider | 9 native C | 28 plugin dirs | 32% | Big gap |
 | Config | ~322 keys | 432 nested keys | ~75% | Needs exact audit |
 | Security | 7 modules | — | ~70% | url_safety, file_safety, rate_limit done |
-| Stubs | 1 true stub | — | **99% clean** | browser_cdp handler not wired to real CDP code |
+|| Stubs | **0** | — | **All fixed** ✅ |
 | Tests | 173 .c files | ~28K py tests | — | Timeout at 120s |
 
 ## Build Status

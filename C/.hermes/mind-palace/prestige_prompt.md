@@ -5,22 +5,23 @@
 ## Identity
 1:1 C reimplementation of Python hermes-agent. ~76K LOC C source. 44 agent files, 57 libs, 83 tools, 9 providers, 19 gateways, 31 tool init functions, 173 tests. Synced upstream (740+ commits).
 
-## Current State
+## Current State (2026-05-27 — code survey update)
 
 | Metric | Value | Verification |
 |--------|-------|-------------|
 | Suite | ~213/0/0 | 173 test files (timeout at 120s) |
 | Binary | 29MB ELF, 0 errors, 0 warnings | ✅ Verified |
-| Tool registrations | ~83 across 31 init functions | ✅ All real except 1 stub |
+| Tool registrations | ~83 across 31 init functions | ✅ All real, 0 stubs |
 | Gateway platforms | 19 of 31 Python modules (61%) | ✅ C files exist |
 | Providers | 9 native C of 28 Python plugins (32%) | ✅ All real |
-| CLI | 8 .c files of 88 Python (9%) | ❌ 40 real, 197 stub cmd_ |
+| CLI commands | **79 real cmd_ in commands.c** (3702 lines) | ✅ **0 stubs** |
 | Agent modules | 44 .c of 77 .py (57%) | 🔶 33 real ports done |
 | ACP | 5 of 9 modules (56%) | ✅ Mostly done |
 | Libraries | 57 lib/ directories | ✅ Clean compilation |
 | Config | ~322 of 432 keys | 🟡 Unknown exact count |
-| Stubs | 1 true stub (browser_cdp handler) | 🟡 Dead code |
-| Parity (fresh) | **~60%** | **~270 real gaps remaining** |
+| Stubs | **0 true stubs** | **S01/CDP fixed** |
+| CLI vs Python | 8 .c files vs 88 .py modules | **Module depth gap, not cmd stubs** |
+| Parity (corrected) | **~63%** | **~200 remaining gaps** |
 
 ## Priority Queue — Remaining Gaps (~270)
 

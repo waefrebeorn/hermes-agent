@@ -2,15 +2,12 @@
 
 ## Active: Battleship reset complete. Fresh gap survey done. All mind palace files rewritten.
 
-## Fresh Findings (DA v15 — 2026-05-24)
-- Old battleship-v3 (500 gaps, 34%) was stale — many phantom gaps from already-resolved stubs
-- Fresh code survey found **~270 real, verifiable gaps**
-- Biggest gap sectors: CLI (9% parity), Agent (57%), Providers (32%)
-- 1 true stub: browser_cdp tool not wired to real CDP client
-- 197 of 237 cmd_ functions in commands.c are printf stubs
-- 33 of 77 agent modules ported
-- 19 of 28 provider plugins missing
-- 19 of 31 gateway platform modules done
+## Fresh Findings (2026-05-27 — code survey update)
+- Old DA v15 claim of "197 stub commands" was stale — commands.c has 79 real cmds (3702 lines)
+- Browser CDP handler (S01) already fixed — real handler registered, not stub
+- CLI gap is MODULE depth (8 .c vs 88 .py files), not command stubs
+- 1 true gap closed this session: /paste now reads WSL clipboard via powershell.exe
+- **Real gap count: ~200 (down from ~270)**
 
 ## Key Paths
 - Source: `/home/wubu/hermes-agent-dev/C/src/`
