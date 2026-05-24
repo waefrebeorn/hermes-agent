@@ -2378,9 +2378,11 @@ static void cmd_paste(const char *args, agent_state_t *state) {
     printf("Clipboard paste not available in C CLI (no X11/Wayland).\n");
 }
 
-/* /insights: Show usage insights */
+/* /insights: Show usage insights (enhanced with DB-backed historical stats) */
 static void cmd_insights(const char *args, agent_state_t *state) {
     (void)args;
+
+    /* --- Current session stats (keep existing) --- */
     size_t total_chars = 0;
     int tool_calls = 0;
     for (size_t i = 0; i < state->message_count; i++) {
@@ -2389,12 +2391,98 @@ static void cmd_insights(const char *args, agent_state_t *state) {
         if (state->messages[i]->tool_calls_count > 0)
             tool_calls += state->messages[i]->tool_calls_count;
     }
+
     printf("Usage insights:\n");
-    printf("  Session messages: %zu\n", state->message_count);
-    printf("  Tool calls made:  %d\n", tool_calls);
-    printf("  Total characters: %zu\n", total_chars);
-    printf("  Est. tokens:      ~%zu\n", (total_chars + 3) / 4);
-    printf("  Iterations used:  %d/%d\n", state->iteration_count, state->max_iterations);
+
+    /* --- Historical DB stats --- */
+    db_t *db = state->db;
+    bool db_opened = false;
+    if (!db && state->hermes_home[0]) {
+        /* Try to open the session database */
+        char sess_dir[HERMES_PATH_MAX];
+        snprintf(sess_dir, sizeof(sess_dir), "%s/sessions", state->hermes_home);
+        db = db_open(sess_dir, NULL);
+        if (db) db_opened = true;
+    }
+
+    if (db) {
+        size_t total_sessions = db_count(db);
+        long long storage = db_storage_size(db);
+
+        printf("  All sessions:\n");
+        printf("    Total sessions: %zu\n", total_sessions);
+        printf("    Storage:        %.1f MB\n", storage / (1024.0 * 1024.0));
+
+        /* Aggregate metadata across sessions */
+        size_t session_count = 0;
+        db_session_entry_t *entries = db_list_with_meta(db, &session_count);
+        if (entries) {
+            long long hist_tokens = 0;
+            long long hist_messages = 0;
+            time_t now = time(NULL);
+            int recent_7d = 0, recent_30d = 0;
+            int model_count = 0;
+            char models[64][128];
+            int model_uses[64];
+
+            memset(models, 0, sizeof(models));
+            memset(model_uses, 0, sizeof(model_uses));
+
+            for (size_t i = 0; i < session_count; i++) {
+                hist_tokens += entries[i].meta.token_count;
+                hist_messages += entries[i].meta.message_count;
+
+                double age_days = difftime(now, entries[i].meta.created_at) / 86400.0;
+                if (age_days <= 7) recent_7d++;
+                if (age_days <= 30) recent_30d++;
+
+                /* Track model distribution */
+                if (entries[i].meta.model[0]) {
+                    int found = -1;
+                    for (int m = 0; m < model_count; m++) {
+                        if (strcmp(models[m], entries[i].meta.model) == 0) {
+                            found = m; break;
+                        }
+                    }
+                    if (found >= 0) {
+                        model_uses[found]++;
+                    } else if (model_count < 64) {
+                        snprintf(models[model_count], sizeof(models[0]), "%s", entries[i].meta.model);
+                        model_uses[model_count] = 1;
+                        model_count++;
+                    }
+                }
+            }
+            free(entries);
+
+            printf("    Total tokens:   %lld\n", hist_tokens);
+            printf("    Total messages: %lld\n", hist_messages);
+            printf("    Last 7 days:    %d sessions\n", recent_7d);
+            printf("    Last 30 days:   %d sessions\n", recent_30d);
+
+            if (model_count > 0) {
+                printf("  Models used:\n");
+                for (int m = 0; m < model_count && m < 8; m++) {
+                    printf("    %s: %d sessions\n", models[m], model_uses[m]);
+                }
+                if (model_count > 8)
+                    printf("    ... and %d more\n", model_count - 8);
+            }
+        } else {
+            printf("    (no metadata)\n");
+        }
+
+        if (db_opened) db_close(db);
+    } else {
+        printf("  DB:              not available\n");
+    }
+
+    printf("  Current session:\n");
+    printf("    Messages:  %zu\n", state->message_count);
+    printf("    Tool calls: %d\n", tool_calls);
+    printf("    Chars:     %zu\n", total_chars);
+    printf("    Est. tokens: ~%zu\n", (total_chars + 3) / 4);
+    printf("    Iterations: %d/%d\n", state->iteration_count, state->max_iterations);
 }
 
 /* /indicator: Pick TUI indicator style — stores in static var */
