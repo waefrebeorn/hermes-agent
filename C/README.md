@@ -4,11 +4,13 @@
 One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 
 ```text
-|Suite:  ~213/0/0 (173 test files, ~1,500 assertions)
+|Suite:  210/0/0 (173 test files, completes in <60s)
 |Binary: 29MB    (dynamic ELF, -O2 -g)
 |Source: ~117 .c + ~47 .h = ~164 files, ~76K LOC (non-lib)
-|Parity: ~60%   (~270 gaps remaining — see battleship-v4)
+|Parity: ~63%   (~176 gaps remaining — see battleship-v4)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|CLI:    79 cmd_ functions (all real, 0 stubs) — tab completion, history, table output
+|Tests:  210/0/0, all 14 provider depth tests, no skips
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -20,17 +22,17 @@ One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (78 Registered)](#all-tools-78-registered)
+- [All Tools (~83 Registered)](#all-tools-83-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (9)](#llm-providers-9)
-- [Plugins (10 .so)](#plugins-10-so)
-- [Libraries (56 Units)](#libraries-56-units)
-- [CLI Commands (~148)](#cli-commands-148)
+- [Plugins (10 .c, 0 .so)](#plugins-10-c-0-so)
+- [Libraries (57 Units)](#libraries-57-units)
+- [CLI Commands (79 Slash, Real)](#cli-commands-79-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-- [Battleship Roadmap (~270 Gaps)](#battleship-roadmap-270-gaps)
+- [Battleship Roadmap (~176 Gaps)](#battleship-roadmap-176-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -336,7 +338,7 @@ Every provider implements the same interface: `(init, chat, stream, count_tokens
 
 ---
 
-## Plugins (10 .so)
+## Plugins (10 .c files, 0 .so built)
 
 Plugins are `.so` files loaded at runtime via `dlopen`. Each exposes `plugin_init`, `plugin_process`, and `plugin_shutdown`.
 
@@ -394,7 +396,7 @@ Libraries are compiled directly into the binary (no intermediate `.a` archives).
 
 ---
 
-|CLI: ~237 commands
+|CLI: 79 commands (all real, tab complete + history)
 
 The CLI uses a central command registry (`cli/commands.c`) with alias resolution and subcommand dispatch.
 
