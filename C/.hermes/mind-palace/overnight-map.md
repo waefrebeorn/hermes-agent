@@ -1,8 +1,9 @@
 # Hermes C — Overnight Navigation Map (2026-05-27)
 
-## Session 59 complete — 2 gaps closed (B27 + B50).
+## Session 60 complete — 1 gap closed (B15).
 
-## Session 59 Completed
+## Session 60 Completed
+- **B15: context_engine.py (211L)** — Pluggable context engine interface (vtable). `context_engine_t` struct with function pointers. Default implementations for all optional methods. 11 unit tests. Suite: 214/0/0.
 - **B50: web_search_registry.py (262L)** — Thread-safe provider registry for web search/extract/crawl backends. Capability-based resolution, config overrides, legacy preference walk. 10 unit tests.
 - **B27: image_gen_registry.py (145L)** — Thread-safe provider registry with register/list/get/get_active/reset. FAL provider registered as default. 6 unit tests. Suite: 212/0/0.
 - **B48: video_gen_registry.py (117L)** — Thread-safe provider registry mirroring Python's dict-based map with register/list/get/get_active/reset. FAL provider registered as default. 6 unit tests. Suite: 211/0/0.
