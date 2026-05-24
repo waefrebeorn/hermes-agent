@@ -839,6 +839,9 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_i18n.c" "$CDIR/src/agent/i18n.c" \
 else skip "i18n (compilation failed)"
 fi
 
+echo ""; echo "=== CLI Paths Tests ==="
+run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/cli/paths.c"
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
