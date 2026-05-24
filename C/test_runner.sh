@@ -802,6 +802,9 @@ run_lib_test "system_prompt" "tests/test_system_prompt.c" "include" "-I$CDIR/lib
 echo ""; echo "=== Tool Result Classification Tests ==="
 run_lib_test "tool_result" "tests/test_tool_result.c" "include" "-I$CDIR/lib/libjson $CDIR/src/tools/tool_result.c $CDIR/lib/libjson/json.c"
 
+echo ""; echo "=== Video Gen Registry Tests ==="
+run_lib_test "video_gen_registry" "tests/test_video_gen_registry.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/tools/video_gen_registry.c $CDIR/src/tools/tool_config.c -lpthread"
+
 echo ""; echo "=== Skill Preprocessing Tests ==="
 run_lib_test "skill_preprocessing" "tests/test_skill_preprocessing.c" "include" "$CDIR/src/agent/skill_preprocessing.c"
 

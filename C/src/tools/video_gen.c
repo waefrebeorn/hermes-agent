@@ -11,6 +11,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "fal_common.h"
+#include "video_gen_registry.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -203,7 +204,21 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
  *  Registration
  * ================================================================ */
 
+/* FAL provider availability check */
+static bool fal_video_is_available(void) {
+    return fal_get_api_key() != NULL;
+}
+
 void registry_init_video_gen(void) {
+    /* Register FAL provider in the video_gen registry */
+    video_gen_provider_t fal_provider;
+    memset(&fal_provider, 0, sizeof(fal_provider));
+    snprintf(fal_provider.name, sizeof(fal_provider.name), "%s", "fal");
+    snprintf(fal_provider.display_name, sizeof(fal_provider.display_name), "%s", "FAL.ai (Veo3)");
+    fal_provider.is_available = fal_video_is_available;
+    fal_provider.generate = NULL; /* Uses video_generate_handler directly */
+    video_gen_register_provider(&fal_provider);
+
     registry_register("video_generate",
         "Generate video from text or images using FAL.ai Veo3 API. "
         "Supports text-to-video (generate), image-to-video (with image_url), "
