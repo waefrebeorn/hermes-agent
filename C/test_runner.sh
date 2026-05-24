@@ -773,6 +773,9 @@ run_lib_test "tool_result" "tests/test_tool_result.c" "include" "-I$CDIR/lib/lib
 echo ""; echo "=== Skill Preprocessing Tests ==="
 run_lib_test "skill_preprocessing" "tests/test_skill_preprocessing.c" "include" "$CDIR/src/agent/skill_preprocessing.c"
 
+echo ""; echo "=== Manual Compression Feedback Tests ==="
+run_lib_test "manual_compression" "tests/test_manual_compression_feedback.c" "include" "$CDIR/src/agent/manual_compression_feedback.c"
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
