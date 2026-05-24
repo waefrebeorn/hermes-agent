@@ -8,6 +8,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "fal_common.h"
+#include "image_gen_registry.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -137,7 +138,20 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
  *  Registration
  * ================================================================ */
 
+/* FAL provider availability check */
+static bool fal_image_is_available(void) {
+    return fal_get_api_key() != NULL;
+}
+
 void registry_init_image_gen(void) {
+    /* Register FAL provider in the image_gen registry */
+    image_gen_provider_t fal_provider;
+    memset(&fal_provider, 0, sizeof(fal_provider));
+    snprintf(fal_provider.name, sizeof(fal_provider.name), "%s", "fal");
+    snprintf(fal_provider.display_name, sizeof(fal_provider.display_name), "%s", "FAL.ai (Flux-Pro)");
+    fal_provider.is_available = fal_image_is_available;
+    image_gen_register_provider(&fal_provider);
+
     registry_register("image_generate",
         "Generate an image from a text prompt using the configured FAL API.",
         "{"
