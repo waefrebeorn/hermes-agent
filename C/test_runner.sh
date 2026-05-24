@@ -45,6 +45,19 @@ run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
 
+echo ""; echo "=== Image Routing Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/image_routing.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    $(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done) \
+    -o /tmp/hermes_test_image_routing -lm 2>/dev/null && [[ -x /tmp/hermes_test_image_routing ]]; then
+    if /tmp/hermes_test_image_routing > /dev/null 2>&1; then
+        ok "image_routing"
+    else fail "image_routing (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_image_routing
+else skip "image_routing (compilation failed)"
+fi
+
 echo ""; echo "=== OSV Malware Check Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libosv" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \

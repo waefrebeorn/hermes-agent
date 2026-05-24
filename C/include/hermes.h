@@ -420,6 +420,7 @@ typedef struct {
     char  reasoning_effort[32];    /* agent.reasoning_effort: low/medium/high */
     int   api_max_retries;         /* agent.api_max_retries: API call retries */
     int   clarify_timeout;         /* agent.clarify_timeout: seconds before auto-deny */
+    char  image_input_mode[16];    /* agent.image_input_mode: auto|native|text */
 } agent_config_t;
 
 /* ================================================================

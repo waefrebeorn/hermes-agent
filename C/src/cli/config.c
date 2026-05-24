@@ -385,6 +385,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->agent.compress_threshold = 0.38f;
     cfg->agent.api_max_retries = 3;
     cfg->agent.clarify_timeout = 300;
+    snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "auto");
     snprintf(cfg->agent.reasoning_effort, sizeof(cfg->agent.reasoning_effort), "medium");
 
     /* Tools/terminal config defaults */
@@ -997,8 +998,14 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int api_retries = yaml_get_int(doc, "agent.api_max_retries", 0);
     if (api_retries > 0) cfg->agent.api_max_retries = api_retries;
 
-    int clarify_to = yaml_get_int(doc, "agent.clarify_timeout", 0);
-    if (clarify_to > 0) cfg->agent.clarify_timeout = clarify_to;
+    int clarify_timeout = yaml_get_int(doc, "agent.clarify_timeout", 0);
+    if (clarify_timeout > 0) cfg->agent.clarify_timeout = clarify_timeout;
+
+    /* image_input_mode: auto/native/text */
+    const char *iim = yaml_get_string(doc, "agent.image_input_mode");
+    if (iim && iim[0]) {
+        snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "%s", iim);
+    }
 
     /* Display section */
     const char *skin = yaml_get_string(doc, "display.skin");
