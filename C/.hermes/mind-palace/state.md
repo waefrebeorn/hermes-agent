@@ -6,7 +6,8 @@
      6|     6|     6|     6||| Category | Done | % | Notes |
      7|     7|     7|     7|||----------|------|---|-------|
      8|     8|     8|     8||| Core | 12/16 | 75% | Solid |
-     9|     9|     9|     9||| Agent | 44/115 | 38% | ~25 SDK-specific not portable |
+     9|     9|     9|     9||| Agent | 45/115 | 39% | ~25 SDK-specific not portable |
+|         | 45/116 | 39% | +image_routing.py port |
     10|    10|    10|    10||| CLI | 79/95 | 83% | 79 commands registered |
     11|| Tools | 65/92 | 71% | +fal_common shared lib, refactored image_gen+video_gen |
     12|    12|    12|    12||| Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
