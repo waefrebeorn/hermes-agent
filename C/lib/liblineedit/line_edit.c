@@ -143,10 +143,16 @@ static void term_enter_raw(void) {
     raw.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
     g_raw_mode = true;
+    /* Enable bracketed paste mode */
+    printf("\x1B[?2004h");
+    fflush(stdout);
 }
 
 static void term_exit_raw(void) {
     if (!g_raw_mode) return;
+    /* Disable bracketed paste mode */
+    printf("\x1B[?2004l");
+    fflush(stdout);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &g_old_term);
     g_raw_mode = false;
 }
@@ -418,6 +424,48 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             if (read(STDIN_FILENO, &seq[1], 1) <= 0) continue;
 
             if (seq[0] == '[') {
+                /* Check for bracketed paste \e[200~ (start) / \e[201~ (end) */
+                if (seq[1] == '2' || seq[1] == '2') {
+                    char rest[4];
+                    ssize_t rn = read(STDIN_FILENO, rest, 4);
+                    if (rn == 4 && rest[0] == '0' && rest[1] == '0' && rest[2] == '~') {
+                        /* \e[200~ — paste start: collect until \e[201~ */
+                        while (1) {
+                            char pc;
+                            ssize_t pr = read(STDIN_FILENO, &pc, 1);
+                            if (pr <= 0) break;
+                            if (pc == 0x1b) {
+                                char pseq[5];
+                                if (read(STDIN_FILENO, pseq, 5) > 0 &&
+                                    pseq[0] == '[' && pseq[1] == '2' &&
+                                    pseq[2] == '0' && pseq[3] == '1' && pseq[4] == '~')
+                                    break; /* \e[201~ — paste end */
+                                /* Not paste end — re-insert ESC + sequence as literal */
+                                line_buf_insert(le->buf, 0x1b);
+                                for (int pi = 0; pi < 5; pi++)
+                                    line_buf_insert(le->buf, (unsigned char)pseq[pi]);
+                                continue;
+                            }
+                            if (pc == '\n' || pc == '\r') {
+                                /* Insert literal newline in buffer */
+                                line_buf_insert(le->buf, '\n');
+                            } else if (pc >= 32 && pc < 127) {
+                                line_buf_insert(le->buf, pc);
+                            }
+                        }
+                        /* Print bracketed paste indication and redraw */
+                        if (le->buf->len > 80)
+                            printf("\r\033[K[pasted %zu chars]", le->buf->len);
+                        else
+                            printf("\r\033[K[pasted %zu chars] %s", le->buf->len, le->buf->buf);
+                        fflush(stdout);
+                        continue;
+                    }
+                    if (rn == 4 && rest[0] == '0' && rest[1] == '1' && rest[2] == '~') {
+                        /* \e[201~ — paste end without start (shouldn't happen) */
+                        continue;
+                    }
+                }
                 switch (seq[1]) {
                     case KEY_UP: {
                         /* Save current line before navigating */

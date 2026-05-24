@@ -1,20 +1,30 @@
 # Hermes C — Overnight Navigation Map (2026-05-27)
 
-## Active: T01 resolved (210/0/0 in <60s). Next: CLI depth or provider plugins.
+## Active: Session 57 complete — 6 gaps closed.
 
-## Session 55-56 Completed
-- **T01: test suite parallelization** — all 175 test blocks now run in background. **210/0/0 completes in <60s** (was timeout at 120s).
-- File-backed ok/fail/skip counters for subshell-safe result collection
-- `wait` before summary blocks until all background tests done
-- Previous sessions: /paste WSL clipboard, stale battleship claims corrected
+## Session 57 Completed
+- **K12: nous portal tags + reasoning defaults** — portal_tags.c dead code wired into provider_openai.c. Auto-injects `{"tags": [...], "reasoning": {"enabled": true, "effort": "medium"}}`.
+- **K12 infra** — portal_tags.c added to all 14 provider depth test compilation blocks in test_runner.sh
+- **Q04: ASCII table formatting** — `display_table()` renders bordered, column-aligned tables with Unicode box-drawing. Auto-width, terminal-clamped, colored. Wired into `/commands`.
+- **C12: /logs --follow/-f** — tail -f mode with log rotation detection. Polls every 1s.
+- **N03: README metrics update** — Parity ~63%, gaps ~176, CLI 79 cmds, suite 210/0/0 in <60s.
+- **B37: HTTP proxy env auto-detection** — http_new_with_retry() reads HTTPS_PROXY > HTTP_PROXY > ALL_PROXY on construction.
+
+## Current Reality
+- Suite: **210/0/0 in <60s** (T01 done)
+- CLI: **79 real cmds** (Q02-Q04 done), tab completion, line editing, table output
+- Stubs: **0** (S01/CDP fixed)
+- K12 (nous provider): done
+- Proxy auto-detect: done
+- **~175 gaps remaining** (down from ~270)
 
 ## Next Workstreams (pick one)
-**A — CLI module depth (~30 gaps, P0):** Port small Python hermes_cli/ modules to C
-**B — Provider plugins (~19 gaps, P1):** Pick smallest missing provider (nous = 44 lines Python)
-**C — Agent modules (~44 gaps, P0):** Port prompt_builder.py, process_bootstrap.py, etc.
+**A — Agent modules (~43 gaps, P0):** Smallest: stream_diag.py (280L), context_references.py (518L), image_gen_registry.py (145L)
+**B — Provider plugins (~17 gaps, P1):** Add config defaults + metadata for remaining providers
+**C — Gateway (~12 gaps, P1):** Per-platform integration tests
 
 ## Data Not to Re-Derive
-- CLI commands.c: 79 real cmds (3702 lines), 0 stubs
-- S01 (browser CDP): already fixed — registered to real handler
-- Total gaps: ~200 (down from ~270)
-- 175 test blocks in test_runner.sh: 64 run_lib_test + 111 if gcc blocks
+- CLI commands.c: 79 real cmds, 0 stubs. Tab completion + history + table output work.
+- Battleship-v4.md is canonical reference — not the stale goal banner.
+- Test suite: all 14 provider depth tests pass (portal_tags.c wired in).
+- git push: main up to date.
