@@ -1,8 +1,9 @@
 # Hermes C — Overnight Navigation Map (2026-05-27)
 
-## Active: Session 57 complete — 6 gaps closed.
+## Session 58 complete — 1 gap closed.
 
-## Session 57 Completed
+## Session 58 Completed
+- **B48: video_gen_registry.py (117L)** — Thread-safe provider registry mirroring Python's dict-based map with register/list/get/get_active/reset. FAL provider registered as default. 6 unit tests. Suite: 211/0/0.
 - **K12: nous portal tags + reasoning defaults** — portal_tags.c dead code wired into provider_openai.c. Auto-injects `{"tags": [...], "reasoning": {"enabled": true, "effort": "medium"}}`.
 - **K12 infra** — portal_tags.c added to all 14 provider depth test compilation blocks in test_runner.sh
 - **Q04: ASCII table formatting** — `display_table()` renders bordered, column-aligned tables with Unicode box-drawing. Auto-width, terminal-clamped, colored. Wired into `/commands`.
