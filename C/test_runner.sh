@@ -815,6 +815,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_onboarding.c" "$CDIR/src/agent/onboar
 else skip "onboarding (compilation failed)"
 fi
 
+echo ""; echo "=== Skill Bundle Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_bundles.c" "$CDIR/src/agent/skill_bundles.c" "$CDIR/lib/libyaml/yaml.c" \
+    -I"$CDIR/include" -I"$CDIR/lib/libyaml" \
+    -o /tmp/hermes_test_skill_bundles -lm 2>/dev/null && [[ -x /tmp/hermes_test_skill_bundles ]]; then
+    if /tmp/hermes_test_skill_bundles > /dev/null 2>&1; then
+        ok "skill_bundles"
+    else fail "skill_bundles (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_skill_bundles
+else skip "skill_bundles (compilation failed)"
+fi
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 

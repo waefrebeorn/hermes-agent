@@ -163,7 +163,8 @@ static yaml_entry_t *parse_value(const char *val_str) {
 static void parse_inline(yaml_entry_t *e, const char *val) {
     while (*val == ' ') val++;
     if (*val == '\0') {
-        e->type = YVAL_MAP;
+        e->type = YVAL_STRING;
+        e->str_val = xstrdup("");
         return;
     }
     if (val[0] == '-' && (val[1] == ' ' || val[1] == '\0')) {
