@@ -803,6 +803,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_moonshot_schema.c" "$CDIR/src/agent/m
 else skip "moonshot_schema (compilation failed)"
 fi
 
+echo ""; echo "=== Onboarding Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_onboarding.c" "$CDIR/src/agent/onboarding.c" "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    -o /tmp/hermes_test_onboarding -lm 2>/dev/null && [[ -x /tmp/hermes_test_onboarding ]]; then
+    if /tmp/hermes_test_onboarding > /dev/null 2>&1; then
+        ok "onboarding"
+    else fail "onboarding (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_onboarding
+else skip "onboarding (compilation failed)"
+fi
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
