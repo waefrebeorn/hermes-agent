@@ -70,6 +70,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_lmstudio_reasoning.c" "$CDIR/src/agen
 else skip "lmstudio_reasoning (compilation failed)"
 fi
 
+echo ""; echo "=== Skill Utils Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_utils.c" "$CDIR/lib/libskillutils/skill_utils.c" "$CDIR/lib/libyaml/yaml.c" \
+    -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libskillutils" \
+    -o /tmp/hermes_test_skill_utils -lm 2>/dev/null && [[ -x /tmp/hermes_test_skill_utils ]]; then
+    if /tmp/hermes_test_skill_utils > /dev/null 2>&1; then
+        ok "skill_utils"
+    else fail "skill_utils (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_skill_utils
+else skip "skill_utils (compilation failed)"
+fi
+
 echo ""; echo "=== OSV Malware Check Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libosv" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \
