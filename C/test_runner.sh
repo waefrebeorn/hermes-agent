@@ -58,6 +58,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/ima
 else skip "image_routing (compilation failed)"
 fi
 
+echo ""; echo "=== LM Studio Reasoning Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_lmstudio_reasoning.c" "$CDIR/src/agent/lmstudio_reasoning.c" \
+    -I"$CDIR/include" \
+    -o /tmp/hermes_test_lmstudio -lm 2>/dev/null && [[ -x /tmp/hermes_test_lmstudio ]]; then
+    if /tmp/hermes_test_lmstudio > /dev/null 2>&1; then
+        ok "lmstudio_reasoning"
+    else fail "lmstudio_reasoning (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_lmstudio
+else skip "lmstudio_reasoning (compilation failed)"
+fi
+
 echo ""; echo "=== OSV Malware Check Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
     -I"$CDIR/lib/libosv" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/include" \
