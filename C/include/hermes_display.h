@@ -128,8 +128,11 @@ char *display_inline_diff(const char *diff_text);
 void display_tool_activity(const char *tool_name, const char *preview,
                            display_color_t color);
 
-/* Print a box/panel around text */
+/* Print a box/panel around text (with word-wrap) */
 void display_panel(const char *title, const char *content, display_color_t color);
+
+/* Word-wrap text to max_width columns. Returns malloc'd string (caller free). */
+char *display_word_wrap(const char *text, int max_width);
 
 /* Print a horizontal rule */
 void display_hr(display_color_t color);

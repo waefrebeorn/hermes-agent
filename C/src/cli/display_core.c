@@ -545,6 +545,88 @@ char *display_inline_diff(const char *diff_text) {
 }
 
 /* ================================================================
+ *  Word Wrapping
+ * ================================================================ */
+
+/* Word-wrap text to max_width columns. Preserves existing newlines (paragraphs).
+ * Returns malloc'd string (caller free). Tabs treated as single space.
+ * ANSI escape sequences are NOT stripped — caller should wrap plain text. */
+char *display_word_wrap(const char *text, int max_width) {
+    if (!text || max_width < 1) return strdup(text ? text : "");
+    size_t in_len = strlen(text);
+    /* Upper bound: each char could need \n before it */
+    size_t cap = in_len + (in_len / (max_width > 1 ? max_width : 1)) + 1;
+    char *out = (char *)malloc(cap);
+    if (!out) return strdup(text);
+    size_t pos = 0;
+    int col = 0;        /* current display column */
+    int word_start = -1; /* buffer position of current word start (-1 = in whitespace) */
+    int word_width = 0;
+
+    for (size_t i = 0; i < in_len && pos < cap - 1; i++) {
+        char ch = text[i];
+        if (ch == '\n') {
+            /* Flush current word if any */
+            if (word_start >= 0) {
+                size_t wlen = i - (size_t)word_start;
+                if (pos + wlen + 1 >= cap) break;
+                memcpy(out + pos, text + word_start, wlen);
+                pos += wlen;
+                col += word_width;
+                word_start = -1;
+                word_width = 0;
+            }
+            out[pos++] = '\n';
+            col = 0;
+            continue;
+        }
+        if (ch == ' ' || ch == '\t') {
+            if (word_start >= 0) {
+                /* Check if word fits on current line */
+                if (col + word_width > max_width) {
+                    /* Insert newline before the word */
+                    out[pos++] = '\n';
+                    col = 0;
+                }
+                size_t wlen = i - (size_t)word_start;
+                if (pos + wlen + 1 >= cap) break;
+                memcpy(out + pos, text + word_start, wlen);
+                pos += wlen;
+                col += word_width;
+                word_start = -1;
+                word_width = 0;
+            }
+            /* Emit the space (only if not at column 0) */
+            if (col > 0 && pos < cap - 1) {
+                out[pos++] = ' ';
+                col++;
+            }
+            continue;
+        }
+        /* Regular character: part of a word */
+        if (word_start < 0) word_start = (int)i;
+        /* Increment display width for this char (skip UTF-8 continuation bytes) */
+        if (((unsigned char)ch & 0xC0) != 0x80) word_width++;
+    }
+    /* Flush last word */
+    if (word_start >= 0) {
+        size_t wlen = in_len - (size_t)word_start;
+        if (col + word_width > max_width && col > 0) {
+            out[pos++] = '\n';
+            col = 0;
+        }
+        if (pos + wlen + 1 >= cap) {
+            if (pos < cap) out[pos] = '\0';
+        } else {
+            memcpy(out + pos, text + word_start, wlen);
+            pos += wlen;
+        }
+    }
+    out[pos] = '\0';
+    return out;
+}
+
+/* ================================================================
  *  Panel / Box
  * ================================================================ */
 
@@ -571,10 +653,33 @@ void display_panel(const char *title, const char *content, display_color_t color
         printf("\xE2\x94\x90\n");
     }
 
-    /* Content */
-    display_printf(color, DISPLAY_NORMAL, "%s", content);
-    if (content[strlen(content) - 1] != '\n')
-        printf("\n");
+    /* Content with word-wrap */
+    int wrap_width = inner - 2; /* leave 1-char padding on each side */
+    if (wrap_width < 20) wrap_width = 20;
+    char *wrapped = display_word_wrap(content, wrap_width);
+    if (wrapped) {
+        /* Print each wrapped line with left-padding for inner box */
+        const char *line_start = wrapped;
+        const char *nl;
+        while ((nl = strchr(line_start, '\n')) != NULL) {
+            size_t line_len = (size_t)(nl - line_start);
+            printf(" ");
+            if (line_len > 0) {
+                printf("%.*s", (int)line_len, line_start);
+            }
+            printf("\n");
+            line_start = nl + 1;
+        }
+        /* Last line (no trailing newline) */
+        if (*line_start) {
+            printf(" %s\n", line_start);
+        }
+        free(wrapped);
+    } else {
+        display_printf(color, DISPLAY_NORMAL, "%s", content);
+        if (content[strlen(content) - 1] != '\n')
+            printf("\n");
+    }
 
     /* Bottom border */
     display_printf(color, DISPLAY_BOLD, "\xE2\x94\x94");

@@ -490,7 +490,7 @@ int hermes_cli_main(int argc, char **argv) {
             if (g_cli.json_output) {
                 cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
             } else {
-                printf("%s\n", resp ? resp : "(no response)");
+                display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
             }
             free(resp);
             free(msg);
@@ -533,7 +533,7 @@ int hermes_cli_main(int argc, char **argv) {
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
                 } else {
-                    printf("%s\n", resp ? resp : "(no response)");
+                    display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
                 }
                 free(resp);
             }
@@ -606,7 +606,7 @@ int hermes_cli_main(int argc, char **argv) {
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, "ok");
                 } else {
-                    printf("%s\n", resp);
+                    display_panel("Response", resp, DISPLAY_CYAN);
                 }
             }
             free(resp);
