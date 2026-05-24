@@ -814,6 +814,9 @@ run_lib_test "image_gen_registry" "tests/test_image_gen_registry.c" "include" "-
 echo ""; echo "=== Web Search Registry Tests ==="
 run_lib_test "web_search_registry" "tests/test_web_search_registry.c" "include" "$CDIR/src/tools/web_search_registry.c -lpthread"
 
+echo ""; echo "=== Account Usage Tests ==="
+run_lib_test "account_usage" "tests/test_account_usage.c" "include" "$CDIR/src/tools/account_usage.c $CDIR/lib/libjson/json.c $CDIR/lib/libhttp/http.c -lssl -lcrypto -lm"
+
 echo ""; echo "=== Skill Preprocessing Tests ==="
 run_lib_test "skill_preprocessing" "tests/test_skill_preprocessing.c" "include" "$CDIR/src/agent/skill_preprocessing.c"
 
