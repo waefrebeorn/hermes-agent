@@ -15,6 +15,8 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 
+#include "skill_bundles.h"
+
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
 extern char *session_crud_handler(const char *args_json, const char *task_id);
