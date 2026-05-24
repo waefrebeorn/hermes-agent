@@ -281,6 +281,12 @@ bool paths_overlap(const char *left, const char *right) {
     size_t rlen = strlen(right);
     size_t min_len = llen < rlen ? llen : rlen;
 
+    /* Root path "/" overlaps with any absolute path */
+    if (llen == 1 && left[0] == '/' && rlen > 0 && right[0] == '/')
+        return true;
+    if (rlen == 1 && right[0] == '/' && llen > 0 && left[0] == '/')
+        return true;
+
     /* Check if they match up to the common prefix */
     if (strncmp(left, right, min_len) != 0)
         return false;

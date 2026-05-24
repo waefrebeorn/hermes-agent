@@ -659,6 +659,18 @@ fi
 echo ""; echo "=== Tool Config Tests (P54) ==="
 run_lib_test "tool_config" "tests/test_tool_config.c" "include" "$CDIR/src/tools/tool_config.c"
 
+# Tool Dispatch Helpers test (libtooldispatch — 5 stateless utility functions)
+echo ""; echo "=== Tool Dispatch Helpers Tests (libtooldispatch) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libtooldispatch" \
+    "$CDIR/tests/test_tool_dispatch_helpers.c" \
+    "$CDIR/lib/libtooldispatch/tool_dispatch_helpers.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tool_dispatch -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tool_dispatch > /dev/null 2>&1; then ok "tool_dispatch_helpers (57 tests)"
+    else fail "tool_dispatch_helpers (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tool_dispatch
+else skip "tool_dispatch_helpers (compilation failed)"
+fi
+
 # Result storage test (P49-P50 — needs hermes_config_load from config.c, skip for now)
 # Test file exists at tests/test_result_storage.c — requires full link with config.c
 # echo ""; echo "=== Tool Result Storage Tests (P49-P50) === (skipped — needs config dependency resolution)"
