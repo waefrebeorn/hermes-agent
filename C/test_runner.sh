@@ -791,6 +791,18 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_gemini_schema.c" "$CDIR/src/agent/gem
 else skip "gemini_schema (compilation failed)"
 fi
 
+echo ""; echo "=== Moonshot Schema Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_moonshot_schema.c" "$CDIR/src/agent/moonshot_schema.c" "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    -o /tmp/hermes_test_moonshot_schema -lm 2>/dev/null && [[ -x /tmp/hermes_test_moonshot_schema ]]; then
+    if /tmp/hermes_test_moonshot_schema > /dev/null 2>&1; then
+        ok "moonshot_schema"
+    else fail "moonshot_schema (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_moonshot_schema
+else skip "moonshot_schema (compilation failed)"
+fi
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
