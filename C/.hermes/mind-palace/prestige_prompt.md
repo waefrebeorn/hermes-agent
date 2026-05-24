@@ -1,84 +1,56 @@
-# WuBu Hermes C — Prestige Prompt (Session ~57 — 2026-05-23)
+# WuBu Hermes C — Prestige Prompt (2026-05-24 v15)
+
+**Reset session — DA v15 fresh survey. Old battleship (500 gaps) archived. New battleship-v4 (~270 gaps).**
 
 ## Identity
-1:1 C reimplementation of Python hermes-agent. 44 agent C files, 57 library units, 82 tools, 19 gateways, 10 plugins, ~148 CLI commands, 173 test files. Synced upstream.
+1:1 C reimplementation of Python hermes-agent. ~76K LOC C source. 44 agent files, 57 libs, 83 tools, 9 providers, 19 gateways, 31 tool init functions, 173 tests. Synced upstream (740+ commits).
 
 ## Current State
-| Metric | Value |
-|--------|-------|
-| Suite | 211/0/0 (173 test files, ~1500 assertions) |
-| Binary | 29MB dynamic ELF |
-| Tools registered | 82 |
-| Gateway platforms | 19 |
-| Plugins .so | 10 |
-| CLI commands | ~148 |
-| Config keys | ~322 |
-| Parity | ~65% (~324/500) |
-| Stubs | 0 — ALL resolved |
-| C LOC | ~76K (src) |
 
-## Agent Sector
-| Module | Status | Notes |
-|--------|--------|-------|
-| agent_loop | ✅ Complete | Core conversation loop |
-| llm_client | ✅ Complete | Chat completions + streaming |
-| provider adapters (9) | ✅ Complete | OpenAI, Anthropic, DeepSeek, xAI, Google, Azure, Bedrock, OpenRouter, Custom |
-| tool_guardrails | ✅ Complete | 475L port |
-| i18n | ✅ Complete | 258L port, 22 tests |
-| subdir_hints | ✅ Complete | 224L port |
-| onboarding | ✅ Complete | 193L port, 25 tests |
-| rate_limit_tracker | ✅ Complete | as libratelimit |
-| fallback_routing | ✅ Complete | Provider failover routing |
-| credential_pool | ✅ Complete | Credential rotation pool |
-| budget_tracker | ✅ Complete | Iteration budget tracking |
-| error_classifier | ✅ Complete | 1134L → C, 25 tests |
-| checkpoint | ✅ Complete | Session checkpoint/resume |
-| context | ✅ Complete | Context window management |
-| system_prompt | ✅ Complete | System prompt builder |
-| audit | ✅ Complete | DA audit engine |
-| retry_utils | ✅ Complete | Retry with backoff |
-| vault | ✅ Complete | Vault documentation engine |
-| tool_dispatch_helpers | ✅ Complete | as libtooldispatch |
-| rate_guard | ✅ Complete | as librateguard |
-| image_routing | ✅ Complete | Config-aware image routing, 34 tests |
-| skill_utils | ✅ Complete | 566L port as libskillutils |
-| lmstudio_reasoning | ✅ Complete | 48L port |
-| manual_compression_feedback | ✅ Complete | 49L port |
-| prompt_caching | ✅ Complete | 79L port |
-| gemini_schema | ✅ Complete | 99L port, 32 tests |
-| moonshot_schema | ✅ Complete | 262L port, 17 tests |
-| skill_bundles | ✅ Complete | 215L, 18 tests |
-| TUI visual parity | ✅ Complete | Tool feed, kawaii, inline diff |
-| agent_init (1638L) | ❌ | Complex Python SDK deps |
-| agent_runtime_helpers (2189L) | ❌ | Runtime helpers |
-| auxiliary_client (5289L) | ❌ | Large, Python async |
-| insights (930L) | ❌ | Session analytics |
-| usage_pricing (877L) | ❌ | Cost estimation |
-| +35 more agent modules | ❌ | Various sizes |
+| Metric | Value | Verification |
+|--------|-------|-------------|
+| Suite | ~213/0/0 | 173 test files (timeout at 120s) |
+| Binary | 29MB ELF, 0 errors, 0 warnings | ✅ Verified |
+| Tool registrations | ~83 across 31 init functions | ✅ All real except 1 stub |
+| Gateway platforms | 19 of 31 Python modules (61%) | ✅ C files exist |
+| Providers | 9 native C of 28 Python plugins (32%) | ✅ All real |
+| CLI | 8 .c files of 88 Python (9%) | ❌ 40 real, 197 stub cmd_ |
+| Agent modules | 44 .c of 77 .py (57%) | 🔶 33 real ports done |
+| ACP | 5 of 9 modules (56%) | ✅ Mostly done |
+| Libraries | 57 lib/ directories | ✅ Clean compilation |
+| Config | ~322 of 432 keys | 🟡 Unknown exact count |
+| Stubs | 1 true stub (browser_cdp handler) | 🟡 Dead code |
+| Parity (fresh) | **~60%** | **~270 real gaps remaining** |
 
-## Priority Queue — Remaining Gaps (~176)
+## Priority Queue — Remaining Gaps (~270)
 
-### P1 — Largest Sectors
-| # | Sector | Done | Remaining | Next Gap |
-|---|--------|------|-----------|----------|
-| 1 | Agent | 54/115 | **61** | account_usage.py (326L), image_gen_registry.py |
-| 2 | Gateway | 22/64 | **42** | Per-platform tests, helpers |
-| 3 | Tools | 66/92 | **26** | skill_manager_tool.py (931L) |
-| 4 | CLI | 79/95 | **16** | Autocomplete, rich formatting |
-| 5 | Plugins | 10/26 | **16** | Provider plugins |
+### P0 — Critical
+| # | Sector | What | Why |
+|---|--------|------|-----|
+| 1 | C + Q | CLI depth — 88 Python modules, 197 stub commands | Biggest parity gap. 8 .c vs 88 .py |
+| 2 | B | Agent modules — 35+ unported .py files | Core functionality missing |
+| 3 | A | Core — agent_init.py, agent_runtime_helpers.py, conversation_loop.py | Agent lifecycle |
+
+### P1 — High Impact
+| # | Sector | What | Why |
+|---|--------|------|-----|
+| 1 | K | Provider plugins — 19 of 28 missing | User-facing, feature parity |
+| 2 | E | Gateway — api_server, feishu_comment, wecom helpers | Platform coverage |
+| 3 | D | Tools — CDP dead code, feature gaps | 300+ lines real code not wired |
+| 4 | T | Tests — suite timeout, per-platform tests | Quality infra |
+| 5 | J | Plugins — .so build, 6 plugin dirs | Plugin ecosystem |
 
 ### P2 — Feature Depth
-| # | ID | What | Effort |
-|---|----|------|--------|
-| 1 | image_gen_registry.py (145L) | Image provider registry | small |
-| 2 | video_gen_registry.py (117L) | Video provider registry | small |
-| 3 | account_usage.py (326L) | Provider account usage API | medium |
-| 4 | insights.py (930L) | Session analytics from DB | large |
-| 5 | usage_pricing.py (877L) | Token cost estimation | large |
+| # | Sector | What |
+|---|--------|------|
+| 1 | I | TUI features — response wrapping, config editor, theme |
+| 2 | M | Library test coverage |
+| 3 | U | CI/CD cross-compile, release automation |
 
 ## Key Files
-- **State:** `state.md` (binary truth table)
-- **Goal-Mantra:** `goal-mantra.md`
-- **DA v14:** `da-audit-v14.md`
-- **Overnight:** `overnight-map.md`
-- **Bugs:** `vault/bug-bounty.md`
+- **Battleship v4:** `.hermes/mind-palace/plans/battleship-v4.md` (~270 gaps)
+- **DA v15:** `.hermes/mind-palace/da-audit-v15.md` (fresh survey)
+- **State:** `.hermes/mind-palace/state.md`
+- **Goal-Mantra:** `.hermes/mind-palace/goal-mantra.md`
+- **Achievements:** `.hermes/vault/achievements.md`
+- **Old battleship (archived):** `.hermes/vault/legacy-plans-archive.md`

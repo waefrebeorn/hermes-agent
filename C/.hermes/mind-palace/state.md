@@ -1,50 +1,54 @@
-# State — Hermes C Translation (2026-05-23, Session ~57)
+# State — Hermes C Translation (2026-05-24, DA v15 — Battleship Reset)
 
-**~65% parity — ~324 of ~500 gaps closed.**
+**~60% estimated parity — ~270 gaps remaining (fresh count).**
 
 ## Dashboard
 
-| Category | Done | % | Notes |
-|----------|------|---|-------|
-| Core | 12/16 | 75% | Solid |
-| Agent | 54/115 | 47% | 44 C files, +10 ported this session chain |
-| CLI | 79/95 | 83% | 79 commands registered |
-| Tools | 66/92 | 72% | 82 tool registrations |
-| Gateway | 22/64 | 34% | 19 platforms, 0 per-platform tests |
-| MCP | 10/11 | 91% | +sampling/createMessage + HTTP transport |
-| ACP | 9/9 | 100% | +events, resource links, permissions |
-| Cron | 3/3 | 100% | Done |
-| TUI | 5/8 | 63% | +session search filtering |
-| Plugins | 10/26 | 38% | 10 .so, 16 to port |
-| Config | 6/6 | 100% | 322 keys, +profile clone/delete |
-| Build/Doc | 10/11 | 91% | Docker fixed |
-| Security | 7/10 | 70% | Sandbox, URL safety, file_safety |
-| Provider | 11/18 | 61% | 9 native + metadata |
-| Stubs | 10/10 | 100% | ALL stubs resolved |
-| Tests | 12/12 | 100% | Suite 211/0/0 (173 test files) |
-| CI/CD | 10/10 | 100% | All gaps closed |
-| Upstream | 3/3 | 100% | Secrets ported |
-| **Total** | **~324/500** | **~65%** | **~176 gaps remaining** |
-
-## Session Log
-
-- **Session ~57 (May 23):** Ported moonshot_schema.py (262L) to C. Suite: 202+/0/0. Agent sector: 54/115.
-- **Session ~56 (May 23):** Ported gemini_schema.py (99L), prompt_caching.py (79L), manual_compression_feedback.py (49L), lmstudio_reasoning.py (48L), skill_utils.py (566L) to C. Suite: 202+/0/0.
-- **Session ~55 (May 23):** Created test suites for onboarding (25 tests), skill_bundles (18 tests), i18n (22 tests). Fixed YAML parser bug (empty inline value blocking multi-line list detection). Suite: 211/0/0 (+14 from 197).
+| Category | C | Python | % | Notes |
+|----------|---|--------|---|-------|
+| Agent | 44 .c files | 77 .py files | 57% | 33 of 77 ported |
+| CLI | 8 .c files | 88 .py files | **9%** | 40 real cmd_, 197 stubs |
+| Tools | 31 init funcs, ~83 reg | 75 .py files, ~68 reg | — | C registers more tool variants |
+| Gateway | 19 platform .c | 31 platform modules | 61% | Missing api_server + 12 helpers |
+| MCP | 1 .c + lib | 1 module | ~90% | Sampling, transports done |
+| ACP | 5 .c files | 9 .py files | 56% | Server, events, permissions done |
+| Cron | 3 .c files | 3 modules | **100%** | ✅ Complete |
+| TUI | 2 .c + lib | 1 Ink app | ~25% | Session browser done |
+| Plugins | 10 .c src files | 16 plugin dirs | 63% | 0 .so built |
+| Provider | 9 native C | 28 plugin dirs | 32% | Big gap |
+| Config | ~322 keys | 432 nested keys | ~75% | Needs exact audit |
+| Security | 7 modules | — | ~70% | url_safety, file_safety, rate_limit done |
+| Stubs | 1 true stub | — | **99% clean** | browser_cdp handler not wired to real CDP code |
+| Tests | 173 .c files | ~28K py tests | — | Timeout at 120s |
 
 ## Build Status
 
-Suite:  211/0/0  (173 test files, ~1500 assertions)
+Suite:  ~213/0/0  (173 test files — cannot complete in 120s)
 Binary: 29MB     (dynamic ELF, -O2 -g)
 Errors: 0        (make -j$(nproc))
-Warnings: ~3     (pre-existing format-truncation in config.c)
+Warnings: 0
 
 ## Current Reality
 
-- C source: 44 agent .c, 57 libraries (lib/), 173 test files
-- Tools: 82 registered via registry_register()
-- Gateways: 19 platforms
-- Plugins: 10 .so
-- CLI: ~148 commands
+- C source: 44 agent .c, 31 tool .c, 19 gateway .c, 5 acp .c, 8 cli .c, 10 plugin .c
+- Library dirs: 57 lib/lib*/
+- Test files: 173 test_*.c
+- Tool registrations: ~83 (31 init functions called from tool_init.c)
+- Gateways: 19 platform files
+- Providers: 9 native (openai, deepseek, openrouter, xai, anthropic, google, azure, bedrock, custom)
+- CLI: 237 cmd_ functions declared — ~40 real, ~197 stubs
+- Plugins: 10 .c source files (honcho, kanban, spotify, disk_cleanup, file_memory, achievements, observability, skills, image_gen, google_meet) — 0 .so on disk
+- Git: 740+ commits on main
 - LLM: Working — DeepSeek v4 Flash via OpenAI-compat
-- TUI: truecolor ASCII banner + kawaii spinner + tool activity feed + inline diffs
+- CDP browser: 300+ lines real client code exists but tool registered to stub handler (dead code)
+
+## Key Gaps (from battleship-v4)
+
+| Sector | Gap Count | Top Item |
+|--------|-----------|----------|
+| CLI/C | ~80 | 197 stub commands, 80 unported modules |
+| Agent/B | ~44 | 35+ unported Python modules |
+| Providers/K | ~19 | 19 missing provider plugins |
+| Gateway/E | ~12 | api_server, feishu_comment, wecom helpers |
+| Tests/T | ~20 | Suite timeout, per-platform tests |
+| CLI Depth/Q | ~10 | Readline, autocomplete, Rich output |

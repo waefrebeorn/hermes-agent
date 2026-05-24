@@ -4,11 +4,11 @@
 One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 
 ```text
-Suite:  197/1/0  (25 library tests, ~1,200 assertions)
-Binary: 9.1MB   (stripped: ~3MB, dynamic)
-Source: 115 .c + 29 .h = 144 files, 75.5K LOC (non-lib)
-Parity: ~65%   (~323/500 gaps)
-Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors
+|Suite:  ~213/0/0 (173 test files, ~1,500 assertions)
+|Binary: 29MB    (dynamic ELF, -O2 -g)
+|Source: ~117 .c + ~47 .h = ~164 files, ~76K LOC (non-lib)
+|Parity: ~60%   (~270 gaps remaining — see battleship-v4)
+|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -30,7 +30,7 @@ Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-- [Battleship Roadmap (500 Gaps)](#battleship-roadmap-500-gaps)
+- [Battleship Roadmap (~270 Gaps)](#battleship-roadmap-270-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -45,7 +45,7 @@ Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 154/0/0
+bash test_runner.sh        # ~213/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -64,7 +64,7 @@ docker run --rm hermes-c --help
 
 ### Smoke Test
 ```bash
-echo "/tools" | ./hermes     # List all 68 registered tools
+echo "/tools" | ./hermes     # List all ~83 registered tools
 echo "/providers" | ./hermes # List provider configurations
 ```
 
@@ -394,7 +394,7 @@ Libraries are compiled directly into the binary (no intermediate `.a` archives).
 
 ---
 
-## CLI Commands (~148)
+|CLI: ~237 commands
 
 The CLI uses a central command registry (`cli/commands.c`) with alias resolution and subcommand dispatch.
 

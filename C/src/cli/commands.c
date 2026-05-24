@@ -2377,8 +2377,27 @@ static void cmd_image(const char *args, agent_state_t *state) {
 
 /* /paste: Attach clipboard image */
 static void cmd_paste(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Clipboard paste not available in C CLI (no X11/Wayland).\n");
+    (void)state;
+    (void)args;
+    /* On WSL, try Windows clipboard via powershell.exe */
+    FILE *fp = popen("powershell.exe -NoProfile -Command \"Get-Clipboard\" 2>/dev/null", "r");
+    if (!fp) {
+        printf("Clipboard paste not available. Use /image <path> instead.\n");
+        return;
+    }
+    char buf[4096];
+    size_t len = 0;
+    if (fgets(buf, sizeof(buf), fp)) {
+        len = strlen(buf);
+        if (len > 0 && buf[len-1] == '\n') buf[--len] = '\0';
+    }
+    int rc = pclose(fp);
+    if (rc != 0 || len == 0) {
+        printf("No clipboard content detected.\n");
+        printf("Tip: Use /image <path> to attach an image file.\n");
+        return;
+    }
+    printf("Clipboard content:\n%s\n", buf);
 }
 
 /* /insights: Show usage insights (enhanced with DB-backed historical stats) */
