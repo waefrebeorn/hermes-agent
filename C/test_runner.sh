@@ -20,45 +20,28 @@ for arg in "$@"; do
     esac
 done
 
-# In parallel mode, use file-backed result counters (survive subprocesses)
-TMPDIR=""
-if $PARALLEL; then
-    TMPDIR=$(mktemp -d /tmp/hermes_test_results.XXXXXX)
-    trap "rm -rf '$TMPDIR'" EXIT
-fi
+# Always use file-backed result counters (survive & subshells from parallel gcc blocks)
+TMPDIR=$(mktemp -d /tmp/hermes_test_results.XXXXXX)
+trap "rm -rf '$TMPDIR'" EXIT
 
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
 ok() {
-    if $PARALLEL; then
-        touch "$TMPDIR/ok.$1"
-    else
-        PASS=$((PASS+1))
-    fi
+    touch "$TMPDIR/ok.$1"
     [[ "$VERBOSE" == true ]] && echo -e "  ${GREEN}PASS${NC}: $1"
 }
 fail() {
-    if $PARALLEL; then
-        touch "$TMPDIR/fail.$1"
-    else
-        FAIL=$((FAIL+1))
-    fi
+    touch "$TMPDIR/fail.$1"
     echo -e "  ${RED}FAIL${NC}: $1"
 }
 skip() {
-    if $PARALLEL; then
-        touch "$TMPDIR/skip.$1"
-    else
-        SKIP=$((SKIP+1))
-    fi
+    touch "$TMPDIR/skip.$1"
     echo -e "  ${YELLOW}SKIP${NC}: $1"
 }
 summary() {
-    if $PARALLEL && [[ -n "$TMPDIR" && -d "$TMPDIR" ]]; then
-        PASS=$(ls "$TMPDIR"/ok.* 2>/dev/null | wc -l)
-        FAIL=$(ls "$TMPDIR"/fail.* 2>/dev/null | wc -l)
-        SKIP=$(ls "$TMPDIR"/skip.* 2>/dev/null | wc -l)
-    fi
+    PASS=$(ls "$TMPDIR"/ok.* 2>/dev/null | wc -l)
+    FAIL=$(ls "$TMPDIR"/fail.* 2>/dev/null | wc -l)
+    SKIP=$(ls "$TMPDIR"/skip.* 2>/dev/null | wc -l)
     echo ""; echo "=============================================="
     echo "  Results: ${PASS} passed, ${FAIL} failed, ${SKIP} skipped"
     echo "=============================================="
@@ -73,25 +56,15 @@ echo ""; echo "=== Library Unit Tests ==="
 run_lib_test() {
     local name=$1 src=$2 inc=$3 libs=$4
     local bin="/tmp/hermes_test_${name}"
-    if $PARALLEL; then
-        (
-        if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
-            if "$bin" > /dev/null 2>&1; then ok "$name"
-            else fail "$name (test binary returned non-zero)"
-            fi
-            rm -f "$bin"
-        else skip "$name (compilation failed)"
+    (
+    if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
+        if "$bin" > /dev/null 2>&1; then ok "$name"
+        else fail "$name (test binary returned non-zero)"
         fi
-        ) &
-    else
-        if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/$inc" "$CDIR/$src" -o "$bin" $libs -lm 2>/dev/null && [[ -x "$bin" ]]; then
-            if "$bin" > /dev/null 2>&1; then ok "$name"
-            else fail "$name (test binary returned non-zero)"
-            fi
-            rm -f "$bin"
-        else skip "$name (compilation failed)"
-        fi
+        rm -f "$bin"
+    else skip "$name (compilation failed)"
     fi
+    ) &
 }
 
 run_lib_test "json"      "tests/test_json.c"           "lib/libjson"            "$CDIR/lib/libjson/json.c"
@@ -103,8 +76,6 @@ run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
 
-# Wait for parallel library tests
-$PARALLEL && wait
 
 echo ""; echo "=== Image Routing Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/image_routing.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libjson/json.c" \
@@ -117,7 +88,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/ima
     fi
     rm -f /tmp/hermes_test_image_routing
 else skip "image_routing (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== LM Studio Reasoning Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_lmstudio_reasoning.c" "$CDIR/src/agent/lmstudio_reasoning.c" \
@@ -129,7 +100,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_lmstudio_reasoning.c" "$CDIR/src/agen
     fi
     rm -f /tmp/hermes_test_lmstudio
 else skip "lmstudio_reasoning (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Skill Utils Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_utils.c" "$CDIR/lib/libskillutils/skill_utils.c" "$CDIR/lib/libyaml/yaml.c" \
@@ -141,7 +112,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_utils.c" "$CDIR/lib/libskilluti
     fi
     rm -f /tmp/hermes_test_skill_utils
 else skip "skill_utils (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== OSV Malware Check Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
@@ -155,7 +126,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "osv (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_osv
 else skip "osv (compilation failed)"
-fi
+fi &
 
 # Error classifier (agent/error_classifier.py port)
 run_lib_test "error_classifier" "tests/test_error_classifier.c" "lib/liberrorclassifier" "$CDIR/lib/liberrorclassifier/error_classifier.c"
@@ -172,7 +143,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "transcription (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_transcribe
 else skip "transcription (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== MCP OAuth Tests (D85) ==="
 if gcc -O2 -Wall -Wextra \
@@ -189,7 +160,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "mcp_oauth (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_mcp_oauth
 else skip "mcp_oauth (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== FAL Common Library Tests (D80) ==="
 if gcc -O2 -Wall -Wextra \
@@ -203,7 +174,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "fal_common (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_fal_common
 else skip "fal_common (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Rate Guard Library Tests (nous_rate_guard) ==="
 if gcc -O2 -Wall -Wextra \
@@ -216,7 +187,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "rate_guard (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_rate_guard
 else skip "rate_guard (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Tool Call Guardrails Tests (G28-G30) ==="
 if gcc -O2 -Wall -Wextra \
@@ -228,7 +199,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "tool_guardrails (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_guardrails
 else skip "tool_guardrails (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Tool Output Limits Tests (tool_output_limits) ==="
 if gcc -O2 -Wall -Wextra \
@@ -240,7 +211,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "tool_output (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tool_output
 else skip "tool_output (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Skill Provenance Tests (skill_provenance) ==="
 if gcc -O2 -Wall -Wextra \
@@ -252,7 +223,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "skill_provenance (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_skill_provenance
 else skip "skill_provenance (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Camofox State Tests (browser_camofox_state) ==="
 if gcc -O2 -Wall -Wextra \
@@ -266,7 +237,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "camofox_state (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_camofox_state
 else skip "camofox_state (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Env Passthrough Library Tests (env_passthrough) ==="
 if gcc -O2 -Wall -Wextra \
@@ -278,7 +249,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "env_passthrough (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_env_passthrough
 else skip "env_passthrough (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== xAI HTTP Library Tests (xai_http) ==="
 if gcc -O2 -Wall -Wextra \
@@ -290,7 +261,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "xai_http (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_xai_http
 else skip "xai_http (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Credential Files Library Tests (credential) ==="
 if gcc -O2 -Wall -Wextra \
@@ -302,7 +273,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "credential (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_credential
 else skip "credential (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Schema Sanitizer Library Tests (schema_sanitizer) ==="
 if gcc -O2 -Wall -Wextra \
@@ -316,7 +287,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "schema_sanitizer (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_schema_sanitizer
 else skip "schema_sanitizer (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Fuzzy Match Library Tests (fuzzy_match) ==="
 if gcc -O2 -Wall -Wextra \
@@ -328,7 +299,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "fuzzy_match (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_fuzzy_match
 else skip "fuzzy_match (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Website Policy Tests (P1 Security) ==="
 if gcc -O2 -Wall -Wextra \
@@ -340,7 +311,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "website_policy (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_website_policy
 else skip "website_policy (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Debug Helpers Tests ==="
 if gcc -O2 -Wall -Wextra \
@@ -352,7 +323,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "debug_helpers (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_debug_helpers
 else skip "debug_helpers (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Skill Usage Telemetry Tests (D82) ==="
 if gcc -O2 -Wall -Wextra \
@@ -420,7 +391,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "skill_manage (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_skill_manage
 else skip "skill_manage (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Computer Use Backend Tests (S01-S02) ==="
 if gcc -O2 -Wall -Wextra \
@@ -444,7 +415,7 @@ if gcc -O2 -Wall -Wextra \
     else fail "computer_use (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_computer_use
 else skip "computer_use (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Honcho (In-Memory Memory) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -456,7 +427,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_honcho (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_honcho
 else skip "plugin_honcho (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Achievements Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -468,7 +439,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_achievements (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_achievements
 else skip "plugin_achievements (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Observability Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -480,7 +451,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_observability (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_observability
 else skip "plugin_observability (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Skills Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -492,7 +463,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_skills (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_skills
 else skip "plugin_skills (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Image Gen Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -504,7 +475,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_image_gen (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_image_gen
 else skip "plugin_image_gen (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Google Meet Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -516,7 +487,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_google_meet (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_google_meet
 else skip "plugin_google_meet (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Kanban (In-Memory Board) Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -528,7 +499,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_kanban (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_kanban
 else skip "plugin_kanban (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Spotify Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -541,7 +512,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_spotify (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_spotify
 else skip "plugin_spotify (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin Disk Cleanup Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -553,7 +524,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_disk_cleanup (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugin_disk_cleanup
 else skip "plugin_disk_cleanup (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Plugin File Memory Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
@@ -566,7 +537,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     rm -f /tmp/hermes_test_plugin_file_memory
     rm -rf /tmp/hermes_test_fm_home
 else skip "plugin_file_memory (compilation failed)"
-fi
+fi &
 
 run_lib_test "dotenv"   "tests/test_dotenv.c"       "lib/libdotenv"          "$CDIR/lib/libdotenv/dotenv.c"
 run_lib_test "cron"     "tests/test_cron_lib.c"         "lib/libcron"            "$CDIR/lib/libcron/cron.c"
@@ -607,7 +578,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \
     else fail "template (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_template
 else skip "template (compilation failed)"
-fi
+fi &
 run_lib_test "tui"      "tests/test_tui.c"          "lib/libtui"             "$CDIR/lib/libtui/tui.c"
 run_lib_test "db"       "tests/test_db.c"           "lib/libdb"              "$CDIR/lib/libdb/db.c"
 run_lib_test "path"     "tests/test_path.c"         "lib/libpath"            "$CDIR/lib/libpath/path.c"
@@ -627,7 +598,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libmangateway" -I"$CDIR/
     else fail "managed_gateway (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_managed_gateway
 else skip "managed_gateway (compilation failed)"
-fi
+fi &
 
 # datetime library test (J05 -- standalone, no deps)
 echo ""; echo "=== datetime Library Tests (J05) ==="
@@ -691,7 +662,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "display (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_display
 else skip "display (compilation failed)"
-fi
+fi &
 
 # Slack Block Kit formatting test (M09 — needs only json lib)
 echo ""; echo "=== Slack Block Kit Formatting Tests (M09) ==="
@@ -727,7 +698,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
     fi
     rm -f /tmp/hermes_test_errors
 else skip "hermes_error (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Redact Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
@@ -738,7 +709,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
     else fail "redact (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_redact
 else skip "redact (compilation failed)"
-fi
+fi &
 
 # Tool config test (P54 — self-contained, no deps)
 echo ""; echo "=== Tool Config Tests (P54) ==="
@@ -754,7 +725,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "tool_dispatch_helpers (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tool_dispatch
 else skip "tool_dispatch_helpers (compilation failed)"
-fi
+fi &
 
 # Registry test (core tool registration/dispatch)
 echo ""; echo "=== Registry Tests ==="
@@ -766,7 +737,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "registry (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_registry
 else skip "registry (compilation failed)"
-fi
+fi &
 
 # Home Assistant tool test (needs json lib + http lib for unresolved symbols)
 echo ""; echo "=== Home Assistant Tool Tests ==="
@@ -778,7 +749,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "homeassistant (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_homeassistant
 else skip "homeassistant (compilation failed)"
-fi
+fi &
 
 # Result storage test (P49-P50 — needs hermes_config_load from config.c, skip for now)
 # Test file exists at tests/test_result_storage.c — requires full link with config.c
@@ -850,7 +821,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_gemini_schema.c" "$CDIR/src/agent/gem
     fi
     rm -f /tmp/hermes_test_gemini_schema
 else skip "gemini_schema (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Moonshot Schema Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_moonshot_schema.c" "$CDIR/src/agent/moonshot_schema.c" "$CDIR/lib/libjson/json.c" \
@@ -862,7 +833,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_moonshot_schema.c" "$CDIR/src/agent/m
     fi
     rm -f /tmp/hermes_test_moonshot_schema
 else skip "moonshot_schema (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Onboarding Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_onboarding.c" "$CDIR/src/agent/onboarding.c" "$CDIR/lib/libjson/json.c" \
@@ -874,7 +845,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_onboarding.c" "$CDIR/src/agent/onboar
     fi
     rm -f /tmp/hermes_test_onboarding
 else skip "onboarding (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Skill Bundle Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_bundles.c" "$CDIR/src/agent/skill_bundles.c" "$CDIR/lib/libyaml/yaml.c" \
@@ -886,7 +857,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_bundles.c" "$CDIR/src/agent/ski
     fi
     rm -f /tmp/hermes_test_skill_bundles
 else skip "skill_bundles (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== i18n Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_i18n.c" "$CDIR/src/agent/i18n.c" \
@@ -898,7 +869,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_i18n.c" "$CDIR/src/agent/i18n.c" \
     fi
     rm -f /tmp/hermes_test_i18n
 else skip "i18n (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== CLI Paths Tests ==="
 run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/cli/paths.c"
@@ -955,7 +926,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
     fi
     rm -f /tmp/hermes_test_vault
 else skip "vault (compilation failed)"
-fi
+fi &
 
 # Audit log rotation test (O12 — needs audit.c)
 echo ""; echo "=== Audit Log Rotation (O12) ==="
@@ -971,7 +942,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     fi
     rm -f /tmp/hermes_test_audit
 else skip "audit_rotate (compilation failed)"
-fi
+fi &
 
 # exec_code tool test (M41 — self-contained, no deps)
 echo ""; echo "=== exec_code Tool Tests (M41) ==="
@@ -994,7 +965,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     fi
     rm -f /tmp/hermes_test_tirith_policy
 else skip "tirith_policy (compilation failed)"
-fi
+fi &
 
 # Provider metadata test (needs libjson + libplugin + url_safety)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1005,7 +976,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "provider_metadata (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provmeta
 else skip "provider_metadata (compilation failed)"
-fi
+fi &
 
 # Azure provider depth test (B37-B38: deployment_id + api_version)
 echo ""; echo "=== Azure Provider Depth Tests (B37-B38) ==="
@@ -1387,7 +1358,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     fi
     rm -f /tmp/hermes_test_deepseek_fim
 else skip "deepseek_fim (compilation failed)"
-fi
+fi &
 
 # Discord interaction tests (M08 — tests JSON parsing of interactions, modals, components)
 echo ""; echo "=== Discord Interaction Tests (M08) ==="
@@ -1407,7 +1378,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     fi
     rm -f /tmp/hermes_test_discord_int
 else skip "discord_interactions (compilation failed)"
-fi
+fi &
 
 # Provider smoke test (needs all provider object files + libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
@@ -1424,7 +1395,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "provider_smoke (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provsmoke
 else skip "provider_smoke (compilation failed)"
-fi
+fi &
 
 # Provider error handling edge cases test (M06 — all providers with error inputs)
 echo ""; echo "=== Provider Error Handling Edge Cases (M06) ==="
@@ -1515,7 +1486,7 @@ if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "checkpoint (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_checkpoint
 else skip "checkpoint (compilation failed)"
-fi
+fi &
 
 # CLI command dispatch test (needs commands.c + json + plugin + http libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
@@ -1527,7 +1498,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "cli_commands (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_cli
 else skip "cli_commands (compilation failed)"
-fi
+fi &
 
 # CLI dispatch test (T02: tests commands_dispatch, commands_get_all, handlers)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1564,7 +1535,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "tool_registry (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tools
 else skip "tool_registry (compilation failed)"
-fi
+fi &
 
 # Credential pool test (needs credential_pool.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1576,7 +1547,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "credential_pool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_credpool
 else skip "credential_pool (compilation failed)"
-fi
+fi &
 
 # Budget tracker test (needs budget_tracker.c + provider_metadata + url_safety + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1589,7 +1560,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "budget_tracker (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_budget
 else skip "budget_tracker (compilation failed)"
-fi
+fi &
 
 echo ""; echo "=== Iteration Budget Tests (agent/iteration_budget.py) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1601,7 +1572,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "iteration_budget (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_iteration_budget
 else skip "iteration_budget (compilation failed)"
-fi
+fi &
 
 # Fallback routing test (needs fallback_routing.c + json lib)
 echo ""; echo "=== Fallback Routing Tests (P83) ==="
@@ -1614,7 +1585,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "fallback_routing (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_fallback
 else skip "fallback_routing (compilation failed)"
-fi
+fi &
 
 # Secrets test (needs secrets.c + json lib)
 echo ""; echo "=== Secrets Resolution Tests ==="
@@ -1627,7 +1598,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "secrets (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_secrets
 else skip "secrets (compilation failed)"
-fi
+fi &
 
 # Gateway subsystem test (needs server.c + http + json + cron + plugin libs)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
@@ -1640,7 +1611,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "gateway_subsystem (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_gw
 else skip "gateway_subsystem (compilation failed)"
-fi
+fi &
 
 # Gateway escape modes test (M07: markdown_to_html, markdown_v2_escape, truncate_message)
 echo ""; echo "=== Gateway Escape Modes (M07) ==="
@@ -1733,7 +1704,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "plugin_system (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_plugins
 else skip "plugin_system (compilation failed)"
-fi
+fi &
 
 # Plugin sandbox loading tests (T07: NULL-safety, invalid input, security boundary)
 echo ""; echo "=== Plugin Sandbox Loading Tests (T07) ==="
@@ -1766,7 +1737,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "rate_limit (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_rl
 else skip "rate_limit (compilation failed)"
-fi
+fi &
 
 # Agent loop/context test suite (G166 — needs context.c, checkpoint.c, json, plugin)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1778,7 +1749,7 @@ if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "agent_loop_context (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_agent
 else skip "agent_loop_context (compilation failed)"
-fi
+fi &
 
 # xAI Search test (needs x_search.c — tests only non-HTTP error paths)
 INCLUDES_ALL=()
@@ -1799,7 +1770,7 @@ if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
     else fail "x_search (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_x_search
 else skip "x_search (compilation failed)"
-fi
+fi &
 
 # URL safety test (needs url_safety.c — scheme/blocklist tests, no DNS)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1810,7 +1781,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "url_safety (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_url
 else skip "url_safety (compilation failed)"
-fi
+fi &
 
 # Command allowlist test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1821,7 +1792,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "allowlist (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_al
 else skip "allowlist (compilation failed)"
-fi
+fi &
 
 # Audit log test (needs audit.c — standalone, no JSON deps)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1832,7 +1803,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "audit_log (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_audit
 else skip "audit_log (compilation failed)"
-fi
+fi &
 
 # Error system test (K01-K05: standalone — only needs hermes_error.c + pthread)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1843,7 +1814,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "error_system (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_error
 else skip "error_system (compilation failed)"
-fi
+fi &
 
 # Memory tool test (M35 — needs memory.c, json, sqlite3)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" \
@@ -1854,7 +1825,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "memory_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_memory
 else skip "memory_tool (compilation failed)"
-fi
+fi &
 
 # File tool test (M31 — needs file.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" \
@@ -1865,7 +1836,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "file_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_file
 else skip "file_tool (compilation failed)"
-fi
+fi &
 
 # Vision tool test (M33 — needs vision.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1876,7 +1847,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "vision_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_vision
 else skip "vision_tool (compilation failed)"
-fi
+fi &
 
 # Todo tool test (M43 — needs todo.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1889,7 +1860,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     rm -f /tmp/hermes_test_todo
     rm -rf /tmp/hermes_test_todo_home
 else skip "todo_tool (compilation failed)"
-fi
+fi &
 
 # Patch tool test (M42 — needs patch.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1900,7 +1871,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "patch_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_patch
 else skip "patch_tool (compilation failed)"
-fi
+fi &
 
 # Process tool test (M39 — needs process.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1912,7 +1883,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "process_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_process
 else skip "process_tool (compilation failed)"
-fi
+fi &
 
 # Approval system test (needs approval.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1923,7 +1894,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "approval_system (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_app
 else skip "approval_system (compilation failed)"
-fi
+fi &
 
 # Kanban tool test (M41 — needs kanban.c + registry.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1936,7 +1907,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     rm -f /tmp/hermes_test_kanban
     rm -rf /tmp/hermes_test_kanban_home
 else skip "kanban_tool (compilation failed)"
-fi
+fi &
 
 # Send_message tool test (M37)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1947,7 +1918,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "send_message_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_sendmsg
 else skip "send_message_tool (compilation failed)"
-fi
+fi &
 
 # Web tool test (M30 — needs web.c + tool_config + registry + http + json)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
@@ -1959,7 +1930,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "web_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_web
 else skip "web_tool (compilation failed)"
-fi
+fi &
 
 # Terminal tool test (M29 — needs terminal.c + tool_config + json + sandbox_escape)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1972,7 +1943,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "terminal_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_terminal
 else skip "terminal_tool (compilation failed)"
-fi
+fi &
 
 # Clarify tool test (M40 — needs clarify.c + json, stdin for response)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1983,7 +1954,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "clarify_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_clarify
 else skip "clarify_tool (compilation failed)"
-fi
+fi &
 
 # TTS tool test (M34 — needs tts.c + tool_config + json)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -1995,7 +1966,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "tts_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tts
 else skip "tts_tool (compilation failed)"
-fi
+fi &
 
 # Cron tool test (M36 — needs cronjob.c + libcron + json, uses stubs for scheduler)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libcron" \
@@ -2006,7 +1977,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "cron_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_cron
 else skip "cron_tool (compilation failed)"
-fi
+fi &
 
 # Delegate tool test (M32 — needs delegate.c + json, 20MB stack req)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
@@ -2017,7 +1988,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "delegate_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_delegate
 else skip "delegate_tool (compilation failed)"
-fi
+fi &
 
 # Skills tool test (M38 — needs skills.c + json + yaml + http)
 if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
@@ -2030,7 +2001,7 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
     rm -f /tmp/hermes_test_skills
     rm -rf /tmp/hermes_test_skills_home
 else skip "skills_tool (compilation failed)"
-fi
+fi &
 
 # Skill management tool test (skill_view + skill_manage — needs skill_mgmt.c + json)
 echo ""; echo "=== Skill Management Tests ==="
@@ -2045,7 +2016,7 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
     else fail "skill_mgmt_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_skill_mgmt
 else skip "skill_mgmt_tool (compilation failed)"
-fi
+fi &
 
 # MCP tool test (M44 — needs mcp_tool.c + libmcp + registry + json)
 if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libmcp" \
@@ -2057,7 +2028,7 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
     else fail "mcp_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_mcp
 else skip "mcp_tool (compilation failed)"
-fi
+fi &
 
 # ==============================================
 # 2. Plugin tests
@@ -2289,5 +2260,6 @@ USAGE_COMP=$("$HERMES" completions 2>&1)
 if echo "$USAGE_COMP" | grep -qi "usage"; then ok "completions shows usage"
 else fail "completions missing usage"; fi
 
+wait
 summary
 exit $FAIL
