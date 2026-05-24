@@ -808,6 +808,9 @@ run_lib_test "video_gen_registry" "tests/test_video_gen_registry.c" "include" "-
 echo ""; echo "=== Image Gen Registry Tests ==="
 run_lib_test "image_gen_registry" "tests/test_image_gen_registry.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/tools/image_gen_registry.c $CDIR/src/tools/tool_config.c -lpthread"
 
+echo ""; echo "=== Web Search Registry Tests ==="
+run_lib_test "web_search_registry" "tests/test_web_search_registry.c" "include" "$CDIR/src/tools/web_search_registry.c -lpthread"
+
 echo ""; echo "=== Skill Preprocessing Tests ==="
 run_lib_test "skill_preprocessing" "tests/test_skill_preprocessing.c" "include" "$CDIR/src/agent/skill_preprocessing.c"
 
