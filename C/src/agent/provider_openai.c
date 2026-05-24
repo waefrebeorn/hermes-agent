@@ -7,6 +7,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "provider.h"
+#include "hermes_portal_tags.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,6 +172,51 @@ static char *openai_build_request_body(const provider_t *p,
             }
         }
         json_free(eb);
+    }
+
+    /* K12: Nous portal tags + reasoning */
+    if (strcmp(p->name, "nous") == 0) {
+        /* Inject portal tags for Nous attribution */
+        char *tags_json = hermes_nous_portal_tags_json();
+        if (tags_json) {
+            json_t *tags = json_parse(tags_json, NULL);
+            if (tags && tags->type == JSON_ARRAY) {
+                json_object_set(root, "tags", json_copy(tags));
+            }
+            json_free(tags);
+            free(tags_json);
+        }
+
+        /* Default reasoning: medium if not set in extra_body already */
+        if (!p->config.reasoning_effort[0]) {
+            /* Check if extra_body already has reasoning */
+            bool has_reasoning = false;
+            json_t *eb_check = NULL;
+            if (p->config.extra_body[0])
+                eb_check = json_parse(p->config.extra_body, NULL);
+            if (eb_check && eb_check->type == JSON_OBJECT) {
+                for (size_t i = 0; i < eb_check->c.count; i++) {
+                    if (strcmp(eb_check->c.keys[i], "reasoning") == 0) {
+                        has_reasoning = true;
+                        break;
+                    }
+                }
+            }
+            json_free(eb_check);
+
+            if (!has_reasoning) {
+                json_t *reasoning = json_new_object();
+                json_object_set(reasoning, "enabled", json_new_bool(true));
+                json_object_set(reasoning, "effort", json_new_string("medium"));
+                json_object_set(root, "reasoning", reasoning);
+            }
+        } else if (p->config.reasoning_effort[0]) {
+            json_t *reasoning = json_new_object();
+            json_object_set(reasoning, "enabled", json_new_bool(true));
+            json_object_set(reasoning, "effort",
+                json_new_string(p->config.reasoning_effort));
+            json_object_set(root, "reasoning", reasoning);
+        }
     }
 
     /* Messages */

@@ -988,6 +988,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_azure_depth > /dev/null 2>&1; then ok "azure_depth (9 tests)"
@@ -1007,6 +1008,7 @@ else
         "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "azure_depth (compilation failed)"
@@ -1022,6 +1024,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (14 tests)"
@@ -1041,6 +1044,7 @@ else
         "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider_xai.c" \
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "bedrock_depth (compilation failed)"
@@ -1057,6 +1061,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_or_depth > /dev/null 2>&1; then ok "openrouter_depth (13 tests)"
@@ -1077,6 +1082,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "openrouter_depth (compilation failed)"
@@ -1093,6 +1099,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (50 tests)"
@@ -1113,6 +1120,7 @@ else
         "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "anthropic_depth (compilation failed)"
@@ -1129,6 +1137,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_goog_full > /dev/null 2>&1; then ok "google_full (40 tests)"
@@ -1149,6 +1158,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "google_full (compilation failed)"
@@ -1169,6 +1179,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (12 tests)"
@@ -1188,6 +1199,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "finish_reason (compilation failed)"
@@ -1204,6 +1216,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (7 tests)"
@@ -1224,6 +1237,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "google_depth (compilation failed)"
@@ -1239,6 +1253,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (10 tests)"
@@ -1258,6 +1273,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "json_mode (compilation failed)"
@@ -1274,6 +1290,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_br_full -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_br_full > /dev/null 2>&1; then ok "bedrock_full (35 tests)"
@@ -1294,6 +1311,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_br_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "bedrock_full (compilation failed)"
@@ -1310,6 +1328,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_az_full -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_az_full > /dev/null 2>&1; then ok "azure_full (45 tests)"
@@ -1330,6 +1349,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_az_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "azure_full (compilation failed)"
@@ -1389,6 +1409,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_provsmoke -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_provsmoke > /dev/null 2>&1; then ok "provider_smoke (439 tests)"
@@ -1407,6 +1428,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_proverr -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_proverr > /dev/null 2>&1; then ok "provider_error (M06: all providers error handling)"
@@ -1426,6 +1448,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
         -o /tmp/hermes_test_proverr -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
     skip "provider_error (M06: compilation failed)"
