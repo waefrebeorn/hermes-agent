@@ -1,31 +1,17 @@
 # Hermes C — Overnight Navigation Map (2026-05-27)
 
-## Active: Test suite parallelization (T01) — phase 1 done. Phase 2 next.
+## Active: T01 resolved (210/0/0 in <60s). Next: CLI depth or provider plugins.
 
-## Session 55 Completed
-- Added `--parallel` flag to test_runner.sh: run_lib_test compilations parallelized with `&`
-- File-backed ok/fail/skip counters for subshell-safe result collection in parallel mode
-- Summary() aggregates from temp files in parallel mode
-- Fixed `/paste` with WSL clipboard support (powershell.exe Get-Clipboard)
-- Corrected battleship stale claims: CLI has 79 real cmds (0 stubs), S01/CDP already fixed
-- Updated all walkway files with corrected numbers (~200 gaps, not ~270)
+## Session 55-56 Completed
+- **T01: test suite parallelization** — all 175 test blocks now run in background. **210/0/0 completes in <60s** (was timeout at 120s).
+- File-backed ok/fail/skip counters for subshell-safe result collection
+- `wait` before summary blocks until all background tests done
+- Previous sessions: /paste WSL clipboard, stale battleship claims corrected
 
-## Remaining for T01
-- Parallelize 111 `if gcc ...` test blocks (currently serial)
-- Approach: generate parallel Makefile targets for all test binaries, or wrap blocks in background subshells
-- Expected: full suite under 60s with parallel compilation
-
-## Key Paths
-- Source: `/home/wubu/hermes-agent-dev/C/src/`
-- Tests: `/home/wubu/hermes-agent-dev/C/tests/test_*.c`
-- Test runner: `bash /home/wubu/hermes-agent-dev/C/test_runner.sh --parallel`
-- Battleship v4: `.hermes/mind-palace/plans/battleship-v4.md`
-- DA v15: `.hermes/mind-palace/da-audit-v15.md`
-
-## Next Workstreams
-**A — T01 phase 2:** Parallelize 111 `if gcc` test blocks (make -j targets)
-**B — CLI module depth:** Port small Python hermes_cli/ modules to C
-**C — Provider plugins:** Pick smallest missing provider (nous = 44 lines Python)
+## Next Workstreams (pick one)
+**A — CLI module depth (~30 gaps, P0):** Port small Python hermes_cli/ modules to C
+**B — Provider plugins (~19 gaps, P1):** Pick smallest missing provider (nous = 44 lines Python)
+**C — Agent modules (~44 gaps, P0):** Port prompt_builder.py, process_bootstrap.py, etc.
 
 ## Data Not to Re-Derive
 - CLI commands.c: 79 real cmds (3702 lines), 0 stubs
