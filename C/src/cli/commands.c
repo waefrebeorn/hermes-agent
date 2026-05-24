@@ -3413,6 +3413,7 @@ static void cmd_secrets(const char *args, agent_state_t *state) {
 static void cmd_logs(const char *args, agent_state_t *state) {
     const char *logname = "agent";  /* default */
     int n_lines = 20;
+    bool follow = false;
     const char *level_filter = NULL;
     char buf[512];  /* for strtok parsing — must outlive level_filter pointer */
 
@@ -3429,6 +3430,8 @@ static void cmd_logs(const char *args, agent_state_t *state) {
             } else if (strcmp(token, "--level") == 0 || strcmp(token, "-l") == 0) {
                 token = strtok(NULL, " \t");
                 if (token) level_filter = token;
+            } else if (strcmp(token, "--follow") == 0 || strcmp(token, "-f") == 0) {
+                follow = true;
             } else if (strcmp(token, "agent") == 0 ||
                        strcmp(token, "errors") == 0 ||
                        strcmp(token, "error") == 0 ||
@@ -3535,6 +3538,45 @@ static void cmd_logs(const char *args, agent_state_t *state) {
         printf("\n(%d lines, total)\n", count);
     else
         printf("\n(%d lines, showing last %d of %d)\n", n_lines < count ? n_lines : count, n_lines, count);
+
+    /* Follow mode: poll for new lines */
+    if (follow) {
+        printf("\n--- Following %s (Ctrl-C to stop) ---\n", filename);
+        fflush(stdout);
+
+        /* Get current file size for comparison */
+        struct stat st;
+        long last_size = 0;
+        if (stat(path, &st) == 0) last_size = st.st_size;
+
+        while (1) {
+            sleep(1);
+            FILE *f = fopen(path, "r");
+            if (!f) break;
+            struct stat new_st;
+            if (stat(path, &new_st) == 0) {
+                /* Handle log rotation: if inode changed or size shrunk, restart */
+                if (new_st.st_ino != st.st_ino || new_st.st_size < last_size) {
+                    printf("\n--- Log rotated, following %s ---\n", filename);
+                    last_size = 0;
+                    st = new_st;
+                }
+            }
+            if (new_st.st_size > last_size) {
+                /* Seek to last known position */
+                fseek(f, last_size, SEEK_SET);
+                char newline[4096];
+                while (fgets(newline, sizeof(newline), f)) {
+                    size_t nl = strlen(newline);
+                    if (nl > 0 && newline[nl-1] == '\n') newline[nl-1] = '\0';
+                    printf("%s\n", newline);
+                }
+                fflush(stdout);
+                last_size = new_st.st_size;
+            }
+            fclose(f);
+        }
+    }
 }
 
 /* ================================================================
