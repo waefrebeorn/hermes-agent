@@ -779,6 +779,18 @@ run_lib_test "manual_compression" "tests/test_manual_compression_feedback.c" "in
 echo ""; echo "=== Prompt Caching Tests ==="
 run_lib_test "prompt_caching" "tests/test_prompt_caching.c" "include" "$CDIR/src/agent/prompt_caching.c"
 
+echo ""; echo "=== Gemini Schema Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_gemini_schema.c" "$CDIR/src/agent/gemini_schema.c" "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    -o /tmp/hermes_test_gemini_schema -lm 2>/dev/null && [[ -x /tmp/hermes_test_gemini_schema ]]; then
+    if /tmp/hermes_test_gemini_schema > /dev/null 2>&1; then
+        ok "gemini_schema"
+    else fail "gemini_schema (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_gemini_schema
+else skip "gemini_schema (compilation failed)"
+fi
+
 echo ""; echo "=== Fuzz Tests (T08) ==="
 run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 
