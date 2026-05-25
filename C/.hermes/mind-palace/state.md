@@ -1,4 +1,4 @@
-# Hermes C — State Dashboard (v46 — 2026-05-25)
+# Hermes C — State Dashboard (v47 — 2026-05-25)
 
 ## Build Metrics (code-verified)
 
@@ -16,11 +16,11 @@
 | Provider modules | **11** (all with tests) | 2026-05-25 |
 | Provider test files | **11** | 2026-05-25 |
 | C plugins | **10** | 2026-05-25 |
-| Git commits | **871+** | 2026-05-25 |
+| Git commits | **872+** | 2026-05-25 |
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (178 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (177 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -43,14 +43,14 @@
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 8 | 0 | 7 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
-| S16 | Prompt Caching | 5 | 0 | 4 | 1 |
+| S16 | Prompt Caching | 4 | 0 | 3 | 1 |
 | S17 | Shell Hooks | 3 | 0 | 3 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
 | S19 | Security | 5 | 0 | 3 | 2 |
 | S20 | New Features | 9 | 0 | 2 | 7 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| | **Total** | **178** | **0** | **103** | **75** |
+| **Total** | **177** | **0** | **102** | **75** |
 
 ## Python Upstream Parity
 
