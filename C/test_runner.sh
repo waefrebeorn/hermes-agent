@@ -926,9 +926,20 @@ run_lib_test "whatsapp_msg" "tests/test_whatsapp_msg.c" "lib/libjson" "$CDIR/lib
 echo ""; echo "=== Vision Tool Tests (M33) ==="
 run_lib_test "vision_tool" "tests/test_vision_tool.c" "." ""
 
-# TTS tool test (M34 — self-contained, no deps)
+# TTS tool test (M34 — needs tts.c + tool_config + libhttp + plugin)
 echo ""; echo "=== TTS Tool Tests (M34) ==="
-run_lib_test "tts_tool" "tests/test_tts_tool.c" "." ""
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libtooloutput" \
+    "$CDIR/tests/test_tts_tool.c" \
+    "$CDIR/src/tools/tts.c" "$CDIR/src/tools/registry.c" "$CDIR/src/tools/tool_config.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_tts -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_tts > /dev/null 2>&1; then ok "tts_tool (11 tests)"
+    else fail "tts_tool (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tts
+else skip "tts_tool (compilation failed)"
+fi &
 
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
@@ -2269,15 +2280,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "web_tool (compilation failed)"
 fi &
 
-# Terminal tool test (M29 — needs terminal.c + tool_config + json + sandbox_escape + tool_output)
+# Terminal tool test (M29 — needs terminal.c + tool_config + vault + sandbox_escape + tool_output + crypto)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
-    -I"$CDIR/lib/libtooloutput" \
+    -I"$CDIR/lib/libtooloutput" -I"$CDIR/lib/libcrypto" \
     "$CDIR/tests/test_terminal.c" \
-    "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" \
+    "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" "$CDIR/src/tools/registry.c" \
     "$CDIR/src/sandbox_escape.c" \
+    "$CDIR/src/agent/vault.c" \
     "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libcrypto/crypto.c" \
     "$CDIR/lib/libtooloutput/tool_output.c" \
-    -o /tmp/hermes_test_terminal -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    -o /tmp/hermes_test_terminal -lm -lssl -lcrypto > /dev/null 2>&1; then
     if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (26 tests)"
     else fail "terminal_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_terminal
@@ -2293,18 +2306,6 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "clarify_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_clarify
 else skip "clarify_tool (compilation failed)"
-fi &
-
-# TTS tool test (M34 — needs tts.c + tool_config + json)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
-    "$CDIR/tests/test_tts.c" \
-    "$CDIR/src/tools/tts.c" "$CDIR/src/tools/tool_config.c" \
-    "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_tts -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_tts > /dev/null 2>&1; then ok "tts_tool (20 tests)"
-    else fail "tts_tool (test binary returned non-zero)"; fi
-    rm -f /tmp/hermes_test_tts
-else skip "tts_tool (compilation failed)"
 fi &
 
 # Cron tool test (M36 — needs cronjob.c + libcron + json, uses stubs for scheduler)
