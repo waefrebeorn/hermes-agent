@@ -1566,6 +1566,9 @@ bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const ch
                 typedef int (*init_fn_t)(void);
                 init_fn_t init_fn = (init_fn_t)plugin_symbol(plug, "plugin_init");
                 if (init_fn) init_fn();
+            } else {
+                fprintf(stderr, "[memory] plugin_load failed: %s\n",
+                        plugin_error());
             }
         }
 

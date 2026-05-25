@@ -648,6 +648,9 @@ int plugin_registry_discover(plugin_registry_t *reg, const char *dir) {
         if (p) {
             plugin_registry_add(reg, p);
             loaded++;
+        } else {
+            fprintf(stderr, "[plugin] FAILED to load %s: %s\n",
+                    fullpath, plugin_error());
         }
     }
 

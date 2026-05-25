@@ -27,7 +27,7 @@ static void install_safe_stdio(void) {
 
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
-    printf("C Translation — 224 gaps remaining\n");
+    printf("C Translation — 223 gaps remaining\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
 
@@ -179,6 +179,7 @@ int main(int argc, char **argv) {
                 n += plugin_registry_discover(plugs, dev_pdir);
 
                 if (n > 0) {
+                    fprintf(stderr, "[plugin] loaded %d plugin(s)\n", n);
                     plugin_registry_init_all(plugs);
                 }
                 agent_state.plugin_reg = plugs;

@@ -466,6 +466,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | B13 | skills_hub_fetch_catalog — added fprintf(stderr) error messages for HTTP client creation failure, network request failure, and JSON parse failure (was: all three failures returned false silently) | S11 | skills_hub.c:95-115 |
 
+## Phase 38: Bug Fix — B14 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B14 | Plugin load errors now propagated to user — `plugin_registry_discover()` logs each failed load to stderr with `plugin_error()` detail; main.c startup prints loaded count; memory.c fallback path logs `plugin_error()` on load failure | S11 | lib/libplugin/plugin.c:648-650, src/main.c:182, src/tools/memory.c:1567-1570 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
