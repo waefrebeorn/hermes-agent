@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **231** (battleship-v8) | C14+C15 closed — proxy config |
+| Gap count | **230** (battleship-v8) | C18 closed — agent.vault.path config |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)

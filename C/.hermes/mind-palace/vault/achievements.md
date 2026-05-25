@@ -424,6 +424,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | C14 | proxy.https_proxy — added `char proxy_https[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "proxy.https_proxy")` | S9 | hermes.h:963, config.c:1099 |
 | C15 | proxy.no_proxy — added `char proxy_no[1024]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "proxy.no_proxy")` | S9 | hermes.h:964, config.c:1102 |
 
+## Phase 31: Config Key Implementation — C18 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C18 | agent.vault.path — added `char vault_path[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "agent.vault.path")` | S9 | hermes.h:965, config.c:1103 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
