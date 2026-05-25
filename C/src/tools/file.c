@@ -353,15 +353,38 @@ static char *handle_write(const char *args_json) {
         mkdir(dir, 0755);
     }
 
-    FILE *f = fopen(path, "w");
-    if (!f) {
+    /* Atomic write: write to temp file, then rename */
+    char tmp_path[4096];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp.XXXXXX", path);
+    int fd = mkstemp(tmp_path);
+    if (fd < 0) {
         json_free(args);
         char buf[256];
-        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot write: %s\"}", strerror(errno));
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot create temp file: %s\"}", strerror(errno));
         return strdup(buf);
     }
-    fputs(content, f);
-    fclose(f);
+
+    /* Write content to temp file */
+    ssize_t written = write(fd, content, strlen(content));
+    if (written < 0 || (size_t)written != strlen(content)) {
+        close(fd);
+        unlink(tmp_path);
+        json_free(args);
+        return strdup("{\"error\":\"Write to temp file failed\"}");
+    }
+
+    /* Flush and sync to ensure data is on disk */
+    fsync(fd);
+    close(fd);
+
+    /* Atomic rename — replaces target atomically on POSIX */
+    if (rename(tmp_path, path) != 0) {
+        unlink(tmp_path);
+        json_free(args);
+        char buf[256];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Atomic rename failed: %s\"}", strerror(errno));
+        return strdup(buf);
+    }
 
     json_node_t *result = json_new_object();
     json_object_set(result, "path", json_new_string(path));

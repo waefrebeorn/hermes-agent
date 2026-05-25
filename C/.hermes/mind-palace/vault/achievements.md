@@ -608,6 +608,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |
 
+## Phase 24: Atomic File Writes — F01 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| F01 | Atomic file writes — write to temp file (`mkstemp`), `fsync`, then `rename()` to target, preventing partial-file corruption on crash | S11 | file.c:handle_write() — replaced `fopen(path,"w")` with mkstemp+write+fsync+rename pattern, verified with standalone test |
+
 ## Phase 23: Stale Retirement — Docker/SSH/Curator (2026-05-24)
 
 | ID | Description | Sector | Evidence |

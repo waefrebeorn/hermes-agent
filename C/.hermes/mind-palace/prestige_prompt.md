@@ -36,7 +36,7 @@
 | 12 | U04 | TUI config editor | 150 | S14 | TUI depth |
 | 13 | C08 | agent.codex_app_server config | 40 | S9 | Config depth |
 | 14 | C11 | agent.mixture_of_agents config | 30 | S9 | Config depth |
-| 15 | F01 | File backend atomic writes | 30 | S11 | Bug fix |
+| 15 | U06 | TUI gateway status dashboard | 120 | S14 | TUI depth |
 
 ## Phase Status
 

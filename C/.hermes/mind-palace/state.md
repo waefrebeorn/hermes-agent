@@ -77,6 +77,7 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | D05 | Docker backend stale — run_command_docker() already exists | S7 | 2026-05-24 |
 | D06 | SSH backend stale — run_command_ssh() already exists | S7 | 2026-05-24 |
 | R02,R03,R05 | Curator stale — /curator with status/run all implemented | S15 | 2026-05-24 |
+| F01 | File backend atomic writes — mkstemp+fsync+rename | S11 | 2026-05-24 |
 
 ## Next Priority Queue (top 10)
 
