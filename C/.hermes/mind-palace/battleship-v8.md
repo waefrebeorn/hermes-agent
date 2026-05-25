@@ -247,11 +247,10 @@ All curator features (status, run, review) implemented in CLI commands.c + curat
 | 3 | P05 | Cache warmup on session load | 60 | P2 |
 | 5 | P06 | Per-provider cache config | 30 | P2 |
 
-## SECTOR 17: Shell Hooks Depth (2 gaps)
+## SECTOR 17: Shell Hooks Depth (0 gaps)
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
-| 1 | H02 | Async hook execution | 60 | P2 |
 | 2 | H03 | Hook return value chaining | 50 | P2 |
 
 ## SECTOR 18: Vault Encryption Depth (3 gaps)

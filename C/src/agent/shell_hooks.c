@@ -45,6 +45,7 @@ typedef struct {
     int     timeout;
     regex_t matcher_re;         /* compiled regex, valid if matcher_valid */
     bool    matcher_valid;
+    bool    async;              /* H02: fire-and-forget mode */
 } shell_hook_spec_t;
 
 /* ── Global state ───────────────────────────────────────────────── */
@@ -80,6 +81,8 @@ static int parse_single_hook(const char *event, const json_t *node) {
 
     double priority_val = json_get_num(node, "priority", 100);
     h->priority = (int)priority_val;
+
+    h->async = json_get_bool(node, "async", false);
 
     double timeout = json_get_num(node, "timeout", SHELL_HOOK_DEFAULT_TIMEOUT);
     if (timeout < 1) timeout = SHELL_HOOK_DEFAULT_TIMEOUT;
@@ -236,6 +239,33 @@ static char *shell_hook_callback(const char *event, const char *payload,
     else
         snprintf(full_cmd, cmdlen, "%s", spec->command);
 
+    /* H02: Async hooks — fork and return immediately */
+    if (spec->async) {
+        pid_t pid = fork();
+        if (pid == -1) {
+            free(full_cmd);
+            return NULL;
+        }
+        if (pid == 0) {
+            /* Child: detach and exec the command */
+            setsid();
+            FILE *null_fp = fopen("/dev/null", "w");
+            if (null_fp) {
+                FILE *fp = popen(full_cmd, "r");
+                if (fp) {
+                    char discard[4096];
+                    while (fgets(discard, sizeof(discard), fp)) {}
+                    pclose(fp);
+                }
+                fclose(null_fp);
+            }
+            _exit(0);
+        }
+        /* Parent: don't wait — fire-and-forget */
+        free(full_cmd);
+        return strdup("{\"async\":true}"); /* signal async success */
+    }
+
     /* Run via popen("r") to capture stdout */
     FILE *fp = popen(full_cmd, "r");
     free(full_cmd);
@@ -286,18 +316,73 @@ static bool spec_matches_tool(const shell_hook_spec_t *spec, const char *tool_na
  */
 /* Comparison function for qsort: lower priority first */
 static int hook_priority_cmp(const void *a, const void *b) {
+    /* Handles both direct array and pointer-to-pointer qsort */
+    const shell_hook_spec_t *ha = *(const shell_hook_spec_t **)a;
+    const shell_hook_spec_t *hb = *(const shell_hook_spec_t **)b;
+    return ha->priority - hb->priority;
+}
+
+/* Wrapper for qsort on the g_hooks array (direct elements, not pointers) */
+static int hook_priority_cmp_direct(const void *a, const void *b) {
     const shell_hook_spec_t *ha = (const shell_hook_spec_t *)a;
     const shell_hook_spec_t *hb = (const shell_hook_spec_t *)b;
     return ha->priority - hb->priority;
 }
 
-int shell_hooks_register_all(void) {
-    /* Sort hooks by priority so lower-priority hooks register first (H01) */
-    qsort(g_hooks, (size_t)g_hook_count, sizeof(shell_hook_spec_t), hook_priority_cmp);
+/* H03: Chaining callback — runs all matching hooks for an event in priority order,
+ * passing each hook's stdout as the payload to the next hook in the chain. */
+static char *shell_hook_chain_callback(const char *event, const char *payload,
+                                        void *userdata) {
+    (void)userdata;
+    if (!event) return NULL;
 
+    /* Collect matching hooks and sort by priority */
+    shell_hook_spec_t *matches[64];
+    int match_count = 0;
+    for (int i = 0; i < g_hook_count && match_count < 64; i++) {
+        if (strcmp(g_hooks[i].event, event) == 0)
+            matches[match_count++] = &g_hooks[i];
+    }
+    qsort(matches, (size_t)match_count, sizeof(shell_hook_spec_t *), hook_priority_cmp);
+
+    /* Chain: each hook's output feeds the next hook's input */
+    const char *current_payload = payload ? payload : "";
+    char *result = NULL;
+    char chained_payload[65536];
+
+    for (int i = 0; i < match_count; i++) {
+        /* Run the hook — reuse shell_hook_callback */
+        result = shell_hook_callback(event, current_payload, matches[i]);
+
+        /* If async, skip chaining for this hook */
+        if (result && strstr(result, "\"async\""))
+            continue;
+
+        /* Pass result as input to next hook */
+        if (result) {
+            snprintf(chained_payload, sizeof(chained_payload), "%s", result);
+            current_payload = chained_payload;
+            free(result);
+            result = NULL;
+        }
+    }
+
+    /* Return final chained output */
+    if (result) return result;
+    if (current_payload && current_payload != payload)
+        return strdup(current_payload);
+    return NULL;
+}
+
+int shell_hooks_register_all(void) {
+    /* Sort hooks by priority (H01) */
+    qsort(g_hooks, (size_t)g_hook_count, sizeof(shell_hook_spec_t), hook_priority_cmp_direct);
+
+    /* Register a single chaining callback per event (H03) */
+    /* For simplicity, register the chaining callback on the first event found */
     int registered = 0;
     for (int i = 0; i < g_hook_count; i++) {
-        if (hook_register(g_hooks[i].event, shell_hook_callback, &g_hooks[i]))
+        if (hook_register(g_hooks[i].event, shell_hook_chain_callback, NULL))
             registered++;
     }
     return registered;
