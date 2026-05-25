@@ -6,9 +6,15 @@
  * Routes:
  *   GET  /v1/models              — list available models
  *   POST /v1/chat/completions    — chat completion (non-streaming)
- *   POST /v1/chat/completions?stream=true — SSE streaming (not yet)
+ *   GET  /v1/capabilities        — machine-readable API capabilities
+ *   GET  /v1/tools               — list all registered tools
+ *   GET  /v1/agent/status        — current agent state
+ *   GET  /health                 — simple health check
+ *   GET  /health/detailed        — rich health + system info
+ *   OPTIONS /*                    - CORS preflight
  *
  * Usage:
+ *   ./hermes api-server [port]
  *   api_server_start(9101, &cfg, &agent_state);
  *   // ... agent runs ...
  *   api_server_stop();

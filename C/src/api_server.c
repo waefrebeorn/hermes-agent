@@ -121,6 +121,48 @@ static const char *find_body(const char *buf) {
 /* ── Route handlers ─────────────────────────────────────────────── */
 
 /**
+ * Parse query string from request buffer into a simple key=value map.
+ * Extracts the portion after '?' in the request line.
+ */
+static void parse_query_params(const char *buf, char *query, size_t qlen) {
+    (void)parse_query_params; /* keep for future use (streaming) */
+    query[0] = '\0';
+    const char *q = strchr(buf, '?');
+    if (!q) return;
+    q++; /* skip '?' */
+    const char *space = strchr(q, ' ');
+    size_t len = space ? (size_t)(space - q) : strlen(q);
+    if (len >= qlen) len = qlen - 1;
+    memcpy(query, q, len);
+    query[len] = '\0';
+}
+
+/**
+ * Get a query parameter value by name.
+ * Returns pointer to value or NULL if not found.
+ */
+static const char *get_query_param(const char *query, const char *name) {
+    if (!query || !query[0] || !name) return NULL;
+    size_t nlen = strlen(name);
+
+    const char *p = query;
+    while (*p) {
+        /* Skip leading '&' if not first */
+        if (p != query && *p == '&') p++;
+
+        if (strncmp(p, name, nlen) == 0 && p[nlen] == '=') {
+            return p + nlen + 1;
+        }
+
+        /* Skip to next param */
+        p = strchr(p, '&');
+        if (!p) break;
+        p++;
+    }
+    return NULL;
+}
+
+/**
  * GET /v1/models — return list of available models.
  */
 static void handle_get_models(int fd) {
@@ -313,6 +355,173 @@ static void handle_options(int fd) {
     send_response(fd, 204, "No Content", NULL, NULL);
 }
 
+/**
+ * GET /v1/capabilities — machine-readable API capabilities.
+ */
+static void handle_capabilities(int fd) {
+    json_t *root = json_object();
+    json_set(root, "api_version", json_string("v1"));
+    json_set(root, "name", json_string("hermes-c"));
+
+    json_t *endpoints = json_array();
+    json_append(endpoints, json_string("GET /v1/models"));
+    json_append(endpoints, json_string("POST /v1/chat/completions"));
+    json_append(endpoints, json_string("GET /v1/capabilities"));
+    json_append(endpoints, json_string("GET /v1/tools"));
+    json_append(endpoints, json_string("GET /v1/agent/status"));
+    json_append(endpoints, json_string("GET /health"));
+    json_append(endpoints, json_string("GET /health/detailed"));
+    json_set(root, "endpoints", endpoints);
+
+    json_t *features = json_object();
+    json_set(features, "chat_completions", json_bool(true));
+    json_set(features, "streaming", json_bool(false));
+    json_set(features, "tools_listing", json_bool(true));
+    json_set(features, "models_listing", json_bool(true));
+    json_set(features, "agent_status", json_bool(true));
+    json_set(features, "health_detailed", json_bool(true));
+    json_set(root, "features", features);
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
+/**
+ * GET /v1/tools — list all registered tools.
+ */
+static void handle_tools_list(int fd) {
+    if (!g_agent) {
+        send_error(fd, 503, "agent not initialized");
+        return;
+    }
+
+    json_t *root = json_object();
+    json_set(root, "object", json_string("list"));
+
+    json_t *tools_array = json_array();
+    size_t tool_count = registry_get_count();
+
+    for (size_t i = 0; i < tool_count; i++) {
+        const char *name = registry_get_name(i);
+        if (!name) continue;
+
+        json_t *tool_obj = json_object();
+        json_set(tool_obj, "name", json_string(name));
+
+        const char *toolset = registry_get_toolset(name);
+        if (toolset) json_set(tool_obj, "toolset", json_string(toolset));
+
+        int timeout = registry_get_timeout(name);
+        if (timeout > 0) json_set(tool_obj, "timeout", json_number((double)timeout));
+
+        json_append(tools_array, tool_obj);
+    }
+
+    json_set(root, "data", tools_array);
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
+/**
+ * GET /health/detailed — rich health status with system info.
+ */
+static void handle_health_detailed(int fd) {
+    json_t *root = json_object();
+
+    /* Basic status */
+    json_set(root, "status", json_string("ok"));
+    json_set(root, "version", json_string(HERMES_VERSION));
+
+    /* Uptime */
+    static time_t start_time = 0;
+    if (start_time == 0) start_time = time(NULL);
+    json_set(root, "uptime_seconds", json_number((double)(time(NULL) - start_time)));
+
+    /* Agent state */
+    if (g_agent) {
+        json_t *agent_info = json_object();
+        if (g_agent->llm.model[0])
+            json_set(agent_info, "model", json_string(g_agent->llm.model));
+        if (g_agent->llm.provider[0])
+            json_set(agent_info, "provider", json_string(g_agent->llm.provider));
+        json_set(agent_info, "tools_registered", json_number((double)registry_get_count()));
+        json_set(agent_info, "session_active", json_bool(g_agent->db != NULL));
+        json_set(root, "agent", agent_info);
+    }
+
+    /* Config port */
+    json_set(root, "port", json_number((double)g_port));
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
+/**
+ * GET /v1/agent/status — current agent state information.
+ */
+static void handle_agent_status(int fd) {
+    if (!g_agent) {
+        send_error(fd, 503, "agent not initialized");
+        return;
+    }
+
+    json_t *root = json_object();
+    json_set(root, "status", json_string("running"));
+
+    /* LLM configuration */
+    json_t *llm_info = json_object();
+    if (g_agent->llm.model[0])
+        json_set(llm_info, "model", json_string(g_agent->llm.model));
+    if (g_agent->llm.provider[0])
+        json_set(llm_info, "provider", json_string(g_agent->llm.provider));
+    if (g_agent->llm.base_url[0])
+        json_set(llm_info, "base_url", json_string(g_agent->llm.base_url));
+    json_set(llm_info, "max_tokens", json_number((double)g_agent->llm.max_tokens));
+    json_set(llm_info, "temperature", json_number((double)g_agent->llm.temperature));
+    json_set(root, "llm", llm_info);
+
+    /* Session info */
+    json_t *session_info = json_object();
+    json_set(session_info, "active", json_bool(g_agent->db != NULL));
+    if (g_agent->session_id[0])
+        json_set(session_info, "session_id", json_string(g_agent->session_id));
+    json_set(root, "session", session_info);
+
+    /* Config */
+    json_set(root, "max_iterations", json_number((double)g_agent->max_iterations));
+
+    /* Tool info */
+    json_set(root, "tools_registered", json_number((double)registry_get_count()));
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
 /* ── Request dispatch ───────────────────────────────────────────── */
 
 static void dispatch_request(int client_fd, const char *method,
@@ -325,6 +534,14 @@ static void dispatch_request(int client_fd, const char *method,
         handle_post_chat(client_fd, body);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/health") == 0) {
         send_json(client_fd, 200, "OK", "{\"status\":\"ok\"}");
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/health/detailed") == 0) {
+        handle_health_detailed(client_fd);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/capabilities") == 0) {
+        handle_capabilities(client_fd);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/tools") == 0) {
+        handle_tools_list(client_fd);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/agent/status") == 0) {
+        handle_agent_status(client_fd);
     } else {
         send_error(client_fd, 404, "not found");
     }
@@ -427,6 +644,19 @@ bool api_server_start(int port, const hermes_config_t *cfg, agent_state_t *agent
 
     if (pthread_create(&g_thread, NULL, server_thread, NULL) != 0) {
         fprintf(stderr, "[api-server] failed to create thread\n");
+        return false;
+    }
+
+    /* Wait for thread to signal readiness (bind+listen succeeded or failed) */
+    for (int i = 0; i < 50; i++) {
+        if (g_running) return true;
+        if (g_server_fd < 0 && i > 5) break; /* thread failed, don't keep waiting */
+        usleep(100000); /* 100ms intervals, up to 5 seconds */
+    }
+
+    if (!g_running) {
+        fprintf(stderr, "[api-server] server thread failed to start (bind error?)\n");
+        pthread_detach(g_thread);
         return false;
     }
 

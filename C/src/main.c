@@ -10,6 +10,7 @@
 #include "acp/server.h"
 #include "hermes_mcp_serve.h"
 #include "hermes_secrets.h"
+#include "hermes_api_server.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -27,7 +28,7 @@ static void install_safe_stdio(void) {
 
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
-    printf("C Translation — 193 gaps remaining\n");
+    printf("C Translation — 193 gaps remaining — E01 partial\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
 
@@ -57,7 +58,7 @@ int main(int argc, char **argv) {
                 printf("# hermes bash completion — source: . <(hermes completions bash)\n");
                 printf("_hermes_completions() {\n");
                 printf("    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
-                printf("    local opts=\"--help -h --version -v --session gateway cron --tui completions status dump logs tools plugins secrets skills model config history sessions usage insights copy\"\n");
+                printf("    local opts=\"--help -h --version -v --session gateway cron api-server api_server --tui completions status dump logs tools plugins secrets skills model config history sessions usage insights copy\"\n");
                 printf("    if [[ $COMP_CWORD -eq 1 ]]; then\n");
                 printf("        COMPREPLY=($(compgen -W \"$opts\" -- \"$cur\"))\n");
                 printf("    fi\n");
@@ -145,6 +146,56 @@ int main(int argc, char **argv) {
 
         mcp_serve_stop();
         fprintf(stderr, "[mcp-serve] Server stopped.\n");
+        return 0;
+    }
+
+    if (argc > 1 && (strcmp(argv[1], "api-server") == 0 || strcmp(argv[1], "api_server") == 0)) {
+        /* API server mode — OpenAI-compatible REST API server */
+        int port = 9101;
+        if (argc > 2) {
+            char *end = NULL;
+            long p = strtol(argv[2], &end, 10);
+            if (end && *end == '\0' && p > 0 && p < 65536)
+                port = (int)p;
+        }
+
+        hermes_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        hermes_config_load(&cfg, NULL);
+        hermes_config_load_env(&cfg);
+        hermes_secrets_init(&cfg);
+
+        agent_state_t agent_state;
+        agent_init(&agent_state);
+        tools_init_all();
+        agent_state.tools = *registry_get();
+
+        /* Copy config into agent state */
+        memcpy(agent_state.llm.base_url, cfg.base_url, sizeof(agent_state.llm.base_url));
+        memcpy(agent_state.llm.api_key, cfg.api_key, sizeof(agent_state.llm.api_key));
+        memcpy(agent_state.llm.model, cfg.model, sizeof(agent_state.llm.model));
+        memcpy(agent_state.llm.provider, cfg.provider, sizeof(agent_state.llm.provider));
+        agent_state.llm.max_tokens = cfg.provider_cfg.max_tokens;
+        agent_state.llm.temperature = cfg.provider_cfg.temperature;
+
+        fprintf(stderr, "[api-server] Starting API server on port %d...\n", port);
+        if (!api_server_start(port, &cfg, &agent_state)) {
+            fprintf(stderr, "[api-server] Failed to start server\n");
+            agent_free(&agent_state);
+            return 1;
+        }
+
+        fprintf(stderr, "[api-server] Server running. Press Ctrl+C to stop.\n");
+        fprintf(stderr, "[api-server] Endpoints: GET /v1/models, POST /v1/chat/completions, GET /v1/tools, GET /v1/capabilities, GET /v1/agent/status, GET /health, GET /health/detailed\n");
+
+        /* Wait until interrupted */
+        while (api_server_is_running()) {
+            sleep(1);
+        }
+
+        api_server_stop();
+        agent_free(&agent_state);
+        fprintf(stderr, "[api-server] Server stopped.\n");
         return 0;
     }
 

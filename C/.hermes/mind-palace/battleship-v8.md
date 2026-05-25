@@ -229,12 +229,13 @@ C tools without dedicated test files.
 
 ## SECTOR 13: API Server Depth (5 gaps)
 
-C api_server.c (457 lines) vs Python api_server.py (~3500 lines).
+C api_server.c (750+ lines, was 457) vs Python api_server.py (~3500 lines).
+E01 partial: tools listing, agent status, health/detailed, capabilities added + server wired into `hermes api-server` CLI.
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
-| 1 | E01 | REST API endpoints (agents, tools, sessions, health) | 1500 | P2 |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | P2 |
+| 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~40% done, see E01a | 900 | P2 |
+| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy + SSE streaming | 500 | P2 |
 | 3 | E03 | Session CRUD via HTTP | 300 | P2 |
 | 4 | E04 | MCP serve mode | 200 | P2 |
 | 5 | E05 | Webhook endpoint for gateways | 250 | P2 |
