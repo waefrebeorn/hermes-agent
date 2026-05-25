@@ -128,6 +128,33 @@ int main(void) {
 
         /* Invalid format */
         TEST("parse garbage returns -1", datetime_parse_iso8601("not-a-date") == (time_t)-1);
+
+        /* Fractional seconds (RFC 3339) */
+        {
+            ts = datetime_parse_iso8601("2026-05-22T14:30:00.123Z");
+            TEST("parse fractional sec Z returns valid", ts != (time_t)-1);
+            if (ts != (time_t)-1) {
+                char *back = datetime_from_time_t_utc(ts);
+                TEST("parse fractional sec Z round-trip to UTC",
+                     back && strstr(back, "14:30:00") != NULL);
+                free(back);
+            }
+        }
+        {
+            ts = datetime_parse_iso8601("2026-05-22T14:30:00.999999+05:00");
+            TEST("parse fractional sec +offset returns valid", ts != (time_t)-1);
+            if (ts != (time_t)-1) {
+                char *back = datetime_from_time_t_utc(ts);
+                /* 14:30 +05:00 = 09:30 UTC */
+                TEST("parse fractional sec +offset correct UTC",
+                     back && strstr(back, "09:30:00") != NULL);
+                free(back);
+            }
+        }
+        TEST("parse rfc3339 alias returns valid",
+             datetime_parse_rfc3339("2026-05-22T14:30:00.5Z") != (time_t)-1);
+        TEST("parse rfc3339 alias matches iso8601",
+             datetime_parse_rfc3339("2026-05-22T14:30:00Z") == datetime_parse_iso8601("2026-05-22T14:30:00Z"));
     }
 
     /* ─── datetime_format() ────────────────────────────────── */

@@ -9,14 +9,14 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **216** (battleship-v8) | L08 — JSON pointer queries added |
+| Gap count | **215** (battleship-v8) | L08 — JSON pointer queries added |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)
 
 - **L08 closed**: Added `json_pointer_get()` — RFC 6901 JSON Pointer query in libjson (60 LOC, 11 tests)
 - **D13 retired stale**: Browser dialog handler already fully implemented
-- Gap count 218 → 216
+- Gap count 218 → 215
 
 ## Resolved Since v35
 

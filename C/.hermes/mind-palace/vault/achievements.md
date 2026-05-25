@@ -562,3 +562,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | P07 | title.c — improved extractive title: first sentence with code-block skipping, whitespace collapsing, 80-char cap, sentence-ending punctuation detection (was placeholder: "(void)cfg — Title gen could use LLM in future") | S2 | title.c:12-76, test_title.c: tests updated for sentence-based extraction |
+
+## Phase 17: RFC 3339 Fractional Seconds — L28 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L28 | datetime_parse_iso8601 — added fractional seconds parsing with proper timezone offset handling for RFC 3339 compliance (.123Z, .999+05:00) | S10 | datetime.c:91-96, test_datetime.c: fractional seconds tests, datetime_parse_rfc3339() alias |

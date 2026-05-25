@@ -88,8 +88,14 @@ time_t datetime_parse_iso8601(const char *str) {
         tm_buf.tm_mon -= 1;      /* struct tm: 0-based month */
         tm_buf.tm_isdst = -1;    /* auto-detect DST */
 
-        /* Check trailing Z for UTC; treat as local if absent */
+        /* Skip fractional seconds (RFC 3339: .fraction after seconds) */
         const char *remaining = str + n;
+        if (*remaining == '.') {
+            remaining++;
+            while (*remaining >= '0' && *remaining <= '9') remaining++;
+        }
+
+        /* Check trailing Z for UTC; treat as local if absent */
         while (*remaining == ' ' || *remaining == '\t') remaining++;
         if (*remaining == 'Z' || *remaining == 'z') {
             /* Parse as UTC — use timegm on systems that have it */
@@ -153,6 +159,10 @@ time_t datetime_parse_iso8601(const char *str) {
     }
 
     return (time_t)-1; /* parse failed */
+}
+
+time_t datetime_parse_rfc3339(const char *str) {
+    return datetime_parse_iso8601(str);
 }
 
 time_t datetime_now_ts(void) {

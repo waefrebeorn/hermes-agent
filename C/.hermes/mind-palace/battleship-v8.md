@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **216 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **215 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -170,7 +170,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
 | 3 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
 
-## SECTOR 10: Library Depth (26 gaps)
+## SECTOR 10: Library Depth (25 gaps)
 
 Libraries ported but missing features.
 
@@ -198,10 +198,9 @@ Libraries ported but missing features.
 | 20 | L25 | libhash | LRU cache eviction | 40 | P2 |
 | 21 | L26 | libhash | TTL-based expiry | 30 | P2 |
 | 22 | L27 | libdatetime | Timezone support | 50 | P2 |
-| 23 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
-| 24 | L29 | libglob | Recursive glob | 25 | P2 |
-| 25 | L30 | libmcp | Streaming response support | 100 | P2 |
-| 26 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
+| 23 | L29 | libglob | Recursive glob | 25 | P2 |
+| 24 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 25 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (2 gaps)
 
@@ -421,7 +420,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S7: Tool Depth | 10 |
 || S8: Gateway | 18 |
 || S9: Config | 3 |
-|| S10: Library | 26 |
+|| S10: Library | 25 |
 || S11: Bug Fixes | 2 |
 || S12: Test Coverage | 25 |
 || S13: API Server | 5 |
@@ -434,5 +433,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **216** |
+|| **Total** | **215** |
 | (resolved items retired to vault/achievements.md) | |
