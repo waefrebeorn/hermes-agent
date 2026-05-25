@@ -1092,6 +1092,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (gw_platforms)
         snprintf(cfg->gateway_platforms, sizeof(cfg->gateway_platforms), "%s", gw_platforms);
     cfg->secret_rotation_interval = yaml_get_int(doc, "gateway.secret_rotation", 0);
+    const char *cred_srcs = yaml_get_string(doc, "credentials.sources");
+    if (cred_srcs) snprintf(cfg->credential_sources, sizeof(cfg->credential_sources), "%s", cred_srcs);
 
     /* Display section — personality */
     const char *personality = yaml_get_string(doc, "display.personality");

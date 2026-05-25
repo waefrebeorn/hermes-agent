@@ -959,6 +959,7 @@ typedef struct {
     bool  compress_enabled;    /* compression.enabled: smart context compression */
     char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
     int   secret_rotation_interval;  /* gateway.secret_rotation: interval in seconds (0=disabled) */
+    char  credential_sources[512];/* credentials.sources: comma-separated resolution order */
 } hermes_config_t;
 
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
