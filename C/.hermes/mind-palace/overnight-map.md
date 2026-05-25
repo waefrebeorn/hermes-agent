@@ -9,19 +9,21 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **218** (battleship-v8) | B16 retired stale |
+| Gap count | **216** (battleship-v8) | L08 — JSON pointer queries added |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)
 
-- **B16 retired stale**: db_list_with_meta already has OOM check at calloc via NULL guard (db.c:522)
-- Gap count 219 → 218 after B16 stale retirement
+- **L08 closed**: Added `json_pointer_get()` — RFC 6901 JSON Pointer query in libjson (60 LOC, 11 tests)
+- **D13 retired stale**: Browser dialog handler already fully implemented
+- Gap count 218 → 216
 
 ## Resolved Since v35
 
 | ID | Description |
 |----|-------------|
-| B16 | Stale claim retired — OOM check already present in db_list_with_meta |
+| L08 | `json_pointer_get()` — JSON Pointer queries added to libjson |
+| D13 | Stale claim retired — browser dialog handler already exists |
 
 ## Current Priority Queue
 

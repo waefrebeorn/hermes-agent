@@ -437,6 +437,76 @@ bool json_get_bool(const json_t *obj, const char *key, bool def) {
 }
 
 /* ================================================================
+ *  JSON Pointer (RFC 6901)
+ * ================================================================
+ * Traverse a JSON document along a JSON Pointer path.
+ * Supports: /key, /key/nested, /array/0/index, /escaped~0~1
+ * Returns the referenced node or NULL if path doesn't exist.
+ * The root pointer "" returns the root node itself.
+ * Non-empty paths must start with '/'. */
+
+static const char *unescape_token(const char *start, size_t len,
+                                   char *buf, size_t cap) {
+    size_t j = 0;
+    for (size_t i = 0; i < len && j < cap - 1; i++) {
+        if (start[i] == '~' && i + 1 < len) {
+            if (start[i + 1] == '0') { buf[j++] = '~'; i++; }
+            else if (start[i + 1] == '1') { buf[j++] = '/'; i++; }
+            else { buf[j++] = '~'; }
+        } else {
+            buf[j++] = start[i];
+        }
+    }
+    buf[j] = '\0';
+    return buf;
+}
+
+json_t *json_pointer_get(const json_t *root, const char *path) {
+    if (!root || !path) return NULL;
+
+    /* Empty pointer → root */
+    if (*path == '\0') return (json_t *)root;
+
+    /* Path must start with '/' */
+    if (*path != '/') return NULL;
+
+    const json_t *cur = root;
+    const char *p = path + 1; /* skip leading '/' */
+
+    while (*p && cur) {
+        /* Find end of current token */
+        const char *end = p;
+        while (*end && *end != '/') end++;
+        size_t tok_len = (size_t)(end - p);
+
+        if (cur->type == JSON_OBJECT) {
+            char key[256];
+            unescape_token(p, tok_len, key, sizeof(key));
+            cur = json_obj_get(cur, key);
+        } else if (cur->type == JSON_ARRAY) {
+            /* Parse array index */
+            char idx_buf[32];
+            size_t cp = tok_len < sizeof(idx_buf) - 1 ? tok_len : sizeof(idx_buf) - 1;
+            memcpy(idx_buf, p, cp);
+            idx_buf[cp] = '\0';
+            char *endp = NULL;
+            long idx = strtol(idx_buf, &endp, 10);
+            if (endp == idx_buf || idx < 0 || (size_t)idx >= json_len(cur))
+                return NULL;
+            cur = json_get(cur, (size_t)idx);
+        } else {
+            /* Scalar — can't descend further */
+            return NULL;
+        }
+
+        p = end;
+        if (*p == '/') p++;
+    }
+
+    return (json_t *)cur;
+}
+
+/* ================================================================
  *  Serialization
  * ================================================================ */
 

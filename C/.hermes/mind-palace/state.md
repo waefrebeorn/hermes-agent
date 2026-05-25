@@ -1,4 +1,4 @@
-# Hermes C — State Dashboard (v39 — 2026-05-24)
+# Hermes C — State Dashboard (v40 — 2026-05-24)
 
 ## Build Metrics (code-verified)
 
@@ -34,10 +34,10 @@
 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
-| Tool Depth Gaps | 11 | 0 | 9 | 2 |
+| Tool Depth Gaps | 10 | 0 | 8 | 2 |
 | Gateway Platform Depth | 18 | 0 | 15 | 3 |
 | Configuration | **3** | 0 | **0** | 3 |
-| Library Depth | 27 | 0 | 19 | 8 |
+| Library Depth | 26 | 0 | 18 | 8 |
 | Bug Fixes | 2 | 0 | 1 | 1 |
 | Test Coverage | 25 | 0 | 25 | 0 |
 | API Server Depth | 5 | 0 | 5 | 0 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **218** | **0** | **141** | **77** |
+| **Total** | **216** | **0** | **140** | **76** |
 
 ## Python Upstream Parity
 
@@ -93,6 +93,8 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | B11 | Gateway config validation — setup_email() validates IMAP/SMTP/sendmail config; startup logs platform count | S11 | 2026-05-24 |
 | B12 | Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel | S11 | 2026-05-24 |
 | B15 | Gateway log rotation — gw_log_open writes to ~/.slermes/logs/gateway.log with 10MB rotation | S11 | 2026-05-24 |
+| L08 | JSON pointer queries — json_pointer_get() added to libjson | S10 | 2026-05-24 |
+| D13 | Stale retired — browser dialog handler already implemented | S7 | 2026-05-24 |
 
 ## Next Priority Queue (top 15)
 

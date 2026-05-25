@@ -12,6 +12,47 @@ static int failures = 0;
     else printf("  PASS: %s\n", name); \
 } while (0)
 
+/* --- JSON Pointer (RFC 6901) tests --- */
+static void test_json_pointer(void) {
+    json_t *obj = json_parse("{\"foo\":{\"bar\":42,\"arr\":[1,\"two\",{\"n\":3}]}}", NULL);
+    json_t *v;
+
+    v = json_pointer_get(obj, "");
+    TEST("pointer root", v == obj);
+
+    v = json_pointer_get(obj, "/foo");
+    TEST("pointer /foo", v && v->type == JSON_OBJECT);
+
+    v = json_pointer_get(obj, "/foo/bar");
+    TEST("pointer /foo/bar", v && v->type == JSON_NUMBER && v->num_val == 42.0);
+
+    v = json_pointer_get(obj, "/foo/arr");
+    TEST("pointer /foo/arr", v && v->type == JSON_ARRAY && json_len(v) == 3);
+
+    v = json_pointer_get(obj, "/foo/arr/0");
+    TEST("pointer /foo/arr/0", v && v->type == JSON_NUMBER && v->num_val == 1.0);
+
+    v = json_pointer_get(obj, "/foo/arr/1");
+    TEST("pointer /foo/arr/1", v && v->type == JSON_STRING && strcmp(v->str_val, "two") == 0);
+
+    v = json_pointer_get(obj, "/foo/arr/2/n");
+    TEST("pointer /foo/arr/2/n", v && v->type == JSON_NUMBER && v->num_val == 3.0);
+
+    v = json_pointer_get(obj, "/nonexistent");
+    TEST("pointer missing key", v == NULL);
+
+    v = json_pointer_get(obj, "/foo/arr/999");
+    TEST("pointer missing index", v == NULL);
+
+    v = json_pointer_get(obj, "bad");
+    TEST("pointer no leading slash", v == NULL);
+
+    v = json_pointer_get(NULL, "/foo");
+    TEST("pointer null root", v == NULL);
+
+    json_free(obj);
+}
+
 int main(void) {
     /* Test 1: parse + serialize roundtrip */
     char *err = NULL;
@@ -29,7 +70,7 @@ int main(void) {
         json_free(doc);
     }
 
-    /* Test 2: builder API — json_string, json_array, json_object */
+    /* Test 2: builder API */
     json_t *arr = json_array();
     json_append(arr, json_string("a"));
     json_append(arr, json_string("b"));
@@ -66,6 +107,9 @@ int main(void) {
     TEST("copy content", json_get_num(cpy, "x", 0) == 1.0);
     json_free(cpy);
     json_free(orig);
+
+    /* Test 5: JSON Pointer */
+    test_json_pointer();
 
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All JSON tests PASSED");
     return failures ? 1 : 0;

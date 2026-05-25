@@ -502,6 +502,18 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-----------|---------|----------|
 | B16 | OOM not handled in `db_list_with_meta` loop | `calloc` at db.c:521 already has NULL check at line 522 that frees `ids` and returns NULL — OOM is properly handled | db.c:521-527 |
 
+## Phase 44: Stale Claim Retired — D13 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| D13 | Browser dialog handling not implemented | `browser_dialog_handler()` fully implemented at browser.c:1382-1411 — parses action/prompt_text, uses CDP to accept/dismiss dialogs, enables Page.dialog events, registered as "browser_dialog" tool | browser.c:1382-1411, browser.c:1486-1489 |
+
+## Phase 45: Library Feature — L08 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L08 | `json_pointer_get()` — RFC 6901 JSON Pointer query function: `/key` traversal, `/arr/0` index access, `~0`/`~1` escaping, returning referenced node or NULL | S10 | lib/libjson/json.c:441-510, json.h:89-93, tests/test_json.c:20-60 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

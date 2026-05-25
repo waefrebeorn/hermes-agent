@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **218 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **216 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -118,7 +118,7 @@ Python subdirectory modules with NO C equivalent.
 | 21 | T27 | codex_event_projector.py | Codex event projector | P3 |
 | 22 | T28 | codex_app_server.py | Codex app server transport | P3 |
 
-## SECTOR 7: Missing Tool Features — Depth Gaps (11 gaps)
+## SECTOR 7: Missing Tool Features — Depth Gaps (10 gaps)
 
 Existing C tools missing features that Python has.
 
@@ -130,11 +130,10 @@ Existing C tools missing features that Python has.
 | 4 | D08 | terminal.c | Environment file sync | 150 | P3 |
 | 5 | D10 | computer_use.c | Modular backend system (backend.py split) | 250 | P2 |
 | 6 | D11 | computer_use.c | Vision routing per backend | 100 | P2 |
-| 7 | D13 | browser.c | Browser dialog handling | 80 | P2 |
-| 8 | D14 | browser.c | Browser supervisor | 200 | P2 |
-| 9 | D15 | browser.c | Camofox browser state management | 150 | P2 |
-| 10 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
-| 11 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
+| 7 | D14 | browser.c | Browser supervisor | 200 | P2 |
+| 8 | D15 | browser.c | Camofox browser state management | 150 | P2 |
+| 9 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
+| 10 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
 
 ## SECTOR 8: Gateway Platform Depth (18 gaps)
 
@@ -171,7 +170,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
 | 3 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
 
-## SECTOR 10: Library Depth (27 gaps)
+## SECTOR 10: Library Depth (26 gaps)
 
 Libraries ported but missing features.
 
@@ -183,27 +182,26 @@ Libraries ported but missing features.
 | 4 | L05 | libhttp | Cookie jar | 60 | P2 |
 | 5 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
 | 6 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
-| 7 | L08 | libjson | JSON pointer queries | 60 | P2 |
-| 8 | L09 | libjson | JSON schema validation | 200 | P3 |
-| 9 | L10 | libjson | Streaming parse | 150 | P3 |
-| 10 | L11 | libyaml | Multi-document YAML | 40 | P2 |
-| 11 | L12 | libcrypto | AES encryption | 200 | P2 |
-| 12 | L13 | libcrypto | RSA key generation | 150 | P3 |
-| 13 | L14 | libcrypto | JWT decode (signed tokens) | 80 | P2 |
-| 14 | L18 | libdb | Session pruning by age | 50 | P2 |
-| 15 | L19 | libdb | Session tags CRUD | 40 | P2 |
-| 16 | L20 | libdb | Branch/parent session navigation | 60 | P2 |
-| 17 | L21 | libdb | Export/import JSON | 50 | P2 |
-| 18 | L22 | libdb | Batch operations | 40 | P3 |
-| 19 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
-| 20 | L24 | libbase64 | URL-safe base64 | 15 | P2 |
-| 21 | L25 | libhash | LRU cache eviction | 40 | P2 |
-| 22 | L26 | libhash | TTL-based expiry | 30 | P2 |
-| 23 | L27 | libdatetime | Timezone support | 50 | P2 |
-| 24 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
-| 25 | L29 | libglob | Recursive glob | 25 | P2 |
-| 26 | L30 | libmcp | Streaming response support | 100 | P2 |
-| 27 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
+| 7 | L09 | libjson | JSON schema validation | 200 | P3 |
+| 8 | L10 | libjson | Streaming parse | 150 | P3 |
+| 9 | L11 | libyaml | Multi-document YAML | 40 | P2 |
+| 10 | L12 | libcrypto | AES encryption | 200 | P2 |
+| 11 | L13 | libcrypto | RSA key generation | 150 | P3 |
+| 12 | L14 | libcrypto | JWT decode (signed tokens) | 80 | P2 |
+| 13 | L18 | libdb | Session pruning by age | 50 | P2 |
+| 14 | L19 | libdb | Session tags CRUD | 40 | P2 |
+| 15 | L20 | libdb | Branch/parent session navigation | 60 | P2 |
+| 16 | L21 | libdb | Export/import JSON | 50 | P2 |
+| 17 | L22 | libdb | Batch operations | 40 | P3 |
+| 18 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
+| 19 | L24 | libbase64 | URL-safe base64 | 15 | P2 |
+| 20 | L25 | libhash | LRU cache eviction | 40 | P2 |
+| 21 | L26 | libhash | TTL-based expiry | 30 | P2 |
+| 22 | L27 | libdatetime | Timezone support | 50 | P2 |
+| 23 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
+| 24 | L29 | libglob | Recursive glob | 25 | P2 |
+| 25 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 26 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (2 gaps)
 
@@ -420,10 +418,10 @@ Functions that exist in C but are significantly less capable than Python equival
 || S4: Missing Agent | 12 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
-|| S7: Tool Depth | 11 |
+|| S7: Tool Depth | 10 |
 || S8: Gateway | 18 |
 || S9: Config | 3 |
-|| S10: Library | 27 |
+|| S10: Library | 26 |
 || S11: Bug Fixes | 2 |
 || S12: Test Coverage | 25 |
 || S13: API Server | 5 |
@@ -436,5 +434,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **218** |
+|| **Total** | **216** |
 | (resolved items retired to vault/achievements.md) | |

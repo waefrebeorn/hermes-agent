@@ -86,6 +86,11 @@ char   *json_serialize_pretty(const json_t *node, int indent);
 json_t *json_copy(const json_t *node);
 void    json_free(json_t *node);
 
+/* === JSON Pointer (RFC 6901) === */
+/** Traverse a JSON tree along a JSON Pointer path (e.g. "/foo/bar/0").
+ *  Returns the referenced node, or NULL if path doesn't exist. */
+json_t *json_pointer_get(const json_t *root, const char *path);
+
 /* === Error handling === */
 /* Check if last OOM occurred. libjson never calls exit(). */
 bool    json_oom_occurred(void);
