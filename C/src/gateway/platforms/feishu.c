@@ -238,6 +238,51 @@ bool feishu_send_message(http_client_t *http, const char *text) {
 }
 
 /* ================================================================
+ *  P114: Image messages
+ * ================================================================ */
+
+/* Send an image message to Feishu.
+ * image_path: local file path to the image.
+ * Uses feishu_upload_image to get the image_key, then sends
+ * an image message via the webhook. */
+bool feishu_send_image_webhook(http_client_t *http, const char *image_path) {
+    if (!g_feishu_webhook[0] || !image_path) return false;
+
+    if (!http) http = http_client_new(10);
+    http_client_t *local_http = NULL;
+    if (!http) { local_http = http_client_new(10); http = local_http; }
+
+    char *image_key = feishu_upload_image(http, image_path);
+    if (!image_key) {
+        if (local_http) http_client_free(local_http);
+        return false;
+    }
+
+    json_node_t *root = json_new_object();
+    json_set(root, "msg_type", json_string("image"));
+    json_node_t *content = json_new_object();
+    json_set(content, "image_key", json_string(image_key));
+    json_set(root, "content", content);
+
+    char *body = json_serialize(root);
+    json_free(root);
+    free(image_key);
+
+    if (!body) { if (local_http) http_client_free(local_http); return false; }
+
+    char headers[256];
+    snprintf(headers, sizeof(headers), "Content-Type: application/json\r\n");
+
+    http_response_t *resp = http_request(http, HTTP_POST, g_feishu_webhook,
+                                          headers, body, strlen(body));
+    free(body);
+    bool ok = resp && resp->status >= 200 && resp->status < 300;
+    if (resp) http_response_free(resp);
+    if (local_http) http_client_free(local_http);
+    return ok;
+}
+
+/* ================================================================
  *  P114: Card messages
  * ================================================================ */
 

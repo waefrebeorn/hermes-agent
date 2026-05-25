@@ -773,6 +773,7 @@ size_t      sms_get_num_media(json_node_t *update);
 /* ---- Basic config ---- */
 void feishu_set_webhook(const char *url);
 bool feishu_send_message(http_client_t *http, const char *text);
+bool feishu_send_image_webhook(http_client_t *http, const char *image_path);
 
 /* ---- App API mode (Open API with tenant access token) ---- */
 void feishu_set_app_credentials(const char *app_id, const char *app_secret);
