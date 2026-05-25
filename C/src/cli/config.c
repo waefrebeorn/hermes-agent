@@ -1096,6 +1096,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (cred_srcs) snprintf(cfg->credential_sources, sizeof(cfg->credential_sources), "%s", cred_srcs);
     const char *sig_num = yaml_get_string(doc, "gateway.signal.number");
     if (sig_num) snprintf(cfg->signal_number, sizeof(cfg->signal_number), "%s", sig_num);
+    const char *proxy_h = yaml_get_string(doc, "proxy.https_proxy");
+    if (proxy_h) snprintf(cfg->proxy_https, sizeof(cfg->proxy_https), "%s", proxy_h);
+    const char *proxy_n = yaml_get_string(doc, "proxy.no_proxy");
+    if (proxy_n) snprintf(cfg->proxy_no, sizeof(cfg->proxy_no), "%s", proxy_n);
 
     /* Display section — personality */
     const char *personality = yaml_get_string(doc, "display.personality");
