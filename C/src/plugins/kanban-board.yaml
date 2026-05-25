@@ -1,0 +1,5 @@
+# Metadata for kanban-board plugin
+name: "kanban-board"
+version: "0.2.0"
+type: "kanban"
+description: "Multi-agent kanban board dispatcher and worker coordinator"

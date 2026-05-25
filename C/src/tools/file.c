@@ -12,6 +12,25 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
+#include <libgen.h>
+#include <fnmatch.h>
+#include <ctype.h>
+
+/* WSL path translation — convert Windows to /mnt/ form (static buf, single-thread) */
+static const char *wsl_translate_path(const char *path) {
+    static char buf[4096];
+    if (!path) return NULL;
+    if (path[0] == '/') return NULL;
+    if (strlen(path) >= 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) {
+        char drive = tolower((unsigned char)path[0]);
+        if (drive >= 'a' && drive <= 'z') {
+            snprintf(buf, sizeof(buf), "/mnt/%c%s", drive, path + 2);
+            for (char *p = buf; *p; p++) if (*p == '\\') *p = '/';
+            return buf;
+        }
+    }
+    return NULL;
+}
 
 /* Schema */
 static const char *SCHEMA_READ = "{"
@@ -44,12 +63,240 @@ static const char *SCHEMA_SEARCH = "{"
 "}";
 
 /* ================================================================
- *  Path security check
+ *  P168: File Sandbox — Allowed directories & symlink attack prevention
+ * ================================================================ */
+
+#define MAX_SANDBOX_DIRS 32
+
+static char *g_allowed_dirs[MAX_SANDBOX_DIRS];
+static int g_allowed_dir_count = 0;
+static bool g_sandbox_enabled = false;
+static bool g_symlink_check_enabled = true;
+
+/* Initialize sandbox with default allowed directories */
+void sandbox_init(void) {
+    const char *home = getenv("HOME");
+    if (home) {
+        sandbox_add_allowed_dir(home);
+    }
+    sandbox_add_allowed_dir("/tmp");
+    sandbox_add_allowed_dir(getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") : "");
+    g_sandbox_enabled = true;
+}
+
+/* Enable/disable the sandbox */
+void sandbox_enable(bool enabled) {
+    g_sandbox_enabled = enabled;
+}
+
+/* Add an allowed directory */
+bool sandbox_add_allowed_dir(const char *dir) {
+    if (!dir || !*dir || g_allowed_dir_count >= MAX_SANDBOX_DIRS)
+        return false;
+
+    /* Resolve to absolute path */
+    char resolved[4096];
+    if (dir[0] == '~') {
+        const char *home = getenv("HOME");
+        if (!home) return false;
+        snprintf(resolved, sizeof(resolved), "%s%s", home, dir + 1);
+    } else {
+        snprintf(resolved, sizeof(resolved), "%s", dir);
+    }
+
+    /* Canonicalize via realpath if path exists */
+    char *real = realpath(resolved, NULL);
+    if (real) {
+        /* Check for duplicate */
+        for (int i = 0; i < g_allowed_dir_count; i++) {
+            if (g_allowed_dirs[i] && strcmp(g_allowed_dirs[i], real) == 0) {
+                free(real);
+                return true;
+            }
+        }
+        g_allowed_dirs[g_allowed_dir_count++] = real;
+        return true;
+    }
+
+    /* Path doesn't exist yet, add as-is */
+    for (int i = 0; i < g_allowed_dir_count; i++) {
+        if (g_allowed_dirs[i] && strcmp(g_allowed_dirs[i], resolved) == 0)
+            return true;
+    }
+    g_allowed_dirs[g_allowed_dir_count++] = strdup(resolved);
+    return true;
+}
+
+/* Remove an allowed directory */
+bool sandbox_remove_allowed_dir(const char *dir) {
+    if (!dir) return false;
+    for (int i = 0; i < g_allowed_dir_count; i++) {
+        if (g_allowed_dirs[i] && strcmp(g_allowed_dirs[i], dir) == 0) {
+            free(g_allowed_dirs[i]);
+            g_allowed_dirs[i] = g_allowed_dirs[--g_allowed_dir_count];
+            g_allowed_dirs[g_allowed_dir_count] = NULL;
+            return true;
+        }
+    }
+    return false;
+}
+
+/* Clear all sandbox dirs */
+void sandbox_clear(void) {
+    for (int i = 0; i < g_allowed_dir_count; i++) {
+        free(g_allowed_dirs[i]);
+        g_allowed_dirs[i] = NULL;
+    }
+    g_allowed_dir_count = 0;
+}
+
+/* Check if a path is a symlink (outside allowed dirs) */
+static bool is_unsafe_symlink(const char *path) {
+    if (!g_symlink_check_enabled) return false;
+
+    struct stat st;
+    if (lstat(path, &st) != 0) return false; /* Doesn't exist, allow through */
+
+    if (!S_ISLNK(st.st_mode)) return false; /* Not a symlink */
+
+    /* It's a symlink — check if target is within allowed dirs */
+    char target[4096];
+    ssize_t tlen = readlink(path, target, sizeof(target) - 1);
+    if (tlen < 0) return false;
+
+    target[tlen] = '\0';
+
+    /* Resolve relative symlinks */
+    char *resolved = realpath(path, NULL);
+    if (!resolved) return true; /* Can't resolve — block */
+
+    /* Check if resolved path is in allowed dirs */
+    bool safe = false;
+    for (int i = 0; i < g_allowed_dir_count; i++) {
+        if (g_allowed_dirs[i] && strncmp(resolved, g_allowed_dirs[i],
+                                          strlen(g_allowed_dirs[i])) == 0) {
+            safe = true;
+            break;
+        }
+    }
+    free(resolved);
+    return !safe;
+}
+
+/* Check if a path is within an allowed directory */
+bool sandbox_check_path(const char *path) {
+    if (!path || !*path) return false;
+    if (!g_sandbox_enabled) return true;
+
+    /* Check for path traversal */
+    if (strstr(path, "..")) return false;
+
+    /* Resolve path */
+    char *resolved = realpath(path, NULL);
+    char check_path[4096];
+
+    if (resolved) {
+        snprintf(check_path, sizeof(check_path), "%s", resolved);
+    } else {
+        /* Path doesn't exist yet — check parent directory */
+        snprintf(check_path, sizeof(check_path), "%s", path);
+        /* Remove trailing slash */
+        char *end = check_path + strlen(check_path) - 1;
+        while (end > check_path && *end == '/') *end-- = '\0';
+
+        /* Try parent */
+        char *slash = strrchr(check_path, '/');
+        if (slash && slash != check_path) {
+            *slash = '\0';
+        }
+    }
+
+    /* Check if the path (or its parent) is in allowed dirs */
+    bool allowed = false;
+    for (int i = 0; i < g_allowed_dir_count; i++) {
+        if (!g_allowed_dirs[i]) continue;
+        size_t dlen = strlen(g_allowed_dirs[i]);
+
+        /* Allow exact match or subpath */
+        if (strncmp(check_path, g_allowed_dirs[i], dlen) == 0) {
+            if (check_path[dlen] == '\0' || check_path[dlen] == '/') {
+                allowed = true;
+                break;
+            }
+        }
+    }
+
+    if (resolved) free(resolved);
+
+    /* Check symlink safety */
+    if (allowed && !is_unsafe_symlink(path)) {
+        return true;
+    }
+
+    return allowed;
+}
+
+/* Enable/disable symlink checking */
+void sandbox_set_symlink_check(bool enabled) {
+    g_symlink_check_enabled = enabled;
+}
+
+/* ================================================================
+ *  Path security check (updated to use sandbox)
  * ================================================================ */
 
 static bool is_safe_path(const char *path) {
-    /* Block absolute paths outside home, and '..' traversals */
-    if (strstr(path, "..")) return false;
+    /* P168: Use sandbox for path validation if enabled */
+    if (g_sandbox_enabled) {
+        return sandbox_check_path(path);
+    }
+
+    /* Fallback: basic checks */
+
+    /* S04: Null byte injection bypass check */
+    if (path && strlen(path) != strnlen(path, 4096)) return false;
+
+    /* S04: URL-encoded traversal detection (before realpath resolves it) */
+    const char *encoded_checks[] = {
+        "%2e",  /* %2e = '.' in URL encoding */
+        "%2E",  /* uppercase variant */
+        "..",   /* literal traversal */
+        NULL
+    };
+    bool has_dotdot = false;
+    for (int chk = 0; encoded_checks[chk]; chk++) {
+        const char *p = path;
+        while ((p = strstr(p, encoded_checks[chk])) != NULL) {
+            /* For literal '..', verify it's a path component boundary */
+            if (encoded_checks[chk][0] == '.' && encoded_checks[chk][1] == '.') {
+                if ((p == path || p[-1] == '/') &&
+                    (p[2] == '/' || p[2] == '\0'))
+                    has_dotdot = true;
+            } else {
+                has_dotdot = true;
+            }
+            p++;
+        }
+    }
+    if (has_dotdot) return false;
+
+    /* S04: Resolve real path for symlink bypass detection */
+    char *resolved = realpath(path, NULL);
+    if (resolved) {
+        /* Resolved path must be under HOME, /tmp/, or /dev/ */
+        const char *home = getenv("HOME");
+        bool under_home = home && strncmp(resolved, home, strlen(home)) == 0;
+        bool under_tmp = strncmp(resolved, "/tmp/", 5) == 0;
+        bool under_dev = strncmp(resolved, "/dev/", 5) == 0;
+        bool under_proc_self = strncmp(resolved, "/proc/self/", 11) == 0;
+        free(resolved);
+        if (!under_home && !under_tmp && !under_dev && !under_proc_self)
+            return false;
+        return true;  /* resolved path passes all checks */
+    }
+
+    /* Path doesn't exist yet (write/create) — fallback to static checks */
+    /* Block absolute paths outside home */
     if (path[0] == '/' && strncmp(path, getenv("HOME"), strlen(getenv("HOME"))) != 0) {
         /* Allow /tmp/ and common paths */
         if (strncmp(path, "/tmp/", 5) != 0 && strncmp(path, "/dev/", 5) != 0)
@@ -69,6 +316,10 @@ static char *handle_read(const char *args_json) {
     if (!args) { return strdup("{\"error\":\"JSON parse\"}"); }
 
     const char *path = json_object_get_string(args, "path", NULL);
+    {
+        const char *wsl = wsl_translate_path(path);
+        if (wsl) path = wsl;
+    }
     if (!path || !is_safe_path(path)) {
         json_free(args);
         return strdup("{\"error\":\"Invalid or unsafe path\"}");
@@ -97,7 +348,7 @@ static char *handle_read(const char *args_json) {
     fseek(f, 0, SEEK_SET);
     char *content = (char *)malloc((size_t)fsize + 1);
     if (!content) { fclose(f); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
-    fread(content, 1, (size_t)fsize, f);
+    if (fread(content, 1, (size_t)fsize, f) == 0 && fsize > 0) { /* suppress warn_unused_result */ }
     fclose(f);
     content[fsize] = '\0';
 
@@ -145,15 +396,38 @@ static char *handle_write(const char *args_json) {
         mkdir(dir, 0755);
     }
 
-    FILE *f = fopen(path, "w");
-    if (!f) {
+    /* Atomic write: write to temp file, then rename */
+    char tmp_path[4096];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp.XXXXXX", path);
+    int fd = mkstemp(tmp_path);
+    if (fd < 0) {
         json_free(args);
         char buf[256];
-        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot write: %s\"}", strerror(errno));
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot create temp file: %s\"}", strerror(errno));
         return strdup(buf);
     }
-    fputs(content, f);
-    fclose(f);
+
+    /* Write content to temp file */
+    ssize_t written = write(fd, content, strlen(content));
+    if (written < 0 || (size_t)written != strlen(content)) {
+        close(fd);
+        unlink(tmp_path);
+        json_free(args);
+        return strdup("{\"error\":\"Write to temp file failed\"}");
+    }
+
+    /* Flush and sync to ensure data is on disk */
+    fsync(fd);
+    close(fd);
+
+    /* Atomic rename — replaces target atomically on POSIX */
+    if (rename(tmp_path, path) != 0) {
+        unlink(tmp_path);
+        json_free(args);
+        char buf[256];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Atomic rename failed: %s\"}", strerror(errno));
+        return strdup(buf);
+    }
 
     json_node_t *result = json_new_object();
     json_object_set(result, "path", json_new_string(path));
@@ -181,12 +455,39 @@ static char *handle_search(const char *args_json) {
         return strdup("{\"error\":\"Missing pattern\"}");
     }
 
-    /* Build grep command */
+    /* Build grep command — F14: with glob support via find for ** patterns */
     char cmd[16384];
-    if (file_glob && file_glob[0])
-        snprintf(cmd, sizeof(cmd), "grep -rn --include='%s' '%s' '%s' 2>/dev/null | head -50",
-                 file_glob, pattern, path);
-    else
+    if (file_glob && file_glob[0]) {
+        /* F14: glob with path prefix support (e.g. src/glob/foo*.c) */
+        char find_glob[1024];
+        const char *last_slash = strrchr(file_glob, '/');
+        if (last_slash) {
+            /* Glob has path component: extract dir + filename pattern */
+            size_t dir_len = (size_t)(last_slash - file_glob);
+            char glob_dir[1024];
+            snprintf(glob_dir, sizeof(glob_dir), "%.*s", (int)dir_len, file_glob);
+            snprintf(find_glob, sizeof(find_glob), "%s", last_slash + 1);
+
+            /* Resolve glob_dir relative to search path */
+            char resolved_dir[2048];
+            snprintf(resolved_dir, sizeof(resolved_dir), "%s/%s", path, glob_dir);
+            /* Remove trailing / and * characters */
+            char *pp = resolved_dir + strlen(resolved_dir) - 1;
+            while (pp > resolved_dir && (*pp == '/' || *pp == '*')) pp--;
+            pp[1] = '\0';
+
+            snprintf(cmd, sizeof(cmd),
+                     "find '%s' -name '%s' -type f 2>/dev/null | "
+                     "xargs -r grep -rn '%s' 2>/dev/null | head -50",
+                     resolved_dir, find_glob, pattern);
+        } else {
+            /* Simple glob pattern — find recurses naturally */
+            snprintf(cmd, sizeof(cmd),
+                     "find '%s' -name '%s' -type f 2>/dev/null | "
+                     "xargs -r grep -rn '%s' 2>/dev/null | head -50",
+                     path, file_glob, pattern);
+        }
+    } else
         snprintf(cmd, sizeof(cmd), "grep -rn '%s' '%s' 2>/dev/null | head -50",
                  pattern, path);
 

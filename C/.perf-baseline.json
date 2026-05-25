@@ -1,0 +1,11 @@
+{
+  "binary_size_bytes": 9778336,
+  "binary_size_human": "9.3MB",
+  "startup_ms": 1,
+  "startup_command": "--help",
+  "baseline_date": "2026-05-23",
+  "tolerance": {
+    "binary_size_percent": 10,
+    "startup_ms_absolute": 500
+  }
+}

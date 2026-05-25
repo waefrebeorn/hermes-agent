@@ -1,69 +1,116 @@
 /*
- * test_json.c — Quick smoke test for JSON parser.
+ * test_json.c — Smoke test for JSON parser/serializer.
  */
-#include "hermes_json.h"
+#include "json.h"
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
+#include <stdlib.h>
+
+static int failures = 0;
+#define TEST(name, cond) do { \
+    if (!(cond)) { fprintf(stderr, "  FAIL: %s\n", name); failures++; } \
+    else printf("  PASS: %s\n", name); \
+} while (0)
+
+/* --- JSON Pointer (RFC 6901) tests --- */
+static void test_json_pointer(void) {
+    json_t *obj = json_parse("{\"foo\":{\"bar\":42,\"arr\":[1,\"two\",{\"n\":3}]}}", NULL);
+    json_t *v;
+
+    v = json_pointer_get(obj, "");
+    TEST("pointer root", v == obj);
+
+    v = json_pointer_get(obj, "/foo");
+    TEST("pointer /foo", v && v->type == JSON_OBJECT);
+
+    v = json_pointer_get(obj, "/foo/bar");
+    TEST("pointer /foo/bar", v && v->type == JSON_NUMBER && v->num_val == 42.0);
+
+    v = json_pointer_get(obj, "/foo/arr");
+    TEST("pointer /foo/arr", v && v->type == JSON_ARRAY && json_len(v) == 3);
+
+    v = json_pointer_get(obj, "/foo/arr/0");
+    TEST("pointer /foo/arr/0", v && v->type == JSON_NUMBER && v->num_val == 1.0);
+
+    v = json_pointer_get(obj, "/foo/arr/1");
+    TEST("pointer /foo/arr/1", v && v->type == JSON_STRING && strcmp(v->str_val, "two") == 0);
+
+    v = json_pointer_get(obj, "/foo/arr/2/n");
+    TEST("pointer /foo/arr/2/n", v && v->type == JSON_NUMBER && v->num_val == 3.0);
+
+    v = json_pointer_get(obj, "/nonexistent");
+    TEST("pointer missing key", v == NULL);
+
+    v = json_pointer_get(obj, "/foo/arr/999");
+    TEST("pointer missing index", v == NULL);
+
+    v = json_pointer_get(obj, "bad");
+    TEST("pointer no leading slash", v == NULL);
+
+    v = json_pointer_get(NULL, "/foo");
+    TEST("pointer null root", v == NULL);
+
+    json_free(obj);
+}
 
 int main(void) {
-    /* Test 1: basic parse + serialize roundtrip */
-    const char *input = "{\"name\":\"hermes\",\"version\":0.14,\"features\":[\"json\",\"yaml\"],\"enabled\":true,\"count\":42,\"empty\":null}";
+    /* Test 1: parse + serialize roundtrip */
     char *err = NULL;
-    json_node_t *root = json_parse(input, &err);
-    assert(root != NULL && "parse should succeed");
-    assert(err == NULL);
+    json_t *doc = json_parse("{\"name\":\"hermes\",\"count\":42,\"ok\":true,\"empty\":null}", &err);
+    TEST("json_parse success", doc != NULL && err == NULL);
+    if (err) free(err);
+    if (doc) {
+        TEST("json_get_str", strcmp(json_get_str(doc, "name", ""), "hermes") == 0);
+        TEST("json_get_num", json_get_num(doc, "count", 0) == 42.0);
+        TEST("json_get_bool", json_get_bool(doc, "ok", false) == true);
+        TEST("json_get_bool default", json_get_bool(doc, "missing", true) == true);
+        char *s = json_serialize(doc);
+        TEST("json_serialize", s != NULL && strlen(s) > 0);
+        free(s);
+        json_free(doc);
+    }
 
-    assert(strcmp(json_object_get_string(root, "name", ""), "hermes") == 0);
-    assert(json_object_get_number(root, "version", 0) == 0.14);
-    assert(json_object_get_bool(root, "enabled", false) == true);
-    assert(json_object_get_bool(root, "missing", true) == true);
-
-    json_node_t *features = json_object_get(root, "features");
-    assert(features != NULL && features->type == JSON_ARRAY);
-    assert(json_array_count(features) == 2);
-
-    char *serialized = json_serialize(root);
-    assert(serialized != NULL);
-    printf("Test 1 PASS: %s\n", serialized);
-    free(serialized);
-
-    /* Test 2: pretty print */
-    char *pretty = json_serialize_pretty(root, 0);
-    assert(pretty != NULL);
-    printf("Test 2 PASS (pretty):\n%s\n", pretty);
-    free(pretty);
-
-    /* Test 3: error handling */
-    char *err2 = NULL;
-    json_node_t *bad = json_parse("{invalid}", &err2);
-    assert(bad == NULL);
-    assert(err2 != NULL);
-    printf("Test 3 PASS: error = '%s'\n", err2);
-    free(err2);
-
-    /* Test 4: array operations */
-    json_node_t *arr = json_new_array();
-    json_array_append(arr, json_new_string("a"));
-    json_array_append(arr, json_new_number(2));
-    json_array_append(arr, json_new_bool(true));
-    assert(json_array_count(arr) == 3);
-    assert(strcmp(json_array_get(arr, 0)->str_val, "a") == 0);
+    /* Test 2: builder API */
+    json_t *arr = json_array();
+    json_append(arr, json_string("a"));
+    json_append(arr, json_string("b"));
+    json_append(arr, json_string("c"));
+    TEST("json_len", json_len(arr) == 3);
+    json_t *first = json_get(arr, 0);
+    TEST("json_get", first != NULL && first->type == JSON_STRING);
     char *arr_s = json_serialize(arr);
-    printf("Test 4 PASS: %s\n", arr_s);
+    TEST("json_serialize array", arr_s != NULL);
     free(arr_s);
     json_free(arr);
 
-    /* Test 5: copy */
-    json_node_t *copy = json_copy(root);
-    assert(copy != NULL);
-    assert(strcmp(json_object_get_string(copy, "name", ""), "hermes") == 0);
-    char *copy_s = json_serialize(copy);
-    printf("Test 5 PASS (copy): %s\n", copy_s);
-    free(copy_s);
-    json_free(copy);
+    json_t *obj = json_object();
+    json_set(obj, "key", json_string("value"));
+    json_set(obj, "num", json_number(3.14));
+    TEST("json_obj_get", json_obj_get(obj, "key") != NULL);
+    TEST("json_get_str obj", strcmp(json_get_str(obj, "key", ""), "value") == 0);
+    char *obj_s = json_serialize(obj);
+    TEST("json_serialize object", obj_s != NULL);
+    free(obj_s);
+    json_free(obj);
 
-    json_free(root);
-    printf("\nAll JSON tests PASSED.\n");
-    return 0;
+    /* Test 3: error handling */
+    char *err2 = NULL;
+    json_t *bad = json_parse("{invalid}", &err2);
+    TEST("json_parse error", bad == NULL);
+    TEST("error message set", err2 != NULL);
+    free(err2);
+
+    /* Test 4: copy */
+    json_t *orig = json_parse("{\"x\":1}", NULL);
+    json_t *cpy = json_copy(orig);
+    TEST("json_copy", cpy != NULL);
+    TEST("copy content", json_get_num(cpy, "x", 0) == 1.0);
+    json_free(cpy);
+    json_free(orig);
+
+    /* Test 5: JSON Pointer */
+    test_json_pointer();
+
+    printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All JSON tests PASSED");
+    return failures ? 1 : 0;
 }

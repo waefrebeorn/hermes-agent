@@ -1,0 +1,161 @@
+/*
+ * budget_tracker.h — Per-session budget tracking for Hermes C (P84).
+ *
+ * Tracks token usage and cost per session with configurable limits.
+ * Issues warnings when approaching limits and can signal the agent
+ * loop to shut down gracefully.
+ */
+
+#ifndef BUDGET_TRACKER_H
+#define BUDGET_TRACKER_H
+
+#include "hermes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* ================================================================
+ *  Budget Tracker
+ * ================================================================ */
+
+typedef struct budget_tracker_t {
+    /* ---- Limits (0 = unlimited) ---- */
+    long long max_input_tokens;    /* session-wide input token limit */
+    long long max_output_tokens;   /* session-wide output token limit */
+    double    max_cost_usd;        /* session-wide USD cost limit */
+    int       max_turns;           /* session-wide turn limit */
+
+    /* ---- Running totals ---- */
+    long long total_input_tokens;
+    long long total_output_tokens;
+    double    total_cost_usd;
+    int       turn_count;
+
+    /* G24: Per-turn tool call tracking */
+    int   turn_tool_calls;         /* tool calls in the current turn */
+    int   max_tool_calls_per_turn; /* per-turn tool call cap (0=unlimited) */
+
+    /* G26: Budget enforcement mode */
+    bool  hard_limit;              /* true=immediate stop, false=grace call */
+
+    /* ---- Alert state ---- */
+    double    warn_at_pct;         /* fraction at which to warn (default 0.8) */
+    bool      warned_input;
+    bool      warned_output;
+    bool      warned_cost;
+    bool      warned_turns;
+    bool      reported_input;      /* warning already emitted for this dimension */
+    bool      reported_output;
+    bool      reported_cost;
+    bool      reported_turns;
+
+    /* ---- Last-turn breakdown ---- */
+    long long last_input_tokens;
+    long long last_output_tokens;
+    double    last_cost_usd;
+    char      last_model[128];     /* model used for this turn */
+
+    /* ---- Iteration budget (per-agent API call counter) ---- */
+    int       max_iterations;       /* per-agent iteration cap (0=unlimited) */
+    int       iterations_used;      /* iterations consumed so far */
+} budget_tracker_t;
+
+/* ================================================================
+ *  API
+ * ================================================================ */
+
+/* Create a budget tracker with defaults (no limits, warn at 80%). */
+void budget_tracker_init(budget_tracker_t *bt);
+
+/* Set limits. Pass 0 for unlimited on any dimension. */
+void budget_tracker_set_limits(budget_tracker_t *bt,
+                                long long max_input,
+                                long long max_output,
+                                double max_cost,
+                                int max_turns);
+
+/* Report a turn's token/cost usage. Call after each LLM response.
+ * - input_tokens: tokens in the request (prompt)
+ * - output_tokens: tokens in the response (completion)
+ * - cost_usd: estimated USD cost for this turn (0.0 if unknown)
+ * - model: model name used (for breakdown tracking)
+ * Updates running totals and checks for warnings. */
+void budget_tracker_report_turn(budget_tracker_t *bt,
+                                 long long input_tokens,
+                                 long long output_tokens,
+                                 double cost_usd,
+                                 const char *model);
+
+/* Check if any limit has been exceeded (session should stop).
+ * Returns true if ANY limit is exceeded (not just warned). */
+bool budget_tracker_is_exceeded(const budget_tracker_t *bt);
+
+/* Check if any warning should be emitted (limit approaching).
+ * Returns the first warning message (static buffer), or NULL if no warning.
+ * Clears the warning flag so it's only emitted once per limit. */
+const char *budget_tracker_get_warning(budget_tracker_t *bt);
+
+/* Get remaining budget. Returns remaining tokens/cost.
+ * Negative = over budget. */
+long long budget_tracker_remaining_input(const budget_tracker_t *bt);
+long long budget_tracker_remaining_output(const budget_tracker_t *bt);
+double    budget_tracker_remaining_cost(const budget_tracker_t *bt);
+int       budget_tracker_remaining_turns(const budget_tracker_t *bt);
+
+/* Compute estimated USD cost from token counts.
+ * Uses a simple per-model rate lookup. Returns 0.0 if model unknown.
+ * This is a rough estimate; actual cost may differ. */
+double budget_tracker_estimate_cost(const char *model,
+                                     long long input_tokens,
+                                     long long output_tokens);
+
+/* G24: Increment per-turn tool call counter. Returns new count. */
+int budget_tracker_increment_tool_call(budget_tracker_t *bt);
+
+/* G24: Reset per-turn tool call counter at start of new turn. */
+void budget_tracker_reset_turn_tools(budget_tracker_t *bt);
+
+/* G24: Check if per-turn tool call limit is exceeded. */
+bool budget_tracker_turn_exceeded(const budget_tracker_t *bt);
+
+/* G24: Set per-turn tool call limit. Pass 0 for unlimited. */
+void budget_tracker_set_per_turn_limit(budget_tracker_t *bt, int max_per_turn);
+
+/* G26: Set hard limit mode — true=immediate stop, false=grace call. */
+void budget_tracker_set_hard_limit(budget_tracker_t *bt, bool hard);
+
+/* G26: Should stop immediately (hard exceeded) vs allow grace call. */
+bool budget_tracker_is_hard_exceeded(const budget_tracker_t *bt);
+
+/* Get stats as JSON string (malloc'd). Caller must free(). */
+char *budget_tracker_stats_json(const budget_tracker_t *bt);
+
+/* Reset all totals and warnings (start a new session). */
+void budget_tracker_reset(budget_tracker_t *bt);
+
+/* ---- Iteration budget (port of Python agent/iteration_budget.py) ---- */
+
+/* Set per-agent iteration limit. Pass 0 for unlimited (default).
+ * Parent agents typically use 90, subagents use 50. */
+void budget_tracker_set_iteration_limit(budget_tracker_t *bt, int max_iterations);
+
+/* Try to consume one iteration. Returns true if under budget (iteration allowed).
+ * Returns false if budget exhausted — caller should stop making API calls. */
+bool budget_tracker_consume_iteration(budget_tracker_t *bt);
+
+/* Refund one iteration (e.g. for execute_code turns that don't count).
+ * Safe to call even at 0 — won't go negative. */
+void budget_tracker_refund_iteration(budget_tracker_t *bt);
+
+/* Get number of iterations used so far. */
+int budget_tracker_iterations_used(const budget_tracker_t *bt);
+
+/* Get remaining iterations. Returns -1 if unlimited. */
+int budget_tracker_iterations_remaining(const budget_tracker_t *bt);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* BUDGET_TRACKER_H */

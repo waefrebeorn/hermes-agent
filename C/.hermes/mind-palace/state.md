@@ -50,8 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 0 | 0 | 0 | 0 |
-|| S23 | Usability & Deployment | 11 | 0 | 5 | 6 |
-|| **Total** | **114** | **0** | **52** | **62** |
+|| **Total** | **103** | **0** | **47** | **56** |
 
 ## Python Upstream Parity
 
