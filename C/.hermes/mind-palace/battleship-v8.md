@@ -147,7 +147,6 @@ C gateways with minimal or incomplete implementations vs Python.
 | 7 | G14 | discord | Slash command registration | 100 | P2 |
 | 8 | G15 | telegram | Inline query mode | 80 | P2 |
 | 9 | G17 | email | Multi-account support | 100 | P2 |
-| 10 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
 | 11 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
 | 12 | G20 | weixin | Rich media messages | 80 | P2 |
 | 13 | G21 | yuanbao | Group management commands | 100 | P2 |

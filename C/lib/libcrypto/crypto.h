@@ -49,6 +49,16 @@ void crypto_hmac_sha256(const unsigned char *key, size_t key_len,
                         const unsigned char *data, size_t data_len,
                         unsigned char out[CRYPTO_SHA256_LEN]);
 
+/* === HMAC-SHA1 (G18) === */
+void crypto_hmac_sha1(const unsigned char *key, size_t key_len,
+                      const unsigned char *data, size_t data_len,
+                      unsigned char out[20]);
+
+/* === HMAC-MD5 (G18) === */
+void crypto_hmac_md5(const unsigned char *key, size_t key_len,
+                     const unsigned char *data, size_t data_len,
+                     unsigned char out[16]);
+
 /* === Base64url (no padding) === */
 char *crypto_base64url_encode(const unsigned char *data, size_t len);
 unsigned char *crypto_base64url_decode(const char *input, size_t *out_len);

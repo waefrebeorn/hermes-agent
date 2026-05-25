@@ -40,6 +40,24 @@ void crypto_hmac_sha256(const unsigned char *key, size_t key_len,
          data, data_len, out, &out_len);
 }
 
+void crypto_hmac_sha1(const unsigned char *key, size_t key_len,
+                      const unsigned char *data, size_t data_len,
+                      unsigned char out[20])
+{
+    unsigned int out_len = 20;
+    HMAC(EVP_sha1(), key, (int)key_len,
+         data, data_len, out, &out_len);
+}
+
+void crypto_hmac_md5(const unsigned char *key, size_t key_len,
+                     const unsigned char *data, size_t data_len,
+                     unsigned char out[16])
+{
+    unsigned int out_len = 16;
+    HMAC(EVP_md5(), key, (int)key_len,
+         data, data_len, out, &out_len);
+}
+
 /* ================================================================
  *  Base64url (no padding)
  * ================================================================ */

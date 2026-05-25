@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (132 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (131 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -35,7 +35,7 @@
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 1 | 0 | 0 | 1 |
-| S8 | Gateway Depth | 17 | 0 | 15 | 2 |
+| S8 | Gateway Depth | 16 | 0 | 14 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 8 | 0 | 3 | 5 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **132** | **0** | **60** | **73** |
+||| **Total** | **131** | **0** | **59** | **73** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,7 @@
 | D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| G18 | Webhook custom HMAC algorithms - SHA1, MD5, configurable algorithm dispatch | S8 | 2026-05-25 |
 | H02 | Shell hook async execution - fork fire-and-forget, async flag | S17 | 2026-05-25 |
 | H03 | Shell hook return value chaining - chain callback, pass output to next | S17 | 2026-05-25 |
 | H01 | Shell hook priority ordering - priority field, JSON parse, qsort | S17 | 2026-05-25 |

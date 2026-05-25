@@ -285,44 +285,55 @@ void webhook_set_verify_secret(const char *secret) {
 bool webhook_verify_hmac(const char *signature, const unsigned char *body, size_t body_len) {
     if (!signature || !body) return false;
 
-    /* Expected format: "sha256=<hex>" */
-    const char *prefix = "sha256=";
-    size_t prefix_len = strlen(prefix);
+    /* Expected format: "sha256=<hex>" or "sha1=<hex>" or "md5=<hex>" (G18) */
+    size_t prefix_len = 0;
+    int expected_hex_len = 0;
+    unsigned char expected[32]; /* max across SHA256(32), SHA1(20), MD5(16) */
+    int hash_len = 0;
 
-    if (strncmp(signature, prefix, prefix_len) != 0) {
-        printf("[webhook:hmac] Invalid signature format (expected sha256=<hex>)\n");
+    if (strncmp(signature, "sha256=", 7) == 0) {
+        prefix_len = 7; expected_hex_len = 64; hash_len = 32;
+    } else if (strncmp(signature, "sha1=", 5) == 0) {
+        prefix_len = 5; expected_hex_len = 40; hash_len = 20;
+    } else if (strncmp(signature, "md5=", 4) == 0) {
+        prefix_len = 4; expected_hex_len = 32; hash_len = 16;
+    } else {
+        printf("[webhook:hmac] Invalid signature format (expected sha256=/sha1=/md5=)\n");
         return false;
     }
 
     const char *hex_sig = signature + prefix_len;
     size_t hex_len = strlen(hex_sig);
 
-    /* SHA-256 hex is 64 chars */
-    if (hex_len != 64) {
-        printf("[webhook:hmac] Invalid signature length: %zu (expected 64)\n", hex_len);
+    if ((int)hex_len != expected_hex_len) {
+        printf("[webhook:hmac] Invalid signature length: %zu (expected %d)\n",
+               hex_len, expected_hex_len);
         return false;
     }
 
-    /* Compute expected HMAC */
-    unsigned char expected[WH_SHA256_LEN];
     pthread_mutex_lock(&g_sub_mutex);
     const char *secret = g_verify_secret;
     size_t secret_len = strlen(secret);
-    crypto_hmac_sha256((const unsigned char *)secret, secret_len,
-                       body, body_len, expected);
+    if (hash_len == 32)
+        crypto_hmac_sha256((const unsigned char *)secret, secret_len,
+                           body, body_len, expected);
+    else if (hash_len == 20)
+        crypto_hmac_sha1((const unsigned char *)secret, secret_len,
+                         body, body_len, expected);
+    else
+        crypto_hmac_md5((const unsigned char *)secret, secret_len,
+                        body, body_len, expected);
     pthread_mutex_unlock(&g_sub_mutex);
 
-    /* Convert to hex for comparison */
-    char *expected_hex = wh_hex_encode(expected, WH_SHA256_LEN);
+    char *expected_hex = wh_hex_encode(expected, (size_t)hash_len);
     if (!expected_hex) return false;
 
-    /* Constant-time comparison */
     int result = 0;
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < expected_hex_len; i++) {
         result |= (expected_hex[i] ^ hex_sig[i]);
     }
 
-    free(expected_hex);
+free(expected_hex);
     return result == 0;
 }
 
