@@ -941,6 +941,25 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "tts_tool (compilation failed)"
 fi &
 
+# Discord tool test (T06 — needs discord.c + api_helpers + tool_config + vault + libhttp + libcrypto)
+echo ""; echo "=== Discord Tool Tests (T06) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_discord.c" \
+    "$CDIR/src/tools/discord.c" "$CDIR/src/tools/registry.c" "$CDIR/src/tools/api_helpers.c" \
+    "$CDIR/src/tools/tool_config.c" "$CDIR/src/agent/vault.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libcrypto/crypto.c" \
+    "$CDIR/lib/libtoolbackend/tool_backend.c" \
+    -o /tmp/hermes_test_discord -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
+    if /tmp/hermes_test_discord > /dev/null 2>&1; then ok "discord_tool (13 tests)"
+    else fail "discord_tool (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_discord
+else skip "discord_tool (compilation failed)"
+fi &
+
 # Error system test (K01-K05: typed error system — standalone, only needs hermes_error.c)
 echo ""; echo "=== Error System Tests (K01-K05) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \

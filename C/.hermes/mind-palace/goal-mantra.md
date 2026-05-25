@@ -4,19 +4,19 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-107 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+103 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 
 - `/home/wubu/hermes-agent-dev/C/` — 154 src .c, 66 .h, 59 libs, 206 test files, 30MB binary
-- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (107 gaps), vault/achievements.md
+- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (103 gaps), vault/achievements.md
 - Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~858 commits)
 
 ## Verified State
 
 | Item | Value |
 |------|-------|
-| Suite | 228/0/21 (207 test files) |
+| Suite | 226/0/23 (207 test files) |
 | Binary | 30MB, 0 errors, 0 warnings |
 | CLI | 79 real cmds, tab completion, history, table output |
 | Tools | 84 registered — all real handlers |
@@ -34,7 +34,7 @@ Battleship-v8 had 19 stale claims retired in Phases 9+22+27 (N01, S05, B05, B06,
 C01-C05, C16, D04, D17-D20, P01, R04 + G01, D16, G10, L03, D23, C17, I01, G22)
 — see vault/achievements.md Phases 9, 22, 27 for full tables.
 
-The remaining 107 gaps are verified open.
+The remaining 103 gaps are verified open.
 
 ## Top Priority Gaps
 

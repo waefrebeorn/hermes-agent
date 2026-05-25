@@ -4,7 +4,7 @@
 
 | Metric | Value | Change from v38 |
 |--------|-------|-----------------|
-| Suite | 228/0/21 (207 files) | ✅ shell_hooks shutdown fix, tirith S05 |
+| Suite | 226/0/23 (207 files) | ✅ tts_tool + terminal_tool deps fixed, discord_tool T06 added |
 | Tools registered | 84 | ✅ |
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
@@ -29,7 +29,7 @@ From prestige_prompt.md v43:
 
 ## Key Facts
 
-- Battleship-v8 is the canonical gap list (107 gaps)
+- Battleship-v8 is the canonical gap list (103 gaps)
 - Vault/achievements.md is the archive — all completed + retired stale claims
 - Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
 - P1 count is 0

@@ -4,7 +4,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Suite | **228/0/21** — 207 test files |
+| Suite | **226/0/23** — 207 test files |
 | Binary | **30MB ELF**, 0 errors, 0 warnings |
 | Source .c files | **154** |
 | Library dirs | **59** |
@@ -15,7 +15,7 @@
 | Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **858+** |
-|| Real gap count | **107** (battleship-v8, 22 sectors) |
+|| Real gap count | **103** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 12 gaps)

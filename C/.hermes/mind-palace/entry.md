@@ -15,20 +15,20 @@ make tui && ./hermes-tui          # ncurses TUI (experimental)
 
 ## Quick Stats
 ```
-Suite:   228/0/21  (207 test files, zero failures)
+Suite:   226/0/23  (207 test files, zero failures)
 Binary:  30MB     (dynamic ELF, 0 warnings)
 Source:  154 .c + 66 .h = 220 files
 Tools:   84 registered
 Gateway: 19 platforms
 Plugins: 10 .so
-Parity:  ~79%    (107 gaps remaining — battleship v8)
+Parity:  ~82%    (103 gaps remaining — battleship v8)
 ```
 
 ## Key Paths
 - **Source:** `/home/wubu/hermes-agent-dev/C/`
 - **Config:** `~/.slermes/config.yaml` (~322 keys) + `~/.slermes/.env`
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v8.md` (107 gaps across 22 sectors)
+- **Battleship:** `battleship-v8.md` (103 gaps across 22 sectors)
 - **Vault:** `.hermes/vault/` (essays, bug bounty, credits)
 - **DA v15:** `da-audit-v15.md`
 

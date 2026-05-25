@@ -4,7 +4,7 @@
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-|| Suite | **228/0/21** — 207 test files | 2026-05-25 |
+|| Suite | **226/0/23** — 207 test files | 2026-05-25 |
 | Binary | **30MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **154** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |
@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (107 verified gaps across 22 sectors)
+|- **Active:** battleship-v8 (103 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -29,9 +29,9 @@
 | Sector | Name | Gaps | P1 | P2 | P3 |
 |--------|------|------|-----|-----|------|
 | S1 | Stubs | 0 | 0 | 0 | 0 |
-| S2 | Placeholder/Unwired | 9 | 0 | 0 | 9 |
-| S3 | Dead Code | 12 | 0 | 2 | 10 |
-| S4 | Missing Agent Modules | 10 | 0 | 6 | 4 |
+|| S2 | Placeholder/Unwired | 9 | 0 | 0 | 9 |
+|| S3 | Dead Code | 12 | 0 | 2 | 10 |
+|| S4 | Missing Agent Modules | 9 | 0 | 6 | 3 |
 | S5 | Agent Module Depth | 11 | 0 | 8 | 4 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
@@ -39,7 +39,7 @@
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 6 | 0 | 2 | 4 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
-|| S12 | Test Coverage | 2 | 0 | 2 | 0 |
+|| S12 | Test Coverage | 1 | 0 | 1 | 0 |
 | S13 | API Server | 0 | 0 | 0 | 0 |
 | S14 | TUI Depth | 1 | 0 | 0 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 0 | 0 | 0 | 0 |
-| **Total** | **107** | **0** | **47** | **60** |
+|| **Total** | **103** | **0** | **47** | **56** |
 
 ## Python Upstream Parity
 
@@ -92,7 +92,8 @@
 | S01 | Cloud metadata endpoint detection — metadata.goog, 100.100.100.200 (Alibaba), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped), 100.64 (CGNAT) pre-DNS blocking | S19 | 2026-05-25 |
 | I04 | Static analysis (cppcheck) in CI — added to c-build.yml | S22 | 2026-05-25 |
 | A28 | skill_commands — C port of Python skill_commands.py (scan, resolve, build_message) | S4 | 2026-05-25 |
-| T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
+|| T06 | discord.c — 13 tests (arg validation, action dispatch, error handling with mocked token) | S12 | 2026-05-25 |
+|| T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
 | D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion | S7 | 2026-05-25 |
 | D15 | Camofox session persistence — save/load/delete browser state | S7 | 2026-05-25 |
 | D10 | Computer use backend registry — register/list/clear backends, CU_BACKEND env | S7 | 2026-05-25 |

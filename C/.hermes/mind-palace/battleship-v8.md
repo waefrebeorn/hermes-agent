@@ -2,7 +2,7 @@
      2|
      3|Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
      4|
-     5|Total: **107 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+     5|Total: **103 active gaps** across 22 sectors.
      6|
      7|## SECTOR 1: Confirmed Stubs (0 gaps)
      8|
@@ -10,7 +10,7 @@
     10|
     11|Functions that return fake data or error. Implementation required. — All resolved (v8→v9).
     12|
-    13|## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (10 gaps)
+    13|## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (9 gaps)
     14|
     15|Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not supported`, `in future`, `for extension`.
     16|
@@ -21,11 +21,10 @@
 | 3 | P03 | memory.c:544-549 | Plugin memory save/load — no-op returns true | 10 | P3 |
 | 4 | P04 | cron/cron_extras.c:319 | Cron placeholder replacement ({{param}} system incomplete) | 30 | P3 |
 | 5 | P06 | qqbot.c:77 | "Reserved for future API mode" — never wired | 25 | P3 |
-| 6 | P08 | server.c:96 | Default gateway port unchanged from 8080 — no config read | 10 | P3 |
-| 7 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
-| 8 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
-| 9 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
-| 10 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
+| 6 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
+| 7 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
+| 8 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
+| 9 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
     30|
     31|## SECTOR 3: Dead Code / Unused Functions (12 gaps)
     32|
@@ -46,23 +45,21 @@
     47|| 12 | W15 | cli/config.c:325 | Fragmented config — "Handled by get_slermes_home()" | 30 | P3 |
     48|| 13 | W16 | context_engine.c:91/100 | Default on_session_start/end = noop | 10 | P3 |
     49|
-    50|## SECTOR 4: Missing Agent Modules — Truly Unported (10 gaps)
+    50|## SECTOR 4: Missing Agent Modules — Truly Unported (9 gaps)
     51|
     52|Python agent modules with NO C equivalent at all. Not merged, not aliased.
     53|
     54|| # | ID | Python Module | Key Functionality | LOC (Python) | Priority |
     55||---|----|--------------|-------------------|--------------|----------|
-    56|| 1 | A35 | background_review | Background review agent | 587 | P2 |
-    57|| 2 | A01 | insights | Full session insights engine (931 LOC Python) | 931 | P1 |
-    58|| 3 | A11 | curator_backup | Curator backup state management | 150 | P2 |
-    59|| 4 | A25 | process_bootstrap | Subprocess bootstrap helpers | 167 | P2 |
-    60|| 5 | A31 | title_generator | Session title generation | 150 | P2 |
-    61|| 6 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
-    62|| 7 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
-    63|| 8 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
-    64|| 9 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
-    65|| 10 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
-    66|| 11 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
+| 1 | A01 | insights | Full session insights engine (931 LOC Python) | 931 | P1 |
+| 2 | A11 | curator_backup | Curator backup state management | 150 | P2 |
+| 3 | A25 | process_bootstrap | Subprocess bootstrap helpers | 167 | P2 |
+| 4 | A31 | title_generator | Session title generation | 150 | P2 |
+| 5 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
+| 6 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
+| 7 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
+| 8 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
+| 9 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
     67|
 ## SECTOR 5: Agent Modules — Partial Merge Depth (11 gaps)
 
@@ -173,7 +170,7 @@ C gateways with minimal or incomplete implementations vs Python.
    184|| 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
    185|| 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
    186|
-   187|## SECTOR 12: Test Coverage (25 entries — 23 exist, 2 missing)
+   187|## SECTOR 12: Test Coverage (25 entries — 24 exist, 1 missing)
    188|
    189|C tools with test file status.
    190|
@@ -184,7 +181,7 @@ C gateways with minimal or incomplete implementations vs Python.
    195|| 3 | T03 | clarify.c | ✅ test_clarify.c (8 tests) | P2 |
    196|| 4 | T04 | cronjob.c | ✅ test_cronjob.c exists (has 23 tests elsewhere) | P2 |
    197|| 5 | T05 | delegate.c | ✅ test_delegate.c (4 tests) — in test_runner as delegate_tool | P2 |
-   198|| 6 | T06 | discord.c | ❌ no test (token gate prevents validation testing) | P2 |
+   198|| 6 | T06 | discord.c | ✅ test_discord.c (13 tests) — new | P2 |
    199|| 7 | T07 | exec_code.c | ✅ test_exec_code.c exists (partial) | P2 |
    200|| 8 | T08 | file.c | ✅ test_file.c exists | P2 |
    201|| 9 | T09 | file_batch.c | ✅ test_file_batch.c exists | P2 |
@@ -337,15 +334,15 @@ C gateways with minimal or incomplete implementations vs Python.
    348||| S1: Stubs | 0 |
    349||| S2: Placeholder | 9 |
    350||| S3: Dead Code | 12 |
-   351||| S4: Missing Agent | 10 |
-   352||| S5: Agent Depth | 11 |
-   353||| S6: Subdirectory | 22 |
-   354||| S7: Tool Depth | 0 |
-   355||| S8: Gateway | 9 |
-   356||| S9: Config | 0 |
-   357|||| S10: Library | 6 |
-   358||| S11: Bug Fixes | 2 |
-   359||| S12: Test Coverage | 2 |
+||| S4: Missing Agent | 9 |
+|| S5: Agent Depth | 11 |
+|| S6: Subdirectory | 22 |
+|| S7: Tool Depth | 0 |
+|| S8: Gateway | 9 |
+|| S9: Config | 0 |
+|||| S10: Library | 6 |
+|| S11: Bug Fixes | 2 |
+|| S12: Test Coverage | 1 |
    360|| S13: API Server | 0 |
    361|| S14: TUI | 1 |
    362|| S15: Curator | 0 |
@@ -356,6 +353,6 @@ C gateways with minimal or incomplete implementations vs Python.
    367||| S20: New Features | 8 |
    368|| S21: Refactoring | 9 |
    369|| S22: CI/Integrate | 0 |
-   370|| **Total** | **107** |
+   370|| **Total** | **103** |
    371|| (resolved items retired to vault/achievements.md) | |
    372|
