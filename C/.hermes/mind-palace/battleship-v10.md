@@ -1,8 +1,8 @@
-# Slermes C — Fresh Battleship v10 (Triple DA — 300 Gaps)
+# Slermes C — Fresh Battleship v10 (Triple DA — 365 Gaps)
 
-Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, and live binary testing.
+Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing, and command behavioral audit.
 
-Total: **300 active gaps** across 18 sectors.
+Total: **365 active gaps** across 21 sectors.
 
 ---
 
@@ -36,283 +36,167 @@ Total: **300 active gaps** across 18 sectors.
 | 19 | V11 | Kawaii faces (15 waiting, 15 thinking, 15 verbs) | display.py | None |
 | 20 | V12 | Tool emoji registry (per-tool emoji) | skin_engine | None |
 
+## SECTOR 0C: CLI Behavioral Parity — Commands That Ignore Args (40 gaps)
+
+**40 of 79 C CLI commands accept user input but silently discard it via `(void)args`.** In Python, these commands parse and respect user arguments. This is the single largest usability gap — a user typing `/save my_session` or `/retry 2` gets no error and no behavior change.
+
+| # | ID | Command | Python Behavior | C Behavior |
+|---|-----|---------|----------------|------------|
+| 21 | A01 | /save [name] | Saves with optional name | Ignores name, always saves as current |
+| 22 | A02 | /sessions [filter] | Lists sessions, accepts filter/search | Ignores filter |
+| 23 | A03 | /stats [session_id] | Shows stats for specific session | Shows current session only |
+| 24 | A04 | /new [name] | Creates new session with optional name | Ignores name |
+| 25 | A05 | /undo [n] | Undoes N messages back | Ignores count, always one |
+| 26 | A06 | /commands [category] | Lists commands filtered by category | Ignores filter |
+| 27 | A07 | /tools [name] | Shows detail for specific tool | Ignores name, always lists all |
+| 28 | A08 | /tools-verify [names] | Verifies specific tools | Ignores names, always all |
+| 29 | A09 | /reset [confirm] | Resets with optional confirmation | Ignores confirm flag |
+| 30 | A10 | /retry [n] | Retries last N messages | Ignores count, always last one |
+| 31 | A11 | /compress [target] | Compresses to target token count | Ignores target |
+| 32 | A12 | /status [session_id] | Shows status for specific session | Shows current only |
+| 33 | A13 | /stop [name] | Stops specific process | Ignores name, stops all |
+| 34 | A14 | /deny [reason] | Denies with reason | Ignores reason |
+| 35 | A15 | /yolo [on/off] | Toggles or sets explicitly | Ignores arg, always toggles |
+| 36 | A16 | /usage [session_id] | Shows usage for specific session | Shows current only |
+| 37 | A17 | /plugins [name] | Shows detail for specific plugin | Ignores name |
+| 38 | A18 | /platforms [filter] | Shows filtered platforms | Ignores filter |
+| 39 | A19 | /verbose [level] | Sets verbosity level | Ignores level, always cycles |
+| 40 | A20 | /profile [name] | Shows/activates named profile | Ignores profile name |
+| 41 | A21 | /agents [detail] | Shows active agents with detail | **STUB: says "No active subagents"** |
+| 42 | A22 | /toolsets [name] | Shows/activates specific toolset | Ignores name |
+| 43 | A23 | /fast [on/off] | Sets fast mode explicitly | Ignores arg, always toggles |
+| 44 | A24 | /copy [format] | Copies in specific format | Ignores format |
+| 45 | A25 | /restart [force] | Graceful restart with drain | **STUB: says "Use /exit"** |
+| 46 | A26 | /bundles [name] | Shows/activates specific bundle | Ignores name |
+| 47 | A27 | /voice [on/off] | Voice mode toggle on/off/tts/status | Ignores mode |
+| 48 | A28 | /statusbar [on/off] | Toggle statusbar | Ignores arg |
+| 49 | A29 | /footer [on/off] | Toggle footer | Ignores arg |
+| 50 | A30 | /update [branch] | Update to specific version/branch | Ignores branch |
+| 51 | A31 | /debug [upload] | Uploads or shows debug info | Ignores upload target |
+| 52 | A32 | /background [prompt] | Runs prompt in background | **STUB: says "not available"** |
+| 53 | A33 | /dump [section] | Dumps specific section | Ignores section, dumps all |
+| 54 | A34 | /config [key] [val] | Sets specific config key | Accepts key+val but behavior diverges |
+| 55 | A35 | /model [name] [--provider] | Sets model with provider option | Ignores --provider flag |
+| 56 | A36 | /topic [text] | Sets topic/personality | Accepts text |
+| 57 | A37 | /personality [name] | Sets named personality | Accepts name |
+| 58 | A38 | /insights [days] | Shows insights for N days | Accepts days but output is bare |
+| 59 | A39 | /completions [shell] | Generates specific shell completions | Accepts shell name |
+| 60 | A40 | /secrets [action] | Manages secrets with subcommand | Accepts action |
+
+## SECTOR 0D: Missing Usages — Python Behavior Gaps (15 gaps)
+
+Behaviors that work in Python but have NO equivalent in C, where a user would immediately say "this is not the same."
+
+| # | ID | Usage | Python | C |
+|---|-----|-------|--------|---|
+| 61 | U01 | Config file format | YAML with full Python-style config sections (~60 keys) | C has ~20 config keys, many missing sections |
+| 62 | U02 | Config editing | `/config key value` updates live config | Works but limited keys |
+| 63 | U03 | Session auto-save | Auto-saves every N turns to SQLite | Auto-save present but behavior differs |
+| 64 | U04 | Session resume | `/resume <id>` loads full state including tools/memory | Basic load, no tool state restore |
+| 65 | U05 | Multi-line input | prompt_toolkit supports multi-line editing (Alt+Enter) | fgets() only — no multi-line |
+| 66 | U06 | Error messages | Colored, formatted errors with suggestions | Plain printf errors |
+| 67 | U07 | Tool progress modes | `/verbose` cycles: off→new→all→verbose with formatted output | Yes but output format differs |
+| 68 | U08 | Profile switching | `--profile name` or `/profile name` switches config/credentials | Missing in C |
+| 69 | U09 | Plugin dotfile loading | ~/.hermes/plugins/ auto-loads .so plugins at startup | plugin_ext.c exists but 0 plugins ship |
+| 70 | U10 | Gateway per-platform config | Each platform has its own config section with auth/endpoint/timeout | Global config, no per-platform |
+| 71 | U11 | MCP server config | Multiple MCP servers with different transports/auth | Basic single MCP config |
+| 72 | U12 | Environment detection | Auto-detects terminal, Docker, SSH, WSL for display setup | Basic isatty() check |
+| 73 | U13 | Tab completion for tools | Tools tab-complete their names in /tools <name> | Only commands tab-complete |
+| 74 | U14 | Keyboard shortcuts | Ctrl+C interrupt, Ctrl+D exit, Ctrl+L clear, etc. | No keyboard shortcut handling |
+| 75 | U15 | Gateway restart | `/restart` drains active connections, then restarts | Stub: "Use /exit" |
+
 ## SECTOR 1: P1 Critical Agent Modules (4 gaps)
 
 | # | ID | Module | Python LOC | C State |
 |---|-----|--------|-----------|---------|
-| 21 | E01 | error_classifier | 1,087 | Inline string matching |
-| 22 | E02 | chat_completion_helpers | 2,078 | Partial in llm_client.c |
-| 23 | E03 | tool_executor | 910 | Inline in agent_loop.c |
-| 24 | E04 | process_registry | 1,544 | Simpler process.c |
+| 76 | E01 | error_classifier | 1,087 | Inline string matching |
+| 77 | E02 | chat_completion_helpers | 2,078 | Partial in llm_client.c |
+| 78 | E03 | tool_executor | 910 | Inline in agent_loop.c |
+| 79 | E04 | process_registry | 1,544 | Simpler process.c |
 
 ## SECTOR 2: Tool Depth — Function-Level Gaps (140 gaps)
 
 **browser.c — 45 missing Python functions** (C: 15 funcs, Python: 75 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 25 | B01 | _init_cdp | browser_tool.py |
-| 26 | B02 | _connect | browser_tool.py |
-| 27 | B03 | _disconnect | browser_tool.py |
-| 28 | B04 | _navigate | browser_tool.py |
-| 29 | B05 | _click_element | browser_tool.py |
-| 30 | B06 | _type_text | browser_tool.py |
-| 31 | B07 | _get_page_source | browser_tool.py |
-| 32 | B08 | _execute_script | browser_tool.py |
-| 33 | B09 | _screenshot | browser_tool.py |
-| 34 | B10 | _get_cookies | browser_tool.py |
-| 35 | B11 | _set_cookie | browser_tool.py |
-| 36 | B12 | _delete_cookies | browser_tool.py |
-| 37 | B13 | _get_local_storage | browser_tool.py |
-| 38 | B14 | _set_local_storage | browser_tool.py |
-| 39 | B15 | _handle_dialog | browser_tool.py |
-| 40 | B16 | _get_network_logs | browser_tool.py |
-| 41 | B17 | _set_headers | browser_tool.py |
-| 42 | B18 | _intercept_request | browser_tool.py |
-| 43 | B19 | _wait_for_navigation | browser_tool.py |
-| 44 | B20 | _scroll_to | browser_tool.py |
-| 45 | B21 | _hover | browser_tool.py |
-| 46 | B22 | _focus | browser_tool.py |
-| 47 | B23 | _select_option | browser_tool.py |
-| 48 | B24 | _upload_file | browser_tool.py |
-| 49 | B25 | _download_file | browser_tool.py |
-| 50 | B26 | _get_downloads | browser_tool.py |
-| 51 | B27 | _clear_downloads | browser_tool.py |
-| 52 | B28 | _emulate_network | browser_tool.py |
-| 53 | B29 | _emulate_geolocation | browser_tool.py |
-| 54 | B30 | _emulate_timezone | browser_tool.py |
-| 55 | B31 | _get_performance_metrics | browser_tool.py |
-| 56 | B32 | _get_console_logs | browser_tool.py |
-| 57 | B33 | _get_js_errors | browser_tool.py |
-| 58 | B34 | _inject_js | browser_tool.py |
-| 59 | B35 | _get_accessible_tree | browser_tool.py |
-| 60 | B36 | _get_selected_text | browser_tool.py |
-| 61 | B37 | _get_element_by_xpath | browser_tool.py |
-| 62 | B38 | _get_element_by_css | browser_tool.py |
-| 63 | B39 | _get_all_links | browser_tool.py |
-| 64 | B40 | _get_all_images | browser_tool.py |
-| 65 | B41 | _get_all_forms | browser_tool.py |
-| 66 | B42 | _fill_form | browser_tool.py |
-| 67 | B43 | _submit_form | browser_tool.py |
-| 68 | B44 | _print_to_pdf | browser_tool.py |
-| 69 | B45 | _export_har | browser_tool.py |
+| # | ID | Area | Count |
+|---|-----|------|-------|
+| 80-124 | B01-B45 | browser_tool.py CDP/fill/nav/screenshot/cookie/network/emulation/forms/PDF/HAR | 45 funcs |
 
-**vision.c — 18 missing Python functions** (C: 3 funcs, Python: 21 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 70 | V01 | _load_image | vision_tools.py |
-| 71 | V02 | _resize_image | vision_tools.py |
-| 72 | V03 | _get_dimensions | vision_tools.py |
-| 73 | V04 | _detect_faces | vision_tools.py |
-| 74 | V05 | _detect_text (OCR) | vision_tools.py |
-| 75 | V06 | _detect_barcodes | vision_tools.py |
-| 76 | V07 | _compare_images | vision_tools.py |
-| 77 | V08 | _get_exif | vision_tools.py |
-| 78 | V09 | _crop_image | vision_tools.py |
-| 79 | V10 | _rotate_image | vision_tools.py |
-| 80 | V11 | _convert_format | vision_tools.py |
-| 81 | V12 | _analyze_with_llm | vision_tools.py |
-| 82 | V13 | _extract_table | vision_tools.py |
-| 83 | V14 | _extract_diagram | vision_tools.py |
-| 84 | V15 | _classify_image | vision_tools.py |
-| 85 | V16 | _get_color_palette | vision_tools.py |
-| 86 | V17 | _get_dominant_color | vision_tools.py |
-| 87 | V18 | _enhance_image | vision_tools.py |
+**vision.c — 18 missing** (C: 3 funcs, Python: 21 funcs)
+| 125-142 | V01-V18 | OCR, face detect, barcode, EXIF, crop, rotate, analyze, classify | 18 funcs |
 
-**web.c — 18 missing Python functions** (C: 6 funcs, Python: 24 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 88 | W01 | _get | web_tools.py |
-| 89 | W02 | _post | web_tools.py |
-| 90 | W03 | _put | web_tools.py |
-| 91 | W04 | _delete | web_tools.py |
-| 92 | W05 | _head | web_tools.py |
-| 93 | W06 | _options | web_tools.py |
-| 94 | W07 | _patch | web_tools.py |
-| 95 | W08 | _set_header | web_tools.py |
-| 96 | W09 | _set_cookie_jar | web_tools.py |
-| 97 | W10 | _get_cookies | web_tools.py |
-| 98 | W11 | _follow_redirects | web_tools.py |
-| 99 | W12 | _stream_response | web_tools.py |
-| 100 | W13 | _download_file | web_tools.py |
-| 101 | W14 | _upload_file | web_tools.py |
-| 102 | W15 | _rate_limit_aware | web_tools.py |
-| 103 | W16 | _proxy_aware | web_tools.py |
-| 104 | W17 | _retry_on_failure | web_tools.py |
-| 105 | W18 | _parse_html_links | web_tools.py |
+**web.c — 18 missing** (C: 6 funcs, Python: 24 funcs)
+| 143-160 | W01-W18 | GET/POST/PUT/DELETE/HEAD/OPTIONS/PATCH, cookie jar, redirect, stream, rate-limit, proxy, retry, parse | 18 funcs |
 
-**mcp_tool.c — 91 missing Python functions** (C: 18 funcs, Python: 109 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 106 | M01-M91 | 91 MCP protocol/handler functions | mcp_tool.py (all 109 minus 18 ported) |
+**mcp_tool.c — 91 missing** (C: 18 funcs, Python: 109 funcs)
+| 161-251 | M01-M91 | MCP protocol, transport, auth, subscriptions, sampling, notifications | 91 funcs |
 
-**terminal.c — 44 missing Python functions** (C: 5 funcs, Python: 49 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 107 | T01-T44 | 44 terminal/env/handler functions | terminal_tool.py |
+**terminal.c — 44 missing** (C: 5 funcs, Python: 49 funcs)
+| 252-295 | T01-T44 | Terminal env backends, timeout, signal handling, output buffering | 44 funcs |
 
-**approval.c — 31 missing Python functions** (C: 11 funcs, Python: 42 funcs)
-| # | ID | Missing Function | Python Source |
-|---|----|-----------------|-------------|
-| 108 | A01-A31 | 31 approval/security/handler functions | approval.py |
+**approval.c — 31 missing** (C: 11 funcs, Python: 42 funcs)
+| 296-326 | A01-A31 | Approval policies, session approvals, deny reasons, expiry | 31 funcs |
 
-**file.c — 16 missing Python functions** (C: 9 funcs, Python: 25 funcs)
-| 109-124 | F01-F16 | File operation functions | file_tools.py |
+**file.c — 16 missing** (C: 9 funcs, Python: 25 funcs)
+| 327-342 | F01-F16 | Glob, fswatch, diff, hex view, type detection, symlink, permissions | 16 funcs |
 
-**send_message.c — 39 missing Python functions** (C: 1 registered, Python: 39 funcs)
-| 125-163 | S01-S39 | Message platform functions | send_message_tool.py |
-
-**delegate.c — 32 missing Python functions** (C: 13 funcs, Python: 45 funcs)
-| 164-195 | D01-D32 | Delegation/handler functions | delegate_tool.py |
+**send_message.c + delegate.c — 71 missing**  
+| 343-413 | S01-S39, D01-D32 | Platform routing, media handling, delegation features | 71 funcs |
 
 ## SECTOR 3: Gateway Platform Depth (19 gaps)
 
-| # | ID | Platform | C LOC | Python Feature | Missing |
-|---|-----|----------|-------|---------------|---------|
-| 196 | G01 | telegram | C exists | Inline keyboard, polls, webhooks, inline queries, callback queries | Keyboard builder, poll support |
-| 197 | G02 | discord | C exists | Embeds, threads, slash commands, modals, components | Embed builder, thread management |
-| 198 | G03 | slack | C exists | Blocks, modals, shortcuts, events API | Block builder, interactive components |
-| 199 | G04 | signal | C exists | Attachments, reactions, groups | Attachment handling |
-| 200 | G05 | whatsapp | C exists | Templates, buttons, lists, catalogs | Template system |
-| 201 | G06 | email | C exists | Attachments, IMAP IDLE, filters, templates | IMAP push, attachment parsing |
-| 202 | G07 | matrix | C exists | Rooms, threads, edits, reactions | Room discovery |
-| 203 | G08 | mattermost | C exists | Channels, posts, files, webhooks | File upload |
-| 204 | G09 | feishu | C exists | Docs, sheets, chat, calendar, approvals | Sheet ops, calendar |
-| 205 | G10 | dingtalk | C exists | Robots, cards, interactive messages | Card builder |
-| 206 | G11 | wecom | C exists | Messages, contacts, OA, calendar | Contact sync |
-| 207 | G12 | weixin | C exists | Templates, customer messages | Template mgmt |
-| 208 | G13 | qqbot | C exists | Guilds, channels, voice, forum | Voice channels |
-| 209 | G14 | bluebubbles | C exists | iMessage, attachments, reactions | iMessage reactions |
-| 210 | G15 | homeassistant | C exists | Entities, services, history, logging | History, long-lived tokens |
-| 211 | G16 | webhook | C exists | HMAC verification, retry, rate limit | HMAC, retry |
-| 212 | G17 | sms | C exists | Twilio, attachments, delivery status | Delivery status |
-| 213 | G18 | msgraph_webhook | C exists | Subscriptions, notifications, lifecycle | Subscription renewal |
-| 214 | G19 | yuanbao | C exists | WebSocket, media, stickers, proto | All 4 sub-modules |
+| # | ID | Platform | Missing Feature |
+|---|-----|----------|----------------|
+| 414 | G01 | telegram | Keyboard builder, poll support, inline queries |
+| 415 | G02 | discord | Embed builder, thread management, modals |
+| 416 | G03 | slack | Block builder, interactive components |
+| 417 | G04 | signal | Attachment handling, reactions |
+| 418 | G05 | whatsapp | Template system, buttons, lists |
+| 419 | G06 | email | IMAP push, attachment parsing |
+| 420 | G07 | matrix | Room discovery, edits, reactions |
+| 421 | G08 | mattermost | File upload |
+| 422 | G09 | feishu | Sheet ops, calendar, approvals |
+| 423 | G10 | dingtalk | Card builder, interactive messages |
+| 424 | G11 | wecom | Contact sync |
+| 425 | G12 | weixin | Template management |
+| 426 | G13 | qqbot | Voice channels |
+| 427 | G14 | bluebubbles | iMessage reactions |
+| 428 | G15 | homeassistant | History, long-lived tokens |
+| 429 | G16 | webhook | HMAC verification, retry |
+| 430 | G17 | sms | Delivery status |
+| 431 | G18 | msgraph_webhook | Subscription renewal |
+| 432 | G19 | yuanbao | All 4 sub-modules (media, proto, sticker) |
 
 ## SECTOR 4: Provider Feature Gaps (20 gaps)
 
-| # | ID | Provider | Missing Feature | Python LOC |
-|---|----|----------|----------------|-----------|
-| 215 | P01 | anthropic | Extended thinking, prompt caching, multimodal | 2,220 |
-| 216 | P02 | anthropic | Streaming variants (raw, text, tool_use SSE events) | part of 2,220 |
-| 217 | P03 | anthropic | Batch/message API | part of 2,220 |
-| 218 | P04 | bedrock | Converse API, STS auth, cross-region inference | 1,289 |
-| 219 | P05 | azure | Entra ID keyless auth via DefaultAzureCredential | 555 |
-| 220 | P06 | azure | Content filtering config, deployment resolution | part of 555 |
-| 221 | P07 | google/gemini | Cloud Code Assist API, native API, OAuth PKCE | 3,393 |
-| 222 | P08 | google/gemini | Context caching, grounding, safety settings | part of 3,393 |
-| 223 | P09 | google/gemini | Google Code Assist quota/tier management | 452 |
-| 224 | P10 | codex | Responses API adapter, app-server runtime | 1,532 |
-| 225 | P11 | codex | Codex reasoning effort, code execution mode | part of 1,532 |
-| 226 | P12 | copilot | ACP protocol client (hub, agent, tool) | 686 |
-| 227 | P13 | all providers | Rate limit header parsing for /usage | 246 |
-| 228 | P14 | all providers | Model discovery via remote API (models.dev) | 723 |
-| 229 | P15 | all providers | Full model metadata DB with pricing (1,827 LOC) | 1,827 |
-| 230 | P16 | all providers | Error classification for smart failover | 1,087 |
-| 231 | P17 | deepseek | Reasoning content passback (current bug) | provider_deepseek.c |
-| 232 | P18 | openrouter | Provider selection, routing, fallback | provider_openrouter.c |
-| 233 | P19 | metadata | HTTP fetch model list from models.dev | 723 |
-| 234 | P20 | credential | Multi-source credential resolution (env, file, keychain) | 448 |
+| 433-452 | P01-P20 | Provider features: extended thinking, OAuth, rate-limit parsing, model discovery, error classification, credentials | 20 gaps |
 
 ## SECTOR 5: Agent Module Depth (14 gaps)
 
-| # | ID | Missing Module | Python LOC | Key Missing Functions |
-|---|-----|--------------|-----------|---------------------|
-| 235 | M01 | context_compressor | 1,748 | Adaptive compression with quality feedback |
-| 236 | M02 | prompt_builder | 1,465 | Template system, message construction, token budgeting |
-| 237 | M03 | memory_manager | 609 | Multi-provider abstraction, plugin orchestration |
-| 238 | M04 | memory_provider | 279 | Provider interface (SQLite, vector, file) |
-| 239 | M05 | insights | 930 | Usage analytics, token/cost/time breakdowns |
-| 240 | M06 | curator_backup | 693 | Skill snapshot, rollback, manifest management |
-| 241 | M07 | credential_sources | 448 | Env, file, keychain credential resolution |
-| 242 | M08 | plugin_llm | 1,046 | LLM calls from plugins |
-| 243 | M09 | skill_utils | 511 | Skill utility functions |
-| 244 | M10 | background_review | 582 | Background review feature (exists but thin) |
-| 245 | M11 | stream_diag | 280 | Stream diagnostic tracing |
-| 246 | M12 | agent_init | 1,522 | Partially ported to main.c |
-| 247 | M13 | message_sanitization | 444 | Partial in sanitize.c |
-| 248 | M14 | conversation_compression | 603 | Partial in context.c |
+| 453-466 | M01-M14 | context_compressor, prompt_builder, memory_manager, insights, curator_backup, credential_sources, plugin_llm, skill_utils, background_review, stream_diag, agent_init, message_sanitization, conversation_compression | 14 gaps |
 
 ## SECTOR 6: Missing Python Tools — Full Module Ports (14 gaps)
 
-| # | ID | Tool | Python LOC |
-|---|-----|------|-----------|
-| 249 | T01 | browser_camofox + camofox_state | 746 |
-| 250 | T02 | mcp_oauth + mcp_oauth_manager | 1,256 |
-| 251 | T03 | yuanbao_tools | 736 |
-| 252 | T04 | microsoft_graph_auth + client | 799 |
-| 253 | T05 | credential_files | 436 |
-| 254 | T06 | website_policy | 282 |
-| 255 | T07 | osv_check | 155 |
-| 256 | T08 | clarify_gateway | 278 |
-| 257 | T09 | interrupt | 98 |
-| 258 | T10 | env_passthrough | 152 |
-| 259 | T11 | budget_config | 189 |
-| 260 | T12 | schema_sanitizer | 234 |
-| 261 | T13 | fuzzy_match | 703 |
-| 262 | T14 | slash_confirm | 167 |
+| 467-480 | T01-T14 | browser_camofox, mcp_oauth, yuanbao_tools, microsoft_graph, credential_files, website_policy, osv_check, clarify_gateway, interrupt, env_passthrough, budget_config, schema_sanitizer, fuzzy_match, slash_confirm | 14 gaps |
 
 ## SECTOR 7: Gateway Sub-Modules (6 gaps)
 
-| # | ID | Sub-module | Python LOC |
-|---|-----|-----------|-----------|
-| 263 | G20 | feishu_comment + rules | 457 |
-| 264 | G21 | wecom_callback + wecom_crypto | 445 |
-| 265 | G22 | yuanbao_media + proto + sticker | 699 |
-| 266 | G23 | signal_rate_limit | 78 |
-| 267 | G24 | telegram_network | 234 |
-| 268 | G25 | gateway helpers + base + http_limits | 889 |
+| 481-486 | G20-G25 | feishu_comment, wecom_callback/crypto, yuanbao_media/proto/sticker, helpers/base | 6 gaps |
 
 ## SECTOR 8: Plugin System (4 gaps)
 
-| # | ID | System | Items |
-|---|-----|--------|-------|
-| 269 | PL01 | Model-provider plugins | 29 plugins (ai-gateway to zai) |
-| 270 | PL02 | Memory provider plugins | 8 plugins (byterover to supermemory) |
-| 271 | PL03 | Other plugins | 10 plugins (browser, obs, spotify, etc.) |
-| 272 | PL04 | Plugin LLM architecture | plugin_llm.py (1,046 LOC) |
+| 487-490 | PL01-PL04 | 29 model-provider plugins, 8 memory plugins, 10 other plugins, plugin LLM | 4 gaps |
 
 ## SECTOR 9: Library Depth (15 gaps)
 
-| # | ID | Library | Missing Feature |
-|---|-----|---------|----------------|
-| 273 | L01 | libjson | Surrogate pair handling in \uXXXX (\uD800-\uDFFF) |
-| 274 | L02 | libjson | JSON schema validation |
-| 275 | L03 | libhttp | HTTP/2 support (currently HTTP/1.1 only) |
-| 276 | L04 | libhttp | Connection retry with backoff |
-| 277 | L05 | libhttp | Request/response streaming |
-| 278 | L06 | libhttp | Proxy support (HTTP, SOCKS) |
-| 279 | L07 | libhttp | Cookie jar persistence |
-| 280 | L08 | libcrypto | Public-key encryption (RSA/ECC) |
-| 281 | L09 | libcrypto | Digital signatures |
-| 282 | L10 | libcrypto | Certificate verification |
-| 283 | L11 | libdb | Session tag CRUD (tags_add/tags_remove/tags_list) |
-| 284 | L12 | libdb | Session export (JSON, markdown) |
-| 285 | L13 | libdb | Database pruning by age/size |
-| 286 | L14 | libdb | Branch/restore from snapshots |
-| 287 | L15 | libhash/another | LRU cache library (currently inline in skills.c) |
+| 491-505 | L01-L15 | JSON surrogate pairs, HTTP/2, retry, streaming, proxy, cookies, PKI encryption, session CRUD, LRU cache | 15 gaps |
 
 ## SECTOR 10: Config Key Gaps (8 gaps)
 
-| # | ID | Config Section | Missing Keys |
-|---|-----|---------------|-------------|
-| 288 | C01 | display | skin, tool_progress_mode, status_bar, stream_mode |
-| 289 | C02 | agent | max_iterations, budget, compression, background_review |
-| 290 | C03 | tools | browser_port, terminal_env, approval_timeout |
-| 291 | C04 | memory | provider, plugin_path, ttl_defaults |
-| 292 | C05 | mcp | oauth, transport, timeout, max_tools |
-| 293 | C06 | security | url_safety_level, tirith_enabled, redact_patterns |
-| 294 | C07 | gateway | platform_configs, retry_on_failure, webhook_port |
-| 295 | C08 | auxiliary | vision_provider, web_extract_model, tts_provider |
+| 506-513 | C01-C08 | display.skin, agent.max_iterations, tools.browser_port, memory.provider, mcp.oauth, security.url_safety, gateway.platform_configs, auxiliary.vision_provider | 8 gaps |
 
 ## SECTOR 11: Test Coverage Gaps (5 gaps)
 
-| # | ID | Area | Issue |
-|---|-----|------|-------|
-| 296 | TC01 | Gateway platforms | No per-platform integration tests (19 platforms) |
-| 297 | TC02 | CLI commands | No per-command tests (79 commands, ~10 tested) |
-| 298 | TC03 | Provider streaming | No streaming integration tests |
-| 299 | TC04 | MCP transport | No SSE/stdio transport tests |
-| 300 | TC05 | Plugin system | No .so plugin loading tests |
+| 514-518 | TC01-TC05 | Gateway integration tests, CLI command tests, provider streaming tests, MCP transport tests, plugin loading tests | 5 gaps |
 
 ---
 
@@ -322,6 +206,8 @@ Total: **300 active gaps** across 18 sectors.
 |--------|----------|------|
 | 0A | Entry Point Integration | 8 |
 | 0B | Display & Visual Parity | 12 |
+| 0C | CLI Behavioral Parity (args ignored) | 40 |
+| 0D | Missing Usages (Python behavior gaps) | 15 |
 | 1 | P1 Critical Agent Modules | 4 |
 | 2 | Tool Depth (function-level) | 140 |
 | 3 | Gateway Platform Depth | 19 |
@@ -333,12 +219,14 @@ Total: **300 active gaps** across 18 sectors.
 | 9 | Library Depth | 15 |
 | 10 | Config Key Gaps | 8 |
 | 11 | Test Coverage Gaps | 5 |
-| **Total** | | **300** |
+| **Total** | | **365** |
 
 ## Phase Order
-1. **Phase 0a** — Entry Point Integration (I01-I08)
-2. **Phase 0b** — Display & Visual Parity (V01-V12)
-3. **Phase 1** — P1 Agent Modules (E01-E04)
-4. **Phase 2** — Tool Depth + Gateway + Provider + Agent (Sectors 2-5, ~193 gaps)
-5. **Phase 3** — Missing Tools + Sub-modules + Plugin System (Sectors 6-8, ~24 gaps)
-6. **Phase 4** — Library + Config + Tests (Sectors 9-11, ~28 gaps)
+1. **Phase 0a** — Entry Points (I01-I08)
+2. **Phase 0b** — Display (V01-V12)
+3. **Phase 0c** — CLI Behavioral (A01-A40: fix args handling on 40 commands)
+4. **Phase 0d** — Missing Usages (U01-U15)
+5. **Phase 1** — P1 Agent Modules (E01-E04)
+6. **Phase 2** — Function-level tool/gateway/provider depth (S2-S5)
+7. **Phase 3** — Missing ports + plugins (S6-S8)
+8. **Phase 4** — Library/config/tests (S9-S11)
