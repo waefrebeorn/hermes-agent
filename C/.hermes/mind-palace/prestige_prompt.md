@@ -23,7 +23,7 @@
 | Rank | ID | Description | LOC | Sector | Why Now |
 |------|----|-------------|-----|--------|---------|
 | 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~40% done | 900 | S13 | Core infra for API mode. 5 endpoints added this session |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | S13 | Required for API server parity |
+| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming added (~60% done) | 200 | S13 | Real-time streaming for frontend clients. Wire format correct, synchronous backend |
 | 3 | D07 | Modal/Daytona/singularity terminal backends | 500 | S7 | Last remaining terminal depth |
 | 4 | G22 | Missing 10 gateway platforms | 3000 | S8 | Parity gap |
 | 5 | D14 | Browser supervisor | 200 | S7 | Browser tool depth |

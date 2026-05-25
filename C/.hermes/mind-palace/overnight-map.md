@@ -16,8 +16,9 @@
 
 - **E01 ~40%**: Added REST API endpoints (capabilities, tools, health/detailed, agent/status) to api_server.c
 - **E01 wired**: `hermes api-server [port]` CLI command added (like mcp-serve)
-- **api_server.c** grew 457 → ~690 lines (+233)
-- 7 endpoints now available: models, chat, capabilities, tools, agent/status, health, health/detailed
+- **E02 ~60%**: SSE streaming for POST /v1/chat/completions via ?stream=true query param
+- **api_server.c** grew 457 → ~850 lines (+393 across both sessions)
+- 7 endpoints now available including SSE streaming
 - Suite still 239/0/0, build 0 warnings
 
 - **L05 closed**: Added HTTP cookie jar (Set-Cookie parse, Cookie build, domain/path/secure matching, wire into do_request)
@@ -33,6 +34,7 @@
 
 | ID | Description |
 |----|-------------|
+| E02 | SSE streaming for /v1/chat/completions (?stream=true) — ~60% done |
 | E01 | REST API endpoints ~40% — capabilities, tools, health/detailed, agent/status, CLI wiring |
 | L11 | yaml_parse_multi() — multi-document YAML parser |
 | L31 | @every N[m|h] cron duration syntax |
@@ -44,8 +46,8 @@
 
 From prestige_prompt.md v39:
 1. **E01** — REST API endpoints ~40% done (capabilities, tools, health/detailed, agent/status done)
-2. **E02** — OpenAI-compatible /v1/chat/completions proxy (500 LOC, next in S13)
-3. **E03** — Session CRUD via HTTP (300 LOC)
+2. **E02** — SSE streaming added (~60% done), remaining: true token-by-token streaming
+3. **E03** — Session CRUD via HTTP (300 LOC, next priority in S13)
 4. **D07** — Modal/Daytona/singularity terminal backends (500 LOC)
 5. **G22** — Missing 10 gateway platforms from Python (3000 LOC)
 

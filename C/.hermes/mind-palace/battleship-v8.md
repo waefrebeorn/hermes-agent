@@ -235,7 +235,7 @@ E01 partial: tools listing, agent status, health/detailed, capabilities added + 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
 | 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~40% done, see E01a | 900 | P2 |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy + SSE streaming | 500 | P2 |
+| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming added (stream=true query param), ~60% done | 200 | P2 |
 | 3 | E03 | Session CRUD via HTTP | 300 | P2 |
 | 4 | E04 | MCP serve mode | 200 | P2 |
 | 5 | E05 | Webhook endpoint for gateways | 250 | P2 |
