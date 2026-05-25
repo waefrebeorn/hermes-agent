@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **180 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **178 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -195,7 +195,7 @@ Confirmed bugs that need fixing.
 | 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
 | 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
 
-## SECTOR 12: Test Coverage Gaps (22 gaps)
+## SECTOR 12: Test Coverage Gaps (21 gaps)
 
 C tools without dedicated test files.
 
@@ -222,7 +222,7 @@ C tools without dedicated test files.
 | 19 | T19 | skills.c | Missing | P2 |
 | 20 | T20 | terminal.c | Missing | P2 |
 | 21 | T21 | tts.c | Missing | P2 |
-| 22 | T22 | video_gen.c | Missing | P2 |
+| 22 | T22 | video_gen.c | ✅ test_video_gen.c (5 tests) — null args, error paths | P2 |
 | 23 | T23 | vision.c | Missing | P2 |
 | 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) — state mgmt, config, argument validation | P2 |
 | 25 | T25 | web.c | Missing | P2 |
@@ -301,7 +301,7 @@ Features in Python that would benefit C.
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
-| 1 | N01 | Bitwarden Secrets Manager integration | 200 | P2 |
+| 1 | N01 | Bitwarden Secrets Manager integration — ✅ STALE: secrets.c (330 LOC) + hermes_secrets.h (55 LOC) already exist | 0 | P2 |
 | 2 | N02 | Mixture of Agents tool (MoA) | 300 | P2 |
 | 3 | N03 | Feishu doc and drive tools | 250 | P3 |
 | 4 | N04 | Microsoft Graph auth + client | 300 | P3 |
@@ -399,7 +399,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S9: Config | 0 |
 | S10: Library | 11 |
 | S11: Bug Fixes | 2 |
-|| S12: Test Coverage | 22 |
+|| S12: Test Coverage | 21 |
 | S13: API Server | 5 |
 | S14: TUI | 8 |
 | S15: Curator | 0 |
@@ -410,5 +410,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 10 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-|| **Total** | **180** |
+|| **Total** | **178** |
 | (resolved items retired to vault/achievements.md) | |
