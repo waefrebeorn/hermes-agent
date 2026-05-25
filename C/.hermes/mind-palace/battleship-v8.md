@@ -164,7 +164,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | # | ID | Config Key | Description | LOC | Priority |
 |---|-----|-----------|-------------|-----|----------|
 | 1 | C08 | agent.codex_runtime | ✅ Config key added: `codex_runtime` (auto | codex_app_server), default="auto", reads from agent.codex_runtime YAML path | P3 |
-| 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
+| 2 | C11 | agent.mixture_of_agents | ✅ Config keys added: moa_enabled, moa_model, moa_strategy, moa_workers — YAML path agent.mixture_of_agents.* | P3 |
 | 3 | C17 | agent.checkpoint.* | ✅ Already implemented — struct has 8 fields at hermes.h:846-854, defaults + YAML reader at config.c:490-496,1515-1526,2084 | P3 |
 
 ## SECTOR 10: Library Depth (11 gaps)

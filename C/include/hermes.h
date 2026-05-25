@@ -435,6 +435,10 @@ typedef struct {
     char  image_input_mode[16];    /* agent.image_input_mode: auto|native|text */
     char  skill_search_paths[1024]; /* agent.skill_search_paths: comma-sep custom skill dirs */
     char  model_metadata_path[512]; /* agent.model_metadata: path to model capabilities JSON */
+    bool  moa_enabled;             /* agent.mixture_of_agents.enabled */
+    char  moa_model[128];          /* agent.mixture_of_agents.model */
+    char  moa_strategy[32];        /* agent.mixture_of_agents.strategy: round_robin | weighted | parallel */
+    int   moa_workers;             /* agent.mixture_of_agents.num_workers */
 } agent_config_t;
 
 /* ================================================================

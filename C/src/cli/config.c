@@ -390,6 +390,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "auto");
     cfg->agent.skill_search_paths[0] = '\0';  /* empty = default ~/.hermes/skills */
     cfg->agent.model_metadata_path[0] = '\0'; /* empty = use hardcoded model data */
+    cfg->agent.moa_enabled = false;
+    cfg->agent.moa_workers = 3;
+    snprintf(cfg->agent.moa_model, sizeof(cfg->agent.moa_model), "");
+    snprintf(cfg->agent.moa_strategy, sizeof(cfg->agent.moa_strategy), "round_robin");
     snprintf(cfg->agent.reasoning_effort, sizeof(cfg->agent.reasoning_effort), "medium");
 
     /* Tools/terminal config defaults */
@@ -1059,6 +1063,15 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (mmp && mmp[0]) {
         snprintf(cfg->agent.model_metadata_path, sizeof(cfg->agent.model_metadata_path), "%s", mmp);
     }
+
+    /* mixture_of_agents config */
+    cfg->agent.moa_enabled = yaml_get_bool(doc, "agent.mixture_of_agents.enabled", false);
+    int moa_w = yaml_get_int(doc, "agent.mixture_of_agents.num_workers", 0);
+    if (moa_w > 0) cfg->agent.moa_workers = moa_w;
+    const char *moa_m = yaml_get_string(doc, "agent.mixture_of_agents.model");
+    if (moa_m) snprintf(cfg->agent.moa_model, sizeof(cfg->agent.moa_model), "%s", moa_m);
+    const char *moa_s = yaml_get_string(doc, "agent.mixture_of_agents.strategy");
+    if (moa_s) snprintf(cfg->agent.moa_strategy, sizeof(cfg->agent.moa_strategy), "%s", moa_s);
 
     /* Display section */
     const char *skin = yaml_get_string(doc, "display.skin");
