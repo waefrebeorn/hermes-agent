@@ -4,13 +4,13 @@
 One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
-|Suite:  243/0/0 (206 test files, completes in <60s)
+|Suite:  224/0/21 (207 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 154 .c + 66 .h = 220 files
-| Parity: ~78%   (~156 verified gaps remaining — see battleship-v8)
+| Parity: ~78%   (~154 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
-|Tests:  243/0/0, 1 skipped
+|Tests:  224/0/21, 21 skipped
 |Tools:  84 registered handlers — all real implementations
 |Libraries: 59 C modules — zero external deps beyond libc+libssl
 |Plugins:  10 C dynamic plugins (achievements, kanban, disk_cleanup, etc.)
@@ -36,7 +36,7 @@ One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||- [Battleship Roadmap (~156 Gaps)](#battleship-roadmap-174-gaps)
+||- [Battleship Roadmap (~154 Gaps)](#battleship-roadmap-174-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -51,7 +51,7 @@ One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 243/0/0
+bash test_runner.sh        # 224/0/21
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -529,7 +529,7 @@ The DA process is the project's quality backbone — every claim is triple-verif
 
 ---
 
-## Battleship Roadmap (~156 Gaps)
+## Battleship Roadmap (~154 Gaps)
 
 The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by 22 sectors (S1-S22) with coordinate IDs.
 

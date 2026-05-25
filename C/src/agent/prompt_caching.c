@@ -98,6 +98,18 @@ void cache_reset_invalidation(void) {
     g_prompt_set_count = 0;
 }
 
+/* ── Multi-turn optimization (P04) ── */
+
+static int g_marked_count = 0;
+
+void cache_set_marked_count(int count) {
+    g_marked_count = count;
+}
+
+int cache_get_marked_count(void) {
+    return g_marked_count;
+}
+
 /* Apply cache_control to a single message */
 static void apply_cache_marker(pc_message_t *msg,
                                const char *cache_type,
@@ -131,6 +143,10 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
                                    bool native_anthropic) {
     if (!messages || !count || *count <= 0) return;
 
+    /* P04: Multi-turn optimization — skip messages already cached in prior turns */
+    int start_idx = g_marked_count;
+    if (start_idx >= *count) return; /* all messages already cached */
+
     /* Default TTL */
     const char *ttl = cache_ttl;
     if (!ttl || !ttl[0]) ttl = "5m";
@@ -141,8 +157,8 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
 
     int breakpoints_used = 0;
 
-    /* First message: if it's system, add cache marker */
-    if (*count > 0 && messages[0].role == 0) {
+    /* First message (system): only mark if new since last turn */
+    if (start_idx == 0 && *count > 0 && messages[0].role == 0) {
         apply_cache_marker(&messages[0], cache_type,
                            cache_ttl_val[0] ? cache_ttl_val : NULL,
                            native_anthropic);
@@ -153,10 +169,10 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
     int remaining = 4 - breakpoints_used;
     if (remaining <= 0) return;
 
-    /* Walk backwards, collect non-system indices */
+    /* Walk backwards, collect non-system indices (only beyond start_idx) */
     int non_sys_indices[PC_MAX_MESSAGES];
     int ns_count = 0;
-    for (int i = *count - 1; i >= 0 && ns_count < remaining; i--) {
+    for (int i = *count - 1; i >= start_idx && ns_count < remaining; i--) {
         if (messages[i].role != 0) { /* not system */
             non_sys_indices[ns_count++] = i;
         }
@@ -168,4 +184,7 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
                            cache_ttl_val[0] ? cache_ttl_val : NULL,
                            native_anthropic);
     }
+
+    /* P04: Update marked count for next turn */
+    g_marked_count = *count;
 }

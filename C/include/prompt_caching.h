@@ -92,6 +92,16 @@ int cache_get_invalidations(void);
 /** Reset cache invalidation state (for testing). */
 void cache_reset_invalidation(void);
 
+/**
+ * Set the number of messages that have already been cached in the previous turn.
+ * Used for multi-turn optimization: only mark messages beyond this count.
+ * Call after apply_anthropic_cache_control() with the total message count.
+ */
+void cache_set_marked_count(int count);
+
+/** Get the number of messages marked as cached in the last turn. */
+int cache_get_marked_count(void);
+
 #ifdef __cplusplus
 }
 #endif

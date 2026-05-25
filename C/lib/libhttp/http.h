@@ -104,6 +104,43 @@ char *http_url_encode(const char *str);
 /* Set HTTP proxy (CONNECT tunnel for HTTPS). Empty/NULL to clear. */
 void http_client_set_proxy(http_t *h, const char *proxy_url);
 
+/* === Multipart form data (RFC 2046) === */
+/* Builder for multipart/form-data bodies. Create, add fields/files, finalize. */
+typedef struct http_multipart_form_t http_multipart_form_t;
+
+/* Create a multipart form builder. Returns NULL on OOM. */
+http_multipart_form_t *http_multipart_form_new(void);
+
+/* Add a text field (name=value). Both params copied internally. */
+bool http_multipart_add_field(http_multipart_form_t *f,
+                              const char *name, const char *value);
+
+/* Add a file field. Content is copied internally.
+ * If content_type is NULL, defaults to "application/octet-stream".
+ * If filename is NULL, no filename is included in the disposition header. */
+bool http_multipart_add_file(http_multipart_form_t *f,
+                             const char *name, const char *filename,
+                             const char *content, size_t content_len,
+                             const char *content_type);
+
+/* Finalize the form. Returns the complete multipart body (malloc'd).
+ * Sets *out_len and *out_boundary (malloc'd boundary string).
+ * After finalize, you can still http_multipart_form_free() the builder.
+ * Returns NULL on error. */
+char *http_multipart_form_finalize(http_multipart_form_t *f,
+                                   size_t *out_len,
+                                   char **out_boundary);
+
+/* Free the form builder. Safe to call after finalize. */
+void http_multipart_form_free(http_multipart_form_t *f);
+
+/* Convenience: POST with multipart body.
+ * Builds Content-Type with boundary automatically.
+ * Returns response like http_request(). */
+http_resp_t *http_post_multipart(http_t *h, const char *url,
+                                  const char *extra_headers,
+                                  http_multipart_form_t *form);
+
 /* === Cookie jar support === */
 #define HTTP_COOKIE_MAX 64
 #define HTTP_COOKIE_NAME_LEN 128

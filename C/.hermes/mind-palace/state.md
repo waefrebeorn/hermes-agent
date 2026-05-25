@@ -4,7 +4,7 @@
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **243/0/0 (1 skipped)** — 206 test files | 2026-05-25 |
+| Suite | **224/0/21** — 207 test files | 2026-05-25 |
 | Binary | **30MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **154** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |
@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (155 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (154 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -50,7 +50,7 @@
 | S20 | New Features | 9 | 0 | 1 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **155** | **0** | **79** | **76** |
+||| **Total** | **154** | **0** | **78** | **76** |
 
 ## Python Upstream Parity
 
@@ -89,6 +89,7 @@
 || L06 | libhttp redirect following configurable — http_client_set_max_redirects() | S10 | 2026-05-25 |
 || L07 | libhttp gzip/deflate decompression — auto-decompress via zlib | S10 | 2026-05-25 |
 || L12 | libcrypto AES-256-GCM encrypt/decrypt — crypto_aes_encrypt/decrypt | S10 | 2026-05-25 |
+|| L04 | libhttp multipart form data — builder API, boundary generation, http_post_multipart | S10 | 2026-05-25 |
 
 ## Next Priority Queue (top 10)
 

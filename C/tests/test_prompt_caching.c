@@ -17,6 +17,8 @@ static int pass = 0, fail = 0;
 } while(0)
 
 static void test_empty_messages(void) {
+    cache_set_marked_count(0);
+
     int count = 0;
     apply_anthropic_cache_control(NULL, &count, "5m", false);
     TEST("null messages no crash", 1); pass--; pass++; /* mark as passed */
@@ -35,7 +37,8 @@ static void test_system_message_cached(void) {
     TEST("system ttl empty (5m)", msgs[0].cache_ttl[0] == '\0');
 }
 
-static void test_system_and_3_non_system(void) {
+    40|static void test_system_and_3_non_system(void) {
+    cache_set_marked_count(0);
     pc_message_t msgs[8];
     memset(msgs, 0, sizeof(msgs));
     msgs[0].role = 0; /* system */
@@ -70,7 +73,8 @@ static void test_no_system_message(void) {
     TEST("no-system: msg2 cached", msgs[2].has_cache);
 }
 
-static void test_1h_ttl(void) {
+    75|static void test_1h_ttl(void) {
+    cache_set_marked_count(0);
     pc_message_t msgs[2];
     memset(msgs, 0, sizeof(msgs));
     msgs[0].role = 0; /* system */
@@ -84,6 +88,7 @@ static void test_1h_ttl(void) {
 }
 
 static void test_native_anthropic_tool_msg(void) {
+    cache_set_marked_count(0);
     pc_message_t msgs[3];
     memset(msgs, 0, sizeof(msgs));
     msgs[0].role = 0; /* system */
@@ -108,6 +113,7 @@ static void test_native_anthropic_tool_msg(void) {
 }
 
 static void test_single_message(void) {
+    cache_set_marked_count(0);
     pc_message_t msgs[1];
     memset(msgs, 0, sizeof(msgs));
     msgs[0].role = 1; /* user */
@@ -218,7 +224,71 @@ static void test_invalid_null_prompt(void) {
     TEST("null then real → 1 invalidation", cache_get_invalidations() == 1);
 }
 
+/* ── Multi-turn optimization tests (P04) ── */
+
+static void test_multiturn_initial_count_zero(void) {
+    cache_reset_invalidation();
+    TEST("initial marked count 0", cache_get_marked_count() == 0);
+}
+
+static void test_multiturn_set_count(void) {
+    cache_set_marked_count(5);
+    TEST("set marked count 5", cache_get_marked_count() == 5);
+    cache_set_marked_count(0);
+}
+
+static void test_multiturn_fresh_call_no_skip(void) {
+    pc_message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0].role = 0;
+    msgs[1].role = 1;
+    msgs[2].role = 1;
+    int count = 3;
+    cache_set_marked_count(0);
+
+    apply_anthropic_cache_control(msgs, &count, "5m", false);
+    TEST("fresh: system cached", msgs[0].has_cache);
+    TEST("fresh: last msg cached", msgs[2].has_cache);
+    TEST("fresh: marked_count updated", cache_get_marked_count() == 3);
+}
+
+   253|static void test_multiturn_skips_old_messages(void) {
+    cache_set_marked_count(0);
+    pc_message_t msgs[5];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0].role = 0;
+    msgs[1].role = 1;
+    msgs[2].role = 1;
+    msgs[3].role = 1;
+    msgs[4].role = 1;
+    int count = 5;
+    cache_set_marked_count(3); /* messages 0-2 already cached */
+
+    apply_anthropic_cache_control(msgs, &count, "5m", false);
+    /* System message (index 0) should NOT be re-marked since start_idx > 0 */
+    TEST("skip: sys not re-marked", msgs[0].has_cache == false);
+    /* Only messages 3 and 4 (the new ones) should be marked */
+    TEST("skip: msg[3] cached", msgs[3].has_cache == true);
+    TEST("skip: msg[4] cached", msgs[4].has_cache == true);
+    /* Total marked should be 3 (start_idx) + up to 4 - but only 2 new */
+    TEST("skip: marked_count updated", cache_get_marked_count() == 5);
+}
+
+static void test_multiturn_all_cached_skips(void) {
+    pc_message_t msgs[2];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0].role = 0;
+    msgs[1].role = 1;
+    int count = 2;
+    cache_set_marked_count(2); /* all already cached */
+
+    apply_anthropic_cache_control(msgs, &count, "5m", false);
+    TEST("all_cached: no new markers", msgs[0].has_cache == false);
+    TEST("all_cached: marked_count unchanged", cache_get_marked_count() == 2);
+}
+
 int main(void) {
+    cache_set_marked_count(0); /* P04: Ensure fresh state for all tests */
     test_empty_messages();
     test_system_message_cached();
     test_system_and_3_non_system();
@@ -237,6 +307,11 @@ int main(void) {
     test_invalid_same_prompt();
     test_invalid_diff_prompt();
     test_invalid_null_prompt();
+    test_multiturn_initial_count_zero();
+    test_multiturn_set_count();
+    test_multiturn_fresh_call_no_skip();
+    test_multiturn_skips_old_messages();
+    test_multiturn_all_cached_skips();
 
     fprintf(stderr, "prompt_caching: %d/%d pass\\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

@@ -51,9 +51,9 @@ Read this first, then dive into sectors via `plans/battleship-v4.md`.
 - **Gateway:** 19 platforms (of 31 Python modules)
 - **CLI:** 8 .c files (of 88 Python modules). 237 cmd_ functions, ~40 real, ~197 stubs
 - **Providers:** 9 native C (of 28 Python plugin providers)
-- **Libraries:** 57 lib/ directories
-- **True stubs:** 1 (browser_cdp tool not wired to real CDP handler)
-- **Binary:** 29MB ELF, 0 errors, 0 warnings
+- **Libraries:** 59 lib/ directories
+- **True stubs:** 0 (all resolved)
+- **Binary:** 30MB ELF, 0 errors, 0 warnings
 
 ## Active Gaps
 

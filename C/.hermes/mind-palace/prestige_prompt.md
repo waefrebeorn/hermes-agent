@@ -15,7 +15,7 @@
 | Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **858+** |
-|| Real gap count | **155** (battleship-v8, 22 sectors) |
+|| Real gap count | **154** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 12 gaps)
@@ -51,7 +51,7 @@
 
 - battleship-v7 had 16 stale claims — v8 verified each item against source
 - battleship-v8 uses Triple DA: stub hunt (all keywords), Python-vs-C module comparison, form-not-function depth check
-- Remainder count (155) is bounded: 79 P2 + 76 P3 items are depth/coverage
+- Remainder count (154) is bounded: 79 P2 + 76 P3 items are depth/coverage
 - 0 P1 items remain
 - Python has 77 agent modules → C has 50 (26 direct matches + 24 C-only)
 - Python has 88+ tool files → C has 43 tool modules

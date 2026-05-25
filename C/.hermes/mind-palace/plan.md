@@ -4,13 +4,13 @@
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-155 gaps is a checklist. Every ✅ without runtime verification is a lie.
+154 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| Suite | 243/0/0 (206 files) | `test_runner.sh` |
+| Suite | 224/0/21 (207 files) | `test_runner.sh` |
 | Binary | 30MB, 0 errors, 0 warnings | `make` |
 | Source files | 154 .c, 66 .h | `ls` |
 | Libraries | 59 | `lib/lib*` |
@@ -20,7 +20,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 | Gateways | 19 platforms | `ls src/gateway/platforms/` |
 | Plugins | 10 C plugins | `ls src/plugins/` |
 | Stubs | 0 real | all resolved |
-|| Real gaps | 155 (22 sectors, 0 P1) | battleship-v8 |
+|| Real gaps | 154 (22 sectors, 0 P1) | battleship-v8 |
 | API server | 1015 LOC, 12 endpoints | `wc -l src/api_server.c` |
 
 ## Next Actions (top 8)

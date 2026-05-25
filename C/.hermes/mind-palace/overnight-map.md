@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
 | Build | 30MB, 0 warnings | ✅ |
-| Gap count | **155** (battleship-v8) | L12 resolved |
+| Gap count | **154** (battleship-v8) | L12 resolved |
 | Source .c files | 154 | +1 |
 | Library dirs | 59 | +1 |
 | API server | 1015 LOC | 12 endpoints |
@@ -18,6 +18,7 @@
 
 ### Session — AES-256-GCM Encryption
 - **L12 resolved**: AES-256-GCM encrypt/decrypt via OpenSSL EVP
+- **L04 resolved**: libhttp multipart form data — builder API, boundary generation, http_post_multipart
 - crypto_aes_encrypt(): random IV, GCM tag, SHA-256 key derivation for short keys
 - crypto_aes_decrypt(): authentication tag verification, NULL on tamper
 - **6 crypto tests**: roundtrip, wrong key auth fail, short key, null safety
@@ -34,7 +35,7 @@ From prestige_prompt.md v42:
 
 ## Key Facts
 
-- Battleship-v8 is the canonical gap list (155 gaps)
+- Battleship-v8 is the canonical gap list (154 gaps)
 - Vault/achievements.md is the archive — all completed + retired stale claims
 - Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
 - P1 count is 0

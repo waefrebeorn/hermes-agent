@@ -22,6 +22,9 @@
 /* zlib for gzip/deflate decompression */
 #include <zlib.h>
 
+/* For time-based boundary generation */
+#include <time.h>
+
 /* ================================================================
  *  Internal helpers
  * ================================================================ */
@@ -1034,6 +1037,253 @@ char *http_url_encode(const char *str) {
     }
     out[j] = '\0';
     return out;
+}
+
+/* ================================================================
+ *  Multipart form data (RFC 2046)
+ * ================================================================ */
+
+/* Maximum number of parts in a multipart form */
+#define HTTP_MULTIPART_MAX_PARTS 64
+
+/* Maximum size of a multipart body we'll build (16MB) */
+#define HTTP_MULTIPART_MAX_BODY (16UL * 1024 * 1024)
+
+/* A single part in a multipart form */
+typedef struct {
+    char   *name;         /* field name */
+    char   *filename;     /* for file fields, NULL for text */
+    char   *content;      /* content data */
+    size_t  content_len;  /* length of content */
+    char   *content_type; /* MIME type, NULL for text fields */
+    bool    is_file;      /* true for file fields */
+} multipart_part_t;
+
+/* Multipart form builder (opaque) */
+struct http_multipart_form_t {
+    multipart_part_t parts[HTTP_MULTIPART_MAX_PARTS];
+    int  part_count;
+    char boundary[80];
+    bool finalized;
+};
+
+/* Generate a random-ish boundary string */
+static void multipart_generate_boundary(char *buf, size_t cap) {
+    unsigned int seed = (unsigned int)(time(NULL) ^ (uintptr_t)buf);
+    const char *chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    snprintf(buf, cap, "----HermesFormBoundary");
+    size_t prefix_len = strlen(buf);
+    for (size_t i = prefix_len; i < cap - 1 && i < 60; i++) {
+        seed = seed * 1103515245U + 12345U;
+        buf[i] = chars[seed % 62];
+    }
+    buf[cap - 1] = '\0';
+}
+
+http_multipart_form_t *http_multipart_form_new(void) {
+    http_multipart_form_t *f = (http_multipart_form_t *)xmalloc(sizeof(*f));
+    if (!f) return NULL;
+    memset(f, 0, sizeof(*f));
+    multipart_generate_boundary(f->boundary, sizeof(f->boundary));
+    return f;
+}
+
+bool http_multipart_add_field(http_multipart_form_t *f,
+                              const char *name, const char *value)
+{
+    if (!f || !name || !value || f->part_count >= HTTP_MULTIPART_MAX_PARTS)
+        return false;
+    multipart_part_t *p = &f->parts[f->part_count];
+    memset(p, 0, sizeof(*p));
+    p->name = xstrdup(name);
+    p->content = xstrdup(value);
+    p->content_len = strlen(value);
+    p->is_file = false;
+    if (!p->name || !p->content) {
+        free(p->name); free(p->content);
+        return false;
+    }
+    f->part_count++;
+    return true;
+}
+
+bool http_multipart_add_file(http_multipart_form_t *f,
+                             const char *name, const char *filename,
+                             const char *content, size_t content_len,
+                             const char *content_type)
+{
+    if (!f || !name || !content || f->part_count >= HTTP_MULTIPART_MAX_PARTS)
+        return false;
+    multipart_part_t *p = &f->parts[f->part_count];
+    memset(p, 0, sizeof(*p));
+    p->name = xstrdup(name);
+    p->content = (char *)malloc(content_len + 1);
+    if (!p->content) { free(p->name); return false; }
+    memcpy(p->content, content, content_len);
+    p->content[content_len] = '\0';
+    p->content_len = content_len;
+    p->is_file = true;
+    if (filename) {
+        p->filename = xstrdup(filename);
+        if (!p->filename) { free(p->name); free(p->content); return false; }
+    }
+    if (content_type) {
+        p->content_type = xstrdup(content_type);
+        if (!p->content_type) {
+            free(p->name); free(p->content); free(p->filename);
+            return false;
+        }
+    }
+    f->part_count++;
+    return true;
+}
+
+char *http_multipart_form_finalize(http_multipart_form_t *f,
+                                    size_t *out_len,
+                                    char **out_boundary)
+{
+    if (!f || f->part_count == 0) return NULL;
+
+    /* Estimate total size: each part header ~200 bytes + content + final boundary */
+    size_t est = 4096;
+    for (int i = 0; i < f->part_count; i++) {
+        multipart_part_t *p = &f->parts[i];
+        est += 200 + p->content_len; /* header overhead + content */
+    }
+    est += strlen(f->boundary) + 8; /* final --boundary--\r\n */
+
+    if (est > HTTP_MULTIPART_MAX_BODY) return NULL;
+
+    char *body = (char *)malloc(est);
+    if (!body) return NULL;
+    size_t pos = 0;
+
+    for (int i = 0; i < f->part_count; i++) {
+        multipart_part_t *p = &f->parts[i];
+
+        /* --boundary\r\n */
+        int n = snprintf(body + pos, est - pos, "--%s\r\n", f->boundary);
+        if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+        pos += (size_t)n;
+
+        /* Content-Disposition: form-data; name="..." */
+        if (p->is_file && p->filename) {
+            n = snprintf(body + pos, est - pos,
+                         "Content-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n",
+                         p->name, p->filename);
+        } else {
+            n = snprintf(body + pos, est - pos,
+                         "Content-Disposition: form-data; name=\"%s\"\r\n",
+                         p->name);
+        }
+        if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+        pos += (size_t)n;
+
+        /* Content-Type for file fields */
+        if (p->is_file) {
+            const char *ct = p->content_type ? p->content_type : "application/octet-stream";
+            n = snprintf(body + pos, est - pos, "Content-Type: %s\r\n", ct);
+            if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+            pos += (size_t)n;
+        }
+
+        /* Blank line before content */
+        n = snprintf(body + pos, est - pos, "\r\n");
+        if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+        pos += (size_t)n;
+
+        /* Content body */
+        if (p->content_len > 0) {
+            if (pos + p->content_len >= est) {
+                /* Shouldn't happen since we estimated, but grow if needed */
+                est = pos + p->content_len + 256;
+                char *nb = (char *)realloc(body, est);
+                if (!nb) { free(body); return NULL; }
+                body = nb;
+            }
+            memcpy(body + pos, p->content, p->content_len);
+            pos += p->content_len;
+        }
+
+        /* \r\n after content */
+        n = snprintf(body + pos, est - pos, "\r\n");
+        if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+        pos += (size_t)n;
+    }
+
+    /* Final boundary: --boundary--\r\n */
+    int n = snprintf(body + pos, est - pos, "--%s--\r\n", f->boundary);
+    if (n < 0 || (size_t)n >= est - pos) { free(body); return NULL; }
+    pos += (size_t)n;
+
+    /* Trim to exact size */
+    char *trim = (char *)realloc(body, pos + 1);
+    if (trim) body = trim;
+    body[pos] = '\0';
+
+    f->finalized = true;
+
+    if (out_len) *out_len = pos;
+    if (out_boundary) *out_boundary = xstrdup(f->boundary);
+
+    return body;
+}
+
+void http_multipart_form_free(http_multipart_form_t *f) {
+    if (!f) return;
+    for (int i = 0; i < f->part_count; i++) {
+        multipart_part_t *p = &f->parts[i];
+        free(p->name);
+        free(p->filename);
+        free(p->content);
+        free(p->content_type);
+    }
+    free(f);
+}
+
+http_resp_t *http_post_multipart(http_t *h, const char *url,
+                                  const char *extra_headers,
+                                  http_multipart_form_t *form)
+{
+    if (!h || !url || !form) return NULL;
+
+    size_t body_len = 0;
+    char *boundary = NULL;
+    char *body = http_multipart_form_finalize(form, &body_len, &boundary);
+    if (!body || !boundary) {
+        free(body);
+        free(boundary);
+        return NULL;
+    }
+
+    /* Build Content-Type header with boundary */
+    char ct_hdr[256];
+    int n = snprintf(ct_hdr, sizeof(ct_hdr),
+                     "Content-Type: multipart/form-data; boundary=%s", boundary);
+    free(boundary);
+
+    if (n < 0 || (size_t)n >= sizeof(ct_hdr)) {
+        free(body);
+        return NULL;
+    }
+
+    /* Merge with extra_headers using snprintf */
+    size_t merged_len = strlen(ct_hdr) + 4;
+    if (extra_headers) merged_len += strlen(extra_headers) + 2;
+    char *merged = (char *)malloc(merged_len);
+    if (!merged) { free(body); return NULL; }
+    int n2 = snprintf(merged, merged_len, "%s\r\n%s%s",
+                      ct_hdr,
+                      extra_headers ? extra_headers : "",
+                      extra_headers ? "\r\n" : "");
+    if (n2 < 0 || (size_t)n2 >= merged_len) {
+        free(merged); free(body); return NULL;
+    }
+
+    http_resp_t *resp = http_request(h, HTTP_POST, url, merged, body, body_len);
+    free(merged);
+    free(body);
+    return resp;
 }
 
 /* ================================================================

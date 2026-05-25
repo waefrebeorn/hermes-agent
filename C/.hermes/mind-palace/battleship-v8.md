@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **155 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **154 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -175,13 +175,12 @@ Libraries ported but missing features.
 |---|--------|---------|----------------|-----|----------|
 | 1 | L01 | libhttp | HTTP/2 support | 500 | P3 |
 | 2 | L02 | libhttp | Connection pooling | 200 | P2 |
-| 3 | L04 | libhttp | Multipart form data | 100 | P2 |
-| 4 | L09 | libjson | JSON schema validation | 200 | P3 |
-| 5 | L10 | libjson | Streaming parse | 150 | P3 |
-| 6 | L13 | libcrypto | RSA key generation | 150 | P3 |
-| 7 | L22 | libdb | Batch operations | 40 | P3 |
-| 8 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
-| 9 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 3 | L09 | libjson | JSON schema validation | 200 | P3 |
+| 4 | L10 | libjson | Streaming parse | 150 | P3 |
+| 5 | L13 | libcrypto | RSA key generation | 150 | P3 |
+| 6 | L22 | libdb | Batch operations | 40 | P3 |
+| 7 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
+| 8 | L30 | libmcp | Streaming response support | 100 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (2 gaps)
 
@@ -407,5 +406,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **155** |
+||| **Total** | **154** |
 | (resolved items retired to vault/achievements.md) | |
