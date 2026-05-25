@@ -92,12 +92,16 @@ bool skills_hub_fetch_catalog(void) {
 
     /* Fetch from browse.sh API */
     http_client_t *client = http_client_new(20);
-    if (!client) return false;
+    if (!client) {
+        fprintf(stderr, "Error: failed to create HTTP client for skill hub\n");
+        return false;
+    }
 
     http_response_t *resp = http_request(client, HTTP_GET,
         SKILLS_HUB_CATALOG_URL, "Accept: application/json", NULL, 0);
 
     if (!resp || !resp->body) {
+        fprintf(stderr, "Error: skill hub HTTP request failed (network error?)\n");
         http_resp_free(resp);
         http_free(client);
         return false;
@@ -107,6 +111,7 @@ bool skills_hub_fetch_catalog(void) {
     char *err = NULL;
     json_node_t *root = json_parse(resp->body, &err);
     if (!root) {
+        fprintf(stderr, "Error: skill hub response parse failed: %s\n", err ? err : "unknown");
         free(err);
         http_resp_free(resp);
         http_free(client);
