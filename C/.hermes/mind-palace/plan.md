@@ -15,7 +15,7 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 | Providers | 10 .c files |
 | Gateways | 19 .c files |
 | Library dirs | 59 lib/*/ |
-| **Real gaps** | **67** (12 P0, 4 P1, 33 P2, 18 P3) |
+| Real gaps | **75** (8 P0a Integration, 12 P0b Display, 4 P1, 33 P2, 18 P3) |
 
 ## Phase Order
 **Phase 0** (12 gaps) — Display & Visual Parity. C CLI must look identical to Python.
