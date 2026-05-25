@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (128 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (127 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -46,11 +46,11 @@
 | S16 | Prompt Caching | 0 | 0 | 0 | 0 |
 | S17 | Shell Hooks | 0 | 0 | 0 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
-| S19 | Security | 3 | 0 | 1 | 2 |
+| S19 | Security | 2 | 0 | 0 | 2 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **128** | **0** | **55** | **73** |
+||| **Total** | **127** | **0** | **54** | **73** |
 
 ## Python Upstream Parity
 
@@ -86,6 +86,7 @@
 || S05 | Process argument injection detection - metacharacter, flag, null byte scanning | S19 | 2026-05-25 |
 || S04 | File path traversal depth - realpath resolution, URL-encoded .., null byte, symlink detection | S19 | 2026-05-25 |
 || P04 | Multi-turn cache optimization — stale, already implemented via g_marked_count + start_idx skip | S16 | 2026-05-25 |
+|| S03 | Credential leak detection in tool outputs — tirith_has_credential_leak(), API key, JWT, AWS, DB connection patterns | S19 | 2026-05-25 |
 || P05 | Cache warmup on session load — cache_warmup() API for restored session messages | S16 | 2026-05-25 |
 | P06 | Per-provider cache config - provider_cache_find, prompt_cache_set_provider_config | S16 | 2026-05-25 |
 | U03 | TUI skill browser - list skills from ~/.hermes/skills/ | S14 | 2026-05-25 |

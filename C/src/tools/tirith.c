@@ -163,6 +163,106 @@ bool tirith_has_arg_injection(const char *command) {
     return false;
 }
 
+/* S03: Credential leak detection in tool outputs (post-execution scan).
+ * Scans text output for common credential patterns: API keys, tokens,
+ * JWTs, cloud service credentials, private keys, database connection strings.
+ * Designed to be called on tool stdout/stderr after execution.
+ * Returns true if any credential-like pattern is detected. */
+bool tirith_has_credential_leak(const char *text) {
+    if (!text || !text[0]) return false;
+
+    /* Known credential prefixes (values after the prefix) */
+    const char *key_prefixes[] = {
+        "api_key\"", "api-key\"", "apikey\"", "api_key=", "api-key=",
+        "token\"", "token=", "secret\"", "secret=", "password\"", "password=",
+        "passwd\"", "passwd=", "authorization\"", "bearer ", "x-api-key",
+        "x-auth-token", "xoxb-", "xoxp-", "xapp-",
+        "ghp_", "gho_", "ghu_", "ghs_", "ghr_",
+        "sk-", "pk-", "AKIA",  /* AWS access key prefix */
+        NULL
+    };
+
+    /* Scan for known key prefixes followed by values */
+    for (int i = 0; key_prefixes[i]; i++) {
+        const char *p = text;
+        while ((p = strstr(p, key_prefixes[i])) != NULL) {
+            /* Find the value after the prefix */
+            const char *val = p + strlen(key_prefixes[i]);
+            /* Skip whitespace/quote after prefix */
+            while (*val == ' ' || *val == '"' || *val == '\'' ||
+                   *val == '=' || *val == ':') val++;
+            /* Check if value looks like a credential (alphanumeric, >= 6 chars) */
+            const char *end = val;
+            int alnum_count = 0;
+            while (*end && !isspace((unsigned char)*end) && *end != '"' &&
+                   *end != '\'' && *end != ',' && *end != '}')
+                if (isalnum((unsigned char)*end++) || *end == '_' || *end == '-')
+                    alnum_count++;
+            if (alnum_count >= 6) return true;
+            p++;
+        }
+    }
+
+    /* JWT detection: three base64url segments separated by dots */
+    const char *jwt_patterns[] = {
+        "eyJ", "eyI", "eyAi",  /* JSON Web Token starts: {"... */
+        NULL
+    };
+    for (int i = 0; jwt_patterns[i]; i++) {
+        const char *p = text;
+        while ((p = strstr(p, jwt_patterns[i])) != NULL) {
+            /* Check for JWT structure: segment1.segment2.segment3 */
+            int dots = 0;
+            const char *c = p;
+            bool valid_jwt = true;
+            while (*c && (size_t)(c - p) < 300 && dots < 3) {
+                if (*c == '.') dots++;
+                else if (!isalnum((unsigned char)*c) && *c != '_' && *c != '-')
+                    { valid_jwt = false; break; }
+                c++;
+            }
+            if (valid_jwt && dots >= 2) return true;
+            p++;
+        }
+    }
+
+    /* AWS key pattern: AKIA + 16 alphanumeric */
+    const char *aws = strstr(text, "AKIA");
+    while (aws) {
+        /* AKIA followed by exactly 16 alphanumeric */
+        const char *v = aws + 4;
+        int cnt = 0;
+        while (isalnum((unsigned char)*v) && cnt < 20) { v++; cnt++; }
+        if (cnt >= 16) return true;
+        aws = strstr(aws + 1, "AKIA");
+    }
+
+    /* Database connection string patterns */
+    const char *db_patterns[] = {
+        "postgresql://", "mysql://", "mongodb://",
+        "redis://", "rediss://", "jdbc:",
+        NULL
+    };
+    for (int i = 0; db_patterns[i]; i++) {
+        if (strstr(text, db_patterns[i])) {
+            /* Check if credentials are in the URL (user:pass@) */
+            const char *url = strstr(text, db_patterns[i]);
+            const char *at = strchr(url, '@');
+            const char *second_colon = url;
+            int colons = 0;
+            while (second_colon && colons < 2) {
+                second_colon = strchr(second_colon + 1, ':');
+                if (second_colon) colons++;
+            }
+            /* If we have user:pass@ pattern (colons before @) */
+            if (at && colons >= 2 && second_colon < at)
+                return true;
+        }
+    }
+
+    return false;
+}
+
 /* Simple check: does text contain ASCII + non-ASCII mixed script?
  * This catches some homograph attacks but is not comprehensive. */
 bool tirith_has_suspicious_url(const char *command) {
