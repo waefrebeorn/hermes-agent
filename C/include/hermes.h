@@ -963,6 +963,7 @@ typedef struct {
     char  signal_number[64];      /* gateway.signal.number: Signal phone number (+1234567890) */
     char  proxy_https[512];       /* proxy.https_proxy: HTTPS proxy URL (e.g. http://proxy:8080) */
     char  proxy_no[1024];         /* proxy.no_proxy: comma-separated bypass list */
+    char  vault_path[512];        /* agent.vault.path: vault file path */
 } hermes_config_t;
 
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);

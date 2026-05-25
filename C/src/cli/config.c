@@ -1100,6 +1100,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (proxy_h) snprintf(cfg->proxy_https, sizeof(cfg->proxy_https), "%s", proxy_h);
     const char *proxy_n = yaml_get_string(doc, "proxy.no_proxy");
     if (proxy_n) snprintf(cfg->proxy_no, sizeof(cfg->proxy_no), "%s", proxy_n);
+    const char *vpath = yaml_get_string(doc, "agent.vault.path");
+    if (vpath) snprintf(cfg->vault_path, sizeof(cfg->vault_path), "%s", vpath);
 
     /* Display section — personality */
     const char *personality = yaml_get_string(doc, "display.personality");
