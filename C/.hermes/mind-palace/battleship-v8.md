@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **194 active gaps** across 22 sectors (resolved items retired to vault Phase 26+).
+Total: **193 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -167,7 +167,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
 | 3 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
 
-## SECTOR 10: Library Depth (12 gaps)
+## SECTOR 10: Library Depth (11 gaps)
 
 Libraries ported but missing features.
 
@@ -396,7 +396,7 @@ Functions that exist in C but are significantly less capable than Python equival
 | S7: Tool Depth | 8 |
 | S8: Gateway | 17 |
 | S9: Config | 3 |
-| S10: Library | 12 |
+| S10: Library | 11 |
 | S11: Bug Fixes | 2 |
 | S12: Test Coverage | 25 |
 | S13: API Server | 5 |
@@ -409,5 +409,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 10 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-| **Total** | **194** |
+| **Total** | **193** |
 | (resolved items retired to vault/achievements.md) | |

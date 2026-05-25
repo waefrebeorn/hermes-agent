@@ -608,6 +608,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |
 
+## Phase 27: HTTP Redirect Following — L06 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L06 | Configurable redirect following in libhttp — handles 301/302/303/307/308, resolves relative Location headers, max 5 redirects, integrated into do_request retry loop | S10 | http.c:do_request() — redirect detection + relative URL resolution; verified 302→/final→200 with live server test |
+
 ## Phase 26: Session Tags CRUD — L19 (2026-05-24)
 
 | ID | Description | Sector | Evidence |

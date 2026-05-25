@@ -316,6 +316,9 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
                                 const char *body, size_t body_len)
 {
     int attempt = 0;
+    int redirect_count = 0;
+    char redirect_url[4096];
+    (void)redirect_url; /* used below for redirect following */
     while (1) {
         attempt++;
 
@@ -654,6 +657,49 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
             http_resp_free(resp);
             sleep_ms(h->backoff_ms * attempt);
             continue;
+        }
+
+        /* L06: Redirect following — handle 3xx responses */
+        if ((resp->status == 301 || resp->status == 302 ||
+             resp->status == 303 || resp->status == 307 || resp->status == 308) &&
+            redirect_count < 5) {
+            /* Extract Location header from response headers */
+            const char *loc = strstr(resp->headers, "Location:");
+            if (!loc) loc = strstr(resp->headers, "location:");
+            if (loc) {
+                loc += 9; /* skip "Location:" */
+                while (*loc == ' ') loc++;
+                /* Copy to newline or end */
+                size_t loc_len = 0;
+                const char *nl = strstr(loc, "\r\n");
+                if (nl) loc_len = (size_t)(nl - loc);
+                else loc_len = strlen(loc);
+                if (loc_len > 0 && loc_len < sizeof(redirect_url) - 1) {
+                    memcpy(redirect_url, loc, loc_len);
+                    redirect_url[loc_len] = '\0';
+                    /* Resolve relative URL against original */
+                    if (redirect_url[0] == '/') {
+                        /* Relative path — prepend scheme + host from original */
+                        parsed_url_t p;
+                        if (parse_url(url, &p)) {
+                            char base[4096];
+                            snprintf(base, sizeof(base), "%s://%s", p.scheme, p.host);
+                            if (p.port > 0 && p.port != 80 && p.port != 443)
+                                snprintf(base + strlen(base), sizeof(base) - strlen(base),
+                                         ":%d", p.port);
+                            /* Build full URL: base + relative_path */
+                            char tmp[4096];
+                            snprintf(tmp, sizeof(tmp), "%s%s", base, redirect_url);
+                            memcpy(redirect_url, tmp, sizeof(redirect_url));
+                        }
+                    }
+                    redirect_count++;
+                    http_resp_free(resp);
+                    /* resp_buf already freed above */
+                    url = redirect_url;
+                    continue;
+                }
+            }
         }
 
         return resp;
