@@ -164,3 +164,53 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
 
     return true;
 }
+
+/* U01: Config init — create default config.yaml + .env template */
+bool hermes_config_init(const char *config_dir) {
+    char dir[4096];
+    if (config_dir && config_dir[0]) {
+        snprintf(dir, sizeof(dir), "%s", config_dir);
+    } else {
+        const char *home = getenv("HERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (!home) { fprintf(stderr, "Error: cannot determine home.\n"); return false; }
+        if (getenv("HERMES_HOME"))
+            snprintf(dir, sizeof(dir), "%s", home);
+        else
+            snprintf(dir, sizeof(dir), "%s/.hermes", home);
+    }
+
+    struct stat st;
+    if (stat(dir, &st) != 0) mkdir(dir, 0700);
+
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/config.yaml", dir);
+    if (stat(path, &st) == 0) {
+        printf("Config already exists at %s\n", path);
+    } else {
+        FILE *f = fopen(path, "w");
+        if (!f) { fprintf(stderr, "Error: cannot write %s\n", path); return false; }
+        fprintf(f, "# Hermes Config\nmodel: claude-sonnet-4\nprovider: anthropic\nmax_turns: 90\n");
+        fclose(f);
+        printf("Created: %s\n", path);
+    }
+
+    snprintf(path, sizeof(path), "%s/.env", dir);
+    if (stat(path, &st) == 0) {
+        printf("Env file already exists at %s\n", path);
+    } else {
+        FILE *f = fopen(path, "w");
+        if (f) {
+            fprintf(f, "# Hermes API Keys\n");
+            fprintf(f, "#OPENAI_API_KEY=sk-...\n");
+            fprintf(f, "#ANTHROPIC_API_KEY=sk-ant-...\n");
+            fprintf(f, "#GOOGLE_API_KEY=...\n");
+            fclose(f);
+            printf("Created: %s (edit to add API keys)\n", path);
+        }
+    }
+
+    printf("\nHermes config initialized at %s\n", dir);
+    printf("Next: edit %s/.env, then run ./hermes\n", dir);
+    return true;
+}

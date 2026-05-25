@@ -58,6 +58,30 @@ test: hermes
 what-changed:
 	@cd .. && git log --oneline @{u}..HEAD --name-only -- '*.py' 2>/dev/null | head -40
 
+# Installation paths
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+MANDIR ?= $(PREFIX)/share/man/man1
+COMPLETION_DIR ?= $(PREFIX)/share/bash-completion/completions
+ZSH_COMPLETION_DIR ?= $(PREFIX)/share/zsh/site-functions
+
+# U02: make install
+install: hermes hermes.1
+	install -d $(DESTDIR)$(BINDIR)
+	install -m 755 hermes $(DESTDIR)$(BINDIR)/hermes
+	install -d $(DESTDIR)$(MANDIR)
+	install -m 644 hermes.1 $(DESTDIR)$(MANDIR)/hermes.1
+	install -d $(DESTDIR)$(COMPLETION_DIR)
+	install -m 644 contrib/completions/hermes.bash $(DESTDIR)$(COMPLETION_DIR)/hermes
+	install -d $(DESTDIR)$(ZSH_COMPLETION_DIR)
+	install -m 644 contrib/completions/_hermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_hermes
+	@echo "hermes installed to $(DESTDIR)$(BINDIR)/"
+
+# U12: make uninstall
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/hermes $(DESTDIR)$(MANDIR)/hermes.1
+	rm -f $(DESTDIR)$(COMPLETION_DIR)/hermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_hermes
+
 clean:
 	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
 	rm -rf digest_output/
