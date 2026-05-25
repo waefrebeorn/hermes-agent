@@ -45,6 +45,7 @@ void registry_init_mcp(void);
 void registry_init_file_batch(void);
 
 void registry_init_feishu_tools(void);
+void registry_init_mixture_of_agents(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -90,6 +91,9 @@ void tools_init_all(void) {
 
     /* D22: Feishu doc/drive tools */
     registry_init_feishu_tools();
+
+    /* N02: Mixture of Agents tool */
+    registry_init_mixture_of_agents();
 
     /* P150: Assign toolsets for enabled/disabled filtering */
     registry_set_toolset("browser_navigate", "browser");
