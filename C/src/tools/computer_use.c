@@ -1497,32 +1497,98 @@ static cu_backend_t *make_windows_backend(void) {
 
 static cu_backend_t *g_cu_backend = NULL;
 
+/* ── Backend Registry ────────────────────────────────────────── */
+
+static cu_backend_entry_t *g_backend_registry = NULL;
+static int g_backend_count = 0;
+
+bool cu_register_backend(const char *name,
+                          const char *description,
+                          cu_backend_t *(*factory)(void)) {
+    if (!name || !factory || g_backend_count >= CU_MAX_BACKENDS) return false;
+    cu_backend_entry_t *entry = (cu_backend_entry_t *)calloc(1, sizeof(cu_backend_entry_t));
+    if (!entry) return false;
+    entry->name = name;
+    entry->description = description;
+    entry->factory = factory;
+    entry->next = g_backend_registry;
+    g_backend_registry = entry;
+    g_backend_count++;
+    return true;
+}
+
+char *cu_list_backends(void) {
+    json_t *arr = json_array();
+    if (!arr) return strdup("[]");
+
+    for (cu_backend_entry_t *e = g_backend_registry; e; e = e->next) {
+        cu_backend_t *b = e->factory ? e->factory() : NULL;
+        json_t *obj = json_object();
+        json_set(obj, "name", json_string(e->name ? e->name : "?"));
+        json_set(obj, "description", json_string(e->description ? e->description : ""));
+        json_set(obj, "available", json_bool(b && b->is_available()));
+        if (b) { free(b->state); free(b); }
+        json_append(arr, obj);
+    }
+    char *str = json_serialize(arr);
+    json_free(arr);
+    return str ? str : strdup("[]");
+}
+
+void cu_clear_backends(void) {
+    cu_backend_entry_t *e = g_backend_registry;
+    while (e) {
+        cu_backend_entry_t *next = e->next;
+        free(e);
+        e = next;
+    }
+    g_backend_registry = NULL;
+    g_backend_count = 0;
+}
+
+static cu_backend_t *find_backend_by_name(const char *name) {
+    if (!name) return NULL;
+    for (cu_backend_entry_t *e = g_backend_registry; e; e = e->next) {
+        if (e->name && strcmp(e->name, name) == 0) {
+            return e->factory ? e->factory() : NULL;
+        }
+    }
+    return NULL;
+}
+
 cu_backend_t *computer_use_new_noop_backend(void) {
     return make_noop_backend();
 }
 
-cu_backend_t *computer_use_select_backend(void) {
-    cu_backend_t *backends[] = {
-        make_macos_backend(),
-        make_windows_backend(),
-        make_wayland_backend(),
-        make_x11_backend(),
-        make_noop_backend(),
-    };
-    int n = (int)(sizeof(backends) / sizeof(backends[0]));
+/* Auto-register built-in backends. Idempotent — safe to call multiple times. */
+static void cu_auto_register(void) {
+    if (g_backend_count > 0) return;  /* already registered */
+    cu_register_backend("noop",    "Test/CI fallback (returns synthetic data)", make_noop_backend);
+    cu_register_backend("x11",     "X11/xdotool (Linux)",                      make_x11_backend);
+    cu_register_backend("wayland", "Wayland compositor (Linux)",               make_wayland_backend);
+    cu_register_backend("macos",   "macOS via cua-driver MCP",                 make_macos_backend);
+    cu_register_backend("windows", "Windows via Win32 API",                    make_windows_backend);
+}
 
-    for (int i = 0; i < n; i++) {
-        if (backends[i] && backends[i]->is_available()) {
-            if (backends[i]->start()) {
-                return backends[i];
-            }
-            backends[i]->stop();
+cu_backend_t *computer_use_select_backend(void) {
+    cu_auto_register();
+    /* Check CU_BACKEND env var for explicit override */
+    const char *override = getenv("CU_BACKEND");
+    if (override && override[0]) {
+        cu_backend_t *b = find_backend_by_name(override);
+        if (b) {
+            if (b->is_available() && b->start()) return b;
+            free(b->state); free(b);
         }
-        if (backends[i]) {
-            free(backends[i]->state);
-            free(backends[i]);
-            backends[i] = NULL;
-        }
+    }
+
+    /* Try all registered backends in registration order */
+    for (cu_backend_entry_t *e = g_backend_registry; e; e = e->next) {
+        cu_backend_t *b = e->factory ? e->factory() : NULL;
+        if (!b) continue;
+        if (b->is_available() && b->start()) return b;
+        free(b->state);
+        free(b);
     }
     return make_noop_backend();
 }

@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 49: Computer Use Backend Registry — D10 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D10 | computer_use.c — Modular backend registry: `cu_register_backend()` registration system, `cu_list_backends()` JSON listing, `cu_clear_backends()` cleanup, `CU_BACKEND` env var override, auto-registration of 5 backends (noop/x11/wayland/macos/windows) | S7 | hermes_computer_use.h, computer_use.c |
+
 ## Phase 48: Camofox State Management — D15 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

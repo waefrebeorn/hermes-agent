@@ -103,6 +103,43 @@ typedef struct cu_backend_t {
 
 /* ── Public API ──────────────────────────────────────────────────────── */
 
+/**
+ * Backend registry entry — holds a factory function + metadata.
+ * Registered backends are tried in order until one is_available.
+ */
+typedef struct cu_backend_entry {
+    const char *name;                             /* e.g. "x11", "macos" */
+    const char *description;                      /* e.g. "X11/xdotool (Linux)" */
+    cu_backend_t *(*factory)(void);               /* Backend constructor */
+    struct cu_backend_entry *next;
+} cu_backend_entry_t;
+
+/** Maximum number of registered backends. */
+#define CU_MAX_BACKENDS 32
+
+/**
+ * Register a backend entry. Called during startup for each backend.
+ * @param name         Short name (e.g. "macos", "x11", "wayland", "noop").
+ * @param description  Human-readable one-liner.
+ * @param factory      Function that creates a new cu_backend_t.
+ * @return true on success, false if registry is full.
+ */
+bool cu_register_backend(const char *name,
+                          const char *description,
+                          cu_backend_t *(*factory)(void));
+
+/**
+ * List all registered backends as a JSON array.
+ * Each entry: {name, description, available}.
+ * Caller must free the returned string.
+ */
+char *cu_list_backends(void);
+
+/**
+ * Unregister all backends (for testing/cleanup).
+ */
+void cu_clear_backends(void);
+
 /* Factory: select best available backend for the current platform.
  * Falls back to noop if nothing available. Must be called once at init. */
 cu_backend_t *computer_use_select_backend(void);
