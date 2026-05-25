@@ -399,6 +399,12 @@ C06 | gateway.secret_rotation — added `int secret_rotation_interval` to hermes
 |----|-------------|--------|----------|
 C07 | tools.environments — added `char environments[512]` to tools_config_t, YAML reader via `yaml_get_string(doc, "tools.environments")` | S9 | hermes.h:459, config.c:1015
 
+## Phase 26: Config Key Implementation — C10 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C10 | plugins.memory.provider — added `char memory_provider[128]` to plugin_config_t, YAML reader via `yaml_get_string(doc, "plugins.memory.provider")` | S9 | hermes.h:574, config.c:1230 |
+
 ## Phase 25: Stale Claim Retired — C09 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
