@@ -452,7 +452,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| B07 | cmd_reload — added plugin registry shutdown + reinit to /reload command. Shuts down old plugin_registry (hermes_plugin_shutdown), creates new one (hermes_plugin_init) from updated config | S11 | commands.c:2194-2197 |
+| B07 | cmd_reload — added plugin registry shutdown + reinit to /reload command. Shuts down old plugin_registry (hermes_plugin_shutdown), creates new one (hermes_plugin_init) from updated config | S11 | commands.c:2194-2197
+
+## Phase 36: Stale Claim Retired — B09 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| B09 | Session metadata not saved on /title | `cmd_title()` calls `agent_save_meta(state)` immediately after setting title; `agent_save_meta` persists `user_title` to DB via `meta.title` | commands.c:1752, agent_loop.c:363-366
 
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 

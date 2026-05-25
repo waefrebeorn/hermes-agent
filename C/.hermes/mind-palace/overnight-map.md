@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **226** (battleship-v8) | B07 fixed — cmd_reload reloads plugins |
+| Gap count | **225** (battleship-v8) | B09 retired stale — title already saved via agent_save_meta |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)
