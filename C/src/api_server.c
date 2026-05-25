@@ -565,24 +565,36 @@ static void handle_post_chat_stream(int fd, const char *body_json) {
     /* Send SSE headers and stream the response */
     send_sse_headers(fd);
 
-    /* Split response into words and send as streaming chunks */
-    char temp[32768];
-    snprintf(temp, sizeof(temp), "%s", result);
-    char *save = NULL;
-    char *word = strtok_r(temp, " ", &save);
+    /* Token-buffer SSE streaming — send in ~4-char chunks for natural
+     * token-level granularity, respecting UTF-8 multi-byte boundaries. */
+#define TOKEN_BUF_SIZE 4
+    char tbuf[TOKEN_BUF_SIZE + 1];
+    int tpos = 0;
     int index = 0;
+    int i = 0;
 
-    while (word) {
-        char chunk[4096];
-        snprintf(chunk, sizeof(chunk), "%s ", word);
-        sse_send_chunk(fd, chunk, index);
-        index++;
-        word = strtok_r(NULL, " ", &save);
+    while (result[i]) {
+        /* Track multi-byte UTF-8: continuation bytes are 0x80-0xBF */
+        int is_utf8_cont = ((unsigned char)result[i] & 0xC0) == 0x80;
+        tbuf[tpos++] = result[i++];
+
+        if (!is_utf8_cont && tpos >= TOKEN_BUF_SIZE) {
+            tbuf[tpos] = '\0';
+            sse_send_chunk(fd, tbuf, index++);
+            tpos = 0;
+        }
     }
 
-    /* Fallback: if no words, send full result as one chunk */
+    /* Flush remaining chars */
+    if (tpos > 0) {
+        tbuf[tpos] = '\0';
+        sse_send_chunk(fd, tbuf, index++);
+    }
+
+    /* Fallback: if no chunks, send full result as one chunk */
     if (index == 0 && result[0]) {
         sse_send_chunk(fd, result, 0);
+        index = 1;
     }
 
     /* Send finish event */
