@@ -356,6 +356,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     snprintf(cfg->provider_cfg.api_mode, sizeof(cfg->provider_cfg.api_mode), "chat_completions");
     snprintf(cfg->provider_cfg.service_tier, sizeof(cfg->provider_cfg.service_tier), "default");
     snprintf(cfg->provider_cfg.reasoning_effort, sizeof(cfg->provider_cfg.reasoning_effort), "medium");
+    snprintf(cfg->provider_cfg.codex_runtime, sizeof(cfg->provider_cfg.codex_runtime), "auto");
     cfg->provider_cfg.response_format[0] = '\0';
     cfg->provider_cfg.metadata[0] = '\0';
     cfg->provider_cfg.tool_choice[0] = '\0';
@@ -842,6 +843,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *reasoning_effort = yaml_get_string(doc, "agent.reasoning_effort");
     if (reasoning_effort) snprintf(cfg->provider_cfg.reasoning_effort,
                                     sizeof(cfg->provider_cfg.reasoning_effort), "%s", reasoning_effort);
+
+    const char *codex_runtime = yaml_get_string(doc, "agent.codex_runtime");
+    if (codex_runtime) snprintf(cfg->provider_cfg.codex_runtime,
+                                 sizeof(cfg->provider_cfg.codex_runtime), "%s", codex_runtime);
 
     const char *response_format = yaml_get_string(doc, "agent.response_format");
     if (response_format) snprintf(cfg->provider_cfg.response_format,

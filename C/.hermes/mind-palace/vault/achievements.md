@@ -3,6 +3,13 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 51: Codex Runtime Config — C08 + C17 stale retirement (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C08 | `agent.codex_runtime` config key (auto\|codex_app_server) — struct field, default "auto", YAML reader at agent.codex_runtime path | S9 | hermes.h, config.c |
+| C17 | Stale claim retired — checkpoint config already has 8 struct fields, defaults, YAML reader, diff tracking, export, schema all present | S9 | hermes.h:846-854, config.c:490-496/1515-1526/2084 |
+
 ## Phase 50: Computer Use Vision Routing — D11 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

@@ -371,6 +371,7 @@ typedef struct {
     char  fallback_providers[1024]; /* comma-separated fallback providers (P83) */
     char  service_tier[32];        /* auto, default (for Anthropic) */
     char  reasoning_effort[32];    /* low, medium, high */
+    char  codex_runtime[32];       /* auto | codex_app_server — OpenAI runtime backend */
     char  response_format[256];    /* "json_object" or JSON schema string */
     char  metadata[256];           /* key-value map JSON string */
     char  tool_choice[32];         /* "auto", "none", "required", or JSON for specific function */
