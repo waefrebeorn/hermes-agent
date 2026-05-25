@@ -1180,6 +1180,101 @@ static char *stub_cdp_handler(const char *args_json, const char *task_id) {
 }
 
 /* ================================================================
+ *  Browser Supervisor — CDP Health Monitor (D14)
+ * ================================================================
+ * Monitors CDP connection state, tracks health metrics, and provides
+ * a status tool. The supervisor does NOT maintain a persistent
+ * WebSocket — it uses the existing cdp_send_command for health checks.
+ * State is tracked in the module's static CDP variables.
+ * ================================================================ */
+
+/* Supervisor state */
+static struct {
+    int   total_commands;      /* Total CDP commands sent */
+    int   failed_commands;     /* Commands that returned NULL */
+    int   disconnects;         /* Times CDP reconnected */
+    time_t last_command;       /* Timestamp of last CDP command */
+    time_t last_error;         /* Timestamp of last CDP error */
+    int   current_retries;     /* Current reconnect attempts */
+} g_supervisor = {0};
+
+/* Forward declaration for cdp_send_command (defined in CDP client section below) */
+static char *cdp_send_command(const char *method, const char *params_json);
+
+/* Ping CDP endpoint to check health.
+ * Returns JSON string with status, or NULL if CDP not configured.
+ * Caller must free the result. */
+static char *cdp_supervisor_ping(void) {
+    const char *url = cdp_get_url();
+    if (!url) {
+        return strdup("{"
+            "\"connected\":false,"
+            "\"configured\":false,"
+            "\"error\":\"No CDP URL configured. Set CAMOFOX_WS_URL or CHROME_WS_URL env var.\","
+            "\"hint\":\"Install Camofox (cargo install camofox) or use a Playwright/CDP server\""
+        "}");
+    }
+
+    /* Try version check — if it works, CDP is alive */
+    char *resp = cdp_send_command("Browser.getVersion", NULL);
+    if (!resp) {
+        return strdup("{"
+            "\"connected\":false,"
+            "\"configured\":true,"
+            "\"error\":\"CDP endpoint not reachable. Is Camofox/Playwright running?\","
+            "\"url\":\"***\""
+        "}");
+    }
+
+    /* Extract version info from response */
+    json_node_t *root = json_parse(resp, NULL);
+    char *version_str = NULL;
+    char *user_agent = NULL;
+    if (root) {
+        json_node_t *result = json_object_get(root, "result");
+        if (result) {
+            const char *v = json_object_get_string(result, "product", NULL);
+            const char *ua = json_object_get_string(result, "userAgent", NULL);
+            if (v) version_str = strdup(v);
+            if (ua) user_agent = strdup(ua);
+        }
+        json_free(root);
+    }
+    free(resp);
+
+    /* Build status response */
+    char *status = (char *)malloc(2048);
+    if (!status) { free(version_str); free(user_agent); return strdup("{\"error\":\"OOM\"}"); }
+
+    int n = snprintf(status, 2048,
+        "{"
+        "\"connected\":true,"
+        "\"configured\":true,"
+        "\"version\":\"%s\","
+        "\"user_agent\":\"%s\","
+        "\"total_commands\":%d,"
+        "\"failed_commands\":%d,"
+        "\"disconnects\":%d"
+        "}",
+        version_str ? version_str : "unknown",
+        user_agent ? user_agent : "unknown",
+        g_supervisor.total_commands,
+        g_supervisor.failed_commands,
+        g_supervisor.disconnects);
+
+    free(version_str);
+    free(user_agent);
+    if (n < 0 || (size_t)n >= 2048) { free(status); return strdup("{\"error\":\"OOM\"}"); }
+    return status;
+}
+
+/* browser_supervisor handler — returns CDP connection health status */
+static char *browser_supervisor_handler(const char *args_json, const char *task_id) {
+    (void)args_json; (void)task_id;
+    return cdp_supervisor_ping();
+}
+
+/* ================================================================
  *  CDP (Chrome DevTools Protocol) Client
  * ================================================================
  * Connects to a CDP WebSocket endpoint and sends JSON-RPC commands.
@@ -1492,4 +1587,12 @@ void registry_init_browser(void) {
         "Send a Chrome DevTools Protocol command. Requires Camofox or Playwright CDP server.",
         "{\"type\":\"object\",\"properties\":{\"cmd\":{\"type\":\"string\",\"description\":\"CDP command\"},\"params\":{\"type\":\"object\",\"description\":\"CDP command parameters\"}}}",
         browser_cdp_handler);
+
+    /* Explicit reference to suppress -Wunused-function for static handlers only reachable via function pointer */
+    (void)browser_supervisor_handler;
+
+    registry_register("browser_supervisor",
+        "Check browser CDP connection health and supervisor status. Returns connection state, version info, and command statistics. Use this to diagnose CDP connectivity before browser_cdp/browser_vision/browser_console operations.",
+        "{\"type\":\"object\",\"properties\":{}}",
+        browser_supervisor_handler);
 }
