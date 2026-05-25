@@ -1,63 +1,40 @@
-# Slermes C — State Dashboard (v3 — 2026-05-25)
+# Slermes C — State Dashboard (v4 — 2026-05-25)
 
-## Build Metrics (code-verified)
+## Build Metrics
 
-| Metric | Value | As Of |
-|--------|-------|-------|
-| Suite | **226/0/23** — 213 test files | 2026-05-25 |
-| Binary | **30MB ELF**, 0 errors, ~15 warnings | 2026-05-25 |
-| Source | **427K LOC** (625 files) | 2026-05-25 |
-| Tools registered | **85** (46 .c files) | 2026-05-25 |
-| CLI commands | **79** slash commands | 2026-05-25 |
-| Gateway platforms | **19** .c files | 2026-05-25 |
-| Provider modules | **10** .c files | 2026-05-25 |
-| Library directories | **59** lib/*/ | 2026-05-25 |
+| Metric | Value |
+|--------|-------|
+| Suite | **226/0/23** — 213 test files |
+| Binary | **30MB ELF**, 0 errors |
+| Tools | **85** registered (46 .c files) |
+| CLI | **79** slash commands |
+| Gateways | **19** .c files |
+| Providers | **10** .c files |
+| Libraries | **59** lib/*/ |
+| Gaps | **300** (battleship-v10, 18 sectors) |
 
-## Visual Parity State
+## Triple DA Findings
+Exhaustive stub hunt (20+ patterns), Python-vs-C function-level comparison (75 tool .py files vs 46 .c), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing.
 
-| Feature | Python Hermes | C slermes | Gap |
-|---------|---------------|-----------|-----|
-| Banner | Rich panel w/ ASCII art + gold borders | `printf("WuBu Slermes v%s\\n")` | **V03** |
-| Spinner | Kawaii faces (｡◕‿◕｡), 9 types | `\|/-\` basic | **V02** |
-| Skin Engine | YAML themes, 30+ hex colors | 8 hardcoded ANSI colors | **V01** |
-| Status Bar | Context %, model, color-coded | None | **V04** |
-| Tool Feed | `┊` prefix + tool emoji | Raw printf | **V05** |
-| Response Box | Colored border panel `╔═╗` | Plain ANSI color | **V06** |
-| Help Output | Rich tables with categories | Raw text list | **V07** |
-| TrueColor | hex `#FFD700` → 24-bit ANSI | 8 colors (30-37) | **V08** |
-| Prompt Input | prompt_toolkit (auto-complete, history) | `fgets()` | **V09** |
-| Markdown | Rich markdown renderer | Basic table parsing | **V10** |
-| Faces/Verbs | 15 faces, 15 verbs, 9 styles | None | **V11** |
-| Tool Emoji | Per-tool emoji (terminal:⚔) | None | **V12** |
+### Key Stub Stats
+- 3 confirmed stubs: acp/resource.c:263 placeholder, mcp_tool.c:1287 auth entry, browser.c:1172 CDP stub
+- 4 no-op callbacks: memory.c:544/549 plugin save/load, context_engine.c:91/100 defaults
+- 2 dead-code functions: tui_alloc_pair (unused), qqbot.c post_api (unused)
+- 8 UI stub strings: "background mode not available", "No active subagents", etc.
+- 300 total gaps across 18 sectors
 
-## Parity Audit (Full Triple DA)
-
-Full audit at `da-audit-full-parity.md`.
-
-| Category | C slermes | Python hermes | Status |
-|----------|-----------|---------------|--------|
-| CLI commands | 79 | 69 | C +10 |
-| Tool names | ~68 registered | ~37 tool modules | C +31 |
-| Provider files | 10 .c | 11 .py | C covers major APIs |
-| Provider adapters | 0 | 7 (9,675 LOC) | Large gap |
-| Gateway platforms | 19 .c | 31 .py | 12 sub-modules missing |
-| Agent modules | 52 .c | 78 .py | ~28 not ported |
-| **Display parity** | **Bare printf** | **Rich/Kawaii/Skin** | **12 gaps (P0)** |
-
-## Gap Count
-- **67 total real gaps** (~45,000 LOC to port)
-- 12 P0 (Display), 4 P1, 33 P2, 18 P3
-- See `battleship-v9.md` for full breakdown
-- See `prestige_prompt.md` for execution order
+## Battleship
+See `battleship-v10.md` for full 300-gap breakdown.
+Previous: battleship-v9 (75 gaps), battleship-v8 (103 gaps, stale).
 
 ## Usage
 ```
-slermes --version           # WuBu Slermes v0.14.1-wubu
-slermes init                # Create ~/.slermes/config.yaml + .env
-slermes doctor              # System diagnostics
-slermes completions install # Shell completion setup
-slermes -q "hello"         # One-shot query (banner currently bare printf)
-slermes                     # Interactive CLI (no skin, no spinner faces)
-slermes gateway             # Multi-platform gateway (19 platforms)
-make install                # Install to /usr/local/bin
+slermes --version
+slermes init
+slermes doctor
+slermes completions install
+slermes -q "hello"
+slermes
+slermes gateway
+make install
 ```

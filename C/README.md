@@ -7,9 +7,10 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 625 .c files (src/ + lib/ + tests/): 427K LOC
-| Parity | 70% | battleship-v9 — 75 gaps (8 P0a, 12 P0b, 4 P1, 33 P2, 18 P3)
-| Integration | 8 entry points broken — pipe multi-line, unknown flags, TUI, --session, logs, config home, provider, cron |
-| Display: bare printf (12 gaps to match Python Rich + KawaiiSpinner + skin engine)
+| Parity:  ~40%   (300 verified gaps — see battleship-v10)
+| Stubs:  3 confirmed + 4 no-op + 2 dead-code
+| Integration: 8 entry points broken — fix before all else
+| Display: 12 gaps — bare printf vs Python Rich + KawaiiSpinner
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, ~15 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tools:  85 registered handlers — all real implementations
