@@ -1,35 +1,34 @@
-# Hermes C — Overnight Navigation Map (v39 — 2026-05-25)
+# Slermes C — Overnight Map
 
-## State Verified (2026-05-25)
+## Navigation
+- **State:** `.hermes/mind-palace/state.md` — build metrics, known gaps
+- **Goal:** `.hermes/mind-palace/goal-mantra.md` — loop, rules
+- **Prestige:** `.hermes/mind-palace/prestige_prompt.md` — priority queue
+- **Battleship:** deprecated — gaps documented in state.md
 
-| Metric | Value | Change from v38 |
-|--------|-------|-----------------|
-| Suite | 226/0/23 (207 files) | ✅ tts_tool + terminal_tool deps fixed, discord_tool T06 added |
-| Tools registered | 84 | ✅ |
-| CLI commands | 79 | ✅ |
-| Real stubs | 0 (all resolved) | ✅ |
-| Build | 30MB, 0 warnings | ✅ |
-| Gap count | **107** (battleship-v8) | P08 config key |
-| Source .c files | 154 | +1 |
-| Library dirs | 59 | +1 |
-| API server | 1015 LOC | 12 endpoints |
+## Current Branch
+`main` — full C codebase merged from slermes branch
 
-## What Changed Since v39 (2026-05-25)
+## Build
+```bash
+cd C/
+make -j$(nproc)       # 30MB slermes binary
+bash test_runner.sh   # 226/0/23
+```
 
-### Session — S01 Cloud Metadata Endpoint Detection
-- **S01 resolved**: Added metadata.goog, 100.100.100.200 (Alibaba Cloud), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped IPv6), and 100.64 (CGNAT) to url_is_always_blocked() pre-DNS checks
+## Commands
+| Command | Action |
+|---------|--------|
+| `slermes init` | Create ~/.slermes/config.yaml + .env |
+| `slermes doctor` | Diagnostics (config, keys, tools) |
+| `slermes completions install` | Shell completion setup |
+| `make install` | Install to /usr/local/bin |
 
-## Current Priority Queue
+## Last Session
+- Renamed C translation from hermes → slermes
+- Merged full codebase (84 tools, 59 libs, 19 gateways, 10 providers)
+- Added: init, doctor, completions install, make install/uninstall
+- Triple DA audit: 6 verified missing agent modules, 13 gateway sub-platforms
 
-From prestige_prompt.md v43:
-1. **D22** — Feishu doc/drive tool support (150 LOC, S7)
-2. **N02** — Mixture of Agents tool (300 LOC, S20)
-3. **U02** — TUI session browser with search (200 LOC, S14)
-3. **T04** — Test coverage for untested modules (S12)
-
-## Key Facts
-
-- Battleship-v8 is the canonical gap list (103 gaps)
-- Vault/achievements.md is the archive — all completed + retired stale claims
-- Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
-- P1 count is 0
+## Fallback Task
+Pick next P1 gap from prestige_prompt.md and implement it.

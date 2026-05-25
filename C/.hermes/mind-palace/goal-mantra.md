@@ -1,54 +1,25 @@
-# Hermes C — Perpetual Goal
+# Slermes C — Goal Mantra
 
-P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
-
-All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
-
-103 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
-
-## What Exists
-
-- `/home/wubu/hermes-agent-dev/C/` — 154 src .c, 66 .h, 59 libs, 206 test files, 30MB binary
-- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (103 gaps), vault/achievements.md
-- Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~858 commits)
-
-## Verified State
-
-| Item | Value |
-|------|-------|
-| Suite | 226/0/23 (207 test files) |
-| Binary | 30MB, 0 errors, 0 warnings |
-| CLI | 79 real cmds, tab completion, history, table output |
-| Tools | 84 registered — all real handlers |
-| Agent | 51 .c modules |
-| Gateways | 19 platforms |
-| Providers | 11 C modules — ALL with dedicated test files |
-| Stubs | 0 real |
-|| Gaps | **107** verified across 22 sectors |
-| P1 priority | 0 |
-
-## Stale Claims Cancelled
-
-Battleship-v7 had 16 stale claims (Phase 8 in vault).
-Battleship-v8 had 19 stale claims retired in Phases 9+22+27 (N01, S05, B05, B06, B03, B10,
-C01-C05, C16, D04, D17-D20, P01, R04 + G01, D16, G10, L03, D23, C17, I01, G22)
-— see vault/achievements.md Phases 9, 22, 27 for full tables.
-
-The remaining 103 gaps are verified open.
-
-## Top Priority Gaps
-
-From prestige_prompt.md v43:
-1. **U02** — TUI session browser with search (200 LOC, S14)
-1. **T04-T25** — Test coverage for remaining untested modules (S12)
-2. **U04** — TUI config editor (150 LOC, S14)
-5. **N03** — Feishu doc and drive tools (250 LOC, S20)
+P0: Full 1:1 functional parity with Python Hermes Agent.
 
 ## The Loop
+1. Read battleship → pick highest priority unclosed gap
+2. Implement in C (function, test, wire)
+3. Build: `make -j$(nproc)` — 0 errors
+4. Test: `bash test_runner.sh` — 226/0/23
+5. Verify output matches Python behavior
+6. Mark done → update all docs → commit
+7. Repeat
 
-1. Read state.md → prestige_prompt.md → battleship-v8.md → overnight-map.md
-2. Pick highest undone gap from battleship-v8.md
-3. Implement → build → test → verify (runtime)
-4. Debug (MARKers, no deep trawls) → commit → push
+## Rules
+- No stubs. No "for later". No "for brevity". Every gap is real code.
+- Every command must produce the same output as Python Hermes
+- Test before marking done — "it compiles" ≠ "it works"
+- After every implementation: update state.md AND prestige_prompt AND overnight-map AND battleship
+- Barnacle hunt each stale number across ALL docs
+- Vault resolved gaps to achievements.md
 
-NO questions. NO choices. Exhaust only: "awaiting direction."
+## Current State
+- **85 tools, 79 CLI, 19 gateways, 10 providers, 59 libs**
+- **226/0/23 test suite, 30MB binary, 427K LOC**
+- Known gaps: ~13 gateway sub-platforms, 7 agent infra modules, ~10 placeholder items
