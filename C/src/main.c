@@ -170,6 +170,12 @@ int main(int argc, char **argv) {
         tools_init_all();
         agent_state.tools = *registry_get();
 
+        /* Open session database for CRUD endpoints */
+        char db_path[1024];
+        snprintf(db_path, sizeof(db_path), "%s/.slermes/sessions",
+                 getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") : getenv("HOME"));
+        agent_state.db = db_open(db_path, 0);
+
         /* Copy config into agent state */
         memcpy(agent_state.llm.base_url, cfg.base_url, sizeof(agent_state.llm.base_url));
         memcpy(agent_state.llm.api_key, cfg.api_key, sizeof(agent_state.llm.api_key));
@@ -194,6 +200,7 @@ int main(int argc, char **argv) {
         }
 
         api_server_stop();
+        if (agent_state.db) db_close(agent_state.db);
         agent_free(&agent_state);
         fprintf(stderr, "[api-server] Server stopped.\n");
         return 0;

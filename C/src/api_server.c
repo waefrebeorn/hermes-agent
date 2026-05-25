@@ -354,6 +354,150 @@ static void send_sse_event(int fd, const char *data);
 static void send_sse_headers(int fd);
 static void sse_send_chunk(int fd, const char *content, int index);
 
+/* ── Path helper ────────────────────────────────────────────────── */
+
+/**
+ * Check if path starts with a prefix and extract the suffix.
+ * E.g. starts_with("/v1/sessions/abc123", "/v1/sessions/", id, 64) → true, id="abc123"
+ */
+static bool starts_with(const char *path, const char *prefix, char *suffix, size_t slen) {
+    size_t plen = strlen(prefix);
+    if (strncmp(path, prefix, plen) != 0) return false;
+    const char *rest = path + plen;
+    if (!rest[0]) return false; /* path = prefix, no suffix */
+    strncpy(suffix, rest, slen - 1);
+    suffix[slen - 1] = '\0';
+    return true;
+}
+
+/**
+ * GET /v1/sessions — list all sessions.
+ */
+static void handle_sessions_list(int fd) {
+    if (!g_agent || !g_agent->db) {
+        send_error(fd, 503, "database not initialized");
+        return;
+    }
+
+    size_t count = 0;
+    db_session_entry_t *entries = db_list_with_meta(g_agent->db, &count);
+    if (!entries) {
+        send_json(fd, 200, "OK", "{\"object\":\"list\",\"data\":[],\"total\":0}");
+        return;
+    }
+
+    json_t *root = json_object();
+    json_set(root, "object", json_string("list"));
+
+    json_t *data = json_array();
+    for (size_t i = 0; i < count; i++) {
+        json_t *s = json_object();
+        json_set(s, "id", json_string(entries[i].id));
+        if (entries[i].meta.title[0])
+            json_set(s, "title", json_string(entries[i].meta.title));
+        if (entries[i].meta.created_at > 0)
+            json_set(s, "created_at", json_number((double)entries[i].meta.created_at));
+        if (entries[i].meta.updated_at > 0)
+            json_set(s, "updated_at", json_number((double)entries[i].meta.updated_at));
+        json_set(s, "message_count", json_number((double)entries[i].meta.message_count));
+        json_append(data, s);
+    }
+    json_set(root, "data", data);
+    json_set(root, "total", json_number((double)count));
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    }
+    json_free(root);
+    free(entries);
+}
+
+/**
+ * GET /v1/sessions/{id} — get session details.
+ */
+static void handle_session_get(int fd, const char *session_id) {
+    if (!g_agent || !g_agent->db) {
+        send_error(fd, 503, "database not initialized");
+        return;
+    }
+
+    char *json_out = db_export_json(g_agent->db, session_id);
+    if (!json_out) {
+        send_error(fd, 404, "session not found");
+        return;
+    }
+
+    send_json(fd, 200, "OK", json_out);
+    free(json_out);
+}
+
+/**
+ * POST /v1/sessions — create a new session.
+ */
+static void handle_session_create(int fd, const char *body_json) {
+    (void)body_json;
+    if (!g_agent || !g_agent->db) {
+        send_error(fd, 503, "database not initialized");
+        return;
+    }
+
+    /* Generate a session ID */
+    char session_id[64];
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    snprintf(session_id, sizeof(session_id), "%04d%02d%02d_%02d%02d%02d",
+             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+             tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+    /* Save empty session data */
+    if (!db_save(g_agent->db, session_id, "[]")) {
+        send_error(fd, 500, "failed to create session");
+        return;
+    }
+
+    /* Create and save default metadata */
+    session_meta_t meta;
+    db_meta_init(&meta);
+    snprintf(meta.title, sizeof(meta.title), "%s", session_id);
+    if (!db_save_meta(g_agent->db, session_id, &meta)) {
+        send_error(fd, 500, "failed to save session metadata");
+        return;
+    }
+
+    json_t *resp = json_object();
+    json_set(resp, "id", json_string(session_id));
+    json_set(resp, "object", json_string("session.created"));
+
+    char *out = json_serialize(resp);
+    if (out) {
+        send_json(fd, 201, "Created", out);
+        free(out);
+    }
+    json_free(resp);
+}
+
+/**
+ * DELETE /v1/sessions/{id} — delete a session.
+ */
+static void handle_session_delete(int fd, const char *session_id) {
+    if (!g_agent || !g_agent->db) {
+        send_error(fd, 503, "database not initialized");
+        return;
+    }
+
+    if (!db_delete(g_agent->db, session_id)) {
+        send_error(fd, 404, "session not found or delete failed");
+        return;
+    }
+
+    /* Build response */
+    char resp[256];
+    snprintf(resp, sizeof(resp), "{\"status\":\"deleted\",\"id\":\"%s\"}", session_id);
+    send_json(fd, 200, "OK", resp);
+}
+
 /**
  * POST /v1/chat/completions?stream=true — SSE streaming response.
  * Sends the complete response as token-by-token SSE events.
@@ -488,6 +632,10 @@ static void handle_capabilities(int fd) {
     json_append(endpoints, json_string("GET /v1/capabilities"));
     json_append(endpoints, json_string("GET /v1/tools"));
     json_append(endpoints, json_string("GET /v1/agent/status"));
+    json_append(endpoints, json_string("GET /v1/sessions"));
+    json_append(endpoints, json_string("POST /v1/sessions"));
+    json_append(endpoints, json_string("GET /v1/sessions/{id}"));
+    json_append(endpoints, json_string("DELETE /v1/sessions/{id}"));
     json_append(endpoints, json_string("GET /health"));
     json_append(endpoints, json_string("GET /health/detailed"));
     json_set(root, "endpoints", endpoints);
@@ -498,6 +646,8 @@ static void handle_capabilities(int fd) {
     json_set(features, "tools_listing", json_bool(true));
     json_set(features, "models_listing", json_bool(true));
     json_set(features, "agent_status", json_bool(true));
+    json_set(features, "sessions_listing", json_bool(true));
+    json_set(features, "sessions_crud", json_bool(true));
     json_set(features, "health_detailed", json_bool(true));
     json_set(root, "features", features);
 
@@ -654,6 +804,22 @@ static void dispatch_request(int client_fd, const char *method,
         handle_post_chat_stream(client_fd, body);
     } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/chat/completions") == 0) {
         handle_post_chat(client_fd, body);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/sessions") == 0) {
+        handle_sessions_list(client_fd);
+    } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/sessions") == 0) {
+        handle_session_create(client_fd, body);
+    } else if (strcmp(method, "GET") == 0 && strncmp(path, "/v1/sessions/", 13) == 0) {
+        char sid[64] = "";
+        if (starts_with(path, "/v1/sessions/", sid, sizeof(sid)))
+            handle_session_get(client_fd, sid);
+        else
+            send_error(client_fd, 400, "invalid session id");
+    } else if (strcmp(method, "DELETE") == 0 && strncmp(path, "/v1/sessions/", 13) == 0) {
+        char sid[64] = "";
+        if (starts_with(path, "/v1/sessions/", sid, sizeof(sid)))
+            handle_session_delete(client_fd, sid);
+        else
+            send_error(client_fd, 400, "invalid session id");
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/health") == 0) {
         send_json(client_fd, 200, "OK", "{\"status\":\"ok\"}");
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/health/detailed") == 0) {
@@ -687,15 +853,19 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    /* Extract query string from path if present */
+    /* Extract query string from request line (path portion after ?) */
     char query[2048] = "";
     const char *qmark = strchr(buf, '?');
-    if (qmark) {
-        const char *space = strchr(qmark, ' ');
-        size_t qlen = space ? (size_t)(space - qmark - 1) : strlen(qmark + 1);
-        if (qlen >= sizeof(query)) qlen = sizeof(query) - 1;
-        memcpy(query, qmark + 1, qlen);
-        query[qlen] = '\0';
+    if (qmark && (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "POST ", 5) == 0)) {
+        /* Ensure qmark is within the first line (before \r\n) */
+        const char *line_end = strstr(buf, "\r\n");
+        if (qmark < line_end) {
+            const char *space = strchr(qmark, ' ');
+            size_t qlen = space ? (size_t)(space - qmark - 1) : strlen(qmark + 1);
+            if (qlen >= sizeof(query)) qlen = sizeof(query) - 1;
+            memcpy(query, qmark + 1, qlen);
+            query[qlen] = '\0';
+        }
     }
 
     const char *body = find_body(buf);
