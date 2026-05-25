@@ -7,7 +7,7 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 |Suite:  238/0/0 (202 test files, completes in <60s)
 |Binary: 29MB    (dynamic ELF, -O2 -g)
 |Source: 153 .c + 66 .h = 219 files
-||Parity: ~72%   (~250 verified gaps remaining — see battleship-v8)
+||Parity: ~72%   (~249 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tests:  238/0/0, no skips
@@ -36,7 +36,7 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-|- [Battleship Roadmap (~313 Gaps)](#battleship-roadmap-313-gaps)
+|- [Battleship Roadmap (~249 Gaps)](#battleship-roadmap-249-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -497,7 +497,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
 | 8 | `da-v12-triple-audit.md` | Final Triple DA audit — methodology, findings, 8 verified stubs |
-| 9 | `plans/battleship-v8.md` | Complete ~313-gap roadmap by sector (Triple DA verified) |
+| 9 | `plans/battleship-v8.md` | Complete ~249-gap roadmap by sector (Triple DA verified) |
 | 10 | `plans/battleship-index.md` | Quick-reference dashboard |
 
 ### Vault (Documentation)
@@ -529,7 +529,7 @@ The DA process is the project's quality backbone — every claim is triple-verif
 
 ---
 
-## Battleship Roadmap (~266 Gaps)
+## Battleship Roadmap (~249 Gaps)
 
 The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by 22 sectors (S1-S22) with coordinate IDs.
 

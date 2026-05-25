@@ -4,12 +4,12 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-250 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+249 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 
 - `/home/wubu/hermes-agent-dev/C/` — 153 src .c, 66 .h, 58 libs, 202 test files, 29MB binary
-- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (255 gaps), vault/achievements.md
+- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (249 gaps), vault/achievements.md
 - Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~857 commits)
 
 ## Verified State
@@ -33,7 +33,7 @@ Battleship-v7 had 16 stale claims (Phase 8 in vault).
 Battleship-v8 had 14 more stale claims retired in Phase 9 (S05, B05, B06, B03, B10,
 C01-C05, C16, D04, D17-D20, P01, R04) — see vault/achievements.md Phase 9 for full table.
 
-The remaining 255 gaps are verified open.
+The remaining 249 gaps are verified open.
 
 ## Triple DA Found
 
@@ -52,8 +52,8 @@ The remaining 255 gaps are verified open.
 
 ||| 1. D16 — Plugin memory provider interface (280 LOC)
 ||| 2. G01 — Home Assistant conversation loop (200 LOC)
-||| 3. G04 — DingTalk inbound polling (80 LOC)
-||| 4. G05 — WeCom inbound polling (80 LOC)
+||| 3. G05 — WeCom inbound polling (80 LOC)
+||| 4. G06 — SMS inbound webhook wiring (50 LOC)
 ## The Loop
 
 1. Read state.md → prestige_prompt.md → battleship-v8.md → overnight-map.md

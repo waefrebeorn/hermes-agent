@@ -879,6 +879,9 @@ bool dingtalk_send_link(http_client_t *http,
                          const char *title, const char *text,
                          const char *message_url, const char *pic_url);
 bool dingtalk_send_image_by_url(http_client_t *http, const char *image_url);
+void dingtalk_queue_message(const char *chat_id, const char *text,
+                             const char *sender_id);
+void dingtalk_handle_webhook(const char *body);
 json_node_t *dingtalk_poll_messages(http_client_t *http);
 const char *dingtalk_get_chat_id(json_node_t *update);
 const char *dingtalk_get_text(json_node_t *update);
