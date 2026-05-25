@@ -42,6 +42,20 @@ Last updated: 2026-05-25
 |----|-------------|-----|----------|----------|
 | V01 | Key rotation — vault_rotate_key() decrypts with old passphrase, re-encrypts with new. Two modes: in-memory (data already loaded) and file-based. Full rollback on failure. 13 new tests | 60 | P2 | vault.c:345-405 (vault_rotate_key), tests/test_vault.c:192-242 (13 rotation tests), vault (50 tests) |
 
+### Feature Added
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| A10 | Vault integration into tool_config_get (step 4). Multi-source credential resolution: override → per-tool env → generic env → vault → NULL. Remaining gap: config file YAML at tools.<tool>.<key> needs hermes_config_t access from tool layer | S4 | tool_config.c:94-97, test_tool_config.c:245-287 (3 vault tests). 28/28 passed |
+
+### Stale Claims Retired This Session
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| G12 | whatsapp interactive buttons — whatsapp_send_interactive_buttons() exists with header/body/footer/buttons support | S8 (stale) | whatsapp.c:121-160 |
+| P05 | API server dispatch — handle_post_chat already dispatches through g_agent->llm at line 294 | S2 (stale) | api_server.c:294-314 (full llm_chat_completion call) |
+
+
 ## Phase 59: Cloud Metadata Endpoint Detection — S01 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

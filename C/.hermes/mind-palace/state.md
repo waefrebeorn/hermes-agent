@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (110 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (108 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -29,13 +29,13 @@
 | Sector | Name | Gaps | P1 | P2 | P3 |
 |--------|------|------|-----|-----|------|
 | S1 | Stubs | 0 | 0 | 0 | 0 |
-| S2 | Placeholder/Unwired | 11 | 0 | 1 | 10 |
+| S2 | Placeholder/Unwired | 10 | 0 | 0 | 10 |
 | S3 | Dead Code | 12 | 0 | 2 | 10 |
 | S4 | Missing Agent Modules | 10 | 0 | 6 | 4 |
 | S5 | Agent Module Depth | 11 | 0 | 8 | 4 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
-| S8 | Gateway Depth | 10 | 0 | 6 | 4 |
+| S8 | Gateway Depth | 9 | 0 | 5 | 4 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 6 | 0 | 2 | 4 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 0 | 0 | 0 | 0 |
-| **Total** | **110** | **0** | **47** | **63** |
+| **Total** | **108** | **0** | **47** | **61** |
 
 ## Python Upstream Parity
 
@@ -71,6 +71,8 @@
 - **G14**: discord slash command registration — discord_register_slash_command() exists
 - **G15**: telegram inline query — telegram_answer_inline_query() exists
 - **G19**: bluebubbles attachment — bluebubbles_send_attachment() exists
+- **G12**: whatsapp interactive buttons — whatsapp_send_interactive_buttons() exists
+- **P05**: API server dispatch — handle_post_chat already uses llm_chat_completion via g_agent
 - **I01**: GitHub Actions CI for C build — c-build.yml has build+test+ASan+coverage+Docker+perf
 - **I02**: ASan in CI — asan job in c-build.yml
 - **I03**: Code coverage reporting — gcov/lcov in c-build.yml

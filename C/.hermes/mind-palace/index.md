@@ -12,7 +12,7 @@
 ## Plans Directory
 | File | Purpose | Status |
 |------|---------|--------|
-| `battleship-v8.md` | Active gap roadmap (110 gaps, 22 sectors) | ✅ Current |
+| `battleship-v8.md` | Active gap roadmap (108 gaps, 22 sectors) | ✅ Current |
 | `battleship-v7.md` | Previous roadmap (stale) | ❌ Superseded |
 
 ## Vault
@@ -28,6 +28,6 @@
 ## DA Audits
 | File | Status |
 |------|--------|
-| `battleship-v8.md` | **Active** — 110 verified gaps, 22 sectors, Triple DA fresh |
+| `battleship-v8.md` | **Active** — 108 verified gaps, 22 sectors, Triple DA fresh |
 | `da-audit-v15.md` | Latest DA audit, 2026-05-24 |
 | `vault/archived-da-audit-*.md` | Historical (v6, v10, v11, v13, v14) |

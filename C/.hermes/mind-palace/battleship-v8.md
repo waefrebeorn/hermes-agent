@@ -2,7 +2,7 @@
      2|
      3|Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
      4|
-     5|Total: **110 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+     5|Total: **108 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
      6|
      7|## SECTOR 1: Confirmed Stubs (0 gaps)
      8|
@@ -10,23 +10,22 @@
     10|
     11|Functions that return fake data or error. Implementation required. — All resolved (v8→v9).
     12|
-    13|## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (11 gaps)
+    13|## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (10 gaps)
     14|
     15|Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not supported`, `in future`, `for extension`.
     16|
     17|| # | ID | File:Line | Issue | LOC | Priority |
     18||---|----|-----------|-------|-----|----------|
-    19|| 1 | P01 | telegram.c:949 | Editable draft with placeholder text — stub UX behavior | 20 | P3 |
-    20|| 2 | P02 | mcp_tool.c:1285 | Placeholder auth entry for future server connections | 15 | P3 |
-    21|| 3 | P03 | memory.c:544-549 | Plugin memory save/load — no-op returns true | 10 | P3 |
-    22|| 4 | P04 | cron/cron_extras.c:319 | Cron placeholder replacement ({{param}} system incomplete) | 30 | P3 |
-    23|| 5 | P05 | api_server.c:219 | "In future, use g_agent to dispatch" — incomplete routing | 200 | P2 |
-    24|| 6 | P06 | qqbot.c:77 | "Reserved for future API mode" — never wired | 25 | P3 |
-    25|| 7 | P08 | server.c:96 | Default gateway port unchanged from 8080 — no config read | 10 | P3 |
-    26|| 8 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
-    27|| 9 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
-    28|| 10 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
-    29|| 11 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
+| 1 | P01 | telegram.c:949 | Editable draft with placeholder text — stub UX behavior | 20 | P3 |
+| 2 | P02 | mcp_tool.c:1285 | Placeholder auth entry for future server connections | 15 | P3 |
+| 3 | P03 | memory.c:544-549 | Plugin memory save/load — no-op returns true | 10 | P3 |
+| 4 | P04 | cron/cron_extras.c:319 | Cron placeholder replacement ({{param}} system incomplete) | 30 | P3 |
+| 5 | P06 | qqbot.c:77 | "Reserved for future API mode" — never wired | 25 | P3 |
+| 6 | P08 | server.c:96 | Default gateway port unchanged from 8080 — no config read | 10 | P3 |
+| 7 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
+| 8 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
+| 9 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
+| 10 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
     30|
     31|## SECTOR 3: Dead Code / Unused Functions (12 gaps)
     32|
@@ -126,7 +125,7 @@ Python modules where C has a partial port merged into another file, missing sign
    130|| 6 | D15 | browser.c | ✅ Camofox session save/load/delete to <home>/browser_auth/camofox/sessions/<task>.json | P2 |
    131|| 7 | D23 | web.c | Web search provider abstraction — ✅ STALE: web_search_registry.c (239+217 test) | 0 | P2 |
    132|
-## SECTOR 8: Gateway Platform Depth (10 gaps)
+## SECTOR 8: Gateway Platform Depth (9 gaps)
 
 C gateways with minimal or incomplete implementations vs Python.
 
@@ -134,14 +133,13 @@ C gateways with minimal or incomplete implementations vs Python.
 |---|---------|----------|----------------|-----|----------|
 | 1 | G03 | qqbot | post_api marked __attribute__((unused)) dead code | 25 | P3 |
 | 2 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
-| 3 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
-| 4 | G13 | matrix | End-to-end encryption | 200 | P3 |
-| 5 | G17 | email | Multi-account support | 100 | P2 |
-| 6 | G21 | yuanbao | Group management commands | 100 | P2 |
-| 7 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
-| 8 | G23 | platform/* | No codex_response platform | 150 | P3 |
-| 9 | G24 | platform/* | No webhook_server platform | 200 | P3 |
-| 10 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
+| 3 | G13 | matrix | End-to-end encryption | 200 | P3 |
+| 4 | G17 | email | Multi-account support | 100 | P2 |
+| 5 | G21 | yuanbao | Group management commands | 100 | P2 |
+| 6 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
+| 7 | G23 | platform/* | No codex_response platform | 150 | P3 |
+| 8 | G24 | platform/* | No webhook_server platform | 200 | P3 |
+| 9 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
    154|
    155|## SECTOR 9: Configuration & Environment (0 gaps)
    156|
@@ -337,13 +335,13 @@ C gateways with minimal or incomplete implementations vs Python.
    346|| Sector | Count |
    347|||--------|-------|
    348||| S1: Stubs | 0 |
-   349||| S2: Placeholder | 11 |
+   349||| S2: Placeholder | 10 |
    350||| S3: Dead Code | 12 |
    351||| S4: Missing Agent | 10 |
    352||| S5: Agent Depth | 11 |
    353||| S6: Subdirectory | 22 |
    354||| S7: Tool Depth | 0 |
-   355||| S8: Gateway | 10 |
+   355||| S8: Gateway | 9 |
    356||| S9: Config | 0 |
    357|||| S10: Library | 6 |
    358||| S11: Bug Fixes | 2 |
@@ -357,7 +355,7 @@ C gateways with minimal or incomplete implementations vs Python.
    366||| S19: Security | 1 |
    367||| S20: New Features | 8 |
    368|| S21: Refactoring | 9 |
-   369|| S22: CI/Integrate | 1 |
-   370|| **Total** | **110** |
+   369|| S22: CI/Integrate | 0 |
+   370|| **Total** | **108** |
    371|| (resolved items retired to vault/achievements.md) | |
    372|
