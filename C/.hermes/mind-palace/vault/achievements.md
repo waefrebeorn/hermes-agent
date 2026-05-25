@@ -403,7 +403,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C10 | plugins.memory.provider — added `char memory_provider[128]` to plugin_config_t, YAML reader via `yaml_get_string(doc, "plugins.memory.provider")` | S9 | hermes.h:574, config.c:1230 |
+| C10 | plugins.memory.provider — added `char memory_provider[128]` to plugin_config_t, YAML reader via `yaml_get_string(doc, "plugins.memory.provider")` | S9 | hermes.h:574, config.c:1230
+
+## Phase 27: Stale Claim Retired — B08 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| B08 | MCP tool auth tokens not persisted | `credential_store_save()` exists — loads `mcp_auth.json`, updates token entry, saves to temp file with atomic rename | mcp_tool.c:1052-1106 |
 
 ## Phase 25: Stale Claim Retired — C09 (2026-05-24)
 
