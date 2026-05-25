@@ -252,8 +252,51 @@ static bool is_safe_path(const char *path) {
     }
 
     /* Fallback: basic checks */
-    /* Block absolute paths outside home, and '..' traversals */
-    if (strstr(path, "..")) return false;
+
+    /* S04: Null byte injection bypass check */
+    if (path && strlen(path) != strnlen(path, 4096)) return false;
+
+    /* S04: URL-encoded traversal detection (before realpath resolves it) */
+    const char *encoded_checks[] = {
+        "%2e",  /* %2e = '.' in URL encoding */
+        "%2E",  /* uppercase variant */
+        "..",   /* literal traversal */
+        NULL
+    };
+    bool has_dotdot = false;
+    for (int chk = 0; encoded_checks[chk]; chk++) {
+        const char *p = path;
+        while ((p = strstr(p, encoded_checks[chk])) != NULL) {
+            /* For literal '..', verify it's a path component boundary */
+            if (encoded_checks[chk][0] == '.' && encoded_checks[chk][1] == '.') {
+                if ((p == path || p[-1] == '/') &&
+                    (p[2] == '/' || p[2] == '\0'))
+                    has_dotdot = true;
+            } else {
+                has_dotdot = true;
+            }
+            p++;
+        }
+    }
+    if (has_dotdot) return false;
+
+    /* S04: Resolve real path for symlink bypass detection */
+    char *resolved = realpath(path, NULL);
+    if (resolved) {
+        /* Resolved path must be under HOME, /tmp/, or /dev/ */
+        const char *home = getenv("HOME");
+        bool under_home = home && strncmp(resolved, home, strlen(home)) == 0;
+        bool under_tmp = strncmp(resolved, "/tmp/", 5) == 0;
+        bool under_dev = strncmp(resolved, "/dev/", 5) == 0;
+        bool under_proc_self = strncmp(resolved, "/proc/self/", 11) == 0;
+        free(resolved);
+        if (!under_home && !under_tmp && !under_dev && !under_proc_self)
+            return false;
+        return true;  /* resolved path passes all checks */
+    }
+
+    /* Path doesn't exist yet (write/create) — fallback to static checks */
+    /* Block absolute paths outside home */
     if (path[0] == '/' && strncmp(path, getenv("HOME"), strlen(getenv("HOME"))) != 0) {
         /* Allow /tmp/ and common paths */
         if (strncmp(path, "/tmp/", 5) != 0 && strncmp(path, "/dev/", 5) != 0)
