@@ -1,5 +1,5 @@
 # BATTLESHIP — Hermes C Translation Gap Audit
-**395 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
+**394 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
 
 ## Legend
 - 🟥 **F-N-F** = Form Not Function (code compiles but doesn't work)
@@ -113,10 +113,10 @@
 84. 🟥 **No `-q` flag support** — Uses raw argv concatenation, not proper flag parsing
 85. ⬜ **No `-m` model override** — No per-query model switching
 
-## SECTOR 3: Tools — 68 GAPS
+## SECTOR 3: Tools — 67 GAPS
 
 ### Existing Tool Defects (F-N-F) — 10 gaps
-86. 🟥 **web_search is alias for web_get** — `web.c:71-73` registers web_search as same handler — no actual search
+86. ✅ **web_search fixed** — `web.c` now uses DuckDuckGo Instant Answer API with separate handler
 87. 🟥 **skills only has list** — No skills_load, skills_view, skills_install, skills_uninstall
 88. 🟥 **file.c has NO patch command** — Python has `patch` for targeted find-replace, C only has full read/write
 89. 🟥 **file.c has NO search_files** — file.c declares SCHEMA_SEARCH but no grep/ripgrep integration

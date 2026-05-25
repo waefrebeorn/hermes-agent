@@ -37,7 +37,7 @@ make       # → hermes binary, 386KB, 0 warnings
 ### Phase 3: Tools 🟧 (Partial)
 - `terminal.c` (133 lines) — Shell execution via popen() + timeout
 - `file.c` (260 lines) — Read/write/search (no patch!)
-- `web.c` (74 lines) — HTTP GET only (web_search is alias!)
+- `web.c` (254 lines) — HTTP GET + web search via DuckDuckGo Instant Answer API
 - `skills.c` (96 lines) — List only (no load/view/install!)
 - `registry.c` (136 lines) — Tool registration + dispatch
 - `tool_init.c` (20 lines) — Init all 4 registered tools
@@ -68,7 +68,7 @@ Top 10 Critical Defects:
 |---|--------|------|--------|
 | 1 | **Tool call loop** — fixed now executes tools and loops | agent_loop.c:173-191 | Tools work in multi-turn |
 | 2 | **Auth header** — fixed Content-Type properly set | llm_client.c:113-121 | LLM API calls work |
-| 3 | **web_search is alias for web_get** — no real search | web.c:71-73 | Can't search web |
+| 3 | **web_search** — fixed uses DuckDuckGo API, no alias | web.c:70-190 | Web search works |
 | 4 | **Jobs are memory-only** — lost on restart | scheduler.c | Data loss |
 | 5 | **cron_list_jobs() returns empty array** — hardcoded stub | jobs.c:19 | Can't list jobs |
 | 6 | **No patch/search tools** — only read/write | file.c | Can't edit files |
@@ -106,7 +106,7 @@ make          # Full binary ✅
 | --version | ✅ | "WuBu Hermes v0.14.0-wubu" |
 | Tool calling | ✅ | Fixed — tools execute and loop back |
 | LLM call | ✅ | Auth header fixed |
-| web search | 🟥 | Alias for GET, no search |
+| web search | ✅ | DuckDuckGo Instant Answer API |
 | cron persist | 🟥 | Memory-only |
 | JSON parser | ✅ | test_json.c all pass |
 | Auth store | ✅ | test_auth.c all pass |

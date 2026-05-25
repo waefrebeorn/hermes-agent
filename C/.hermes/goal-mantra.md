@@ -6,7 +6,7 @@
 - **Binary:** 386KB, compiles with 0 warnings on `make`
 - **Source:** 5,973 lines C across 29 `.c` + 9 `.h` files
 - **Build:** All 5 phase targets compile (`phase1`–`phase5`/`all`)
-- **Gaps:** 395 identified (59 form-not-function, 330 missing, 1 stub, 5 fixed)
+- **Gaps:** 394 identified (58 form-not-function, 330 missing, 1 stub, 6 fixed)
 - **Target:** Close to ~300 productive gaps, all critical P0 fixed
 
 ## Phase Status (HONEST)
@@ -24,7 +24,7 @@
 ### P0 — Fix Now (blocking):
 1. ~~Fix tool call loop — agent_loop.c dead code (return before TODO)~~ ✅ DONE
 2. ~~Fix auth header — llm_client.c malformed Content-Type~~ ✅ DONE
-3. Implement real web_search
+3. ~~Implement real web_search~~ ✅ DONE (DuckDuckGo Instant Answer API)
 4. Implement cron job persistence
 5. Write HONEST state.md (replace the lying version)
 
