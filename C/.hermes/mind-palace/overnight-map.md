@@ -9,19 +9,19 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **220** (battleship-v8) | B15 — gateway log rotation |
+| Gap count | **219** (battleship-v8) | P10 retired stale |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v33 (previous session)
+## What Changed Since v34 (previous session)
 
-- **B15 closed**: Gateway log rotation — gw_log_open/close writes to ~/.slermes/logs/gateway.log with 10 MB rotation
-- Gap count 221 → 220 after B15 closure
+- **P10 retired stale**: CDP client already fully implemented in browser.c (WebSocket, config/env URL, stub handler)
+- Gap count 220 → 219 after P10 stale retirement
 
-## Resolved Since v33
+## Resolved Since v34
 
 | ID | Description |
 |----|-------------|
-| B15 | Gateway log rotation — gw_log_open writes to ~/.slermes/logs/gateway.log with 10MB rotation |
+| P10 | Stale claim retired — CDP client already implemented in browser.c |
 
 ## Current Priority Queue
 

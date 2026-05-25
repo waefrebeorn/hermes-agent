@@ -490,6 +490,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | B15 | Gateway log rotation — `gw_log_open/create` writes to `~/.slermes/logs/gateway.log` with 10 MB rotation to `.1`; called at gateway startup/cleanup | S11 | src/gateway/server.c:101-131, 1694, 1909 |
 
+## Phase 42: Stale Claim Retired — P10 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| P10 | "CDP not connected" — fallback message, CDP not wired | CDP client fully implemented in browser.c: WebSocket connect, config/env URL resolution (CAMOFOX_WS_URL/CHROME_WS_URL), cdp_get_url/set_url, stub_cdp_handler for CDP-dependent tools | browser.c:1190-1207, browser.c:1172-1178 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
