@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 55: Token-Buffer SSE Streaming — E02 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| E02 | Token-buffer SSE streaming — replaces word-by-word strtok_r splitting with ~4-char chunked streaming. UTF-8 continuation bytes preserved (no mid-codepoint splits). Configurable TOKEN_BUF_SIZE. | S13 | api_server.c:handle_post_chat_stream() — token-buffer loop with is_utf8_cont detection |
+
 ## Phase 54: REST API Config/Service/Metrics — E01 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

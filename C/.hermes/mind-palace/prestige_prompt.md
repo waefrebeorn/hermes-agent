@@ -15,23 +15,23 @@
 | Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **858+** |
-|| Real gap count | **148** (battleship-v8, 22 sectors) |
+|| Real gap count | **147** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 12 gaps)
 
 | Rank | ID | Description | LOC | Sector | Why Now |
 |------|----|-------------|-----|--------|---------|
-| 1 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE token-buffer streaming (~85% done) | 100 | S13 | Core infra for API mode — complete SSE implementation |
-| 2 | D22 | Feishu doc/drive tool support | 150 | S7 | Tool depth gap |
-| 3 | N02 | Mixture of Agents tool | 300 | S20 | New feature |
-| 4 | U01 | TUI image display — code exists but unwired | 150 | S14 | TUI depth |
-| 5 | U02 | TUI session browser with search | 200 | S14 | TUI depth |
-| 6 | T04 | Test coverage for untested modules | 200 | S12 | Test coverage |
-| 7 | N03 | Feishu doc and drive tools | 250 | S20 | New feature |
-| 8 | U04 | TUI config editor | 150 | S14 | TUI depth |
-| 9 | N04 | Microsoft Graph auth + client | 300 | S20 | New feature |
-| 10 | N05 | LSP protocol client (IDE integration) | 500 | S20 | New feature |
+| 1 | D22 | Feishu doc/drive tool support | 150 | S7 | Tool depth gap |
+| 2 | N02 | Mixture of Agents tool | 300 | S20 | New feature |
+| 3 | U01 | TUI image display — code exists but unwired | 150 | S14 | TUI depth |
+| 4 | U02 | TUI session browser with search | 200 | S14 | TUI depth |
+| 5 | T04 | Test coverage for untested modules | 200 | S12 | Test coverage |
+| 6 | N03 | Feishu doc and drive tools | 250 | S20 | New feature |
+| 7 | U04 | TUI config editor | 150 | S14 | TUI depth |
+| 8 | N04 | Microsoft Graph auth + client | 300 | S20 | New feature |
+| 9 | N05 | LSP protocol client (IDE integration) | 500 | S20 | New feature |
+| 10 | U06 | Gateway status dashboard | 120 | S14 | TUI depth |
 
 ## Phase Status
 
@@ -49,7 +49,7 @@
 
 - battleship-v7 had 16 stale claims — v8 verified each item against source
 - battleship-v8 uses Triple DA: stub hunt (all keywords), Python-vs-C module comparison, form-not-function depth check
-- Remainder count (148) is bounded: 75 P2 + 73 P3 items are depth/coverage
+- Remainder count (147) is bounded: 74 P2 + 73 P3 items are depth/coverage
 - 0 P1 items remain
 - Python has 77 agent modules → C has 50 (26 direct matches + 24 C-only)
 - Python has 88+ tool files → C has 43 tool modules
