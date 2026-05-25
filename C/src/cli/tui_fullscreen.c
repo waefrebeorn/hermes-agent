@@ -388,6 +388,7 @@ static const slash_cmd_t slash_commands[] = {
     {"/redraw",  "Force screen redraw", ""},
     {"/skin",    "List/reload skins", ""},
     {"/image",   "Display an image file", "<path>"},
+    {"/gateway", "Show gateway status dashboard", ""},
     {NULL, NULL, NULL}
 };
 
@@ -655,6 +656,7 @@ typedef struct {
         MODE_SESSION_BROWSE,
         MODE_CONFIG_EDIT,
         MODE_IMAGE_VIEW,
+        MODE_GATEWAY_STATUS,
         MODE_HELP,
     } modal_mode;
 } tui_global_state_t;
@@ -2246,6 +2248,47 @@ static void tui_draw_image_viewer(void) {
  *  P199: GATEWAY — JSON-RPC backend via FIFO
  * ================================================================== */
 
+/* Draw gateway status dashboard — P199 */
+static void tui_draw_gateway_status(void) {
+    WINDOW *win = tui.panes[PANE_HISTORY].win;
+    if (!win) return;
+
+    werase(win);
+
+    int w_rows = tui.panes[PANE_HISTORY].rows;
+
+    wattron(win, A_BOLD | COLOR_PAIR(1));
+    mvwprintw(win, 0, 0, " GATEWAY STATUS ");
+    wattroff(win, A_BOLD | COLOR_PAIR(1));
+
+    int y = 2;
+    mvwprintw(win, y++, 0, " RPC Status:     %s",
+              tui.gateway.state == RPC_CONNECTED ? "Connected" : "Idle");
+    mvwprintw(win, y++, 0, " FIFO Path:      %s", RPC_FIFO_PATH);
+    mvwprintw(win, y++, 0, " FIFO FD:        %d", tui.gateway.fifo_fd);
+    mvwprintw(win, y++, 0, " Read Buffer:    %d/%d bytes",
+              tui.gateway.read_pos, (int)sizeof(tui.gateway.read_buf));
+    y++;
+    mvwprintw(win, y++, 0, " Agent:          %s",
+              tui.agent ? "Available" : "Not available");
+    if (tui.agent && tui.agent->db) {
+        mvwprintw(win, y++, 0, " Session DB:     Connected");
+    } else {
+        mvwprintw(win, y++, 0, " Session DB:     Not connected");
+    }
+    y++;
+    mvwprintw(win, y++, 0, " Platforms:      19 registered (in binary)");
+    mvwprintw(win, y++, 0, " Model:          %s", tui.status.model);
+    mvwprintw(win, y++, 0, " Provider:       %s", tui.status.provider);
+
+    wattron(win, A_DIM | COLOR_PAIR(10));
+    mvwprintw(win, w_rows - 1, 0, " Press any key to close ");
+    wattroff(win, A_DIM | COLOR_PAIR(10));
+
+    wnoutrefresh(win);
+    doupdate();
+}
+
 /* Create FIFO for RPC communication */
 static bool tui_gateway_init(void) {
     /* Remove old FIFO if exists */
@@ -2652,6 +2695,11 @@ static void tui_process_input(const char *line) {
             tui_redraw_history();
             return;
 
+        } else if (strcmp(line, "/gateway") == 0) {
+            tui.modal_mode = MODE_GATEWAY_STATUS;
+            tui_draw_gateway_status();
+            return;
+
         } else if (strncmp(line, "/image ", 7) == 0) {
             /* Extract path and try to display image */
             const char *img_path = line + 7;
@@ -2708,6 +2756,10 @@ static int tui_handle_modal_input(int ch) {
             return tui_config_editor_handle(ch);
         case MODE_IMAGE_VIEW:
             return tui_image_viewer_handle(ch);
+        case MODE_GATEWAY_STATUS:
+            tui.modal_mode = MODE_NORMAL;
+            tui_redraw_history();
+            return 1;
         case MODE_HELP:
             tui.modal_mode = MODE_NORMAL;
             tui_redraw_history();
@@ -3066,6 +3118,7 @@ int tui_fullscreen_run(agent_state_t *state) {
                 case MODE_SESSION_BROWSE: tui_draw_session_browser(); break;
                 case MODE_CONFIG_EDIT:    tui_draw_config_editor(); break;
                 case MODE_IMAGE_VIEW:     tui_draw_image_viewer(); break;
+                case MODE_GATEWAY_STATUS: tui_draw_gateway_status(); break;
                 case MODE_HELP:           break; /* help stays until dismissed */
                 default: break;
             }
