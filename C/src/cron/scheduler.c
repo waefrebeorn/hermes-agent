@@ -187,6 +187,13 @@ int cron_run_loop(int interval_sec) {
 int hermes_cron_main(int argc, char **argv) {
     (void)argc; (void)argv;
 
+    /* Set notification channel from env var (standalone mode) */
+    {
+        const char *cron_chan = getenv("HERMES_CRON_NOTIFY_CHANNEL");
+        if (cron_chan && cron_chan[0])
+            cron_notify_set_channel(cron_chan);
+    }
+
     /* Add default jobs from environment or config */
     const char *jobs_env = getenv("HERMES_CRON_JOBS");
     if (jobs_env) {

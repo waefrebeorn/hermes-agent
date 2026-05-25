@@ -1,4 +1,4 @@
-# Hermes C — Overnight Navigation Map (v32 — 2026-05-24)
+# Hermes C — Overnight Navigation Map (v33 — 2026-05-24)
 
 ## State Verified (2026-05-24)
 
@@ -9,19 +9,19 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **222** (battleship-v8) | B11 — gateway config validation |
+| Gap count | **221** (battleship-v8) | B12 — cron session context wired |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v31 (previous session)
+## What Changed Since v32 (previous session)
 
-- **B11 closed**: Gateway config validation — setup_email() now validates IMAP/SMTP config; startup logs platform count
-- Gap count 223 → 222 after B11 closure
+- **B12 closed**: Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel in both gateway and standalone cron modes
+- Gap count 222 → 221 after B12 closure
 
-## Resolved Since v31
+## Resolved Since v32
 
 | ID | Description |
 |----|-------------|
-| B11 | Gateway config validation — setup_email() validates IMAP/SMTP config; startup logs platform count |
+| B12 | Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel |
 
 ## Current Priority Queue
 

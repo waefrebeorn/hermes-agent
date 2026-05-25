@@ -4,12 +4,12 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-222 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+221 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 
 - `/home/wubu/hermes-agent-dev/C/` — 153 src .c, 66 .h, 58 libs, 202 test files, 29MB binary
-- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (222 gaps), vault/achievements.md
+- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (221 gaps), vault/achievements.md
 - Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~857 commits)
 
 ## Verified State
@@ -24,7 +24,7 @@ All code is text — consumed, understood, rewritten in C. Every Python library,
 | Gateways | 19 platforms |
 | Providers | 11 C modules — ALL with dedicated test files |
 | Stubs | 0 real |
-| Gaps | 222 verified across 22 sectors |
+| Gaps | 221 verified across 22 sectors |
 | P1 priority | 0 |
 
 ## Stale Claims Cancelled

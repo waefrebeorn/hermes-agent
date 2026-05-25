@@ -478,6 +478,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | B11 | Gateway config validation on startup — `setup_email()` now validates IMAP/SMTP/sendmail config exists before returning true; startup log prints platform count and requested list | S11 | src/gateway/server.c:1249-1257, src/gateway/server.c:1823-1824 |
 
+## Phase 40: Bug Fix — B12 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B12 | Cron jobs now inherit gateway session context — `HERMES_CRON_NOTIFY_CHANNEL` env var wires the notification delivery channel in both gateway and standalone cron modes; gateway startup logs the configured channel | S11 | src/gateway/server.c:1833-1841, src/cron/scheduler.c:190-196 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

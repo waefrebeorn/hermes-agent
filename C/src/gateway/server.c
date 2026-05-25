@@ -1830,6 +1830,15 @@ int hermes_gateway_main(int argc, char **argv) {
     /* Wire cron notifications through gateway */
     cron_notify_set_send_fn(gw_platform_send);
 
+    /* Set cron notification channel from env var (format: "platform:chat_id") */
+    {
+        const char *cron_chan = getenv("HERMES_CRON_NOTIFY_CHANNEL");
+        if (cron_chan && cron_chan[0]) {
+            cron_notify_set_channel(cron_chan);
+            printf("[gateway] Cron notification channel: %s\n", cron_chan);
+        }
+    }
+
     printf("[gateway] %d platform(s) running. Press Ctrl+C to stop\n",
            g_gw.platform_count);
 
