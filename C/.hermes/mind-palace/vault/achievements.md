@@ -440,7 +440,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C19 | cron.scheduler_poll_interval — added `int scheduler_poll_interval` to cron_config_t, YAML reader via `yaml_get_int(doc, "cron.scheduler_poll_interval", 60)`, default 60s | S9 | hermes.h:532, config.c:1193 |
+| C19 | cron.scheduler_poll_interval — added `int scheduler_poll_interval` to cron_config_t, YAML reader via `yaml_get_int(doc, "cron.scheduler_poll_interval", 60)`, default 60s | S9 | hermes.h:532, config.c:1193
+
+## Phase 34: Placeholder Fix — P12 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| P12 | cmd_toolsets — replaced hardcoded toolset list with dynamic iteration of registry (registry_get_count/name/toolset). Groups tools by toolset, handles unknown toolsets as "core" | S2 | commands.c:2049-2085
 
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 

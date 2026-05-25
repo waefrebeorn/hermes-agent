@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **228 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **227 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -10,7 +10,7 @@ All prior plugin stubs resolved. Remaining gaps in other sectors.
 
 Functions that return fake data or error. Implementation required. — All resolved (v8→v9).
 
-## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (13 gaps)
+## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (12 gaps)
 
 Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not supported`, `in future`, `for extension`.
 
@@ -26,9 +26,8 @@ Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not sup
 | 8 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
 | 9 | P10 | commands.c:3003 | "CDP not connected" — fallback message, means CDP not wired | 20 | P2 |
 | 10 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
-| 11 | P12 | commands.c:2051 | cmd_toolsets — hardcoded list, not dynamic | 15 | P2 |
-| 12 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
-| 13 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
+| 11 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
+| 12 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
 
 ## SECTOR 3: Dead Code / Unused Functions (12 gaps)
 
@@ -425,7 +424,7 @@ Functions that exist in C but are significantly less capable than Python equival
 | Sector | Count |
 ||--------|-------|
 || S1: Stubs | 0 |
-|| S2: Placeholder | 13 |
+|| S2: Placeholder | 12 |
 || S3: Dead Code | 12 |
 || S4: Missing Agent | 12 |
 || S5: Agent Depth | 15 |
@@ -446,5 +445,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **228** |
+|| **Total** | **227** |
 | (resolved items retired to vault/achievements.md) | |
