@@ -607,3 +607,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |
+
+## Phase 23: Stale Retirement — Docker/SSH/Curator (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D05 | Docker backend — run_command_docker() exists, wired in terminal handler | S7 (stale) | terminal.c:270-385, 570-571 — full Docker exec with image config, CWD mount, env forwarding |
+| D06 | SSH backend — run_command_ssh() exists, wired in terminal handler | S7 (stale) | terminal.c:224-268, 565-566 — full SSH exec with host/user/key/port config |
+| R02 | /curator review inline review — exists as /curator run subcommand | S15 (stale) | commands.c:2461-2505 — calls llm_background_review() |
+| R03 | /curator status — exists as default /curator subcommand | S15 (stale) | commands.c:2508-2525 — status display with run_count, last_run, duration |
+| R05 | /curator run — real agent review via llm_background_review() | S15 (stale) | commands.c:2491 + llm_client.c:1523-1569 — full LLM-based tool result review |

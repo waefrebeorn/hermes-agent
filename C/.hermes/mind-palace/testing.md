@@ -1,4 +1,4 @@
-# Hermes C — Testing (v13 — 2026-05-24)
+# Hermes C — Testing (v14 — 2026-05-24)
 
 ## Suite
 ```bash
@@ -7,7 +7,7 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**237 passed, 0 failed, 0 skipped** (202 files, zero failures).
+**239 passed, 0 failed, 0 skipped** (202 files, zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |

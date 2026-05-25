@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **201 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **196 active gaps** across 22 sectors (resolved items retired to vault Phase 21+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -118,22 +118,20 @@ Python subdirectory modules with NO C equivalent.
 | 21 | T27 | codex_event_projector.py | Codex event projector | P3 |
 | 22 | T28 | codex_app_server.py | Codex app server transport | P3 |
 
-## SECTOR 7: Missing Tool Features — Depth Gaps (10 gaps)
+## SECTOR 7: Missing Tool Features — Depth Gaps (8 gaps)
 
 Existing C tools missing features that Python has.
 
 | # | ID | Tool | Missing Feature | LOC | Priority |
 |---|-----|------|----------------|-----|----------|
-| 1 | D05 | terminal.c | Docker backend (only local execution) | 300 | P2 |
-| 2 | D06 | terminal.c | SSH backend | 250 | P2 |
-| 3 | D07 | terminal.c | Modal/Daytona/singularity backends | 500 | P3 |
-| 4 | D08 | terminal.c | Environment file sync | 150 | P3 |
-| 5 | D10 | computer_use.c | Modular backend system (backend.py split) | 250 | P2 |
-| 6 | D11 | computer_use.c | Vision routing per backend | 100 | P2 |
-| 7 | D14 | browser.c | Browser supervisor | 200 | P2 |
-| 8 | D15 | browser.c | Camofox browser state management | 150 | P2 |
-| 9 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
-| 10 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
+| 1 | D07 | terminal.c | Modal/Daytona/singularity backends | 500 | P3 |
+| 2 | D08 | terminal.c | Environment file sync | 150 | P3 |
+| 3 | D10 | computer_use.c | Modular backend system (backend.py split) | 250 | P2 |
+| 4 | D11 | computer_use.c | Vision routing per backend | 100 | P2 |
+| 5 | D14 | browser.c | Browser supervisor | 200 | P2 |
+| 6 | D15 | browser.c | Camofox browser state management | 150 | P2 |
+| 7 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
+| 8 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
 
 ## SECTOR 8: Gateway Platform Depth (17 gaps)
 
@@ -257,15 +255,9 @@ C tui_fullscreen.c (~3800 lines) vs Python TUI (Ink/React, ~5000 lines).
 | 7 | U07 | Cron job viewer | 80 | P2 |
 | 8 | U08 | Log viewer (tail -f in TUI) | 100 | P2 |
 
-## SECTOR 15: Curator Depth (3 gaps)
+## SECTOR 15: Curator Depth (0 gaps — all resolved)
 
-C curator.c vs Python curator.py.
-
-| # | ID | Feature | LOC | Priority |
-|---|-----|---------|-----|----------|
-| 1 | R02 | /curator review — inline review of current session | 80 | P2 |
-| 2 | R03 | /curator status — curator state overview | 50 | P2 |
-| 3 | R05 | /curator run — real agent review (S05, 100 LOC) | 100 | P1 |
+All curator features (status, run, review) implemented in CLI commands.c + curator.c using llm_background_review. Retired to vault Phase 21.
 
 ## SECTOR 16: Prompt Caching Depth (5 gaps)
 
@@ -403,21 +395,21 @@ Functions that exist in C but are significantly less capable than Python equival
 || S4: Missing Agent | 12 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
-|| S7: Tool Depth | 10 |
-|| S8: Gateway | 17 |
-|| S9: Config | 3 |
-|| S10: Library | 13 |
-|| S11: Bug Fixes | 2 |
-|| S12: Test Coverage | 25 |
-|| S13: API Server | 5 |
-|| S14: TUI | 8 |
-|| S15: Curator | 3 |
-|| S16: Prompt Cache | 5 |
-|| S17: Shell Hooks | 3 |
-|| S18: Vault Encrypt | 3 |
-|| S19: Security | 6 |
-|| S20: New Features | 10 |
-|| S21: Refactoring | 9 |
-|| S22: CI/Integrate | 7 |
-|| **Total** | **201** |
+| S7: Tool Depth | 8 |
+| S8: Gateway | 17 |
+| S9: Config | 3 |
+| S10: Library | 13 |
+| S11: Bug Fixes | 2 |
+| S12: Test Coverage | 25 |
+| S13: API Server | 5 |
+| S14: TUI | 8 |
+| S15: Curator | 0 |
+| S16: Prompt Cache | 5 |
+| S17: Shell Hooks | 3 |
+| S18: Vault Encrypt | 3 |
+| S19: Security | 6 |
+| S20: New Features | 10 |
+| S21: Refactoring | 9 |
+| S22: CI/Integrate | 7 |
+| **Total** | **196** |
 | (resolved items retired to vault/achievements.md) | |

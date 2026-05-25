@@ -7,10 +7,10 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 |Suite:  239/0/0 (202 test files, completes in <60s)
 |Binary: 29MB    (dynamic ELF, -O2 -g)
 |Source: 153 .c + 66 .h = 219 files
-| Parity: ~78%   (~201 verified gaps remaining — see battleship-v8)
+| Parity: ~78%   (~196 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
-|Tests:  238/0/0, no skips
+|Tests:  239/0/0, no skips
 |Tools:  85 registered handlers — all real implementations
 |Libraries: 58 C modules — zero external deps beyond libc+libssl
 |Plugins:  10 C dynamic plugins (achievements, kanban, disk_cleanup, etc.)
@@ -36,7 +36,7 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-|- [Battleship Roadmap (~249 Gaps)](#battleship-roadmap-249-gaps)
+|- [Battleship Roadmap (~196 Gaps)](#battleship-roadmap-196-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -51,7 +51,7 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 238/0/0
+bash test_runner.sh        # 239/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -497,7 +497,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
 | 8 | `da-v12-triple-audit.md` | Final Triple DA audit — methodology, findings, 8 verified stubs |
-| 9 | `plans/battleship-v8.md` | Complete ~249-gap roadmap by sector (Triple DA verified) |
+| 9 | `plans/battleship-v8.md` | Complete ~196-gap roadmap by sector (Triple DA verified) |
 | 10 | `plans/battleship-index.md` | Quick-reference dashboard |
 
 ### Vault (Documentation)

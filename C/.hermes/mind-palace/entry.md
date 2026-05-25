@@ -1,10 +1,10 @@
-# Hermes C — Entry (v13 — 2026-05-24)
+# Hermes C — Entry (v14 — 2026-05-24)
 
 ## Build & Run
 ```bash
 cd /home/wubu/hermes-agent-dev/C/
 make -j$(nproc)                   # Build (0 errors, 0 warnings)
-bash test_runner.sh                # 238/0/0
+bash test_runner.sh                # 239/0/0
 ./hermes --version                 # v0.14.1+
 ./hermes --help                    # Usage
 ./hermes "hello"                   # One-shot
@@ -15,7 +15,7 @@ make tui && ./hermes-tui          # ncurses TUI (experimental)
 
 ## Quick Stats
 ```
-Suite:   238/0/0  (202 test files, zero failures)
+Suite:   239/0/0  (202 test files, zero failures)
 Binary:  29MB     (dynamic ELF, 0 warnings)
 Source:  153 .c + 66 .h = 219 files
 Tools:   85 registered
