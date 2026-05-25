@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **234 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **233 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -163,7 +163,7 @@ C gateways with minimal or incomplete implementations vs Python.
 | 17 | G24 | platform/* | No webhook_server platform | 200 | P3 |
 | 18 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
 
-## SECTOR 9: Configuration & Environment (9 gaps)
+## SECTOR 9: Configuration & Environment (8 gaps)
 
 Missing config keys, env vars, or settings that Python handles but C doesn't.
 
@@ -171,13 +171,12 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 |---|-----|-----------|-------------|-----|----------|
 | 1 | C08 | agent.codex_app_server | Codex app server config | 40 | P3 |
 | 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
-| 3 | C13 | gateway.signal.* | Signal-specific config (number, etc.) | 20 | P2 |
-| 4 | C14 | proxy.https_proxy | Separate HTTPS proxy config | 10 | P2 |
-| 5 | C15 | proxy.no_proxy | Per-host proxy bypass list | 15 | P2 |
-| 6 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
-| 7 | C18 | agent.vault.* | Vault encryption config | 20 | P2 |
-| 8 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
-| 9 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
+| 3 | C14 | proxy.https_proxy | Separate HTTPS proxy config | 10 | P2 |
+| 4 | C15 | proxy.no_proxy | Per-host proxy bypass list | 15 | P2 |
+| 5 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
+| 6 | C18 | agent.vault.* | Vault encryption config | 20 | P2 |
+| 7 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
+| 8 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
 
 ## SECTOR 10: Library Depth (27 gaps)
 
@@ -438,7 +437,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S6: Subdirectory | 22 |
 || S7: Tool Depth | 11 |
 || S8: Gateway | 18 |
-|| S9: Config | 9 |
+|| S9: Config | 8 |
 || S10: Library | 27 |
 || S11: Bug Fixes | 10 |
 || S12: Test Coverage | 25 |
@@ -452,5 +451,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **234** |
+|| **Total** | **233** |
 | (resolved items retired to vault/achievements.md) | |

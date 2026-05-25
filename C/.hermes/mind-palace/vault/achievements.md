@@ -409,7 +409,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C12 | credentials.sources — added `char credential_sources[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "credentials.sources")` | S9 | hermes.h:961, config.c:1095 |
+| C12 | credentials.sources — added `char credential_sources[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "credentials.sources")` | S9 | hermes.h:961, config.c:1095
+
+## Phase 29: Config Key Implementation — C13 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C13 | gateway.signal.number — added `char signal_number[64]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "gateway.signal.number")` | S9 | hermes.h:962, config.c:1097
 
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
