@@ -98,6 +98,14 @@ void cron_job_reset_retry(const char *job_name) {
 
 static char g_notify_channel[256] = {0};
 
+/* Gateway send function — set by gateway init, NULL when standalone */
+static bool (*g_notify_send_fn)(const char *platform, const char *chat_id, const char *text) = NULL;
+
+/** Set the gateway delivery function for cron notifications. */
+void cron_notify_set_send_fn(bool (*fn)(const char *, const char *, const char *)) {
+    g_notify_send_fn = fn;
+}
+
 bool cron_notify_set_channel(const char *channel_id) {
     if (!channel_id) return false;
     snprintf(g_notify_channel, sizeof(g_notify_channel), "%s", channel_id);
@@ -127,6 +135,17 @@ bool cron_send_notification(const char *job_name, const char *status,
                              const char *message) {
     if (!g_notify_channel[0]) return false;
 
+    /* Parse "platform:chat_id" format */
+    char channel_copy[256];
+    snprintf(channel_copy, sizeof(channel_copy), "%s", g_notify_channel);
+
+    char *platform = channel_copy;
+    char *chat_id = strchr(channel_copy, ':');
+    if (chat_id) {
+        *chat_id = '\0';
+        chat_id++;
+    }
+
     /* Build notification message */
     char notify_msg[4096];
     time_t now = time(NULL);
@@ -135,14 +154,18 @@ bool cron_send_notification(const char *job_name, const char *status,
     strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", tm);
 
     snprintf(notify_msg, sizeof(notify_msg),
-             "{\"event\":\"cron_job\",\"job\":\"%s\",\"status\":\"%s\","
-             "\"time\":\"%s\",\"message\":\"%s\",\"channel\":\"%s\"}",
+             "[cron] Job '%s' %s at %s%s%s",
              job_name, status, ts,
-             message ? message : "",
-             g_notify_channel);
+             message ? ": " : "",
+             message ? message : "");
 
-    /* TODO: In production, this would send via gateway to the channel.
-     * For now, log the notification. */
+    /* Try gateway delivery first */
+    if (g_notify_send_fn && platform && chat_id && chat_id[0]) {
+        if (g_notify_send_fn(platform, chat_id, notify_msg))
+            return true;
+    }
+
+    /* Fallback: log to stderr */
     fprintf(stderr, "[cron-notify] %s\n", notify_msg);
     return true;
 }

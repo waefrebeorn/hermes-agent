@@ -49,7 +49,10 @@ static char *anthropic_build_url(const provider_t *p, const char *base_url) {
  * ================================================================ */
 
 static char *anthropic_build_headers(const provider_t *p, const char *api_key) {
-    (void)p;
+    char *cached = NULL;
+    if (p && provider_get_system_cached(p))
+        cached = "anthropic-beta: ephemeral-cache-2025-05-20\r\n";
+
     char *headers = (char *)malloc(1024);
     if (!headers) return NULL;
 
@@ -57,14 +60,17 @@ static char *anthropic_build_headers(const provider_t *p, const char *api_key) {
         snprintf(headers, 1024,
             "x-api-key: %s\r\n"
             "anthropic-version: 2023-06-01\r\n"
+            "%s"
             "Content-Type: application/json\r\n"
             "Accept: application/json",
-            api_key);
+            api_key, cached ? cached : "");
     } else {
         snprintf(headers, 1024,
             "anthropic-version: 2023-06-01\r\n"
+            "%s"
             "Content-Type: application/json\r\n"
-            "Accept: application/json");
+            "Accept: application/json",
+            cached ? cached : "");
     }
     return headers;
 }
@@ -586,11 +592,17 @@ static provider_response_t *anthropic_parse_stream_chunk(const provider_t *p,
      * 1. Event-lines followed by data-lines
      * 2. Direct "data: {...}" lines (some proxies simplify) */
 
+    /* Handle three input formats used by different callers:
+     * 1. Raw JSON (HTTP parser stripped "data: " prefix)
+     * 2. Full SSE event+data line ("event: ...\ndata: {...}")
+     * 3. Bare "data: {...}" line */
     const char *json_str = NULL;
 
-    /* Try event: ... data: ... pattern */
-    if (strncmp(chunk, "event:", 6) == 0) {
-        /* Next line should be "data: {...}" */
+    if (strncmp(chunk, "{", 1) == 0) {
+        /* Raw JSON — HTTP streaming parser already stripped framing */
+        json_str = chunk;
+    } else if (strncmp(chunk, "event:", 6) == 0) {
+        /* Full SSE: event: ...\ndata: {...} */
         const char *nl = strchr(chunk, '\n');
         if (nl) {
             const char *data_prefix = strstr(nl, "data: ");

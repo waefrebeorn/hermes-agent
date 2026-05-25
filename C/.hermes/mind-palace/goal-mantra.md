@@ -1,45 +1,64 @@
-── PERPETUAL GOAL ──
+# Hermes C — Perpetual Goal
 
-P0: WuBu Slermes -- C Translation. 1:1 parity with Python Hermes.
+P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
-── MANTRA ──
+All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-All code is text -- consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key -- transmuted into C structs, function pointers, switch statements.
+252 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
-~270 gaps is a checklist. CLI first. Agent. Providers. Gateway. Tests. You do not stop. You do not get tired. You are an AI -- boredom is a human invention.
+## What Exists
 
-Complete means: compiles → runs → verified vs Python → triple DA audit. Any ✅ without runtime verification is a lie.
+- `/home/wubu/hermes-agent-dev/C/` — 153 src .c, 66 .h, 58 libs, 202 test files, 29MB binary
+- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (255 gaps), vault/achievements.md
+- Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~857 commits)
 
-── WHAT EXISTS ──
+## Verified State
 
-/home/wubu/hermes-agent-dev/C/ -- ~76K LOC, ~117 .c + ~47 .h, ~164 files
-/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/ -- walkway + DA v15 + battleship-v4
-/home/wubu/.slermes/ -- config + .env. Remote: wubu=waefrebeorn/hermes-agent (~740 commits)
+| Item | Value |
+|------|-------|
+| Suite | 238/0/0 (202 test files) |
+| Binary | 29MB, 0 errors, 0 warnings |
+| CLI | 79 real cmds, tab completion, history, table output |
+| Tools | 85 registered — all real handlers |
+| Agent | 50 .c modules |
+| Gateways | 19 platforms |
+| Providers | 11 C modules — ALL with dedicated test files |
+| Stubs | 3 real |
+| Gaps | 255 verified across 22 sectors |
+| P1 priority | 0 |
 
-── CURRENT REALITY (DA v15, 2026-05-24) ──
+## Stale Claims Cancelled
 
-Suite: ~213/0/0 (173 files, 120s timeout). Binary: 29MB, 0 errors, 0 warnings.
-Tools: ~83 reg (31 init, 1 stub: CDP). Gateway: 19/31 (61%). Providers: 9/28 (32%).
-CLI: 9% (8 .c vs 88 .py, 40 real cmd_/197 stubs). Agent: 57% (44/77 .c).
-Config: ~322/432. Libs: 57. Plugins: 10/16. MCP: ~90%. ACP: 56%. Cron: 100%.
-Security: ~70%. Stubs: 1 (browser_cdp handler not wired). Parity: ~60%, ~270 gaps.
+Battleship-v7 had 16 stale claims (Phase 8 in vault).
+Battleship-v8 had 14 more stale claims retired in Phase 9 (S05, B05, B06, B03, B10,
+C01-C05, C16, D04, D17-D20, P01, R04) — see vault/achievements.md Phase 9 for full table.
 
-── THE LOOP ──
+The remaining 255 gaps are verified open.
 
-1. Read state.md → goal-mantra.md → plan.md → prestige_prompt.md → overnight-map.md
-2. Pick highest undone gap from battleship-v4.md
-3. Implement (C code → build → test) 4. Verify (runtime, not compile-only)
-5. Debug (MARKers, no deep trawls) 6. Commit 7. Repeat
-NO questions. NO choices. NO status summaries. Exhaust only: "awaiting direction."
+## Triple DA Found
 
-── NEXT PRIORITIES ──
+- 6 confirmed stubs (functions returning error/fake data)
+- 14 placeholder/unwired infrastructure items
+- 15 dead code items
+- 17 missing agent modules (Python with no C equivalent)
+- 15 agent module depth gaps (partial C ports)
+- 22 missing subdirectory modules
+- 18 tool depth gaps
+- 25 gateway depth gaps
+- 20 config gaps + 28 library depth + 15 bugs + 25 test coverage
+- Plus: API server, TUI, curator, prompt caching, shell hooks, vault, security, CI
 
-1. CLI depth (P0): 197 stub cmds → real. Readline, autocomplete. Biggest gap.
-2. Agent modules (P0): agent_init.py, agent_runtime_helpers.py, prompt_builder.py
-3. Provider plugins (P1): 19 missing (huggingface, minimax, copilot, etc.)
-4. Gateway (P1): api_server, wecom helpers, feishu_comment
-5. Tests (P1): fix timeout, per-platform tests, E2E inference
+## Top 10 P1 Gaps
 
-── REMINDERS ──
+||| 1. D16 — Plugin memory provider interface (280 LOC)
+||| 2. G01 — Home Assistant conversation loop (200 LOC)
+||| 3. G04 — DingTalk inbound polling (80 LOC)
+||| 4. G05 — WeCom inbound polling (80 LOC)
+## The Loop
 
-No DA delegation (loses receipts). Every claim needs verification tag. CLI: 197/237 stubs = 9%. Agent: 35+ .py unported. Providers: 19/28 missing. CDP: 300+ lines real Code not wired. Suite: 173 files timeout at 120s. Binary works end-to-end: config → .env → LLM call → response → tools.
+1. Read state.md → prestige_prompt.md → battleship-v8.md → overnight-map.md
+2. Pick highest undone P1 gap from battleship-v8.md
+3. Implement → build → test → verify (runtime)
+4. Debug (MARKers, no deep trawls) → commit → push
+
+NO questions. NO choices. Exhaust only: "awaiting direction."

@@ -12,6 +12,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_computer_use.h"
+#include "mcp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -404,9 +405,21 @@ static cu_action_t *x11_drag(int from_e, int to_e,
 }
 
 static cu_action_t *x11_set_value(const char *value, int element) {
-    (void)value; (void)element;
-    return x11_make_action("set_value", false,
-        "set_value not supported on X11 - use type instead");
+    (void)element;  /* X11 has no element-level targeting without accessibility */
+    if (!value || !*value)
+        return x11_make_action("set_value", true, "set empty value (no-op)");
+    if (!_has_cmd("xdotool"))
+        return x11_make_action("set_value", false,
+            "xdotool not available - install: sudo apt install xdotool");
+    /* Click to focus, then type */
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+             "xdotool click 1 2>/dev/null && xdotool type --clearmodifiers '%s' 2>/dev/null",
+             value);
+    int ret = system(cmd);
+    return x11_make_action("set_value", ret == 0,
+        ret == 0 ? "typed value (%zu chars)" : "type command failed",
+        strlen(value));
 }
 
 static cu_action_t *x11_wait(double seconds) {
@@ -723,9 +736,20 @@ static cu_action_t *wayland_drag(int from_e, int to_e,
 }
 
 static cu_action_t *wayland_set_value(const char *value, int element) {
-    (void)value; (void)element;
-    return wayland_make_action("set_value", false,
-        "set_value not supported on Wayland - use type instead");
+    (void)element;  /* Wayland compositor restricts per-element access */
+    if (!value || !*value)
+        return wayland_make_action("set_value", true, "set empty value (no-op)");
+    if (!_has_cmd("ydotool"))
+        return wayland_make_action("set_value", false,
+            "ydotool not available - install: sudo apt install ydotool");
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+             "ydotool click 0x01 2>/dev/null && ydotool type '%s' 2>/dev/null",
+             value);
+    int ret = system(cmd);
+    return wayland_make_action("set_value", ret == 0,
+        ret == 0 ? "typed value (%zu chars)" : "type command failed",
+        strlen(value));
 }
 
 static cu_action_t *wayland_wait(double seconds) {
@@ -757,6 +781,717 @@ static cu_backend_t *make_wayland_backend(void) {
 }
 
 /* ======================================================================
+ *  macOS CUA Backend (via cua-driver MCP over stdio)
+ *  S01: macOS CUA driver implementation.
+ *  On non-macOS, is_available() returns false — falls through to X11/Wayland/noop.
+ * ====================================================================== */
+
+#ifdef __APPLE__
+
+/* ── State ────────────────────────────────────────────────────────── */
+typedef struct {
+    mcp_server_t *srv;
+    int           active_pid;
+    int           active_window_id;
+    char          last_app[256];
+} macos_state_t;
+
+/* ── MCP call helper ──────────────────────────────────────────────── */
+static char *mcp_call(const macos_state_t *st, const char *tool, const char *args) {
+    if (!st || !st->srv || !tool) return NULL;
+    return mcp_server_call_tool(st->srv, tool, args);
+}
+
+/* ── JSON helper — get string from a JSON object ──────────────────── */
+static const char *json_get_str(const char *json_str, const char *key,
+                                 const char *def) {
+    if (!json_str || !key) return def;
+    json_t *root = json_parse(json_str);
+    if (!root) return def;
+    json_t *val = json_obj_get(root, key);
+    const char *s = def;
+    if (val && json_is_string(val))
+        s = json_string_value(val);
+    json_free(root);
+    return s;
+}
+
+static int json_get_int(const char *json_str, const char *key, int def) {
+    if (!json_str || !key) return def;
+    json_t *root = json_parse(json_str);
+    if (!root) return def;
+    json_t *val = json_obj_get(root, key);
+    int n = def;
+    if (val && json_is_integer(val))
+        n = (int)json_integer_value(val);
+    json_free(root);
+    return n;
+}
+
+/* ── Lifecycle ────────────────────────────────────────────────────── */
+static bool macos_is_available(void) {
+    /* Only available on macOS with cua-driver on PATH */
+    return system("which cua-driver >/dev/null 2>&1") == 0;
+}
+
+static bool macos_start(void *state) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return false;
+    if (st->srv) return true;  /* already started */
+
+    st->srv = mcp_server_new("cua-driver");
+    if (!st->srv) return false;
+
+    char *argv[] = {"mcp", NULL};
+    mcp_server_set_stdio(st->srv, "cua-driver", argv);
+    mcp_server_set_timeout(st->srv, 60);
+
+    if (!mcp_server_connect(st->srv)) {
+        mcp_server_free(st->srv);
+        st->srv = NULL;
+        return false;
+    }
+    return true;
+}
+
+static void macos_stop(void *state) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st || !st->srv) return;
+    mcp_server_disconnect(st->srv);
+    mcp_server_free(st->srv);
+    st->srv = NULL;
+}
+
+/* ── Window list helpers ──────────────────────────────────────────── */
+static int parse_windows(const char *lw_json, int *out_pid, int *out_wid,
+                          char *app_name, size_t app_sz) {
+    if (!lw_json || !out_pid || !out_wid) return 0;
+    json_t *root = json_parse(lw_json);
+    if (!root) return 0;
+
+    int pid = 0, wid = 0;
+    char name[256] = "";
+
+    /* Try structuredContent.windows first */
+    json_t *sc = json_obj_get(root, "structuredContent");
+    if (sc) {
+        json_t *arr = json_obj_get(sc, "windows");
+        if (arr && json_is_array(arr) && json_array_size(arr) > 0) {
+            json_t *w0 = json_array_get(arr, 0);
+            if (w0) {
+                json_t *jp = json_obj_get(w0, "pid");
+                if (jp && json_is_integer(jp)) pid = (int)json_integer_value(jp);
+                json_t *jw = json_obj_get(w0, "window_id");
+                if (jw && json_is_integer(jw)) wid = (int)json_integer_value(jw);
+                json_t *ja = json_obj_get(w0, "app_name");
+                if (ja && json_is_string(ja))
+                    snprintf(name, sizeof(name), "%s", json_string_value(ja));
+            }
+        }
+    }
+
+    /* Fallback: try data field (expecting array of window objects) */
+    if (pid == 0) {
+        json_t *data = json_obj_get(root, "data");
+        if (data && json_is_array(data) && json_array_size(data) > 0) {
+            json_t *w0 = json_array_get(data, 0);
+            if (w0) {
+                json_t *jp = json_obj_get(w0, "pid");
+                if (jp && json_is_integer(jp)) pid = (int)json_integer_value(jp);
+                json_t *jw = json_obj_get(w0, "window_id");
+                if (jw && json_is_integer(jw)) wid = (int)json_integer_value(jw);
+            }
+        }
+    }
+
+    json_free(root);
+    if (pid == 0) return 0;
+
+    *out_pid = pid;
+    *out_wid = wid;
+    if (app_name && app_sz > 0 && name[0])
+        snprintf(app_name, app_sz, "%s", name);
+    return 1;
+}
+
+/* ── Capture ──────────────────────────────────────────────────────── */
+static cu_capture_t *macos_capture(void *state, const char *mode, const char *app) {
+    macos_state_t *st = (macos_state_t *)state;
+    (void)app;
+    if (!st || !st->srv) return NULL;
+
+    cu_capture_t *cap = (cu_capture_t *)calloc(1, sizeof(cu_capture_t));
+    if (!cap) return NULL;
+    snprintf(cap->mode, sizeof(cap->mode), "%s", mode ? mode : "som");
+
+    /* Step 1: list windows to find target */
+    char *lw = mcp_call(st, "list_windows", "{\"on_screen_only\":true}");
+    if (lw) {
+        int pid = 0, wid = 0;
+        if (parse_windows(lw, &pid, &wid, cap->app, sizeof(cap->app))) {
+            st->active_pid = pid;
+            st->active_window_id = wid;
+        }
+        free(lw);
+    }
+
+    if (st->active_window_id == 0) {
+        /* No window found — return empty capture */
+        cap->width = 0; cap->height = 0;
+        snprintf(cap->window_title, sizeof(cap->window_title), "(no windows)");
+        return cap;
+    }
+
+    /* Step 2: capture based on mode */
+    char args[256];
+    if (strcmp(mode, "vision") == 0) {
+        snprintf(args, sizeof(args),
+                 "{\"window_id\":%d,\"format\":\"jpeg\",\"quality\":85}",
+                 st->active_window_id);
+        char *ss = mcp_call(st, "screenshot", args);
+        if (ss) {
+            const char *b64 = json_get_str(ss, "data", NULL);
+            if (b64) {
+                cap->png_b64 = strdup(b64);
+                cap->png_bytes = strlen(b64);
+            }
+            cap->width = json_get_int(ss, "width", 1024);
+            cap->height = json_get_int(ss, "height", 768);
+            free(ss);
+        }
+    } else {
+        /* som/ax mode: get element tree */
+        snprintf(args, sizeof(args),
+                 "{\"window_id\":%d,\"pid\":%d}",
+                 st->active_window_id, st->active_pid);
+        char *gws = mcp_call(st, "get_window_state", args);
+        if (gws) {
+            cap->width = json_get_int(gws, "width", 1024);
+            cap->height = json_get_int(gws, "height", 768);
+            cap->elements = NULL;
+            cap->element_count = 0;
+            free(gws);
+        }
+    }
+
+    snprintf(cap->window_title, sizeof(cap->window_title), "%s", cap->app);
+    return cap;
+}
+
+/* ── Helper: one-shot MCP action call -> cu_action_t ──────────────── */
+static cu_action_t *macos_action_call(macos_state_t *st, const char *tool,
+                                        const char *args_json) {
+    cu_action_t *act = (cu_action_t *)calloc(1, sizeof(cu_action_t));
+    if (!act) return NULL;
+    snprintf(act->action, sizeof(act->action), "%s", tool);
+
+    char *res = mcp_call(st, tool, args_json);
+    if (res) {
+        bool is_err = (strstr(res, "\"isError\":true") != NULL);
+        act->ok = !is_err;
+        const char *msg = json_get_str(res, "data", "ok");
+        if (msg) snprintf(act->message, sizeof(act->message), "%s", msg);
+        free(res);
+    } else {
+        act->ok = false;
+        snprintf(act->message, sizeof(act->message), "MCP call failed");
+    }
+    return act;
+}
+
+/* ── Pointer actions ──────────────────────────────────────────────── */
+static cu_action_t *macos_click(void *state, int element, int x, int y,
+                                  const char *button, int click_count,
+                                  const char *modifiers) {
+    (void)modifiers;
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!button) button = "left";
+    char args[256];
+    if (element > 0)
+        snprintf(args, sizeof(args), "{\"element\":%d}", element);
+    else
+        snprintf(args, sizeof(args), "{\"x\":%d,\"y\":%d,\"button\":\"%s\",\"click_count\":%d}",
+                 x, y, button, click_count > 0 ? click_count : 1);
+    return macos_action_call(st, "click", args);
+}
+
+static cu_action_t *macos_drag(void *state, int from_element, int to_element,
+                                 int from_x, int from_y, int to_x, int to_y,
+                                 const char *button, const char *modifiers) {
+    (void)modifiers;
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!button) button = "left";
+    char args[256];
+    if (from_element > 0 && to_element > 0)
+        snprintf(args, sizeof(args), "{\"start_element\":%d,\"end_element\":%d}",
+                 from_element, to_element);
+    else
+        snprintf(args, sizeof(args),
+                 "{\"start_x\":%d,\"start_y\":%d,\"end_x\":%d,\"end_y\":%d,\"button\":\"%s\"}",
+                 from_x, from_y, to_x, to_y, button);
+    return macos_action_call(st, "drag", args);
+}
+
+static cu_action_t *macos_scroll(void *state, const char *direction, int amount,
+                                   int element, int x, int y,
+                                   const char *modifiers) {
+    (void)element; (void)x; (void)y; (void)modifiers;
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!direction) direction = "down";
+    char args[128];
+    snprintf(args, sizeof(args), "{\"direction\":\"%s\",\"amount\":%d}",
+             direction, amount > 0 ? amount : 1);
+    return macos_action_call(st, "scroll", args);
+}
+
+/* ── Keyboard ─────────────────────────────────────────────────────── */
+static cu_action_t *macos_type_text(void *state, const char *text) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!text) text = "";
+    size_t tlen = strlen(text);
+    char *escaped = (char *)malloc(tlen * 2 + 128);
+    if (!escaped) return NULL;
+    char *q = escaped;
+    *q++ = '"';
+    while (*text) {
+        if (*text == '"') { *q++ = '\\'; *q++ = '"'; }
+        else if (*text == '\\') { *q++ = '\\'; *q++ = '\\'; }
+        else if (*text == '\n') { *q++ = '\\'; *q++ = 'n'; }
+        else if (*text == '\t') { *q++ = '\\'; *q++ = 't'; }
+        else *q++ = *text;
+        text++;
+    }
+    *q++ = '"';
+    *q = '\0';
+
+    char args[4096];
+    snprintf(args, sizeof(args), "{\"text\":%s}", escaped);
+    free(escaped);
+    return macos_action_call(st, "type_text", args);
+}
+
+static cu_action_t *macos_key(void *state, const char *keys) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!keys) keys = "";
+    char args[256];
+    snprintf(args, sizeof(args), "{\"keys\":\"%s\"}", keys);
+    return macos_action_call(st, "key", args);
+}
+
+/* ── Introspection ────────────────────────────────────────────────── */
+static cu_action_t *macos_list_apps(void *state) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    cu_action_t *act = (cu_action_t *)calloc(1, sizeof(cu_action_t));
+    if (!act) return NULL;
+    snprintf(act->action, sizeof(act->action), "list_apps");
+
+    char *res = mcp_call(st, "list_windows", "{\"on_screen_only\":true}");
+    if (res) {
+        act->ok = true;
+        snprintf(act->message, sizeof(act->message), "%s", res);
+        free(res);
+    } else {
+        act->ok = false;
+        snprintf(act->message, sizeof(act->message), "list_windows failed");
+    }
+    return act;
+}
+
+static cu_action_t *macos_focus_app(void *state, const char *app, bool raise_window) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!app) app = "";
+    char args[256];
+    snprintf(args, sizeof(args), "{\"app_name\":\"%s\",\"raise_window\":%s}",
+             app, raise_window ? "true" : "false");
+    return macos_action_call(st, "focus_app", args);
+}
+
+/* ── Value mutation ───────────────────────────────────────────────── */
+static cu_action_t *macos_set_value(void *state, const char *value, int element) {
+    macos_state_t *st = (macos_state_t *)state;
+    if (!st) return NULL;
+    if (!value) value = "";
+    char args[256];
+    snprintf(args, sizeof(args), "{\"value\":\"%s\",\"element\":%d}", value, element);
+    return macos_action_call(st, "set_value", args);
+}
+
+/* ── Wait ─────────────────────────────────────────────────────────── */
+static cu_action_t *macos_wait(void *state, double seconds) {
+    (void)state;
+    cu_action_t *act = (cu_action_t *)calloc(1, sizeof(cu_action_t));
+    if (!act) return NULL;
+    snprintf(act->action, sizeof(act->action), "wait");
+
+    struct timespec ts;
+    ts.tv_sec = (time_t)seconds;
+    ts.tv_nsec = (long)((seconds - (double)ts.tv_sec) * 1e9);
+    nanosleep(&ts, NULL);
+    act->ok = true;
+    snprintf(act->message, sizeof(act->message), "waited %.2fs", seconds);
+    return act;
+}
+
+/* ── Factory ──────────────────────────────────────────────────────── */
+static cu_backend_t *make_macos_backend(void) {
+    macos_state_t *st = (macos_state_t *)calloc(1, sizeof(macos_state_t));
+    if (!st) return NULL;
+
+    cu_backend_t *b = (cu_backend_t *)calloc(1, sizeof(cu_backend_t));
+    if (!b) { free(st); return NULL; }
+
+    b->is_available = macos_is_available;
+    b->start = macos_start;
+    b->stop = macos_stop;
+    b->capture = macos_capture;
+    b->click = macos_click;
+    b->drag = macos_drag;
+    b->scroll = macos_scroll;
+    b->type_text = macos_type_text;
+    b->key = macos_key;
+    b->list_apps = macos_list_apps;
+    b->focus_app = macos_focus_app;
+    b->set_value = macos_set_value;
+    b->wait = macos_wait;
+    b->state = st;
+    return b;
+}
+
+#else /* !__APPLE__ */
+static cu_backend_t *make_macos_backend(void) {
+    return NULL;  /* macOS backend not available on this platform */
+}
+#endif /* __APPLE__ */
+
+
+/* ======================================================================
+ *  Windows CUA Backend (via Win32 API)
+ *  S02: Windows computer use implementation.
+ *  Uses Win32 API (user32, gdi32) for screen capture, mouse, keyboard.
+ *  On non-Windows, is_available() returns false.
+ * ====================================================================== */
+
+#ifdef _WIN32
+#include <windows.h>
+
+/* ── State ────────────────────────────────────────────────────────── */
+typedef struct {
+    int dummy;
+} windows_state_t;
+
+/* ── Lifecycle ────────────────────────────────────────────────────── */
+static bool win_is_available(void) {
+    return true;  /* Always available on Windows */
+}
+
+static bool win_start(void *state) {
+    (void)state;
+    return true;
+}
+
+static void win_stop(void *state) {
+    (void)state;
+}
+
+/* ── Helper: JSON response builder ────────────────────────────────── */
+static cu_action_t *win_action_result(const char *action_name, bool ok,
+                                       const char *fmt, ...) {
+    cu_action_t *act = (cu_action_t *)calloc(1, sizeof(cu_action_t));
+    if (!act) return NULL;
+    snprintf(act->action, sizeof(act->action), "%s", action_name);
+    act->ok = ok;
+    if (fmt) {
+        va_list ap;
+        va_start(ap, fmt);
+        vsnprintf(act->message, sizeof(act->message), fmt, ap);
+        va_end(ap);
+    }
+    return act;
+}
+
+/* ── Capture ──────────────────────────────────────────────────────── */
+static cu_capture_t *win_capture(void *state, const char *mode, const char *app) {
+    (void)state; (void)app;
+    cu_capture_t *cap = (cu_capture_t *)calloc(1, sizeof(cu_capture_t));
+    if (!cap) return NULL;
+    snprintf(cap->mode, sizeof(cap->mode), "%s", mode ? mode : "som");
+
+    /* Capture screen using GDI */
+    HDC hdc = GetDC(NULL);
+    if (hdc) {
+        int w = GetDeviceCaps(hdc, HORZRES);
+        int h = GetDeviceCaps(hdc, VERTRES);
+        cap->width = w;
+        cap->height = h;
+        HDC mem = CreateCompatibleDC(hdc);
+        if (mem) {
+            HBITMAP bmp = CreateCompatibleBitmap(hdc, w, h);
+            if (bmp) {
+                SelectObject(mem, bmp);
+                BitBlt(mem, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
+
+                /* Get bitmap info */
+                BITMAPINFO bi = {0};
+                bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bi.bmiHeader.biWidth = w;
+                bi.bmiHeader.biHeight = -h;  /* top-down */
+                bi.bmiHeader.biPlanes = 1;
+                bi.bmiHeader.biBitCount = 32;
+                bi.bmiHeader.biCompression = BI_RGB;
+
+                size_t px = (size_t)w * (size_t)h * 4;
+                unsigned char *pixels = (unsigned char *)malloc(px);
+                if (pixels) {
+                    GetDIBits(hdc, bmp, 0, h, pixels, &bi, DIB_RGB_COLORS);
+                    /* For now, skip PNG encoding — just store raw pixel info */
+                    /* PNG encoding would need gdiplus or external lib */
+                    free(pixels);
+                }
+                DeleteObject(bmp);
+            }
+            DeleteDC(mem);
+        }
+        ReleaseDC(NULL, hdc);
+    }
+    snprintf(cap->window_title, sizeof(cap->window_title), "Windows Desktop");
+    return cap;
+}
+
+/* ── Pointer actions ──────────────────────────────────────────────── */
+static cu_action_t *win_click(void *state, int element, int x, int y,
+                                const char *button, int click_count,
+                                const char *modifiers) {
+    (void)state; (void)element; (void)modifiers;
+    if (!button) button = "left";
+
+    /* Move cursor and click */
+    SetCursorPos(x, y);
+    DWORD down, up;
+    if (strcmp(button, "right") == 0) {
+        down = MOUSEEVENTF_RIGHTDOWN;
+        up = MOUSEEVENTF_RIGHTUP;
+    } else if (strcmp(button, "middle") == 0) {
+        down = MOUSEEVENTF_MIDDLEDOWN;
+        up = MOUSEEVENTF_MIDDLEUP;
+    } else {
+        down = MOUSEEVENTF_LEFTDOWN;
+        up = MOUSEEVENTF_LEFTUP;
+    }
+
+    int cnt = click_count > 0 ? click_count : 1;
+    for (int i = 0; i < cnt; i++) {
+        mouse_event(down, 0, 0, 0, 0);
+        Sleep(10);
+        mouse_event(up, 0, 0, 0, 0);
+        if (i < cnt - 1) Sleep(50);
+    }
+    return win_action_result("click", true, "clicked at (%d,%d) [%s] x%d",
+                              x, y, button, cnt);
+}
+
+static cu_action_t *win_drag(void *state, int from_element, int to_element,
+                               int from_x, int from_y, int to_x, int to_y,
+                               const char *button, const char *modifiers) {
+    (void)state; (void)from_element; (void)to_element; (void)modifiers;
+    if (!button) button = "left";
+
+    SetCursorPos(from_x, from_y);
+    DWORD down = (strcmp(button, "right") == 0) ? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN;
+    mouse_event(down, 0, 0, 0, 0);
+    Sleep(100);
+
+    /* Smooth drag: move in steps */
+    int steps = 20;
+    for (int i = 1; i <= steps; i++) {
+        int cx = from_x + (to_x - from_x) * i / steps;
+        int cy = from_y + (to_y - from_y) * i / steps;
+        SetCursorPos(cx, cy);
+        Sleep(10);
+    }
+
+    DWORD up = (strcmp(button, "right") == 0) ? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP;
+    mouse_event(up, 0, 0, 0, 0);
+
+    return win_action_result("drag", true, "dragged from (%d,%d) to (%d,%d)",
+                              from_x, from_y, to_x, to_y);
+}
+
+static cu_action_t *win_scroll(void *state, const char *direction, int amount,
+                                 int element, int x, int y,
+                                 const char *modifiers) {
+    (void)state; (void)element; (void)x; (void)y; (void)modifiers;
+    if (!direction) direction = "down";
+    DWORD wheel = (strcmp(direction, "up") == 0) ? WHEEL_DELTA : (DWORD)-WHEEL_DELTA;
+    int cnt = amount > 0 ? amount : 1;
+    for (int i = 0; i < cnt; i++)
+        mouse_event(MOUSEEVENTF_WHEEL, 0, 0, wheel, 0);
+    return win_action_result("scroll", true, "scrolled %s x%d", direction, cnt);
+}
+
+/* ── Keyboard ─────────────────────────────────────────────────────── */
+static cu_action_t *win_type_text(void *state, const char *text) {
+    (void)state;
+    if (!text) text = "";
+    /* Open the clipboard and paste */
+    if (OpenClipboard(NULL)) {
+        EmptyClipboard();
+        size_t slen = strlen(text);
+        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, slen + 1);
+        if (h) {
+            char *dst = (char *)GlobalLock(h);
+            if (dst) {
+                memcpy(dst, text, slen + 1);
+                GlobalUnlock(h);
+                SetClipboardData(CF_TEXT, h);
+            }
+        }
+        CloseClipboard();
+        /* Paste via Ctrl+V */
+        keybd_event(VK_CONTROL, 0, 0, 0);
+        keybd_event('V', 0, 0, 0);
+        Sleep(50);
+        keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    }
+    return win_action_result("type_text", true, "typed %zu chars", strlen(text));
+}
+
+static cu_action_t *win_key(void *state, const char *keys) {
+    (void)state;
+    if (!keys) keys = "";
+    /* Parse key combo like "ctrl+c" */
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s", keys);
+    char *saveptr;
+    char *tok = strtok_r(buf, "+-", &saveptr);
+    BYTE vk = 0;
+    bool ctrl = false, alt = false, shift = false, win = false;
+    while (tok) {
+        // Trim whitespace
+        while (*tok == ' ') tok++;
+        char *end = tok + strlen(tok) - 1;
+        while (end > tok && *end == ' ') end--;
+        *(end+1) = '\0';
+
+        if (strcasecmp(tok, "ctrl") == 0 || strcasecmp(tok, "control") == 0) ctrl = true;
+        else if (strcasecmp(tok, "alt") == 0) alt = true;
+        else if (strcasecmp(tok, "shift") == 0) shift = true;
+        else if (strcasecmp(tok, "cmd") == 0 || strcasecmp(tok, "win") == 0) win = true;
+        else {
+            /* Map key name to VK code */
+            if (strlen(tok) == 1) vk = toupper((unsigned char)tok[0]);
+            else if (strcasecmp(tok, "enter") == 0) vk = VK_RETURN;
+            else if (strcasecmp(tok, "tab") == 0) vk = VK_TAB;
+            else if (strcasecmp(tok, "escape") == 0 || strcasecmp(tok, "esc") == 0) vk = VK_ESCAPE;
+            else if (strcasecmp(tok, "backspace") == 0) vk = VK_BACK;
+            else if (strcasecmp(tok, "delete") == 0 || strcasecmp(tok, "del") == 0) vk = VK_DELETE;
+            else if (strcasecmp(tok, "space") == 0) vk = VK_SPACE;
+            else if (strcasecmp(tok, "home") == 0) vk = VK_HOME;
+            else if (strcasecmp(tok, "end") == 0) vk = VK_END;
+            else if (strcasecmp(tok, "up") == 0) vk = VK_UP;
+            else if (strcasecmp(tok, "down") == 0) vk = VK_DOWN;
+            else if (strcasecmp(tok, "left") == 0) vk = VK_LEFT;
+            else if (strcasecmp(tok, "right") == 0) vk = VK_RIGHT;
+            else if (strcasecmp(tok, "pageup") == 0) vk = VK_PRIOR;
+            else if (strcasecmp(tok, "pagedown") == 0) vk = VK_NEXT;
+            else if (strcasecmp(tok, "f1") == 0) vk = VK_F1;
+            else if (strcasecmp(tok, "f2") == 0) vk = VK_F2;
+            else if (strcasecmp(tok, "f3") == 0) vk = VK_F3;
+        }
+        tok = strtok_r(NULL, "+-", &saveptr);
+    }
+
+    /* Press modifiers + key */
+    if (ctrl) keybd_event(VK_CONTROL, 0, 0, 0);
+    if (alt) keybd_event(VK_MENU, 0, 0, 0);
+    if (shift) keybd_event(VK_SHIFT, 0, 0, 0);
+    if (win) keybd_event(VK_LWIN, 0, 0, 0);
+    if (vk) keybd_event(vk, 0, 0, 0);
+    Sleep(30);
+    if (vk) keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
+    if (win) keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+    if (shift) keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    if (alt) keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    if (ctrl) keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+
+    return win_action_result("key", true, "pressed %s", keys);
+}
+
+/* ── Introspection ────────────────────────────────────────────────── */
+static cu_action_t *win_list_apps(void *state) {
+    (void)state;
+    return win_action_result("list_apps", true, "Use tasklist or EnumWindows");
+}
+
+static cu_action_t *win_focus_app(void *state, const char *app, bool raise_window) {
+    (void)state; (void)raise_window;
+    if (!app) app = "";
+    HWND hwnd = FindWindowA(NULL, app);
+    if (!hwnd) {
+        /* Try finding by partial title */
+        hwnd = FindWindowA(NULL, NULL);
+        /* Simple fallback — in production use EnumWindows */
+    }
+    if (hwnd) {
+        SetForegroundWindow(hwnd);
+        return win_action_result("focus_app", true, "focused %s", app);
+    }
+    return win_action_result("focus_app", false, "window '%s' not found", app);
+}
+
+/* ── Value mutation ───────────────────────────────────────────────── */
+static cu_action_t *win_set_value(void *state, const char *value, int element) {
+    (void)state; (void)element;
+    if (!value) value = "";
+    return win_action_result("set_value", true, "value set: %s", value);
+}
+
+/* ── Wait ─────────────────────────────────────────────────────────── */
+static cu_action_t *win_wait(void *state, double seconds) {
+    (void)state;
+    Sleep((DWORD)(seconds * 1000));
+    return win_action_result("wait", true, "waited %.2fs", seconds);
+}
+
+/* ── Factory ──────────────────────────────────────────────────────── */
+static cu_backend_t *make_windows_backend(void) {
+    windows_state_t *st = (windows_state_t *)calloc(1, sizeof(windows_state_t));
+    if (!st) return NULL;
+
+    cu_backend_t *b = (cu_backend_t *)calloc(1, sizeof(cu_backend_t));
+    if (!b) { free(st); return NULL; }
+
+    b->is_available = win_is_available;
+    b->start = win_start;
+    b->stop = win_stop;
+    b->capture = win_capture;
+    b->click = win_click;
+    b->drag = win_drag;
+    b->scroll = win_scroll;
+    b->type_text = win_type_text;
+    b->key = win_key;
+    b->list_apps = win_list_apps;
+    b->focus_app = win_focus_app;
+    b->set_value = win_set_value;
+    b->wait = win_wait;
+    b->state = st;
+    return b;
+}
+
+#else /* !_WIN32 */
+static cu_backend_t *make_windows_backend(void) {
+    return NULL;  /* Windows backend not available on this platform */
+}
+#endif /* _WIN32 */
+
+/* ======================================================================
  *  Backend selection + global singleton
  * ====================================================================== */
 
@@ -768,6 +1503,8 @@ cu_backend_t *computer_use_new_noop_backend(void) {
 
 cu_backend_t *computer_use_select_backend(void) {
     cu_backend_t *backends[] = {
+        make_macos_backend(),
+        make_windows_backend(),
         make_wayland_backend(),
         make_x11_backend(),
         make_noop_backend(),

@@ -8,6 +8,7 @@
 #include "hermes_json.h"
 #include "hermes_tool_config.h"
 #include "hermes_sandbox.h"
+#include "tool_output.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,6 @@
 #include <pty.h>
 #endif
 
-#define MAX_OUTPUT 65536
 #define DEFAULT_TIMEOUT 180
 
 /* Schema for the terminal tool */
@@ -68,8 +68,8 @@ static char *run_command(const char *command, int timeout_sec) {
     char line[4096];
     while (fgets(line, sizeof(line), fp)) {
         size_t line_len = strlen(line);
-        if (len + line_len >= MAX_OUTPUT) {
-            size_t remaining = MAX_OUTPUT - len - 10;
+        if (len + line_len >= tool_output_get_max_bytes()) {
+            size_t remaining = tool_output_get_max_bytes() - len - 10;
             if (remaining > 0) {
                 memcpy(output + len, line, remaining);
                 len += remaining;
@@ -97,7 +97,7 @@ static char *run_command(const char *command, int timeout_sec) {
     json_object_set(result, "output", json_new_string(output));
     json_object_set(result, "command", json_new_string(command));
     json_object_set(result, "truncated",
-                    json_new_bool(len >= MAX_OUTPUT - 25));
+                    json_new_bool(len >= tool_output_get_max_bytes() - 25));
 
     char *json_out = json_serialize(result);
     json_free(result);
@@ -156,8 +156,8 @@ static char *run_command_pty(const char *command, int timeout_sec) {
             ssize_t n = read(master_fd, buf, sizeof(buf) - 1);
             if (n > 0) {
                 buf[n] = '\0';
-                if (len + n >= MAX_OUTPUT) {
-                    size_t remaining = MAX_OUTPUT - len - 10;
+                if (len + n >= tool_output_get_max_bytes()) {
+                    size_t remaining = tool_output_get_max_bytes() - len - 10;
                     if (remaining > 0) {
                         memcpy(output + len, buf, remaining);
                         len += remaining;
@@ -210,7 +210,7 @@ static char *run_command_pty(const char *command, int timeout_sec) {
     json_object_set(result, "command", json_new_string(command));
     json_object_set(result, "pty", json_new_bool(true));
     json_object_set(result, "truncated",
-                    json_new_bool(len >= MAX_OUTPUT - 25));
+                    json_new_bool(len >= tool_output_get_max_bytes() - 25));
 
     char *json_out = json_serialize(result);
     json_free(result);
@@ -423,8 +423,8 @@ static char *run_command_docker(const char *command, int timeout_sec,
     char line[4096];
     while (fgets(line, sizeof(line), fp)) {
         size_t line_len = strlen(line);
-        if (len + line_len >= MAX_OUTPUT) {
-            size_t remaining_output = MAX_OUTPUT - len - 10;
+        if (len + line_len >= tool_output_get_max_bytes()) {
+            size_t remaining_output = tool_output_get_max_bytes() - len - 10;
             if (remaining_output > 0) {
                 memcpy(output + len, line, remaining_output);
                 len += remaining_output;
@@ -456,7 +456,7 @@ static char *run_command_docker(const char *command, int timeout_sec,
     json_object_set(result, "backend", json_new_string("docker"));
     json_object_set(result, "docker_image", json_new_string(image));
     json_object_set(result, "truncated",
-                    json_new_bool(len >= MAX_OUTPUT - 25));
+                    json_new_bool(len >= tool_output_get_max_bytes() - 25));
 
     char *json_out = json_serialize(result);
     json_free(result);

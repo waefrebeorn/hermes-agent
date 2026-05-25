@@ -43,6 +43,25 @@ static const char *ALLOWED_SUBDIRS[] = {
 
 static char *get_skills_dir(void) {
     static char buf[MAX_PATH];
+
+    /* Check configured skill_search_paths env var first (comma-sep paths) */
+    const char *cfg_paths = getenv("HERMES_SKILL_SEARCH_PATHS");
+    if (cfg_paths && cfg_paths[0]) {
+        /* Return first configured path */
+        const char *comma = strchr(cfg_paths, ',');
+        size_t len = comma ? (size_t)(comma - cfg_paths) : strlen(cfg_paths);
+        if (len > 0 && len < MAX_PATH) {
+            memcpy(buf, cfg_paths, len);
+            buf[len] = '\0';
+            /* Trim trailing whitespace */
+            while (len > 0 && (buf[len-1] == ' ' || buf[len-1] == '\t'))
+                buf[--len] = '\0';
+            struct stat st;
+            if (stat(buf, &st) == 0 && S_ISDIR(st.st_mode))
+                return buf;
+        }
+    }
+
     const char *home = getenv("HERMES_HOME");
     if (!home) home = getenv("HOME");
     if (!home) home = "/tmp";

@@ -70,7 +70,10 @@ int hermes_plugin_cfg_inject(const hermes_config_t *cfg, plugin_t *p) {
     }
 
     /* Try to call plugin_configure() if the plugin exports it */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     int (*cfg_fn)(const char *) = (int (*)(const char *))plugin_symbol(p, "plugin_configure");
+#pragma GCC diagnostic pop
 
     if (cfg_fn) {
         char *json = hermes_plugin_cfg_to_json(&block);
@@ -223,7 +226,10 @@ int hermes_plugin_init_enabled(plugin_registry_t *reg, const hermes_config_t *cf
         hermes_plugin_cfg_inject(cfg, reg->plugins[i]);
 
         if (plugin_is_initialized(reg->plugins[i])) { ok++; continue; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
         int (*init_fn)(void) = (int (*)(void))plugin_symbol(reg->plugins[i], "plugin_init");
+#pragma GCC diagnostic pop
         if (init_fn) {
             if (init_fn() == 0) {
                 plugin_set_initialized(reg->plugins[i], true);

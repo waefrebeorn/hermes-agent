@@ -133,21 +133,63 @@ int main(void) {
          strstr(content, "abc") == NULL);
     free(content);
 
-    /* 7. old_string not found */
-    write_file(testfile, "some random content");
+    /* 7. old_string not found (exact + fuzzy) */
+    write_file(testfile, "some random content is here");
     r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"NONEXISTENT\"}", NULL));
     TEST("patch old_string not found returns error",
          r && strstr(result_get_str(r, "error", ""), "not found") != NULL);
     json_free(r);
 
-    /* 8. empty old_string */
+    /* 8. fuzzy: line_trimmed — extra whitespace on lines */
+    write_file(testfile, "int main(void) {\n    return 0;\n}\n");
+    r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"  int main(void) {\\n  return 0;\\n  }\",\"new_string\":\"int main() {\\n  return 1;\\n}\"}", NULL));
+    TEST("patch fuzzy line_trimmed returns success",
+         r && json_object_get_bool(r, "success", false));
+    TEST("patch fuzzy line_trimmed strategy != exact",
+         r && strcmp(result_get_str(r, "strategy", ""), "exact") != 0);
+    json_free(r);
+    content = read_file(testfile);
+    TEST("patch fuzzy line_trimmed content correct",
+         content && strstr(content, "return 1") != NULL);
+    free(content);
+
+    /* 9. fuzzy: whitespace_normalized — extra middle spaces */
+    write_file(testfile, "Hello    World   Foo");
+    r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"Hello World Foo\",\"new_string\":\"Hi There\"}", NULL));
+    TEST("patch fuzzy whitespace_normalized returns success",
+         r && json_object_get_bool(r, "success", false));
+    json_free(r);
+    content = read_file(testfile);
+    TEST("patch fuzzy whitespace_normalized content correct",
+         content && strstr(content, "Hi There") != NULL);
+    free(content);
+
+    /* 10. fuzzy: indentation_flexible — different leading whitespace */
+    write_file(testfile, "        leading spaces here\n        more indented");
+    r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"  leading spaces here\\n  more indented\",\"new_string\":\"done\"}", NULL));
+    TEST("patch fuzzy indentation_flexible returns success",
+         r && json_object_get_bool(r, "success", false));
+    json_free(r);
+    content = read_file(testfile);
+    TEST("patch fuzzy indentation_flexible content correct",
+         content && strstr(content, "done") != NULL);
+    free(content);
+
+    /* 11. exact match still uses exact strategy */
+    write_file(testfile, "exact match test");
+    r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"exact match\",\"new_string\":\"EXACT MATCH\"}", NULL));
+    TEST("patch exact match uses exact strategy",
+         r && strcmp(result_get_str(r, "strategy", ""), "exact") == 0);
+    json_free(r);
+
+    /* 12. empty old_string */
     write_file(testfile, "content");
     r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"\"}", NULL));
     TEST("patch empty old_string returns error",
          r && strstr(result_get_str(r, "error", ""), "empty") != NULL);
     json_free(r);
 
-    /* 9. replace with empty new_string (delete) */
+    /* 13. replace with empty new_string (delete) */
     write_file(testfile, "Hello World");
     r = parse_result(patch_handler("{\"path\":\"/tmp/hermes_test_patch.txt\",\"old_string\":\"Hello \",\"new_string\":\"\"}", NULL));
     TEST("patch delete (empty new_string) returns success",
@@ -159,7 +201,7 @@ int main(void) {
          content && strcmp(content, "World") == 0);
     free(content);
 
-    /* 10. JSON parse error */
+    /* 14. JSON parse error */
     r = parse_result(patch_handler("{invalid json}", NULL));
     TEST("patch JSON parse error",
          r && strstr(result_get_str(r, "error", ""), "JSON parse") != NULL);

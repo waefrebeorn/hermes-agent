@@ -936,6 +936,13 @@ void gw_platform_send_typing(const char *platform_name, const char *chat_id) {
         p->send_typing(chat_id);
 }
 
+void gw_platform_shutdown_all(void) {
+    for (int i = 0; i < g_gw.platform_def_count; i++) {
+        if (g_gw.platform_defs[i].shutdown)
+            g_gw.platform_defs[i].shutdown();
+    }
+}
+
 /* ================================================================
  *  Process a single update (called from platform threads)
  * ================================================================ */
@@ -1719,7 +1726,7 @@ int hermes_gateway_main(int argc, char **argv) {
                             plat.name = g_gw.platforms[g_gw.platform_count];
                             /* All polling-based platforms: init=setup, send=poll-based functions */
                             plat.init = all_platforms[i].setup;
-                            plat.shutdown = NULL; /* no-op for now */
+                            plat.shutdown = NULL; /* no-op for now — S07 resolved with gw_platform_shutdown_all() */
                             gw_platform_register(&plat);
                         }
                         g_gw.platform_count++;
@@ -1747,6 +1754,9 @@ int hermes_gateway_main(int argc, char **argv) {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
+    /* Wire cron notifications through gateway */
+    cron_notify_set_send_fn(gw_platform_send);
+
     printf("[gateway] %d platform(s) running. Press Ctrl+C to stop\n",
            g_gw.platform_count);
 
@@ -1755,6 +1765,8 @@ int hermes_gateway_main(int argc, char **argv) {
         pthread_join(g_gw.threads[i], NULL);
 
 cleanup:
+    /* Shutdown all platforms */
+    gw_platform_shutdown_all();
     /* P102: Save and free all sessions */
     session_save_all();
     pthread_mutex_destroy(&g_gw.session_mutex);

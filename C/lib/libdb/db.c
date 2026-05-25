@@ -136,6 +136,7 @@ static char *meta_to_json(const session_meta_t *meta) {
     size_t sz = 1024;
     for (int i = 0; i < meta->tag_count; i++)
         sz += strlen(meta->tags[i]) + 8;
+    sz += 128;  /* Extra room for new metadata fields - MUST be before malloc */
     char *buf = (char *)malloc(sz);
     if (!buf) return NULL;
 
@@ -172,6 +173,12 @@ static char *meta_to_json(const session_meta_t *meta) {
         "\"title\":\"%s\","
         "\"model\":\"%s\","
         "\"token_count\":%d,"
+        "\"input_tokens\":%d,"
+        "\"output_tokens\":%d,"
+        "\"cache_read_tokens\":%d,"
+        "\"cache_write_tokens\":%d,"
+        "\"tool_call_count\":%d,"
+        "\"source\":\"%s\","
         "\"message_count\":%d,"
         "\"created_at\":%ld,"
         "\"created_at_str\":\"%s\","
@@ -185,6 +192,12 @@ static char *meta_to_json(const session_meta_t *meta) {
         meta->title,
         meta->model,
         meta->token_count,
+        meta->input_tokens,
+        meta->output_tokens,
+        meta->cache_read_tokens,
+        meta->cache_write_tokens,
+        meta->tool_call_count,
+        meta->source,
         meta->message_count,
         (long)meta->created_at, time_created,
         (long)meta->updated_at, time_updated,
@@ -211,7 +224,15 @@ static bool json_to_meta(const char *json_str, session_meta_t *meta) {
     if (val) { snprintf(meta->model, sizeof(meta->model), "%s", val); free(val); }
 
     meta->token_count = json_extract_int(json_str, "token_count");
+    meta->input_tokens = json_extract_int(json_str, "input_tokens");
+    meta->output_tokens = json_extract_int(json_str, "output_tokens");
+    meta->cache_read_tokens = json_extract_int(json_str, "cache_read_tokens");
+    meta->cache_write_tokens = json_extract_int(json_str, "cache_write_tokens");
+    meta->tool_call_count = json_extract_int(json_str, "tool_call_count");
     meta->message_count = json_extract_int(json_str, "message_count");
+
+    val = json_extract_str(json_str, "source");
+    if (val) { snprintf(meta->source, sizeof(meta->source), "%s", val); free(val); }
     meta->created_at = (time_t)json_extract_num(json_str, "created_at");
     meta->updated_at = (time_t)json_extract_num(json_str, "updated_at");
 
@@ -293,11 +314,11 @@ void db_close(db_t *db) {
 bool db_save(db_t *db, const char *session_id, const char *json_data) {
     if (!db || !session_id || !json_data) return false;
 
-    char path[4096];
+    char path[8192];
     make_path(db, session_id, path, sizeof(path));
 
     /* Write to temporary file first, then rename for atomicity */
-    char tmp_path[4096];
+    char tmp_path[16384];
     snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", path);
 
     FILE *f = fopen(tmp_path, "wb");
@@ -327,7 +348,7 @@ char *db_load(const db_t *db, const char *session_id, char **error_msg) {
         return NULL;
     }
 
-    char path[4096];
+    char path[8192];
     make_path(db, session_id, path, sizeof(path));
 
     char *buf = read_file(path);
@@ -341,11 +362,11 @@ char *db_load(const db_t *db, const char *session_id, char **error_msg) {
 
 bool db_delete(db_t *db, const char *session_id) {
     if (!db || !session_id) return false;
-    char path[4096];
+    char path[8192];
     make_path(db, session_id, path, sizeof(path));
     int rc = unlink(path);
-    /* Also delete metadata */
-    char meta_path[4096];
+
+    char meta_path[8192];
     make_meta_path(db, session_id, meta_path, sizeof(meta_path));
     unlink(meta_path);
     if (rc == 0) db->dirty = true;
@@ -354,7 +375,7 @@ bool db_delete(db_t *db, const char *session_id) {
 
 bool db_exists(const db_t *db, const char *session_id) {
     if (!db || !session_id) return false;
-    char path[4096];
+    char path[8192];
     make_path(db, session_id, path, sizeof(path));
     return access(path, F_OK) == 0;
 }
@@ -378,10 +399,10 @@ bool db_save_meta(db_t *db, const char *session_id, const session_meta_t *meta) 
     char *json = meta_to_json(meta);
     if (!json) return false;
 
-    char meta_path[4096];
+    char meta_path[8192];
     make_meta_path(db, session_id, meta_path, sizeof(meta_path));
 
-    char tmp_path[4096];
+    char tmp_path[16384];
     snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", meta_path);
 
     FILE *f = fopen(tmp_path, "wb");
@@ -411,7 +432,7 @@ bool db_save_meta(db_t *db, const char *session_id, const session_meta_t *meta) 
 bool db_load_meta(const db_t *db, const char *session_id, session_meta_t *meta) {
     if (!db || !session_id || !meta) return false;
 
-    char meta_path[4096];
+    char meta_path[8192];
     make_meta_path(db, session_id, meta_path, sizeof(meta_path));
 
     char *json = read_file(meta_path);
@@ -540,7 +561,7 @@ int db_prune_by_age(db_t *db, int retention_days) {
                 should_prune = true;
         } else {
             /* No metadata — check file modification time */
-            char path[4096];
+            char path[8192];
             make_path(db, ids[i], path, sizeof(path));
             struct stat st;
             if (stat(path, &st) == 0 && st.st_mtime < cutoff)
@@ -795,6 +816,113 @@ int db_migrate(db_t *db) {
     return migrated;
 }
 
+
+
+/* ================================================================
+ *  P151: Message-level queries
+ * ================================================================ */
+
+/* Query tool call statistics across sessions.
+ * Loads session data, parses messages for tool_calls arrays, aggregates counts.
+ * Filters: days_only (0=all), source_filter (NULL or empty=all).
+ * Returns malloc'd array of (tool_name, count) pairs terminated by {NULL, 0}.
+ * Caller must free the array. */
+db_tool_stat_t *db_query_tool_stats(const db_t *db, int days_only, const char *source_filter) {
+    if (!db) return NULL;
+
+    size_t session_count = 0;
+    char **sessions = db_list(db, &session_count);
+    if (!sessions || session_count == 0) {
+        db_tool_stat_t *r = (db_tool_stat_t *)calloc(1, sizeof(db_tool_stat_t));
+        if (sessions) free(sessions);
+        return r;
+    }
+
+    time_t now = time(NULL);
+    int max_tools = 128;
+    db_tool_stat_t *stats = (db_tool_stat_t *)calloc((size_t)max_tools, sizeof(db_tool_stat_t));
+    int tool_count = 0;
+
+    for (size_t i = 0; i < session_count; i++) {
+        session_meta_t meta;
+        db_load_meta(db, sessions[i], &meta);
+
+        double age_days = difftime(now, meta.created_at) / 86400.0;
+        if (days_only > 0 && age_days > days_only) continue;
+        if (source_filter && source_filter[0] && strcmp(meta.source, source_filter) != 0) continue;
+
+        char *data = db_load(db, sessions[i], NULL);
+        if (!data) continue;
+
+/* Scan raw JSON for "tool_calls":[...] blocks, extract "name":"..." */
+        const char *p = data;
+        /* Pattern: "tool_calls":[  (may span lines) */
+        const char *tc_key = "\"tool_calls\":";
+        while ((p = strstr(p, tc_key)) != NULL) {
+            p += 13; /* skip past "tool_calls": */
+            while (*p && *p != '[') p++;
+            if (!*p) break;
+            p++; /* skip [ */
+            if (*p == ']' || *p == '\0') continue; /* empty array */
+
+            /* Parse each tool call object in the array */
+            while (*p && *p != ']') {
+                while (*p && *p != '{') { if (*p == ']') goto next_array; p++; }
+                if (!*p || *p == ']') break;
+                p++; /* skip { */
+
+                /* Find the matching closing } (count braces) */
+                int depth = 1;
+                const char *close = p;
+                while (*close && depth > 0) {
+                    if (*close == '{') depth++;
+                    else if (*close == '}') depth--;
+                    if (depth > 0) close++;
+                }
+                if (depth != 0) break;
+                /* Now p..close is the object body */
+
+                /* Search for "name":" inside this object */
+                const char *nm_search = p;
+                while (nm_search < close && *nm_search) {
+                    if (strncmp(nm_search, "\"name\":", 7) == 0) {
+                        nm_search += 7;
+                        while (*nm_search == ' ') nm_search++;
+                        if (*nm_search != '\"') continue;
+                        const char *ne = nm_search;
+                        while (*ne && *ne != '\"') { if (*ne == '\\' && *(ne+1)) ne++; ne++; }
+                        size_t nlen = (size_t)(ne - nm_search);
+                        if (nlen > 0 && nlen < 64) {
+                            int found = -1;
+                            for (int t = 0; t < tool_count; t++) {
+                                if (strncmp(stats[t].name, nm_search, nlen) == 0 && stats[t].name[nlen] == '\0') {
+                                    found = t; break;
+                                }
+                            }
+                            if (found >= 0) {
+                                stats[found].count++;
+                            } else if (tool_count < max_tools - 1) {
+                                strncpy(stats[tool_count].name, nm_search, nlen);
+                                stats[tool_count].name[nlen] = '\0';
+                                stats[tool_count].count = 1;
+                                tool_count++;
+                            }
+                        }
+                        break; /* found "name" in this object */
+                    }
+                    nm_search++;
+                }
+                p = close + 1; /* skip past closing } */
+            }
+next_array: ;
+        }
+        free(data);
+    }
+
+    for (size_t i = 0; i < session_count; i++) free(sessions[i]);
+    free(sessions);
+return stats;
+}
 /* ================================================================
  *  Maintenance
  * ================================================================ */
@@ -807,12 +935,12 @@ long long db_storage_size(const db_t *db) {
     if (!list) return 0;
 
     for (size_t i = 0; i < count; i++) {
-        char path[4096];
+        char path[8192];
         make_path(db, list[i], path, sizeof(path));
         struct stat st;
         if (stat(path, &st) == 0) total += (long long)st.st_size;
         /* Also check meta file */
-        char meta_path[4096];
+        char meta_path[8192];
         make_meta_path(db, list[i], meta_path, sizeof(meta_path));
         if (stat(meta_path, &st) == 0) total += (long long)st.st_size;
         free(list[i]);

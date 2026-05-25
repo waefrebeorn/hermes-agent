@@ -275,6 +275,13 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
         }
     }
 
+    /* Check NO_PROXY — if it's "*", disable proxy entirely */
+    const char *no_proxy = getenv("NO_PROXY");
+    if (!no_proxy || !no_proxy[0])
+        no_proxy = getenv("no_proxy");
+    if (no_proxy && no_proxy[0] && strcmp(no_proxy, "*") == 0)
+        c->proxy[0] = '\0';
+
     return c;
 }
 
@@ -325,6 +332,38 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         const char *connect_host = purl.host;
         int connect_port = purl.port;
         bool use_proxy = h->proxy[0] != '\0';
+
+        /* NO_PROXY bypass — check if target host is excluded */
+        if (use_proxy) {
+            const char *np = getenv("NO_PROXY");
+            if (!np || !np[0]) np = getenv("no_proxy");
+            if (np && np[0]) {
+                /* Check for exact or suffix match with leading dot */
+                char np_buf[1024];
+                snprintf(np_buf, sizeof(np_buf), "%s", np);
+                char *token = np_buf;
+                while (token && *token) {
+                    /* Skip leading spaces */
+                    while (*token == ' ') token++;
+                    char *comma = strchr(token, ',');
+                    if (comma) *comma = '\0';
+                    /* Trim trailing spaces */
+                    char *end = token + strlen(token) - 1;
+                    while (end > token && *end == ' ') *end-- = '\0';
+                    if (token[0]) {
+                        if (token[0] == '.' && strstr(purl.host, token) != NULL) {
+                            /* Suffix match: .example.com matches any.example.com */
+                            use_proxy = false;
+                            break;
+                        } else if (strcasecmp(purl.host, token) == 0) {
+                            use_proxy = false;
+                            break;
+                        }
+                    }
+                    token = comma ? comma + 1 : NULL;
+                }
+            }
+        }
 
         if (use_proxy) {
             /* Parse proxy URL to get proxy host:port */

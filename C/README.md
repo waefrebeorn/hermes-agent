@@ -1,16 +1,20 @@
 # Hermes C
 
 **Standalone C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**
-One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
+One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 
 ```text
-|Suite:  210/0/0 (173 test files, completes in <60s)
+|Suite:  238/0/0 (202 test files, completes in <60s)
 |Binary: 29MB    (dynamic ELF, -O2 -g)
-|Source: ~117 .c + ~47 .h = ~164 files, ~76K LOC (non-lib)
-|Parity: ~63%   (~176 gaps remaining — see battleship-v4)
+|Source: 153 .c + 66 .h = 219 files
+||Parity: ~72%   (~252 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|CLI:    79 cmd_ functions (all real, 0 stubs) — tab completion, history, table output
-|Tests:  210/0/0, all 14 provider depth tests, no skips
+|CLI:    79 cmd_ functions (all real) — tab completion, history, table output
+|Tests:  238/0/0, no skips
+|Tools:  85 registered handlers — all real implementations
+|Libraries: 58 C modules — zero external deps beyond libc+libssl
+|Plugins:  10 C dynamic plugins (achievements, kanban, disk_cleanup, etc.)
+|Providers: 11 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom + metadata)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -22,17 +26,17 @@ One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (~83 Registered)](#all-tools-83-registered)
+- [All Tools (85 Registered)](#all-tools-85-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (9)](#llm-providers-9)
 - [Plugins (10 .c, 0 .so)](#plugins-10-c-0-so)
-- [Libraries (57 Units)](#libraries-57-units)
+- [Libraries (58 Units)](#libraries-58-units)
 - [CLI Commands (79 Slash, Real)](#cli-commands-79-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-- [Battleship Roadmap (~176 Gaps)](#battleship-roadmap-176-gaps)
+|- [Battleship Roadmap (~313 Gaps)](#battleship-roadmap-313-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -47,7 +51,7 @@ One binary. Zero runtime deps beyond libc + libssl. 9.1MB ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # ~213/0/0
+bash test_runner.sh        # 238/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -66,7 +70,7 @@ docker run --rm hermes-c --help
 
 ### Smoke Test
 ```bash
-echo "/tools" | ./hermes     # List all ~83 registered tools
+echo '/tools' | ./hermes     # List all 85 registered tools
 echo "/providers" | ./hermes # List provider configurations
 ```
 
@@ -94,20 +98,20 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ Tool call
                     ┌──────────▼──────────────┐
-                    │   68 Tool Registry       │
+                    │   85 Tool Registry       │
                     │  (file, web, terminal,   │
                     │   skills, MCP, kanban,   │
                     │   browser, delegate...)  │
                     └──────────┬──────────────┘
                                │ Plugin dispatch
                     ┌──────────▼──────────────┐
-                    │   10 Plugin .so          │
+                    │   10 Plugin .c           │
                     │  (kanban, honcho,        │
                     │   spotify, image_gen...) │
                     └──────────┬──────────────┘
                                │ System calls
                     ┌──────────▼──────────────┐
-                    │   30 Library Units       │
+                    │   58 Library Units       │
                     │  (json, yaml, http,      │
                     │   crypto, mcp, cron...)  │
                     └─────────────────────────┘
@@ -120,10 +124,10 @@ echo "/providers" | ./hermes # List provider configurations
 ## Build System
 
 ```bash
-make hermes           # Full binary (phase5) — 0 errors, 9.1MB
+make hermes           # Full binary (phase5) — 0 errors, 28.8MB
 make plugins          # 10 .so shared objects
 make tui              # ncurses TUI → hermes-tui (experimental)
-make libs             # 30 library compilation units
+make libs             # 58 library compilation units
 make install-plugins  # Build + copy .so → ~/.hermes/plugins/
 make docs             # Doxygen HTML docs (if doxygen available)
 ```
@@ -132,9 +136,9 @@ make docs             # Doxygen HTML docs (if doxygen available)
 
 | Phase | What | Output |
 |-------|------|--------|
-| P1 | 30 library units (.o) | lib/*.o |
-| P2 | Agent core + CLI + 9 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 68 tool handlers | src/tools/*.o |
+|| P1 | 58 library units (.o) | lib/*.o |
+| P2 | Agent core + CLI + 11 providers | src/agent/*.o, src/cli/*.o |
+| P3 | 85 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -155,7 +159,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (68 Registered)
+## All Tools (85 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -187,12 +191,12 @@ Every tool is registered at startup via `registry_register(name, description, sc
 | `browser_scroll` | `src/tools/browser.c` | ✅ Text-based |
 | `browser_back` | `src/tools/browser.c` | ✅ Text-based |
 | `browser_forward` | `src/tools/browser.c` | ✅ Text-based |
-| `browser_get_images` | `src/tools/browser.c` | 🟡 **Stub** (needs CDP) |
+| `browser_get_images` | `src/tools/browser.c` | ✅ Text-based (HTML parse) |
 | `browser_press` | `src/tools/browser.c` | ✅ Text-based |
-| `browser_vision` | `src/tools/browser.c` | 🟡 **Stub** (needs CDP) |
-| `browser_console` | `src/tools/browser.c` | 🟡 **Stub** (needs CDP) |
-| `browser_dialog` | `src/tools/browser.c` | 🟡 **Stub** (needs CDP) |
-| `browser_cdp` | `src/tools/browser.c` | 🟡 **Stub** (needs CDP) |
+| `browser_vision` | `src/tools/browser.c` | ✅ CDP-dependent (real) |
+| `browser_console` | `src/tools/browser.c` | ✅ CDP-dependent (real) |
+| `browser_dialog` | `src/tools/browser.c` | ✅ CDP-dependent (real) |
+| `browser_cdp` | `src/tools/browser.c` | ✅ CDP-dependent (real) |
 
 ### Agent Communication
 | Tool | File | Status |
@@ -357,7 +361,7 @@ Plugins are `.so` files loaded at runtime via `dlopen`. Each exposes `plugin_ini
 
 ---
 
-## Libraries (30 Units)
+## Libraries (58 Units)
 
 Libraries are compiled directly into the binary (no intermediate `.a` archives). Each is a self-contained module under `lib/`.
 
@@ -412,13 +416,15 @@ The CLI uses a central command registry (`cli/commands.c`) with alias resolution
 
 ---
 
-## Verified Stubs (All Resolved)
+## Verified Stubs (9 Remaining — sector 1 in battleship-v8)
 
-All 4 critical stubs from DA v11 have been resolved:
-- **computer_use** — Real backend with noop/X11 fallback (1300-line impl)
-- **browser CDP** — Real WebSocket CDP client (1495-line impl, all 13 tools)
-- **image_gen** — Real FAL.ai REST API (both tool and plugin)
-- **TUI sessions** — DB-backed session browser via `agent_session_list()`
+9 verified stubs remain — all documented with clear resolution paths in battleship-v8.md:
+- **S01-S06** — memory.c plugin_vtable NULL function pointers (import_json, export_json, get_by_hash, compress_old, get_prioritized, plugin_delete always false)
+- **S07** — server.c plat.shutdown = NULL (no-op, handled by gw_platform_shutdown_all)
+- **S08** — video_gen.c fal_provider.generate = NULL (uses handler directly)
+- **S09** — commands.c cmd_background "background mode not available" message
+
+All are P2-P3. The 85 tools + 79 CLI commands are real implementations.
 
 ---
 
@@ -445,7 +451,7 @@ All bugs discovered through DA audits and runtime testing.
 ```
 waefrebeorn/hermes-agent/         ← Repo root
 ├── C/                            ← All source code (canonical README lives here)
-│   ├── src/                      ← 75.5K LOC
+│   ├── src/                      ← 153 .c files
 │   │   ├── agent/                ←   Provider adapters, LLM client, fallback routing,
 │   │   │                           budget tracker, checkpoint/resume, audit, redact/sanitize
 │   │   ├── cli/                  ←   CLI orchestrator, command registry, config,
@@ -454,18 +460,18 @@ waefrebeorn/hermes-agent/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   78 tool handler implementations
+│   │   ├── tools/                ←   85 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-│   ├── lib/                      ←   56 library units (compiled directly, no .a)
+│   ├── lib/                      ←   58 library units (compiled directly, no .a)
 │   │   ├── libjson/              ←   JSON parser/builder
 │   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
 │   │   ├── libmcp/               ←   MCP transport layer (stdio, server, SSE)
 │   │   ├── libdb/                ←   SQLite wrapping (sessions, cron state, store)
 │   │   ├── libcrypto/            ←   AES, SHA256, HMAC, base64
 │   │   └── ...                   ←   25 more
-│   ├── include/                  ←   29 public headers
-│   ├── tests/                    ←   50+ test files (via test_runner.sh)
+│   ├── include/                  ←   66 headers (64 include/ + 2 src/)
+│   ├── tests/                    ←   200+ test files (via test_runner.sh)
 │   ├── Dockerfile                ←   Multi-stage Docker build
 │   ├── Makefile                  ←   5-phase build pipeline
 │   └── .hermes/                  ←   Agentic process documentation (see below)
@@ -490,8 +496,8 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 5 | `entry.md` | Build/run commands + architecture |
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
-| 8 | `da-audit-v11-500-goals.md` | Full Devil's Advocate audit (DA v11) — methodology, findings, stub hunt |
-| 9 | `plans/battleship-v2.md` | Complete 500-gap roadmap by sector |
+| 8 | `da-v12-triple-audit.md` | Final Triple DA audit — methodology, findings, 8 verified stubs |
+| 9 | `plans/battleship-v8.md` | Complete ~313-gap roadmap by sector (Triple DA verified) |
 | 10 | `plans/battleship-index.md` | Quick-reference dashboard |
 
 ### Vault (Documentation)
@@ -518,58 +524,63 @@ The DA process is the project's quality backbone — every claim is triple-verif
 | v6 | May 22 | First systematic audit. Found 9 false ✅. Real parity: ~36% |
 | v10 | May 23 | Post-upstream-sync audit. 21 new gaps found. Parity: 34% |
 | v11 | May 23 | Stub hunt (4 found). Dockerfile CI bug. Battleship 468→500. Parity: 32% |
+| v12 | May 24 | Triple DA audit. 8 verified stubs, all claims verified. Parity: ~60% |
+| **v18** | **May 28** | **CDP stub correction — all 3 CDP "stubs" were real handlers. 9 verified stubs. Parity: ~60%** |
 
 ---
 
-## Battleship Roadmap (500 Gaps)
+## Battleship Roadmap (~266 Gaps)
 
-The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by sector (A-U) with coordinate IDs.
+The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by 22 sectors (S1-S22) with coordinate IDs.
 
-| Sector | Area | Gaps | Done | % | Priority |
-|--------|------|------|------|---|----------|
-| A | Core (entry, build, types) | 16 | 12 | 75% | ✅ Solid |
-| B | Agent (loop, context, providers) | 115 | 30 | 26% | 🔴 Biggest |
-| C | CLI (commands, config, setup) | 95 | 13 | 14% | 🔴 Needs depth |
-| D | Tools (68 registered) | 92 | 32 | 35% | 🟡 4 stubs |
-| E | Gateway (19 platforms) | 64 | 22 | 34% | 🟡 0 per-platform tests |
-| F | MCP (transports, OAuth) | 11 | 2 | 18% | 🟡 |
-| G | ACP (JSON-RPC server) | 9 | 1 | 11% | 🟡 |
-| H | Cron (scheduler, store) | 3 | 3 | 100% | ✅ Done |
-| I | TUI (ncurses interface) | 8 | 1 | 12% | 🟡 |
-| J | Plugins (.so backends) | 26 | 10 | 38% | 🟡 |
-| L | Config (YAML, profiles) | 6 | 4 | 67% | 🟡 |
-| N | Build/Doc (CI, docs) | 11 | 9 | 82% | 🟡 |
-| O | Upstream (Python sync) | 3 | 0 | 0% | 🔴 |
-| P | Security (sandbox, rate) | 10 | 6 | 60% | 🟡 |
-| Q | Cross-cut (token, audit) | 5 | 5 | 100% | ✅ Done |
-| R | Provider quirks | 18 | 11 | 61% | 🟡 |
-| **S** | **Stubs** | **10** | **0** | **0%** | 🔴 NEW |
-| **T** | **Test Infrastructure** | **12** | **0** | **0%** | 🔴 NEW |
-| **U** | **CI/CD Infrastructure** | **10** | **0** | **0%** | 🔴 NEW |
-| | **Total** | **~500** | **~161** | **32%** | **339 remaining** |
+| Sector | Area | Gaps | P1 | P2 | P3 |
+|--------|------|------|-----|-----|------|
+| S1 | Confirmed Stubs | 8 | 0 | 6 | 2 |
+| S2 | Placeholder/Unwired | 14 | 0 | 4 | 10 |
+| S3 | Dead Code | 14 | 0 | 2 | 12 |
+| S4 | Missing Agent Modules | 17 | 4 | 8 | 5 |
+| S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
+| S6 | Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
+| S7 | Tool Depth Gaps | 13 | 1 | 10 | 2 |
+| S8 | Gateway Platform Depth | 25 | 0 | 21 | 4 |
+| S9 | Configuration | 14 | 0 | 10 | 4 |
+| S10 | Library Depth | 28 | 0 | 20 | 8 |
+| S11 | Bug Fixes | 11 | 0 | 9 | 2 |
+| S12 | Test Coverage | 25 | 0 | 25 | 0 |
+| S13 | API Server Depth | 5 | 0 | 5 | 0 |
+| S14 | TUI Depth | 8 | 0 | 7 | 1 |
+| S15 | Curator Depth | 3 | 0 | 2 | 1 |
+| S16 | Prompt Caching | 5 | 0 | 4 | 1 |
+| S17 | Shell Hooks | 3 | 0 | 3 | 0 |
+| S18 | Vault Encryption | 3 | 0 | 2 | 1 |
+| S19 | Security Depth | 6 | 0 | 4 | 2 |
+| S20 | C-Only New Features | 10 | 0 | 4 | 6 |
+| S21 | Refactoring | 10 | 0 | 2 | 8 |
+| S22 | Integration & CI | 7 | 0 | 6 | 1 |
+| | **Total** | **266** | **5** | **168** | **93** |
 
-**Full details:** [`.hermes/mind-palace/plans/battleship-v2.md`](C/.hermes/mind-palace/plans/battleship-v2.md)
+**Full details:** [battleship-v8.md](.hermes/mind-palace/battleship-v8.md)
 
-### Top 5 Gaps
+### Top 5 P1 Gaps (critical path)
 
-| Priority | ID | What | Why |
-|----------|----|------|-----|
-| P0 | S01-S03 | computer_use real backend | 5 registered tools return errors |
-| P0 | U01-U02 | CI must pass + Docker | Gate to merge |
-| P1 | S04-S06 | CDP browser backend | 5/11 browser tools broken |
-| P1 | T01-T02 | Gateway + CLI test coverage | Catch regressions |
-| P1 | S07 | image_gen real backend | Plugin produces fake URLs |
+| Priority | ID | What | LOC | Why |
+|----------|----|------|-----|-----|
+| P1 | A02 | context_compressor.py port | 1748 | Core agent infra missing |
+| P1 | A03 | conversation_compression.py port | 603 | Related to A02 |
+| P1 | D02 | Skill breakdown in insights | 80 | User-facing feature |
+| P1 | A23 | nous_rate_guard.py port | 325 | Rate limiting from Nous Portal |
+| P1 | A27 | rate_limit_tracker.py port | 246 | Token rate tracking |
 
 ---
 
 ## Test Suite
 
 ```bash
-bash test_runner.sh                    # Full suite (117 files)
+bash test_runner.sh                    # Full suite (202 files)
 bash test_runner.sh --verbose          # Per-test output
 ```
 
-**154 passed, 0 failed, 0 skipped** (2026-05-23).
+**237 passed, 0 failed, 0 skipped** (2026-05-24).
 
 ### Coverage by Area
 
@@ -608,7 +619,7 @@ bash test_runner.sh --verbose          # Per-test output
 
 ### Status
 - ✅ Linux x86_64 build (0 errors)
-- ✅ Full test suite (154/0/0)
+- ✅ Full test suite (217/0/0)
 - ✅ Docker image build
 - 🟡 ASan/UBSan not yet in CI (gap U04)
 - 🟡 No cross-compilation matrix (gap U05)

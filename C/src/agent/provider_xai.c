@@ -87,6 +87,10 @@ static char *xai_build_request_body(const provider_t *p,
     if (p->config.user[0])
         json_object_set(root, "user", json_new_string(p->config.user));
 
+    /* P09: xAI reasoning_effort */
+    if (p->config.reasoning_effort[0])
+        json_object_set(root, "reasoning_effort", json_new_string(p->config.reasoning_effort));
+
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);

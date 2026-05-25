@@ -119,7 +119,26 @@ json_node_t *ha_poll_messages(http_client_t *http) {
     json_append(results, msg);
 
     /* Reset the input_text to clear it */
-    /* Would need to call /api/services/input_text/set_value with empty value */
+    {
+        http_client_t *reset_http = http_client_new(5);
+        if (reset_http) {
+            char reset_url[1024];
+            snprintf(reset_url, sizeof(reset_url), "%s/api/services/input_text/set_value",
+                     g_ha_url);
+            json_node_t *reset_body = json_new_object();
+            json_set(reset_body, "entity_id", json_string("input_text.hermes_message"));
+            json_set(reset_body, "value", json_string(""));
+            char *reset_body_str = json_serialize(reset_body);
+            json_free(reset_body);
+            if (reset_body_str) {
+                http_response_t *reset_resp = http_request(reset_http, HTTP_POST, reset_url,
+                    headers, reset_body_str, strlen(reset_body_str));
+                free(reset_body_str);
+                if (reset_resp) http_response_free(reset_resp);
+            }
+            http_client_free(reset_http);
+        }
+    }
     json_free(root);
     return json_len(results) > 0 ? results : NULL;
 }

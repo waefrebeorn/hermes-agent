@@ -14,6 +14,7 @@
 #include "hermes_agent.h"
 #include "provider.h"
 #include "plugin.h"
+#include "hermes_system_prompt.h"
 #include "budget_tracker.h"
 #include "hermes_subdir_hints.h"
 #include "hermes_onboarding.h"
@@ -52,6 +53,9 @@ static void sigint_handler(int sig) {
 
 void agent_init(agent_state_t *state) {
     memset(state, 0, sizeof(*state));
+    state->compress_tail_messages = 2;  /* P99b: default tail keep */
+    state->compress_cooldown_secs = 30;         /* L02: default cooldown */
+    state->compress_failure_cooldown_secs = 600; /* L02: default failure cooldown */
     state->message_capacity = 64;
     state->messages = (message_t **)calloc(state->message_capacity, sizeof(message_t *));
     state->max_iterations = HERMES_MAX_TOOL_CALLS;
@@ -147,6 +151,15 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
 
     /* Compress enabled */
     state->compress_enabled = cfg->compress_enabled;
+    /* P99b: Tail messages from config (0 = use state default) */
+    if (cfg->agent.compress_tail_messages >= 2)
+        state->compress_tail_messages = cfg->agent.compress_tail_messages;
+
+    /* L02: Compression cooldowns from compression config */
+    state->compress_cooldown_secs = cfg->compression.cooldown_secs > 0
+        ? cfg->compression.cooldown_secs : 30;
+    state->compress_failure_cooldown_secs = cfg->compression.failure_cooldown_secs > 0
+        ? cfg->compression.failure_cooldown_secs : 600;
 
     /* P150: Forward enabled/disabled toolsets */
     if (cfg->tools.enabled_toolsets[0])
@@ -354,9 +367,20 @@ bool agent_save_meta(agent_state_t *state) {
     if (state->llm.model[0])
         snprintf(meta.model, sizeof(meta.model), "%s", state->llm.model);
     meta.message_count = (int)state->message_count;
+    /* Populate token tracking from agent state */
+    meta.token_count = state->session_total_tokens;
+    meta.input_tokens = state->session_input_tokens;
+    meta.output_tokens = state->session_output_tokens;
+    meta.cache_read_tokens = state->session_cache_read_tokens;
+    meta.cache_write_tokens = state->session_cache_write_tokens;
+    meta.tool_call_count = 0;
+    for (size_t i = 0; i < state->message_count; i++) {
+        if (state->messages[i])
+            meta.tool_call_count += state->messages[i]->tool_calls_count;
+    }
+    meta.schema_version = SESSION_SCHEMA_VERSION;
     meta.updated_at = time(NULL);
     if (meta.created_at == 0) meta.created_at = meta.updated_at;
-    if (meta.schema_version == 0) meta.schema_version = 1;
 
     return db_save_meta(state->db, state->session_id, &meta);
 }
@@ -805,8 +829,32 @@ char *agent_run_conversation(agent_state_t *state,
     }
 
     /* P150: Apply system_message override if set */
+    /* Load context files (SOUL.md, .hermes.md, AGENTS.md, etc.) and prepend */
     if (state->system_message[0]) {
-        context_set_system(state, state->system_message);
+        /* Try to load context files from cwd, skip SOUL.md if already in identity */
+        const char *cwd = getenv("PWD");
+        if (!cwd || !cwd[0]) cwd = ".";
+        char *context_block = context_build_files_prompt(cwd, true);
+        if (context_block && context_block[0]) {
+            /* Prepend context block to system message */
+            size_t ctx_len = strlen(context_block);
+            size_t sys_len = strlen(state->system_message);
+            char *combined = (char *)malloc(ctx_len + 3 + sys_len + 1);
+            if (combined) {
+                memcpy(combined, context_block, ctx_len);
+                combined[ctx_len] = '\n';
+                combined[ctx_len + 1] = '\n';
+                memcpy(combined + ctx_len + 2, state->system_message, sys_len + 1);
+                context_set_system(state, combined);
+                free(combined);
+            } else {
+                context_set_system(state, state->system_message);
+            }
+            free(context_block);
+        } else {
+            context_set_system(state, state->system_message);
+            free(context_block);
+        }
     }
 
     /* G13-G14: Apply runtime tool_choice/parallel_tool_calls overrides */
@@ -835,29 +883,55 @@ char *agent_run_conversation(agent_state_t *state,
             &state->compression_fb, HERMES_MAX_CTX_TOKENS);
         size_t adaptive_max = (size_t)(adaptive_threshold > 0 ?
             adaptive_threshold : HERMES_MAX_CTX_TOKENS);
-        char *summary = llm_compress_context(state, adaptive_max,
-                                              state->compress_enabled);
-        if (summary) {
-            /* G22: Record positive feedback — compression was used successfully */
-            compression_feedback_positive(&state->compression_fb);
-            /* Insert summary as a user message and truncate */
-            message_t *summary_msg = message_new(MSG_USER, summary);
-            if (summary_msg) {
-                /* Insert after system message */
-                size_t idx = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
-                /* Remove old messages up to last 2 */
-                size_t keep = idx;
-                size_t remove_count = state->message_count - keep - 2;
-                for (size_t i = 0; i < remove_count; i++)
-                    message_free(state->messages[keep + i]);
-                memmove(&state->messages[keep], &state->messages[keep + remove_count],
-                        (state->message_count - keep - remove_count) * sizeof(message_t *));
-                state->message_count -= remove_count;
+        /* P99: Anti-thrashing — skip compression if cooldown not elapsed */
+        /* B03: Also skip if last failure was <failure cooldown>s ago */
+        /* L02: Cooldowns are configurable via compression.cooldown_secs / failure_cooldown_secs */
+        time_t now = time(NULL);
+        if ((state->last_compress_time == 0 ||
+            (now - state->last_compress_time) >= state->compress_cooldown_secs) &&
+            (now - state->last_compress_failure_time) >= state->compress_failure_cooldown_secs) {
+            char *summary = llm_compress_context(state, adaptive_max,
+                                                  state->compress_enabled);
+            if (summary) {
+                /* Record timestamp for anti-thrashing */
+                state->last_compress_time = now;
+                /* G22: Record positive feedback — compression was used successfully */
+                compression_feedback_positive(&state->compression_fb);
+                /* Wrap with compaction handoff prefix (matches Python SUMMARY_PREFIX) */
+                char summary_prompt[8192];
+                snprintf(summary_prompt, sizeof(summary_prompt),
+                    "[CONTEXT COMPACTION - REFERENCE ONLY] Earlier turns were "
+                    "compacted into the summary below. This is a handoff from a "
+                    "previous context window - treat it as background reference, "
+                    "NOT as active instructions. "
+                    "Do NOT answer questions or fulfill requests mentioned in this "
+                    "summary; they were already addressed. "
+                    "Respond ONLY to the latest user message that appears AFTER "
+                    "this summary:\n\n%s", summary);
+                /* Insert summary as a user message and truncate */
+                message_t *summary_msg = message_new(MSG_USER, summary_prompt);
+                if (summary_msg) {
+                    /* Insert after system message */
+                    size_t idx = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
+                    /* Remove old messages, keeping tail budget */
+                    int tail = state->compress_tail_messages;
+                    if (tail < 2) tail = 2;
+                    size_t keep = idx;
+                    size_t remove_count = state->message_count - keep - tail;
+                    for (size_t i = 0; i < remove_count; i++)
+                        message_free(state->messages[keep + i]);
+                    memmove(&state->messages[keep], &state->messages[keep + remove_count],
+                            (state->message_count - keep - remove_count) * sizeof(message_t *));
+                    state->message_count -= remove_count;
 
-                /* Insert summary message */
-                context_push(state, summary_msg);
+                    /* Insert summary message */
+                    context_push(state, summary_msg);
+                }
+                free(summary);
+            } else {
+                /* B03: Record failure time for cooldown */
+                state->last_compress_failure_time = time(NULL);
             }
-            free(summary);
         }
 
         /* Truncate context if too long (128K token budget) */

@@ -259,6 +259,15 @@ typedef struct {
     char  prefill[4096];
     /* P97: Compression feedback tracker */
     compression_feedback_t compression_fb;
+    /* P99: Anti-thrashing — timestamp of last compression to prevent re-compressing same content */
+    time_t last_compress_time;
+    /* B03: Failure cooldown — skip compression if last failure was <600s ago */
+    time_t last_compress_failure_time;
+    /* L02: Configurable cooldown from compression config */
+    int compress_cooldown_secs;         /* compression.cooldown_secs */
+    int compress_failure_cooldown_secs; /* compression.failure_cooldown_secs */
+    /* P99b: Tail messages to preserve during compression (default 2, token-budget-aware config) */
+    int compress_tail_messages;
     /* P98: Checkpoint manager — auto-save, named checkpoints, rollback */
     checkpoint_manager_t  checkpoints;
     /* G15-G16: Enabled/disabled toolsets — comma-separated lists for tool filtering */
@@ -382,6 +391,7 @@ typedef struct {
     bool  bedrock_trace_enabled;         /* B41: Bedrock trace header */
     bool  local_provider;          /* N05: true if base_url is localhost/127.0.0.1 */
     bool  supports_vision;         /* L06: override model vision capability (false=auto from metadata) */
+    char  vision_overrides[1024];  /* S06: comma-sep model prefixes to force vision-capable (e.g. "qwen-vl,llava,pixtral") */
     int   deepseek_cache_ttl;      /* B33: DeepSeek context cache TTL in seconds (-1=disabled, 0=default 300) */
 } provider_config_t;
 
@@ -417,10 +427,13 @@ typedef struct {
     bool  fast_mode;               /* agent.fast: skip system prompt for speed */
     bool  quiet_mode;              /* agent.quiet_mode: suppress non-essential output */
     float compress_threshold;      /* compression.threshold: auto-compress ratio */
+    int   compress_tail_messages;  /* compression.tail_messages: tail messages to keep */
     char  reasoning_effort[32];    /* agent.reasoning_effort: low/medium/high */
     int   api_max_retries;         /* agent.api_max_retries: API call retries */
     int   clarify_timeout;         /* agent.clarify_timeout: seconds before auto-deny */
     char  image_input_mode[16];    /* agent.image_input_mode: auto|native|text */
+    char  skill_search_paths[1024]; /* agent.skill_search_paths: comma-sep custom skill dirs */
+    char  model_metadata_path[512]; /* agent.model_metadata: path to model capabilities JSON */
 } agent_config_t;
 
 /* ================================================================
@@ -499,6 +512,8 @@ typedef struct {
     int   protect_last_n;         /* protect_last_n: recent messages to keep */
     int   protect_first_n;        /* protect_first_n: head messages to preserve */
     int   hygiene_hard_message_limit; /* hygiene_hard_message_limit: force-compress threshold */
+    int   cooldown_secs;            /* compression.cooldown_secs: anti-thrashing cooldown (default 30) */
+    int   failure_cooldown_secs;    /* compression.failure_cooldown_secs: failure cooldown (default 600) */
     bool  preserve_system;        /* preserve_system: keep system prompt */
     bool  abort_on_summary_failure; /* abort_on_summary_failure: skip drop on LLM error */
 } compression_config_t;
@@ -1215,6 +1230,10 @@ void rate_limit_clear(void);
 /* P166: Output sanitization */
 char *hermes_sanitize_output(const char *tool_name, const char *raw_output);
 
+/* B34: Surrogate character sanitization — replace lone UTF-8 surrogates with U+FFFD */
+char *sanitize_surrogates(const char *text);
+bool  sanitize_json_surrogates(void *json_obj);
+
 /* P167: Credential vault */
 bool vault_set_master_key(const char *passphrase);
 bool vault_has_master_key(void);
@@ -1271,6 +1290,7 @@ int  cron_job_get_max_retries(const char *job_name);
 
 /* P173: Job notification */
 bool cron_notify_set_channel(const char *channel_id);
+void cron_notify_set_send_fn(bool (*fn)(const char *platform, const char *chat_id, const char *text));
 bool cron_notify_on_complete(const char *job_name, bool enabled);
 bool cron_notify_on_failure(const char *job_name, bool enabled);
 

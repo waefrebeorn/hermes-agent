@@ -1,21 +1,28 @@
 # Changelog
 
-## [Unreleased] — 2026-05-23
+## [Unreleased] — 2026-05-31
 
 ### Added
-- **300-gap battleship roadmap**: 16-sector Python→C gap analysis, 447 gaps cataloged
-- **digest.py**: FILE_MAP expanded from 27 to 250+ entries
-- **translation-essay-2.md**: "The Gap Reveal" — honest accounting sequel
-- **Test: cron_sqlite** (P169): 48 assertions — open/close/save/load/delete/update/persistence
-- **Test: cron_extras** (P172-P175): 41 assertions — retry/chain/template/notification
+- **Triple DA v8**: 313 verified gaps across 22 sectors — stub hunt, placeholder scan, Python-vs-C module comparison
+- **battleship-v8.md**: 313 verified gaps (9 P1, 193 P2, 111 P3) — all stale claims from v7 retired
+- **Vault Phase 8**: 16 stale claims retired with evidence table
+- **~user tilde expansion**: getpwnam-based path resolution
+- **Message-level DB queries**: db_query_tool_stats() + tool breakdown in /insights
+- **--source filter**: per-platform insights filtering
+- **Glob pattern allowlist**: approval.c supports glob patterns instead of substring
+- **X11/Wayland set_value**: type-based fallback for computer_use
 
 ### Fixed
-- `cron_job_reset_retry(NULL)` SEGV — strcmp on NULL
-- `cron_job_increment_retry(NULL)` SEGV — same pattern
-- `cron_template_instantiate` placeholder replacement broken — `json_get_str` on string node returned empty
+- B01: Buffer overflow in meta_to_json (insights crash)
+- R01/W01: llm_background_review wired to /curator run
+- S03/S04: x11_set_value/wayland_set_value replaced with real fallbacks
+- Skills use-after-free in skills_list_handler
+- xAI reasoning_effort from config
+- NO_PROXY env var bypass
+- patch.c fuzzy match offset 0 buffer overflow guard
 
 ### Suite
-- 154/0/0 — 116 test files, ~573 assertions
+- 237/0/0 — 202 test files, zero failures
 
 ## [v0.14.1] — 2026-05-23
 

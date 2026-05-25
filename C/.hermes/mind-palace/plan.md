@@ -1,81 +1,71 @@
-# Implementation Plan — Hermes C Translation (2026-05-24 v15)
+# Hermes C Translation — Plan (v28 — 2026-05-24)
 
-**Phase: Battleship reset, fresh gap count. Next: tackle biggest gaps.**
+## Mission
 
-## Phase 1: CLI Depth Attack (P0)
-| Step | What | Target |
-|------|------|--------|
-| 1.1 | Fix 197 stub commands in commands.c | Replace printf(...) with real implementations |
-| 1.2 | Add readline support (history, C-r search) | Replace fgets() with libedit/readline |
-| 1.3 | Tab autocomplete for commands | CLI completion |
-| 1.4 | Rich output formatting (panels, tables) | ANSI/colour formatting |
+P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
+Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
+312 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
-## Phase 2: Agent Module Ports (P0)
-| Step | What | Lines | Priority |
-|------|------|-------|----------|
-| 2.1 | agent_init.py → C | 1638L | P0 |
-| 2.2 | agent_runtime_helpers.py → C | 2189L | P0 |
-| 2.3 | prompt_builder.py → C | ~500L | P0 |
-| 2.4 | chat_completion_helpers.py → C | ~400L | P1 |
-| 2.5 | tool_executor.py → C | ~300L | P1 |
-| 2.6 | auxiliary_client.py → C | 5289L | P1 |
-| 2.7 | account_usage.py → C | 326L | P1 |
-| 2.8 | context_compressor.py → C | ~400L | P1 |
-| 2.9 | context_engine.py → C | ~500L | P1 |
-| 2.10 | shell_hooks.py → C | 847L | P1 |
+## Verified State
 
-## Phase 3: Provider Plugin Expansion (P1)
-| Step | What | Priority |
-|------|------|----------|
-| 3.1 | OpenRouter client tool port | P1 |
-| 3.2 | Azure Foundry provider | P1 |
-| 3.3 | Copilot/Copilot-ACP provider | P2 |
-| 3.4 | Remaining 16 provider plugins | P2 |
+| Metric | Value | Source |
+|--------|-------|--------|
+| Suite | 238/0/0 (202 files) | `test_runner.sh` |
+| Binary | 29MB, 0 errors, 0 warnings | `make` |
+| Source files | 153 .c, 66 .h | `ls` |
+| Libraries | 58 | `lib/lib*` |
+| Tools | 85 registered | `registry_register` grep |
+| CLI | 79 commands | `commands.c` grep |
+| Providers | 11 modules, all tested | `ls src/agent/provider_*.c` + tests |
+| Gateways | 19 platforms | `ls src/gateway/platforms/` |
+| Plugins | 10 C plugins | `ls src/plugins/` |
+| Stubs | 9 real (1 P1) | battleship-v8 |
+| Real gaps | 266 (22 sectors, 5 P1) | battleship-v8, resolved items stripped |
+| Python modules scanned | 77 agent, 88+ tools, 31 gateways | Upstream check |
 
-## Phase 4: Gateway Coverage (P1)
-| Step | What | Priority |
-|------|------|----------|
-| 4.1 | api_server gateway (REST API) | P1 |
-| 4.2 | WeCom callback + crypto helpers | P2 |
-| 4.3 | Feishu comment support | P2 |
-| 4.4 | Yuanbao media/protobuf/sticker | P2 |
+## Milestones
 
-## Phase 5: Test Infrastructure (P1)
-| Step | What | Priority |
-|------|------|----------|
-| 5.1 | Fix suite timeout — parallelize or optimize | P1 |
-| 5.2 | Gateway per-platform integration tests | P1 |
-| 5.3 | Provider API mock tests | P1 |
-| 5.4 | CLI dispatch tests | P1 |
-| 5.5 | Memory leak CI (valgrind gate) | P1 |
-| 5.6 | E2E inference test | P1 |
+| # | Milestone | Done | Remaining |
+|---|-----------|------|-----------|
+| 1 | All stubs resolved (P1-P3, 9 items) | 0/9 | ~300 LOC |
+| 2 | All dead code wired/removed (15 items) | 0/15 | ~400 LOC |
+| 3 | Missing agent modules ported (17 items) | 0/17 | ~5000 LOC |
+| 4 | Agent module depth gaps closed (15 items) | 0/15 | ~3000 LOC |
+| 5 | Subdirectory modules ported (22 items) | 0/22 | ~4000 LOC |
+| 6 | Tool depth gaps closed (18 items) | 0/18 | ~2500 LOC |
+| 7 | Gateway depth gaps closed (25 items) | 0/25 | ~7000 LOC |
+| 8 | All config keys read (19 items) | 1/19 | ~450 LOC |
+| 9 | Library depth features added (28 items) | 0/28 | ~2500 LOC |
+| 10 | Bug fixes (15 items) | 0/15 | ~500 LOC |
+| 11 | Test coverage (25 items) | 0/25 | ~5000 LOC* |
+| 12 | Full parity passes suite | 0/1 | growth target |
 
-## Phase 6: TUI & Polish (P2)
-| Step | What |
-|------|------|
-| 6.1 | Response box wrapping |
-| 6.2 | Config editor (TUI) |
-| 6.3 | Theme engine depth |
-| 6.4 | Image viewer |
+*Test files are counted in LOC but are lower cognitive cost — one session per file.
 
-## Phase 7: CI/CD & Build (P2)
-| Step | What |
-|------|------|
-| 7.1 | Cross-compile matrix in CI |
-| 7.2 | Release automation |
-| 7.3 | Code coverage upload |
-| 7.4 | CVE scanning |
+## Next Actions (top 8)
 
-## Dependency Graph
+1. □ Start A02 — context_compressor.py port (largest gap, ~1748 LOC)
+2. □ Start A03 — conversation_compression.py port (603 LOC)
+3. □ Add D02 — skill breakdown to insights tool (80 LOC)
+4. □ Port A23 — nous_rate_guard.py (325 LOC)
+5. □ Port A27 — rate_limit_tracker.py (246 LOC)
+6. □ Add D16 — plugin memory provider interface (280 LOC)
+7. □ G01 — Home Assistant conversation loop (200 LOC)
+8. □ G04 — DingTalk inbound polling (80 LOC)
 
-```
-Phase 1 (CLI) ← no blockers
-Phase 2 (Agent) ← depends on: agent_init.py understanding
-Phase 3 (Providers) ← depends on: provider.c extension
-Phase 4 (Gateway) ← no blockers
-Phase 5 (Tests) ← depends on: Phase 1-4 implementations (for integration)
-Phase 6 (TUI) ← no blockers
-Phase 7 (CI/CD) ← no blockers
-```
+## Recently Resolved
 
-Phase 1 and 2 can run in parallel. Phase 3 needs provider infrastructure in place.
+| ID | Description | Date |
+|----|-------------|------|
+| P01 | Anthropic ephemeral cache headers | 2026-05-24 |
+| D04 | Insights empty-state handling | 2026-05-24 |
+| B10 | Process health check action | 2026-05-24 |
+| B03 | WSL path translation | 2026-05-24 |
+| R04 | HomeAssistant input_text reset after poll | 2026-05-24 |
+| C03 | agent.model_metadata config key | 2026-05-24 |
+| S05 | /curator run — stale claim retired | 2026-05-24 |
+| B05,B06 | Gateway crash + db leak — stale claims retired | 2026-05-24 |
+| C01-C05,C16 | 6 config keys — stale claims retired | 2026-05-24 |
+| D04,D17-D20 | Insights + file backend depth — resolved | 2026-05-24 |
+| R04/W10 | HomeAssistant poll reset | 2026-05-24 |
+| P01 (S16) | Anthropic ephemeral cache headers | 2026-05-24 |

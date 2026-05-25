@@ -31,7 +31,7 @@ typedef struct db_t db_t;
 /* ================================================================
  *  P141: Session metadata structure
  * ================================================================ */
-#define SESSION_SCHEMA_VERSION 1
+#define SESSION_SCHEMA_VERSION 2
 #define SESSION_TAGS_MAX 32
 #define SESSION_TAG_LEN 64
 
@@ -40,6 +40,12 @@ typedef struct {
     char     model[128];          /* model used */
     int      schema_version;      /* P150: schema version for migration */
     int      token_count;         /* total tokens used */
+    int      input_tokens;        /* total input tokens */
+    int      output_tokens;       /* total output tokens */
+    int      cache_read_tokens;   /* total cache read tokens */
+    int      cache_write_tokens;  /* total cache write tokens */
+    int      tool_call_count;     /* total tool calls */
+    char     source[32];          /* source platform (cli, telegram, etc.) */
     int      message_count;       /* total messages */
     time_t   created_at;          /* creation timestamp */
     time_t   updated_at;          /* last update timestamp */
@@ -129,6 +135,17 @@ char *db_branch(db_t *db, const char *source_id, const char *new_id, int branch_
 /* Check and upgrade schema version for all sessions. Returns number migrated. */
 int db_migrate(db_t *db);
 
+
+/* === P151: Message-level queries === */
+
+/* Tool call statistics across sessions. */
+typedef struct {
+    char name[64];
+    int  count;
+} db_tool_stat_t;
+
+/* Query tool call statistics. Returns NULL-terminated pair array. Caller must free. */
+db_tool_stat_t *db_query_tool_stats(const db_t *db, int days_only, const char *source_filter);
 /* === Maintenance === */
 
 /* Get storage size in bytes. */

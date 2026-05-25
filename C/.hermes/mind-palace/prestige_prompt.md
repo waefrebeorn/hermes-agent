@@ -1,57 +1,63 @@
-# WuBu Hermes C — Prestige Prompt (2026-05-24 v15)
+# Hermes C — Prestige Prompt (v32 — 2026-05-24 Code-Verified)
 
-**Reset session — DA v15 fresh survey. Old battleship (500 gaps) archived. New battleship-v4 (~270 gaps).**
+## Verified State
 
-## Identity
-1:1 C reimplementation of Python hermes-agent. ~76K LOC C source. 44 agent files, 57 libs, 83 tools, 9 providers, 19 gateways, 31 tool init functions, 173 tests. Synced upstream (740+ commits).
+| Metric | Value |
+|--------|-------|
+| Suite | **238/0/0** — 202 test files |
+| Binary | **29MB ELF**, 0 errors, 0 warnings |
+| Source .c files | **153** |
+| Library dirs | **58** |
+| Tools registered | **85** — all real handlers |
+| CLI commands | **79** |
+| Gateway platforms | **19** |
+| C provider modules | **11** — all with tests |
+| Agent .c modules | **50** |
+| C plugins | **10** |
+| Git commits | **857+** |
+| Real gap count | **252** (battleship-v8, 22 sectors) |
+| P1 gaps | **0** |
 
-## Current State (2026-05-27 — code survey update)
+## Priority Queue (top 20 gaps)
 
-| Metric | Value | Verification |
-|--------|-------|-------------|
-| Suite | ~213/0/0 | 173 test files (timeout at 120s) |
-| Binary | 29MB ELF, 0 errors, 0 warnings | ✅ Verified |
-| Tool registrations | ~83 across 31 init functions | ✅ All real, 0 stubs |
-| Gateway platforms | 19 of 31 Python modules (61%) | ✅ C files exist |
-| Providers | 9 native C of 28 Python plugins (32%) | ✅ All real |
-| CLI commands | **79 real cmd_ in commands.c** (3702 lines) | ✅ **0 stubs** |
-| Agent modules | 44 .c of 77 .py (57%) | 🔶 33 real ports done |
-| ACP | 5 of 9 modules (56%) | ✅ Mostly done |
-| Libraries | 57 lib/ directories | ✅ Clean compilation |
-| Config | ~322 of 432 keys | 🟡 Unknown exact count |
-| Stubs | **0 true stubs** | **S01/CDP fixed** |
-| CLI vs Python | 8 .c files vs 88 .py modules | **Module depth gap, not cmd stubs** |
-| Parity (corrected) | **~63%** | **~200 remaining gaps** |
+| Rank | ID | Description | LOC | Sector | Why Now |
+|------|----|-------------|-----|--------|---------|
+| 1 | A02 | context_compressor.py port (1748 LOC) [pruning done] | 1748 | S4 | Core agent infra missing — tool result pruning implemented |
+| 2 | A03 | conversation_compression.py port | 603 | S4 | Related to A02 |
+| 6 | D16 | Plugin memory provider interface | 280 | S7 | Memory system incomplete |
+| 7 | D17-D20 | Memory import/export/hash/compress/prioritize | 150 | S7 | File backend depth |
+| 8 | G01 | Home Assistant conversation loop | 200 | S8 | Gateway depth |
+| 9 | G04 | DingTalk inbound polling | 80 | S8 | Gateway depth |
+| 10 | G05 | WeCom inbound polling | 80 | S8 | Gateway depth |
+| 11 | G06 | SMS inbound webhook wiring | 50 | S8 | Gateway depth |
+| 12 | T01-T25 | Test coverage for 25 untested modules | — | S12 | Coverage gap |
+| 13 | C06 | gateway.secret_rotation | 30 | S9 | Config depth |
+| 14 | C10 | Skill auto-install config | 25 | S9 | Config depth |
+| 15 | C11 | Session auto-save compression level | 15 | S9 | Config depth |
+| 16 | F01 | File backend atomic writes | 30 | S11 | Bug fix |
+| 17 | F02 | Terminal stdout truncation detection | 20 | S11 | Bug fix |
+| 18 | E01 | API server health endpoint | 150 | S13 | API server depth |
+| 19 | E02 | API server /v1/models | 200 | S13 | API server depth |
+| 20 | G22 | Missing 10 gateway platforms | 3000 | S8 | Parity gap |
 
-## Priority Queue — Remaining Gaps (~270)
+## Phase Status
 
-### P0 — Critical
-| # | Sector | What | Why |
-|---|--------|------|-----|
-| 1 | C + Q | CLI depth — 88 Python modules, 197 stub commands | Biggest parity gap. 8 .c vs 88 .py |
-| 2 | B | Agent modules — 35+ unported .py files | Core functionality missing |
-| 3 | A | Core — agent_init.py, agent_runtime_helpers.py, conversation_loop.py | Agent lifecycle |
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Config/DEPS | ✅ Complete | 58 libs, YAML config, secrets |
+| Agent/CLI | ~60% | 50 C modules + 42 missing/partial from Python |
+| Tools | ~85% | 85 tools registered, 18 depth gaps |
+| Gateway | ~61% | 19 platforms, 25 depth gaps |
+| Build/Link | ✅ Complete | 29MB, 0 warnings, pre-commit hooks |
+| Stubs | 0 remaining | All resolved — plugin vtable + gateway + video gen stubs cleared |
+| Dead code | 15 items (mostly P3) | Image display fns, qqbot post_api |
 
-### P1 — High Impact
-| # | Sector | What | Why |
-|---|--------|------|-----|
-| 1 | K | Provider plugins — 19 of 28 missing | User-facing, feature parity |
-| 2 | E | Gateway — api_server, feishu_comment, wecom helpers | Platform coverage |
-| 3 | D | Tools — CDP dead code, feature gaps | 300+ lines real code not wired |
-| 4 | T | Tests — suite timeout, per-platform tests | Quality infra |
-| 5 | J | Plugins — .so build, 6 plugin dirs | Plugin ecosystem |
+## Pitfalls
 
-### P2 — Feature Depth
-| # | Sector | What |
-|---|--------|------|
-| 1 | I | TUI features — response wrapping, config editor, theme |
-| 2 | M | Library test coverage |
-| 3 | U | CI/CD cross-compile, release automation |
-
-## Key Files
-- **Battleship v4:** `.hermes/mind-palace/plans/battleship-v4.md` (~270 gaps)
-- **DA v15:** `.hermes/mind-palace/da-audit-v15.md` (fresh survey)
-- **State:** `.hermes/mind-palace/state.md`
-- **Goal-Mantra:** `.hermes/mind-palace/goal-mantra.md`
-- **Achievements:** `.hermes/vault/achievements.md`
-- **Old battleship (archived):** `.hermes/vault/legacy-plans-archive.md`
+- battleship-v7 had 16 stale claims — v8 verified each item against source
+- battleship-v8 uses Triple DA: stub hunt (all keywords), Python-vs-C module comparison, form-not-function depth check
+- Remainder count (252) is bounded: 166 P2 + 90 P3 items are depth/coverage
+- 0 P1 items remain
+- Python has 77 agent modules → C has 50 (26 direct matches + 24 C-only)
+- Python has 88+ tool files → C has 43 tool modules
+- All 58 libs are dependency-free C — no external runtime deps

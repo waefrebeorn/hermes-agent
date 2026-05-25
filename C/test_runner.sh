@@ -77,6 +77,137 @@ run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
 
 
+echo ""; echo "=== Auxiliary Client Tests (B04) ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_auxiliary_client.c" "$CDIR/src/agent/auxiliary_client.c" \
+    -I"$CDIR/include" \
+    $(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done) \
+    -o /tmp/hermes_test_auxiliary_client -lm 2>/dev/null && [[ -x /tmp/hermes_test_auxiliary_client ]]; then
+    if /tmp/hermes_test_auxiliary_client > /dev/null 2>&1; then
+        ok "auxiliary_client"
+    else fail "auxiliary_client (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_auxiliary_client
+else skip "auxiliary_client (compilation failed)"
+fi &
+
+echo ""; echo "=== Provider Registry Tests (P10) ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider.c" "$CDIR/src/agent/provider.c" \
+    -I"$CDIR/include" \
+    $(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider ]]; then
+    if /tmp/hermes_test_provider > /dev/null 2>&1; then
+        ok "provider"
+    else fail "provider (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider
+else skip "provider (compilation failed)"
+fi &
+
+echo ""; echo "=== Plugin Extension Tests (P126) ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_plugin_ext.c" "$CDIR/src/agent/plugin_ext.c" \
+    "$CDIR/lib/libplugin/plugin.c" "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_plugin_ext -lm 2>/dev/null && [[ -x /tmp/hermes_test_plugin_ext ]]; then
+    if /tmp/hermes_test_plugin_ext > /dev/null 2>&1; then
+        ok "plugin_ext (30 tests)"
+    else fail "plugin_ext (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_plugin_ext
+else skip "plugin_ext (compilation failed)"
+fi &
+
+echo ""; echo "=== OpenAI Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openai.c" \
+    "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_openai -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openai ]]; then
+    if /tmp/hermes_test_provider_openai > /dev/null 2>&1; then
+        ok "provider_openai (54 tests)"
+    else fail "provider_openai (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_openai
+else skip "provider_openai (compilation failed)"
+fi &
+
+echo ""; echo "=== Anthropic Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_anthropic.c" \
+    "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_anthropic -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_anthropic ]]; then
+    if /tmp/hermes_test_provider_anthropic > /dev/null 2>&1; then
+        ok "provider_anthropic (74 tests)"
+    else fail "provider_anthropic (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_anthropic
+else skip "provider_anthropic (compilation failed)"
+fi &
+
+echo ""; echo "=== Google Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_google.c" \
+    "$CDIR/src/agent/provider_google.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_google -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_google ]]; then
+    if /tmp/hermes_test_provider_google > /dev/null 2>&1; then
+        ok "provider_google (64 tests)"
+    else fail "provider_google (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_google
+else skip "provider_google (compilation failed)"
+fi &
+
+echo ""; echo "=== DeepSeek Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_deepseek.c" \
+    "$CDIR/src/agent/provider_deepseek.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_deepseek -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_deepseek ]]; then
+    if /tmp/hermes_test_provider_deepseek > /dev/null 2>&1; then
+        ok "provider_deepseek (60 tests)"
+    else fail "provider_deepseek (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_deepseek
+else skip "provider_deepseek (compilation failed)"
+fi &
+
 echo ""; echo "=== Image Routing Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_image_routing.c" "$CDIR/src/agent/image_routing.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libjson/json.c" \
     -I"$CDIR/include" \
@@ -249,6 +380,111 @@ if gcc -O2 -Wall -Wextra \
     else fail "env_passthrough (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_env_passthrough
 else skip "env_passthrough (compilation failed)"
+fi &
+
+echo ""; echo "=== xAI (Grok) Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_xai.c" \
+    "$CDIR/src/agent/provider_xai.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_xai -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_xai ]]; then
+    if /tmp/hermes_test_provider_xai > /dev/null 2>&1; then
+        ok "provider_xai (63 tests)"
+    else fail "provider_xai (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_xai
+else skip "provider_xai (compilation failed)"
+fi &
+
+echo ""; echo "=== Azure Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_azure.c" \
+    "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_azure -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_azure ]]; then
+    if /tmp/hermes_test_provider_azure > /dev/null 2>&1; then
+        ok "provider_azure (54 tests)"
+    else fail "provider_azure (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_azure
+else skip "provider_azure (compilation failed)"
+fi &
+
+echo ""; echo "=== Bedrock Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_bedrock.c" \
+    "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_bedrock -lm -lcrypto 2>/dev/null && [[ -x /tmp/hermes_test_provider_bedrock ]]; then
+    if /tmp/hermes_test_provider_bedrock > /dev/null 2>&1; then
+        ok "provider_bedrock (40 tests)"
+    else fail "provider_bedrock (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_bedrock
+else skip "provider_bedrock (compilation failed)"
+fi &
+
+echo ""; echo "=== OpenRouter Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openrouter.c" \
+    "$CDIR/src/agent/provider_openrouter.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_openrouter -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openrouter ]]; then
+    if /tmp/hermes_test_provider_openrouter > /dev/null 2>&1; then
+        ok "provider_openrouter (50 tests)"
+    else fail "provider_openrouter (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_openrouter
+else skip "provider_openrouter (compilation failed)"
+fi &
+
+echo ""; echo "=== Custom Provider Tests ==="
+if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_custom.c" \
+    "$CDIR/src/agent/provider_custom.c" "$CDIR/src/agent/provider.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    $(for d in "$CDIR"/lib/libyaml "$CDIR"/lib/libhttp "$CDIR"/lib/libmcp \
+       "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
+       "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
+       "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
+       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_provider_custom -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_custom ]]; then
+    if /tmp/hermes_test_provider_custom > /dev/null 2>&1; then
+        ok "provider_custom (37 tests)"
+    else fail "provider_custom (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_provider_custom
+else skip "provider_custom (compilation failed)"
 fi &
 
 echo ""; echo "=== xAI HTTP Library Tests (xai_http) ==="
@@ -588,6 +824,7 @@ run_lib_test "interrupt" "tests/test_interrupt.c" "lib/libinterrupt" "$CDIR/lib/
 run_lib_test "file_state" "tests/test_file_state.c" "lib/libfilestate" "$CDIR/lib/libfilestate/file_state.c -lpthread"
 run_lib_test "tool_backend" "tests/test_tool_backend.c" "lib/libtoolbackend" "$CDIR/lib/libtoolbackend/tool_backend.c -lm"
 run_lib_test "rate_limit" "tests/test_rate_limit.c" "lib/libratelimit" "$CDIR/lib/libratelimit/rate_limit.c -lm"
+run_lib_test "nous_rate_guard" "tests/test_nous_rate_guard.c" "include" "$CDIR/src/agent/nous_rate_guard.c $CDIR/lib/libjson/json.c -lm"
 # Managed gateway test (needs mangateway + toolbackend includes)
 echo ""; echo "=== Managed Gateway Library Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libmangateway" -I"$CDIR/lib/libtoolbackend" \
@@ -638,6 +875,10 @@ echo ""; echo "=== CLI Paths Tests (P21) ==="
 run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "$CDIR/src/cli/paths.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
 echo ""; echo "=== Session Search Tests (P142) ==="
 run_lib_test "session_search" "tests/test_session_search.c" "include" "$CDIR/src/tools/session_search.c $CDIR/lib/libjson/json.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
+echo ""; echo "=== Session CRUD Tests (P143) ==="
+run_lib_test "session_crud" "tests/test_session_crud.c" "include" "$CDIR/src/tools/session_crud.c $CDIR/lib/libdb/db.c $CDIR/lib/libjson/json.c -I$CDIR/lib/libjson -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all -D_FORTIFY_SOURCE=0"
+echo ""; echo "=== Tirith Security Tests (O13) ==="
+run_lib_test "tirith" "tests/test_tirith.c" "include" "$CDIR/src/tools/tirith.c -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all"
 echo ""; echo "=== Sanitize Output Tests (P166) ==="
 run_lib_test "sanitize" "tests/test_sanitize.c" "include" "$CDIR/src/agent/sanitize.c $CDIR/src/agent/redact.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
 echo ""; echo "=== Message/Context Tests ==="
@@ -799,8 +1040,14 @@ run_lib_test "portal_tags" "tests/test_portal_tags.c" "include" "$CDIR/src/agent
 echo ""; echo "=== Markdown Tables Tests (B120) ==="
 run_lib_test "markdown_tables" "tests/test_markdown_tables.c" "include" "$CDIR/src/agent/markdown_tables.c"
 
+echo ""; echo "=== Hook Registry Tests (P186) ==="
+run_lib_test "hook_registry" "tests/test_hook_registry.c" "include" "$CDIR/src/agent/hook_registry.c -lpthread"
+
 echo ""; echo "=== File Safety Tests (P02) ==="
 run_lib_test "file_safety" "tests/test_file_safety.c" "include" "$CDIR/src/agent/file_safety.c"
+
+echo ""; echo "=== Subdirectory Hints Tests ==="
+run_lib_test "subdir_hints" "tests/test_subdir_hints.c" "include" "-I$CDIR/lib/libjson $CDIR/src/agent/subdir_hints.c $CDIR/lib/libjson/json.c -lpthread"
 
 echo ""; echo "=== System Prompt Tests ==="
 run_lib_test "system_prompt" "tests/test_system_prompt.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/agent/system_prompt.c"
@@ -828,6 +1075,18 @@ run_lib_test "manual_compression" "tests/test_manual_compression_feedback.c" "in
 
 echo ""; echo "=== Prompt Caching Tests ==="
 run_lib_test "prompt_caching" "tests/test_prompt_caching.c" "include" "$CDIR/src/agent/prompt_caching.c"
+
+echo ""; echo "=== Usage Pricing Tests (Pricing) ==="
+run_lib_test "usage_pricing" "tests/test_usage_pricing.c" "include" "$CDIR/src/agent/usage_pricing.c $CDIR/src/hermes_tokenizer.c -lm"
+
+echo ""; echo "=== Curator State Tests ==="
+run_lib_test "curator" "tests/test_curator.c" "include" "-I$CDIR/lib/libjson -I$CDIR/lib/libplugin $CDIR/src/agent/curator.c $CDIR/lib/libjson/json.c -lm"
+
+echo ""; echo "=== Shell Hooks Tests (B07) ==="
+run_lib_test "shell_hooks" "tests/test_shell_hooks.c" "include" "-I$CDIR/lib/libjson $CDIR/src/agent/shell_hooks.c $CDIR/src/agent/hook_registry.c $CDIR/lib/libjson/json.c -lpthread -Wno-unused-function"
+
+echo ""; echo "=== Cron Job Schedule Tests ==="
+run_lib_test "cronjob" "tests/test_cronjob.c" "include" "-I$CDIR/lib/libcron $CDIR/lib/libcron/cron.c -lm"
 
 echo ""; echo "=== Gemini Schema Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_gemini_schema.c" "$CDIR/src/agent/gemini_schema.c" "$CDIR/lib/libjson/json.c" \
@@ -1530,7 +1789,7 @@ else skip "checkpoint (compilation failed)"
 fi &
 
 # CLI command dispatch test (needs commands.c + json + plugin + http libs)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libskillusage" \
     "$CDIR/tests/test_cli_commands.c" \
     "$CDIR/src/cli/commands.c" \
     "$CDIR/lib/libjson/json.c" \
@@ -1542,7 +1801,7 @@ else skip "cli_commands (compilation failed)"
 fi &
 
 # CLI dispatch test (T02: tests commands_dispatch, commands_get_all, handlers)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
     "$CDIR/tests/test_cli_dispatch.c" \
     "$CDIR/src/cli/commands.c" \
     "$CDIR/lib/libjson/json.c" \
@@ -1557,7 +1816,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     rm -f /tmp/hermes_test_cli_dispatch
 else
     echo "  CLI dispatch test compilation error:"
-    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
         "$CDIR/tests/test_cli_dispatch.c" \
         "$CDIR/src/cli/commands.c" \
         "$CDIR/lib/libjson/json.c" \
@@ -1973,12 +2232,14 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "web_tool (compilation failed)"
 fi &
 
-# Terminal tool test (M29 — needs terminal.c + tool_config + json + sandbox_escape)
+# Terminal tool test (M29 — needs terminal.c + tool_config + json + sandbox_escape + tool_output)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libtooloutput" \
     "$CDIR/tests/test_terminal.c" \
     "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" \
     "$CDIR/src/sandbox_escape.c" \
     "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libtooloutput/tool_output.c" \
     -o /tmp/hermes_test_terminal -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (26 tests)"
     else fail "terminal_tool (test binary returned non-zero)"; fi
@@ -2283,6 +2544,23 @@ else
         "$CDIR/src/sandbox_escape.c" \
         -o /tmp/hermes_test_sandbox_esc -lm 2>&1 | sed 's/^/    /'
     skip "sandbox_escape (compilation failed)"
+fi
+
+# ==============================================
+# Transcribe Tool Tests (D10)
+# ==============================================
+echo ""; echo "=== Transcribe Tool Tests (D10) ==="
+INCDIRS=$(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
+    "$CDIR/tests/test_transcribe.c" \
+    "$CDIR/src/tools/transcribe.c" "$CDIR/src/tools/registry.c" \
+    "$CDIR/lib/libtranscribe/transcribe.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_transcribe -lssl -lcrypto -ldl -lm 2>/dev/null && [[ -x /tmp/hermes_test_transcribe ]]; then
+    if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcribe"
+    else fail "transcribe (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_transcribe
+else skip "transcribe (compilation failed)"
 fi
 
 # ==============================================

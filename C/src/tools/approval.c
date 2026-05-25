@@ -290,7 +290,7 @@ static bool approval_prompt_user(const char *tool, const char *reason,
 
 static struct {
     char tool[64];
-    char pattern[256];  /* Simple substring match (eventually glob) */
+    char pattern[256];  /* Glob pattern: *, ? wildcards supported */
 } g_allowlist[MAX_ALLOWLIST_ENTRIES];
 static int g_allowlist_count = 0;
 
@@ -334,6 +334,34 @@ void allowlist_clear(void) {
     g_allowlist_count = 0;
 }
 
+/* Simple glob-style pattern matching.
+ * Supports: * (any chars), ? (single char). Literal match for everything else.
+ * Returns true if `str` matches `pattern`. */
+static bool glob_match(const char *str, const char *pattern) {
+    if (!str || !pattern) return false;
+    while (*pattern) {
+        if (*pattern == '*') {
+            /* Skip consecutive stars */
+            while (pattern[1] == '*') pattern++;
+            pattern++;
+            if (*pattern == '\0') return true;  /* trailing * matches everything */
+            /* Try matching the rest at every position */
+            while (*str) {
+                if (glob_match(str, pattern)) return true;
+                str++;
+            }
+            return false;
+        } else if (*pattern == '?') {
+            if (*str == '\0') return false;
+            str++; pattern++;
+        } else {
+            if (*str != *pattern) return false;
+            str++; pattern++;
+        }
+    }
+    return *str == '\0';
+}
+
 /* P161: Check if a command is allowed by the allowlist for a tool.
  * Returns: true if allowed, false if denied.
  * If the tool has no allowlist entries, all commands pass.
@@ -346,8 +374,16 @@ bool allowlist_check(const char *tool, const char *command) {
     for (int i = 0; i < g_allowlist_count; i++) {
         if (strcmp(g_allowlist[i].tool, tool) == 0) {
             has_entries = true;
-            if (strstr(command, g_allowlist[i].pattern))
-                return true; /* Matched */
+            bool has_glob = (strchr(g_allowlist[i].pattern, '*') != NULL ||
+                               strchr(g_allowlist[i].pattern, '?') != NULL);
+            if (has_glob) {
+                if (glob_match(command, g_allowlist[i].pattern))
+                    return true; /* Matched glob */
+            } else {
+                /* Bare pattern: substring match (backward compat) */
+                if (strstr(command, g_allowlist[i].pattern))
+                    return true; /* Matched substring */
+            }
         }
     }
 

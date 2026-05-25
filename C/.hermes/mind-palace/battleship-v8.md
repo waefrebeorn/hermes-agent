@@ -1,0 +1,474 @@
+# Hermes C — Fresh Battleship (v8 — Triple DA Verified)
+
+Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
+
+Total: **252 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
+
+## SECTOR 1: Confirmed Stubs (0 gaps)
+
+All prior plugin stubs resolved. Remaining gaps in other sectors.
+
+Functions that return fake data or error. Implementation required. — All resolved (v8→v9).
+
+## SECTOR 2: Placeholder / "For Later" / Unwired Infrastructure (14 gaps)
+
+Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not supported`, `in future`, `for extension`.
+
+| # | ID | File:Line | Issue | LOC | Priority |
+|---|----|-----------|-------|-----|----------|
+| 1 | P01 | telegram.c:949 | Editable draft with placeholder text — stub UX behavior | 20 | P3 |
+| 2 | P02 | mcp_tool.c:1285 | Placeholder auth entry for future server connections | 15 | P3 |
+| 3 | P03 | memory.c:544-549 | Plugin memory save/load — no-op returns true | 10 | P3 |
+| 4 | P04 | cron/cron_extras.c:319 | Cron placeholder replacement ({{param}} system incomplete) | 30 | P3 |
+| 5 | P05 | api_server.c:219 | "In future, use g_agent to dispatch" — incomplete routing | 200 | P2 |
+| 6 | P06 | qqbot.c:77 | "Reserved for future API mode" — never wired | 25 | P3 |
+| 7 | P07 | title.c:13 | "(void)cfg — Title gen could use LLM in future" | 30 | P2 |
+| 8 | P08 | server.c:96 | Default gateway port unchanged from 8080 — no config read | 10 | P3 |
+| 9 | P09 | credential.c:432 | (void)cd->old_name placeholder for unused field | 5 | P3 |
+| 10 | P10 | commands.c:3003 | "CDP not connected" — fallback message, means CDP not wired | 20 | P2 |
+| 11 | P11 | commands.c:2002 | cmd_agents — "No active subagents" message, always | 5 | P3 |
+| 12 | P12 | commands.c:2051 | cmd_toolsets — hardcoded list, not dynamic | 15 | P2 |
+| 13 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
+| 14 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
+
+## SECTOR 3: Dead Code / Unused Functions (13 gaps)
+
+Functions fully implemented but never called. Wire or remove.
+
+| # | ID | File:Line | Function | LOC | Priority |
+|---|----|-----------|----------|-----|----------|
+| 1 | W02 | qqbot.c:78 | post_api — __attribute__((unused)) | 25 | P3 |
+| 2 | W03 | feishu.c:506 | feishu_upload_image — implements, never called | 40 | P3 |
+| 3 | W04 | tui_fullscreen.c:184 | tui_alloc_pair — unused | 20 | P3 |
+| 4 | W05 | tui_fullscreen.c:835 | tui_wprint_role — unused | 30 | P3 |
+| 5 | W06 | tui_fullscreen.c:1947 | tui_display_image_sixel — unused | 35 | P3 |
+| 6 | W07 | tui_fullscreen.c:1984 | tui_display_image_kitty — unused | 50 | P3 |
+| 7 | W08 | tui_fullscreen.c:2035 | tui_display_image — unused orchestrator | 30 | P3 |
+| 8 | W09 | skill_bundles.c:17 | Bundle loader can parse but no apply/install | 80 | P2 |
+| 9 | W11 | memory.c:1412 | plugin_delete — returns false, never used | 20 | P3 |
+| 10 | W12 | server.c:96 | Default port 8080 (unchanged) | 10 | P3 |
+| 11 | W14 | feishu.c:506 | Image upload implemented but unwired (dup) | 40 | P3 |
+| 12 | W15 | cli/config.c:325 | Fragmented config — "Handled by get_slermes_home()" | 30 | P3 |
+| 13 | W16 | context_engine.c:91/100 | Default on_session_start/end = noop | 10 | P3 |
+
+## SECTOR 4: Missing Agent Modules — Truly Unported (12 gaps)
+
+Python agent modules with NO C equivalent at all. Not merged, not aliased.
+
+| # | ID | Python Module | Key Functionality | LOC (Python) | Priority |
+|---|----|--------------|-------------------|--------------|----------|
+| 1 | A35 | background_review | Background review agent | 587 | P2 |
+| 2 | A01 | insights | Full session insights engine (931 LOC Python) | 931 | P1 |
+| 3 | A11 | curator_backup | Curator backup state management | 150 | P2 |
+| 4 | A25 | process_bootstrap | Subprocess bootstrap helpers | 167 | P2 |
+| 5 | A28 | skill_commands | Skill slash-command injection | 200 | P2 |
+| 6 | A31 | title_generator | Session title generation | 150 | P2 |
+| 7 | A32 | tool_dispatch_helpers | Tool call dispatch helpers | 180 | P2 |
+| 8 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
+| 9 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
+| 10 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
+| 11 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
+| 12 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
+| 13 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
+
+## SECTOR 5: Agent Modules — Partial Merge Depth (15 gaps)
+
+Python modules where C has a partial port merged into another file, missing significant features.
+
+| # | ID | Python Module | C Location | Missing Features | Priority |
+|---|----|--------------|-----------|-----------------|----------|
+| 1 | M01 | anthropic_adapter | provider_anthropic.c | C has raw API, missing: thinking block → message format conversion, tool_use block reordering | P2 |
+| 2 | M02 | bedrock_adapter | provider_bedrock.c | C has SigV4 + Converse, missing: streaming response handling, model-specific quirks | P2 |
+| 3 | M03 | gemini_native_adapter | provider_google.c | C has parts/functionCall, missing: inlineContext caching, Google-native streaming format | P2 |
+| 4 | M04 | google_oauth | (none) | No Google OAuth flow — needed for GCP services, Calendar, Drive | P2 |
+| 5 | M05 | gemini_schema | agent/gemini_schema.c | C port exists, missing: Google Cloud Code schema extensions | P3 |
+| 6 | M06 | memory_manager | tools/memory.c | C has store/search/delete, missing: multi-backend orchestration, priority ranking | P2 |
+| 7 | M07 | memory_provider | plugins/plugin_*.c | C has 5 plugin backends, missing: unified memory_provider interface with auto-fallback | P2 |
+| 8 | M08 | message_sanitization | (merged into various) | C sanitizes per-platform inline, missing: centralized sanitize table | P3 |
+| 9 | M09 | model_metadata | agent/provider_metadata.c | C has provider properties, missing: full model capabilities DB (context window, pricing, features) | P2 |
+| 10 | M10 | models_dev | (none) | No dev model configuration (staging/test provider endpoints) | P3 |
+| 11 | M11 | plugin_llm | (none) | No LLM calls from plugins — plugins can't make provider calls | P2 |
+| 12 | M12 | prompt_builder | agent/system_prompt.c | C has system prompt generation, missing: AGENTS.md/CLAUDE.md loading, threat detection | P2 |
+| 13 | M13 | stream_diag | agent/llm_client.c | C has basic streaming, missing: Ttfb tracking, header diagnostics, retry logging | P2 |
+| 14 | M14 | conversation_loop | agent/agent_loop.c + llm_client.c | C has the loop split across files, missing: unified loop with interrupt coordination | P2 |
+| 15 | M15 | azure_identity_adapter | provider_azure.c | C has Azure API, missing: managed identity auth, token refresh | P3 |
+
+## SECTOR 6: Missing Subdirectory Modules (22 gaps)
+
+Python subdirectory modules with NO C equivalent.
+
+| # | ID | Python Module | Key Functionality | Priority |
+|---|----|--------------|-------------------|----------|
+| 1 | T01 | environments/local.py | Local terminal backend (C has inline in terminal.c) | P2 |
+| 2 | T02 | environments/docker.py | Docker terminal backend | P2 |
+| 3 | T03 | environments/ssh.py | SSH terminal backend | P2 |
+| 4 | T04 | environments/modal.py | Modal terminal backend | P2 |
+| 5 | T05 | environments/daytona.py | Daytona terminal backend | P2 |
+| 6 | T06 | environments/singularity.py | Singularity terminal backend | P2 |
+| 7 | T07 | environments/vercel_sandbox.py | Vercel sandbox backend | P3 |
+| 8 | T08 | environments/managed_modal.py | Managed modal backend | P3 |
+| 9 | T09 | environments/base.py | Environment base class | P2 |
+| 10 | T10 | environments/file_sync.py | File sync for environments | P3 |
+| 11 | T11 | environments/modal_utils.py | Modal utility functions | P3 |
+| 12 | T12 | computer_use/backend.py | Computer use backend abstraction (C has inline) | P2 |
+| 13 | T13 | computer_use/cua_backend.py | CUA (Computer Use Agent) backend | P2 |
+| 14 | T14 | computer_use/schema.py | Computer use schema definitions (C has schema inline) | P2 |
+| 15 | T15 | computer_use/tool.py | Computer use tool orchestration | P2 |
+| 16 | T16 | computer_use/vision_routing.py | Vision routing for computer use | P2 |
+| 17 | T21 | hermes_tools_mcp_server.py | Hermes MCP server transport | P3 |
+| 18 | T22 | transports/types.py | Transport type definitions | P3 |
+| 19 | T25 | lsp/* (8 files) | LSP protocol client for IDE integration | P3 |
+| 20 | T26 | codex_app_server_session.py | Codex session transport | P3 |
+| 21 | T27 | codex_event_projector.py | Codex event projector | P3 |
+| 22 | T28 | codex_app_server.py | Codex app server transport | P3 |
+
+## SECTOR 7: Missing Tool Features — Depth Gaps (11 gaps)
+
+Existing C tools missing features that Python has.
+
+| # | ID | Tool | Missing Feature | LOC | Priority |
+|---|-----|------|----------------|-----|----------|
+| 1 | D05 | terminal.c | Docker backend (only local execution) | 300 | P2 |
+| 2 | D06 | terminal.c | SSH backend | 250 | P2 |
+| 3 | D07 | terminal.c | Modal/Daytona/singularity backends | 500 | P3 |
+| 4 | D08 | terminal.c | Environment file sync | 150 | P3 |
+| 5 | D10 | computer_use.c | Modular backend system (backend.py split) | 250 | P2 |
+| 6 | D11 | computer_use.c | Vision routing per backend | 100 | P2 |
+| 7 | D13 | browser.c | Browser dialog handling | 80 | P2 |
+| 8 | D14 | browser.c | Browser supervisor | 200 | P2 |
+| 9 | D15 | browser.c | Camofox browser state management | 150 | P2 |
+| 10 | D16 | memory.c | Plugin memory provider interface | 280 | P2 |
+| 11 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
+| 12 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
+
+## SECTOR 8: Gateway Platform Depth (25 gaps)
+
+C gateways with minimal or incomplete implementations vs Python.
+
+| # | ID | Platform | Missing Feature | LOC | Priority |
+|---|---------|----------|----------------|-----|----------|
+| 1 | G01 | homeassistant | No conversation loop, one-way notify only | 200 | P2 |
+| 2 | G02 | qqbot | No inbound polling, webhook-only | 150 | P2 |
+| 3 | G03 | qqbot | post_api marked __attribute__((unused)) dead code | 25 | P3 |
+| 4 | G04 | dingtalk | No inbound polling | 80 | P2 |
+| 5 | G05 | wecom | No inbound polling | 80 | P2 |
+| 6 | G06 | sms | Webhook not wired for inbound | 50 | P2 |
+| 7 | G07 | mattermost | No bot-message filtering, relies on agent dedup | 30 | P2 |
+| 8 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
+| 9 | G09 | feishu | feishu_upload_image implemented but never called | 40 | P3 |
+| 10 | G10 | signal | Attachment support | 60 | P2 |
+| 11 | G11 | slack | Rich message formatting blocks | 100 | P2 |
+| 12 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
+| 13 | G13 | matrix | End-to-end encryption | 200 | P3 |
+| 14 | G14 | discord | Slash command registration | 100 | P2 |
+| 15 | G15 | telegram | Inline query mode | 80 | P2 |
+| 16 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
+| 17 | G17 | email | Multi-account support | 100 | P2 |
+| 18 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
+| 19 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
+| 20 | G20 | weixin | Rich media messages | 80 | P2 |
+| 21 | G21 | yuanbao | Group management commands | 100 | P2 |
+| 22 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
+| 23 | G23 | platform/* | No codex_response platform | 150 | P3 |
+| 24 | G24 | platform/* | No webhook_server platform | 200 | P3 |
+| 25 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
+
+## SECTOR 9: Configuration & Environment (14 gaps)
+
+Missing config keys, env vars, or settings that Python handles but C doesn't.
+
+| # | ID | Config Key | Description | LOC | Priority |
+|---|-----|-----------|-------------|-----|----------|
+| 1 | C06 | gateway.secret_rotation | Gateway secret rotation interval | 30 | P3 |
+| 2 | C07 | tools.environments | Environment backends config | 50 | P2 |
+| 3 | C08 | agent.codex_app_server | Codex app server config | 40 | P3 |
+| 4 | C09 | agent.bitwarden | Bitwarden secrets manager config | 30 | P2 |
+| 5 | C10 | plugins.memory.* | Plugin memory provider config | 40 | P2 |
+| 6 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
+| 7 | C12 | credentials.sources | Multi-source credential resolution order | 25 | P2 |
+| 8 | C13 | gateway.signal.* | Signal-specific config (number, etc.) | 20 | P2 |
+| 9 | C14 | proxy.https_proxy | Separate HTTPS proxy config | 10 | P2 |
+| 10 | C15 | proxy.no_proxy | Per-host proxy bypass list | 15 | P2 |
+| 11 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
+| 12 | C18 | agent.vault.* | Vault encryption config | 20 | P2 |
+| 13 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
+| 14 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
+
+## SECTOR 10: Library Depth (28 gaps)
+
+Libraries ported but missing features.
+
+| # | ID | Library | Missing Feature | LOC | Priority |
+|---|--------|---------|----------------|-----|----------|
+| 1 | L01 | libhttp | HTTP/2 support | 500 | P3 |
+| 2 | L02 | libhttp | Connection pooling | 200 | P2 |
+| 3 | L03 | libhttp | Retry with backoff | 80 | P2 |
+| 4 | L04 | libhttp | Multipart form data | 100 | P2 |
+| 5 | L05 | libhttp | Cookie jar | 60 | P2 |
+| 6 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
+| 7 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
+| 8 | L08 | libjson | JSON pointer queries | 60 | P2 |
+| 9 | L09 | libjson | JSON schema validation | 200 | P3 |
+| 10 | L10 | libjson | Streaming parse | 150 | P3 |
+| 11 | L11 | libyaml | Multi-document YAML | 40 | P2 |
+| 12 | L12 | libcrypto | AES encryption | 200 | P2 |
+| 13 | L13 | libcrypto | RSA key generation | 150 | P3 |
+| 14 | L14 | libcrypto | JWT decode (signed tokens) | 80 | P2 |
+| 15 | L18 | libdb | Session pruning by age | 50 | P2 |
+| 16 | L19 | libdb | Session tags CRUD | 40 | P2 |
+| 17 | L20 | libdb | Branch/parent session navigation | 60 | P2 |
+| 18 | L21 | libdb | Export/import JSON | 50 | P2 |
+| 19 | L22 | libdb | Batch operations | 40 | P3 |
+| 20 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
+| 21 | L24 | libbase64 | URL-safe base64 | 15 | P2 |
+| 22 | L25 | libhash | LRU cache eviction | 40 | P2 |
+| 23 | L26 | libhash | TTL-based expiry | 30 | P2 |
+| 24 | L27 | libdatetime | Timezone support | 50 | P2 |
+| 25 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
+| 26 | L29 | libglob | Recursive glob | 25 | P2 |
+| 27 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 28 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
+
+## SECTOR 11: Bug Fixes & Known Issues (11 gaps)
+
+Confirmed bugs that need fixing.
+
+| # | ID | Bug | File | LOC | Priority |
+|---|-----|-----|------|-----|----------|
+| 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
+| 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
+| 3 | B07 | Config reload doesn't reload plugins | commands.c (cmd_reload) | 30 | P2 |
+| 4 | B08 | MCP tool auth tokens not persisted | mcp_tool.c | 60 | P2 |
+| 5 | B09 | Session metadata not saved on /title | commands.c (cmd_title checks agent_save_meta) | 10 | P2 |
+| 6 | B11 | Gateway platforms don't validate config on startup | server.c | 50 | P2 |
+| 7 | B12 | Cron jobs don't inherit gateway session context | cron/scheduler.c | 60 | P2 |
+| 8 | B13 | Skill hub fails silently on network error | skills_hub.c | 20 | P2 |
+| 9 | B14 | Plugin load errors not propagated to user | plugin.c | 30 | P2 |
+| 10 | B15 | No log rotation for gateway logs | gateway/server.c | 40 | P2 |
+| 11 | B16 | OOM not handled in `db_list_with_meta` loop | db.c:522 (calloc NULL check) | 5 | P3 |
+
+## SECTOR 12: Test Coverage Gaps (25 gaps)
+
+C tools without dedicated test files.
+
+| # | ID | Module | Test File | Priority |
+|---|-------|--------|-----------|----------|
+| 1 | T01 | api_helpers.c | Missing | P2 |
+| 2 | T02 | approve.c (alias approval.c) | Missing | P2 |
+| 3 | T03 | clarify.c | Missing | P2 |
+| 4 | T04 | cronjob.c | Missing (has 23 tests elsewhere) | P2 |
+| 5 | T05 | delegate.c | Missing | P2 |
+| 6 | T06 | discord.c | Missing | P2 |
+| 7 | T07 | exec_code.c | Missing (has partial test) | P2 |
+| 8 | T08 | file.c (all 3 file tools) | Missing | P2 |
+| 9 | T09 | file_batch.c | Missing | P2 |
+| 10 | T10 | homeassistant.c | Missing | P2 |
+| 11 | T11 | image_gen.c | Missing | P2 |
+| 12 | T12 | kanban.c | Missing | P2 |
+| 13 | T13 | mcp_tool.c | Missing | P2 |
+| 14 | T14 | memory.c | Missing | P2 |
+| 15 | T15 | patch.c | Missing | P2 |
+| 16 | T16 | process.c | Missing | P2 |
+| 17 | T17 | send_message.c | Missing | P2 |
+| 18 | T18 | session_search.c | Missing | P2 |
+| 19 | T19 | skills.c | Missing | P2 |
+| 20 | T20 | terminal.c | Missing | P2 |
+| 21 | T21 | tts.c | Missing | P2 |
+| 22 | T22 | video_gen.c | Missing | P2 |
+| 23 | T23 | vision.c | Missing | P2 |
+| 24 | T24 | voice_mode.c | Missing | P2 |
+| 25 | T25 | web.c | Missing | P2 |
+
+## SECTOR 13: API Server Depth (5 gaps)
+
+C api_server.c (457 lines) vs Python api_server.py (~3500 lines).
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | E01 | REST API endpoints (agents, tools, sessions, health) | 1500 | P2 |
+| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | P2 |
+| 3 | E03 | Session CRUD via HTTP | 300 | P2 |
+| 4 | E04 | MCP serve mode | 200 | P2 |
+| 5 | E05 | Webhook endpoint for gateways | 250 | P2 |
+
+## SECTOR 14: TUI Depth (8 gaps)
+
+C tui_fullscreen.c (~3800 lines) vs Python TUI (Ink/React, ~5000 lines).
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | U01 | Image display (sixel/kitty/iterm2) — code exists but unwired | 150 | P2 |
+| 2 | U02 | Session browser with search | 200 | P2 |
+| 3 | U03 | Skill browser/list | 100 | P2 |
+| 4 | U04 | Config editor | 150 | P2 |
+| 5 | U05 | Plugin manager | 100 | P3 |
+| 6 | U06 | Gateway status dashboard | 120 | P2 |
+| 7 | U07 | Cron job viewer | 80 | P2 |
+| 8 | U08 | Log viewer (tail -f in TUI) | 100 | P2 |
+
+## SECTOR 15: Curator Depth (3 gaps)
+
+C curator.c vs Python curator.py.
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | R02 | /curator review — inline review of current session | 80 | P2 |
+| 2 | R03 | /curator status — curator state overview | 50 | P2 |
+| 3 | R05 | /curator run — real agent review (S05, 100 LOC) | 100 | P1 |
+
+## SECTOR 16: Prompt Caching Depth (5 gaps)
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | P02 | Cache hit rate tracking | 40 | P2 |
+| 2 | P03 | Automatic cache invalidation on system prompt change | 30 | P2 |
+| 3 | P04 | Multi-turn cache optimization | 50 | P2 |
+| 4 | P05 | Cache warmup on session load | 60 | P2 |
+| 5 | P06 | Per-provider cache config | 30 | P2 |
+
+## SECTOR 17: Shell Hooks Depth (3 gaps)
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | H01 | Hook priority ordering | 40 | P2 |
+| 2 | H02 | Async hook execution | 60 | P2 |
+| 3 | H03 | Hook return value chaining | 50 | P2 |
+
+## SECTOR 18: Vault Encryption Depth (3 gaps)
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | V01 | Key rotation | 60 | P2 |
+| 2 | V02 | Multiple vaults | 80 | P2 |
+| 3 | V03 | Vault sharing/export | 100 | P3 |
+
+## SECTOR 19: Security Depth (6 gaps)
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | S01 | cloud/service patterns in tírith_security.py | 200 | P2 |
+| 2 | S02 | Port scan detection in terminal tool | 50 | P2 |
+| 3 | S03 | Credential leak detection in tool outputs | 100 | P2 |
+| 4 | S04 | File path traversal depth (recursive pattern) | 60 | P2 |
+| 5 | S05 | Process argument injection detection | 80 | P2 |
+| 6 | S06 | DNS rebinding protection for web tool | 100 | P3 |
+
+## SECTOR 20: C-Only New Features (10 gaps)
+
+Features in Python that would benefit C.
+
+| # | ID | Feature | LOC | Priority |
+|---|-----|---------|-----|----------|
+| 1 | N01 | Bitwarden Secrets Manager integration | 200 | P2 |
+| 2 | N02 | Mixture of Agents tool (MoA) | 300 | P2 |
+| 3 | N03 | Feishu doc and drive tools | 250 | P3 |
+| 4 | N04 | Microsoft Graph auth + client | 300 | P3 |
+| 5 | N05 | LSP protocol client (IDE integration) | 500 | P3 |
+| 6 | N06 | Codex app server integration | 400 | P3 |
+| 7 | N07 | Codex Responses API support | 300 | P3 |
+| 8 | N08 | Codex runtime environment | 200 | P3 |
+| 9 | N09 | Copilot ACP client integration | 300 | P3 |
+| 10 | N10 | Neutts synth (Neural TTS) | 100 | P3 |
+
+## SECTOR 21: Refactoring & Cleanup (10 gaps)
+
+| # | ID | Task | Description | LOC | Priority |
+|---|-----|------|-------------|-----|----------|
+| 1 | R01 | Remove dead TUI display functions | tui_display_image, tui_wprint_role, etc. | -50 | P3 |
+| 2 | R02 | Fix qqbot dead code (post_api unused) | Remove __attribute__((unused)) or wire it | 5 | P3 |
+| 3 | R03 | Wire feishu_upload_image | Call from message send flow | 5 | P3 |
+| 4 | R05 | Standardize gateway platform creation | ADDING_A_PLATFORM.md for C | 30 | P3 |
+| 5 | R06 | Remove duplicate gateway/sms flags | Consolidate flag_send/flags | 10 | P3 |
+| 6 | R07 | Add make check target | Combined lint + build + test | 10 | P2 |
+| 7 | R08 | Add make clean-all target | Deep clean (objects, binary, deps) | 5 | P3 |
+| 8 | R09 | Add .PHONY to all Makefile targets | Fix false-positive up-to-date | 10 | P3 |
+| 9 | R10 | Consolidate SLERMES_HOME vs HERMES_HOME | Some files use SLERMES_HOME, some HERMES_HOME | 20 | P2 |
+| 10 | R11 | Remove trailing whitespace across codebase | Pre-commit catches new, existing files have it | 5 | P3 |
+
+## SECTOR 22: Integration & CI (16 gaps)
+## SECTOR 22: Integration & CI (7 gaps)
+| # | ID | Task | Description | Priority |
+|---|-----|------|-------------|----------|
+| 1 | I01 | GitHub Actions CI for C build | Automatic build + test on push | P2 |
+| 2 | I02 | ASan in CI | Detect memory errors automatically | P2 |
+| 3 | I03 | Code coverage reporting | gcov integration | P2 |
+| 4 | I04 | Static analysis (cppcheck/scan-build) | Automated lint | P2 |
+| 5 | I05 | Benchmark regression detection | Track perf changes | P3 |
+| 6 | I06 | Release workflow (binary artifact) | Automated release builds | P3 |
+| 7 | I07 | Docker build for C version | Containerized deployment | P2 |
+
+---
+
+## Upstream Sync: Python Features Not Yet in C
+
+Verified by scanning Python Hermes (597 .py files, 78 agent modules, 88+ tool files, 31 gateway platforms, 138 plugin dirs):
+
+### New Python modules with NO C equivalent (not in battleship sectors above)
+| Module | LOC | What It Does |
+|--------|-----|-------------|
+| agent/onboarding | 400 | First-time user onboarding flow |
+| tools/slash_confirm.py | 80 | Confirmation dialog for destructive tool actions |
+| tools/budget_config.py | 120 | Per-session budget configuration |
+| tools/checkpoint_manager.py | 200 | Checkpoint save/load during agent runs |
+| tools/lazy_deps.py | 60 | Lazy dependency loading for tool files |
+| tools/openrouter_client.py | 150 | OpenRouter-specific tool interface |
+| tools/mcp_oauth_manager.py | 250 | OAuth token lifecycle for MCP connections (C has libmcp_oauth) |
+| tools/path_security.py | 100 | Path traversal prevention utilities |
+| tools/binary_extensions.py | 60 | Binary file type detection (C has libbinary) |
+| tools/debug_helpers.py | 90 | Debugging helpers for tool inspection |
+| tools/feishu_doc_tool.py | 300 | Feishu document create/edit tool |
+| tools/feishu_drive_tool.py | 250 | Feishu file upload/download tool |
+| tools/microsoft_graph_auth.py | 200 | Microsoft identity OAuth2 flow |
+| tools/microsoft_graph_client.py | 300 | Microsoft Graph API client |
+| tools/mixture_of_agents_tool.py | 250 | MoA ensemble tool |
+| tools/neutts_synth.py | 100 | Neural TTS synthesis |
+| tools/website_policy.py | 80 | Website access policy enforcement (C has libwebsite) |
+| tools/skills_guard.py | 100 | Skill sandbox execution |
+| tools/skill_provenance.py | 80 | Skill source tracking |
+
+## Form-Not-Function Gaps (verified by Triple DA)
+
+Functions that exist in C but are significantly less capable than Python equivalent:
+
+| # | C Function | Python Equivalent | Gap |
+|---|-----------|-------------------|-----|
+| 8 | db_query_tool_stats (80 LOC) | insights.py (931 LOC) | C has raw SQL, Python has ML-based session scoring, skill breakdown, top sessions ranking, source filtering, cost analysis across providers |
+| 9 | prompt_caching.c (87 LOC) | prompt_caching.py (600+ LOC) | C has basic cache fields, Python has Anthropic ephemeral caching, automatic invalidation, hit-rate tracking, multi-turn optimization |
+| 10 | curator.c (160 LOC) | curator.py (800+ LOC) | C has basic state machine, Python has full review workflow, backup scheduling, meta-reviews, manual override |
+| 11 | shell_hooks.c (309 LOC) | shell_hooks.py (500+ LOC) | C has basic hook dispatch, Python has priority ordering, async execution, return value chaining, hook composition |
+| 12 | memory.c tool (full) | memory_tool.py + memory_manager.py | C has file + plugin backends, Python has multi-backend orchestration with priority ranking and auto-compression |
+| 13 | computer_use.c (~1540 LOC) | computer_use/ (4 files, ~2000 LOC) | C has inline backends, Python has modular backend/vision_routing/schema/tool split |
+| 14 | browser.c (~1400 LOC) | browser_tool.py + browser_cdp_tool.py + browser_dialog_tool.py + browser_supervisor.py (~2500 LOC) | C has single-file, Python has modular supervisor, CDP, dialog, state management |
+| 15 | tirith.c | tirith_security.py | C has basic scanning, Python has cloud patterns, credential leak detection, injection detection |
+| 16 | agent broker/routing | agent/fallback_routing.py (Python) | C has basic fallback_routing, Python has multi-provider failover with ordered priority |
+
+---
+
+## Summary
+
+| Sector | Count |
+|--------|-------|
+| S1: | 5 |
+| S2: | 14 |
+| S3: | 14 |
+| S4: | 12 |
+| S5: | 15 |
+| S6: | 22 |
+| S7: | 11 |
+| S8: | 25 |
+| S9: | 14 |
+| S10: | 28 |
+| S11: | 11 |
+| S12: | 25 |
+| S13: | 5 |
+| S14: | 8 |
+| S15: | 3 |
+| S16: | 5 |
+| S17: | 3 |
+| S18: | 3 |
+| S19: | 6 |
+| S20: | 10 |
+| S21: | 10 |
+| S22: | 7 |
+| **Total** | **258** |
+| (resolved items retired to vault/achievements.md) | |

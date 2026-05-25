@@ -144,6 +144,373 @@ void llm_truncate_context(agent_state_t *state, size_t max_tokens) {
 }
 
 /* ================================================================
+ *  Context Compression — Tool Result Pruning
+ * ================================================================ */
+
+/* Simple FNV-1a hash for content deduplication */
+static uint32_t compress_content_hash(const char *content) {
+    uint32_t h = 2166136261u;
+    if (!content) return 0;
+    while (*content) {
+        h ^= (unsigned char)*content++;
+        h *= 16777619u;
+    }
+    return h;
+}
+
+/* Create an informative 1-line summary of a tool call + result.
+ * Matches Python context_compressor._summarize_tool_result() format. */
+static void compress_summarize_tool(const char *tool_name, const char *tool_args,
+                                     const char *tool_content,
+                                     char *out, size_t out_sz) {
+    if (!out || out_sz == 0) return;
+    out[0] = '\0';
+
+    /* Parse args JSON if present */
+    /* Count lines in content */
+    int line_count = 1;
+    size_t content_len = 0;
+    if (tool_content) {
+        content_len = strlen(tool_content);
+        for (const char *p = tool_content; *p; p++) {
+            if (*p == '\n') line_count++;
+        }
+        if (line_count < 0) line_count = 0;
+    }
+
+    if (!tool_name) tool_name = "unknown";
+
+    if (strcmp(tool_name, "terminal") == 0) {
+        /* Extract command from args */
+        char cmd[256] = "";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                const char *c = json_get_str(jargs, "command", "");
+                if (c[0]) {
+                    size_t cl = strlen(c);
+                    if (cl > 80) { memcpy(cmd, c, 77); cmd[77] = '\0'; strcat(cmd, "..."); }
+                    else { memcpy(cmd, c, cl); cmd[cl] = '\0'; }
+                }
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[terminal] ran `%s` -> %d lines output",
+                 cmd[0] ? cmd : "?", line_count);
+
+    } else if (strcmp(tool_name, "read_file") == 0) {
+        const char *path = "?";
+        int offset = 1;
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                path = json_get_str(jargs, "path", "?");
+                offset = (int)json_get_num(jargs, "offset", 1);
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[read_file] read %s from line %d (%zu chars)",
+                 path, offset, content_len);
+
+    } else if (strcmp(tool_name, "write_file") == 0) {
+        const char *path = "?";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                path = json_get_str(jargs, "path", "?");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[write_file] wrote to %s (%d lines)",
+                 path, line_count);
+
+    } else if (strcmp(tool_name, "search_files") == 0) {
+        const char *pattern = "?", *path = ".", *target = "content";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                pattern = json_get_str(jargs, "pattern", "?");
+                path = json_get_str(jargs, "path", ".");
+                target = json_get_str(jargs, "target", "content");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[search_files] %s search for '%s' in %s -> %d lines",
+                 target, pattern, path, line_count);
+
+    } else if (strcmp(tool_name, "patch") == 0) {
+        const char *path = "?";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                path = json_get_str(jargs, "path", "?");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[patch] in %s (%zu chars result)", path, content_len);
+
+    } else if (strcmp(tool_name, "web_search") == 0) {
+        const char *query = "?";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                query = json_get_str(jargs, "query", "?");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[web_search] query='%s' (%zu chars result)", query, content_len);
+
+    } else if (strcmp(tool_name, "web_extract") == 0) {
+        const char *url = "?";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                json_node_t *urls = json_obj_get(jargs, "urls");
+                if (urls && json_len(urls) > 0)
+                    url = json_get_str(json_get(urls, 0), "", "?");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[web_extract] %s (%zu chars)", url, content_len);
+
+    } else if (strcmp(tool_name, "execute_code") == 0) {
+        char code_preview[80] = "";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                const char *code = json_get_str(jargs, "code", "");
+                if (code[0]) {
+                    size_t cl = strlen(code);
+                    size_t pl = cl > 60 ? 57 : cl;
+                    int newline = 0;
+                    for (size_t ii = 0; ii < pl && code[ii]; ii++) {
+                        if (code[ii] == '\n' && !newline) { code_preview[ii] = ' '; newline = 1; }
+                        else { code_preview[ii] = code[ii]; }
+                    }
+                    code_preview[pl] = '\0';
+                    if (cl > 60) memcpy(code_preview + pl, "...", 4);
+                }
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[execute_code] `%s` (%d lines output)",
+                 code_preview[0] ? code_preview : "?", line_count);
+
+    } else if (strcmp(tool_name, "delegate_task") == 0) {
+        char goal[80] = "";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                const char *g = json_get_str(jargs, "goal", "");
+                size_t gl = strlen(g);
+                size_t cp = gl > 60 ? 57 : gl;
+                memcpy(goal, g, cp);
+                goal[cp] = '\0';
+                if (gl > 60) memcpy(goal + cp, "...", 4);
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[delegate_task] '%s' (%zu chars result)",
+                 goal[0] ? goal : "?", content_len);
+
+    } else if (strcmp(tool_name, "memory") == 0) {
+        const char *action = "?", *target = "?";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                action = json_get_str(jargs, "action", "?");
+                target = json_get_str(jargs, "target", "?");
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[memory] %s on %s", action, target);
+
+    } else if (strcmp(tool_name, "todo") == 0) {
+        snprintf(out, out_sz, "[todo] updated task list");
+
+    } else if (strcmp(tool_name, "clarify") == 0) {
+        snprintf(out, out_sz, "[clarify] asked user a question");
+
+    } else if (strcmp(tool_name, "vision_analyze") == 0) {
+        char question[80] = "";
+        if (tool_args && tool_args[0]) {
+            char *err = NULL;
+            json_node_t *jargs = json_parse(tool_args, &err);
+            free(err);
+            if (jargs) {
+                const char *q = json_get_str(jargs, "question", "");
+                size_t ql = strlen(q);
+                size_t cp = ql > 50 ? 47 : ql;
+                memcpy(question, q, cp);
+                question[cp] = '\0';
+                if (ql > 50) memcpy(question + cp, "...", 4);
+                json_free(jargs);
+            }
+        }
+        snprintf(out, out_sz, "[vision_analyze] '%s' (%zu chars)", question, content_len);
+
+    } else {
+        /* Generic fallback */
+        snprintf(out, out_sz, "[%s] %s (%zu chars, %d lines)",
+                 tool_name, "", content_len, line_count);
+    }
+}
+
+/* Prune old tool results before LLM compression.
+ * Deduplicates identical tool results, replaces old ones with 1-line summaries,
+ * and truncates large tool_call arguments.
+ *
+ * Operates on state->messages IN PLACE (modifies content field of tool/assistant messages).
+ * Does NOT add/remove messages. */
+static void compress_prune_tool_results(agent_state_t *state, size_t sys_keep) {
+    if (!state || state->message_count <= sys_keep + 2) return;
+
+    /* Build tool_call_id -> (tool_name, arguments) index from assistant messages */
+    #define MAX_TOOL_INDEX 256
+    static struct { char id[64]; char name[128]; char args[4096]; } tool_index[MAX_TOOL_INDEX];
+    int idx_count = 0;
+
+    for (size_t i = sys_keep; i < state->message_count && idx_count < MAX_TOOL_INDEX; i++) {
+        message_t *msg = state->messages[i];
+        if (!msg || msg->role != MSG_ASSISTANT) continue;
+        for (int j = 0; j < msg->tool_calls_count && idx_count < MAX_TOOL_INDEX; j++) {
+            memcpy(tool_index[idx_count].id, msg->tool_calls[j].id, sizeof(tool_index[idx_count].id) - 1);
+            tool_index[idx_count].id[sizeof(tool_index[idx_count].id) - 1] = '\0';
+            memcpy(tool_index[idx_count].name, msg->tool_calls[j].name, sizeof(tool_index[idx_count].name) - 1);
+            tool_index[idx_count].name[sizeof(tool_index[idx_count].name) - 1] = '\0';
+            memcpy(tool_index[idx_count].args, msg->tool_calls[j].arguments, sizeof(tool_index[idx_count].args) - 1);
+            tool_index[idx_count].args[sizeof(tool_index[idx_count].args) - 1] = '\0';
+            idx_count++;
+        }
+    }
+
+    if (idx_count == 0) return;
+
+    /* Pass 1: Deduplicate identical tool results by content hash */
+    #define MAX_HASH_MAP 256
+    static struct { uint32_t hash; size_t index; } hash_map[MAX_HASH_MAP];
+    int hash_count = 0;
+
+    /* Walk backward so older duplicates get replaced */
+    for (size_t i = state->message_count; i > sys_keep; i--) {
+        size_t idx = i - 1;
+        message_t *msg = state->messages[idx];
+        if (!msg || msg->role != MSG_TOOL || !msg->content) continue;
+        size_t clen = strlen(msg->content);
+        if (clen < 200) continue;
+
+        uint32_t h = compress_content_hash(msg->content);
+        int found = -1;
+        for (int hi = 0; hi < hash_count; hi++) {
+            if (hash_map[hi].hash == h) { found = hi; break; }
+        }
+        if (found >= 0) {
+            /* Older duplicate — replace with back-reference */
+            const char *dup_text = "[Duplicate tool output — same content as a more recent call]";
+            free(msg->content);
+            msg->content = strdup(dup_text);
+        } else if (hash_count < MAX_HASH_MAP) {
+            hash_map[hash_count].hash = h;
+            hash_map[hash_count].index = idx;
+            hash_count++;
+        }
+    }
+
+    /* Pass 2: Replace old tool results with 1-line summaries */
+    /* Determine prune boundary — protect the most recent tool results within tail budget */
+    size_t tail_budget_tokens = 2048; /* ~20% of 10K, similar to llm_compress_context */
+    size_t tail_tokens = 0;
+    int tail_count = 0;
+    size_t prune_boundary = state->message_count;
+
+    for (size_t i = state->message_count; i > sys_keep; i--) {
+        size_t idx = i - 1;
+        message_t *msg = state->messages[idx];
+        if (!msg) continue;
+        size_t mt = (size_t)context_message_tokens(msg);
+        if (tail_tokens + mt > tail_budget_tokens && tail_count >= 3) {
+            prune_boundary = idx;
+            break;
+        }
+        tail_tokens += mt;
+        tail_count++;
+    }
+    if (tail_count < 3) tail_count = 3;
+    /* Ensure we don't prune past the protected tail */
+    size_t actual_boundary = state->message_count;
+    if (state->message_count > tail_count + sys_keep)
+        actual_boundary = state->message_count - tail_count - sys_keep;
+    else
+        actual_boundary = sys_keep;
+    if (actual_boundary > prune_boundary) actual_boundary = prune_boundary;
+
+    for (size_t i = sys_keep; i < actual_boundary; i++) {
+        message_t *msg = state->messages[i];
+        if (!msg || msg->role != MSG_TOOL || !msg->content) continue;
+
+        /* Skip already-deduplicated or short content */
+        size_t clen = strlen(msg->content);
+        if (clen < 200) continue;
+        if (strstr(msg->content, "[Duplicate tool output")) continue;
+        if (strstr(msg->content, "[old tool output truncated]")) continue;
+
+        /* Look up tool name from index */
+        const char *tool_name = "unknown";
+        const char *tool_args = "";
+        for (int hi = 0; hi < idx_count; hi++) {
+            if (msg->tool_call_id && strcmp(tool_index[hi].id, msg->tool_call_id) == 0) {
+                tool_name = tool_index[hi].name;
+                tool_args = tool_index[hi].args;
+                break;
+            }
+        }
+
+        char summary[512];
+        compress_summarize_tool(tool_name, tool_args, msg->content, summary, sizeof(summary));
+        free(msg->content);
+        msg->content = strdup(summary);
+    }
+
+    /* Pass 3: Truncate large tool_call arguments in assistant messages outside protected tail */
+    for (size_t i = sys_keep; i < actual_boundary; i++) {
+        message_t *msg = state->messages[i];
+        if (!msg || msg->role != MSG_ASSISTANT || msg->tool_calls_count == 0) continue;
+        for (int j = 0; j < msg->tool_calls_count; j++) {
+            size_t alen = strlen(msg->tool_calls[j].arguments);
+            if (alen > 500) {
+                /* Truncate arguments to 200 chars + ellipsis */
+                char truncated[4160]; /* 4096 max + room */
+                memcpy(truncated, msg->tool_calls[j].arguments, 200);
+                truncated[200] = '\0';
+                strcat(truncated, "...[truncated]");
+                memcpy(msg->tool_calls[j].arguments, truncated, sizeof(msg->tool_calls[j].arguments) - 1);
+                msg->tool_calls[j].arguments[sizeof(msg->tool_calls[j].arguments) - 1] = '\0';
+            }
+        }
+    }
+}
+
+/* ================================================================
  *  Smart Context Compression
  * ================================================================ */
 
@@ -156,46 +523,143 @@ void llm_truncate_context(agent_state_t *state, size_t max_tokens) {
 
 /* Compress middle messages by summarizing them via LLM.
  * Returns a malloc'd summary string, or NULL on failure.
- * Does NOT modify state. */
+ * Does NOT modify state.
+ * Matches Python context_compressor._serialize_for_summary() format. */
 static char *llm_compress_messages(const message_t **msgs, size_t count,
                                     llm_config_t *llm_cfg) {
     if (!msgs || count == 0 || !llm_cfg) return NULL;
 
-    /* Build conversation segment text */
+    /* Content truncation limits matching Python _serialize_for_summary */
+    #define SERIALIZE_CONTENT_MAX   6000    /* max chars per message body */
+    #define SERIALIZE_CONTENT_HEAD  4000    /* chars kept from start */
+    #define SERIALIZE_CONTENT_TAIL  1500    /* chars kept from end */
+    #define SERIALIZE_TOOL_ARGS_MAX 1500    /* tool call argument chars */
+    #define SERIALIZE_TOOL_ARGS_HEAD 1200   /* kept from start of tool args */
+
+    /* Build conversation segment text with Python-style formatting */
     size_t total = 0;
+    /* Estimate size: role labels ~80 bytes per message + content + tool calls */
     for (size_t i = 0; i < count; i++) {
         if (!msgs[i]) continue;
-        const char *role_str;
-        switch (msgs[i]->role) {
-            case MSG_SYSTEM:    role_str = "system"; break;
-            case MSG_USER:      role_str = "user"; break;
-            case MSG_ASSISTANT: role_str = "assistant"; break;
-            case MSG_TOOL:      role_str = "tool result"; break;
-            default:            role_str = "unknown"; break;
+        total += 80; /* overhead per message (label, separator, newlines) */
+        if (msgs[i]->content) {
+            size_t clen = strlen(msgs[i]->content);
+            if (clen > SERIALIZE_CONTENT_MAX)
+                total += SERIALIZE_CONTENT_HEAD + SERIALIZE_CONTENT_TAIL + 30;
+            else
+                total += clen;
         }
-        total += strlen(role_str) + 3;
-        if (msgs[i]->content) total += strlen(msgs[i]->content) + 1;
+        /* Tool calls in assistant messages */
+        if (msgs[i]->role == MSG_ASSISTANT && msgs[i]->tool_calls_count > 0) {
+            for (int j = 0; j < msgs[i]->tool_calls_count; j++) {
+                total += strlen(msgs[i]->tool_calls[j].name) + 8;
+                size_t alen = strlen(msgs[i]->tool_calls[j].arguments);
+                if (alen > SERIALIZE_TOOL_ARGS_MAX)
+                    total += SERIALIZE_TOOL_ARGS_HEAD + 5;
+                else
+                    total += alen;
+            }
+        }
     }
     total += strlen(COMPRESS_PROMPT) + 1;
+    if (total > 100000) total = 100000; /* safety cap */
 
     char *text = (char *)malloc(total);
     if (!text) return NULL;
     text[0] = '\0';
 
+    /* Helper: truncate content with head/middle/tail pattern */
+    #define TRUNCATE_BUF_SIZE (SERIALIZE_CONTENT_HEAD + SERIALIZE_CONTENT_TAIL + 40)
+    char trunc_buf[TRUNCATE_BUF_SIZE];
+
     strcat(text, COMPRESS_PROMPT);
     for (size_t i = 0; i < count; i++) {
         if (!msgs[i]) continue;
-        const char *role_str;
-        switch (msgs[i]->role) {
-            case MSG_SYSTEM:    role_str = "system"; break;
-            case MSG_USER:      role_str = "user"; break;
-            case MSG_ASSISTANT: role_str = "assistant"; break;
-            case MSG_TOOL:      role_str = "tool result"; break;
-            default:            role_str = "unknown"; break;
-        }
         size_t cur = strlen(text);
-        snprintf(text + cur, total - cur, "%s: %s\n",
-                 role_str, msgs[i]->content ? msgs[i]->content : "");
+        size_t remain = total > cur ? total - cur : 0;
+        if (remain < 20) break;
+
+        /* Redact sensitive data before serialization (matches Python redact_sensitive_text) */
+        const char *raw_content = msgs[i]->content ? msgs[i]->content : "";
+        char *redacted = hermes_redact(raw_content);
+        const char *content = redacted ? redacted : raw_content;
+        size_t clen = strlen(content);
+
+        if (msgs[i]->role == MSG_TOOL) {
+            /* Tool result: [TOOL RESULT id]: content */
+            const char *tid = msgs[i]->tool_call_id ? msgs[i]->tool_call_id : "";
+            if (clen > SERIALIZE_CONTENT_MAX) {
+                size_t head_cp = SERIALIZE_CONTENT_HEAD < clen ? SERIALIZE_CONTENT_HEAD : clen;
+                size_t tail_start = clen > SERIALIZE_CONTENT_TAIL ? clen - SERIALIZE_CONTENT_TAIL : 0;
+                snprintf(trunc_buf, sizeof(trunc_buf),
+                         "%.*s\n...[truncated]...\n%s",
+                         (int)head_cp, content,
+                         tail_start > 0 ? content + tail_start : "");
+                snprintf(text + cur, remain, "[TOOL RESULT %s]: %s\n", tid, trunc_buf);
+            } else {
+                snprintf(text + cur, remain, "[TOOL RESULT %s]: %s\n", tid, content);
+            }
+
+        } else if (msgs[i]->role == MSG_ASSISTANT) {
+            /* Assistant: include tool call names + args */
+            char tc_block[4096] = "";
+            if (msgs[i]->tool_calls_count > 0) {
+                size_t tc_pos = 0;
+                tc_pos += snprintf(tc_block + tc_pos, sizeof(tc_block) - tc_pos,
+                                   "\n[Tool calls:\n");
+                for (int j = 0; j < msgs[i]->tool_calls_count && tc_pos < sizeof(tc_block) - 100; j++) {
+                    const char *tname = msgs[i]->tool_calls[j].name;
+                    const char *targs = msgs[i]->tool_calls[j].arguments;
+                    size_t alen = strlen(targs);
+                    if (alen > SERIALIZE_TOOL_ARGS_MAX) {
+                        char args_trunc[SERIALIZE_TOOL_ARGS_HEAD + 10];
+                        size_t head_cp = SERIALIZE_TOOL_ARGS_HEAD < alen ? SERIALIZE_TOOL_ARGS_HEAD : alen;
+                        memcpy(args_trunc, targs, head_cp);
+                        args_trunc[head_cp] = '\0';
+                        strcat(args_trunc, "...");
+                        tc_pos += snprintf(tc_block + tc_pos, sizeof(tc_block) - tc_pos,
+                                           "  %s(%s)\n", tname, args_trunc);
+                    } else {
+                        tc_pos += snprintf(tc_block + tc_pos, sizeof(tc_block) - tc_pos,
+                                           "  %s(%s)\n", tname, targs);
+                    }
+                }
+                snprintf(tc_block + tc_pos, sizeof(tc_block) - tc_pos, "]");
+            }
+
+            /* Content + tool calls block */
+            if (clen > SERIALIZE_CONTENT_MAX) {
+                size_t head_cp = SERIALIZE_CONTENT_HEAD < clen ? SERIALIZE_CONTENT_HEAD : clen;
+                size_t tail_start = clen > SERIALIZE_CONTENT_TAIL ? clen - SERIALIZE_CONTENT_TAIL : 0;
+                snprintf(trunc_buf, sizeof(trunc_buf),
+                         "%.*s\n...[truncated]...\n%s",
+                         (int)head_cp, content,
+                         tail_start > 0 ? content + tail_start : "");
+                snprintf(text + cur, remain, "[ASSISTANT]: %s%s\n",
+                         trunc_buf, tc_block);
+            } else {
+                snprintf(text + cur, remain, "[ASSISTANT]: %s%s\n",
+                         content, tc_block);
+            }
+
+        } else {
+            /* User and other roles: [ROLE]: content */
+            const char *role_label = "USER";
+            if (msgs[i]->role == MSG_SYSTEM) role_label = "SYSTEM";
+            if (clen > SERIALIZE_CONTENT_MAX) {
+                size_t head_cp = SERIALIZE_CONTENT_HEAD < clen ? SERIALIZE_CONTENT_HEAD : clen;
+                size_t tail_start = clen > SERIALIZE_CONTENT_TAIL ? clen - SERIALIZE_CONTENT_TAIL : 0;
+                snprintf(trunc_buf, sizeof(trunc_buf),
+                         "%.*s\n...[truncated]...\n%s",
+                         (int)head_cp, content,
+                         tail_start > 0 ? content + tail_start : "");
+                snprintf(text + cur, remain, "[%s]: %s\n", role_label, trunc_buf);
+            } else {
+                snprintf(text + cur, remain, "[%s]: %s\n", role_label, content);
+            }
+        }
+        /* Free redacted copy if allocated */
+        if (redacted) free(redacted);
     }
 
     /* Create a temporary config for the summarization call */
@@ -206,11 +670,39 @@ static char *llm_compress_messages(const message_t **msgs, size_t count,
 
     /* Build summarization messages */
     message_t *sys = message_new(MSG_SYSTEM,
-        "You are a conversation summarizer. Condense the following "
-        "conversation into a brief summary preserving key facts, "
-        "decisions, and tool usage.");
+        "You are a summarization agent creating a context checkpoint. "
+        "Treat the conversation turns below as source material for a "
+        "compact record of prior work. "
+        "Produce only the structured summary; do not add a greeting, "
+        "preamble, or prefix. "
+        "NEVER include API keys, tokens, passwords, secrets, credentials, "
+        "or connection strings in the summary -- replace any that appear "
+        "with [REDACTED].\n\n"
+        "Use this exact structure:\n"
+        "## Active Task\n"
+        "[The user's most recent request verbatim -- pick up exactly here]\n\n"
+        "## Completed Actions\n"
+        "[Numbered list: ACTION target -- outcome]\n\n"
+        "## Active State\n"
+        "[Working directory, modified files, test status, running processes]\n\n"
+        "## Key Decisions\n"
+        "[Technical decisions and WHY they were made]\n\n"
+        "## Blocked\n"
+        "[Any blockers, errors, or issues not yet resolved]\n\n"
+        "## Remaining Work\n"
+        "[What remains -- framed as context, not instructions]");
     message_t *user = message_new(MSG_USER, text);
     const message_t *compress_msgs[2] = {sys, user};
+
+    /* B01: Scaled summary budget — proportional to content size, capped at 5% of 128K = 6400 */
+    /* Matches Python _compute_summary_budget: content_tokens * 0.20, min 2000, max 5% of context */
+    size_t content_tokens = (strlen(text) + 3) / 4;  /* rough estimate */
+    int scaled_budget = (int)(content_tokens * 0.20);
+    int max_budget = 6400;  /* 5% of 128K context */
+    if (max_budget > 12000) max_budget = 12000;  /* Python _SUMMARY_TOKENS_CEILING */
+    if (scaled_budget < 2000) scaled_budget = 2000;  /* Python _MIN_SUMMARY_TOKENS */
+    if (scaled_budget > max_budget) scaled_budget = max_budget;
+    compress_cfg.max_tokens = scaled_budget;
 
     llm_response_t *resp = llm_chat_completion(&compress_cfg,
                                                 compress_msgs, 2, NULL);
@@ -232,13 +724,61 @@ char *llm_compress_context(agent_state_t *state, size_t max_tokens,
                             bool enabled) {
     if (!state || !enabled || state->message_count < 3) return NULL;
 
+    /* Phase 1: Prune old tool results before counting tokens.
+     * This deduplicates identical outputs, replaces large tool results with
+     * 1-line summaries, and truncates oversized tool_call arguments.
+     * Matches Python context_compressor._prune_old_tool_results(). */
+    size_t keep = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
+    if (keep >= state->message_count) return NULL;
+    compress_prune_tool_results(state, keep);
+
     size_t current = llm_count_context_tokens(
         (const message_t **)state->messages, state->message_count, max_tokens);
     if (current <= max_tokens) return NULL;
 
-    size_t keep = (state->messages[0]->role == MSG_SYSTEM) ? 1 : 0;
-    size_t compress_count = state->message_count - keep - 2;
+    /* B02: Token-budget tail — walk backwards to determine how many
+     * messages to preserve. Budget = 20% of max_tokens (summary_target_ratio). */
+    size_t tail_budget = max_tokens / 5; /* 20% */
+    if (tail_budget < 1024) tail_budget = 1024; /* floor: at least 1K tokens */
+    size_t tail_tokens = 0;
+    int tail_count = 0;
+    for (int i = (int)state->message_count - 1; i >= (int)keep; i--) {
+        if (!state->messages[i]) continue;
+        size_t mt = (size_t)context_message_tokens(state->messages[i]);
+        if (tail_tokens + mt > tail_budget && tail_count >= 2) break;
+        tail_tokens += mt;
+        tail_count++;
+    }
+    if (tail_count < 2) tail_count = 2;
+
+    size_t compress_count = (tail_count < (int)(state->message_count - keep))
+        ? state->message_count - keep - tail_count : 0;
     if (compress_count < 2 || compress_count > 20) return NULL;
+
+    /* Boundary alignment: don't split tool_call/tool_result pairs.
+     * If the first tail message is a tool result, exclude it from the tail
+     * and include it in the compress region instead. This prevents the
+     * compressed summary from referencing a tool_call whose result is
+     * still in the tail, or a tool result with no preceding call. */
+    size_t compress_end = keep + compress_count;
+    if (compress_end < state->message_count &&
+        state->messages[compress_end] &&
+        state->messages[compress_end]->role == MSG_TOOL) {
+        /* Move the orphan tool result into the compress region */
+        compress_count++;
+        if (compress_count > 20) compress_count = 20;
+    } else if (compress_end > keep && compress_end - 1 < state->message_count &&
+               compress_end - 1 >= keep &&
+               state->messages[compress_end - 1] &&
+               state->messages[compress_end - 1]->role == MSG_ASSISTANT &&
+               state->messages[compress_end - 1]->tool_calls_count > 0) {
+        /* The last compress message is an assistant with pending tool calls.
+         * Move it into the tail so the tool result has its call visible. */
+        if (tail_count > 0) {
+            compress_count--;
+        }
+    }
+    if (compress_count < 2) return NULL;
 
     return llm_compress_messages(
         (const message_t **)&state->messages[keep],
@@ -975,10 +1515,11 @@ void llm_response_free(llm_response_t *resp) {
     "suggest improvements, and note any security concerns. " \
     "Be concise. Output only your review:\n\n"
 
-/* Perform background review of a tool result.
+/* Perform background review of a tool result — available for future use.
  * Returns malloc'd review text, or NULL on failure.
- * This is a lightweight LLM call that should be async/non-blocking
- * in production. Currently synchronous for simplicity. */
+ * Currently synchronous (runs inline). To use, call from a detached thread
+ * and deliver the result via callback to avoid blocking the agent loop.
+ * NOT YET WIRED: no caller in C agent_loop. */
 char *llm_background_review(llm_config_t *cfg,
                              const char *tool_name,
                              const char *tool_args,

@@ -187,10 +187,26 @@ static int supports_vision_override(const hermes_config_t *cfg,
     if (cfg->provider_cfg.supports_vision)
         return 1;
 
-    /* TODO: Per-provider per-model supports_vision lookup from config.
-     * Python version checks model.provider and providers.<name>.models.<m>.supports_vision.
-     * The C config currently only has top-level model.supports_vision.
-     * For now, fall through to metadata. */
+    /* 2. S06: Check per-model vision_overrides for custom model prefixes */
+    if (cfg->provider_cfg.vision_overrides[0]) {
+        char buf[1024];
+        strncpy(buf, cfg->provider_cfg.vision_overrides, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+        char *tok = buf;
+        while (tok && *tok) {
+            while (*tok == ' ' || *tok == ',') tok++;
+            if (!*tok) break;
+            char *end = tok;
+            while (*end && *end != ',') end++;
+            int is_last = (*end == '\0');
+            *end = '\0';
+            char *trim = end - 1;
+            while (trim >= tok && *trim == ' ') { *trim = '\0'; trim--; }
+            if (*tok && model && strncasecmp(model, tok, strlen(tok)) == 0)
+                { if (!is_last) *end = ','; return 1; }
+            tok = is_last ? NULL : end + 1;
+        }
+    }
 
     return -1; /* unknown — fall through to model_metadata */
 }

@@ -353,6 +353,24 @@ char *process_handler(const char *args_json, const char *task_id) {
         json_object_set(result, "processes", procs);
         json_object_set(result, "count", json_new_number((double)json_len(procs)));
 
+    } else if (strcmp(action, "health") == 0) {
+        /* Process subsystem health check */
+        reap_children();
+        int running = 0, finished = 0, stopped = 0;
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+            if (g_procs[i].pid == 0) continue;
+            if (g_procs[i].running) running++;
+            else finished++;
+            if (g_procs[i].stdin_fd < 0 && g_procs[i].running) stopped++;
+        }
+        json_object_set(result, "status", json_new_string(running > 0 ? "active" : "idle"));
+        json_object_set(result, "running", json_new_number((double)running));
+        json_object_set(result, "finished", json_new_number((double)finished));
+        json_object_set(result, "total_slots", json_new_number((double)MAX_PROCESSES));
+        json_object_set(result, "available_slots", json_new_number((double)(MAX_PROCESSES - running - finished)));
+        if (stopped > 0)
+            json_object_set(result, "stopped_processes", json_new_number((double)stopped));
+
     } else if (strcmp(action, "cleanup") == 0) {
         /* Remove finished processes older than N seconds (default 1800 = 30min) */
         reap_children();
@@ -519,7 +537,7 @@ done:
 void registry_init_process(void) {
     registry_register("process",
         "Manage background processes. Actions: start (run command in bg), "
-        "list (list all processes), poll (check status), kill (terminate), "
+        "list (list all processes), health (subsystem health check), poll (check status), kill (terminate), "
         "wait (block until done), log (get output buffer), signal (send arbitrary signal), "
         "write (write to stdin), submit (write + newline), close (close stdin/EOF), "
         "cleanup (remove finished processes). "
@@ -527,7 +545,7 @@ void registry_init_process(void) {
         "{"
         "\"type\":\"object\","
         "\"properties\":{"
-          "\"action\":{\"type\":\"string\",\"description\":\"start | list | cleanup | poll | kill | wait | log | signal | write | submit | close\"},"
+          "\"action\":{\"type\":\"string\",\"description\":\"start | list | health | cleanup | poll | kill | wait | log | signal | write | submit | close\"},"
           "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for start)\"},"
           "\"session_id\":{\"type\":\"number\",\"description\":\"Process session ID (required for poll/kill/wait/log/signal/write/close)\"},"
           "\"env\":{\"type\":\"string\",\"description\":\"Environment overrides as 'KEY=VALUE KEY2=VALUE2' (for start)\"},"

@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <pthread.h>
+#include <pwd.h>
 
 /* ================================================================
  *  State
@@ -102,7 +103,17 @@ static char *resolve_path(const char *raw_path) {
         if (rest[0] == '/' || rest[0] == '\0') {
             snprintf(buf, sizeof(buf), "%s%s", home, rest);
         } else {
-            return NULL; /* ~user not supported */
+            /* ~user expansion: look up user's home directory via getpwnam */
+            const char *slash = strchr(rest, '/');
+            size_t user_len = slash ? (size_t)(slash - rest) : strlen(rest);
+            if (user_len >= 256) return NULL; /* sanity */
+            char username[256];
+            memcpy(username, rest, user_len);
+            username[user_len] = '\0';
+            struct passwd *pw = getpwnam(username);
+            if (!pw) return NULL; /* user not found */
+            const char *subpath = slash ? slash : "";
+            snprintf(buf, sizeof(buf), "%s%s", pw->pw_dir, subpath);
         }
     } else if (raw_path[0] != '/') {
         /* Relative path — prepend working dir */

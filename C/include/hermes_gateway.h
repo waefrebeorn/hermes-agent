@@ -1039,5 +1039,8 @@ bool gw_platform_send(const char *platform_name, const char *chat_id, const char
 /* Send typing indicator on a registered platform (no-op if not supported). */
 void gw_platform_send_typing(const char *platform_name, const char *chat_id);
 
+/* Shutdown all registered platforms — calls each platform's shutdown callback. */
+void gw_platform_shutdown_all(void);
+
 /** @} */ /* end of hermes_gateway group */
 #endif /* HERMES_GATEWAY_H */

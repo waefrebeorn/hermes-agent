@@ -1,35 +1,54 @@
-# Hermes C — Overnight Navigation Map (2026-05-27)
+# Hermes C — Overnight Navigation Map (v29 — 2026-05-24)
 
-## Session 61 complete — 1 gap closed (B01).
+## State Verified (2026-05-24)
 
-## Session 61 Completed
-- **B01: account_usage.py (326L)** — Provider account usage tracking. OpenRouter credits/key API. Struct + render. 11 unit tests. Suite: 215/0/0.
-- **B15: context_engine.py (211L)** — Pluggable context engine interface (vtable). `context_engine_t` struct with function pointers. Default implementations for all optional methods. 11 unit tests. Suite: 214/0/0.
-- **B50: web_search_registry.py (262L)** — Thread-safe provider registry for web search/extract/crawl backends. Capability-based resolution, config overrides, legacy preference walk. 10 unit tests.
-- **B27: image_gen_registry.py (145L)** — Thread-safe provider registry with register/list/get/get_active/reset. FAL provider registered as default. 6 unit tests. Suite: 212/0/0.
-- **B48: video_gen_registry.py (117L)** — Thread-safe provider registry mirroring Python's dict-based map with register/list/get/get_active/reset. FAL provider registered as default. 6 unit tests. Suite: 211/0/0.
-- **K12: nous portal tags + reasoning defaults** — portal_tags.c dead code wired into provider_openai.c. Auto-injects `{"tags": [...], "reasoning": {"enabled": true, "effort": "medium"}}`.
-- **K12 infra** — portal_tags.c added to all 14 provider depth test compilation blocks in test_runner.sh
-- **Q04: ASCII table formatting** — `display_table()` renders bordered, column-aligned tables with Unicode box-drawing. Auto-width, terminal-clamped, colored. Wired into `/commands`.
-- **C12: /logs --follow/-f** — tail -f mode with log rotation detection. Polls every 1s.
-- **N03: README metrics update** — Parity ~63%, gaps ~176, CLI 79 cmds, suite 210/0/0 in <60s.
-- **B37: HTTP proxy env auto-detection** — http_new_with_retry() reads HTTPS_PROXY > HTTP_PROXY > ALL_PROXY on construction.
+| Metric | Value | Change from v22 |
+|--------|-------|-----------------|
+| Suite | 238/0/0 (202 files) | ✅ |
+| Tools registered | 85 | ✅ |
+| CLI commands | 79 | ✅ |
+| Real stubs | 0 (all resolved) | ✅ 17 resolved |
+| Build | 29MB, 0 warnings | ✅ |
+| Gap count | **252** (battleship-v8) | S13+S16+W13 retired stale |
+| Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## Current Reality
-- Suite: **210/0/0 in <60s** (T01 done)
-- CLI: **79 real cmds** (Q02-Q04 done), tab completion, line editing, table output
-- Stubs: **0** (S01/CDP fixed)
-- K12 (nous provider): done
-- Proxy auto-detect: done
-- **~175 gaps remaining** (down from ~270)
+## What Changed Since v22 (previous session)
 
-## Next Workstreams (pick one)
-**A — Agent modules (~43 gaps, P0):** Smallest: stream_diag.py (280L), context_references.py (518L), image_gen_registry.py (145L)
-**B — Provider plugins (~17 gaps, P1):** Add config defaults + metadata for remaining providers
-**C — Gateway (~12 gaps, P1):** Per-platform integration tests
+- **C03 resolved**: Added `agent.model_metadata` config key to agent_config_t struct
+- **Phase 9 stale cleanup**: 14 battleship-v8 claims retired to vault (S05, B05, B06, B03, B10, C01-C05, C16, D04, D17-D20, P01, R04)
+- **S09/S10/S11 resolved**: Plugin vtable stubs replaced with safe fallbacks (get_by_hash, compress_old, get_prioritized)
+- Gap count 312 → 255 after stale retirement + stub closure
 
-## Data Not to Re-Derive
-- CLI commands.c: 79 real cmds, 0 stubs. Tab completion + history + table output work.
-- Battleship-v4.md is canonical reference — not the stale goal banner.
-- Test suite: all 14 provider depth tests pass (portal_tags.c wired in).
-- git push: main up to date.
+## Resolved Since v22
+
+| ID | Description |
+|----|-------------|
+| C03 | agent.model_metadata config key |
+| S05 | /curator run — had real llm_background_review (stale claim) |
+| B05 | Gateway crash on malformed callback (stale — null checks exist) |
+| B06 | Memory leak in db_list_with_meta (stale — code is clean) |
+| B03 | WSL path translation (done previous session) |
+| B10 | Process health check (done previous session) |
+| C01-C05,C16 | Config keys all had YAML readers already |
+| D04 | Insights empty-state (done previous session) |
+| D17-D20 | File backend functions all had real implementations |
+| P01 | Anthropic ephemeral cache headers (done previous session) |
+|| R04 | HomeAssistant poll reset (done previous session) |
+|| S09 | plugin_get_by_hash — safe fallback (NULL→return false) |
+|| S10 | plugin_compress_old — safe fallback (NULL→return 0) |
+|| S11 | plugin_get_prioritized — safe fallback (NULL→return NULL) |
+
+## Current Priority Queue
+
+From prestige_prompt.md v33:
+1. **D16** — Plugin memory provider interface (280 LOC)
+2. **G01** — Home Assistant conversation loop (200 LOC)
+3. **G04** — DingTalk inbound polling (80 LOC)
+4. **G05** — WeCom inbound polling (80 LOC)
+
+## Key Facts
+
+- Battleship-v8 is the canonical gap list (252 gaps)
+- Vault/achievements.md is the archive — all completed + retired stale claims
+- Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
+- P1 count is 0

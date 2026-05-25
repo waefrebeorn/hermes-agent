@@ -6,6 +6,7 @@
  */
 
 #include "hermes.h"
+#include "hermes_json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,11 +115,9 @@ static char *redact_env_vars(const char *input) {
                             if (tlen > len) {
                                 char *new_result = (char *)realloc(result, tlen + 64);
                                 if (!new_result) return result;
-                                /* Recalculate offset in new buffer */
-                                size_t old_start_off = (size_t)(val_start - result);
                                 result = new_result;
                                 memcpy(result, temp, tlen + 1);
-                                p = result + old_start_off + rlen;
+                                p = result + vstart_off + rlen;
                             } else {
                                 memcpy(result, temp, tlen + 1);
                                 p = result + vstart_off + rlen;
@@ -169,6 +168,100 @@ static char *sanitize_file_paths(const char *input) {
     }
 
     return result;
+}
+
+/* ================================================================
+ *  B34: Surrogate Character Sanitization
+ * ================================================================ */
+
+/* Replace lone UTF-8 surrogate code points (U+D800-U+DFFF) with U+FFFD.
+ * In UTF-8, surrogates are 3-byte sequences: 0xED [0xA0-0xBF] [0x80-0xBF].
+ * U+FFFD encodes as EF BF BD.
+ * Returns malloc'd string; caller must free. */
+char *sanitize_surrogates(const char *text) {
+    if (!text) return NULL;
+
+    size_t len = strlen(text);
+    /* Worst case: all surrogates replaced with same-length replacement */
+    char *result = strdup(text);
+    if (!result) return NULL;
+
+    char *write = result;
+    const unsigned char *read = (const unsigned char *)text;
+
+    while (*read) {
+        if (read[0] == 0xED && read[1] >= 0xA0 && read[1] <= 0xBF
+            && read[2] >= 0x80 && read[2] <= 0xBF) {
+            /* Replace surrogate with U+FFFD (EF BF BD) */
+            *write++ = (char)0xEF;
+            *write++ = (char)0xBF;
+            *write++ = (char)0xBD;
+            read += 3;
+        } else {
+            *write++ = (char)*read++;
+        }
+    }
+    *write = '\0';
+
+    /* Only realloc if we actually changed something */
+    size_t new_len = (size_t)(write - result);
+    if (new_len < len) {
+        char *shrunk = (char *)realloc(result, new_len + 1);
+        if (shrunk) result = shrunk;
+    }
+
+    return result;
+}
+
+/* Recursively walk a json_t object and replace surrogate characters
+ * in all string values. Returns true if any surrogates were replaced.
+ * Mutates the json_t tree in-place. */
+static bool walk_json(json_t *node) {
+    if (!node) return false;
+    bool found = false;
+
+    if (node->type == JSON_STRING) {
+        char *fixed = sanitize_surrogates(node->str_val);
+        if (fixed && strcmp(fixed, node->str_val) != 0) {
+            free(node->str_val);
+            node->str_val = fixed;
+            found = true;
+        } else if (fixed) {
+            free(fixed);
+        }
+        return found;
+    }
+
+    if (node->type == JSON_OBJECT) {
+        for (size_t i = 0; i < node->c.count; i++) {
+            /* Fix keys too (unlikely but defensive) */
+            char *kfix = sanitize_surrogates(node->c.keys[i]);
+            if (kfix && strcmp(kfix, node->c.keys[i]) != 0) {
+                free(node->c.keys[i]);
+                node->c.keys[i] = kfix;
+                found = true;
+            } else if (kfix) {
+                free(kfix);
+            }
+            if (walk_json(node->c.items[i]))
+                found = true;
+        }
+        return found;
+    }
+
+    if (node->type == JSON_ARRAY) {
+        for (size_t i = 0; i < node->c.count; i++) {
+            if (walk_json(node->c.items[i]))
+                found = true;
+        }
+        return found;
+    }
+
+    return false;
+}
+
+bool sanitize_json_surrogates(void *json_obj) {
+    return walk_json((json_t *)json_obj);
 }
 
 /* ================================================================

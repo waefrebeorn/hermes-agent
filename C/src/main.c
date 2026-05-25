@@ -13,18 +13,28 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 /* Forward declaration for startup initialization */
 extern void mcp_init_all(void);
 extern void tools_init_all(void);
 
+/* L03: Crash-resistant stdio — ignore SIGPIPE so broken pipe
+ * (OSError in Python terms) doesn't crash the agent. */
+static void install_safe_stdio(void) {
+    signal(SIGPIPE, SIG_IGN);
+}
+
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
-    printf("C Translation — Phase 5 target\n");
+    printf("C Translation — 252 gaps remaining\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
 
 int main(int argc, char **argv) {
+    /* L03: Install crash-resistant stdio before any output */
+    install_safe_stdio();
+
     if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
         print_banner();
         return 0;

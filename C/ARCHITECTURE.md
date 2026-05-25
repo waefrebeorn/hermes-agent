@@ -5,13 +5,13 @@
 Hermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
 
 ```
-CLI / Gateway → Agent Loop → LLM Client → 9 Providers → HTTP/JSON
+|CLI / Gateway → Agent Loop → LLM Client → 11 Providers → HTTP/JSON
                     ↓
-             Tool Registry (28 tools)
+             Tool Registry (85 tools)
                     ↓
              Plugin Registry (10 .so)
                     ↓
-             30 Library Archives (.a)
+             58 Library Modules
 ```
 
 ## Module Overview
@@ -22,12 +22,12 @@ CLI / Gateway → Agent Loop → LLM Client → 9 Providers → HTTP/JSON
 | **LLM Client** | Provider abstraction | `src/agent/llm_client.c` | 1 |
 | **Providers** | LLM API implementations | `src/agent/provider_*.c` | 9 + metadata |
 | **CLI** | Interactive shell | `src/cli/*.c` | 9, ~148 commands |
-| **Tools** | Action handlers | `src/tools/*.c` | 37, 28 registered |
-| **Gateway** | Messaging platforms | `src/gateway/` | ~20, 19 platforms |
+| **Tools** | Action handlers | `src/tools/*.c` | 43, 85 registered |
+| **Gateway** | Messaging platforms | `src/gateway/` | ~25 files, 19 platforms |
 | **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
 | **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
-| **Libraries** | Reusable C archives | `lib/*.a` | 30 |
-| **Tests** | Unit tests | `tests/test_*.c` | 116, 154/0/0 |
+| **Libraries** | Reusable C modules | `lib/lib*` | 58 |
+| **Tests** | Unit tests | `tests/test_*.c` | 202, 237/0/0 |
 | **Config** | YAML/env configuration | `~/.slermes/` | ~322 keys |
 
 ## Core Data Flow
@@ -76,7 +76,7 @@ Provider categories:
 7. Text response → return to caller
 
 ### Tool System (`src/tools/*.c`)
-- **Registry:** 28 registered tools, auto-discovered at init time
+- **Registry:** 85 registered tools, auto-discovered at init time
 - **Execution:** Each tool implements `handler(args_json, state) → result_json`
 - **Key tools:** terminal, file, web, vision, TTS, delegate, cron, MCP, memory, kanban, skills, process, patch, clarify, exec_code, send_message, session CRUD, browser, image_gen
 
@@ -90,7 +90,7 @@ Provider categories:
 - **Lifecycle:** Load .so → resolve symbols → init → process → cleanup
 - **10 plugins:** kanban, honcho, spotify, disk-cleanup, file-memory, achievements, observability, skills, image_gen, google_meet
 
-### Library Layer (`lib/*/`) — 30 .a Archives
+### Library Layer (`lib/lib*/`) — 58 Modules
 
 | Library | Purpose | Deps |
 |---------|---------|------|
@@ -126,7 +126,7 @@ Provider categories:
 | libansi | ANSI terminal codes | none |
 
 ## Testing
-- **116 test files, 154/0/0 suite** (all passed, 0 failed, 0 skipped)
+- **202 test files, 237/0/0 suite** (all passed, 0 failed, 0 skipped)
 - **Pattern:** Each test is `int main(void)` returning 0 on pass
 - **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
@@ -140,15 +140,15 @@ Provider categories:
 ## Building
 ```bash
 make -j$(nproc)         # Full binary
-bash test_runner.sh      # 154 tests
+bash test_runner.sh      # 237 tests
 make tui                 # With ncurses TUI
 make docs                # Doxygen HTML docs
 make plugins             # Build 10 .so plugins
 ```
 
 ## Current State
-- **Suite:** 154/0/0 — 116 test files
-- **Binary:** 9.2M dynamically linked
-- **Commits:** 392 C-specific
-- **Upstream:** 183 commits behind Python
-- **Parity:** ~36% (see `.hermes/mind-palace/plans/300-gap-roadmap-v1.md`)
+- **Suite:** 237/0/0 — 202 test files
+- **Binary:** 29MB ELF, 0 warnings
+- **Commits:** 817+ C-specific
+- **Upstream:** synced via battleship-v8
+- **Parity:** ~65% (see `.hermes/mind-palace/battleship-v8.md`)

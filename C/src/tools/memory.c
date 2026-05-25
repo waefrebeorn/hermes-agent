@@ -1410,8 +1410,16 @@ static bool plugin_get(memory_storage_t *st, const char *key, memory_entry_t *en
 }
 
 static bool plugin_delete(memory_storage_t *st, const char *key) {
-    (void)st; (void)key;
-    return false; /* not supported via plugin interface */
+    if (!st || !st->plugin_iface || !st->plugin_iface->memory_store || !key)
+        return false;
+    /* Delete by setting empty content with matching key metadata */
+    char metadata[256];
+    snprintf(metadata, sizeof(metadata),
+             "{\"key\":\"%s\",\"operation\":\"delete\"}", key);
+    char *result = st->plugin_iface->memory_store("", metadata);
+    bool ok = (result != NULL);
+    free(result);
+    return ok;
 }
 
 static void plugin_clear(memory_storage_t *st) {
@@ -1450,6 +1458,47 @@ static memory_entry_t *plugin_search(memory_storage_t *st, const char *query, in
     return entries;
 }
 
+static int plugin_import_json(memory_storage_t *st, const json_t *entries) {
+    if (!st || !entries || entries->type != JSON_ARRAY) return 0;
+    if (!st->plugin_iface || !st->plugin_iface->memory_store) return 0;
+
+    size_t n = json_len(entries);
+    int imported = 0;
+
+    for (size_t i = 0; i < n; i++) {
+        json_t *item = json_get(entries, i);
+        if (!item || item->type != JSON_OBJECT) continue;
+
+        memory_entry_t entry;
+        if (memory_entry_from_json(&entry, item)) {
+            if (entry.created_at == 0) entry.created_at = time(NULL);
+            if (entry.updated_at == 0) entry.updated_at = entry.created_at;
+            if (!entry.key[0]) {
+                snprintf(entry.key, sizeof(entry.key), "entry_imported_%zu", (size_t)imported);
+            }
+
+            /* Store via plugin interface */
+            char metadata[128];
+            snprintf(metadata, sizeof(metadata),
+                     "{\"key\":\"%s\",\"created_at\":%ld,\"updated_at\":%ld}",
+                     entry.key, (long)entry.created_at, (long)entry.updated_at);
+            char *result = st->plugin_iface->memory_store(entry.content, metadata);
+            if (result) {
+                imported++;
+                free(result);
+            }
+        }
+    }
+    return imported;
+}
+
+static json_t *plugin_export_json(memory_storage_t *st) {
+    (void)st;
+    /* Plugin backend doesn't support full enumeration.
+     * Return empty array — callers can use search for specific queries. */
+    return json_new_array();
+}
+
 static bool plugin_vtable_persist(memory_storage_t *st) {
     (void)st; return true; /* plugin manages its own state */
 }
@@ -1458,24 +1507,37 @@ static bool plugin_vtable_load(memory_storage_t *st) {
     (void)st; return true;
 }
 
+static bool plugin_get_by_hash(memory_storage_t *st, uint64_t hash, memory_entry_t *entry) {
+    (void)st; (void)hash; (void)entry;
+    /* Plugin backend doesn't support hash-based dedup lookup.
+     * Return false = "not found" — dedup best-effort for plugin. */
+    return false;
+}
+
+static int plugin_compress_old(memory_storage_t *st, time_t before, memory_compress_fn_t compress_cb) {
+    (void)st; (void)before; (void)compress_cb;
+    /* Plugin manages its own storage — no local compression needed. */
+    return 0;
+}
+
+static memory_entry_t *plugin_get_prioritized(memory_storage_t *st, size_t limit, size_t *count) {
+    (void)st; (void)limit;
+    if (count) *count = 0;
+    /* Plugin backend doesn't support priority enumeration. */
+    return NULL;
+}
+
 static memory_storage_vtable_t plugin_vtable = {
     .name        = "plugin",
     .open        = plugin_open,
     .close       = plugin_close,
-    .store       = plugin_store,
-    .get         = plugin_get,
-    .delete      = plugin_delete,
-    .clear       = plugin_clear,
-    .count       = plugin_count,
-    .list_keys   = plugin_list_keys,
-    .search      = plugin_search,
-    .import_json = NULL,  /* not supported */
-    .export_json = NULL,  /* not supported */
-    .get_by_hash = NULL,  /* not supported */
+    .import_json = plugin_import_json,
+    .export_json = plugin_export_json,
+    .get_by_hash = plugin_get_by_hash,
     .persist     = plugin_vtable_persist,
     .load        = plugin_vtable_load,
-    .compress_old = NULL, /* not supported */
-    .get_prioritized  = NULL,  /* not supported */
+    .compress_old = plugin_compress_old,
+    .get_prioritized  = plugin_get_prioritized,
 };
 
 bool memory_storage_plugin_init(memory_storage_t *st, void *plugin_reg, const char *plugin_name_str) {

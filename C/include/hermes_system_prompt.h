@@ -11,10 +11,14 @@
  *   volatile — memory snapshot, user profile, timestamp
  *
  * Returns a malloc'd string (caller must free) or NULL on error.
+ *
+ * Context file loading (SOUL.md, .hermes.md, AGENTS.md, CLAUDE.md, .cursorrules)
+ * with prompt-injection threat detection. Port of Python prompt_builder.py.
  */
 
 #include "hermes.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +57,70 @@ extern const char *SYSPRMPT_GOOGLE_OPS;
 
 /* Computer-use guidance */
 extern const char *SYSPRMPT_COMPUTER_USE;
+
+/* ================================================================
+ *  Context file threat detection constants
+ * ================================================================ */
+
+#define CONTEXT_FILE_MAX_CHARS    20000
+#define CONTEXT_TRUNCATE_HEAD_RATIO 0.7
+#define CONTEXT_TRUNCATE_TAIL_RATIO 0.2
+
+/* Threat pattern match result */
+typedef struct {
+    const char *id;   /* pattern identifier */
+} context_threat_match_t;
+
+/* ================================================================
+ *  Context file loading API
+ * ================================================================ */
+
+/* Scan content for prompt-injection patterns. Returns sanitized content
+ * (malloc'd), or NULL if content is clean. Caller must free result.
+ * When threats are found, returns a [BLOCKED: ...] message. */
+char *context_scan_content(const char *content, const char *filename);
+
+/* Walk up from start_dir looking for a .git directory. Returns malloc'd
+ * path to the git root, or NULL. Caller must free. */
+char *context_find_git_root(const char *start_dir);
+
+/* Load SOUL.md from HERMES_HOME (~/.hermes/). Returns malloc'd content
+ * (with threat scan applied) or NULL. Caller must free. */
+char *context_load_soul_md(void);
+
+/* Load .hermes.md / HERMES.md by walking to git root from cwd.
+ * Returns malloc'd content or NULL. Caller must free. */
+char *context_load_hermes_md(const char *cwd);
+
+/* Load AGENTS.md / agents.md from cwd. Returns malloc'd or NULL. */
+char *context_load_agents_md(const char *cwd);
+
+/* Load CLAUDE.md / claude.md from cwd. Returns malloc'd or NULL. */
+char *context_load_claude_md(const char *cwd);
+
+/* Load .cursorrules + .cursor/rules *.mdc from cwd. Returns malloc'd or NULL. */
+char *context_load_cursorrules(const char *cwd);
+
+/* Build full context files prompt block (SOUL.md + highest-priority project
+ * context). Returns malloc'd string or empty string (if no context found).
+ * If skip_soul is true, SOUL.md is not included (loaded separately). */
+char *context_build_files_prompt(const char *cwd, bool skip_soul);
+
+/* ================================================================
+ *  Platform hints (PLATFORM_HINTS dict from prompt_builder.py)
+ * ================================================================ */
+
+/* Get platform-specific hint string for system prompt. Returns a static
+ * string or NULL if platform is unknown. */
+const char *platform_hint_get(const char *platform_name);
+
+/* ================================================================
+ *  Environment hints (build_environment_hints from prompt_builder.py)
+ * ================================================================ */
+
+/* Build environment-specific guidance string (WSL, host info, remote
+ * backends). Returns malloc'd string or NULL. Caller must free. */
+char *build_environment_hints(void);
 
 /* ================================================================
  *  System prompt assembly
@@ -97,6 +165,18 @@ char *system_prompt_build_stable(const system_prompt_config_t *cfg);
 
 /* Build the volatile tier only (for per-turn updates) */
 char *system_prompt_build_volatile(const system_prompt_config_t *cfg);
+
+/* ================================================================
+ *  Utility: truncate content with head/tail marker
+ * ================================================================ */
+
+/* Truncate content with head/tail marker. Returns malloc'd string or NULL.
+ * Caller must free. Always returns a copy (even if no truncation). */
+char *context_truncate_content(const char *content, const char *name, int max_chars);
+
+/* Strip YAML frontmatter from content. Returns malloc'd string (caller
+ * must free) or NULL on error. */
+char *context_strip_frontmatter(const char *content);
 
 #ifdef __cplusplus
 }

@@ -1,55 +1,106 @@
-# State — Hermes C Translation (2026-05-27 — Code Survey)
+# Hermes C — State Dashboard (v34 — 2026-05-24)
 
-**~63% estimated parity — ~200 gaps remaining.**  
-**Big update: CLI cmds are 79 real (not 197 stubs). CDP stub fixed. /paste improved.**
+## Build Metrics (code-verified)
 
-## Dashboard
+| Metric | Value | As Of |
+|--------|-------|-------|
+| Suite | **238/0/0** — 202 test files | 2026-05-24 |
+| Binary | **29MB ELF**, 0 warnings | 2026-05-24 |
+| Source `.c` files | **153** | 2026-05-24 |
+| Headers | **66** | 2026-05-24 |
+| Library directories | **58** | 2026-05-24 |
+| Tools registered | **85** (all real handlers) | 2026-05-24 |
+| CLI commands | **79** | 2026-05-24 |
+| Gateway platforms | **19** | 2026-05-24 |
+| Agent `.c` modules | **50** | 2026-05-24 |
+| Provider modules | **11** (all with tests) | 2026-05-24 |
+| Provider test files | **11** | 2026-05-24 |
+| C plugins | **10** | 2026-05-24 |
+| Git commits | **820+** | 2026-05-24 |
 
-| Category | C | Python | % | Notes |
-|----------|---|--------|---|-------|
-| Agent | 44 .c files | 77 .py files | 57% | 33 of 77 ported |
-|| CLI | 8 .c files, **79 real cmds** | 88 .py files | 9% module depth | **0 stubs** — all cmd_ real |
-| Tools | 31 init funcs, ~83 reg | 75 .py files, ~68 reg | — | C registers more tool variants |
-| Gateway | 19 platform .c | 31 platform modules | 61% | Missing api_server + 12 helpers |
-| MCP | 1 .c + lib | 1 module | ~90% | Sampling, transports done |
-| ACP | 5 .c files | 9 .py files | 56% | Server, events, permissions done |
-| Cron | 3 .c files | 3 modules | **100%** | ✅ Complete |
-| TUI | 2 .c + lib | 1 Ink app | ~25% | Session browser done |
-| Plugins | 10 .c src files | 16 plugin dirs | 63% | 0 .so built |
-| Provider | 9 native C | 28 plugin dirs | 32% | Big gap |
-| Config | ~322 keys | 432 nested keys | ~75% | Needs exact audit |
-| Security | 7 modules | — | ~70% | url_safety, file_safety, rate_limit done |
-|| Stubs | **0** | — | **All fixed** ✅ |
-|| Tests | 173 .c files | ~28K py tests | — | **210/0/0 in <60s** ✅ (parallelized) |
+## Battleship Status
 
-## Build Status
+- **Active:** battleship-v8 (252 verified gaps across 22 sectors)
+- **Retired:** battleship-v7 (all stale claims moved to vault)
+- **Vault:** achievements.md updated with all completed work and retired stale claims
 
-Suite:  ~213/0/0  (173 test files — cannot complete in 120s)
-Binary: 29MB     (dynamic ELF, -O2 -g)
-Errors: 0        (make -j$(nproc))
-Warnings: 0
+## Gap Summary
 
-## Current Reality
+| Category | Gaps | P1 | P2 | P3 |
+|----------|------|-----|-----|------|
+| Confirmed Stubs | 0 | 0 | 0 | 0 |
+| Placeholder/Unwired | 14 | 0 | 4 | 10 |
+| Dead Code | 13 | 0 | 2 | 11 |
+| Missing Agent Modules | 12 | 0 | 8 | 4 |
+| Agent Module Depth | 15 | 0 | 12 | 3 |
+| Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
+| Tool Depth Gaps | 12 | 0 | 10 | 2 |
+| Gateway Platform Depth | 25 | 0 | 21 | 4 |
+| Configuration | **14** | 0 | **10** | 4 |
+| Library Depth | 28 | 0 | 20 | 8 |
+| Bug Fixes | 11 | 0 | 9 | 2 |
+| Test Coverage | 25 | 0 | 25 | 0 |
+| API Server Depth | 5 | 0 | 5 | 0 |
+| TUI Depth | 8 | 0 | 7 | 1 |
+| Curator Depth | 3 | 0 | 2 | 1 |
+| Prompt Caching | 5 | 0 | 4 | 1 |
+| Shell Hooks | 3 | 0 | 3 | 0 |
+| Vault Encryption | 3 | 0 | 2 | 1 |
+| Security Depth | 6 | 0 | 4 | 2 |
+| C-Only New Features | 10 | 0 | 4 | 6 |
+| Refactoring | 10 | 0 | 2 | 8 |
+| Integration & CI | 7 | 0 | 6 | 1 |
+| **Total** | **252** | **0** | **166** | **90** |
 
-- C source: 44 agent .c, 31 tool .c, 19 gateway .c, 5 acp .c, 8 cli .c, 10 plugin .c
-- Library dirs: 57 lib/lib*/
-- Test files: 173 test_*.c
-- Tool registrations: ~83 (31 init functions called from tool_init.c)
-- Gateways: 19 platform files
-- Providers: 9 native (openai, deepseek, openrouter, xai, anthropic, google, azure, bedrock, custom)
-- CLI: 237 cmd_ functions declared — ~40 real, ~197 stubs
-- Plugins: 10 .c source files (honcho, kanban, spotify, disk_cleanup, file_memory, achievements, observability, skills, image_gen, google_meet) — 0 .so on disk
-- Git: 740+ commits on main
-- LLM: Working — DeepSeek v4 Flash via OpenAI-compat
-- CDP browser: 300+ lines real client code exists but tool registered to stub handler (dead code)
+## Python Upstream Parity
 
-## Key Gaps (from battleship-v4)
+| Category | Python | C | Coverage |
+|----------|--------|---|----------|
+| Agent modules | 77 | 50 (26 direct match + 24 C-only) | ~65% coverage |
+| Tool files | 88+ | 43 tool `.c` files | ~49% files |
+| Gateway platforms | 31 | 19 | 61% |
+| Plugins | 138 dirs (many optional-shared) | 10 C plugins | core plugins done |
 
-| Sector | Gap Count | Top Item |
-|--------|-----------|----------|
-| CLI/C | ~80 | 197 stub commands, 80 unported modules |
-| Agent/B | ~44 | 35+ unported Python modules |
-| Providers/K | ~19 | 19 missing provider plugins |
-| Gateway/E | ~12 | api_server, feishu_comment, wecom helpers |
-| Tests/T | ~20 | Suite timeout, per-platform tests |
-| CLI Depth/Q | ~10 | Readline, autocomplete, Rich output |
+## Known Stale Claims Retired
+
+16 items from battleship-v7 proven stale — see vault/achievements.md Phase 8 for full table.
+Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs existed), S03/S04 (set_value fixed), B01 (buffer overflow fixed), L15-L17 (message queries added).
+
+## Recently Resolved
+
+| ID | Description | Sector | This Session |
+|----|-------------|--------|-------------|
+| P01 | Anthropic ephemeral cache headers — anthropic-beta header added | S16 | 2026-05-24 |
+| D04 | Insights empty-state handling — message when no sessions | S7 | 2026-05-24 |
+| B10 | Process health check action — subsystem status summary | S11 | 2026-05-24 |
+| B03 | WSL path translation — Windows paths→/mnt/ in file tool | S11 | 2026-05-24 |
+| R04 | HomeAssistant input_text reset after poll — was TODO comment | S2 | 2026-05-24 |
+| C03 | agent.model_metadata config key — file path for custom model DB | S9 | 2026-05-24 |
+| S05 | /curator run — stale claim, real llm_background_review existed | S1 | 2026-05-24 |
+| B05 | Gateway crash callback — stale claim, null checks exist | S11 | 2026-05-24 |
+| B06 | db_list_with_meta leak — stale claim, code is clean | S11 | 2026-05-24 |
+| C01-C05,C16 | 6 config keys — stale claims, all had YAML readers | S9 | 2026-05-24 |
+| D17-D20 | File backend depth — stale claims, all had real impls | S7 | 2026-05-24 |
+| D04 | Insights empty-state handling | S7 | 2026-05-24 |
+| R04/W10 | HomeAssistant poll reset | S21 | 2026-05-24 |
+| P01 (S16) | Anthropic ephemeral cache headers | S16 | 2026-05-24 |
+| A23 | nous_rate_guard.py port — cross-session rate limit guard | S4 | 2026-05-24 |
+| A27 | rate_limit_tracker — stale, already in lib/libratelimit | S4 | 2026-05-24 |
+| A02 | context_compressor.py port — core compression pipeline complete (tool pruning, redaction, LLM summary gen, scaled budget, boundary alignment, anti-thrashing) | S4 | 2026-05-24 |
+| A03 | conversation_compression.py — orchestration done via agent_loop + auxiliary_client | S4 | 2026-05-24 |
+| S07, S08 | Plugin memory vtable import_json + export_json — now wired | S1 | 2026-05-24 |
+
+## Next Priority Queue (top 15)
+
+| Rank | ID | Description | LOC | Sector |
+|------|----|-------------|-----|--------|
+| 1 | D16 | Plugin memory provider interface | 280 | S7 |
+| 2 | G01 | Home Assistant conversation loop | 200 | S8 |
+| 3 | G04 | DingTalk inbound polling | 80 | S8 |
+| 4 | G05 | WeCom inbound polling | 80 | S8 |
+| 5 | G06 | SMS inbound webhook wiring | 50 | S8 |
+| 6 | T01-T25 | Test coverage for untested modules | — | S12 |
+| 7 | C06 | gateway.secret_rotation | 30 | S9 |
+| 8 | C10 | Skill auto-install config | 25 | S9 |
+| 9 | C11 | Session auto-save compression level | 15 | S9 |
+| 10 | F01 | File backend atomic writes | 30 | S11 |

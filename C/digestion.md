@@ -37,7 +37,7 @@ The `digest.py` FILE_MAP has 250+ entries mapping Python modules to C files:
 "gateway/run.py"             → ("gateway/server", "Gateway server")
 ```
 
-Entries with `(".")` indicate the Python module has NO C equivalent yet — these are gaps tracked in the 300-gap roadmap.
+Entries with `(".")` indicate the Python module has NO C equivalent yet — these are gaps tracked in the 313-gap battleship-v8.
 
 ## Super Fork Architecture
 
@@ -49,6 +49,6 @@ The C code lives in the SAME repo as the Python code (under `C/`). This means:
 ## Current Status
 
 - **Remote:** origin = NousResearch/hermes-agent (upstream)
-- **Last sync:** `729a778af0b3` (May 2026)
-- **Behind:** 183 commits
-- **FILE_MAP coverage:** ~250 of 392 core Python files mapped
+- **Last sync:** battleship-v8 (May 2026)
+- **Behind:** Tracked via battleship-v8 gap list
+- **FILE_MAP coverage:** ~270 of 400+ core Python files mapped

@@ -163,6 +163,13 @@ int cron_run_loop(int interval_sec) {
                 if (job->command[0]) {
                     int rc = system(job->command);
                     printf("[cron] Job '%s' exit: %d\n", job->name, rc);
+                    if (rc == 0)
+                        cron_send_notification(job->name, "completed", NULL);
+                    else {
+                        char msg[64];
+                        snprintf(msg, sizeof(msg), "exit code %d", rc);
+                        cron_send_notification(job->name, "failed", msg);
+                    }
                 }
             }
         }

@@ -172,6 +172,235 @@ static account_usage_snapshot_t *fetch_openrouter(const char *base_url,
     return snap;
 }
 
+/* Fetch Anthropic account usage via OAuth usage API */
+static account_usage_snapshot_t *fetch_anthropic(const char *base_url,
+    const char *api_key)
+{
+    if (!api_key || !api_key[0]) return NULL;
+
+    /* Only OAuth tokens can fetch usage */
+    /* sk-ant-oauth-... or sk-ant-api03-... (admin) tokens */
+    if (strstr(api_key, "sk-ant-oauth") == NULL &&
+        strstr(api_key, "sk-ant-api") == NULL) {
+        account_usage_snapshot_t *snap = calloc(1, sizeof(*snap));
+        if (!snap) return NULL;
+        snprintf(snap->provider, sizeof(snap->provider), "anthropic");
+        snprintf(snap->source, sizeof(snap->source), "oauth_usage_api");
+        snap->fetched_at = (int64_t)time(NULL);
+        snprintf(snap->title, sizeof(snap->title), "Account limits");
+        snprintf(snap->unavailable_reason, sizeof(snap->unavailable_reason),
+            "Anthropic account limits are only available for OAuth-backed Claude accounts.");
+        snap->available = false;
+        return snap;
+    }
+
+    const char *root = (base_url && base_url[0])
+        ? base_url : "https://api.anthropic.com";
+    char url[512];
+    snprintf(url, sizeof(url), "%s/api/oauth/usage", root);
+
+    http_t *h = http_new(10);
+    if (!h) return NULL;
+
+    char headers[2048];
+    snprintf(headers, sizeof(headers),
+        "Authorization: Bearer %s\r\n"
+        "Accept: application/json\r\n"
+        "Content-Type: application/json\r\n"
+        "anthropic-beta: oauth-2025-04-20\r\n"
+        "User-Agent: claude-code/2.1.0\r\n",
+        api_key);
+
+    http_resp_t *resp = http_get(h, url, headers);
+    if (!resp || resp->status != 200) {
+        if (resp) http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    json_t *payload = json_parse(resp->body, NULL);
+    http_resp_free(resp);
+    http_free(h);
+    if (!payload) return NULL;
+
+    account_usage_snapshot_t *snap = calloc(1, sizeof(*snap));
+    if (!snap) { json_free(payload); return NULL; }
+
+    snprintf(snap->provider, sizeof(snap->provider), "anthropic");
+    snprintf(snap->source, sizeof(snap->source), "oauth_usage_api");
+    snap->fetched_at = (int64_t)time(NULL);
+    snprintf(snap->title, sizeof(snap->title), "Account limits");
+
+    /* Parse usage windows */
+    struct {
+        const char *key;
+        const char *label;
+    } windows[] = {
+        {"five_hour",       "Current session"},
+        {"seven_day",       "Current week"},
+        {"seven_day_opus",  "Opus week"},
+        {"seven_day_sonnet","Sonnet week"},
+    };
+
+    for (int i = 0; i < 4 && snap->window_count < ACCOUNT_USAGE_WINDOWS_MAX; i++) {
+        json_t *win = json_obj_get(payload, windows[i].key);
+        if (!win) continue;
+
+        double util = json_get_num(win, "utilization", -1);
+        if (util < 0) continue;
+
+        /* Normalize: API returns 0-1 or 0-100 */
+        double pct = (util <= 1.0) ? util * 100.0 : util;
+        snprintf(snap->windows[snap->window_count].label,
+            sizeof(snap->windows[snap->window_count].label), "%s", windows[i].label);
+        snap->windows[snap->window_count].used_percent = pct;
+
+        const char *reset = json_get_str(win, "resets_at", NULL);
+        if (reset) snap->windows[snap->window_count].reset_at = parse_dt(reset);
+        snap->window_count++;
+    }
+
+    /* Parse extra usage details */
+    json_t *extra = json_obj_get(payload, "extra_usage");
+    if (extra && json_get_bool(extra, "is_enabled", false)) {
+        double used = json_get_num(extra, "used_credits", -1);
+        double monthly = json_get_num(extra, "monthly_limit", -1);
+        if (used >= 0 && monthly > 0 && snap->detail_count < ACCOUNT_USAGE_DETAILS_MAX) {
+            snprintf(snap->details[snap->detail_count],
+                sizeof(snap->details[snap->detail_count]),
+                "Credits used: $%.2f / $%.0f", used, monthly);
+            snap->detail_count++;
+        }
+    }
+
+    snap->available = (snap->window_count > 0);
+    json_free(payload);
+    return snap;
+}
+
+/* Fetch OpenAI Codex account usage via codex usage API */
+static account_usage_snapshot_t *fetch_codex(const char *base_url,
+    const char *api_key)
+{
+    if (!api_key || !api_key[0]) return NULL;
+
+    const char *root = (base_url && base_url[0])
+        ? base_url : "https://chatgpt.com/backend-api/codex";
+
+    /* Normalize URL per Python _resolve_codex_usage_url */
+    char url[1024];
+    size_t root_len = strlen(root);
+    if (root_len >= 6 && strcmp(root + root_len - 6, "/codex") == 0) {
+        root_len -= 6;
+    }
+    char norm_root[1024];
+    memcpy(norm_root, root, root_len);
+    norm_root[root_len] = '\0';
+
+    if (strstr(norm_root, "/backend-api")) {
+        snprintf(url, sizeof(url), "%s/wham/usage", norm_root);
+    } else {
+        snprintf(url, sizeof(url), "%s/api/codex/usage", norm_root);
+    }
+
+    http_t *h = http_new(10);
+    if (!h) return NULL;
+
+    char headers[2048];
+    snprintf(headers, sizeof(headers),
+        "Authorization: Bearer %s\r\n"
+        "Accept: application/json\r\n"
+        "Content-Type: application/json\r\n"
+        "User-Agent: codex-cli\r\n",
+        api_key);
+
+    http_resp_t *resp = http_get(h, url, headers);
+    if (!resp || resp->status != 200) {
+        if (resp) http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    json_t *payload = json_parse(resp->body, NULL);
+    http_resp_free(resp);
+    http_free(h);
+    if (!payload) return NULL;
+
+    account_usage_snapshot_t *snap = calloc(1, sizeof(*snap));
+    if (!snap) { json_free(payload); return NULL; }
+
+    snprintf(snap->provider, sizeof(snap->provider), "openai-codex");
+    snprintf(snap->source, sizeof(snap->source), "usage_api");
+    snap->fetched_at = (int64_t)time(NULL);
+    snprintf(snap->title, sizeof(snap->title), "Account limits");
+    snap->available = true;
+
+    /* Parse plan_type */
+    const char *plan = json_get_str(payload, "plan_type", "free");
+    if (plan) {
+        /* Title-case: "free" -> "Free", "plus" -> "Plus" */
+        char plan_buf[64];
+        snprintf(plan_buf, sizeof(plan_buf), "%s", plan);
+        if (plan_buf[0] >= 'a' && plan_buf[0] <= 'z')
+            plan_buf[0] = (char)(plan_buf[0] - 32);
+        snprintf(snap->plan, sizeof(snap->plan), "%s", plan_buf);
+    }
+
+    /* Parse rate limit windows */
+    json_t *rate_limit = json_obj_get(payload, "rate_limit");
+    if (rate_limit) {
+        struct {
+            const char *key;
+            const char *label;
+        } windows[] = {
+            {"primary_window",   "Session"},
+            {"secondary_window", "Weekly"},
+        };
+
+        for (int i = 0; i < 2 && snap->window_count < ACCOUNT_USAGE_WINDOWS_MAX; i++) {
+            json_t *win = json_obj_get(rate_limit, windows[i].key);
+            if (!win) continue;
+
+            double used = json_get_num(win, "used_percent", -1);
+            if (used < 0) continue;
+
+            snprintf(snap->windows[snap->window_count].label,
+                sizeof(snap->windows[snap->window_count].label), "%s", windows[i].label);
+            snap->windows[snap->window_count].used_percent = used;
+
+            const char *reset = json_get_str(win, "reset_at", NULL);
+            if (reset) snap->windows[snap->window_count].reset_at = parse_dt(reset);
+            snap->window_count++;
+        }
+    }
+
+    /* Parse credits */
+    json_t *credits = json_obj_get(payload, "credits");
+    if (credits) {
+        bool has_credits = json_get_bool(credits, "has_credits", false);
+        bool unlimited = json_get_bool(credits, "unlimited", false);
+
+        if (unlimited && snap->detail_count < ACCOUNT_USAGE_DETAILS_MAX) {
+            snprintf(snap->details[snap->detail_count],
+                sizeof(snap->details[snap->detail_count]),
+                "Credits balance: unlimited");
+            snap->detail_count++;
+        } else if (has_credits) {
+            double balance = json_get_num(credits, "balance", -1);
+            if (balance >= 0 && snap->detail_count < ACCOUNT_USAGE_DETAILS_MAX) {
+                snprintf(snap->details[snap->detail_count],
+                    sizeof(snap->details[snap->detail_count]),
+                    "Credits balance: $%.2f", balance);
+                snap->detail_count++;
+            }
+        }
+    }
+
+    snap->available = (snap->window_count > 0 || snap->detail_count > 0);
+    json_free(payload);
+    return snap;
+}
+
 /*
  *  Public API
  */
@@ -184,7 +413,11 @@ account_usage_snapshot_t *account_usage_fetch(const char *provider,
     if (strcmp(provider, "openrouter") == 0)
         return fetch_openrouter(base_url, api_key);
 
-    /* TODO: port _fetch_codex_account_usage, _fetch_anthropic_account_usage */
+    if (strcmp(provider, "anthropic") == 0)
+        return fetch_anthropic(base_url, api_key);
+
+    if (strcmp(provider, "openai-codex") == 0)
+        return fetch_codex(base_url, api_key);
 
     return NULL;
 }

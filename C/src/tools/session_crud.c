@@ -108,7 +108,6 @@ char *session_crud_handler(const char *args_json, const char *task_id) {
                 json_array_append(sessions, s);
                 listed++;
             }
-            free(entries[i].id);
         }
         free(entries);
 

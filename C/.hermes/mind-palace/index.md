@@ -1,4 +1,4 @@
-# Hermes C — Index (v11 — 2026-05-23)
+# Hermes C — Index (v17 — 2026-05-24)
 
 ## Reading Order (new session)
 | # | File | What |
@@ -7,14 +7,13 @@
 | 2 | **goal-mantra.md** | Perpetual goal + loop |
 | 3 | **state.md** | Binary truth table |
 | 4 | **plan.md** | Phase completion + next steps |
-| 5 | **entry.md** | Build/run + architecture |
-| 6 | **overnight-map.md** | Session navigation + fallback |
+| 5 | **overnight-map.md** | Session navigation + fallback |
 
 ## Plans Directory
-| File | Purpose |
-|------|---------|
-| `plans/battleship-index.md` | Quick dashboard — 19 sectors, 500 gaps |
-| `plans/battleship-v2.md` | Full roadmap with DA v11 findings |
+| File | Purpose | Status |
+|------|---------|--------|
+| `battleship-v8.md` | Active gap roadmap (312 gaps, 22 sectors) | ✅ Current |
+| `battleship-v7.md` | Previous roadmap (stale) | ❌ Superseded |
 
 ## Vault
 | File | Purpose |
@@ -27,7 +26,8 @@
 | `vault/translation-essay.md` | Translation methodology |
 
 ## DA Audits
-| File | For |
-|------|-----|
-| `da-audit-v11-500-goals.md` | **Active** — DA v11, stub hunt, CI audit |
-| `vault/archived-da-audit-*.md` | Historical (v6, v10, etc.) |
+| File | Status |
+|------|--------|
+| `battleship-v8.md` | **Active** — 312 verified gaps, 22 sectors, Triple DA fresh |
+| `da-audit-v15.md` | Latest DA audit, 2026-05-24 |
+| `vault/archived-da-audit-*.md` | Historical (v6, v10, v11, v13, v14) |

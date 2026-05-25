@@ -174,6 +174,46 @@ int main(void) {
     TEST("provider list includes bedrock", json && strstr(json, "bedrock") != NULL);
     free(json);
 
+    /* --- S06: vision_overrides tests --- */
+    {
+        provider_config_t pcfg;
+        memset(&pcfg, 0, sizeof(pcfg));
+
+        /* No override set: unknown model should NOT have vision */
+        TEST("unknown model no vision without override",
+             !model_supports_vision("unknown-model", &pcfg));
+
+        /* Override set: model matching prefix should have vision */
+        strncpy(pcfg.vision_overrides, "qwen-vl,llava,pixtral", sizeof(pcfg.vision_overrides) - 1);
+        TEST("qwen-vl has vision via override",
+             model_supports_vision("qwen-vl", &pcfg));
+        TEST("qwen-vl-72b has vision via prefix override",
+             model_supports_vision("qwen-vl-72b", &pcfg));
+        TEST("llava has vision via override",
+             model_supports_vision("llava", &pcfg));
+        TEST("pixtral-12b has vision via override",
+             model_supports_vision("pixtral-12b", &pcfg));
+
+        /* Non-matching should NOT get extra vision from override alone */
+        /* Note: gpt-4o-mini already has vision via metadata (MODEL_CAP_VISION) */
+        TEST("model without override and no metadata has no vision",
+             !model_supports_vision("unknown-nonvision-model", &pcfg));
+
+        /* Known model (gpt-4o) should still have vision from metadata */
+        TEST("gpt-4o has vision via metadata even with overrides set",
+             model_supports_vision("gpt-4o", &pcfg));
+
+        /* Empty overrides — no effect */
+        pcfg.vision_overrides[0] = '\0';
+        TEST("unknown model no vision with empty overrides",
+             !model_supports_vision("unknown-model", &pcfg));
+
+        /* Global supports_vision still works */
+        pcfg.supports_vision = true;
+        TEST("global supports_vision true overrides all",
+             model_supports_vision("anything-here", &pcfg));
+    }
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

@@ -18,6 +18,8 @@
 #include "skill_bundles.h"
 #include "usage_pricing.h"
 #include "hermes_display.h"
+#include "hermes_curator.h"
+#include "skill_usage.h"
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -179,7 +181,7 @@ static const command_def_t COMMANDS[] = {
     {"/curator", NULL,    "Background skill maintenance status",            cmd_curator},
     {"/image",   NULL,    "Attach a local image file for next prompt",     cmd_image},
     {"/paste",   NULL,    "Attach clipboard image from clipboard",          cmd_paste},
-    {"/insights",NULL,    "Show usage insights and analytics",              cmd_insights},
+    {"/insights",NULL,    "Show usage insights and analytics (--days N)",              cmd_insights},
     {"/indicator",NULL,   "Pick the TUI busy-indicator style",             cmd_indicator},
     {"/statusbar",NULL,   "Toggle the context/model status bar",           cmd_statusbar},
     {"/footer",  NULL,    "Toggle gateway metadata footer on replies",     cmd_footer},
@@ -2389,8 +2391,117 @@ static void cmd_bundles(const char *args, agent_state_t *state) {
 
 /* /curator: Background skill maintenance */
 static void cmd_curator(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Curator status: active. Skills are managed via skill_manage tool.\n");
+    (void)state;
+    bool show_help = false;
+
+    /* Parse subcommand */
+    const char *sub = NULL;
+    if (args) {
+        while (*args == ' ') args++;
+        if (*args) sub = args;
+    }
+
+    if (sub && strcmp(sub, "--help") == 0) show_help = true;
+
+    if (show_help || (sub && strcmp(sub, "help") == 0)) {
+        printf("Usage: /curator [status|run|pause|resume|help]\\n");
+        printf("  status   - Show curator state (default)\\n");
+        printf("  run      - Trigger a curator run\\n");
+        printf("  pause    - Pause curator auto-runs\\n");
+        printf("  resume   - Resume curator auto-runs\\n");
+        return;
+    }
+
+    /* Load curator state */
+    curator_state_t cs;
+    curator_load_state(&cs);
+
+    if (sub && strcmp(sub, "pause") == 0) {
+        cs.paused = true;
+        curator_save_state(&cs);
+        printf("Curator paused.\\n");
+        return;
+    }
+
+    if (sub && strcmp(sub, "resume") == 0) {
+        cs.paused = false;
+        curator_save_state(&cs);
+        printf("Curator resumed.\\n");
+        return;
+    }
+
+    if (sub && strcmp(sub, "run") == 0) {
+        printf("Triggering curator run...\n");
+        /* Wire llm_background_review: review last tool result in session */
+        char *review = NULL;
+        double duration = 0.0;
+        if (state && state->message_count > 0) {
+            /* Find the last tool result message */
+            char *tool_result = NULL;
+            char *tool_name = NULL;
+            for (int i = (int)state->message_count - 1; i >= 0; i--) {
+                if (state->messages[i]->role == MSG_TOOL) {
+                    tool_result = state->messages[i]->content;
+                    /* Look backward for the tool name from assistant message */
+                    for (int j = i - 1; j >= 0; j--) {
+                        if (state->messages[j]->role == MSG_ASSISTANT &&
+                            state->messages[j]->tool_call_id &&
+                            strcmp(state->messages[j]->tool_call_id,
+                                   state->messages[i]->tool_call_id) == 0) {
+                            tool_name = state->messages[j]->tool_name;
+                            break;
+                        }
+                    }
+                    if (!tool_name && state->messages[i]->tool_call_id) {
+                        /* Use tool_call_id as fallback name */
+                        tool_name = state->messages[i]->tool_call_id;
+                    }
+                    break;
+                }
+            }
+            if (tool_result) {
+                review = llm_background_review(&state->llm,
+                    tool_name ? tool_name : "unknown",
+                    "{}", tool_result);
+            }
+        }
+        if (review) {
+            curator_record_run(&cs, duration, review);
+            printf("Curator run complete. Review summary:\n  %s\n", review);
+            free(review);
+        } else {
+            curator_record_run(&cs, duration,
+                "No tool results to review in current session");
+            printf("Curator run complete (no tool results found).\n");
+        }
+        return;
+    }
+
+    /* Default: status display */
+    const char *status_str = "ENABLED";
+    if (cs.paused) status_str = "PAUSED";
+    else if (!cs.enabled) status_str = "DISABLED";
+
+    char time_buf[64], duration_buf[64];
+    curator_format_reltime(cs.last_run_at, time_buf, sizeof(time_buf));
+    curator_format_duration(cs.last_run_duration, duration_buf, sizeof(duration_buf));
+
+    printf("curator: %s\\n", status_str);
+    printf("  runs:           %d\\n", cs.run_count);
+    printf("  last run:       %s\\n", time_buf);
+    printf("  last duration:  %s\\n", duration_buf);
+    if (cs.last_run_summary[0])
+        printf("  summary:        %s\\n", cs.last_run_summary);
+
+    /* Also show skill usage stats if available */
+    skill_usage_map_t sumap;
+    skill_usage_load(NULL, &sumap);
+    int total = sumap.count;
+    int agent_created = 0;
+    for (int i = 0; i < total; i++) {
+        if (strcmp(sumap.records[i].created_by, "agent") == 0) agent_created++;
+    }
+    printf("  skills tracked: %d (%d agent-created)\n", total, agent_created);
 }
 
 /* /image: Attach a local image file */
@@ -2430,7 +2541,29 @@ static void cmd_paste(const char *args, agent_state_t *state) {
 
 /* /insights: Show usage insights (enhanced with DB-backed historical stats) */
 static void cmd_insights(const char *args, agent_state_t *state) {
-    (void)args;
+    /* Parse --days N and --source S arguments */
+    int days_filter = 0;
+    char source_filter[64] = {0};
+    if (args) {
+        const char *d = strstr(args, "--days");
+        if (d) {
+            d += 6;
+            while (*d == ' ' || *d == '=') d++;
+            if (*d >= '0' && *d <= '9') days_filter = atoi(d);
+        }
+        const char *s = strstr(args, "--source");
+        if (s) {
+            s += 8;
+            while (*s == ' ' || *s == '=') s++;
+            const char *end = s;
+            while (*end && *end != ' ' && *end != '\t') end++;
+            size_t slen = (size_t)(end - s);
+            if (slen > 0 && slen < sizeof(source_filter)) {
+                memcpy(source_filter, s, slen);
+                source_filter[slen] = '\0';
+            }
+        }
+    }
 
     /* --- Current session stats (keep existing) --- */
     size_t total_chars = 0;
@@ -2466,8 +2599,15 @@ static void cmd_insights(const char *args, agent_state_t *state) {
         /* Aggregate metadata across sessions */
         size_t session_count = 0;
         db_session_entry_t *entries = db_list_with_meta(db, &session_count);
-        if (entries) {
+        if (!entries) {
+            printf("    No sessions yet. Start a conversation to see stats.\n");
+        } else {
+            if (days_filter > 0)
+                printf("    Filtered:       %zu in last %dd\n", session_count, days_filter);
             long long hist_tokens = 0;
+            long long hist_input = 0, hist_output = 0;
+            long long hist_cache_read = 0, hist_cache_write = 0;
+            long long hist_tool_calls = 0;
             long long hist_messages = 0;
             time_t now = time(NULL);
             int recent_7d = 0, recent_30d = 0;
@@ -2476,15 +2616,38 @@ static void cmd_insights(const char *args, agent_state_t *state) {
             int model_count = 0;
             char models[64][128];
             int model_uses[64];
+            long long model_tok_in[64], model_tok_out[64];
+            double model_cost[64];
+            /* B08: Per-platform breakdown */
+            int platform_count = 0;
+            char platforms[32][32];
+            int platform_sessions[32];
+            long long platform_tokens[32];
 
             memset(models, 0, sizeof(models));
             memset(model_uses, 0, sizeof(model_uses));
+            memset(model_tok_in, 0, sizeof(model_tok_in));
+            memset(model_tok_out, 0, sizeof(model_tok_out));
+            memset(model_cost, 0, sizeof(model_cost));
+            memset(platforms, 0, sizeof(platforms));
+            memset(platform_sessions, 0, sizeof(platform_sessions));
+            memset(platform_tokens, 0, sizeof(platform_tokens));
 
             for (size_t i = 0; i < session_count; i++) {
+                /* Apply --days filter */
+                double age_days = difftime(now, entries[i].meta.created_at) / 86400.0;
+                if (days_filter > 0 && age_days > days_filter) continue;
+                /* Apply --source filter */
+                if (source_filter[0] && strcmp(entries[i].meta.source, source_filter) != 0) continue;
+
                 hist_tokens += entries[i].meta.token_count;
+                hist_input += entries[i].meta.input_tokens;
+                hist_output += entries[i].meta.output_tokens;
+                hist_cache_read += entries[i].meta.cache_read_tokens;
+                hist_cache_write += entries[i].meta.cache_write_tokens;
+                hist_tool_calls += entries[i].meta.tool_call_count;
                 hist_messages += entries[i].meta.message_count;
 
-                double age_days = difftime(now, entries[i].meta.created_at) / 86400.0;
                 if (age_days <= 7) recent_7d++;
                 if (age_days <= 30) recent_30d++;
 
@@ -2508,17 +2671,95 @@ static void cmd_insights(const char *args, agent_state_t *state) {
                     }
                     if (found >= 0) {
                         model_uses[found]++;
+                        model_tok_in[found] += entries[i].meta.input_tokens;
+                        model_tok_out[found] += entries[i].meta.output_tokens;
+                        /* Accumulate cost per model */
+                        if (entries[i].meta.input_tokens > 0 || entries[i].meta.output_tokens > 0) {
+                            usage_counts_t uc = {entries[i].meta.input_tokens, entries[i].meta.output_tokens};
+                            model_cost[found] += usage_pricing_estimate(entries[i].meta.model, &uc).total_cost;
+                        }
                     } else if (model_count < 64) {
                         snprintf(models[model_count], sizeof(models[0]), "%s", entries[i].meta.model);
                         model_uses[model_count] = 1;
+                        model_tok_in[model_count] = entries[i].meta.input_tokens;
+                        model_tok_out[model_count] = entries[i].meta.output_tokens;
+                        /* Cost for new model */
+                        if (entries[i].meta.input_tokens > 0 || entries[i].meta.output_tokens > 0) {
+                            usage_counts_t uc = {entries[i].meta.input_tokens, entries[i].meta.output_tokens};
+                            model_cost[model_count] = usage_pricing_estimate(entries[i].meta.model, &uc).total_cost;
+                        }
                         model_count++;
                     }
+                }
+
+                /* B08: Track per-platform distribution */
+                if (entries[i].meta.source[0]) {
+                    int found = -1;
+                    for (int p = 0; p < platform_count; p++) {
+                        if (strcmp(platforms[p], entries[i].meta.source) == 0) {
+                            found = p; break;
+                        }
+                    }
+                    if (found >= 0) {
+                        platform_sessions[found]++;
+                        platform_tokens[found] += entries[i].meta.token_count;
+                    } else if (platform_count < 32) {
+                        snprintf(platforms[platform_count], sizeof(platforms[0]),
+                                 "%s", entries[i].meta.source);
+                        platform_sessions[platform_count] = 1;
+                        platform_tokens[platform_count] = entries[i].meta.token_count;
+                        platform_count++;
+                    }
+                }
+            }
+
+            /* Top 10 sessions by token count */
+            if (session_count > 0) {
+                /* Sort by token_count descending for top-N display */
+                for (size_t i = 0; i < session_count && i < 10; i++) {
+                    size_t max_idx = i;
+                    for (size_t j = i + 1; j < session_count; j++) {
+                        if (entries[j].meta.token_count > entries[max_idx].meta.token_count)
+                            max_idx = j;
+                    }
+                    if (max_idx != i) {
+                        db_session_entry_t tmp = entries[i];
+                        entries[i] = entries[max_idx];
+                        entries[max_idx] = tmp;
+                    }
+                }
+                int top_n = session_count < 10 ? (int)session_count : 10;
+                printf("  Top sessions:\n");
+                for (int t = 0; t < top_n; t++) {
+                    char title_short[44];
+                    const char *title = entries[t].meta.title;
+                    size_t tlen = strlen(title);
+                    if (tlen > 40) {
+                        memcpy(title_short, title, 40);
+                        title_short[40] = 0;
+                    } else {
+                        memcpy(title_short, title, tlen + 1);
+                    }
+                    char date_buf[16];
+                    struct tm *tm_info = localtime(&entries[t].meta.created_at);
+                    strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", tm_info);
+                    printf("    #%d: %-40s %8d tok %s %s\n",
+                           t + 1, title_short, entries[t].meta.token_count,
+                           entries[t].meta.source, date_buf);
                 }
             }
             free(entries);
 
             printf("    Total tokens:   %lld\n", hist_tokens);
+            if (hist_input > 0 || hist_output > 0) {
+                printf("      Input:        %lld\n", hist_input);
+                printf("      Output:       %lld\n", hist_output);
+                printf("      Cache read:   %lld\n", hist_cache_read);
+                printf("      Cache write:  %lld\n", hist_cache_write);
+            }
             printf("    Total messages: %lld\n", hist_messages);
+            if (hist_tool_calls > 0)
+                printf("    Tool calls:     %lld\n", hist_tool_calls);
             printf("    Avg duration:   %s\n",
                    usage_pricing_format_duration(
                        session_count > 0 ? total_duration / session_count : 0.0));
@@ -2545,14 +2786,74 @@ static void cmd_insights(const char *args, agent_state_t *state) {
             if (model_count > 0) {
                 printf("  Models used:\n");
                 for (int m = 0; m < model_count && m < 8; m++) {
-                    printf("    %s: %d sessions\n", models[m], model_uses[m]);
+                    printf("    %s: %d sessions", models[m], model_uses[m]);
+                    if (model_tok_in[m] > 0 || model_tok_out[m] > 0)
+                        printf(" (%lld in / %lld out)", model_tok_in[m], model_tok_out[m]);
+                    if (model_cost[m] > 0.0)
+                        printf(" [~$%.4f]", model_cost[m]);
+                    printf("\n");
                 }
                 if (model_count > 8)
                     printf("    ... and %d more\n", model_count - 8);
             }
-        } else {
-            printf("    (no metadata)\n");
-        }
+
+            /* B08: Per-platform breakdown */
+            if (platform_count > 0) {
+                printf("  Platforms:\n");
+                for (int p = 0; p < platform_count && p < 8; p++) {
+                    printf("    %s: %d sessions", platforms[p], platform_sessions[p]);
+                    if (platform_tokens[p] > 0)
+                        printf(" (%lld tokens)", platform_tokens[p]);
+                    printf("\n");
+                }
+                if (platform_count > 8)
+                    printf("    ... and %d more\n", platform_count - 8);
+            }
+            /* D01: Per-tool breakdown from message-level queries (P151) */
+            {
+                db_tool_stat_t *tool_stats = db_query_tool_stats(db, days_filter,
+                    source_filter[0] ? source_filter : NULL);
+                if (tool_stats) {
+                    int disp = 0;
+                    for (int t = 0; tool_stats[t].name[0]; t++) disp++;
+                    if (disp > 0) {
+                        printf("  Tools used:\n");
+                        for (int t = 0; t < disp && t < 10; t++)
+                            printf("    %s: %d calls\n", tool_stats[t].name, tool_stats[t].count);
+                        if (disp > 10)
+                            printf("    ... and %d more\n", disp - 10);
+                    }
+                    free(tool_stats);
+                }
+            }
+
+            /* D02: Skill breakdown — loaded skills with usage stats */
+            {
+                skill_usage_map_t sumap;
+                skill_usage_load(state->hermes_home, &sumap);
+                if (sumap.count > 0) {
+                    int active_count = 0;
+                    for (int s = 0; s < sumap.count; s++)
+                        if (strcmp(sumap.records[s].state, "active") == 0)
+                            active_count++;
+                    printf("  Skills (%d active, %d total):\n",
+                           active_count, sumap.count);
+                    for (int s = 0; s < sumap.count && s < 15; s++) {
+                        skill_usage_record_t *r = &sumap.records[s];
+                        printf("    %s:", r->name);
+                        if (r->use_count > 0)  printf(" uses=%d", r->use_count);
+                        if (r->view_count > 0) printf(" views=%d", r->view_count);
+                        if (r->patch_count > 0) printf(" patches=%d", r->patch_count);
+                        if (r->state[0] && strcmp(r->state, "active") != 0)
+                            printf(" [%s]", r->state);
+                        printf("\n");
+                    }
+                    if (sumap.count > 15)
+                        printf("    ... and %d more\n", sumap.count - 15);
+                }
+            }
+
+        } /* end entries else */
 
         if (db_opened) db_close(db);
     } else {

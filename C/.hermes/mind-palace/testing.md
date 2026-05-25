@@ -1,4 +1,4 @@
-# Hermes C — Testing (v11 — 2026-05-23)
+# Hermes C — Testing (v13 — 2026-05-24)
 
 ## Suite
 ```bash
@@ -7,19 +7,19 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**154 passed, 0 failed, 0 skipped** (117 files, ~573 assertions).
+**237 passed, 0 failed, 0 skipped** (202 files, zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |
 |------|-------|-----------|
-| **Libraries** | ~30 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display |
-| **Providers** | ~12 | provider_error (225 assertions, 9 providers), anthropic/azure/bedrock/google/openrouter depth, metadata, finish_reason, json_mode |
-| **Agent** | ~8 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer |
+| **Libraries** | ~58 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display, error_classifier, rate_limit, rate_guard, filestate, tool_dispatch, etc. |
+| **Providers** | 11 files | provider_error (225 assertions, 9 providers), anthropic/azure/bedrock/google/openrouter/xai/deepseek/custom depth, metadata, finish_reason, json_mode |
+| **Agent** | ~10 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer, subdir_hints |
 | **CLI** | ~5 | commands, paths, display, TUI |
 | **Cron** | 4 | cron_lib, cron_tool, cron_sqlite, cron_extras |
-| **Tools** | ~25 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage |
+| **Tools** | ~30 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage, session_crud, shell_hooks, curator, usage_pricing |
 | **Gateway** | ~5 | escape_mode, slack_blocks, discord_interactions, whatsapp_msg |
-| **Plugins** | ~8 | honcho, kanban, spotify, achievements, disk_cleanup, file_memory, google_meet, image_gen, observability, skills |
+| **Plugins** | ~10 | honcho, kanban, spotify, achievements, disk_cleanup, file_memory, google_meet, image_gen, observability, skills, google_full, portal_tags |
 
 ## Known Gaps
 - No per-platform gateway integration tests (19 platforms)

@@ -383,9 +383,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->agent.fast_mode = false;
     cfg->agent.quiet_mode = false;
     cfg->agent.compress_threshold = 0.38f;
+    cfg->agent.compress_tail_messages = 0;  /* 0 = use state default of 2 */
     cfg->agent.api_max_retries = 3;
     cfg->agent.clarify_timeout = 300;
     snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "auto");
+    cfg->agent.skill_search_paths[0] = '\0';  /* empty = default ~/.hermes/skills */
+    cfg->agent.model_metadata_path[0] = '\0'; /* empty = use hardcoded model data */
     snprintf(cfg->agent.reasoning_effort, sizeof(cfg->agent.reasoning_effort), "medium");
 
     /* Tools/terminal config defaults */
@@ -423,6 +426,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->compression.protect_last_n = 20;
     cfg->compression.protect_first_n = 3;
     cfg->compression.hygiene_hard_message_limit = 400;
+    cfg->compression.cooldown_secs = 30;          /* L02: anti-thrashing cooldown */
+    cfg->compression.failure_cooldown_secs = 600; /* L02: failure cooldown */
     cfg->compression.abort_on_summary_failure = false;
 
     cfg->cron.max_concurrent_jobs = 5;
@@ -697,6 +702,14 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
                                                   strcasecmp(sv_env, "yes") == 0);
         }
     }
+    /* S06: vision_overrides from env in env-only path */
+    {
+        const char *vo_env = getenv("HERMES_VISION_OVERRIDES");
+        if (vo_env) {
+            strncpy(cfg->provider_cfg.vision_overrides, vo_env,
+                    sizeof(cfg->provider_cfg.vision_overrides) - 1);
+        }
+    }
     return true;
     }
 
@@ -960,6 +973,23 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         }
     }
 
+    /* S06: vision_overrides config — comma-separated model prefixes */
+    {
+        const char *vo_yaml = yaml_get_string(doc, "model.vision_overrides");
+        if (vo_yaml) {
+            strncpy(cfg->provider_cfg.vision_overrides, vo_yaml,
+                    sizeof(cfg->provider_cfg.vision_overrides) - 1);
+        }
+    }
+    /* Env override for vision_overrides */
+    {
+        const char *vo_env = getenv("HERMES_VISION_OVERRIDES");
+        if (vo_env) {
+            strncpy(cfg->provider_cfg.vision_overrides, vo_env,
+                    sizeof(cfg->provider_cfg.vision_overrides) - 1);
+        }
+    }
+
     /* Agent section */
     int max_turns = yaml_get_int(doc, "agent.max_turns", 90);
     cfg->max_turns = max_turns > 0 ? max_turns : 90;
@@ -995,6 +1025,10 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         }
     }
 
+    /* Compression section — tail messages to keep */
+    int c_tail = yaml_get_int(doc, "compression.tail_messages", -1);
+    if (c_tail >= 2) cfg->agent.compress_tail_messages = c_tail;
+
     int api_retries = yaml_get_int(doc, "agent.api_max_retries", 0);
     if (api_retries > 0) cfg->agent.api_max_retries = api_retries;
 
@@ -1005,6 +1039,18 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *iim = yaml_get_string(doc, "agent.image_input_mode");
     if (iim && iim[0]) {
         snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "%s", iim);
+    }
+
+    /* skill_search_paths: custom skill directories */
+    const char *ssp = yaml_get_string(doc, "agent.skill_search_paths");
+    if (ssp && ssp[0]) {
+        snprintf(cfg->agent.skill_search_paths, sizeof(cfg->agent.skill_search_paths), "%s", ssp);
+    }
+
+    /* model_metadata_path: custom model capabilities file */
+    const char *mmp = yaml_get_string(doc, "agent.model_metadata");
+    if (mmp && mmp[0]) {
+        snprintf(cfg->agent.model_metadata_path, sizeof(cfg->agent.model_metadata_path), "%s", mmp);
     }
 
     /* Display section */
@@ -1117,6 +1163,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     int cmm = yaml_get_int(doc, "compression.min_messages", 0);
     if (cmm > 0) cfg->compression.min_messages = cmm;
     cfg->compression.preserve_system = yaml_get_bool(doc, "compression.preserve_system", true);
+
+    /* L02: Configurable compression cooldowns */
+    int ccs = yaml_get_int(doc, "compression.cooldown_secs", 0);
+    if (ccs > 0) cfg->compression.cooldown_secs = ccs;
+    int fcs = yaml_get_int(doc, "compression.failure_cooldown_secs", 0);
+    if (fcs > 0) cfg->compression.failure_cooldown_secs = fcs;
 
     /* P9: Cron section */
     const char *cd = yaml_get_string(doc, "cron.cron_dir");
@@ -1998,6 +2050,10 @@ bool hermes_config_load_env(hermes_config_t *cfg) {
     /* Skills env overrides */
     v = getenv("HERMES_SKILLS_DIR");
     if (v) snprintf(cfg->skills.dir, sizeof(cfg->skills.dir), "%s", v);
+    v = getenv("HERMES_SKILL_SEARCH_PATHS");
+    if (v) snprintf(cfg->agent.skill_search_paths, sizeof(cfg->agent.skill_search_paths), "%s", v);
+    v = getenv("HERMES_MODEL_METADATA");
+    if (v) snprintf(cfg->agent.model_metadata_path, sizeof(cfg->agent.model_metadata_path), "%s", v);
     v = getenv("HERMES_SKILLS_ENABLED");
     if (v) snprintf(cfg->skills.enabled, sizeof(cfg->skills.enabled), "%s", v);
     v = getenv("HERMES_SKILLS_AUTO_DISCOVER");
@@ -2410,6 +2466,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_str(diff, "bedrock.guardrail_config", def.provider_cfg.bedrock_guardrail_config, active->provider_cfg.bedrock_guardrail_config);
     diff_bool(diff, "bedrock.trace_enabled", def.provider_cfg.bedrock_trace_enabled, active->provider_cfg.bedrock_trace_enabled);
     diff_bool(diff, "model.supports_vision", def.provider_cfg.supports_vision, active->provider_cfg.supports_vision);
+    diff_str(diff, "model.vision_overrides", def.provider_cfg.vision_overrides, active->provider_cfg.vision_overrides);
 
     /* Display group */
     diff_str(diff, "display.skin", def.display.skin, active->display.skin);
@@ -2431,6 +2488,8 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "compression.protect_last_n", def.compression.protect_last_n, active->compression.protect_last_n);
     diff_int(diff, "compression.protect_first_n", def.compression.protect_first_n, active->compression.protect_first_n);
     diff_int(diff, "compression.hygiene_hard_message_limit", def.compression.hygiene_hard_message_limit, active->compression.hygiene_hard_message_limit);
+    diff_int(diff, "compression.cooldown_secs", def.compression.cooldown_secs, active->compression.cooldown_secs);
+    diff_int(diff, "compression.failure_cooldown_secs", def.compression.failure_cooldown_secs, active->compression.failure_cooldown_secs);
     diff_str(diff, "agent.system_prompt", def.agent.system_prompt, active->agent.system_prompt);
     diff_str(diff, "agent.profile", def.agent.profile, active->agent.profile);
 
@@ -2594,6 +2653,7 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_bool(f, "  json_mode", cfg->provider_cfg.json_mode);
     exp_bool(f, "  response_format_strict", cfg->provider_cfg.response_format_strict);
     exp_bool(f, "  supports_vision", cfg->provider_cfg.supports_vision);
+    exp_str(f, "  vision_overrides", cfg->provider_cfg.vision_overrides);
 
     fprintf(f, "\ndisplay:\n");
     exp_str(f, "  skin", cfg->display.skin);
@@ -2648,6 +2708,8 @@ bool hermes_config_export(const hermes_config_t *cfg, const char *path) {
     exp_int(f, "  protect_last_n", cfg->compression.protect_last_n);
     exp_int(f, "  protect_first_n", cfg->compression.protect_first_n);
     exp_int(f, "  hygiene_hard_message_limit", cfg->compression.hygiene_hard_message_limit);
+    exp_int(f, "  cooldown_secs", cfg->compression.cooldown_secs);
+    exp_int(f, "  failure_cooldown_secs", cfg->compression.failure_cooldown_secs);
     exp_bool(f, "  abort_on_summary_failure", cfg->compression.abort_on_summary_failure);
     exp_bool(f, "  enabled", cfg->compress_enabled);
 

@@ -1205,9 +1205,13 @@ bool skill_curator_run(char *report_out, size_t report_sz) {
 
             /* Auto-update for hub-sourced skills */
             if (sk->origin == SKILL_ORIGIN_HUB) {
-                if (report) fprintf(report, "    -> Auto-updating hub skill '%s'\n", sk->name);
-                /* We'd trigger hub resync here; for now, just mark it */
-                updated_count++;
+                if (report) fprintf(report, "    -> Auto-updating hub skill '%s'\\n", sk->name);
+                char err[256] = "";
+                if (skill_install_from_hub(sk->name, err, sizeof(err))) {
+                    updated_count++;
+                } else if (report) {
+                    fprintf(report, "    -> Update FAILED: %s\\n", err);
+                }
             }
         }
 
@@ -2182,11 +2186,13 @@ char *skills_list_handler(const char *args_json, const char *task_id) {
         for (size_t i = 0; i < list->count; i++) {
             json_append(skills_arr, json_new_string(list->skills[i].name));
         }
+        json_set(result, "count", json_new_number((double)list->count));
         skills_scan_free(list);
+    } else {
+        json_set(result, "count", json_new_number(0));
     }
 
     json_set(result, "skills", skills_arr);
-    json_set(result, "count", json_new_number((double)(list ? list->count : 0)));
     char *out = json_serialize(result);
     json_free(result);
     return out;

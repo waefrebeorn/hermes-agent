@@ -14,6 +14,23 @@
 #include <errno.h>
 #include <libgen.h>
 #include <fnmatch.h>
+#include <ctype.h>
+
+/* WSL path translation — convert Windows to /mnt/ form (static buf, single-thread) */
+static const char *wsl_translate_path(const char *path) {
+    static char buf[4096];
+    if (!path) return NULL;
+    if (path[0] == '/') return NULL;
+    if (strlen(path) >= 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) {
+        char drive = tolower((unsigned char)path[0]);
+        if (drive >= 'a' && drive <= 'z') {
+            snprintf(buf, sizeof(buf), "/mnt/%c%s", drive, path + 2);
+            for (char *p = buf; *p; p++) if (*p == '\\') *p = '/';
+            return buf;
+        }
+    }
+    return NULL;
+}
 
 /* Schema */
 static const char *SCHEMA_READ = "{"
@@ -256,6 +273,10 @@ static char *handle_read(const char *args_json) {
     if (!args) { return strdup("{\"error\":\"JSON parse\"}"); }
 
     const char *path = json_object_get_string(args, "path", NULL);
+    {
+        const char *wsl = wsl_translate_path(path);
+        if (wsl) path = wsl;
+    }
     if (!path || !is_safe_path(path)) {
         json_free(args);
         return strdup("{\"error\":\"Invalid or unsafe path\"}");

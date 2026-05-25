@@ -292,10 +292,36 @@ char *provider_derive_api_key_name(const char *provider_name, const char *base_u
  * ================================================================ */
 
 bool model_supports_vision(const char *model_name, const provider_config_t *provider_cfg) {
-    /* Config override takes precedence */
+    if (!model_name) return false;
+
+    /* 1. Config override takes precedence */
     if (provider_cfg && provider_cfg->supports_vision) {
         return true;
     }
-    /* Otherwise fall back to metadata lookup */
+
+    /* 2. S06: Check per-model vision overrides (comma-separated prefixes) */
+    if (provider_cfg && provider_cfg->vision_overrides[0]) {
+        char buf[1024];
+        strncpy(buf, provider_cfg->vision_overrides, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+        char *tok = buf;
+        while (tok && *tok) {
+            while (*tok == ' ' || *tok == ',') tok++;
+            if (!*tok) break;
+            char *end = tok;
+            while (*end && *end != ',') end++;
+            int is_last = (*end == '\0');
+            *end = '\0';
+            /* Trim trailing whitespace */
+            char *trim = end - 1;
+            while (trim >= tok && *trim == ' ') { *trim = '\0'; trim--; }
+            if (*tok && strncasecmp(model_name, tok, strlen(tok)) == 0) {
+                return true;
+            }
+            tok = is_last ? NULL : end + 1;
+        }
+    }
+
+    /* 3. Fall back to metadata lookup */
     return model_name_has_capability(model_name, MODEL_CAP_VISION);
 }
