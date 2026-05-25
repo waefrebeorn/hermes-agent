@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (156 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (155 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -37,7 +37,7 @@
 | S7 | Tool Depth | 2 | 0 | 1 | 1 |
 | S8 | Gateway Depth | 17 | 0 | 15 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
-|| S10 | Library Depth | 9 | 0 | 4 | 5 |
+||| S10 | Library Depth | 8 | 0 | 3 | 5 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
 || S12 | Test Coverage | 3 | 0 | 3 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 9 | 0 | 1 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-|| **Total** | **156** | **0** | **80** | **76** |
+||| **Total** | **155** | **0** | **79** | **76** |
 
 ## Python Upstream Parity
 
@@ -88,6 +88,7 @@
 || N01 | Bitwarden Secrets Manager — stale, already implemented | S20 | 2026-05-25 |
 || L06 | libhttp redirect following configurable — http_client_set_max_redirects() | S10 | 2026-05-25 |
 || L07 | libhttp gzip/deflate decompression — auto-decompress via zlib | S10 | 2026-05-25 |
+|| L12 | libcrypto AES-256-GCM encrypt/decrypt — crypto_aes_encrypt/decrypt | S10 | 2026-05-25 |
 
 ## Next Priority Queue (top 10)
 
