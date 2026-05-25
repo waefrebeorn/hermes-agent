@@ -159,6 +159,10 @@ typedef struct {
     double  tokens_per_second;     /* average throughput during stream */
     size_t  total_tokens;          /* total tokens received in stream */
     bool    first_token_received;  /* set when first content token arrives */
+    int     http_status;           /* P95: HTTP status code from API response */
+    int     retry_count;           /* P95: number of retries performed */
+    char    rate_limit_remaining[16]; /* P95: X-RateLimit-Remaining header value */
+    char    rate_limit_reset[16];     /* P95: X-RateLimit-Reset header value */
     /* Internal: timing markers */
     double  request_start_time;    /* monotonic time when request was sent */
     double  first_token_time;      /* monotonic time when first token arrived */

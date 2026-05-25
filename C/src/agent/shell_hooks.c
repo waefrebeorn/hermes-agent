@@ -41,6 +41,7 @@ typedef struct {
     char    event[64];
     char    command[512];
     char    matcher[256];
+    int     priority;           /* H01: lower = executes first (default 100) */
     int     timeout;
     regex_t matcher_re;         /* compiled regex, valid if matcher_valid */
     bool    matcher_valid;
@@ -76,6 +77,9 @@ static int parse_single_hook(const char *event, const json_t *node) {
         if (regcomp(&h->matcher_re, matcher, REG_EXTENDED | REG_NOSUB) == 0)
             h->matcher_valid = true;
     }
+
+    double priority_val = json_get_num(node, "priority", 100);
+    h->priority = (int)priority_val;
 
     double timeout = json_get_num(node, "timeout", SHELL_HOOK_DEFAULT_TIMEOUT);
     if (timeout < 1) timeout = SHELL_HOOK_DEFAULT_TIMEOUT;
@@ -280,7 +284,17 @@ static bool spec_matches_tool(const shell_hook_spec_t *spec, const char *tool_na
  * Called once at startup after config is loaded.
  * Returns number of registered hooks.
  */
+/* Comparison function for qsort: lower priority first */
+static int hook_priority_cmp(const void *a, const void *b) {
+    const shell_hook_spec_t *ha = (const shell_hook_spec_t *)a;
+    const shell_hook_spec_t *hb = (const shell_hook_spec_t *)b;
+    return ha->priority - hb->priority;
+}
+
 int shell_hooks_register_all(void) {
+    /* Sort hooks by priority so lower-priority hooks register first (H01) */
+    qsort(g_hooks, (size_t)g_hook_count, sizeof(shell_hook_spec_t), hook_priority_cmp);
+
     int registered = 0;
     for (int i = 0; i < g_hook_count; i++) {
         if (hook_register(g_hooks[i].event, shell_hook_callback, &g_hooks[i]))
