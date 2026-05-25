@@ -128,7 +128,7 @@ Existing C tools missing features that Python has.
 | 2 | D08 | terminal.c | Environment file sync | 150 | P3 |
 | 3 | D10 | computer_use.c | Modular backend system (backend.py split) | 250 | P2 |
 | 4 | D11 | computer_use.c | Vision routing per backend | 100 | P2 |
-| 5 | D14 | browser.c | Browser supervisor | 200 | P2 |
+| 5 | D14 | browser.c | ✅ Browser supervisor: cdp_supervisor_ping(), Browser.getVersion health check, connection state/command stats tracking, browser_supervisor tool registered | P2 |
 | 6 | D15 | browser.c | Camofox browser state management | 150 | P2 |
 | 7 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
 | 8 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |

@@ -78,7 +78,8 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | D06 | SSH backend stale — run_command_ssh() already exists | S7 | 2026-05-24 |
 | R02,R03,R05 | Curator stale — /curator with status/run all implemented | S15 | 2026-05-24 |
 | F01 | File backend atomic writes — mkstemp+fsync+rename | S11 | 2026-05-24 |
-| E01 | REST API endpoints added (capabilities, tools, health/detailed, agent/status) — 40% done, server wired into CLI | S13 | 2026-05-25 |
+|| D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion, connection state, command stats | S7 | 2026-05-25 |
+|| E01 | REST API endpoints added (capabilities, tools, health/detailed, agent/status) — 40% done, server wired into CLI | S13 | 2026-05-25 |
 | S02 | Port scan detection — nmap/masscan/nc/zmap/dev/tcp detection in tirith | S19 | 2026-05-24 |
 | L19 | Session tags CRUD — db_tag_add/remove/list/find | S10 | 2026-05-24 |
 | L06 | HTTP redirect following — 301/302/303/307/308, relative URL resolution | S10 | 2026-05-24 |

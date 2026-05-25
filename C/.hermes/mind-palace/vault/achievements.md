@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 47: Browser Supervisor — D14 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D14 | browser.c — Browser supervisor: CDP health monitoring via Browser.getVersion, connection state/configured/version/command stats, registered as `browser_supervisor` tool | S7 | browser.c:1185-1291, registry_init_browser |
+
 ## Phase 46: Voice Mode Test Coverage — T24 (2026-05-25)
 
 | ID | Description | Sector | Evidence |
