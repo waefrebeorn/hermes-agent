@@ -2046,14 +2046,37 @@ static void cmd_reasoning(const char *args, agent_state_t *state) {
     printf("Reasoning effort set to: %s\n", value);
 }
 
-/* /toolsets: List available toolsets */
+/* /toolsets: List available toolsets (dynamic from registry) */
 static void cmd_toolsets(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("Available toolsets (C build):\n");
-    printf("  core — Terminal, file, web, skills, patch, exec_code\n");
-    printf("  browser — Navigate, snapshot, click, type, scroll, back, forward\n");
-    printf("  security — Approval, URL safety, path traversal, Tirith\n");
-    printf("  communication — Send message, TTS, vision\n");
+    printf("Available toolsets (dynamic):\n");
+    size_t n = registry_get_count();
+    char seen[32][32]; int seen_count = 0;
+    for (size_t i = 0; i < n; i++) {
+        const char *name = registry_get_name(i);
+        const char *ts = registry_get_toolset(name);
+        if (!ts || !ts[0]) ts = "core";
+        bool dup = false;
+        for (int j = 0; j < seen_count; j++)
+            if (strcmp(seen[j], ts) == 0) { dup = true; break; }
+        if (dup) continue;
+        if (seen_count < 32) snprintf(seen[seen_count], 32, "%s", ts);
+        seen_count++;
+        /* Collect tools for this toolset */
+        printf("  %s —", ts);
+        int col = 0;
+        for (size_t k = 0; k < n; k++) {
+            const char *tn = registry_get_name(k);
+            const char *tt = registry_get_toolset(tn);
+            if (!tt || !tt[0]) tt = "core";
+            if (strcmp(tt, ts) != 0) continue;
+            if (col > 0) printf(",");
+            if (col % 5 == 0 && col > 0) printf("\n         ");
+            printf(" %s", tn);
+            col++;
+        }
+        printf("\n");
+    }
 }
 
 /* /skills: List installed skills */
