@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 50: Computer Use Vision Routing — D11 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D11 | computer_use.c — Vision routing: if backend's `capture("vision", ...)` returns NULL, fall back to `capture("som", ...)` transparently. Adds `vision_fallback` flag and explanatory `note` to capture response so agent knows mode was downgraded. | S7 | computer_use.c dispatch_capture |
+
 ## Phase 49: Computer Use Backend Registry — D10 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

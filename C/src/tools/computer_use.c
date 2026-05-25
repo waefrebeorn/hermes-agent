@@ -1774,10 +1774,34 @@ static char *dispatch_capture(cu_backend_t *b, json_t *args) {
     if (max_elements < 1) max_elements = 100;
     if (max_elements > 1000) max_elements = 1000;
 
+    /* Try requested mode first */
     cu_capture_t *cap = b->capture(mode, app);
+
+    /* Vision fallback: if vision mode failed, fall back to som
+     * (some backends don't support vision natively — e.g. x11 via xdotool) */
+    bool fell_back = false;
+    if (!cap && strcmp(mode, "vision") == 0) {
+        cap = b->capture("som", app);
+        fell_back = true;
+    }
+
     if (!cap) return make_error_response("capture failed");
     char *resp = make_capture_response(cap, max_elements);
     cu_capture_free(cap);
+
+    /* Notify agent of fallback */
+    if (fell_back) {
+        size_t rlen = resp ? strlen(resp) : 0;
+        char *fb = (char *)malloc(rlen + 128);
+        if (fb) {
+            int n = snprintf(fb, rlen + 128,
+                "%.*s,\"vision_fallback\":true,"
+                "\"note\":\"Vision capture unavailable, fell back to som mode\"}",
+                (int)(rlen > 2 ? rlen - 1 : 0), resp ? resp : "{}");
+            if (n > 0) { free(resp); resp = fb; }
+            else free(fb);
+        }
+    }
     return resp;
 }
 
