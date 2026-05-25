@@ -2190,7 +2190,12 @@ static void cmd_reload(const char *args, agent_state_t *state) {
     if (cfg.api_key[0]) memcpy(state->llm.api_key, cfg.api_key, sizeof(state->llm.api_key));
     if (cfg.model[0]) memcpy(state->llm.model, cfg.model, sizeof(state->llm.model));
     if (cfg.provider[0]) memcpy(state->llm.provider, cfg.provider, sizeof(state->llm.provider));
-    printf(".env reloaded. Config updated.\n");
+    /* Reload plugins from updated config */
+    plugin_registry_t *old_reg = (plugin_registry_t *)state->plugin_reg;
+    hermes_plugin_shutdown(old_reg);
+    plugin_registry_t *new_reg = hermes_plugin_init(&cfg);
+    if (new_reg) state->plugin_reg = new_reg;
+    printf(".env reloaded. Config + plugins updated.\n");
 }
 
 /* /rollback: List or restore state snapshots */
