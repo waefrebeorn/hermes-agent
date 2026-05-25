@@ -4,7 +4,7 @@
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-108 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+107 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 

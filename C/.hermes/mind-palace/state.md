@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (108 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (107 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -29,7 +29,7 @@
 | Sector | Name | Gaps | P1 | P2 | P3 |
 |--------|------|------|-----|-----|------|
 | S1 | Stubs | 0 | 0 | 0 | 0 |
-| S2 | Placeholder/Unwired | 10 | 0 | 0 | 10 |
+| S2 | Placeholder/Unwired | 9 | 0 | 0 | 9 |
 | S3 | Dead Code | 12 | 0 | 2 | 10 |
 | S4 | Missing Agent Modules | 10 | 0 | 6 | 4 |
 | S5 | Agent Module Depth | 11 | 0 | 8 | 4 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 0 | 0 | 0 | 0 |
-| **Total** | **108** | **0** | **47** | **61** |
+| **Total** | **107** | **0** | **47** | **60** |
 
 ## Python Upstream Parity
 
@@ -87,6 +87,7 @@
 
 | ID | Description | Sector | Date |
 |----|-------------|--------|------|
+| P08 | Webhook port config key — gateway.webhook_port YAML key added, config value takes priority over env vars in get_webhook_port() | S2 | 2026-05-25 |
 | V01 | Key rotation — vault_rotate_key() decrypt with old passphrase, re-encrypt with new, full rollback, 13 tests | S18 | 2026-05-25 |
 | S01 | Cloud metadata endpoint detection — metadata.goog, 100.100.100.200 (Alibaba), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped), 100.64 (CGNAT) pre-DNS blocking | S19 | 2026-05-25 |
 | I04 | Static analysis (cppcheck) in CI — added to c-build.yml | S22 | 2026-05-25 |

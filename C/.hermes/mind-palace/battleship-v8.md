@@ -2,7 +2,7 @@
      2|
      3|Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
      4|
-     5|Total: **108 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+     5|Total: **107 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
      6|
      7|## SECTOR 1: Confirmed Stubs (0 gaps)
      8|
@@ -335,7 +335,7 @@ C gateways with minimal or incomplete implementations vs Python.
    346|| Sector | Count |
    347|||--------|-------|
    348||| S1: Stubs | 0 |
-   349||| S2: Placeholder | 10 |
+   349||| S2: Placeholder | 9 |
    350||| S3: Dead Code | 12 |
    351||| S4: Missing Agent | 10 |
    352||| S5: Agent Depth | 11 |
@@ -356,6 +356,6 @@ C gateways with minimal or incomplete implementations vs Python.
    367||| S20: New Features | 8 |
    368|| S21: Refactoring | 9 |
    369|| S22: CI/Integrate | 0 |
-   370|| **Total** | **108** |
+   370|| **Total** | **107** |
    371|| (resolved items retired to vault/achievements.md) | |
    372|
