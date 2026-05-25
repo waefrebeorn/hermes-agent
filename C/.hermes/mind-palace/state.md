@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (125 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (118 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -31,7 +31,7 @@
 | S1 | Stubs | 0 | 0 | 0 | 0 |
 | S2 | Placeholder/Unwired | 11 | 0 | 1 | 10 |
 | S3 | Dead Code | 12 | 0 | 2 | 10 |
-| S4 | Missing Agent Modules | 11 | 0 | 7 | 4 |
+| S4 | Missing Agent Modules | 10 | 0 | 6 | 4 |
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
@@ -49,8 +49,8 @@
 | S19 | Security | 1 | 0 | 0 | 1 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
-| S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| **Total** | **125** | **0** | **53** | **72** |
+| S22 | CI/Integration | 1 | 0 | 0 | 1 |
+| **Total** | **118** | **0** | **47** | **71** |
 
 ## Python Upstream Parity
 
@@ -63,6 +63,13 @@
 
 ## Stale Claims Retired This Session
 
+- **I01**: GitHub Actions CI for C build — c-build.yml has build+test+ASan+coverage+Docker+perf
+- **I02**: ASan in CI — asan job in c-build.yml
+- **I03**: Code coverage reporting — gcov/lcov in c-build.yml
+- **I05**: Benchmark regression — perf job in c-build.yml
+- **I06**: Release workflow — c-release.yml exists
+- **I07**: Docker build — C/Dockerfile exists, built in CI
+- **A32**: tool_dispatch_helpers — fully ported in lib/libtooldispatch (304 LOC)
 - **N01**: Bitwarden Secrets Manager — secrets.c (330 LOC) + hermes_secrets.h (55 LOC) already implement full integration
 - **D23**: Web search provider abstraction — web_search_registry.c (239 LOC + 217 test) already exists
 
@@ -71,6 +78,7 @@
 | ID | Description | Sector | Date |
 |----|-------------|--------|------|
 | S01 | Cloud metadata endpoint detection — metadata.goog, 100.100.100.200 (Alibaba), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped), 100.64 (CGNAT) pre-DNS blocking | S19 | 2026-05-25 |
+| I04 | Static analysis (cppcheck) in CI — added to c-build.yml | S22 | 2026-05-25 |
 | A28 | skill_commands — C port of Python skill_commands.py (scan, resolve, build_message) | S4 | 2026-05-25 |
 | T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
 | D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion | S7 | 2026-05-25 |

@@ -3,6 +3,24 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 60: CI/Integration Stale Cleanup + Static Analysis — S22 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| I01 | GitHub Actions CI for C build — already exists in c-build.yml (build + test + ASan + coverage + Docker + perf) | S22 (stale) | .github/workflows/c-build.yml — full CI pipeline with build, test-suite, ASan, coverage, Docker build, perf gate |
+| I02 | ASan in CI — already exists as asan job in c-build.yml | S22 (stale) | c-build.yml lines 87-120: ASan build + test under sanitizer |
+| I03 | Code coverage reporting — gcov/lcov integration exists | S22 (stale) | c-build.yml lines 185-223: coverage job with lcov HTML report |
+| I05 | Benchmark regression detection — already exists as perf job | S22 (stale) | c-build.yml lines 307-330: perf job runs make perf-gate |
+| I06 | Release workflow — c-release.yml publishes tagged releases | S22 (stale) | .github/workflows/c-release.yml — GitHub Release on v* tags |
+| I07 | Docker build for C image — C/Dockerfile exists, built in CI | S22 (stale) | C/Dockerfile (45 LOC multi-stage), c-build.yml lines 175-183: docker build test |
+| A32 | tool_dispatch_helpers — fully ported in lib/libtooldispatch/ (304 LOC) | S4 (stale) | lib/libtooldispatch/tool_dispatch_helpers.c — stateless dispatch utilities matching Python |
+
+## Phase 61: Static Analysis in CI — I04 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| I04 | Added cppcheck static analysis to c-build.yml CI pipeline — runs after test suite, --enable=all, --error-exitcode=1, suppresses missingIncludeSystem | S22 | .github/workflows/c-build.yml — new "Static analysis (cppcheck)" step. Suite 228/0/21 |
+
 ## Phase 59: Cloud Metadata Endpoint Detection — S01 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

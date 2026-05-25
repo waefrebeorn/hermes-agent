@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **125 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+Total: **118 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -47,7 +47,7 @@ Functions fully implemented but never called. Wire or remove.
 | 12 | W15 | cli/config.c:325 | Fragmented config — "Handled by get_slermes_home()" | 30 | P3 |
 | 13 | W16 | context_engine.c:91/100 | Default on_session_start/end = noop | 10 | P3 |
 
-## SECTOR 4: Missing Agent Modules — Truly Unported (11 gaps)
+## SECTOR 4: Missing Agent Modules — Truly Unported (10 gaps)
 
 Python agent modules with NO C equivalent at all. Not merged, not aliased.
 
@@ -58,13 +58,12 @@ Python agent modules with NO C equivalent at all. Not merged, not aliased.
 | 3 | A11 | curator_backup | Curator backup state management | 150 | P2 |
 | 4 | A25 | process_bootstrap | Subprocess bootstrap helpers | 167 | P2 |
 | 5 | A31 | title_generator | Session title generation | 150 | P2 |
-| 6 | A32 | tool_dispatch_helpers | Tool call dispatch helpers | 180 | P2 |
-| 7 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
-| 8 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
-| 9 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
-| 10 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
-| 11 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
-| 12 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
+| 6 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
+| 7 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
+| 8 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
+| 9 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
+| 10 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
+| 11 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
 
 ## SECTOR 5: Agent Modules — Partial Merge Depth (15 gaps)
 
@@ -289,17 +288,11 @@ Features in Python that would benefit C.
 | 7 | R09 | Add .PHONY to all Makefile targets | Fix false-positive up-to-date | 10 | P3 |
 | 8 | R10 | Consolidate SLERMES_HOME vs HERMES_HOME | Some files use SLERMES_HOME, some HERMES_HOME | 20 | P2 |
 | 9 | R11 | Remove trailing whitespace across codebase | Pre-commit catches new, existing files have it | 5 | P3 |
+## SECTOR 22: Integration & CI (1 gap)
 
-## SECTOR 22: Integration & CI (7 gaps)
 | # | ID | Task | Description | Priority |
 |---|-----|------|-------------|----------|
-| 1 | I01 | GitHub Actions CI for C build | Automatic build + test on push | P2 |
-| 2 | I02 | ASan in CI | Detect memory errors automatically | P2 |
-| 3 | I03 | Code coverage reporting | gcov integration | P2 |
-| 4 | I04 | Static analysis (cppcheck/scan-build) | Automated lint | P2 |
-| 5 | I05 | Benchmark regression detection | Track perf changes | P3 |
-| 6 | I06 | Release workflow (binary artifact) | Automated release builds | P3 |
-| 7 | I07 | Docker build for C version | Containerized deployment | P2 |
+| 1 | I04 | Static analysis (cppcheck/scan-build) | Automated lint — cppcheck added to c-build.yml CI | P2 |
 
 ---
 
@@ -355,7 +348,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S1: Stubs | 0 |
 || S2: Placeholder | 11 |
 || S3: Dead Code | 12 |
-|| S4: Missing Agent | 11 |
+|| S4: Missing Agent | 10 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
 || S7: Tool Depth | 0 |
@@ -373,6 +366,6 @@ Functions that exist in C but are significantly less capable than Python equival
 || S19: Security | 1 |
 || S20: New Features | 8 |
 | S21: Refactoring | 9 |
-| S22: CI/Integrate | 7 |
-| **Total** | **125** |
+| S22: CI/Integrate | 1 |
+| **Total** | **118** |
 | (resolved items retired to vault/achievements.md) | |

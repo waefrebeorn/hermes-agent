@@ -55,6 +55,14 @@ jobs:
         run: bash test_runner.sh --verbose 2>&1
         working-directory: C/
 
+      - name: Static analysis (cppcheck)
+        run: |
+          sudo apt-get install -y -qq cppcheck
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            --error-exitcode=1 \
+            -I include -I lib/libjson -I lib/libhttp -I lib/libyaml \
+            src/ 2>&1
+
       - name: Build TUI
         run: |
           sudo apt-get install -y -qq libncurses-dev

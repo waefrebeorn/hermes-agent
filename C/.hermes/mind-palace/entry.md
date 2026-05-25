@@ -21,14 +21,14 @@ Source:  154 .c + 66 .h = 220 files
 Tools:   84 registered
 Gateway: 19 platforms
 Plugins: 10 .so
-Parity:  ~78%    (125 gaps remaining — battleship v8)
+Parity:  ~78%    (118 gaps remaining — battleship v8)
 ```
 
 ## Key Paths
 - **Source:** `/home/wubu/hermes-agent-dev/C/`
 - **Config:** `~/.slermes/config.yaml` (~322 keys) + `~/.slermes/.env`
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v8.md` (125 gaps across 22 sectors)
+- **Battleship:** `battleship-v8.md` (118 gaps across 22 sectors)
 - **Vault:** `.hermes/vault/` (essays, bug bounty, credits)
 - **DA v15:** `da-audit-v15.md`
 
