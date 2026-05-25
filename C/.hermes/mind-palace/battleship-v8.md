@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **204 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **202 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -135,7 +135,7 @@ Existing C tools missing features that Python has.
 | 9 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
 | 10 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
 
-## SECTOR 8: Gateway Platform Depth (18 gaps)
+## SECTOR 8: Gateway Platform Depth (17 gaps)
 
 C gateways with minimal or incomplete implementations vs Python.
 
@@ -149,16 +149,15 @@ C gateways with minimal or incomplete implementations vs Python.
 | 6 | G13 | matrix | End-to-end encryption | 200 | P3 |
 | 7 | G14 | discord | Slash command registration | 100 | P2 |
 | 8 | G15 | telegram | Inline query mode | 80 | P2 |
-| 9 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
-| 10 | G17 | email | Multi-account support | 100 | P2 |
-| 11 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
-| 12 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
-| 13 | G20 | weixin | Rich media messages | 80 | P2 |
-| 14 | G21 | yuanbao | Group management commands | 100 | P2 |
-| 15 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
-| 16 | G23 | platform/* | No codex_response platform | 150 | P3 |
-| 17 | G24 | platform/* | No webhook_server platform | 200 | P3 |
-| 18 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
+| 9 | G17 | email | Multi-account support | 100 | P2 |
+| 10 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
+| 11 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
+| 12 | G20 | weixin | Rich media messages | 80 | P2 |
+| 13 | G21 | yuanbao | Group management commands | 100 | P2 |
+| 14 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
+| 15 | G23 | platform/* | No codex_response platform | 150 | P3 |
+| 16 | G24 | platform/* | No webhook_server platform | 200 | P3 |
+| 17 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
 
 ## SECTOR 9: Configuration & Environment (3 gaps)
 
@@ -323,7 +322,7 @@ Features in Python that would benefit C.
 | 9 | N09 | Copilot ACP client integration | 300 | P3 |
 | 10 | N10 | Neutts synth (Neural TTS) | 100 | P3 |
 
-## SECTOR 21: Refactoring & Cleanup (10 gaps)
+## SECTOR 21: Refactoring & Cleanup (9 gaps)
 
 | # | ID | Task | Description | LOC | Priority |
 |---|-----|------|-------------|-----|----------|
@@ -332,11 +331,10 @@ Features in Python that would benefit C.
 | 3 | R03 | Wire feishu_upload_image | Call from message send flow | 5 | P3 |
 | 4 | R05 | Standardize gateway platform creation | ADDING_A_PLATFORM.md for C | 30 | P3 |
 | 5 | R06 | Remove duplicate gateway/sms flags | Consolidate flag_send/flags | 10 | P3 |
-| 6 | R07 | Add make check target | Combined lint + build + test | 10 | P2 |
-| 7 | R08 | Add make clean-all target | Deep clean (objects, binary, deps) | 5 | P3 |
-| 8 | R09 | Add .PHONY to all Makefile targets | Fix false-positive up-to-date | 10 | P3 |
-| 9 | R10 | Consolidate SLERMES_HOME vs HERMES_HOME | Some files use SLERMES_HOME, some HERMES_HOME | 20 | P2 |
-| 10 | R11 | Remove trailing whitespace across codebase | Pre-commit catches new, existing files have it | 5 | P3 |
+| 6 | R08 | Add make clean-all target | Deep clean (objects, binary, deps) | 5 | P3 |
+| 7 | R09 | Add .PHONY to all Makefile targets | Fix false-positive up-to-date | 10 | P3 |
+| 8 | R10 | Consolidate SLERMES_HOME vs HERMES_HOME | Some files use SLERMES_HOME, some HERMES_HOME | 20 | P2 |
+| 9 | R11 | Remove trailing whitespace across codebase | Pre-commit catches new, existing files have it | 5 | P3 |
 
 ## SECTOR 22: Integration & CI (7 gaps)
 | # | ID | Task | Description | Priority |
@@ -407,7 +405,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
 || S7: Tool Depth | 10 |
-|| S8: Gateway | 18 |
+|| S8: Gateway | 17 |
 || S9: Config | 3 |
 || S10: Library | 14 |
 || S11: Bug Fixes | 2 |
@@ -420,7 +418,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S18: Vault Encrypt | 3 |
 || S19: Security | 6 |
 || S20: New Features | 10 |
-|| S21: Refactoring | 10 |
+|| S21: Refactoring | 9 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **204** |
+|| **Total** | **202** |
 | (resolved items retired to vault/achievements.md) | |

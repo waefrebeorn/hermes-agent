@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **204** (battleship-v8) | L11 — multi-document YAML |
+| Gap count | **202** (battleship-v8) | R07 — make check, G16 stale |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)

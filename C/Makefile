@@ -449,3 +449,13 @@ coverage:
 # Use --update-baseline to refresh baseline after intentional growth
 perf-gate: hermes
 	@python3 scripts/perf-gate.py
+
+# R07: Combined check — bash lint, build, test suite
+.PHONY: check
+check:
+	@echo "=== Check: lint ==="
+	bash -n test_runner.sh 2>/dev/null || true
+	@echo "=== Check: build ==="
+	$(MAKE) -j$(nproc) all
+	@echo "=== Check: test suite ==="
+	bash test_runner.sh

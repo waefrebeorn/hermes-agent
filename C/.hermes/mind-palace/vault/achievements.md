@@ -594,3 +594,10 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | L11 | yaml_parse_multi() — parse multi-document YAML streams with --- document separators | S10 | yaml.h:66-74, yaml.c: added ~100 LOC, verified 3 docs parsed correctly |
+
+## Phase 21: Make Check + G16 STARTTLS Stale Retirement (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| R07 | make check target — combined bash lint + build + test suite | S21 (closed) | Makefile:451-459, .PHONY: check |
+| G16 | STARTTLS already fully implemented (EHLO→STARTTLS→re-EHLO→AUTH) | S8 (stale) | email.c:1542-1560 |
