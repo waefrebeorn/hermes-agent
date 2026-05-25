@@ -410,6 +410,11 @@ bool url_is_always_blocked(const char *url) {
     if (strstr(lower, "localhost")) return true;
     if (strstr(lower, "127.0.0.1")) return true;
     if (strstr(lower, "169.254.")) return true;
+    if (strstr(lower, "metadata.goog")) return true;
+    if (strstr(lower, "100.100.100.200")) return true;
+    if (strstr(lower, "fd00:ec2")) return true;
+    if (strstr(lower, "::ffff:")) return true;
+    if (strstr(lower, "100.64.")) return true;
 
     /* Private IPs (quick string check, no DNS) */
     if (strstr(lower, "://10.")) return true;
