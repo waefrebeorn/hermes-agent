@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (131 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (130 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **131** | **0** | **59** | **73** |
+||| **Total** | **130** | **0** | **58** | **73** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,7 @@
 | D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| G20 | Weixin rich media - send_video (msg_type=4), send_file (msg_type=6) | S8 | 2026-05-25 |
 | G18 | Webhook custom HMAC algorithms - SHA1, MD5, configurable algorithm dispatch | S8 | 2026-05-25 |
 | H02 | Shell hook async execution - fork fire-and-forget, async flag | S17 | 2026-05-25 |
 | H03 | Shell hook return value chaining - chain callback, pass output to next | S17 | 2026-05-25 |

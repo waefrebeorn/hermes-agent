@@ -148,7 +148,6 @@ C gateways with minimal or incomplete implementations vs Python.
 | 8 | G15 | telegram | Inline query mode | 80 | P2 |
 | 9 | G17 | email | Multi-account support | 100 | P2 |
 | 11 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
-| 12 | G20 | weixin | Rich media messages | 80 | P2 |
 | 13 | G21 | yuanbao | Group management commands | 100 | P2 |
 | 14 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
 | 15 | G23 | platform/* | No codex_response platform | 150 | P3 |

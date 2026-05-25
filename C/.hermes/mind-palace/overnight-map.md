@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
 | Build | 30MB, 0 warnings | ✅ |
-| Gap count | **131** (battleship-v8) | G18 resolved |
+| Gap count | **130** (battleship-v8) | G20 resolved |
 | Source .c files | 154 | +1 |
 | Library dirs | 59 | +1 |
 | API server | 1015 LOC | 12 endpoints |

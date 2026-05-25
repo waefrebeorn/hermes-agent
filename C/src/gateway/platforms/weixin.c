@@ -293,6 +293,17 @@ static int send_message(const char *to_user_id, const char *text,
 
 /* sendMarkdown */
 static int send_markdown(const char *to_user_id, const char *text,
+                          const char *context_token);
+/* sendImage (G20) */
+static int send_image(const char *to_user_id, const char *image_url,
+                       const char *context_token);
+/* sendVideo (G20) */
+static int send_video(const char *to_user_id, const char *video_url,
+                       const char *context_token);
+/* sendFile (G20) */
+static int send_file(const char *to_user_id, const char *file_url,
+                      const char *filename, const char *context_token);
+static int send_markdown(const char *to_user_id, const char *text,
                           const char *context_token) {
     char payload[MAX_BODY];
     if (context_token && *context_token) {
@@ -353,6 +364,71 @@ static int send_image_msg(const char *to_user_id, const char *image_data,
     int errcode = (int)json_get_num(j, "errcode", 0);
     json_free(j);
 
+    if (ret != 0 || errcode != 0) return errcode ? errcode : ret;
+    return 0;
+}
+
+/* sendImage — msg_type 3 (G20) */
+static int send_image(const char *to_user_id, const char *image_url,
+                       const char *context_token) {
+    return send_image_msg(to_user_id, image_url, 0, context_token);
+}
+
+/* sendVideo — msg_type 4 (G20) */
+static int send_video(const char *to_user_id, const char *video_url,
+                       const char *context_token) {
+    char payload[MAX_BODY];
+    if (context_token && *context_token) {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":4,\"content\":\"%s\","
+                 "\"context_token\":\"%s\"",
+                 to_user_id, video_url, context_token);
+    } else {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":4,\"content\":\"%s\"",
+                 to_user_id, video_url);
+    }
+    char *resp = wx_api_post(EP_SEND_MESSAGE, payload, API_TIMEOUT_MS, NULL);
+    if (!resp) return -1;
+    json_t *j = json_parse(resp, NULL);
+    free(resp);
+    if (!j) return -1;
+    int ret = (int)json_get_num(j, "ret", 0);
+    int errcode = (int)json_get_num(j, "errcode", 0);
+    json_free(j);
+    if (ret != 0 || errcode != 0) return errcode ? errcode : ret;
+    return 0;
+}
+
+/* sendFile — msg_type 6 (G20) */
+static int send_file(const char *to_user_id, const char *file_url,
+                      const char *filename, const char *context_token) {
+    char payload[MAX_BODY];
+    const char *fname = filename ? filename : "file";
+    if (context_token && *context_token) {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":6,\"content\":\"%s\","
+                 "\"file_name\":\"%s\","
+                 "\"context_token\":\"%s\"",
+                 to_user_id, file_url, fname, context_token);
+    } else {
+        snprintf(payload, sizeof(payload),
+                 "{\"from_user_id\":\"\",\"to_user_id\":\"%s\","
+                 "\"msg_type\":6,\"content\":\"%s\","
+                 "\"file_name\":\"%s\"",
+                 to_user_id, file_url, fname);
+    }
+    char *resp = wx_api_post(EP_SEND_MESSAGE, payload, API_TIMEOUT_MS, NULL);
+    if (!resp) return -1;
+    json_t *j = json_parse(resp, NULL);
+    free(resp);
+    if (!j) return -1;
+    int ret = (int)json_get_num(j, "ret", 0);
+    int errcode = (int)json_get_num(j, "errcode", 0);
+    json_free(j);
     if (ret != 0 || errcode != 0) return errcode ? errcode : ret;
     return 0;
 }
@@ -534,4 +610,16 @@ void weixin_send_image(const char *chat_id, const char *image_data,
                         int image_type, const char *context_token) {
     if (!chat_id || !image_data) return;
     send_image_msg(chat_id, image_data, image_type, context_token);
+}
+
+void weixin_send_video(const char *chat_id, const char *video_url,
+                        const char *context_token) {
+    if (!chat_id || !video_url) return;
+    send_video(chat_id, video_url, context_token);
+}
+
+void weixin_send_file(const char *chat_id, const char *file_url,
+                       const char *filename, const char *context_token) {
+    if (!chat_id || !file_url) return;
+    send_file(chat_id, file_url, filename, context_token);
 }

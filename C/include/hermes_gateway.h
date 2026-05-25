@@ -985,6 +985,10 @@ void weixin_send_markdown(const char *chat_id, const char *text,
                            const char *context_token);
 void weixin_send_image(const char *chat_id, const char *image_data,
                         int image_type, const char *context_token);
+void weixin_send_video(const char *chat_id, const char *video_url,
+                        const char *context_token);
+void weixin_send_file(const char *chat_id, const char *file_url,
+                       const char *filename, const char *context_token);
 
 /* yuanbao — Yuanbao WebSocket gateway */
 bool yuanbao_init(const char *app_id, const char *app_secret,
