@@ -110,10 +110,11 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     }
 
     /* Build auth header */
-    char auth_header[512];
+    char auth_header[768];
     if (cfg->api_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
-                 "Authorization: Bearer %s\r\nContent-Type: application/json",
+                 "Authorization: Bearer %s\r\n"
+                 "Content-Type: application/json",
                  cfg->api_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
@@ -172,7 +173,19 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
             /* Check for tool calls */
             json_node_t *tool_calls = json_object_get(message, "tool_calls");
             if (tool_calls && json_array_count(tool_calls) > 0) {
-                resp->tool_calls_count = (int)json_array_count(tool_calls);
+                int n = (int)json_array_count(tool_calls);
+                resp->tool_calls_count = n;
+                resp->tool_calls = (typeof(resp->tool_calls))calloc(n, sizeof(resp->tool_calls[0]));
+                for (int i = 0; i < n; i++) {
+                    json_node_t *tc = json_array_get(tool_calls, i);
+                    if (!tc) continue;
+                    resp->tool_calls[i].id = xstrdup(json_object_get_string(tc, "id", ""));
+                    json_node_t *fn = json_object_get(tc, "function");
+                    if (fn) {
+                        resp->tool_calls[i].name = xstrdup(json_object_get_string(fn, "name", ""));
+                        resp->tool_calls[i].arguments = xstrdup(json_object_get_string(fn, "arguments", "{}"));
+                    }
+                }
             }
 
             /* Reasoning content field (some providers use this instead of "reasoning") */
@@ -191,5 +204,11 @@ void llm_response_free(llm_response_t *resp) {
     if (!resp) return;
     free(resp->content);
     free(resp->reasoning);
+    for (int i = 0; i < resp->tool_calls_count; i++) {
+        free(resp->tool_calls[i].id);
+        free(resp->tool_calls[i].name);
+        free(resp->tool_calls[i].arguments);
+    }
+    free(resp->tool_calls);
     free(resp);
 }

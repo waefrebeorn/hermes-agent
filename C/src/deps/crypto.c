@@ -118,6 +118,59 @@ unsigned char *crypto_base64_decode(const char *in, size_t *out_len) {
 }
 
 /* ================================================================
+ *  Base64url (URL-safe, no padding)
+ * ================================================================ */
+
+static const char b64url_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+char *crypto_base64url_encode(const unsigned char *data, size_t len) {
+    size_t out_len = 4 * ((len + 2) / 3) + 1;
+    char *out = (char *)xmalloc(out_len);
+    size_t i = 0, j = 0;
+    while (i < len) {
+        unsigned a = i < len ? data[i++] : 0;
+        unsigned b = i < len ? data[i++] : 0;
+        unsigned c = i < len ? data[i++] : 0;
+        unsigned triplet = (a << 16) | (b << 8) | c;
+        out[j++] = b64url_chars[(triplet >> 18) & 0x3F];
+        out[j++] = b64url_chars[(triplet >> 12) & 0x3F];
+        out[j++] = b64url_chars[(triplet >> 6) & 0x3F];
+        out[j++] = b64url_chars[triplet & 0x3F];
+    }
+    /* Strip padding (base64url omits it per RFC 4648 §5) */
+    size_t rem = len % 3;
+    if (rem == 1) j -= 2;  /* remove == */
+    else if (rem == 2) j -= 1;  /* remove = */
+    out[j] = '\0';
+    return out;
+}
+
+/* ================================================================
+ *  PKCE helpers (RFC 7636)
+ * ================================================================ */
+
+char *crypto_pkce_verifier(void) {
+    unsigned char raw[64];
+    if (!crypto_random_bytes(raw, 64)) return NULL;
+    char *b64 = crypto_base64url_encode(raw, 64);
+    if (!b64) return NULL;
+    /* Truncate to 128 chars max (RFC 7636 §4.1: 43-128 chars) */
+    size_t len = strlen(b64);
+    if (len > 128) len = 128;
+    b64[len] = '\0';
+    return b64;
+}
+
+char *crypto_pkce_challenge(const char *code_verifier) {
+    unsigned char hash[32];
+    if (!crypto_sha256((const unsigned char *)code_verifier,
+                       strlen(code_verifier), hash))
+        return NULL;
+    return crypto_base64url_encode(hash, 32);
+}
+
+/* ================================================================
  *  Random bytes
  * ================================================================ */
 

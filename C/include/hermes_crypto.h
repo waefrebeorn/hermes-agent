@@ -25,6 +25,17 @@ unsigned char *crypto_base64_decode(const char *in, size_t *out_len);
 /* Fill buffer with cryptographically random bytes. */
 bool crypto_random_bytes(unsigned char *buf, size_t len);
 
+/* Base64url encode (URL-safe chars, no padding). Caller must free result. */
+char *crypto_base64url_encode(const unsigned char *data, size_t len);
+
+/* Generate PKCE code verifier: random string, 43-128 chars (RFC 7636 §4.1). */
+/* Returns malloc'd string. Caller must free. Returns NULL on failure. */
+char *crypto_pkce_verifier(void);
+
+/* Generate PKCE code challenge S256: SHA-256(verifier) → base64url (RFC 7636 §4.2). */
+/* Returns malloc'd string. Caller must free. Returns NULL on failure. */
+char *crypto_pkce_challenge(const char *code_verifier);
+
 /* Get last OpenSSL error string. */
 const char *crypto_last_error(void);
 

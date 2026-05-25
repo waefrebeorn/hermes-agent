@@ -1,130 +1,132 @@
 # WuBu Hermes — C Translation
 
-**Translating Hermes Agent from Python into C for zero-dependency operation.**
+> **Zero-dependency single binary Hermes Agent in C**
+> 
+> Translation of 60K+ lines Python → C. Currently 5,973 lines C across 29 source files.
+> **Status: 436 gaps identified** — real working foundation with critical F-N-F fixes needed.
+> Binary: 386KB, 0 compile warnings.
 
-This directory (`C/`) lives inside the standard Hermes Agent repo and contains
-the complete C translation. It tracks alongside the Python source so that
-`git pull` updates both languages in one operation.
+## Quick Start
 
-## Why
+```bash
+# Build
+make -C C
 
-- **No Python runtime.** No pip, no venv, no virtualenv, no dependency hell.
-- **Single binary.** `hermes` is one file you can scp to any Linux box.
-- **Maximum performance.** C has no GIL, no interpreter overhead, no GC pauses.
-- **Adoption path for upstream.** If the Nous team wants to use our fork,
-  the C/ directory is a complete, reviewable feature branch.
+# Usage
+./C/hermes --version
+./C/hermes -q "hello"          # One-shot query
+./C/hermes                      # Interactive CLI
+./C/hermes gateway              # Telegram gateway
+./C/hermes cron                 # Cron scheduler
+```
 
-## Directory Layout
+> ⚠️ **Warning:** This is a work-in-progress C translation. The Python Hermes at project root is the production version. C/ is the parallel porting effort. See battleship for gap status.
+
+## Architecture
 
 ```
 C/
-├── README.md              ← This file. Workflow overview.
-├── DEPENDENCIES.md        ← Full Python → C dependency map (phase-ordered)
-├── digestion.md           ← How the digestion system works
-├── digest.py              ← Digestion automation script
-├── Makefile               ← Build system (phase-ordered targets)
-├── src/                   ← C source files, mirrors Python repo layout
-│   ├── main.c             ← Entry point
-│   ├── agent/             ← Agent loop, context, memory, skills
-│   ├── cli/               ← CLI, config, display, commands
-│   ├── gateway/           ← Gateway server + platform adapters
-│   ├── tools/             ← Tool implementations
-│   ├── cron/              ← Scheduler + job management
-│   └── deps/              ← C equivalents of Python dependencies
-├── include/
-│   ├── hermes.h           ← Master header (types, constants, function decls)
-│   └── *.h                ← Module-specific headers
-└── scripts/
-    └── build.sh           ← Build helper
+├── src/
+│   ├── deps/        ← JSON, YAML, HTTP, DB, Crypto, Display (Phase 1) ✅
+│   ├── agent/       ← Loop, LLM client, Context, Title (Phase 2) 🟧
+│   ├── cli/         ← CLI, Config, Commands, Display (Phase 2) 🟧
+│   ├── tools/       ← Registry, Terminal, File, Web, Skills (Phase 3) 🟧
+│   ├── gateway/     ← Server + Telegram (Phase 4) 🟧
+│   ├── cron/        ← Scheduler + Jobs (Phase 5) 🟥
+│   └── provider/    ← Token exchange, OAuth store 🟧
+├── include/         ← 9 headers (hermes.h, hermes_*.h)
+├── tests/           ← test_json, test_auth (smoke only)
+├── Makefile         ← 5 phase targets
+└── .hermes/         ← Battleship, state, goal-mantra
 ```
 
-## Workflow
+## Phase Status (HONEST)
 
-### Daily Development
+| Phase | Lines | Files | Status | Gaps |
+|-------|-------|-------|--------|------|
+| 1: Foundation | 2,249 LOC | 6 .c + 6 .h | ✅ Real | 0 critical |
+| 2: Agent Core | 861 LOC | 6 .c + 1 .h | 🟧 Partial | 16 F-N-F |
+| 3: Tools | 719 LOC | 6 .c + 0 .h | 🟧 Partial | 10 F-N-F |
+| 4: Gateway | 351 LOC | 2 .c + 0 .h | 🟧 Partial | 6 F-N-F |
+| 5: Cron/Adv | 223 LOC | 2 .c + 0 .h | 🟥 Broken | 5 F-N-F |
+| Auth/Provider | 552 LOC | 1 .c + 1 .h | 🟧 Partial | 3 F-N-F |
+| **Total** | **5,973 LOC** | **29 .c + 9 .h** | **🟧 Partial** | **67 F-N-F** |
+
+**436 total gaps** — 67 Form-Not-Function (code that compiles but doesn't work), 362 missing features, 1 stub, 6 doc.
+
+## Gap Summary
+
+| Priority | Count | Description |
+|----------|-------|-------------|
+| 🔴 P0 | 5 | Blocks basic agent function (tool loop, auth, search, cron, docs) |
+| 🟠 P1 | 150 | Major features (commands, tools, platforms, tests) |
+| 🟡 P2 | 200 | Normal improvements (profiles, display, build system) |
+| ⚪ P3 | 81 | Nice-to-haves (Nix, WASM, plugins, advanced comms) |
+
+[Full battleship](C/.hermes/battleship.md) — [HONEST state](C/.hermes/state.md) — [Goal mantra](C/.hermes/goal-mantra.md)
+
+## Verification
 
 ```bash
-# 1. Pull latest from our fork (Python + C changes together)
-cd ~/hermes-agent-dev
-git pull wubu main
-
-# 2. Run digestion to see what Python changed and what C needs updating
-python3 C/digest.py
-
-# 3. If digestion shows C work is needed:
-#    - Edit C/src/*.c and C/include/*.h
-#    - Build to verify
-make -C C phase3   # or phase1/2/4/5 for specific tier
-
-# 4. Commit both Python and C changes together
-git add -A
-git commit -m "feat(x): description + C translation"
-git push wubu HEAD
+make -C C           # Full build (0 warnings)
+./C/hermes --version # WuBu Hermes v0.14.0-wubu
+./C/tests/test_json  # JSON tests PASS
+./C/tests/test_auth  # Auth tests PASS
 ```
 
-### Creating Feature Branches
+## Directory Docs
 
-Each feature gets its own branch with BOTH Python and C implementation:
+| Directory | Contents |
+|-----------|----------|
+| `src/deps/` | JSON, YAML, HTTP, DB, Crypto, Display — standalone wrappers |
+| `src/agent/` | Agent loop, LLM client, context, title generation |
+| `src/cli/` | CLI orchestrator, config, display, commands, main |
+| `src/tools/` | Tool registry + 4 tool implementations |
+| `src/gateway/` | Gateway server + Telegram adapter |
+| `src/cron/` | Scheduler + job management |
+| `src/provider/` | OAuth PKCE token exchange + auth store |
+| `include/` | Master header + 8 module-specific headers |
+| `tests/` | JSON + Auth smoke tests |
+| `.hermes/` | Project management (battleship, state, goal-mantra) |
 
-```bash
-git checkout -b feat/some-feature wubu/main
-# ... make Python changes ...
-# ... make C/ translation changes ...
-git push wubu feat/some-feature
-# Open PR from feat/some-feature → wubu/main on GitHub
-```
+## References
 
-### C Translation Feature (special case)
+- [Battleship — 436 Gap Audit](C/.hermes/battleship.md)
+- [HONEST State](C/.hermes/state.md)
+- [Goal Mantra](C/.hermes/goal-mantra.md)
+- [DEPENDENCIES.md](C/DEPENDENCIES.md) — Python→C dependency map
+- [digestion.md](C/digestion.md) — Update flow docs
 
-```bash
-git checkout -b feat/c-translation wubu/main
-# C/ directory work only, no Python changes
-git push wubu feat/c-translation
-```
+## Appendix: What the Binary Does Today
 
-## Production Hermes (Daily Driver)
+### Working
+- ✅ `--version` prints banner
+- ✅ `-q "query"` one-shot mode (tries LLM call)  
+- ✅ Interactive CLI (fgets-based, 4 commands)
+- ✅ Config loading (YAML + .env)
+- ✅ Message context management
+- ✅ JSON parser (parse, serialize, pretty-print, copy)
+- ✅ YAML config parser
+- ✅ HTTP client (raw socket + OpenSSL)
+- ✅ Crypto (SHA-256, HMAC, base64, PKCE)
+- ✅ File-based session store
+- ✅ OAuth token exchange (PKCE)
+- ✅ Auth store (auth.json CRUD)
+- ✅ Telegram gateway (basic message/response)
 
-The production installation at `~/.hermes/hermes-agent/` is a SEPARATE git checkout.
-It stays on `wubu/main` and is used for everyday work.
+### Broken
+- ❌ Tool calling loop (returns before executing tools)
+- ❌ LLM auth header (malformed Content-Type)
+- ❌ web_search (alias for GET, not real search)
+- ❌ Cron job persistence (memory-only)
+- ❌ cron_list_jobs (returns "[]")
 
-```bash
-# Update production Hermes (Python only)
-cd ~/.hermes/hermes-agent
-git pull wubu main
-# hermes command picks up changes automatically (pip -e install)
-```
-
-## Build Phases
-
-The translation is organized into 5 phases. Each phase builds on the previous:
-
-| Phase | What | make target | Deps needed |
-|-------|------|-------------|-------------|
-| 1 | Foundation: JSON, YAML, HTTP, SQLite, crypto wrappers | `phase1` | libsqlite3, libcurl, libyaml, openssl |
-| 2 | Agent Core: loop, LLM client, CLI, config | `phase2` | Phase 1 |
-| 3 | Tools: terminal, file, web, skills | `phase3` | Phase 2 |
-| 4 | Gateway: server + platform adapters | `phase4` | Phase 3 |
-| 5 | Cron + Advanced features | `phase5` / `all` | Phase 4 |
-
-## What's Tracked vs Unchanged
-
-- **`C/` directory** is tracked by git — all C code, build scripts, and docs.
-- **Python source** in the repo root is NEVER modified by the C translation.
-  The C/ directory is a parallel implementation.
-- **`hermes update`** (the Hermes CLI command) updates the production Python install.
-  It does NOT touch the C/ directory — that's managed via `git pull` in the dev clone.
-
-## Developer Setup
-
-```bash
-# Install C dependencies
-sudo apt install libsqlite3-dev libcurl4-openssl-dev libyaml-dev libssl-dev ncurses-dev
-
-# Build phase 1 (foundation deps — verify toolchain works)
-make -C C phase1
-
-# Build full binary
-make -C C
-
-# Run digestion (after any git pull)
-python3 C/digest.py
-```
+### Missing
+- ⬜ Memory, compression, profiles, plugins
+- ⬜ 38/50+ slash commands
+- ⬜ 25+ tool implementations
+- ⬜ 17 missing platforms
+- ⬜ Multi-provider support
+- ⬜ Test infrastructure
+- ⬜ CI/CD
+- ⬜ MCP/ACP servers

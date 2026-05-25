@@ -81,6 +81,11 @@ typedef struct {
     int   input_tokens;
     int   output_tokens;
     int   tool_calls_count;
+    struct {
+        char *id;
+        char *name;
+        char *arguments;  /* JSON string */
+    } *tool_calls;
 } llm_response_t;
 
 /* ================================================================
@@ -138,6 +143,7 @@ bool hermes_config_load_env(hermes_config_t *cfg);
 #include "hermes_db.h"
 #include "hermes_display.h"
 #include "hermes_agent.h"
+#include "hermes_auth.h"
 
 /* ================================================================
  *  Entry Points

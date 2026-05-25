@@ -170,40 +170,25 @@ char *agent_run_conversation(agent_state_t *state,
             return result;
         }
 
-        /* Parse tool calls from the LLM response content */
-        /* The content includes tool_calls JSON embedded by some providers */
-        /* For simplicity, we re-parse the LLM response JSON */
-        /* Actually, the tool_calls come from the structured JSON response,
-           but our simplified client puts them in the content as JSON.
-           
-           Real implementation: the llm_chat_completion should return
-           extracted tool calls. For now, try to parse tool calls from
-           the message content if it looks like tool call JSON. */
+        /* Execute tool calls */
+        for (int i = 0; i < llm_resp->tool_calls_count; i++) {
+            char *tool_result = run_tool(state,
+                llm_resp->tool_calls[i].name,
+                llm_resp->tool_calls[i].arguments);
+            if (!tool_result) tool_result = strdup("{\"error\": \"tool returned NULL\"}");
 
-        /* Check if content contains tool calls (OpenAI format) */
-        const char *content = llm_resp->content;
-        if (content && strstr(content, "tool_calls") == NULL) {
-            /* No tool calls in content either — final response */
-            char *result = strdup(content ? content : "");
-            llm_response_free(llm_resp);
-            json_free(tools_json);
-            return result;
+            message_t *tool_msg = message_new_tool(
+                llm_resp->tool_calls[i].id,
+                tool_result);
+            free(tool_result);
+
+            if (tool_msg) {
+                context_push(state, tool_msg);
+            }
         }
 
-        /* Parse tool calls from content */
-        /* This is a simplified parsing — real implementation would
-           extract tool_calls from the structured response */
-        /* For now: return the content as-is (it includes tool calls JSON) */
-        char *result = strdup(content ? content : "");
         llm_response_free(llm_resp);
-        json_free(tools_json);
-        return result;
-
-        /* TODO: Full tool call execution loop:
-         * 1. Parse tool_calls array from response
-         * 2. For each: call run_tool()
-         * 3. Append tool result messages
-         * 4. Loop back to LLM */
+        iteration++;
     }
 
     json_free(tools_json);
