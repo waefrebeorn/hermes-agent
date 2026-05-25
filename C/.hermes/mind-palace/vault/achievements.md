@@ -387,6 +387,12 @@ D16 | memory.c — "Plugin memory provider interface" | `memory_storage_plugin_i
 G10 | signal — "Attachment support" | `signal_send_attachment()` + attachment parser in inbound handler | signal.c:162, 275-282, 370-372
 L03 | libhttp — "Retry with backoff" | `http_new_with_retry()`, `max_retries`, `backoff_ms`, exponential backoff sleep | libhttp/http.c:47-48, 257-262, 392-393
 
+## Phase 23: Config Key Implementation — C06 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C06 | gateway.secret_rotation — added `int secret_rotation_interval` to hermes_config_t, YAML reader via `yaml_get_int(doc, "gateway.secret_rotation", 0)`, default 0 (disabled) | S9 | hermes.h:959, config.c:1092 |
+
 ## Phase 12: A02 Context Compressor Closure (2026-05-24)
 
 | ID | Description | Sector | Evidence |
