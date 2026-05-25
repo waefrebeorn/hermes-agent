@@ -244,7 +244,7 @@ All curator features (status, run, review) implemented in CLI commands.c + curat
 | 1 | P02 | Cache hit rate tracking — ✅ cache_track_hit/miss, get_stats_json, thread-safe atomics | P2 |
 | 2 | P03 | ✅ Auto-invalidation: hash-based sys prompt fingerprint, cache_is_valid check | P2 |
 | 3 | P04 | Multi-turn cache optimization | 50 | P2 |
-| 4 | P05 | Cache warmup on session load | 60 | P2 |
+| 3 | P05 | Cache warmup on session load | 60 | P2 |
 | 5 | P06 | Per-provider cache config | 30 | P2 |
 
 ## SECTOR 17: Shell Hooks Depth (3 gaps)

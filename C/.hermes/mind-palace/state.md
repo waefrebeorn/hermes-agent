@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (137 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (136 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -43,14 +43,14 @@
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 1 | 0 | 0 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
-| S16 | Prompt Caching | 3 | 0 | 2 | 1 |
+| S16 | Prompt Caching | 2 | 0 | 1 | 1 |
 | S17 | Shell Hooks | 3 | 0 | 3 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
 | S19 | Security | 5 | 0 | 3 | 2 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **137** | **0** | **64** | **73** |
+||| **Total** | **136** | **0** | **63** | **73** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,7 @@
 | D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| P06 | Per-provider cache config - provider_cache_find, prompt_cache_set_provider_config | S16 | 2026-05-25 |
 | U03 | TUI skill browser - list skills from ~/.hermes/skills/ | S14 | 2026-05-25 |
 | U07 | TUI cron job viewer - config, commands, guide | S14 | 2026-05-25 |
 | U08 | TUI log viewer - tail agent.log, file paths | S14 | 2026-05-25 |

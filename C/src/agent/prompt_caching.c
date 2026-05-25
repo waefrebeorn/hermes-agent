@@ -24,6 +24,55 @@ static unsigned long g_sys_prompt_hash = 0;
 static int g_invalidations = 0;
 static int g_prompt_set_count = 0;
 
+/* ── Per-provider cache config (P06) ──────────────────────────────── */
+#define MAX_PROVIDER_CACHE_CFG 16
+
+typedef struct {
+    char    provider[32];
+    char    cache_type[32];     /* "ephemeral" or "persistent" */
+    int     ttl_seconds;        /* 0 = use default */
+    bool    enabled;
+} provider_cache_config_t;
+
+static provider_cache_config_t g_provider_cache[MAX_PROVIDER_CACHE_CFG];
+static int g_provider_cache_count = 0;
+
+/* Find per-provider cache config, or NULL if none */
+static const provider_cache_config_t *provider_cache_find(const char *provider) {
+    if (!provider) return NULL;
+    for (int i = 0; i < g_provider_cache_count; i++) {
+        if (strcmp(g_provider_cache[i].provider, provider) == 0)
+            return &g_provider_cache[i];
+    }
+    return NULL;
+}
+
+/* Add or update per-provider cache config */
+void prompt_cache_set_provider_config(const char *provider,
+                                       const char *cache_type,
+                                       int ttl_seconds, bool enabled) {
+    if (!provider || !*provider) return;
+
+    for (int i = 0; i < g_provider_cache_count; i++) {
+        if (strcmp(g_provider_cache[i].provider, provider) == 0) {
+            if (cache_type) snprintf(g_provider_cache[i].cache_type,
+                                     sizeof(g_provider_cache[i].cache_type), "%s", cache_type);
+            if (ttl_seconds >= 0) g_provider_cache[i].ttl_seconds = ttl_seconds;
+            g_provider_cache[i].enabled = enabled;
+            return;
+        }
+    }
+
+    if (g_provider_cache_count >= MAX_PROVIDER_CACHE_CFG) return;
+    snprintf(g_provider_cache[g_provider_cache_count].provider,
+             sizeof(g_provider_cache[g_provider_cache_count].provider), "%s", provider);
+    if (cache_type) snprintf(g_provider_cache[g_provider_cache_count].cache_type,
+                             sizeof(g_provider_cache[g_provider_cache_count].cache_type), "%s", cache_type);
+    g_provider_cache[g_provider_cache_count].ttl_seconds = (ttl_seconds >= 0) ? ttl_seconds : 300;
+    g_provider_cache[g_provider_cache_count].enabled = enabled;
+    g_provider_cache_count++;
+}
+
 /* Simple djb2 hash for fingerprinting */
 static unsigned long hash_str(const char *s) {
     unsigned long h = 5381;
@@ -147,9 +196,23 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
     int start_idx = g_marked_count;
     if (start_idx >= *count) return; /* all messages already cached */
 
-    /* Default TTL */
+    /* Default TTL -- check per-provider config first (P06) */
     const char *ttl = cache_ttl;
-    if (!ttl || !ttl[0]) ttl = "5m";
+    if (!ttl || !ttl[0]) {
+        const provider_cache_config_t *pcfg = provider_cache_find("anthropic");
+        if (pcfg && pcfg->enabled && pcfg->ttl_seconds > 0) {
+            static char s_ttl_override[16];
+            if (pcfg->ttl_seconds >= 3600)
+                snprintf(s_ttl_override, sizeof(s_ttl_override), "%dh", pcfg->ttl_seconds / 3600);
+            else if (pcfg->ttl_seconds >= 60)
+                snprintf(s_ttl_override, sizeof(s_ttl_override), "%dm", pcfg->ttl_seconds / 60);
+            else
+                snprintf(s_ttl_override, sizeof(s_ttl_override), "%ds", pcfg->ttl_seconds);
+            ttl = s_ttl_override;
+        } else {
+            ttl = "5m";
+        }
+    }
 
     char cache_type[32], cache_ttl_val[32];
     build_marker(ttl, cache_type, sizeof(cache_type),

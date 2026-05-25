@@ -102,6 +102,11 @@ void cache_set_marked_count(int count);
 /** Get the number of messages marked as cached in the last turn. */
 int cache_get_marked_count(void);
 
+/** P06: Set per-provider cache configuration. */
+void prompt_cache_set_provider_config(const char *provider,
+                                       const char *cache_type,
+                                       int ttl_seconds, bool enabled);
+
 #ifdef __cplusplus
 }
 #endif
