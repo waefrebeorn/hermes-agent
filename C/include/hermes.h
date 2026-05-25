@@ -456,6 +456,7 @@ typedef struct {
     char  web_extract_backend[32]; /* web.extract_backend: native, jina, etc. */
     char  enabled_toolsets[1024];  /* tools.enabled_toolsets: comma-separated toolset list */
     char  disabled_toolsets[1024]; /* tools.disabled_toolsets: comma-separated toolset list */
+    char  environments[512];       /* tools.environments: comma-separated enabled backends */
 } tools_config_t;
 
 /* ================================================================

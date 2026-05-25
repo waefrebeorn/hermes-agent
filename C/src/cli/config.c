@@ -1012,6 +1012,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (enabled_ts) snprintf(cfg->tools.enabled_toolsets, sizeof(cfg->tools.enabled_toolsets), "%s", enabled_ts);
     const char *disabled_ts = yaml_get_string(doc, "tools.disabled_toolsets");
     if (disabled_ts) snprintf(cfg->tools.disabled_toolsets, sizeof(cfg->tools.disabled_toolsets), "%s", disabled_ts);
+    const char *envs = yaml_get_string(doc, "tools.environments");
+    if (envs) snprintf(cfg->tools.environments, sizeof(cfg->tools.environments), "%s", envs);
 
     /* Compression section — threshold */
     int c_thresh_int = yaml_get_int(doc, "compression.threshold", -1);
@@ -2535,6 +2537,7 @@ bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff) {
     diff_int(diff, "web.search_timeout", def.tools.web_search_timeout, active->tools.web_search_timeout);
     diff_str(diff, "tools.enabled_toolsets", def.tools.enabled_toolsets, active->tools.enabled_toolsets);
     diff_str(diff, "tools.disabled_toolsets", def.tools.disabled_toolsets, active->tools.disabled_toolsets);
+    diff_str(diff, "tools.environments", def.tools.environments, active->tools.environments);
 
     /* Delegation */
     diff_int(diff, "delegation.max_concurrent_children",
