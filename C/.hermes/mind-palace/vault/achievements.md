@@ -428,7 +428,13 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C18 | agent.vault.path — added `char vault_path[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "agent.vault.path")` | S9 | hermes.h:965, config.c:1103 |
+| C18 | agent.vault.path — added `char vault_path[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "agent.vault.path")` | S9 | hermes.h:965, config.c:1103
+
+## Phase 32: Config Key Implementation — C20 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C20 | browser.user_agent — added `char user_agent[256]` to browser_config_t, YAML reader via `yaml_get_string(doc, "browser.user_agent")` | S9 | hermes.h:485, config.c:1131
 
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
