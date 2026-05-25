@@ -6,9 +6,11 @@
  *   2. Per-tool env var (<TOOL>_<KEY>)
  *   3. Generic env var (HERMES_<KEY>)
  *   4. Config file key (tools.<tool_name>.<key>)
+ *   5. Vault (encrypted credential store via vault_retrieve)
  */
 
 #include "hermes_tool_config.h"
+#include "hermes.h"             /* for vault_retrieve */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,6 +90,10 @@ const char *tool_config_get(const char *tool_name, const char *key) {
         free(generic_name);
         if (val && val[0]) return val;
     }
+
+    /* 4. Vault (encrypted credential store) */
+    val = vault_retrieve(tool_name, key);
+    if (val && val[0]) return val;
 
     return NULL; /* Not found */
 }

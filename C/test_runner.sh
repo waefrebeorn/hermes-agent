@@ -957,9 +957,29 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
 else skip "redact (compilation failed)"
 fi &
 
-# Tool config test (P54 — self-contained, no deps)
-echo ""; echo "=== Tool Config Tests (P54) ==="
-run_lib_test "tool_config" "tests/test_tool_config.c" "include" "$CDIR/src/tools/tool_config.c"
+# Tool config test (P54 — depends on vault, crypto, json)
+echo ""; echo "=== Tool Config Tests (P54) === "
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_tool_config.c" \
+    "$CDIR/src/tools/tool_config.c" "$CDIR/src/agent/vault.c" \
+    "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_tool_config > /dev/null 2>&1; then ok "tool_config (28 tests)"
+    else
+        echo "  Tool config test output:"
+        /tmp/hermes_test_tool_config 2>&1 | sed 's/^/    /'
+        fail "tool_config (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tool_config
+else
+    echo "  Compilation failed"
+    gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_tool_config.c" \
+        "$CDIR/src/tools/tool_config.c" "$CDIR/src/agent/vault.c" \
+        "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto 2>&1 | head -5
+    skip "tool_config (compilation failed)"
+fi
 
 # Tool Dispatch Helpers test (libtooldispatch — 5 stateless utility functions)
 echo ""; echo "=== Tool Dispatch Helpers Tests (libtooldispatch) ==="

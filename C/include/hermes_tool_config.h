@@ -12,7 +12,8 @@
  *   1. Per-tool env var: <TOOL>_<KEY> (e.g., DISCORD_BOT_TOKEN)
  *   2. Generic env var: HERMES_<KEY> (e.g., HERMES_API_KEY)
  *   3. Config file key: tools.<tool_name>.<key>
- *   4. Default value (if provided)
+ *   4. Vault (encrypted credential store via vault_retrieve)
+ *   5. Default value (if provided)
  */
 
 #include <stdbool.h>

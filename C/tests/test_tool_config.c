@@ -238,6 +238,46 @@ static void test_env_var_override_order(void) {
 }
 
 /* ================================================================
+ * 8. Vault integration
+ * ================================================================ */
+
+#include "hermes.h"
+
+static void test_vault_integration(void) {
+    TEST("vault credential resolved via tool_config_get");
+    /* Set master key and store in vault */
+    vault_set_master_key("test-vault-key");
+    vault_set_path("/tmp/hermes_test_vault_tc.enc");
+    vault_store("testvault", "api_key", "vault-secret-abc");
+    vault_save();
+    vault_lock();
+    vault_set_master_key("test-vault-key");
+    vault_load();
+
+    const char *v = tool_config_get("testvault", "api_key");
+    assert(v != NULL);
+    assert(strcmp(v, "vault-secret-abc") == 0);
+    PASS();
+}
+
+static void test_vault_override_priority(void) {
+    TEST("runtime override beats vault");
+    tool_config_set("testvault", "api_key", "override-value");
+    const char *v = tool_config_get("testvault", "api_key");
+    assert(v != NULL);
+    assert(strcmp(v, "override-value") == 0);
+    PASS();
+}
+
+static void test_vault_not_found(void) {
+    TEST("vault missing key returns NULL (no override, no env)");
+    tool_config_clear();
+    const char *v = tool_config_get("nonexistent", "no_such_key");
+    assert(v == NULL);
+    PASS();
+}
+
+/* ================================================================
  * Main
  * ================================================================ */
 
@@ -269,6 +309,9 @@ int main(void) {
     test_env_var_per_tool();
     test_env_var_generic();
     test_env_var_override_order();
+    test_vault_integration();
+    test_vault_override_priority();
+    test_vault_not_found();
 
     printf("\n%d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;
