@@ -500,6 +500,8 @@ int hermes_cli_main(int argc, char **argv) {
                         snprintf(cmd_input + clen, sizeof(cmd_input) - clen, " %s", argv[j]);
                     }
                     commands_dispatch(cmd_input, &g_cli.agent);
+                    /* Also try skill command if dispatch failed */
+                    commands_try_skill(cmd_input, &g_cli.agent);
                     agent_close_db(&g_cli.agent);
                     agent_free(&g_cli.agent);
                     return 0;
@@ -560,11 +562,13 @@ int hermes_cli_main(int argc, char **argv) {
             /* Check for slash commands */
             if (input[0] == '/') {
                 if (!commands_dispatch(input, &g_cli.agent)) {
-                    if (g_cli.json_output) {
-                        char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", input);
-                        cli_json_respond(err, g_cli.agent.session_id, "error");
-                    } else {
-                        printf("Unknown command: %s\n", input);
+                    if (!commands_try_skill(input, &g_cli.agent)) {
+                        if (g_cli.json_output) {
+                            char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", input);
+                            cli_json_respond(err, g_cli.agent.session_id, "error");
+                        } else {
+                            printf("Unknown command: %s\n", input);
+                        }
                     }
                 }
             } else {
@@ -634,6 +638,9 @@ int hermes_cli_main(int argc, char **argv) {
         /* Check for slash commands — dispatch via registry */
         if (input[0] == '/') {
             if (commands_dispatch(input, &g_cli.agent))
+                continue;
+            /* Try skill command before reporting unknown */
+            if (commands_try_skill(input, &g_cli.agent))
                 continue;
             /* Unknown command */
             if (g_cli.json_output) {

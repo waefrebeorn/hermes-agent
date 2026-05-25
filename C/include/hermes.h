@@ -1092,6 +1092,7 @@ typedef struct command_def_t {
     void (*handler)(const char *args, agent_state_t *state);
 } command_def_t;
 bool commands_dispatch(const char *input, agent_state_t *state);
+bool commands_try_skill(const char *input, agent_state_t *state);
 const command_def_t *commands_resolve(const char *input);
 const command_def_t *commands_get_all(void);
 int commands_count(void);

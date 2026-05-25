@@ -2914,6 +2914,8 @@ static void tui_process_input(const char *line) {
             /* Unknown command — try dispatch via agent command system */
             if (tui.agent && commands_dispatch((char *)line, tui.agent)) {
                 /* command handled */
+            } else if (tui.agent && commands_try_skill((char *)line, tui.agent)) {
+                /* skill command handled */
             } else {
                 tui_history_add(MSG_ROLE_ERROR, "Unknown command", true);
             }

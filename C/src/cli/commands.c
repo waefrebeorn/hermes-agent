@@ -20,6 +20,7 @@
 #include "hermes_display.h"
 #include "hermes_curator.h"
 #include "skill_usage.h"
+#include "hermes_skill_commands.h"
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -262,6 +263,43 @@ bool commands_dispatch(const char *input, agent_state_t *state) {
     const char *args = input + strlen(cmd->name);
     while (*args == ' ') args++;
     cmd->handler(args, state);
+    return true;
+}
+
+/* Try to dispatch a /command as a skill invocation.
+ * Returns true if handled (message sent to agent_chat), false if not a skill.
+ * Call this when commands_dispatch() returns false and input starts with '/'. */
+bool commands_try_skill(const char *input, agent_state_t *state) {
+    if (!input || input[0] != '/') return false;
+
+    skill_cmd_scan();
+    const char *slug = skill_cmd_resolve(input);
+    if (!slug) return false;
+
+    /* Extract user args after the skill name */
+    size_t slen = strlen(slug);
+    const char *user_args = input;
+    if (strncmp(user_args, slug, slen) == 0) {
+        user_args += slen;
+        while (*user_args == ' ') user_args++;
+    } else {
+        /* Input is just /slug — find where slug ends */
+        user_args = input + 1;
+        while (*user_args && *user_args != ' ') user_args++;
+        while (*user_args == ' ') user_args++;
+    }
+
+    char *msg = skill_cmd_build_message(slug, user_args);
+    if (!msg) return false;
+
+    printf("\n  [Invoking skill: %s]\n", slug);
+    fflush(stdout);
+    char *resp = agent_chat(state, msg);
+    if (resp) {
+        printf("\n%s\n", resp);
+        free(resp);
+    }
+    free(msg);
     return true;
 }
 
