@@ -13,6 +13,49 @@
 #include "prompt_caching.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+/* ── Cache statistics (thread-safe via simple atomics on common platforms) ── */
+static int g_cache_hits = 0;
+static int g_cache_misses = 0;
+
+void cache_track_hit(void) {
+    __sync_fetch_and_add(&g_cache_hits, 1);
+}
+
+void cache_track_miss(void) {
+    __sync_fetch_and_add(&g_cache_misses, 1);
+}
+
+void cache_reset_stats(void) {
+    __sync_lock_test_and_set(&g_cache_hits, 0);
+    __sync_lock_test_and_set(&g_cache_misses, 0);
+}
+
+int cache_get_hits(void) {
+    return __sync_fetch_and_add(&g_cache_hits, 0);
+}
+
+int cache_get_misses(void) {
+    return __sync_fetch_and_add(&g_cache_misses, 0);
+}
+
+int cache_get_total(void) {
+    return cache_get_hits() + cache_get_misses();
+}
+
+char *cache_get_stats_json(void) {
+    int hits = cache_get_hits();
+    int misses = cache_get_misses();
+    int total = hits + misses;
+    double hit_rate = total > 0 ? (double)hits / total : 0.0;
+
+    char buf[256];
+    snprintf(buf, sizeof(buf),
+        "{\"hits\":%d,\"misses\":%d,\"total\":%d,\"hit_rate\":%.3f}",
+        hits, misses, total, hit_rate);
+    return strdup(buf);
+}
 
 /* Apply cache_control to a single message */
 static void apply_cache_marker(pc_message_t *msg,

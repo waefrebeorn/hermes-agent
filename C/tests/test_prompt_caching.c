@@ -116,6 +116,69 @@ static void test_single_message(void) {
     TEST("single: cached", msgs[0].has_cache);
 }
 
+/* ── Cache hit/miss statistics tests ── */
+
+static void test_cache_stats_initial_zero(void) {
+    cache_reset_stats();
+    TEST("initial hits zero", cache_get_hits() == 0);
+    TEST("initial misses zero", cache_get_misses() == 0);
+    TEST("initial total zero", cache_get_total() == 0);
+}
+
+static void test_cache_track_hit(void) {
+    cache_reset_stats();
+    cache_track_hit();
+    TEST("hit increments to 1", cache_get_hits() == 1);
+    TEST("misses still 0", cache_get_misses() == 0);
+    TEST("total is 1", cache_get_total() == 1);
+}
+
+static void test_cache_track_miss(void) {
+    cache_reset_stats();
+    cache_track_miss();
+    cache_track_miss();
+    TEST("miss increments to 2", cache_get_misses() == 2);
+    TEST("hits still 0", cache_get_hits() == 0);
+    TEST("total is 2", cache_get_total() == 2);
+}
+
+static void test_cache_mixed(void) {
+    cache_reset_stats();
+    cache_track_hit();
+    cache_track_hit();
+    cache_track_miss();
+    TEST("hits 2 after 2 hits 1 miss", cache_get_hits() == 2);
+    TEST("misses 1", cache_get_misses() == 1);
+    TEST("total 3", cache_get_total() == 3);
+}
+
+static void test_cache_stats_json(void) {
+    cache_reset_stats();
+    cache_track_hit();
+    cache_track_hit();
+    cache_track_hit(); /* 3 hits */
+    cache_track_miss(); /* 1 miss */
+    char *json = cache_get_stats_json();
+    int ok = (json != NULL &&
+              strstr(json, "\"hits\":3") != NULL &&
+              strstr(json, "\"misses\":1") != NULL &&
+              strstr(json, "\"total\":4") != NULL &&
+              strstr(json, "\"hit_rate\":0.750") != NULL);
+    TEST("stats json correct", ok);
+    free(json);
+}
+
+static void test_cache_stats_json_zero(void) {
+    cache_reset_stats();
+    char *json = cache_get_stats_json();
+    int ok = (json != NULL &&
+              strstr(json, "\"hits\":0") != NULL &&
+              strstr(json, "\"total\":0") != NULL &&
+              strstr(json, "\"hit_rate\":0.000") != NULL);
+    TEST("zero stats json correct", ok);
+    free(json);
+}
+
 int main(void) {
     test_empty_messages();
     test_system_message_cached();
@@ -124,6 +187,12 @@ int main(void) {
     test_1h_ttl();
     test_native_anthropic_tool_msg();
     test_single_message();
+    test_cache_stats_initial_zero();
+    test_cache_track_hit();
+    test_cache_track_miss();
+    test_cache_mixed();
+    test_cache_stats_json();
+    test_cache_stats_json_zero();
 
     fprintf(stderr, "prompt_caching: %d/%d pass\\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

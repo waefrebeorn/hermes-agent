@@ -47,6 +47,31 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
                                    const char *cache_ttl,
                                    bool native_anthropic);
 
+/** Track a cache hit. Increments hit counter. */
+void cache_track_hit(void);
+
+/** Track a cache miss. Increments miss counter. */
+void cache_track_miss(void);
+
+/** Reset all cache statistics counters to zero. */
+void cache_reset_stats(void);
+
+/**
+ * Get cache statistics as a JSON string.
+ * Returns malloc'd JSON like {"hits":N,"misses":N,"total":N,"hit_rate":0.0}.
+ * Caller must free().
+ */
+char *cache_get_stats_json(void);
+
+/** Get total cache requests (hits + misses). */
+int cache_get_total(void);
+
+/** Get total cache hits. */
+int cache_get_hits(void);
+
+/** Get total cache misses. */
+int cache_get_misses(void);
+
 #ifdef __cplusplus
 }
 #endif
