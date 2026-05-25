@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (233 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (231 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -36,7 +36,7 @@
 | Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
 | Tool Depth Gaps | 11 | 0 | 9 | 2 |
 | Gateway Platform Depth | 18 | 0 | 15 | 3 |
-| Configuration | **8** | 0 | **4** | 4 |
+| Configuration | **6** | 0 | **2** | 4 |
 | Library Depth | 27 | 0 | 19 | 8 |
 | Bug Fixes | 10 | 0 | 8 | 2 |
 | Test Coverage | 25 | 0 | 25 | 0 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **233**| **233** | **0** | **154** | **79** |
+| **Total** | **231**| **231** | **0** | **152** | **79** |
 
 ## Python Upstream Parity
 
