@@ -25,6 +25,15 @@
 /* For time-based boundary generation */
 #include <time.h>
 
+/* Forward decl for HTTP_POOL_MAX used in http_free below */
+#define HTTP_POOL_MAX 16
+
+/* Forward declarations for connection pool functions (defined later) */
+static int http_pool_acquire(http_t *h, const char *host, int port,
+                              bool use_ssl, int *out_fd, SSL **out_ssl);
+static void http_pool_release(http_t *h, int fd, SSL *ssl,
+                               const char *host, int port, bool use_ssl);
+
 /* ================================================================
  *  Internal helpers
  * ================================================================ */
@@ -61,6 +70,8 @@ struct http_t {
     bool     cookies_enabled;
     http_cookie_t cookies[HTTP_COOKIE_MAX];
     int      cookie_count;
+    /* Connection pool */
+    void    *pool; /* http_pool_t*, opaque to avoid circular include */
 };
 
 typedef struct {
@@ -277,6 +288,7 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
     c->proxy[0] = '\0';
     c->max_redirects = 5;  /* default: follow up to 5 redirects */
     c->decompress = false; /* default: return raw response */
+    c->pool = NULL;
 
     /* Auto-detect proxy from environment (HTTPS_PROXY > HTTP_PROXY > ALL_PROXY) */
     const char *env_keys[] = {"HTTPS_PROXY", "https_proxy", "HTTP_PROXY",
@@ -301,6 +313,9 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
 
 void http_free(http_t *h) {
     if (!h) return;
+    if (h->pool) {
+        http_client_set_pool(h, 0, 0);
+    }
     if (h->ssl_ctx) SSL_CTX_free(h->ssl_ctx);
     free(h);
 }
@@ -408,8 +423,21 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
             }
         }
 
-        int fd = socket_connect(connect_host, connect_port, h->timeout_sec);
-        if (fd < 0) {
+        bool pooled = false;
+        int pool_fd = -1;
+        SSL *pool_ssl = NULL;
+        SSL *ssl = NULL;
+        int fd = -1;
+        if (http_pool_acquire(h, connect_host, connect_port, use_ssl, &pool_fd, &pool_ssl) == 0) {
+            fd = pool_fd;
+            ssl = pool_ssl;
+            pooled = true;
+        } else {
+            fd = socket_connect(connect_host, connect_port, h->timeout_sec);
+        }
+        if (pooled) {
+            /* Skip socket_connect + SSL handshake — connection is ready */
+        } else if (fd < 0) {
             if (attempt <= h->max_retries) {
                 sleep_ms(h->backoff_ms * attempt);
                 continue;
@@ -422,8 +450,7 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
             return r;
         }
 
-        SSL *ssl = NULL;
-        if (use_ssl) {
+        if (use_ssl && !pooled) {
             /* For HTTPS through proxy: send CONNECT tunnel request first */
             if (use_proxy) {
                 char connect_req[1024];
@@ -578,8 +605,7 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         size_t total = 0;
         char *resp_buf = read_all(fd, ssl, &total, h->timeout_sec);
 
-        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
-        close(fd);
+        http_pool_release(h, fd, ssl, purl.host, purl.port, use_ssl);
 
         if (!resp_buf) {
             if (attempt <= h->max_retries) {
@@ -1037,6 +1063,182 @@ char *http_url_encode(const char *str) {
     }
     out[j] = '\0';
     return out;
+}
+
+
+/* ================================================================
+ *  Connection pool for HTTP keep-alive
+ * ================================================================ */
+
+/* Maximum pool size */
+
+
+/* A pooled connection entry */
+typedef struct {
+    int     fd;             /* socket fd, -1 if slot empty */
+    SSL    *ssl;            /* SSL handle, NULL for plain HTTP */
+    char    host[256];      /* connect host */
+    int     port;           /* connect port */
+    bool    use_ssl;        /* whether connection uses SSL */
+    bool    in_use;         /* currently loaned out */
+    time_t  last_used;      /* time of last release or acquire */
+} http_pool_entry_t;
+
+/* Connection pool handle (opaque) */
+typedef struct {
+    http_pool_entry_t entries[HTTP_POOL_MAX];
+    int  count;             /* number of active entries */
+    int  max_conns;         /* max connections to keep (1..HTTP_POOL_MAX) */
+    int  idle_timeout;      /* seconds before idle connection is closed */
+} http_pool_t;
+
+/* Acquire a connection from pool, or NULL if pool full / no match.
+ * Returns 0 on success (fd and ssl set), -1 on miss. */
+static int http_pool_acquire(http_t *h, const char *host, int port,
+                              bool use_ssl, int *out_fd, SSL **out_ssl) {
+    http_pool_t *pool = (http_pool_t *)h->pool;
+    if (!pool) return -1;
+
+    time_t now = time(NULL);
+
+    /* Scan for an idle connection to the same host:port */
+    for (int i = 0; i < HTTP_POOL_MAX; i++) {
+        http_pool_entry_t *e = &pool->entries[i];
+        if (e->fd < 0 || e->in_use) continue;
+        if (e->port != port || e->use_ssl != use_ssl) continue;
+        if (strcmp(e->host, host) != 0) continue;
+
+        /* Check idle timeout */
+        if (pool->idle_timeout > 0 && (now - e->last_used) > pool->idle_timeout) {
+            /* Expired — close and reuse slot */
+            if (e->ssl) { SSL_shutdown(e->ssl); SSL_free(e->ssl); }
+            close(e->fd);
+            memset(e, 0, sizeof(*e));
+            e->fd = -1;
+            pool->count--;
+            continue;
+        }
+
+        /* Found! */
+        e->in_use = true;
+        e->last_used = now;
+        *out_fd = e->fd;
+        *out_ssl = e->ssl;
+        return 0;
+    }
+    return -1; /* no match */
+}
+
+/* Release a connection back to the pool.
+ * Call this INSTEAD of close(fd) / SSL_free(ssl) when pool is active. */
+static void http_pool_release(http_t *h, int fd, SSL *ssl,
+                               const char *host, int port, bool use_ssl) {
+    http_pool_t *pool = (http_pool_t *)h->pool;
+    if (!pool) {
+        /* No pool — close normally */
+        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+        close(fd);
+        return;
+    }
+
+    time_t now = time(NULL);
+
+    /* Find a free slot or the LRU expired entry to replace */
+    int lru_idx = -1;
+    time_t lru_time = 0;
+    int empty_idx = -1;
+
+    for (int i = 0; i < HTTP_POOL_MAX; i++) {
+        http_pool_entry_t *e = &pool->entries[i];
+        if (e->fd < 0) { empty_idx = i; break; }
+        if (!e->in_use && e->last_used > 0) {
+            if (lru_idx < 0 || e->last_used < lru_time) {
+                lru_idx = i;
+                lru_time = e->last_used;
+            }
+        }
+    }
+
+    int slot = -1;
+    if (empty_idx >= 0) {
+        slot = empty_idx;
+    } else if (lru_idx >= 0 && pool->count >= pool->max_conns) {
+        /* Evict LRU */
+        slot = lru_idx;
+        http_pool_entry_t *e = &pool->entries[slot];
+        if (e->ssl) { SSL_shutdown(e->ssl); SSL_free(e->ssl); }
+        close(e->fd);
+        memset(e, 0, sizeof(*e));
+        pool->count--;
+    }
+
+    if (slot >= 0 && pool->count < pool->max_conns) {
+        http_pool_entry_t *e = &pool->entries[slot];
+        e->fd = fd;
+        e->ssl = ssl;
+        e->port = port;
+        e->use_ssl = use_ssl;
+        e->in_use = false;
+        e->last_used = now;
+        snprintf(e->host, sizeof(e->host), "%s", host);
+        pool->count++;
+        return;
+    }
+
+    /* No room — close normally */
+    if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+    close(fd);
+}
+
+/* Set connection pool on an http handle.
+ * max_connections: 0 = disable pool, 1..HTTP_POOL_MAX = pool size.
+ * idle_timeout_sec: 0 = never expire. */
+void http_client_set_pool(http_t *h, int max_connections, int idle_timeout_sec) {
+    if (!h) return;
+
+    /* Free existing pool if any */
+    if (h->pool) {
+        http_pool_t *old = (http_pool_t *)h->pool;
+        for (int i = 0; i < HTTP_POOL_MAX; i++) {
+            if (old->entries[i].fd >= 0) {
+                if (old->entries[i].ssl) { SSL_shutdown(old->entries[i].ssl); SSL_free(old->entries[i].ssl); }
+                close(old->entries[i].fd);
+            }
+        }
+        free(old);
+        h->pool = NULL;
+    }
+
+    if (max_connections <= 0) return;
+    if (max_connections > HTTP_POOL_MAX) max_connections = HTTP_POOL_MAX;
+
+    http_pool_t *pool = (http_pool_t *)calloc(1, sizeof(http_pool_t));
+    if (!pool) return;
+    for (int i = 0; i < HTTP_POOL_MAX; i++) pool->entries[i].fd = -1;
+    pool->max_conns = max_connections;
+    pool->idle_timeout = idle_timeout_sec > 0 ? idle_timeout_sec : 0;
+    h->pool = pool;
+}
+
+/* Get pool stats. Returns number of connections in each state. */
+int http_pool_stats(http_t *h, int *active, int *idle, int *max) {
+    if (!h || !h->pool) {
+        if (active) *active = 0;
+        if (idle) *idle = 0;
+        if (max) *max = 0;
+        return 0;
+    }
+    http_pool_t *pool = (http_pool_t *)h->pool;
+    int a = 0, id = 0;
+    for (int i = 0; i < HTTP_POOL_MAX; i++) {
+        if (pool->entries[i].fd < 0) continue;
+        if (pool->entries[i].in_use) a++;
+        else id++;
+    }
+    if (active) *active = a;
+    if (idle) *idle = id;
+    if (max) *max = pool->max_conns;
+    return a + id;
 }
 
 /* ================================================================

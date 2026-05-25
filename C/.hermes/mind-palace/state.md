@@ -50,7 +50,7 @@
 | S20 | New Features | 9 | 0 | 1 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **154** | **0** | **78** | **76** |
+||| **Total** | **153** | **0** | **77** | **76** |
 
 ## Python Upstream Parity
 
@@ -89,6 +89,7 @@
 || L06 | libhttp redirect following configurable — http_client_set_max_redirects() | S10 | 2026-05-25 |
 || L07 | libhttp gzip/deflate decompression — auto-decompress via zlib | S10 | 2026-05-25 |
 || L12 | libcrypto AES-256-GCM encrypt/decrypt — crypto_aes_encrypt/decrypt | S10 | 2026-05-25 |
+|| L02 | libhttp connection pooling — pool_acquire/release, http_client_set_pool, LRU eviction | S10 | 2026-05-25 |
 || L04 | libhttp multipart form data — builder API, boundary generation, http_post_multipart | S10 | 2026-05-25 |
 
 ## Next Priority Queue (top 10)

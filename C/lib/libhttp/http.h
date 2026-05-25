@@ -104,6 +104,13 @@ char *http_url_encode(const char *str);
 /* Set HTTP proxy (CONNECT tunnel for HTTPS). Empty/NULL to clear. */
 void http_client_set_proxy(http_t *h, const char *proxy_url);
 
+/* === Connection pool for keep-alive === */
+/* Enable connection pooling. max_connections: 0 = disable, 1-16. idle_timeout_sec: 0 = never expire. */
+void http_client_set_pool(http_t *h, int max_connections, int idle_timeout_sec);
+
+/* Get pool stats: active, idle, max. Returns total connection count. */
+int http_pool_stats(http_t *h, int *active, int *idle, int *max);
+
 /* === Multipart form data (RFC 2046) === */
 /* Builder for multipart/form-data bodies. Create, add fields/files, finalize. */
 typedef struct http_multipart_form_t http_multipart_form_t;
