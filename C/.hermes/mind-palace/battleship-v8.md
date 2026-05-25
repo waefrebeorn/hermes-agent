@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **182 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **180 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -118,14 +118,14 @@ Python subdirectory modules with NO C equivalent.
 | 21 | T27 | codex_event_projector.py | Codex event projector | P3 |
 | 22 | T28 | codex_app_server.py | Codex app server transport | P3 |
 
-## SECTOR 7: Missing Tool Features — Depth Gaps (3 gaps)
+## SECTOR 7: Missing Tool Features — Depth Gaps (2 gaps)
 
 Existing C tools missing features that Python has.
 
 | # | ID | Tool | Missing Feature | LOC | Priority |
 |---|-----|------|----------------|-----|----------|
 | 1 | D07 | terminal.c | ✅ Modal backend added: run_command_modal() wraps commands via `modal run`, schema mentions 'modal' backend option | P3 |
-| 2 | D08 | terminal.c | Environment file sync | 150 | P3 |
+| 2 | D08 | terminal.c | ✅ file_sync library (239+166 test) — collect, mkdir, upload_all | P3 |
 | 3 | D10 | computer_use.c | ✅ Backend registry: cu_register_backend/cu_list_backends/cu_clear_backends, CU_BACKEND env override, 5 backends auto-registered | P2 |
 | 4 | D11 | computer_use.c | ✅ Vision routing: vision→som fallback with notification, `vision_fallback` flag in capture response | P2 |
 | 5 | D14 | browser.c | ✅ Browser supervisor: cdp_supervisor_ping(), Browser.getVersion health check, connection state/command stats tracking, browser_supervisor tool registered | P2 |
@@ -195,7 +195,7 @@ Confirmed bugs that need fixing.
 | 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
 | 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
 
-## SECTOR 12: Test Coverage Gaps (23 gaps)
+## SECTOR 12: Test Coverage Gaps (22 gaps)
 
 C tools without dedicated test files.
 
@@ -211,7 +211,7 @@ C tools without dedicated test files.
 | 8 | T08 | file.c (all 3 file tools) | Missing | P2 |
 | 9 | T09 | file_batch.c | Missing | P2 |
 | 10 | T10 | homeassistant.c | Missing | P2 |
-| 11 | T11 | image_gen.c | Missing | P2 |
+| 11 | T11 | image_gen.c | ✅ test_image_gen.c (8 tests) — null args, error paths, validation | P2 |
 | 12 | T12 | kanban.c | Missing | P2 |
 | 13 | T13 | mcp_tool.c | Missing | P2 |
 | 14 | T14 | memory.c | Missing | P2 |
@@ -394,12 +394,12 @@ Functions that exist in C but are significantly less capable than Python equival
 || S4: Missing Agent | 12 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
-|| S7: Tool Depth | 3 |
+|| S7: Tool Depth | 2 |
 | S8: Gateway | 17 |
 || S9: Config | 0 |
 | S10: Library | 11 |
 | S11: Bug Fixes | 2 |
-|| S12: Test Coverage | 23 |
+|| S12: Test Coverage | 22 |
 | S13: API Server | 5 |
 | S14: TUI | 8 |
 | S15: Curator | 0 |
@@ -410,5 +410,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 10 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-|| **Total** | **182** |
+|| **Total** | **180** |
 | (resolved items retired to vault/achievements.md) | |

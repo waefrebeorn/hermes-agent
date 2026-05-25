@@ -1,10 +1,10 @@
-# Hermes C — State Dashboard (v43 — 2026-05-25)
+# Hermes C — State Dashboard (v45 — 2026-05-25)
 
 ## Build Metrics (code-verified)
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **241/0/0** — 203 test files | 2026-05-25 |
+| Suite | **243/0/0** — 205 test files | 2026-05-25 |
 | Binary | **29MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **153** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |
@@ -16,11 +16,11 @@
 | Provider modules | **11** (all with tests) | 2026-05-25 |
 | Provider test files | **11** | 2026-05-25 |
 | C plugins | **10** | 2026-05-25 |
-| Git commits | **866+** | 2026-05-25 |
+| Git commits | **869+** | 2026-05-25 |
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (182 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (180 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -34,12 +34,12 @@
 | S4 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
-| S7 | Tool Depth | 3 | 0 | 1 | 2 |
+| S7 | Tool Depth | 2 | 0 | 1 | 1 |
 | S8 | Gateway Depth | 17 | 0 | 15 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 | S10 | Library Depth | 11 | 0 | 5 | 6 |
 | S11 | Bug Fixes | 2 | 0 | 1 | 1 |
-| S12 | Test Coverage | 23 | 0 | 23 | 0 |
+| S12 | Test Coverage | 21 | 0 | 21 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 8 | 0 | 7 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 10 | 0 | 2 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| | **Total** | **182** | **0** | **105** | **77** |
+| | **Total** | **180** | **0** | **103** | **77** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,8 @@
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
 | D07 | Modal terminal backend — run_command_modal() via `modal run` | S7 | 2026-05-25 |
+| D08 | file_sync library — collect mkdir upload_all (14 tests) | S7 | 2026-05-25 |
+| T11 | image_gen.c — 8 tests (null args, error paths, validation) | S12 | 2026-05-25 |
 | T03 | clarify.c — 8 tests (null args, schema, error paths) | S12 | 2026-05-25 |
 | C17 | agent.checkpoint.* — already implemented (8 fields, YAML reader) | S9 | 2026-05-25 |
 | I01 | GitHub Actions CI — already exists (.github/workflows) | S22 | 2026-05-25 |
@@ -89,7 +91,7 @@
 |------|----|-------------|-----|--------|
 | 1 | E01 | API server health endpoint + REST endpoints | 1500 | S13 |
 | 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | S13 |
-| 3 | D08 | terminal.c — Environment file sync | 150 | S7 |
+| 3 | D22 | Feishu doc/drive tool support | 150 | S7 |
 | 4 | N01 | Bitwarden Secrets Manager integration | 200 | S20 |
 | 5 | D22 | Feishu doc/drive tool support | 150 | S7 |
 | 6 | N02 | Mixture of Agents tool | 300 | S20 |
