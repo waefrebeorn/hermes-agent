@@ -15,7 +15,7 @@
 | Agent .c modules | **50** |
 | C plugins | **10** |
 | Git commits | **857+** |
-| Real gap count | **249** (battleship-v8, 22 sectors) |
+| Real gap count | **248** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 20 gaps)

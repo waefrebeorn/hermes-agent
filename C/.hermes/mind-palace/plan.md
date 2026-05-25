@@ -52,6 +52,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 6. □ Add D16 — plugin memory provider interface (280 LOC)
 7. □ G01 — Home Assistant conversation loop (200 LOC)
 8. ✅ G04 — DingTalk inbound polling (80 LOC) — complete
+9. ✅ G05 — WeCom inbound polling (80 LOC) — complete
 
 ## Recently Resolved
 

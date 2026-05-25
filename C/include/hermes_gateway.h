@@ -851,6 +851,9 @@ bool wecom_send_taskcard(http_client_t *http,
                           const char *title, const char *description,
                           const char *url, const char *task_id,
                           const char *btns_json);
+void wecom_queue_message(const char *chat_id, const char *text,
+                          const char *sender_id);
+void wecom_handle_webhook(const char *body);
 json_node_t *wecom_poll_messages(http_client_t *http);
 const char *wecom_get_chat_id(json_node_t *update);
 const char *wecom_get_text(json_node_t *update);

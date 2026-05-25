@@ -325,8 +325,99 @@ bool wecom_send_taskcard(http_client_t *http,
     return post_webhook(http, root);
 }
 
+/* ================================================================
+ *  Webhook message queue — stores messages received via HTTP callback
+ * ================================================================ */
+
+#define WECOM_QUEUE_MAX 64
+
+typedef struct {
+    char chat_id[128];
+    char text[4096];
+    char sender_id[128];
+    time_t timestamp;
+} wecom_msg_t;
+
+static wecom_msg_t g_wx_queue[WECOM_QUEUE_MAX];
+static int g_wx_head = 0;
+static int g_wx_tail = 0;
+static pthread_mutex_t g_wx_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Push a message into the ring buffer. Thread-safe. */
+void wecom_queue_message(const char *chat_id, const char *text,
+                          const char *sender_id) {
+    pthread_mutex_lock(&g_wx_lock);
+    int next = (g_wx_tail + 1) % WECOM_QUEUE_MAX;
+    if (next != g_wx_head) {
+        snprintf(g_wx_queue[g_wx_tail].chat_id, sizeof(g_wx_queue[g_wx_tail].chat_id), "%s", chat_id ? chat_id : "wecom");
+        snprintf(g_wx_queue[g_wx_tail].text, sizeof(g_wx_queue[g_wx_tail].text), "%s", text ? text : "");
+        snprintf(g_wx_queue[g_wx_tail].sender_id, sizeof(g_wx_queue[g_wx_tail].sender_id), "%s", sender_id ? sender_id : "");
+        g_wx_queue[g_wx_tail].timestamp = time(NULL);
+        g_wx_tail = next;
+    }
+    pthread_mutex_unlock(&g_wx_lock);
+}
+
+/* Handle incoming WeCom webhook callback.
+ * WeCom callback format (XML body):
+ *   <xml><ToUserName><![CDATA[...]]></ToUserName>
+ *       <FromUserName><![CDATA[...]]></FromUserName>
+ *       <CreateTime>...</CreateTime>
+ *       <MsgType><![CDATA[text]]></MsgType>
+ *       <Content><![CDATA[...]]></Content>
+ *       <MsgId>...</MsgId>
+ *     </xml>
+ * For simplicity, accept JSON wrapper or pass raw body for agent processing. */
+void wecom_handle_webhook(const char *body) {
+    if (!body || !body[0]) return;
+
+    /* Try JSON format first */
+    char *err = NULL;
+    json_t *root = json_parse(body, &err);
+    if (root) {
+        const char *chat_id = json_get_str(root, "FromUserName", NULL);
+        const char *text = NULL;
+        const char *msgtype = json_get_str(root, "MsgType", "");
+        if (strcmp(msgtype, "text") == 0) {
+            text = json_get_str(root, "Content", NULL);
+        }
+        if (chat_id && text) {
+            wecom_queue_message(chat_id, text,
+                json_get_str(root, "ToUserName", NULL));
+        }
+        json_free(root);
+        return;
+    }
+    free(err);
+
+    /* XML fallback: queue raw body as text */
+    wecom_queue_message("wecom", body, NULL);
+}
+
+/* Poll for inbound WeCom messages.
+ * Returns JSON array of messages from the webhook queue. */
 json_node_t *wecom_poll_messages(http_client_t *http) {
-    (void)http; return NULL;
+    /* Refresh app token as side effect if credentials exist */
+    if (g_corp_id[0] && g_corp_secret[0])
+        get_app_token(http);
+
+    pthread_mutex_lock(&g_wx_lock);
+    if (g_wx_head == g_wx_tail) {
+        pthread_mutex_unlock(&g_wx_lock);
+        return NULL;
+    }
+
+    json_node_t *results = json_array();
+    while (g_wx_head != g_wx_tail) {
+        json_node_t *msg = json_new_object();
+        json_set(msg, "chat_id", json_string(g_wx_queue[g_wx_head].chat_id));
+        json_set(msg, "text", json_string(g_wx_queue[g_wx_head].text));
+        json_set(msg, "sender_id", json_string(g_wx_queue[g_wx_head].sender_id));
+        json_append(results, msg);
+        g_wx_head = (g_wx_head + 1) % WECOM_QUEUE_MAX;
+    }
+    pthread_mutex_unlock(&g_wx_lock);
+    return results;
 }
 
 const char *wecom_get_chat_id(json_node_t *update) {

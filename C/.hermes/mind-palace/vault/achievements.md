@@ -315,11 +315,25 @@ The following items from battleship-v8 were verified as stale — code already i
 |----|-------------|--------|----------|
 | A23 | nous_rate_guard — cross-session Nous Portal rate limit guard with atomic JSON state file | S4 | nous_rate_guard.h/c, test_nous_rate_guard.c — 11/11 tests |
 
-## Phase 17: DingTalk Inbound Polling — G04 (2026-05-24)
+## Phase 18: WeCom Inbound Polling — G05 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| G05 | wecom_poll_messages — implemented webhook message queue + handle_webhook + poll function; wired thread_poll_wecom in server.c to poll messages; uses existing get_app_token() infrastructure | S8 | wecom.c:328-420, server.c:1408-1425 |
+
+
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | G04 | dingtalk_poll_messages — implemented OAuth2 access token acquisition + webhook message queue + poll function; wired thread_poll_dingtalk in server.c to poll messages | S8 | dingtalk.c:224-380, server.c:1427-1445 |
+
+## Phase 18: WeCom Inbound Polling — G05 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| G05 | wecom_poll_messages — implemented webhook message queue + handle_webhook + poll function; wired thread_poll_wecom in server.c to poll messages; uses existing get_app_token() infrastructure | S8 | wecom.c:328-420, server.c:1408-1425 |
+
+## Current Verified State
 
 | Metric | Value | Verified |
 |--------|-------|----------|
