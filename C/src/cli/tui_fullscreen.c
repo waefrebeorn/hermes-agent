@@ -391,6 +391,7 @@ static const slash_cmd_t slash_commands[] = {
     {"/gateway", "Show gateway status dashboard", ""},
     {"/cron",    "Show cron job viewer", ""},
     {"/logs",    "Show log viewer", ""},
+    {"/skills",  "Browse available skills", ""},
     {NULL, NULL, NULL}
 };
 
@@ -661,6 +662,7 @@ typedef struct {
         MODE_GATEWAY_STATUS,
         MODE_CRON_VIEW,
         MODE_LOG_VIEW,
+        MODE_SKILL_BROWSE,
         MODE_HELP,
     } modal_mode;
 } tui_global_state_t;
@@ -2403,6 +2405,74 @@ static void tui_draw_log_viewer(void) {
     doupdate();
 }
 
+/* Draw skill browser overlay — U03 */
+static void tui_draw_skill_browser(void) {
+    WINDOW *win = tui.panes[PANE_HISTORY].win;
+    if (!win) return;
+
+    werase(win);
+
+    int w_rows = tui.panes[PANE_HISTORY].rows;
+    int w_cols = tui.panes[PANE_HISTORY].cols;
+
+    wattron(win, A_BOLD | COLOR_PAIR(1));
+    mvwprintw(win, 0, 0, " SKILL BROWSER ");
+    wattroff(win, A_BOLD | COLOR_PAIR(1));
+
+    /* Determine skill directory */
+    const char *hermes_home = getenv("HERMES_HOME");
+    if (!hermes_home) hermes_home = getenv("HOME");
+    char skill_dir[HERMES_PATH_MAX];
+    if (hermes_home) {
+        snprintf(skill_dir, sizeof(skill_dir), "%s/.hermes/skills", hermes_home);
+    } else {
+        snprintf(skill_dir, sizeof(skill_dir), "~/.hermes/skills");
+    }
+
+    int y = 2;
+    mvwprintw(win, y++, 0, " Skills Dir: %s", skill_dir);
+    y++;
+
+    /* Scan directory for skill files */
+    DIR *d = opendir(skill_dir);
+    if (d) {
+        struct dirent *entry;
+        int count = 0;
+        while ((entry = readdir(d)) != NULL && y < w_rows - 3) {
+            /* Skip hidden and non-directory entries */
+            if (entry->d_name[0] == '.') continue;
+            if (entry->d_type != DT_DIR && entry->d_type != DT_LNK && entry->d_type != DT_REG) continue;
+            /* Only show .md files and directories */
+            size_t nlen = strlen(entry->d_name);
+            if (entry->d_type == DT_REG && (nlen < 3 || strcmp(entry->d_name + nlen - 3, ".md") != 0))
+                continue;
+
+            char display[256];
+            if (entry->d_type == DT_DIR) {
+                snprintf(display, sizeof(display), " [%s]", entry->d_name);
+            } else {
+                snprintf(display, sizeof(display), "   %s", entry->d_name);
+            }
+            mvwprintw(win, y, 0, " %-60s", display);
+            y++;
+            count++;
+        }
+        closedir(d);
+        if (count == 0) {
+            mvwprintw(win, y++, 0, " (no skills found)");
+        }
+    } else {
+        mvwprintw(win, y++, 0, " (cannot access skills directory)");
+    }
+
+    wattron(win, A_DIM | COLOR_PAIR(10));
+    mvwprintw(win, w_rows - 1, 0, " Press any key to close ");
+    wattroff(win, A_DIM | COLOR_PAIR(10));
+
+    wnoutrefresh(win);
+    doupdate();
+}
+
 /* Create FIFO for RPC communication */
 static bool tui_gateway_init(void) {
     /* Remove old FIFO if exists */
@@ -2809,6 +2879,11 @@ static void tui_process_input(const char *line) {
             tui_redraw_history();
             return;
 
+        } else if (strcmp(line, "/skills") == 0) {
+            tui.modal_mode = MODE_SKILL_BROWSE;
+            tui_draw_skill_browser();
+            return;
+
         } else if (strcmp(line, "/logs") == 0) {
             tui.modal_mode = MODE_LOG_VIEW;
             tui_draw_log_viewer();
@@ -2889,6 +2964,10 @@ static int tui_handle_modal_input(int ch) {
             tui_redraw_history();
             return 1;
         case MODE_LOG_VIEW:
+            tui.modal_mode = MODE_NORMAL;
+            tui_redraw_history();
+            return 1;
+        case MODE_SKILL_BROWSE:
             tui.modal_mode = MODE_NORMAL;
             tui_redraw_history();
             return 1;
@@ -3253,6 +3332,7 @@ int tui_fullscreen_run(agent_state_t *state) {
                 case MODE_GATEWAY_STATUS: tui_draw_gateway_status(); break;
                 case MODE_CRON_VIEW:      tui_draw_cron_viewer(); break;
                 case MODE_LOG_VIEW:       tui_draw_log_viewer(); break;
+                case MODE_SKILL_BROWSE:  tui_draw_skill_browser(); break;
                 case MODE_HELP:           break; /* help stays until dismissed */
                 default: break;
             }
