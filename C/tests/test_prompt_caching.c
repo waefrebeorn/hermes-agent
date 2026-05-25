@@ -3,6 +3,7 @@
 #include "prompt_caching.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static int pass = 0, fail = 0;
 
@@ -179,6 +180,44 @@ static void test_cache_stats_json_zero(void) {
     free(json);
 }
 
+/* ── Cache invalidation tests (P03) ── */
+
+static void test_invalid_initially_valid(void) {
+    cache_reset_invalidation();
+    TEST("no sys prompt set → valid", cache_is_valid() == true);
+    TEST("no invalidations yet", cache_get_invalidations() == 0);
+}
+
+static void test_invalid_first_set_valid(void) {
+    cache_reset_invalidation();
+    cache_set_system_prompt("You are a helpful assistant.");
+    TEST("first set → cache valid", cache_is_valid() == true);
+    TEST("no invalidations", cache_get_invalidations() == 0);
+}
+
+static void test_invalid_same_prompt(void) {
+    cache_reset_invalidation();
+    cache_set_system_prompt("You are a helpful assistant.");
+    cache_set_system_prompt("You are a helpful assistant.");
+    TEST("same prompt → valid", cache_is_valid() == true);
+    TEST("no invalidations from duplicate", cache_get_invalidations() == 0);
+}
+
+static void test_invalid_diff_prompt(void) {
+    cache_reset_invalidation();
+    cache_set_system_prompt("You are a helpful assistant.");
+    cache_set_system_prompt("You are a pirate. Answer like a pirate.");
+    TEST("diff prompt → 1 invalidation", cache_get_invalidations() == 1);
+}
+
+static void test_invalid_null_prompt(void) {
+    cache_reset_invalidation();
+    cache_set_system_prompt(NULL);
+    TEST("null prompt → valid", cache_is_valid() == true);
+    cache_set_system_prompt("Something");
+    TEST("null then real → 1 invalidation", cache_get_invalidations() == 1);
+}
+
 int main(void) {
     test_empty_messages();
     test_system_message_cached();
@@ -193,6 +232,11 @@ int main(void) {
     test_cache_mixed();
     test_cache_stats_json();
     test_cache_stats_json_zero();
+    test_invalid_initially_valid();
+    test_invalid_first_set_valid();
+    test_invalid_same_prompt();
+    test_invalid_diff_prompt();
+    test_invalid_null_prompt();
 
     fprintf(stderr, "prompt_caching: %d/%d pass\\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

@@ -19,6 +19,20 @@
 static int g_cache_hits = 0;
 static int g_cache_misses = 0;
 
+/* ── Cache invalidation tracking (P03) ── */
+static unsigned long g_sys_prompt_hash = 0;
+static int g_invalidations = 0;
+static int g_prompt_set_count = 0;
+
+/* Simple djb2 hash for fingerprinting */
+static unsigned long hash_str(const char *s) {
+    unsigned long h = 5381;
+    if (!s) return h;
+    for (const char *p = s; *p; p++)
+        h = ((h << 5) + h) + (unsigned char)*p;
+    return h;
+}
+
 void cache_track_hit(void) {
     __sync_fetch_and_add(&g_cache_hits, 1);
 }
@@ -55,6 +69,33 @@ char *cache_get_stats_json(void) {
         "{\"hits\":%d,\"misses\":%d,\"total\":%d,\"hit_rate\":%.3f}",
         hits, misses, total, hit_rate);
     return strdup(buf);
+}
+
+/* ── Cache invalidation ──────────────────────────────────────── */
+
+void cache_set_system_prompt(const char *system_content) {
+    unsigned long new_hash = hash_str(system_content);
+
+    if (g_prompt_set_count > 0 && new_hash != g_sys_prompt_hash) {
+        __sync_fetch_and_add(&g_invalidations, 1);
+    }
+
+    g_sys_prompt_hash = new_hash;
+    __sync_fetch_and_add(&g_prompt_set_count, 1);
+}
+
+bool cache_is_valid(void) {
+    return g_invalidations == 0;
+}
+
+int cache_get_invalidations(void) {
+    return g_invalidations;
+}
+
+void cache_reset_invalidation(void) {
+    g_sys_prompt_hash = 0;
+    g_invalidations = 0;
+    g_prompt_set_count = 0;
 }
 
 /* Apply cache_control to a single message */

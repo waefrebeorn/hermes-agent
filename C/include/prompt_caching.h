@@ -72,6 +72,26 @@ int cache_get_hits(void);
 /** Get total cache misses. */
 int cache_get_misses(void);
 
+/**
+ * Register the current system prompt for cache invalidation tracking.
+ * Call this whenever system prompt content changes.
+ * Stores a fingerprint and triggers cache invalidation if different from previous.
+ */
+void cache_set_system_prompt(const char *system_content);
+
+/**
+ * Check if the cache is still valid for the current system prompt.
+ * Returns true if no invalidation needed (same system prompt as last set).
+ * Returns false if system prompt changed since last cache_set_system_prompt call.
+ */
+bool cache_is_valid(void);
+
+/** Get the number of times cache has been invalidated due to system prompt changes. */
+int cache_get_invalidations(void);
+
+/** Reset cache invalidation state (for testing). */
+void cache_reset_invalidation(void);
+
 #ifdef __cplusplus
 }
 #endif
