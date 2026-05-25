@@ -1,13 +1,25 @@
-# Slermes C — Overnight Map
+# Slermes C — Overnight Map (v3 — 2026-05-25)
 
 ## Navigation
-- **State:** `.hermes/mind-palace/state.md` — build metrics, known gaps
-- **Goal:** `.hermes/mind-palace/goal-mantra.md` — loop, rules
-- **Prestige:** `.hermes/mind-palace/prestige_prompt.md` — priority queue
-- **Battleship:** deprecated — gaps documented in state.md
+- **State:** `state.md` — visual parity table, gap overview
+- **Goal:** `goal-mantra.md` — visual parity now mandatory P0
+- **Prestige:** `prestige_prompt.md` — phased priority queue (67 gaps)
+- **Battleship:** `battleship-v9.md` — 9 sectors, 67 gaps, phase order
+- **DA Audit:** `da-audit-full-parity.md` — comprehensive 10-section audit
+
+## Critical Insight
+**Phase 0 (Display Parity) must come FIRST.** Users experience parity through the CLI visuals — banner, spinner, colors, help output, status bar. If these don't match Python Hermes, the product looks broken regardless of backend parity.
+
+C has bare printf. Python has Rich panels, KawaiiSpinner (｡◕‿◕｡), skin engine (30+ hex colors), status bar, prompt_toolkit, and tool emojis.
+
+## Phase Order
+1. **Phase 0 (P0)** — 12 display gaps: Skin engine → Spinner → Banner → Status bar → Tool feed → Response box → Help → 256-color → Prompt → Markdown → Faces → Emoji
+2. **Phase 1 (P1)** — 4 agent modules: error_classifier, chat_completion_helpers, tool_executor, process_registry
+3. **Phase 2 (P2)** — 33 port gaps: 14 tools, 7 adapters, 6 gateway modules, 6 agent modules
+4. **Phase 3 (P3)** — 18 depth gaps: 7 small modules, 7 tool depth, 4 plugin system
 
 ## Current Branch
-`main` — full C codebase merged from slermes branch
+`main` — full C codebase, renamed to slermes
 
 ## Build
 ```bash
@@ -16,19 +28,8 @@ make -j$(nproc)       # 30MB slermes binary
 bash test_runner.sh   # 226/0/23
 ```
 
-## Commands
-| Command | Action |
-|---------|--------|
-| `slermes init` | Create ~/.slermes/config.yaml + .env |
-| `slermes doctor` | Diagnostics (config, keys, tools) |
-| `slermes completions install` | Shell completion setup |
-| `make install` | Install to /usr/local/bin |
+## First Action
+Read `hermes_cli/skin_engine.py` (926 LOC). Port to C as `src/deps/skin_engine.c` with YAML config loading, 30+ color struct, spinner/default skin. Wire into `cli.c`.
 
-## Last Session
-- Renamed C translation from hermes → slermes
-- Merged full codebase (84 tools, 59 libs, 19 gateways, 10 providers)
-- Added: init, doctor, completions install, make install/uninstall
-- Triple DA audit: 6 verified missing agent modules, 13 gateway sub-platforms
-
-## Fallback Task
-Pick next P1 gap from prestige_prompt.md and implement it.
+## Fallback
+After skin engine, port KawaiiSpinner (`agent/display.py`) to C as animated face renderer. Then use both to build the Rich banner.

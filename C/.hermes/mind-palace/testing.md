@@ -1,4 +1,4 @@
-# Hermes C — Testing (v14 — 2026-05-24)
+# Slermes C — Testing (v2 — 2026-05-25)
 
 ## Suite
 ```bash
@@ -7,19 +7,34 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**239 passed, 0 failed, 0 skipped** (202 files, zero failures).
+**226 passed, 0 failed, 23 skipped** (213 test files, zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |
 |------|-------|-----------|
-| **Libraries** | ~58 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display, error_classifier, rate_limit, rate_guard, filestate, tool_dispatch, etc. |
-| **Providers** | 11 files | provider_error (225 assertions, 9 providers), anthropic/azure/bedrock/google/openrouter/xai/deepseek/custom depth, metadata, finish_reason, json_mode |
+| **Libraries** | ~58 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display, ratelimit, rate_guard, filestate, tool_dispatch, etc. |
+| **Providers** | 10 files | provider_error, anthropic/azure/bedrock/google/openrouter/xai/deepseek/custom depth, metadata, finish_reason, json_mode |
 | **Agent** | ~10 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer, subdir_hints |
 | **CLI** | ~5 | commands, paths, display, TUI |
 | **Cron** | 4 | cron_lib, cron_tool, cron_sqlite, cron_extras |
 | **Tools** | ~30 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage, session_crud, shell_hooks, curator, usage_pricing |
 | **Gateway** | ~5 | escape_mode, slack_blocks, discord_interactions, whatsapp_msg |
-| **Plugins** | ~10 | honcho, kanban, spotify, achievements, disk_cleanup, file_memory, google_meet, image_gen, observability, skills, google_full, portal_tags |
+| **Memory** | 1 | memory operations (basic SQLite) |
+
+## Tool Depth Notes
+- browser.c: 1,598 LOC (Python: 3,796) — missing autofill, cookies, PDF, HAR export
+- vision.c: 203 LOC (Python: 1,421) — missing OCR, face detection, barcode, EXIF
+- web.c: 466 LOC (Python: 1,561) — missing cookie jar, sessions, proxy, form fill
+- mcp_tool.c: 1,623 LOC (Python: 3,584) — missing SSE transport, OAuth, subscriptions
+- file.c: 561 LOC (Python: 1,220) — missing glob, watch, diff, hex view
+
+## Codebase Size
+- Source `.c` files: 625 (src/ + lib/ + tests/)
+- Source code lines: 84,164 (src/)
+- Library lines: 286,003 (lib/)
+- Test lines: 48,262 (tests/)
+- Header lines: 8,462 (include/)
+- Total: **~427K lines**
 
 ## Known Gaps
 - No per-platform gateway integration tests (19 platforms)
@@ -30,25 +45,11 @@ bash test_runner.sh --verbose    # Per-test output
 - No fuzz testing
 - No memory leak detection (valgrind/ASan in CI)
 
-## Test Infrastructure Needs (Sector T)
-| ID | Gap | Priority |
-|----|-----|----------|
-| T01 | Gateway per-platform integration tests | P1 |
-| T02 | CLI command coverage >80% | P1 |
-| T03 | TUI component tests | P2 |
-| T04 | MCP server/transport tests | P2 |
-| T05 | ACP protocol tests | P2 |
-| T06 | Browser CDP test harness | P2 |
-| T07 | Plugin sandbox loading tests | P1 |
-| T08 | Fuzz testing | P2 |
-| T09 | Valgrind/ASan in CI | P1 |
-| T10 | Thread safety tests | P2 |
-
 ## Build with Sanitizers
 ```bash
 # AddressSanitizer
-make CFLAGS="-O1 -g -fsanitize=address" LDFLAGS="-fsanitize=address" hermes
+make CFLAGS="-O1 -g -fsanitize=address" LDFLAGS="-fsanitize=address" slermes
 
 # UndefinedBehaviorSanitizer
-make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
+make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" slermes
 ```

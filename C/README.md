@@ -1,20 +1,20 @@
-# Hermes C
+# Slermes C
 
-**Standalone C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**
-One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
+**Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**
+One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
-|Suite:  228/0/21 (207 test files, completes in <60s)
+|Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
-|Source: 154 .c + 66 .h = 220 files
-| Parity:  ~79%   (~107 verified gaps remaining — see battleship-v8)
-|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|Source: 625 .c files (src/ + lib/ + tests/): 427K LOC
+| Parity:  ~70%   (~67 verified gaps remaining — see battleship-v9)
+| Display: bare printf (12 gaps to match Python Rich + KawaiiSpinner + skin engine)
+|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, ~15 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
-|Tests:  228/0/21, 21 skipped
-|Tools:  84 registered handlers — all real implementations
+|Tools:  85 registered handlers — all real implementations
 |Libraries: 59 C modules — zero external deps beyond libc+libssl
-|Plugins:  10 C dynamic plugins (achievements, kanban, disk_cleanup, etc.)
-|Providers: 11 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom + metadata)
+|Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+|Providers: 10 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom + metadata)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
