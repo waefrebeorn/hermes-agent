@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **146 active gaps** across 22 sectors (resolved items retired to vault Phase 56+).
+Total: **145 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -280,22 +280,21 @@ All curator features (status, run, review) implemented in CLI commands.c + curat
 | 4 | S05 | Process argument injection detection | 80 | P2 |
 | 5 | S06 | DNS rebinding protection for web tool | 100 | P3 |
 
-## SECTOR 20: C-Only New Features (10 gaps)
+## SECTOR 20: C-Only New Features (9 gaps)
 
 Features in Python that would benefit C.
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
 | 1 | N01 | Bitwarden Secrets Manager integration — ✅ STALE: secrets.c (330 LOC) + hermes_secrets.h (55 LOC) already exist | 0 | P2 |
-| 2 | N02 | Mixture of Agents tool (MoA) | 300 | P2 |
-| 3 | N03 | Feishu doc and drive tools | 250 | P3 |
-| 4 | N04 | Microsoft Graph auth + client | 300 | P3 |
-| 5 | N05 | LSP protocol client (IDE integration) | 500 | P3 |
-| 6 | N06 | Codex app server integration | 400 | P3 |
-| 7 | N07 | Codex Responses API support | 300 | P3 |
-| 8 | N08 | Codex runtime environment | 200 | P3 |
-| 9 | N09 | Copilot ACP client integration | 300 | P3 |
-| 10 | N10 | Neutts synth (Neural TTS) | 100 | P3 |
+| 2 | N03 | Feishu doc and drive tools | 250 | P3 |
+| 3 | N04 | Microsoft Graph auth + client | 300 | P3 |
+| 4 | N05 | LSP protocol client (IDE integration) | 500 | P3 |
+| 5 | N06 | Codex app server integration | 400 | P3 |
+| 6 | N07 | Codex Responses API support | 300 | P3 |
+| 7 | N08 | Codex runtime environment | 200 | P3 |
+| 8 | N09 | Copilot ACP client integration | 300 | P3 |
+| 9 | N10 | Neutts synth (Neural TTS) | 100 | P3 |
 
 ## SECTOR 21: Refactoring & Cleanup (9 gaps)
 
@@ -392,8 +391,8 @@ Functions that exist in C but are significantly less capable than Python equival
 | S17: Shell Hooks | 3 |
 | S18: Vault Encrypt | 3 |
 | S19: Security | 5 |
-| S20: New Features | 9 |
+|| S20: New Features | 8 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **146** |
+||| **Total** | **145** |
 | (resolved items retired to vault/achievements.md) | |

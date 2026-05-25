@@ -21,7 +21,7 @@ Source:  154 .c + 66 .h = 220 files
 Tools:   84 registered
 Gateway: 19 platforms
 Plugins: 10 .so
-Parity:  ~78%    (146 gaps remaining — battleship v8)
+Parity:  ~78%    (145 gaps remaining — battleship v8)
 ```
 
 ## Key Paths

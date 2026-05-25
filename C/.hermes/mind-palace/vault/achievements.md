@@ -3,17 +3,17 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 57: Mixture of Agents Tool — N02 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| N02 | Mixture of Agents tool — queries 4 reference models (claude-opus-4.6, gemini-2.5-pro, gpt-5.4-pro, deepseek-v3.2) via C LLM provider infra, then aggregates via claude-opus-4.6. Uses OPENROUTER_API_KEY. Sequential query_model calls, JSON-safe output escaping. | S20 | src/tools/mixture_of_agents.c — handle_mixture_of_agents, query_model, json_escape |
+
 ## Phase 56: Feishu Doc/Drive Tools — D22 (2026-05-25)
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | D22 | Feishu doc/drive tool support — `feishu_doc_read` (GET /docx/v1/documents/{id}/raw_content), `feishu_drive_list` (GET /drive/v1/files). Auth via FEISHU_APP_ID + FEISHU_APP_SECRET env vars, tenant token caching. | S7 | src/tools/feishu_tools.c — handle_feishu_doc_read, handle_feishu_drive_list, feishu_get_token |
-
-## Phase 55: Token-Buffer SSE Streaming — E02 (2026-05-25)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| E02 | Token-buffer SSE streaming — replaces word-by-word strtok_r splitting with ~4-char chunked streaming. UTF-8 continuation bytes preserved (no mid-codepoint splits). Configurable TOKEN_BUF_SIZE. | S13 | api_server.c:handle_post_chat_stream() — token-buffer loop with is_utf8_cont detection |
 
 ## Phase 54: REST API Config/Service/Metrics — E01 (2026-05-25)
 

@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (146 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (145 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -47,10 +47,10 @@
 | S17 | Shell Hooks | 3 | 0 | 3 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
 | S19 | Security | 5 | 0 | 3 | 2 |
-| S20 | New Features | 9 | 0 | 1 | 8 |
+| S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **146** | **0** | **73** | **73** |
+||| **Total** | **145** | **0** | **72** | **73** |
 
 ## Python Upstream Parity
 
@@ -92,6 +92,7 @@
 || E05 | API server webhook endpoint — POST /webhook/:platform, JSON acknowledgment, 23 unit tests | S13 | 2026-05-25 |
 || L30 | libmcp streaming response — mcp_server_call_tool_stream, transport_read_any | S10 | 2026-05-25 |
 || L02 | libhttp connection pooling — pool_acquire/release, http_client_set_pool, LRU eviction | S10 | 2026-05-25 |
+|| N02 | Mixture of Agents tool — 4 reference models + aggregator, OPENROUTER_API_KEY | S20 | 2026-05-25 |
 || D22 | Feishu doc/drive tool support — feishu_doc_read + feishu_drive_list tools | S7 | 2026-05-25 |
 || E02 | Token-buffer SSE streaming — ~4-char chunked streaming, UTF-8 safe | S13 | 2026-05-25 |
 || E01 | REST API config/service/metrics endpoints — handle_config_get, handle_service_info, handle_metrics_get, request counter, start time | S13 | 2026-05-25 |
@@ -101,13 +102,13 @@
 
 | Rank | ID | Description | LOC | Sector |
 |------|----|-------------|-----|--------|
-| 1 | N02 | Mixture of Agents tool | 300 | S20 |
-| 2 | U01 | TUI image display (sixel/kitty/iterm2) — code exists but unwired | 150 | S14 |
-| 3 | U02 | TUI session browser with search | 200 | S14 |
-| 4 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
-| 5 | N03 | Feishu doc and drive tools | 250 | S20 |
-| 6 | U04 | TUI config editor | 150 | S14 |
-| 7 | U03 | Skill browser/list | 100 | S14 |
-| 8 | U05 | Plugin manager | 100 | S14 |
-| 9 | U06 | Gateway status dashboard | 120 | S14 |
-| 10 | U07 | Cron job viewer | 80 | S14 |
+| 1 | U01 | TUI image display (sixel/kitty/iterm2) — code exists but unwired | 150 | S14 |
+| 2 | U02 | TUI session browser with search | 200 | S14 |
+| 3 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
+| 4 | N03 | Feishu doc and drive tools | 250 | S20 |
+| 5 | U04 | TUI config editor | 150 | S14 |
+| 6 | U03 | Skill browser/list | 100 | S14 |
+| 7 | U05 | Plugin manager | 100 | S14 |
+| 8 | U06 | Gateway status dashboard | 120 | S14 |
+| 9 | U07 | Cron job viewer | 80 | S14 |
+| 10 | U08 | Log viewer (tail -f in TUI) | 100 | S14 |
