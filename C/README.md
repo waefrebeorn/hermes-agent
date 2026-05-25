@@ -7,7 +7,7 @@ One binary. Zero runtime deps beyond libc + libssl. 29MB ELF.
 |Suite:  238/0/0 (202 test files, completes in <60s)
 |Binary: 29MB    (dynamic ELF, -O2 -g)
 |Source: 153 .c + 66 .h = 219 files
-| Parity: ~72%   (~246 verified gaps remaining — see battleship-v8)
+| Parity: ~72%   (~245 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tests:  238/0/0, no skips

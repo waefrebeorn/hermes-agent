@@ -335,6 +335,15 @@ The following items from battleship-v8 were verified as stale — code already i
 
 ## Phase 19: SMS Webhook Wiring — G06 (2026-05-24)
 ## Phase 20: Mattermost Bot-Message Filtering — G07 (2026-05-24)
+## Phase 21: QQ Bot Inbound Polling — G02 (2026-05-24)
+
+
+
+| ID | Description | Sector | Evidence |
+
+|----|-------------|--------|----------|
+
+| G02 | qqbot_poll_messages — implemented webhook message queue + handle_webhook (OneBot + QQ Guild API formats); wired thread_poll_qqbot in server.c | S8 | qqbot.c:206-310, server.c:1492-1510 |
 
 
 

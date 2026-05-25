@@ -55,6 +55,8 @@ Every Python library, provider adapter, tool function, config key → C structs,
 9. ✅ G05 — WeCom inbound polling (80 LOC) — complete
 10. ✅ G06 — SMS webhook wiring (50 LOC) — complete
 11. ✅ G07 — Mattermost bot-message filtering (30 LOC) — complete
+12. ✅ G02 — QQ Bot inbound polling (150 LOC) — complete
+11. ✅ G07 — Mattermost bot-message filtering (30 LOC) — complete
 
 ## Recently Resolved
 

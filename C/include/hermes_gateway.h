@@ -903,7 +903,10 @@ bool qqbot_send_image(http_client_t *http, const char *image_url);
 bool qqbot_send_with_keyboard(http_client_t *http, const char *text,
                                const char *keyboard_json);
 bool qqbot_send_with_at(http_client_t *http, const char *text,
-                         const char *at_user_id);
+                          const char *at_user_id);
+void qqbot_queue_message(const char *chat_id, const char *text,
+                          const char *sender_id);
+void qqbot_handle_webhook(const char *body);
 json_node_t *qqbot_poll_messages(http_client_t *http);
 const char *qqbot_get_chat_id(json_node_t *update);
 const char *qqbot_get_text(json_node_t *update);

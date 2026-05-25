@@ -203,8 +203,109 @@ bool qqbot_send_with_at(http_client_t *http, const char *text,
     return post_webhook(http, root);
 }
 
+/* ================================================================
+ *  Webhook message queue — stores messages received via HTTP callback
+ * ================================================================ */
+
+#define QQ_QUEUE_MAX 64
+
+typedef struct {
+    char chat_id[128];
+    char text[4096];
+    char sender_id[128];
+    time_t timestamp;
+} qq_msg_t;
+
+static qq_msg_t g_qq_queue[QQ_QUEUE_MAX];
+static int g_qq_head = 0;
+static int g_qq_tail = 0;
+static pthread_mutex_t g_qq_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void qqbot_queue_message(const char *chat_id, const char *text,
+                          const char *sender_id) {
+    pthread_mutex_lock(&g_qq_lock);
+    int next = (g_qq_tail + 1) % QQ_QUEUE_MAX;
+    if (next != g_qq_head) {
+        snprintf(g_qq_queue[g_qq_tail].chat_id, sizeof(g_qq_queue[g_qq_tail].chat_id), "%s", chat_id ? chat_id : "qqbot");
+        snprintf(g_qq_queue[g_qq_tail].text, sizeof(g_qq_queue[g_qq_tail].text), "%s", text ? text : "");
+        snprintf(g_qq_queue[g_qq_tail].sender_id, sizeof(g_qq_queue[g_qq_tail].sender_id), "%s", sender_id ? sender_id : "");
+        g_qq_queue[g_qq_tail].timestamp = time(NULL);
+        g_qq_tail = next;
+    }
+    pthread_mutex_unlock(&g_qq_lock);
+}
+
+/* Handle incoming QQ Bot webhook POST.
+ * Supports both older OneBot (post_type/message_type) and
+ * newer QQ Guild API (op/d) formats. */
+void qqbot_handle_webhook(const char *body) {
+    if (!body || !body[0]) return;
+
+    char *err = NULL;
+    json_t *root = json_parse(body, &err);
+    if (!root) { free(err); return; }
+
+    /* Check for OneBot format: { "post_type": "message", ... } */
+    const char *post_type = json_get_str(root, "post_type", "");
+    if (strcmp(post_type, "message") == 0) {
+        const char *msg_type = json_get_str(root, "message_type", "");
+        const char *text = json_get_str(root, "message", "");
+        char chat_id[256];
+        if (strcmp(msg_type, "group") == 0) {
+            /* Group message: use group_id as chat_id */
+            long gid = (long)json_get_num(root, "group_id", 0);
+            snprintf(chat_id, sizeof(chat_id), "group_%ld", gid);
+        } else {
+            /* Private message: use user_id */
+            long uid = (long)json_get_num(root, "user_id", 0);
+            snprintf(chat_id, sizeof(chat_id), "user_%ld", uid);
+        }
+        if (text && text[0]) {
+            qqbot_queue_message(chat_id, text, "");
+        }
+        json_free(root);
+        return;
+    }
+
+    /* Check for QQ Guild API format: { "op": 0, "d": { ... } }
+     * where d has channel_id, author, content */
+    int op = (int)json_get_num(root, "op", -1);
+    if (op == 0) {
+        json_t *d = json_obj_get(root, "d");
+        if (d) {
+            const char *content = json_get_str(d, "content", "");
+            const char *channel_id = json_get_str(d, "channel_id", "");
+            json_t *author = json_obj_get(d, "author");
+            const char *author_id = author ? json_get_str(author, "id", "") : "";
+            if (channel_id[0] && content[0]) {
+                qqbot_queue_message(channel_id, content, author_id);
+            }
+        }
+    }
+
+    json_free(root);
+}
+
 json_node_t *qqbot_poll_messages(http_client_t *http) {
-    (void)http; return NULL;
+    (void)http;
+
+    pthread_mutex_lock(&g_qq_lock);
+    if (g_qq_head == g_qq_tail) {
+        pthread_mutex_unlock(&g_qq_lock);
+        return NULL;
+    }
+
+    json_node_t *results = json_array();
+    while (g_qq_head != g_qq_tail) {
+        json_node_t *msg = json_new_object();
+        json_set(msg, "chat_id", json_string(g_qq_queue[g_qq_head].chat_id));
+        json_set(msg, "text", json_string(g_qq_queue[g_qq_head].text));
+        json_set(msg, "sender_id", json_string(g_qq_queue[g_qq_head].sender_id));
+        json_append(results, msg);
+        g_qq_head = (g_qq_head + 1) % QQ_QUEUE_MAX;
+    }
+    pthread_mutex_unlock(&g_qq_lock);
+    return results;
 }
 
 const char *qqbot_get_chat_id(json_node_t *update) {

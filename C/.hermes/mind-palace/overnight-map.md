@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **246** (battleship-v8) | G04+G05+G06+G07 resolved — DingTalk/WeCom/SMS/Mattermost |
+| Gap count | **245** (battleship-v8) | G04+G05+G06+G07 resolved — DingTalk/WeCom/SMS/Mattermost |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v22 (previous session)

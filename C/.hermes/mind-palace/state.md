@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **246** | **0** | **164** | **82** |
+| **Total** | **245**| **246** | **0** | **164** | **82** |
 
 ## Python Upstream Parity
 

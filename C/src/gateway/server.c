@@ -1491,8 +1491,23 @@ static bool setup_qqbot(void) {
 
 static void *thread_poll_qqbot(void *arg) {
     (void)arg;
-    printf("[gateway] QQ Bot platform (webhook-based). Idle.\n");
-    while (g_gw.running) sleep(g_gw.poll_interval * 10);
+    printf("[gateway] QQ Bot polling (interval: %ds)\n", g_gw.poll_interval * 5);
+    while (g_gw.running) {
+        json_node_t *updates = qqbot_poll_messages(g_gw.http);
+        if (updates && json_len(updates) > 0) {
+            size_t n = json_len(updates);
+            for (size_t i = 0; i < n; i++) {
+                json_node_t *update = json_get(updates, i);
+                process_update("qqbot",
+                               qqbot_get_chat_id(update),
+                               qqbot_get_text(update));
+            }
+            json_free(updates);
+        } else {
+            json_free(updates);
+        }
+        if (g_gw.running) sleep(g_gw.poll_interval * 5);
+    }
     return NULL;
 }
 
