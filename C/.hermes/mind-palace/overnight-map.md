@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **239** (battleship-v8) | C06 closed — gateway.secret_rotation config key |
+| Gap count | **238** (battleship-v8) | C07 closed — tools.environments config key |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)
@@ -18,7 +18,8 @@
 - **T01 closed**: DingTalk gateway test (16 tests, suite 239)
 - **Phase 22 stale cleanup**: 4 battleship-v8 claims retired to vault (G01, D16, G10, L03)
 - **C06 closed**: gateway.secret_rotation config key added
-- Gap count 240 → 239 after C06 closure
+- **C07 closed**: tools.environments config key added
+- Gap count 239 → 238 after C07 closure
 - Gap count 245 → 240 after stale retirement
 
 ## Resolved Since v29

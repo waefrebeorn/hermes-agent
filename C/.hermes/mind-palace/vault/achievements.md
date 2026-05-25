@@ -391,7 +391,13 @@ L03 | libhttp — "Retry with backoff" | `http_new_with_retry()`, `max_retries`,
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C06 | gateway.secret_rotation — added `int secret_rotation_interval` to hermes_config_t, YAML reader via `yaml_get_int(doc, "gateway.secret_rotation", 0)`, default 0 (disabled) | S9 | hermes.h:959, config.c:1092 |
+C06 | gateway.secret_rotation — added `int secret_rotation_interval` to hermes_config_t, YAML reader via `yaml_get_int(doc, "gateway.secret_rotation", 0)`, default 0 (disabled) | S9 | hermes.h:959, config.c:1092
+
+## Phase 24: Config Key Implementation — C07 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C07 | tools.environments — added `char environments[512]` to tools_config_t, YAML reader via `yaml_get_string(doc, "tools.environments")` | S9 | hermes.h:459, config.c:1015 |
 
 ## Phase 12: A02 Context Compressor Closure (2026-05-24)
 
