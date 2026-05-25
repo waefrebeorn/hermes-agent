@@ -1,101 +1,37 @@
-# Upstream Hermes — Vault Reference
+# Upstream Reference — Python Hermes Agent
 
-> **What the Python Hermes Agent provides that C must translate.**
-> Target for C translation completeness.
+> Reference document mapping Python Hermes source to C translation status.
+> Updated: May 25, 2026
 
-## Version Reference
-- **Python Hermes:** v0.14.0 (commit 6c5ca8441, May 23 2026)
-- **C Translation:** v0.14.0-wubu (5,973 LOC)
-- **Upstream:** NousResearch/hermes-agent (git@github.com:NousResearch/hermes-agent.git)
+## Python Source Overview
 
-## Python Source Structure (What C Must Cover)
+| Area | Count | C Count | Gap |
+|------|-------|---------|-----|
+| Agent modules | 78 .py | 4 .c | 74 |
+| Tool files | 76 .py | 6 .c (4 registered tools) | 70 |
+| Gateway platforms | 32 .py | 1 .c | 31 |
+| Provider backends | ~10 | 1 | ~9 |
+| Test files | 900+ | 2 | ~900 |
 
-| Python Area | LOC (approx) | C Status | Notes |
-|-------------|-------------|----------|-------|
-| Agent loop (`run_agent.py`) | 12K | 🟧 218 lines | Tool calling broken |
-| CLI (`cli.py`) | 11K | 🟧 156 lines | 4/50+ commands |
-| Tools (30+ files) | 8K | 🟧 719 lines | 4/30+ tools |
-| Gateway (server + 15 platforms) | 6K | 🟧 351 lines | Only Telegram |
-| Cron (scheduler + jobs) | 2K | 🟥 223 lines | Memory-only |
-| Provider adapters (20+ providers) | 3K | ⬜ 0 lines | Only OpenAI format |
-| Plugin system | 2K | ⬜ 0 lines | Not started |
-| Profile system | 1K | ⬜ 0 lines | Not started |
-| MCP server | 1K | ⬜ 0 lines | Not started |
-| ACP server | 1K | ⬜ 0 lines | Not started |
-| Skin engine | 1K | ⬜ 0 lines | Not started |
-| Testing (900+ files, 17K tests) | 20K | ⬜ 2 files | Smoke only |
-| **Total** | **~68K** | **5,973 LOC** | **9% coverage** |
+## Python Agent Modules (78)
+Known ports: `context.py` → `context.c`, `title.py` → `title.c`, `llm_client.py` → `llm_client.c` (partial), `agent_loop.py` → `agent_loop.c` (partial)
 
-## Python→C Migration Work Log
+Unported (74): insights, compress, hermes_state, checkpoint_manager, hermes_logging, hermes_constants, credential_pool, budget_config, skill_commands, model_tools, toolsets, batch_runner, agent/display, agent/prompt_caching, agent/context_engine, agent/profile, agent/curator, agent/debug_helpers, agent/session_manager, agent/cost_tracker, agent/skill_registry, agent/tool_guardrails, agent/tool_result, agent/tool_usage, agent/memory_manager, agent/compress_state, agent/conversation_splitter, agent/checkpoint, agent/rollback, agent/fork, agent/merge, agent/export, agent/import, agent/search, agent/browse, agent/screenshot, agent/voice, agent/tts, agent/stt, agent/ocr, agent/translate, agent/summarize, agent/classify, agent/embed, agent/rag, agent/knowledge_graph, agent/plan, agent/reason, agent/debate, agent/vote, agent/consensus, agent/delegate, agent/parallel, agent/monitor, agent/log, agent/metrics, agent/trace, agent/alert, agent/schedule, agent/trigger, agent/webhook, agent/callback, agent/cron, agent/event, agent/bus, agent/queue, agent/lock, agent/rate_limit, agent/throttle, agent/circuit_breaker, agent/retry, agent/timeout, agent/health, agent/heartbeat
 
-### Phase 1: Foundation ✅ (Apr 29 - May 3)
-- Ported JSON parser from cJSON concepts
-- Wrote minimal YAML reader (config subset only)
-- Built raw socket + OpenSSL HTTP client
-- Implemented SHA-256, HMAC, base64, PKCE
-- File-based session store (no SQLite dependency)
+## Python Tools (76)
+Known ports: `terminal_tool.py` → `terminal.c`, `file_tool.py` → `file.c`, `web_tool.py` → `web.c`, `skills_tool.py` → `skills.c`
 
-### Phase 2: Agent Core 🟧 (May 4 - May 10)
-- Agent loop with message flow
-- LLM client for OpenAI chat completions
-- Context management (push/pop/clear/truncate)
-- Title generation (extractive)
-- Config loading (YAML + .env)
-- CLI (fgets-based interactive loop)
-- 4 slash commands implemented
-- Display (ANSI color wrappers)
+Unported (72): vision_analyze, execute_code, session_search, memory, clarify, delegate_task, cronjob, browser, browser_cdp, browser_dialog, browser_supervisor, computer_use, image_gen, voice_mode, text_to_speech, process, todo, send_message, kanban, curator, mcp, gateway, plugin, system, hermes, batch_runner, task_manager, path_security, code_analyzer, diff_tool, file_history, notepad, clipboard, env, dotenv, network_scanner, port_check, dns_check, ssl_check, cert_info, hash_file, checksum, compress_file, extract_archive, gpg_sign, gpg_verify, password_gen, qr_code, barcode, camera, microphone, ocr, translate, summarize, classify, embed, vector_search, knowledge_graph, note_graph, mind_map, flow_chart, diagram_gen, skills_install, skills_uninstall, skills_view, skills_list, tool_config, tool_permission, tool_approval, agent_config, mcp_tool, file_search
 
-### Phase 3: Tools 🟧 (May 11 - May 15)
-- Tool registry (register/find/dispatch)
-- Terminal (popen + timeout)
-- File (read/write/search schemas only)
-- Web (HTTP GET only)
-- Skills (list only)
-- Tool init (4 tools registered)
+## Python Gateway Platforms (32)
+Known ports: `telegram.py` → `telegram.c`
 
-### Phase 4: Gateway 🟧 (May 16 - May 18)
-- Telegram long-poll server
-- Message send/receive
-- Response chunking (4K limit)
-- No platform abstraction
+Unported (31): discord, slack, whatsapp, signal, matrix, mattermost, email, sms, dingtalk, wecom, weixin, feishu, qqbot, bluebubbles, yuanbao, webhook, websocket, mcp, acp, google_meet, voip, twilio, telegram_bot (rich version), discord_bot, slack_bot, teams, zoom, meet, jitsi, irc, xmpp
 
-### Phase 5: Cron/Advanced 🟥 (May 19 - May 22)
-- Crontab schedule parser
-- In-memory job list
-- `system()` execution
-- Jobs file is a stub
-
-### Provider/Auth 🟧 (May 20 - May 23)
-- Full PKCE OAuth token exchange (xAI, MiniMax, generic)
-- Auth store (auth.json CRUD)
-- Not wired into CLI
-
-## Upstream Changes Since Fork Start
-
-From git log since April 29 (first C commit):
-```
-04a616589 → C scaffold + digestion
-e8530c40e → Phase 1
-c257aa12f → Phase 2
-b2011e736 → Phase 3
-575e21fac → Phase 4
-6c5ca8441 → Phase 5
-```
-
-Upstream Python has progressed concurrently with fixes/test additions:
-```
-78f6003e4 → fix(test_openclaw): add pathlib_file_write...
-fed55c6c9 → fix(tests): align drain resume_pending...
-9895657ce → test: add path_security test suite (49 tests)
-```
-
-## Translation Gap Analysis
-
-The C translation covers ~9% of the Python Hermes codebase. The 436 remaining gaps represent ~91% of the work. The critical insight: Python has been continuously developed (new features, bug fixes, tests) while C translates the April 29 snapshot. Every git pull needs digestion to catch C up with Python changes.
-
-## Recommended Upstream Sync Cadence
-1. `git pull wubu main` weekly
-2. Run `python3 C/digest.py`
-3. Apply digestion-generated stubs
-4. Fix P0 gaps first
-5. Progress phases in order
+## Key Python Files for Reference Reading
+- `run_agent.py` — AIAgent class, core conversation loop (~12K LOC)
+- `cli.py` — HermesCLI, interactive CLI orchestrator (~11K LOC)
+- `model_tools.py` — Tool orchestration, function call handling
+- `hermes_state.py` — SessionDB with FTS5 search
+- `gateway/run.py` — Gateway main entry
+- `tools/registry.py` — Tool registration pattern
