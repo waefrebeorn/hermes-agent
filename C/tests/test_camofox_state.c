@@ -123,6 +123,67 @@ static void test_gen_identity_all_null(void)
     TEST("all NULL returns false", !ok);
 }
 
+static void test_save_load_session(void)
+{
+    char url[CAMOFOX_PATH_MAX];
+    bool ok;
+
+    /* Save session */
+    ok = camofox_save_session("/tmp/hermes_test_sessions", "test-browser",
+                               "ws://127.0.0.1:9222/devtools/browser/test");
+    TEST("save session succeeds", ok);
+
+    /* Load session */
+    ok = camofox_load_session("/tmp/hermes_test_sessions", "test-browser", url);
+    TEST("load session succeeds", ok);
+    TEST("cdp_url matches",
+         strcmp(url, "ws://127.0.0.1:9222/devtools/browser/test") == 0);
+
+    /* Delete session */
+    ok = camofox_delete_session("/tmp/hermes_test_sessions", "test-browser");
+    TEST("delete session succeeds", ok);
+
+    /* After delete, load should fail */
+    ok = camofox_load_session("/tmp/hermes_test_sessions", "test-browser", url);
+    TEST("load after delete fails", !ok);
+}
+
+static void test_save_session_null_params(void)
+{
+    bool ok = camofox_save_session(NULL, "task", "url");
+    TEST("save null home fails", !ok);
+
+    ok = camofox_save_session("/tmp/t", NULL, "url");
+    TEST("save null task fails", !ok);
+
+    ok = camofox_save_session("/tmp/t", "task", NULL);
+    TEST("save null url fails", !ok);
+}
+
+static void test_load_session_nonexistent(void)
+{
+    char url[CAMOFOX_PATH_MAX] = "dirty";
+    bool ok = camofox_load_session("/tmp/nonexistent_XXXX", "ghost", url);
+    TEST("load nonexistent fails", !ok);
+    TEST("load nonexistent nulls output", url[0] == '\0');
+}
+
+static void test_delete_session_null(void)
+{
+    bool ok = camofox_delete_session(NULL, "task");
+    TEST("delete null home fails", !ok);
+
+    ok = camofox_delete_session("/tmp/t", NULL);
+    TEST("delete null task fails", !ok);
+}
+
+static void test_delete_session_nonexistent(void)
+{
+    /* Deleting a nonexistent file should succeed (idempotent) */
+    bool ok = camofox_delete_session("/tmp", "no-such-session-12345");
+    TEST("delete nonexistent returns true", ok);
+}
+
 int main(void)
 {
     printf("=== Camofox State Library Tests ===\n");
@@ -136,6 +197,11 @@ int main(void)
     test_gen_identity_null_output_handling();
     test_gen_identity_null_home();
     test_gen_identity_all_null();
+    test_save_load_session();
+    test_save_session_null_params();
+    test_load_session_nonexistent();
+    test_delete_session_null();
+    test_delete_session_nonexistent();
 
     printf("\nResults: %d passed, %d failed, %d total\n",
            passed, failed, tests);

@@ -45,7 +45,7 @@ const char *camofox_state_dir(const char *hermes_home, char out_path[CAMOFOX_PAT
  *
  * @param hermes_home  Path to HERMES_HOME (for scope root).
  * @param task_id      Optional task/session ID. NULL treated as "default".
- * @param out_user_id  Buffer for user_id string (C resolve (): filled with hex digest.
+ * @param out_user_id  Buffer for user_id string (CAMOFOX_USER_ID_MAX).
  * @param out_session_key  Buffer for session_key string (CAMOFOX_SESSION_KEY_MAX).
  * @return true on success, false on allocation failure.
  */
@@ -53,6 +53,41 @@ bool camofox_gen_identity(const char *hermes_home,
                            const char *task_id,
                            char out_user_id[CAMOFOX_USER_ID_MAX],
                            char out_session_key[CAMOFOX_SESSION_KEY_MAX]);
+
+/**
+ * Persist browser session state (CDP URL + identity) to disk.
+ * Writes a JSON file at <state_dir>/sessions/<task_id>.json.
+ *
+ * @param hermes_home  Path to HERMES_HOME.
+ * @param task_id      Unique task/session identifier.
+ * @param cdp_url      The CDP WebSocket URL (e.g. ws://127.0.0.1:9222).
+ * @return true on success, false on I/O error.
+ */
+bool camofox_save_session(const char *hermes_home,
+                           const char *task_id,
+                           const char *cdp_url);
+
+/**
+ * Load a previously saved browser session from disk.
+ *
+ * @param hermes_home  Path to HERMES_HOME.
+ * @param task_id      Task/session identifier to look up.
+ * @param out_cdp_url  Buffer for CDP URL (CAMOFOX_PATH_MAX size).
+ * @return true if session found and loaded, false if not found or error.
+ */
+bool camofox_load_session(const char *hermes_home,
+                           const char *task_id,
+                           char out_cdp_url[CAMOFOX_PATH_MAX]);
+
+/**
+ * Remove a saved browser session file from disk.
+ *
+ * @param hermes_home  Path to HERMES_HOME.
+ * @param task_id      Task/session identifier to remove.
+ * @return true on success or if file didn't exist, false on I/O error.
+ */
+bool camofox_delete_session(const char *hermes_home,
+                             const char *task_id);
 
 #ifdef __cplusplus
 }

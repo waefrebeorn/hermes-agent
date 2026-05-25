@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 const char *camofox_state_dir(const char *hermes_home, char out_path[CAMOFOX_PATH_MAX])
 {
@@ -98,4 +101,125 @@ bool camofox_gen_identity(const char *hermes_home,
     free(session_uuid_str);
 
     return true;
+}
+
+/* ── Session Persistence ─────────────────────────────────────── */
+
+static bool ensure_session_dir(const char *hermes_home) {
+    char dir[CAMOFOX_PATH_MAX];
+    const char *base = camofox_state_dir(hermes_home, dir);
+    if (!base) return false;
+
+    /* Create directory chain: every component including the final one */
+    char *p = dir;
+    if (*p == '/') p++;
+    while (*p) {
+        while (*p && *p != '/') p++;
+        if (!*p) break;
+        char saved = *p;
+        *p = '\0';
+        mkdir(dir, 0755);
+        *p = saved;
+        p++;
+    }
+    /* Create final component (no trailing '/') */
+    mkdir(dir, 0755);
+
+    /* Now create the sessions subdir chain */
+    size_t len = strlen(dir);
+    snprintf(dir + len, CAMOFOX_PATH_MAX - len, "/sessions");
+    p = dir;
+    if (*p == '/') p++;
+    while (*p) {
+        while (*p && *p != '/') p++;
+        if (!*p) break;
+        char saved = *p;
+        *p = '\0';
+        mkdir(dir, 0755);
+        *p = saved;
+        p++;
+    }
+    /* Create final sessions dir */
+    mkdir(dir, 0755);
+    return true;
+}
+
+static char *session_file_path(const char *hermes_home,
+                                const char *task_id,
+                                char out[CAMOFOX_PATH_MAX]) {
+    const char *base = camofox_state_dir(hermes_home, out);
+    if (!base) return NULL;
+    size_t len = strlen(out);
+    snprintf(out + len, CAMOFOX_PATH_MAX - len, "/sessions/%s.json", task_id);
+    return out;
+}
+
+bool camofox_save_session(const char *hermes_home,
+                           const char *task_id,
+                           const char *cdp_url) {
+    if (!hermes_home || !task_id || !cdp_url) return false;
+    if (!ensure_session_dir(hermes_home)) return false;
+
+    char path[CAMOFOX_PATH_MAX];
+    if (!session_file_path(hermes_home, task_id, path)) return false;
+
+    char user_id[CAMOFOX_USER_ID_MAX] = "";
+    char session_key[CAMOFOX_SESSION_KEY_MAX] = "";
+    camofox_gen_identity(hermes_home, task_id, user_id, session_key);
+
+    /* Build JSON: {"cdp_url":"...","user_id":"...","session_key":"...","task_id":"..."} */
+    char json[4096];
+    int n = snprintf(json, sizeof(json),
+        "{\"cdp_url\":\"%s\",\"user_id\":\"%s\","
+        "\"session_key\":\"%s\",\"task_id\":\"%s\","
+        "\"version\":1}",
+        cdp_url, user_id, session_key, task_id);
+    if (n < 0 || (size_t)n >= sizeof(json)) return false;
+
+    FILE *f = fopen(path, "w");
+    if (!f) return false;
+    size_t written = fwrite(json, 1, (size_t)n, f);
+    fclose(f);
+    return written == (size_t)n;
+}
+
+bool camofox_load_session(const char *hermes_home,
+                           const char *task_id,
+                           char out_cdp_url[CAMOFOX_PATH_MAX]) {
+    if (!hermes_home || !task_id || !out_cdp_url) {
+        if (out_cdp_url) out_cdp_url[0] = '\0';
+        return false;
+    }
+
+    char path[CAMOFOX_PATH_MAX];
+    if (!session_file_path(hermes_home, task_id, path)) return false;
+
+    FILE *f = fopen(path, "r");
+    if (!f) { out_cdp_url[0] = '\0'; return false; }
+
+    char buf[8192];
+    size_t nr = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    buf[nr] = '\0';
+
+    /* Simple JSON key-value extract — find "cdp_url":"..." */
+    const char *key = strstr(buf, "\"cdp_url\":\"");
+    if (!key) { out_cdp_url[0] = '\0'; return false; }
+
+    key += 11; /* skip past "cdp_url":" */
+    int dst = 0;
+    while (*key && *key != '"' && dst < CAMOFOX_PATH_MAX - 1) {
+        if (*key == '\\' && *(key+1) == '"') { key++; }  /* skip escaped quote */
+        out_cdp_url[dst++] = *key++;
+    }
+    out_cdp_url[dst] = '\0';
+    return dst > 0;
+}
+
+bool camofox_delete_session(const char *hermes_home,
+                             const char *task_id) {
+    if (!hermes_home || !task_id) return false;
+    char path[CAMOFOX_PATH_MAX];
+    if (!session_file_path(hermes_home, task_id, path)) return false;
+    return unlink(path) == 0 || errno == ENOENT;
 }
