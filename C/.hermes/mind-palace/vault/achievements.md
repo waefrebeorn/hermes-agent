@@ -3,7 +3,19 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
-## Phase 51: Codex Runtime Config — C08 + C17 stale retirement (2026-05-25)
+## Phase 51: Modal Terminal Backend — D07 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D07 | terminal.c — Modal execution backend: `run_command_modal()` wraps commands in a Python Modal app, runs via `modal run` CLI. Schema updated to mention `modal` backend option. | S7 | terminal.c |
+
+## Phase 53: MoA Config Keys — C11 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C11 | agent_config_t: moa_enabled, moa_model, moa_strategy, moa_workers — YAML path agent.mixture_of_agents.*, defaults: disabled/round_robin/3 | S9 | hermes.h, config.c |
+
+## Phase 52: Codex Runtime Config — C08 + C17 stale retirement (2026-05-25)
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|

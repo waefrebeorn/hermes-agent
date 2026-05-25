@@ -124,7 +124,7 @@ Existing C tools missing features that Python has.
 
 | # | ID | Tool | Missing Feature | LOC | Priority |
 |---|-----|------|----------------|-----|----------|
-| 1 | D07 | terminal.c | Modal/Daytona/singularity backends | 500 | P3 |
+| 1 | D07 | terminal.c | ✅ Modal backend added: run_command_modal() wraps commands via `modal run`, schema mentions 'modal' backend option | P3 |
 | 2 | D08 | terminal.c | Environment file sync | 150 | P3 |
 | 3 | D10 | computer_use.c | ✅ Backend registry: cu_register_backend/cu_list_backends/cu_clear_backends, CU_BACKEND env override, 5 backends auto-registered | P2 |
 | 4 | D11 | computer_use.c | ✅ Vision routing: vision→som fallback with notification, `vision_fallback` flag in capture response | P2 |

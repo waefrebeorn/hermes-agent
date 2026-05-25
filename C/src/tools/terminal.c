@@ -33,7 +33,7 @@ static const char *SCHEMA = "{"
       "\"pty\":{\"type\":\"boolean\",\"description\":\"Use pseudo-terminal for interactive commands\",\"default\":false},"
       "\"env\":{\"type\":\"string\",\"description\":\"Environment variables in KEY=VALUE KEY2=VALUE2 format\"},"
       "\"workdir\":{\"type\":\"string\",\"description\":\"Working directory for the command\"},"
-      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, ssh\"},"
+      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, ssh, modal\"}\","
       "\"docker_image\":{\"type\":\"string\",\"description\":\"Docker image override for backend=docker\"}"
     "},"
     "\"required\":[\"command\"]"
@@ -464,8 +464,44 @@ static char *run_command_docker(const char *command, int timeout_sec,
     return json_out;
 }
 
+/* M35: Modal execution backend — run command via Modal CLI */
+static char *run_command_modal(const char *command, int timeout_sec) {
+    if (!command) return strdup("{\"error\": \"No command provided\"}");
+    char tmpfile[] = "/tmp/hermes_modal_XXXXXX";
+    int fd = mkstemp(tmpfile);
+    if (fd < 0) return strdup("{\"error\": \"mkstemp failed\"}");
+
+    /* Write Modal Python wrapper */
+    dprintf(fd,
+        "import subprocess, sys, json\n"
+        "import modal\n\n"
+        "app = modal.App(\"hermes-cmd\")\n\n"
+        "@app.function()\n"
+        "def run_cmd():\n"
+        "    try:\n"
+        "        r = subprocess.run(%s, shell=True, capture_output=True,\n"
+        "                          text=True, timeout=%d)\n"
+        "        print(json.dumps({\n"
+        "            'stdout': r.stdout,\n"
+        "            'stderr': r.stderr[:4000],\n"
+        "            'exit_code': r.returncode\n"
+        "        }))\n"
+        "    except subprocess.TimeoutExpired:\n"
+        "        print(json.dumps({'stdout':'','stderr':'timeout','exit_code':124}))\n\n"
+        "if __name__ == '__main__':\n"
+        "    modal.run(app, run_cmd)\n",
+        command, timeout_sec > 0 ? timeout_sec : 30);
+    close(fd);
+
+    char cmd[66560];
+    snprintf(cmd, sizeof(cmd), "modal run %s 2>/dev/null", tmpfile);
+    char *result = run_command(cmd, timeout_sec + 10);
+    unlink(tmpfile);
+    return result;
+}
+
 /* ================================================================
- *  Handler
+ *  Main terminal handler
  * ================================================================ */
 
 char *terminal_handler(const char *args_json, const char *task_id) {
@@ -569,6 +605,11 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* F11: Route to Docker execution backend if configured */
     if (backend && strcasecmp(backend, "docker") == 0) {
         return run_command_docker(command, timeout, docker_image);
+    }
+
+    /* M35: Route to Modal execution backend if configured */
+    if (backend && strcasecmp(backend, "modal") == 0) {
+        return run_command_modal(command, timeout);
     }
 
     return run_command(full_command, timeout);
