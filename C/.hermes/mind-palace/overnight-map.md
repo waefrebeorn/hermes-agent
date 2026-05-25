@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
 | Build | 30MB, 0 warnings | ✅ |
-| Gap count | **145** (battleship-v8) | N02 resolved |
+| Gap count | **144** (battleship-v8) | U01 resolved |
 | Source .c files | 154 | +1 |
 | Library dirs | 59 | +1 |
 | API server | 1015 LOC | 12 endpoints |
@@ -24,13 +24,12 @@
 From prestige_prompt.md v43:
 1. **D22** — Feishu doc/drive tool support (150 LOC, S7)
 2. **N02** — Mixture of Agents tool (300 LOC, S20)
-3. **U01** — TUI image display — code exists but unwired (150 LOC, S14)
-4. **U02** — TUI session browser with search (200 LOC, S14)
-5. **T04** — Test coverage for untested modules (S12)
+3. **U02** — TUI session browser with search (200 LOC, S14)
+4. **T04** — Test coverage for untested modules (S12)
 
 ## Key Facts
 
-- Battleship-v8 is the canonical gap list (145 gaps)
+- Battleship-v8 is the canonical gap list (144 gaps)
 - Vault/achievements.md is the archive — all completed + retired stale claims
 - Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
 - P1 count is 0

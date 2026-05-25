@@ -387,6 +387,7 @@ static const slash_cmd_t slash_commands[] = {
     {"/undo",    "Undo last turn", ""},
     {"/redraw",  "Force screen redraw", ""},
     {"/skin",    "List/reload skins", ""},
+    {"/image",   "Display an image file", "<path>"},
     {NULL, NULL, NULL}
 };
 
@@ -1944,7 +1945,7 @@ static void tui_image_viewer_init(void) {
 }
 
 /* Display image via sixel escape codes — P197 */
-static bool __attribute__((unused)) tui_display_image_sixel(const char *path) {
+static bool tui_display_image_sixel(const char *path) {
     if (!path || !tui.image_viewer.sixel_supported) return false;
 
     /* Read file and output sixel data */
@@ -1981,7 +1982,7 @@ static bool __attribute__((unused)) tui_display_image_sixel(const char *path) {
 }
 
 /* Display image via kitty protocol — P197 */
-static bool __attribute__((unused)) tui_display_image_kitty(const char *path, int max_width, int max_height) {
+static bool tui_display_image_kitty(const char *path, int max_width, int max_height) {
     (void)max_width;
     (void)max_height;
     if (!path || !tui.image_viewer.kitty_supported) return false;
@@ -2032,7 +2033,7 @@ static bool __attribute__((unused)) tui_display_image_kitty(const char *path, in
 }
 
 /* P197: Display image — try kitty first, then sixel */
-static void __attribute__((unused)) tui_display_image(const char *path) {
+static void tui_display_image(const char *path) {
     if (!path) return;
 
     strncpy(tui.image_viewer.image_path, path, sizeof(tui.image_viewer.image_path) - 1);
@@ -2049,6 +2050,99 @@ static void __attribute__((unused)) tui_display_image(const char *path) {
     tui_history_add(MSG_ROLE_INFO, "[Image] Terminal does not support inline images", false);
     tui_history_add(MSG_ROLE_INFO, path, false);
     tui_redraw_history();
+}
+
+/* P197: Image viewer modal keyboard handler */
+static int tui_image_viewer_handle(int ch) {
+    switch (ch) {
+        case 27: /* ESC — exit */
+            tui.modal_mode = MODE_NORMAL;
+            tui_redraw_history();
+            return 1;
+        case '+':
+        case '=':
+            if (tui.image_viewer.zoom_level < 400) {
+                tui.image_viewer.zoom_level += 25;
+                if (tui.image_viewer.image_path[0])
+                    tui_display_image(tui.image_viewer.image_path);
+            }
+            return 1;
+        case '-':
+        case '_':
+            if (tui.image_viewer.zoom_level > 25) {
+                tui.image_viewer.zoom_level -= 25;
+                if (tui.image_viewer.image_path[0])
+                    tui_display_image(tui.image_viewer.image_path);
+            }
+            return 1;
+        case KEY_LEFT:
+            tui.image_viewer.pan_x -= 10;
+            return 1;
+        case KEY_RIGHT:
+            tui.image_viewer.pan_x += 10;
+            return 1;
+        case KEY_UP:
+            tui.image_viewer.pan_y -= 10;
+            return 1;
+        case KEY_DOWN:
+            tui.image_viewer.pan_y += 10;
+            return 1;
+        case 'r':
+        case 'R':
+            tui.image_viewer.pan_x = 0;
+            tui.image_viewer.pan_y = 0;
+            tui.image_viewer.zoom_level = 100;
+            if (tui.image_viewer.image_path[0])
+                tui_display_image(tui.image_viewer.image_path);
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+/* P197: Draw image viewer modal overlay */
+static void tui_draw_image_viewer(void) {
+    WINDOW *win = tui.panes[PANE_HISTORY].win;
+    if (!win) return;
+
+    werase(win);
+
+    wattron(win, A_BOLD | COLOR_PAIR(1));
+    mvwprintw(win, 0, 0, " IMAGE VIEWER ");
+    wattroff(win, A_BOLD | COLOR_PAIR(1));
+
+    int y = 2;
+    if (tui.image_viewer.image_path[0]) {
+        mvwprintw(win, y++, 0, " Path: %s", tui.image_viewer.image_path);
+        y++;
+        mvwprintw(win, y++, 0, " Zoom: %d%%", tui.image_viewer.zoom_level);
+        mvwprintw(win, y++, 0, " Pan:  (%d, %d)", tui.image_viewer.pan_x, tui.image_viewer.pan_y);
+        y++;
+        if (tui.image_viewer.image_displayed) {
+            mvwprintw(win, y++, 0, " Image displayed inline.");
+        } else {
+            mvwprintw(win, y++, 0, " Terminal does not support inline image display.");
+        }
+    } else {
+        mvwprintw(win, y++, 0, " No image loaded.");
+        mvwprintw(win, y++, 0, " Use /image <path> to display an image.");
+    }
+    y++;
+
+    wattron(win, A_DIM);
+    mvwprintw(win, y++, 0, " Controls:");
+    mvwprintw(win, y++, 0, "   ESC       Close viewer");
+    mvwprintw(win, y++, 0, "   +/-       Zoom in/out");
+    mvwprintw(win, y++, 0, "   Arrows    Pan image");
+    mvwprintw(win, y++, 0, "   R         Reset zoom/pan");
+    wattroff(win, A_DIM);
+
+    wattron(win, A_DIM | COLOR_PAIR(10));
+    mvwprintw(win, tui.panes[PANE_HISTORY].rows - 1, 0, " Press ESC to close ");
+    wattroff(win, A_DIM | COLOR_PAIR(10));
+
+    wnoutrefresh(win);
+    doupdate();
 }
 
 /* ==================================================================
@@ -2461,6 +2555,17 @@ static void tui_process_input(const char *line) {
             tui_redraw_history();
             return;
 
+        } else if (strncmp(line, "/image ", 7) == 0) {
+            /* Extract path and try to display image */
+            const char *img_path = line + 7;
+            if (*img_path) {
+                tui_display_image(img_path);
+            } else {
+                tui_history_add(MSG_ROLE_ERROR, "Usage: /image <path>", true);
+                tui_redraw_history();
+            }
+            return;
+
         } else {
             /* Unknown command — try dispatch via agent command system */
             if (tui.agent && commands_dispatch((char *)line, tui.agent)) {
@@ -2504,6 +2609,8 @@ static int tui_handle_modal_input(int ch) {
             return tui_session_browser_handle(ch);
         case MODE_CONFIG_EDIT:
             return tui_config_editor_handle(ch);
+        case MODE_IMAGE_VIEW:
+            return tui_image_viewer_handle(ch);
         case MODE_HELP:
             tui.modal_mode = MODE_NORMAL;
             tui_redraw_history();
@@ -2861,6 +2968,7 @@ int tui_fullscreen_run(agent_state_t *state) {
             switch (tui.modal_mode) {
                 case MODE_SESSION_BROWSE: tui_draw_session_browser(); break;
                 case MODE_CONFIG_EDIT:    tui_draw_config_editor(); break;
+                case MODE_IMAGE_VIEW:     tui_draw_image_viewer(); break;
                 case MODE_HELP:           break; /* help stays until dismissed */
                 default: break;
             }

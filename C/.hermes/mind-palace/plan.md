@@ -4,7 +4,7 @@
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-145 gaps is a checklist. Every ✅ without runtime verification is a lie.
+144 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 
@@ -25,8 +25,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 
 ## Next Actions (top 5)
 
-1. □ U01 — TUI image display — code exists but unwired (150 LOC, S14)
-2. □ U02 — TUI session browser with search (200 LOC, S14)
-3. □ T04-T25 — Test coverage for remaining untested modules (S12)
-4. □ U04 — TUI config editor (150 LOC, S14)
+1. □ U02 — TUI session browser with search (200 LOC, S14)
+2. □ T04-T25 — Test coverage for remaining untested modules (S12)
+3. □ U04 — TUI config editor (150 LOC, S14)
 5. □ N03 — Feishu doc and drive tools (250 LOC, S20)
