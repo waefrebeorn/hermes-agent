@@ -1606,6 +1606,10 @@ static void *thread_poll_bluebubbles(void *arg) {
  * ================================================================ */
 
 static int get_webhook_port(void) {
+    /* 1. Config value (from YAML) takes priority */
+    if (g_gw.config.webhook_port > 0 && g_gw.config.webhook_port <= 65535)
+        return g_gw.config.webhook_port;
+    /* 2. Env vars */
     const char *port_str = getenv("SLERMES_WEBHOOK_PORT");
     if (!port_str) port_str = getenv("HERMES_WEBHOOK_PORT");
     if (!port_str) port_str = getenv("WEBHOOK_PORT");

@@ -970,6 +970,7 @@ typedef struct {
     bool  compress_enabled;    /* compression.enabled: smart context compression */
     char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
     int   secret_rotation_interval;  /* gateway.secret_rotation: interval in seconds (0=disabled) */
+    int   webhook_port;               /* gateway.webhook_port: webhook server port (0=auto/env/8080) */
     char  credential_sources[512];/* credentials.sources: comma-separated resolution order */
     char  signal_number[64];      /* gateway.signal.number: Signal phone number (+1234567890) */
     char  proxy_https[512];       /* proxy.https_proxy: HTTPS proxy URL (e.g. http://proxy:8080) */
