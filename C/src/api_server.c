@@ -217,7 +217,9 @@ static void handle_post_chat(int fd, const char *body_json) {
     }
 
     /* Extract model */
-    const char *model = json_get_str(req, "model", "");
+    const char *model_raw = json_get_str(req, "model", "");
+    char model[256] = "";
+    if (model_raw) strncpy(model, model_raw, sizeof(model) - 1);
     (void)model;
 
     /* Extract messages array */
@@ -348,6 +350,123 @@ static void handle_post_chat(int fd, const char *body_json) {
     json_free(req);
 }
 
+static void send_sse_event(int fd, const char *data);
+static void send_sse_headers(int fd);
+static void sse_send_chunk(int fd, const char *content, int index);
+
+/**
+ * POST /v1/chat/completions?stream=true — SSE streaming response.
+ * Sends the complete response as token-by-token SSE events.
+ * The handler closes the fd when done.
+ */
+static void handle_post_chat_stream(int fd, const char *body_json) {
+    if (!body_json || !body_json[0]) {
+        send_error(fd, 400, "empty request body");
+        close(fd);
+        return;
+    }
+
+    json_t *req = json_parse(body_json, NULL);
+    if (!req) {
+        send_error(fd, 400, "invalid JSON");
+        close(fd);
+        return;
+    }
+
+    /* Extract model and messages */
+    const char *model_raw = json_get_str(req, "model", "");
+    char model[256] = "";
+    if (model_raw) strncpy(model, model_raw, sizeof(model) - 1);
+    const json_t *messages = json_obj_get(req, "messages");
+    if (!messages || messages->type != JSON_ARRAY || json_len(messages) == 0) {
+        json_free(req);
+        send_error(fd, 400, "missing or empty messages array");
+        close(fd);
+        return;
+    }
+
+    /* Run through LLM if available */
+    char result[32768] = "";
+    if (g_agent && g_agent->llm.base_url[0]) {
+        const message_t *llm_msgs[256];
+        int llm_count = 0;
+        for (size_t i = 0; i < json_len(messages) && llm_count < 256; i++) {
+            const json_t *m = json_get(messages, i);
+            if (!m) continue;
+            const char *role = json_get_str(m, "role", "user");
+            const char *content = json_get_str(m, "content", "");
+            message_role_t r = MSG_USER;
+            if (strcmp(role, "system") == 0) r = MSG_SYSTEM;
+            else if (strcmp(role, "assistant") == 0) r = MSG_ASSISTANT;
+            llm_msgs[llm_count++] = message_new(r, content);
+        }
+
+        llm_response_t *resp_llm = llm_chat_completion(
+            &g_agent->llm, llm_msgs, (size_t)llm_count, NULL);
+        if (resp_llm && resp_llm->content) {
+            snprintf(result, sizeof(result), "%s", resp_llm->content);
+        }
+        llm_response_free(resp_llm);
+        for (int i = 0; i < llm_count; i++)
+            message_free((message_t *)llm_msgs[i]);
+    }
+
+    json_free(req);
+
+    /* Send SSE headers and stream the response */
+    send_sse_headers(fd);
+
+    /* Split response into words and send as streaming chunks */
+    char temp[32768];
+    snprintf(temp, sizeof(temp), "%s", result);
+    char *save = NULL;
+    char *word = strtok_r(temp, " ", &save);
+    int index = 0;
+
+    while (word) {
+        char chunk[4096];
+        snprintf(chunk, sizeof(chunk), "%s ", word);
+        sse_send_chunk(fd, chunk, index);
+        index++;
+        word = strtok_r(NULL, " ", &save);
+    }
+
+    /* Fallback: if no words, send full result as one chunk */
+    if (index == 0 && result[0]) {
+        sse_send_chunk(fd, result, 0);
+    }
+
+    /* Send finish event */
+    json_t *choice = json_object();
+    json_set(choice, "index", json_number(0));
+    json_t *delta = json_object();
+    json_set(delta, "role", json_string("assistant"));
+    json_set(delta, "content", json_string(""));
+    json_set(choice, "delta", delta);
+    json_set(choice, "finish_reason", json_string("stop"));
+
+    json_t *finish_msg = json_object();
+    json_set(finish_msg, "id", json_string("chatcmpl-stream"));
+    json_set(finish_msg, "object", json_string("chat.completion.chunk"));
+    json_set(finish_msg, "created", json_number((double)time(NULL)));
+    json_set(finish_msg, "model", json_string(model));
+    json_t *choices_arr = json_array();
+    json_append(choices_arr, choice);
+    json_set(finish_msg, "choices", choices_arr);
+
+    char *finish_str = json_serialize(finish_msg);
+    if (finish_str) {
+        send_sse_event(fd, finish_str);
+        free(finish_str);
+    }
+    json_free(finish_msg);
+
+    /* End of stream */
+    send_sse_event(fd, "[DONE]");
+    fsync(fd);
+    close(fd);
+}
+
 /**
  * Handle an OPTIONS preflight request.
  */
@@ -375,7 +494,7 @@ static void handle_capabilities(int fd) {
 
     json_t *features = json_object();
     json_set(features, "chat_completions", json_bool(true));
-    json_set(features, "streaming", json_bool(false));
+    json_set(features, "streaming", json_bool(true));
     json_set(features, "tools_listing", json_bool(true));
     json_set(features, "models_listing", json_bool(true));
     json_set(features, "agent_status", json_bool(true));
@@ -525,11 +644,14 @@ static void handle_agent_status(int fd) {
 /* ── Request dispatch ───────────────────────────────────────────── */
 
 static void dispatch_request(int client_fd, const char *method,
-                              const char *path, const char *body) {
+                              const char *path, const char *body,
+                              const char *query) {
     if (strcmp(method, "OPTIONS") == 0) {
         handle_options(client_fd);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/models") == 0) {
         handle_get_models(client_fd);
+    } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/chat/completions") == 0 && strstr(query ? query : "", "stream=true")) {
+        handle_post_chat_stream(client_fd, body);
     } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/chat/completions") == 0) {
         handle_post_chat(client_fd, body);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/health") == 0) {
@@ -565,9 +687,45 @@ static void handle_client(int client_fd) {
         return;
     }
 
+    /* Extract query string from path if present */
+    char query[2048] = "";
+    const char *qmark = strchr(buf, '?');
+    if (qmark) {
+        const char *space = strchr(qmark, ' ');
+        size_t qlen = space ? (size_t)(space - qmark - 1) : strlen(qmark + 1);
+        if (qlen >= sizeof(query)) qlen = sizeof(query) - 1;
+        memcpy(query, qmark + 1, qlen);
+        query[qlen] = '\0';
+    }
+
     const char *body = find_body(buf);
-    dispatch_request(client_fd, method, path, body);
+    dispatch_request(client_fd, method, path, body, query);
     close(client_fd);
+}
+
+/* ── SSE helpers ────────────────────────────────────────────────── */
+
+static void send_sse_event(int fd, const char *data) {
+    dprintf(fd, "data: %s\n\n", data ? data : "");
+}
+
+static void send_sse_headers(int fd) {
+    const char *headers =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/event-stream\r\n"
+        "Cache-Control: no-cache\r\n"
+        "Connection: keep-alive\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "\r\n";
+    write(fd, headers, strlen(headers));
+}
+
+static void sse_send_chunk(int fd, const char *content, int index) {
+    char event[4096];
+    snprintf(event, sizeof(event),
+        "{\"choices\":[{\"delta\":{\"content\":\"%s\"},\"index\":%d}]}",
+        content, index);
+    send_sse_event(fd, event);
 }
 
 /* ── Server thread ──────────────────────────────────────────────── */
