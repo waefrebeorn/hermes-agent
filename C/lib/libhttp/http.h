@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <time.h>  /* for time_t in cookie expiry */
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,6 +103,30 @@ char *http_url_encode(const char *str);
 /* === Proxy support === */
 /* Set HTTP proxy (CONNECT tunnel for HTTPS). Empty/NULL to clear. */
 void http_client_set_proxy(http_t *h, const char *proxy_url);
+
+/* === Cookie jar support === */
+#define HTTP_COOKIE_MAX 64
+#define HTTP_COOKIE_NAME_LEN 128
+#define HTTP_COOKIE_VALUE_LEN 512
+#define HTTP_COOKIE_DOMAIN_LEN 256
+#define HTTP_COOKIE_PATH_LEN 256
+
+typedef struct {
+    char name[HTTP_COOKIE_NAME_LEN];
+    char value[HTTP_COOKIE_VALUE_LEN];
+    char domain[HTTP_COOKIE_DOMAIN_LEN];
+    char path[HTTP_COOKIE_PATH_LEN];
+    time_t expires;
+    bool secure_only;
+    bool http_only;
+} http_cookie_t;
+
+void http_client_enable_cookies(http_t *h, bool enable);
+void http_client_clear_cookies(http_t *h);
+
+/* Internal http_request hooks */
+void http_cookie_parse_set_cookie(http_t *h, const char *header_value);
+char *http_cookie_build_header(http_t *h, const char *url);
 
 #ifdef __cplusplus
 }

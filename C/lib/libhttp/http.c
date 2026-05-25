@@ -48,7 +48,11 @@ struct http_t {
     int      backoff_ms;
     SSL_CTX *ssl_ctx;
     bool     ssl_init;
-    char     proxy[512];     /* HTTP proxy URL, empty = direct */
+    char     proxy[512];
+    /* Cookie jar */
+    bool     cookies_enabled;
+    http_cookie_t cookies[HTTP_COOKIE_MAX];
+    int      cookie_count;
 };
 
 typedef struct {
@@ -494,6 +498,15 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         if (extra_headers)
             REQ_APPEND("%s\r\n", extra_headers);
 
+        /* Append Cookie header from cookie jar if enabled */
+        if (h->cookies_enabled && h->cookie_count > 0) {
+            char *cookie_hdr = http_cookie_build_header(h, url);
+            if (cookie_hdr) {
+                REQ_APPEND("Cookie: %s\r\n", cookie_hdr);
+                free(cookie_hdr);
+            }
+        }
+
         if (body && body_len > 0)
             REQ_APPEND("Content-Length: %zu\r\n", body_len);
 
@@ -588,6 +601,26 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         resp->headers = xstrdup(resp_buf);
         resp->body = xstrdup(header_end + 4);
         resp->body_len = strlen(resp->body);
+
+        /* Parse Set-Cookie headers from response */
+        if (h->cookies_enabled) {
+            const char *sc = resp->headers;
+            while ((sc = strstr(sc, "Set-Cookie:")) != NULL) {
+                sc += 11;
+                while (*sc == ' ') sc++;
+                const char *nl = strstr(sc, "\r\n");
+                size_t sc_len = nl ? (size_t)(nl - sc) : strlen(sc);
+                char *sc_val = (char *)malloc(sc_len + 1);
+                if (sc_val) {
+                    memcpy(sc_val, sc, sc_len);
+                    sc_val[sc_len] = '\0';
+                    http_cookie_parse_set_cookie(h, sc_val);
+                    free(sc_val);
+                }
+                if (!nl) break;
+                sc = nl + 2;
+            }
+        }
 
         /* Handle chunked transfer encoding */
         if (strstr(resp->headers, "Transfer-Encoding: chunked") ||
@@ -920,4 +953,96 @@ char *http_url_encode(const char *str) {
     }
     out[j] = '\0';
     return out;
+}
+
+/* ================================================================
+ *  Cookie jar
+ * ================================================================ */
+
+void http_client_enable_cookies(http_t *h, bool enable) {
+    if (!h) return;
+    h->cookies_enabled = enable;
+    if (!enable) http_client_clear_cookies(h);
+}
+
+void http_client_clear_cookies(http_t *h) {
+    if (!h) return;
+    h->cookie_count = 0;
+    memset(h->cookies, 0, sizeof(h->cookies));
+}
+
+/* Parse a single Set-Cookie header value: name=value[; attr...] */
+void http_cookie_parse_set_cookie(http_t *h, const char *header_value) {
+    if (!h || !header_value || !h->cookies_enabled) return;
+
+    /* Extract name=value (first token before ;) */
+    const char *semi = strchr(header_value, ';');
+    size_t nv_len = semi ? (size_t)(semi - header_value) : strlen(header_value);
+
+    const char *eq = strchr(header_value, '=');
+    if (!eq || (size_t)(eq - header_value) >= nv_len) return;
+
+    size_t name_len = (size_t)(eq - header_value);
+    size_t val_len = nv_len - name_len - 1;
+
+    if (name_len == 0 || name_len >= HTTP_COOKIE_NAME_LEN) return;
+    if (val_len >= HTTP_COOKIE_VALUE_LEN) return;
+
+    if (h->cookie_count >= HTTP_COOKIE_MAX) return;
+    http_cookie_t *c = &h->cookies[h->cookie_count];
+
+    memcpy(c->name, header_value, name_len);
+    c->name[name_len] = '\0';
+    memcpy(c->value, eq + 1, val_len);
+    c->value[val_len] = '\0';
+
+    /* Expand cookie value escape sequences like \x22 */
+    size_t wi = 0;
+    for (size_t ri = 0; ri < val_len; ri++) {
+        if (c->value[ri] == '\\' && ri + 1 < val_len) {
+            if (c->value[ri + 1] == '"') continue; /* skip \" */
+        }
+        c->value[wi++] = c->value[ri];
+    }
+    c->value[wi] = '\0';
+
+    /* Default domain and path */
+    strncpy(c->domain, "*", sizeof(c->domain) - 1);
+    strncpy(c->path, "/", sizeof(c->path) - 1);
+    c->expires = 0;
+    c->secure_only = false;
+    c->http_only = false;
+
+    h->cookie_count++;
+}
+
+/* Build Cookie header value for a given URL. Returns malloc'd string or NULL if none. */
+char *http_cookie_build_header(http_t *h, const char *url) {
+    if (!h || !url || !h->cookies_enabled || h->cookie_count == 0) return NULL;
+
+    parsed_url_t purl;
+    memset(&purl, 0, sizeof(purl));
+    if (!parse_url(url, &purl)) return NULL;
+
+    size_t total = 0;
+    char buf[4096] = {0};
+
+    for (int i = 0; i < h->cookie_count; i++) {
+        http_cookie_t *c = &h->cookies[i];
+        bool domain_match = (strcmp(c->domain, "*") == 0)
+            || strstr(purl.host, c->domain) != NULL;
+        bool path_match = strncmp(purl.path, c->path, strlen(c->path)) == 0;
+        bool not_expired = (c->expires == 0) || (difftime(c->expires, time(NULL)) > 0);
+        bool secure_ok = !c->secure_only || strcmp(purl.scheme, "https") == 0;
+
+        if (domain_match && path_match && not_expired && secure_ok) {
+            size_t remaining = sizeof(buf) - total - 1;
+            int n = snprintf(buf + total, remaining, "%s%s=%s",
+                             total > 0 ? "; " : "", c->name, c->value);
+            if (n > 0 && (size_t)n < remaining) total += (size_t)n;
+        }
+    }
+
+    if (total == 0) return NULL;
+    return strdup(buf);
 }

@@ -601,3 +601,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | R07 | make check target — combined bash lint + build + test suite | S21 (closed) | Makefile:451-459, .PHONY: check |
 | G16 | STARTTLS already fully implemented (EHLO→STARTTLS→re-EHLO→AUTH) | S8 (stale) | email.c:1542-1560 |
+
+## Phase 22: HTTP Cookie Jar — L05 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |

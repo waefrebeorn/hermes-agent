@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **202 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **201 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -169,7 +169,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 2 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
 | 3 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
 
-## SECTOR 10: Library Depth (14 gaps)
+## SECTOR 10: Library Depth (13 gaps)
 
 Libraries ported but missing features.
 
@@ -178,17 +178,16 @@ Libraries ported but missing features.
 | 1 | L01 | libhttp | HTTP/2 support | 500 | P3 |
 | 2 | L02 | libhttp | Connection pooling | 200 | P2 |
 | 3 | L04 | libhttp | Multipart form data | 100 | P2 |
-| 4 | L05 | libhttp | Cookie jar | 60 | P2 |
-| 5 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
-| 6 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
-| 7 | L09 | libjson | JSON schema validation | 200 | P3 |
-| 8 | L10 | libjson | Streaming parse | 150 | P3 |
-| 9 | L12 | libcrypto | AES encryption | 200 | P2 |
-| 10 | L13 | libcrypto | RSA key generation | 150 | P3 |
-| 11 | L19 | libdb | Session tags CRUD | 40 | P2 |
-| 12 | L22 | libdb | Batch operations | 40 | P3 |
-| 13 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
-| 14 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 4 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
+| 5 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
+| 6 | L09 | libjson | JSON schema validation | 200 | P3 |
+| 7 | L10 | libjson | Streaming parse | 150 | P3 |
+| 8 | L12 | libcrypto | AES encryption | 200 | P2 |
+| 9 | L13 | libcrypto | RSA key generation | 150 | P3 |
+| 10 | L19 | libdb | Session tags CRUD | 40 | P2 |
+| 11 | L22 | libdb | Batch operations | 40 | P3 |
+| 12 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
+| 13 | L30 | libmcp | Streaming response support | 100 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (2 gaps)
 
@@ -407,7 +406,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S7: Tool Depth | 10 |
 || S8: Gateway | 17 |
 || S9: Config | 3 |
-|| S10: Library | 14 |
+|| S10: Library | 13 |
 || S11: Bug Fixes | 2 |
 || S12: Test Coverage | 25 |
 || S13: API Server | 5 |
@@ -420,5 +419,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 9 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **202** |
+|| **Total** | **201** |
 | (resolved items retired to vault/achievements.md) | |
