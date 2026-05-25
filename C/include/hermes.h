@@ -482,6 +482,7 @@ typedef struct {
     int   viewport_height;         /* browser viewport height */
     int   timeout;                /* browser.command_timeout */
     bool  enable_javascript;       /* enable JS in browser */
+    char  user_agent[256];         /* browser.user_agent: custom UA string */
 } browser_config_t;
 
 /* ================================================================

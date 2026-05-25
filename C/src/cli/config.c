@@ -1128,6 +1128,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
 
     int bt = yaml_get_int(doc, "browser.command_timeout", 0);
     if (bt > 0) cfg->browser_cfg.timeout = bt;
+    const char *ua = yaml_get_string(doc, "browser.user_agent");
+    if (ua) snprintf(cfg->browser_cfg.user_agent, sizeof(cfg->browser_cfg.user_agent), "%s", ua);
 
     /* P5: Delegation section */
     int dcc = yaml_get_int(doc, "delegation.max_concurrent_children", 0);
