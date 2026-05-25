@@ -2642,6 +2642,25 @@ else skip "image_gen (compilation failed)"
 fi
 
 # ==============================================
+# Video Generation Tests
+# ==============================================
+echo ""; echo "=== Video Generation Tests ==="
+INCDIRS=$(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done)
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" $INCDIRS \
+    "$CDIR/tests/test_video_gen.c" \
+    "$CDIR/src/tools/video_gen.c" \
+    "$CDIR/src/tools/video_gen_registry.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libfal_common/fal_common.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_video_gen -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_video_gen ]]; then
+    if /tmp/hermes_test_video_gen > /dev/null 2>&1; then ok "video_gen (5 tests)"
+    else fail "video_gen (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_video_gen
+else skip "video_gen (compilation failed)"
+fi
+
+# ==============================================
 # 7. Completions test
 # ==============================================
 echo ""; echo "=== Completions Tests ==="
