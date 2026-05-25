@@ -992,6 +992,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "homeassistant (compilation failed)"
 fi &
 
+# DingTalk gateway test
+echo ""; echo "=== DingTalk Gateway Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_dingtalk.c" \
+    "$CDIR/src/gateway/platforms/dingtalk.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_dingtalk -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_dingtalk > /dev/null 2>&1; then ok "dingtalk (10 tests)"
+    else fail "dingtalk (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_dingtalk
+else skip "dingtalk (compilation failed)"
+fi &
+
 # Result storage test (P49-P50 — needs hermes_config_load from config.c, skip for now)
 # Test file exists at tests/test_result_storage.c — requires full link with config.c
 # echo ""; echo "=== Tool Result Storage Tests (P49-P50) === (skipped — needs config dependency resolution)"

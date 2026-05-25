@@ -359,9 +359,7 @@ json_node_t *dingtalk_poll_messages(http_client_t *http) {
 
     pthread_mutex_lock(&g_msg_lock);
     if (g_msg_head == g_msg_tail) {
-        /* Queue empty — try to refresh access token as side effect */
         pthread_mutex_unlock(&g_msg_lock);
-        dingtalk_get_access_token(http);
         return NULL;
     }
 
