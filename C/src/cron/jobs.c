@@ -11,10 +11,9 @@
 /* Forward declarations from scheduler.c */
 bool cron_add_job(const char *name, const char *schedule, const char *command);
 void cron_remove_job(const char *name);
+char *cron_get_jobs_json(void);
 
-/* List all jobs */
+/* List all jobs as JSON array */
 char *cron_list_jobs(void) {
-    /* Would iterate g_jobs from scheduler.c */
-    /* For minimal impl: return empty list */
-    return strdup("[]");
+    return cron_get_jobs_json();
 }

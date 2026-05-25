@@ -6,7 +6,7 @@
 - **Binary:** 386KB, compiles with 0 warnings on `make`
 - **Source:** 5,973 lines C across 29 `.c` + 9 `.h` files
 - **Build:** All 5 phase targets compile (`phase1`–`phase5`/`all`)
-- **Gaps:** 394 identified (58 form-not-function, 330 missing, 1 stub, 6 fixed)
+- **Gaps:** 392 identified (56 form-not-function, 330 missing, 1 stub, 8 fixed)
 - **Target:** Close to ~300 productive gaps, all critical P0 fixed
 
 ## Phase Status (HONEST)
@@ -17,7 +17,7 @@
 | 2: Agent Core | ✅ | 🟧 | Loop runs with tool execution, multi-turn works. No memory, compression, persistence |
 | 3: Tools | ✅ | 🟧 | Only 4 tools registered (need 30+). web_search is an alias. No patch/search |
 | 4: Gateway | ✅ | 🟧 | Telegram long-poll works minimally. No other platforms. No approval |
-| 5: Cron/Advanced | ✅ | 🟥 | Jobs memory-only. cron_list returns "[]" stub. No skill system |
+| 5: Cron/Advanced | ✅ | 🟧 | Jobs persist to disk. cron_list works. No skill system |
 
 ## Priority Queue
 
@@ -25,7 +25,7 @@
 1. ~~Fix tool call loop — agent_loop.c dead code (return before TODO)~~ ✅ DONE
 2. ~~Fix auth header — llm_client.c malformed Content-Type~~ ✅ DONE
 3. ~~Implement real web_search~~ ✅ DONE (DuckDuckGo Instant Answer API)
-4. Implement cron job persistence
+4. ~~Implement cron job persistence~~ ✅ DONE (JSON save/load to ~/.hermes/cron_jobs.json)
 5. Write HONEST state.md (replace the lying version)
 
 ### P1 — Next Wave:

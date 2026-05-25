@@ -1,5 +1,5 @@
 # BATTLESHIP — Hermes C Translation Gap Audit
-**394 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
+**392 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
 
 ## Legend
 - 🟥 **F-N-F** = Form Not Function (code compiles but doesn't work)
@@ -213,11 +213,11 @@
 170. ⬜ **No message edit support** — Can't update sent messages
 171. ⬜ **No keyboard/markup support** — Can't send buttons
 
-## SECTOR 5: Cron & Scheduler — 13 GAPS
+## SECTOR 5: Cron & Scheduler — 11 GAPS
 
 ### Cron Defects (F-N-F) — 4 gaps
-172. 🟥 **Jobs have no persistence** — `scheduler.c` stores jobs in memory only
-173. 🟥 **`cron_list_jobs()` returns "[]"** — `jobs.c:19` is a hardcoded stub
+172. ✅ **Jobs persistence fixed** — `scheduler.c` saves/loads jobs JSON to `~/.hermes/cron_jobs.json`
+173. ✅ **`cron_list_jobs()` fixed** — now iterates linked list via `cron_get_jobs_json()`
 174. 🟥 **No job pause/resume tracking** — `active` flag but no CLI integration
 175. 🟥 **No job output capture** — `system()` output goes to stdout, not captured
 

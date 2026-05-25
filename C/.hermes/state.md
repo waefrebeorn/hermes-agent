@@ -46,9 +46,9 @@ make       # → hermes binary, 386KB, 0 warnings
 - `server.c` (221 lines) — Telegram long-poll loop
 - `telegram.c` (130 lines) — Inline Telegram API helpers
 
-### Phase 5: Cron/Advanced 🟥 (Broken)
-- `scheduler.c` (203 lines) — Schedule parsing + run loop
-- `jobs.c` (20 lines) — Stub: `cron_list_jobs()` returns "[]"
+### Phase 5: Cron/Advanced 🟧 (Partial)
+- `scheduler.c` (317 lines) — Schedule parsing + run loop + JSON persistence
+- `jobs.c` (20 lines) — Job listing via `cron_get_jobs_json()`
 
 ### Provider/Auth
 - `token_exchange.c` (552 lines) — Full PKCE OAuth token exchange
@@ -69,8 +69,8 @@ Top 10 Critical Defects:
 | 1 | **Tool call loop** — fixed now executes tools and loops | agent_loop.c:173-191 | Tools work in multi-turn |
 | 2 | **Auth header** — fixed Content-Type properly set | llm_client.c:113-121 | LLM API calls work |
 | 3 | **web_search** — fixed uses DuckDuckGo API, no alias | web.c:70-190 | Web search works |
-| 4 | **Jobs are memory-only** — lost on restart | scheduler.c | Data loss |
-| 5 | **cron_list_jobs() returns empty array** — hardcoded stub | jobs.c:19 | Can't list jobs |
+| 4 | **Jobs persistence** — fixed saves/loads JSON | scheduler.c:149-240 | Jobs survive restarts |
+| 5 | **cron_list_jobs** — fixed iterates linked list | jobs.c:14 | Can list jobs |
 | 6 | **No patch/search tools** — only read/write | file.c | Can't edit files |
 | 7 | **No readline/autocomplete** — raw fgets | cli.c | Bad UX |
 | 8 | **Display has no spinner/progress/panel** — declarations but no code | display.h vs cli_display.c | Lies to callers |
@@ -107,7 +107,7 @@ make          # Full binary ✅
 | Tool calling | ✅ | Fixed — tools execute and loop back |
 | LLM call | ✅ | Auth header fixed |
 | web search | ✅ | DuckDuckGo Instant Answer API |
-| cron persist | 🟥 | Memory-only |
+| cron persist | ✅ | JSON save/load to ~/.hermes/cron_jobs.json |
 | JSON parser | ✅ | test_json.c all pass |
 | Auth store | ✅ | test_auth.c all pass |
 
