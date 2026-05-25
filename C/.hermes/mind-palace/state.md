@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (195 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (194 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -37,7 +37,7 @@
 | S7 | Tool Depth | 8 | 0 | 6 | 2 |
 | S8 | Gateway Depth | 17 | 0 | 15 | 2 |
 | S9 | Config/Environment | 3 | 0 | 0 | 3 |
-| S10 | Library Depth | 13 | 0 | 7 | 6 |
+| S10 | Library Depth | 12 | 0 | 6 | 6 |
 | S11 | Bug Fixes | 2 | 0 | 1 | 1 |
 | S12 | Test Coverage | 25 | 0 | 25 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 10 | 0 | 2 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| | **Total** | **195** | **0** | **121** | **74** |
+| | **Total** | **194** | **0** | **120** | **74** |
 
 ## Python Upstream Parity
 
@@ -79,6 +79,7 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | R02,R03,R05 | Curator stale — /curator with status/run all implemented | S15 | 2026-05-24 |
 | F01 | File backend atomic writes — mkstemp+fsync+rename | S11 | 2026-05-24 |
 | S02 | Port scan detection — nmap/masscan/nc/zmap/dev/tcp detection in tirith | S19 | 2026-05-24 |
+| L19 | Session tags CRUD — db_tag_add/remove/list/find | S10 | 2026-05-24 |
 
 ## Next Priority Queue (top 10)
 

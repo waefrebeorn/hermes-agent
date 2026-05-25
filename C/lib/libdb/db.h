@@ -88,6 +88,20 @@ bool db_load_meta(const db_t *db, const char *session_id, session_meta_t *meta);
 /* Initialize metadata with defaults (title, model, timestamps). */
 void db_meta_init(session_meta_t *meta);
 
+/* === L19: Tag CRUD operations === */
+
+/* Add a tag to a session. Returns true if added. Max SESSION_TAGS_MAX per session. */
+bool db_tag_add(db_t *db, const char *session_id, const char *tag);
+
+/* Remove a tag from a session. Returns true if tag existed. */
+bool db_tag_remove(db_t *db, const char *session_id, const char *tag);
+
+/* List all tags for a session. Returns malloc'd array of strings, caller must free. */
+char **db_tag_list(const db_t *db, const char *session_id, int *count);
+
+/* Find sessions by tag. Returns NULL-terminated array of session IDs, caller must free. */
+char **db_tag_find(const db_t *db, const char *tag, size_t *count);
+
 /* === Listing === */
 
 /* List all session IDs. Returns NULL-terminated array. Caller free each + array. */

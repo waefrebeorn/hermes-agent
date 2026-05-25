@@ -449,6 +449,113 @@ bool db_load_meta(const db_t *db, const char *session_id, session_meta_t *meta) 
 }
 
 /* ================================================================
+ *  L19: Tag CRUD operations
+ * ================================================================ */
+
+bool db_tag_add(db_t *db, const char *session_id, const char *tag) {
+    if (!db || !session_id || !tag || !*tag) return false;
+    session_meta_t meta;
+    if (!db_load_meta(db, session_id, &meta))
+        db_meta_init(&meta);
+
+    /* Check if tag already exists */
+    for (int i = 0; i < meta.tag_count; i++) {
+        if (strcmp(meta.tags[i], tag) == 0) return true; /* already has it */
+    }
+
+    /* Check limit */
+    if (meta.tag_count >= SESSION_TAGS_MAX) return false;
+
+    snprintf(meta.tags[meta.tag_count], SESSION_TAG_LEN, "%s", tag);
+    meta.tag_count++;
+    return db_save_meta(db, session_id, &meta);
+}
+
+bool db_tag_remove(db_t *db, const char *session_id, const char *tag) {
+    if (!db || !session_id || !tag || !*tag) return false;
+    session_meta_t meta;
+    if (!db_load_meta(db, session_id, &meta)) return false;
+
+    for (int i = 0; i < meta.tag_count; i++) {
+        if (strcmp(meta.tags[i], tag) == 0) {
+            /* Shift remaining tags left */
+            for (int j = i; j < meta.tag_count - 1; j++)
+                snprintf(meta.tags[j], SESSION_TAG_LEN, "%s", meta.tags[j + 1]);
+            meta.tag_count--;
+            return db_save_meta(db, session_id, &meta);
+        }
+    }
+    return false; /* tag not found */
+}
+
+char **db_tag_list(const db_t *db, const char *session_id, int *count) {
+    if (!db || !session_id || !count) return NULL;
+    session_meta_t meta;
+    if (!db_load_meta(db, session_id, &meta)) {
+        *count = 0;
+        return NULL;
+    }
+
+    char **result = calloc((size_t)meta.tag_count + 1, sizeof(char *));
+    if (!result) { *count = 0; return NULL; }
+
+    for (int i = 0; i < meta.tag_count; i++) {
+        result[i] = strdup(meta.tags[i]);
+        if (!result[i]) {
+            for (int j = 0; j < i; j++) free(result[j]);
+            free(result);
+            *count = 0;
+            return NULL;
+        }
+    }
+    *count = meta.tag_count;
+    return result;
+}
+
+char **db_tag_find(const db_t *db, const char *tag, size_t *count) {
+    if (!db || !tag || !*tag || !count) return NULL;
+    *count = 0;
+
+    size_t total = 0;
+    db_session_entry_t *all = db_list_with_meta(db, &total);
+    if (!all) return NULL;
+
+    size_t cap = 16, idx = 0;
+    char **result = calloc(cap, sizeof(char *));
+    if (!result) { free(all); return NULL; }
+
+    for (size_t i = 0; i < total; i++) {
+        for (int t = 0; t < all[i].meta.tag_count; t++) {
+            if (strcmp(all[i].meta.tags[t], tag) == 0) {
+                /* Grow if needed */
+                if (idx + 1 >= cap) {
+                    cap *= 2;
+                    char **tmp = realloc(result, cap * sizeof(char *));
+                    if (!tmp) {
+                        for (size_t j = 0; j < idx; j++) free(result[j]);
+                        free(result); free(all);
+                        return NULL;
+                    }
+                    result = tmp;
+                }
+                result[idx] = strdup(all[i].id);
+                if (!result[idx]) {
+                    for (size_t j = 0; j < idx; j++) free(result[j]);
+                    free(result); free(all);
+                    return NULL;
+                }
+                idx++;
+                break;
+            }
+        }
+    }
+    free(all);
+    result[idx] = NULL;
+    *count = idx;
+    return result;
+}
+
+/* ================================================================
  *  Listing
  * ================================================================ */
 

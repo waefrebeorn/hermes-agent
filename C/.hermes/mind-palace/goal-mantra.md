@@ -24,7 +24,7 @@ All code is text — consumed, understood, rewritten in C. Every Python library,
 | Gateways | 19 platforms |
 | Providers | 11 C modules — ALL with dedicated test files |
 | Stubs | 0 real |
-| Gaps | 195 verified across 22 sectors |
+| Gaps | 194 verified across 22 sectors |
 | P1 priority | 0 |
 
 ## Stale Claims Cancelled
@@ -33,7 +33,7 @@ Battleship-v7 had 16 stale claims (Phase 8 in vault).
 Battleship-v8 had 18 more stale claims retired in Phases 9+22 (S05, B05, B06, B03, B10,
 C01-C05, C16, D04, D17-D20, P01, R04 + G01, D16, G10, L03) — see vault/achievements.md Phases 9, 22 for full tables.
 
-The remaining 195 gaps are verified open.
+The remaining 194 gaps are verified open.
 
 ## Triple DA Found
 

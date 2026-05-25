@@ -84,6 +84,68 @@ int main(void) {
         bool flushed = db_flush(db);
         TEST("db_flush success", flushed == true);
 
+        /* L19: Tag CRUD tests */
+        {
+            int count = 0;
+            /* Re-init session_1 for tag tests */
+            db_save(db, "session_1", "{}");
+
+            TEST("db_tag_add adds tag", db_tag_add(db, "session_1", "important"));
+            TEST("db_tag_add duplicate returns true",
+                 db_tag_add(db, "session_1", "important") == true);
+
+            char **tags = db_tag_list(db, "session_1", &count);
+            TEST("db_tag_list non-NULL", tags != NULL);
+            if (tags) {
+                TEST("db_tag_list has 1 tag", count == 1);
+                TEST("db_tag_list correct tag", strcmp(tags[0], "important") == 0);
+                for (int i = 0; i < count; i++) free(tags[i]);
+                free(tags);
+            }
+
+            TEST("db_tag_add second tag", db_tag_add(db, "session_1", "work"));
+            tags = db_tag_list(db, "session_1", &count);
+            TEST("db_tag_list has 2 tags", tags && count == 2);
+            if (tags) {
+                for (int i = 0; i < count; i++) free(tags[i]);
+                free(tags);
+            }
+
+            TEST("db_tag_remove removes tag",
+                 db_tag_remove(db, "session_1", "important"));
+            tags = db_tag_list(db, "session_1", &count);
+            TEST("db_tag_list has 1 tag after remove", tags && count == 1);
+            if (tags) {
+                TEST("remaining tag is 'work'", strcmp(tags[0], "work") == 0);
+                for (int i = 0; i < count; i++) free(tags[i]);
+                free(tags);
+            }
+
+            TEST("db_tag_remove nonexistent returns false",
+                 db_tag_remove(db, "session_1", "nonexistent") == false);
+
+            /* db_tag_find */
+            db_save(db, "session_tag_find", "{}");
+            db_tag_add(db, "session_tag_find", "important");
+            db_tag_add(db, "session_1", "important"); /* re-add after earlier remove */
+            size_t find_count = 0;
+            char **found = db_tag_find(db, "important", &find_count);
+            TEST("db_tag_find non-NULL", found != NULL);
+            if (found) {
+                TEST("db_tag_find found sessions", find_count > 0);
+                bool found_s1 = false, found_stf = false;
+                for (size_t i = 0; found[i]; i++) {
+                    if (strcmp(found[i], "session_1") == 0) found_s1 = true;
+                    if (strcmp(found[i], "session_tag_find") == 0) found_stf = true;
+                }
+                TEST("db_tag_find found session_1", found_s1);
+                TEST("db_tag_find found session_tag_find", found_stf);
+                for (size_t i = 0; found[i]; i++) free(found[i]);
+                free(found);
+            }
+            db_delete(db, "session_tag_find");
+        }
+
         /* Test 10: db_clear */
         bool cleared = db_clear(db);
         TEST("db_clear success", cleared == true);

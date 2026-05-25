@@ -608,6 +608,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |
 
+## Phase 26: Session Tags CRUD — L19 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L19 | db_tag_add/db_tag_remove/db_tag_list/db_tag_find — full tag CRUD for session metadata, including cross-session tag search | S10 | db.h: 4 new function declarations, db.c: ~90 LOC implementation, test_db.c: 16 tag tests all PASS |
+
 ## Phase 25: Port Scan Detection — S02 (2026-05-24)
 
 | ID | Description | Sector | Evidence |
