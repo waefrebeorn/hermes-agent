@@ -188,6 +188,65 @@ int main(void) {
         TEST("data intact after wrong-key attempt", v && strcmp(v, "secret-value") == 0);
     }
 
+    printf("\n--- Key rotation ---\n");
+    {
+        /* Save with old key, rotate to new, verify new key works */
+        vault_set_master_key("old-passphrase");
+        vault_set_path(vault_path);
+        vault_store("rotate_service", "key1", "rotate-value");
+        vault_save();
+        vault_lock();
+
+        /* Rotate key in-memory (vault already has data) */
+        vault_set_master_key("old-passphrase");
+        TEST("rotate key (in-memory)", vault_rotate_key("old-passphrase", "new-passphrase"));
+        TEST("data survives rotation", vault_retrieve("rotate_service", "key1") &&
+             strcmp(vault_retrieve("rotate_service", "key1"), "rotate-value") == 0);
+        vault_save();
+        vault_lock();
+
+        /* New key should work */
+        vault_set_master_key("new-passphrase");
+        TEST("new key loads vault", vault_load());
+        {
+            const char *v = vault_retrieve("rotate_service", "key1");
+            TEST("data survives key rotation", v && strcmp(v, "rotate-value") == 0);
+        }
+
+        /* Old key should not work */
+        vault_lock();
+        vault_set_master_key("old-passphrase");
+        TEST("old key fails after rotation", !vault_load());
+
+        /* Rotate from file with old passphrase */
+        vault_lock();
+        vault_set_master_key("new-passphrase");
+        vault_load();
+        vault_store("second_service", "key2", "second-value");
+        vault_save();
+        vault_lock();
+
+        /* File-based rotation: new-passphrase -> final-passphrase */
+        vault_set_master_key("new-passphrase");
+        TEST("rotate from file", vault_rotate_key("new-passphrase", "final-passphrase"));
+        vault_lock();
+
+        vault_set_master_key("final-passphrase");
+        TEST("final key loads rotated vault", vault_load());
+        {
+            const char *v1 = vault_retrieve("rotate_service", "key1");
+            const char *v2 = vault_retrieve("second_service", "key2");
+            TEST("both services survive rotation", v1 && v2);
+            TEST("rotate_service value intact", v1 && strcmp(v1, "rotate-value") == 0);
+            TEST("second_service value intact", v2 && strcmp(v2, "second-value") == 0);
+        }
+
+        /* NULL safety */
+        TEST("rotate with NULL old passphrase", !vault_rotate_key(NULL, "new"));
+        TEST("rotate with NULL new passphrase", !vault_rotate_key("old", NULL));
+        TEST("rotate with empty old passphrase", !vault_rotate_key("", "new"));
+    }
+
     /* Cleanup */
     vault_lock();
     unlink(vault_path);

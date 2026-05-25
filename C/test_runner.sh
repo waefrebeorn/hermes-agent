@@ -1212,7 +1212,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
     "$CDIR/src/agent/vault.c" \
     "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_vault -lm -lssl -lcrypto > /dev/null 2>&1; then
-    if /tmp/hermes_test_vault > /dev/null 2>&1; then ok "vault (37 tests)"
+    if /tmp/hermes_test_vault > /dev/null 2>&1; then ok "vault (50 tests)"
     else
         echo "  Vault test output:"
         /tmp/hermes_test_vault 2>&1 | sed 's/^/    /'

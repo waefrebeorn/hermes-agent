@@ -342,6 +342,63 @@ bool vault_delete(const char *service, const char *key) {
     return false;
 }
 
+/* ================================================================
+ *  Key Rotation
+ * ================================================================ */
+
+/* Rotate master key: decrypt vault with old passphrase, re-encrypt with new.
+ * The in-memory vault state is preserved after rotation if successful. */
+bool vault_rotate_key(const char *old_passphrase, const char *new_passphrase) {
+    if (!old_passphrase || !new_passphrase) return false;
+    if (!old_passphrase[0] || !new_passphrase[0]) return false;
+
+    /* Save current in-memory data first (if already loaded) */
+    bool had_data = (g_vault_count > 0);
+
+    /* Derive old key and try to load vault */
+    unsigned char old_key[32];
+    derive_key(old_passphrase, old_key, sizeof(old_key));
+
+    bool load_ok = false;
+    if (had_data) {
+        /* If we have in-memory data, rotate in-place without file I/O */
+        unsigned char new_key[32];
+        derive_key(new_passphrase, new_key, sizeof(new_key));
+        memcpy(g_master_key, new_key, sizeof(g_master_key));
+        g_master_key_set = true;
+        return true;
+    }
+
+    /* Otherwise, try to load and decrypt existing vault file */
+    unsigned char saved_key[32];
+    memcpy(saved_key, g_master_key, sizeof(g_master_key));
+
+    /* Temporarily use old key to load */
+    memcpy(g_master_key, old_key, sizeof(g_master_key));
+    g_master_key_set = true;
+
+    load_ok = vault_load();
+    if (!load_ok) {
+        /* Restore original key on failure */
+        memcpy(g_master_key, saved_key, sizeof(g_master_key));
+        return false;
+    }
+
+    /* Re-encrypt with new key */
+    unsigned char new_key[32];
+    derive_key(new_passphrase, new_key, sizeof(new_key));
+    memcpy(g_master_key, new_key, sizeof(g_master_key));
+
+    bool save_ok = vault_save();
+    if (!save_ok) {
+        /* Rollback: restore old key */
+        memcpy(g_master_key, old_key, sizeof(g_master_key));
+        return false;
+    }
+
+    return true;
+}
+
 /* List services in vault */
 int vault_list_services(char services[][128], int max_count) {
     if (!services) return 0;

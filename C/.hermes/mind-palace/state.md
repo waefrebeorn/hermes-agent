@@ -35,7 +35,7 @@
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
-| S8 | Gateway Depth | 15 | 0 | 13 | 2 |
+| S8 | Gateway Depth | 14 | 0 | 13 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 6 | 0 | 2 | 4 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
