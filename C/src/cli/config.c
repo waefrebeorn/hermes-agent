@@ -1190,6 +1190,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (cd) snprintf(cfg->cron.dir, sizeof(cfg->cron.dir), "%s", cd);
     int mcj = yaml_get_int(doc, "cron.max_concurrent_jobs", 0);
     if (mcj > 0) cfg->cron.max_concurrent_jobs = mcj;
+    cfg->cron.scheduler_poll_interval = yaml_get_int(doc, "cron.scheduler_poll_interval", 60);
     int jto = yaml_get_int(doc, "cron.job_timeout", 0);
     if (jto > 0) cfg->cron.job_timeout = jto;
     int crd = yaml_get_int(doc, "cron.retention_days", 0);

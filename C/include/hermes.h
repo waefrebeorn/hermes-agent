@@ -529,6 +529,7 @@ typedef struct {
     int   job_timeout;            /* job_timeout */
     int   retention_days;         /* retention_days */
     bool  notify_on_failure;      /* notify_on_failure */
+    int   scheduler_poll_interval; /* cron.scheduler_poll_interval: seconds between scheduler ticks */
 } cron_config_t;
 
 /* ================================================================
