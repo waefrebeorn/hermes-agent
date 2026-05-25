@@ -147,7 +147,7 @@ void cache_reset_invalidation(void) {
     g_prompt_set_count = 0;
 }
 
-/* ── Multi-turn optimization (P04) ── */
+/* ── Multi-turn optimization (P04 — already implemented) ── */
 
 static int g_marked_count = 0;
 
@@ -250,4 +250,28 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
 
     /* P04: Update marked count for next turn */
     g_marked_count = *count;
+}
+
+/* ── Cache warmup on session load (P05) ────────────────────────────────── */
+
+/**
+ * Warm up the cache when loading messages from session state.
+ * Applies cache markers to restored messages so the first turn of a
+ * resumed session gets a cache hit instead of a cold start.
+ *
+ * @param messages  Messages loaded from session (modified in-place)
+ * @param count     Number of messages
+ * @param cache_ttl Cache TTL string ("5m", "1h"), or NULL for default
+ * @param native_anthropic Tool messages get cache_control too
+ */
+void cache_warmup(pc_message_t *messages, int count,
+                  const char *cache_ttl, bool native_anthropic) {
+    if (!messages || count <= 0) return;
+
+    /* Apply the standard cache marking strategy */
+    apply_anthropic_cache_control(messages, &count, cache_ttl, native_anthropic);
+
+    /* The function above already set g_marked_count = count.
+     * For a warmup, g_marked_count means "already cached" — next
+     * call to apply_anthropic_cache_control will skip these. */
 }

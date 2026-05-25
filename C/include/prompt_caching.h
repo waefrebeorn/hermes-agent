@@ -47,6 +47,18 @@ void apply_anthropic_cache_control(pc_message_t *messages, int *count,
                                    const char *cache_ttl,
                                    bool native_anthropic);
 
+/**
+ * Warm up cache on session load. Applies cache markers to restored messages
+ * so the first turn of a resumed session gets a cache hit.
+ *
+ * @param messages  Messages loaded from session (modified in-place)
+ * @param count     Number of messages
+ * @param cache_ttl Cache TTL: "5m" (default) or "1h"
+ * @param native_anthropic Tool messages get cache_control too
+ */
+void cache_warmup(pc_message_t *messages, int count,
+                  const char *cache_ttl, bool native_anthropic);
+
 /** Track a cache hit. Increments hit counter. */
 void cache_track_hit(void);
 
