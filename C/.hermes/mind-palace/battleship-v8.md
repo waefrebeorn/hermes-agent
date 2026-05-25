@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **238 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **237 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -163,24 +163,23 @@ C gateways with minimal or incomplete implementations vs Python.
 | 17 | G24 | platform/* | No webhook_server platform | 200 | P3 |
 | 18 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
 
-## SECTOR 9: Configuration & Environment (12 gaps)
+## SECTOR 9: Configuration & Environment (11 gaps)
 
 Missing config keys, env vars, or settings that Python handles but C doesn't.
 
 | # | ID | Config Key | Description | LOC | Priority |
 |---|-----|-----------|-------------|-----|----------|
 | 1 | C08 | agent.codex_app_server | Codex app server config | 40 | P3 |
-| 2 | C09 | agent.bitwarden | Bitwarden secrets manager config | 30 | P2 |
-| 3 | C10 | plugins.memory.* | Plugin memory provider config | 40 | P2 |
-| 4 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
-| 5 | C12 | credentials.sources | Multi-source credential resolution order | 25 | P2 |
-| 6 | C13 | gateway.signal.* | Signal-specific config (number, etc.) | 20 | P2 |
-| 7 | C14 | proxy.https_proxy | Separate HTTPS proxy config | 10 | P2 |
-| 8 | C15 | proxy.no_proxy | Per-host proxy bypass list | 15 | P2 |
-| 9 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
-| 10 | C18 | agent.vault.* | Vault encryption config | 20 | P2 |
-| 11 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
-| 12 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
+| 2 | C10 | plugins.memory.* | Plugin memory provider config | 40 | P2 |
+| 3 | C11 | agent.mixture_of_agents | MoA config | 30 | P3 |
+| 4 | C12 | credentials.sources | Multi-source credential resolution order | 25 | P2 |
+| 5 | C13 | gateway.signal.* | Signal-specific config (number, etc.) | 20 | P2 |
+| 6 | C14 | proxy.https_proxy | Separate HTTPS proxy config | 10 | P2 |
+| 7 | C15 | proxy.no_proxy | Per-host proxy bypass list | 15 | P2 |
+| 8 | C17 | agent.checkpoint.* | Checkpoint config | 30 | P3 |
+| 9 | C18 | agent.vault.* | Vault encryption config | 20 | P2 |
+| 10 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
+| 11 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
 
 ## SECTOR 10: Library Depth (27 gaps)
 
@@ -442,7 +441,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S6: Subdirectory | 22 |
 || S7: Tool Depth | 11 |
 || S8: Gateway | 18 |
-|| S9: Config | 12 |
+|| S9: Config | 11 |
 || S10: Library | 27 |
 || S11: Bug Fixes | 11 |
 || S12: Test Coverage | 25 |
@@ -456,5 +455,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **238** |
+|| **Total** | **237** |
 | (resolved items retired to vault/achievements.md) | |

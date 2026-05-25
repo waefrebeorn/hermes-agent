@@ -397,7 +397,13 @@ C06 | gateway.secret_rotation — added `int secret_rotation_interval` to hermes
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
-| C07 | tools.environments — added `char environments[512]` to tools_config_t, YAML reader via `yaml_get_string(doc, "tools.environments")` | S9 | hermes.h:459, config.c:1015 |
+C07 | tools.environments — added `char environments[512]` to tools_config_t, YAML reader via `yaml_get_string(doc, "tools.environments")` | S9 | hermes.h:459, config.c:1015
+
+## Phase 25: Stale Claim Retired — C09 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| C09 | agent.bitwarden — "Bitwarden secrets manager config" | Already implemented as `secrets.bitwarden.*` with 5 config fields, YAML reader, defaults, diff tracking, and validation | hermes.h:857-861, config.c:1516-1523, config.c:2309 |
 
 ## Phase 12: A02 Context Compressor Closure (2026-05-24)
 

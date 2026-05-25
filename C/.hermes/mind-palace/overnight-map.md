@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **238** (battleship-v8) | C07 closed — tools.environments config key |
+| Gap count | **237** (battleship-v8) | C09 retired stale — bitwarden config already exists under secrets.bitwarden.* |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)
