@@ -436,6 +436,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | C20 | browser.user_agent — added `char user_agent[256]` to browser_config_t, YAML reader via `yaml_get_string(doc, "browser.user_agent")` | S9 | hermes.h:485, config.c:1131
 
+## Phase 33: Config Key Implementation — C19 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C19 | cron.scheduler_poll_interval — added `int scheduler_poll_interval` to cron_config_t, YAML reader via `yaml_get_int(doc, "cron.scheduler_poll_interval", 60)`, default 60s | S9 | hermes.h:532, config.c:1193 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

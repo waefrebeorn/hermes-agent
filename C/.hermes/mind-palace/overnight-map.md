@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **229** (battleship-v8) | C20 closed — browser.user_agent config |
+| Gap count | **228** (battleship-v8) | C19 closed — cron.scheduler_poll_interval config |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)
