@@ -956,6 +956,7 @@ typedef struct {
     bool  fast_mode;           /* agent.fast: skip system prompt for speed */
     bool  compress_enabled;    /* compression.enabled: smart context compression */
     char  gateway_platforms[256];  /* Comma-separated: "telegram,discord,webhook" */
+    int   secret_rotation_interval;  /* gateway.secret_rotation: interval in seconds (0=disabled) */
 } hermes_config_t;
 
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
