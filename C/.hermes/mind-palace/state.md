@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (126 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (125 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -46,11 +46,11 @@
 | S16 | Prompt Caching | 0 | 0 | 0 | 0 |
 | S17 | Shell Hooks | 0 | 0 | 0 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
-| S19 | Security | 2 | 0 | 0 | 2 |
+| S19 | Security | 1 | 0 | 0 | 1 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| **Total** | **126** | **0** | **53** | **73** |
+| **Total** | **125** | **0** | **53** | **72** |
 
 ## Python Upstream Parity
 
@@ -70,6 +70,7 @@
 
 | ID | Description | Sector | Date |
 |----|-------------|--------|------|
+| S01 | Cloud metadata endpoint detection — metadata.goog, 100.100.100.200 (Alibaba), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped), 100.64 (CGNAT) pre-DNS blocking | S19 | 2026-05-25 |
 | A28 | skill_commands — C port of Python skill_commands.py (scan, resolve, build_message) | S4 | 2026-05-25 |
 | T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
 | D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion | S7 | 2026-05-25 |

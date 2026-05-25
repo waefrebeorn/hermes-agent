@@ -9,15 +9,15 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
 | Build | 30MB, 0 warnings | ✅ |
-| Gap count | **126** (battleship-v8) | S4 A28 resolved |
+| Gap count | **125** (battleship-v8) | S19 S01 resolved |
 | Source .c files | 154 | +1 |
 | Library dirs | 59 | +1 |
 | API server | 1015 LOC | 12 endpoints |
 
 ## What Changed Since v39 (2026-05-25)
 
-### Session — E02 Token-Buffer SSE Streaming
-- **E02 resolved**: Token-buffer SSE streaming — ~4-char chunked, UTF-8 safe
+### Session — S01 Cloud Metadata Endpoint Detection
+- **S01 resolved**: Added metadata.goog, 100.100.100.200 (Alibaba Cloud), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped IPv6), and 100.64 (CGNAT) to url_is_always_blocked() pre-DNS checks
 
 ## Current Priority Queue
 
@@ -29,7 +29,7 @@ From prestige_prompt.md v43:
 
 ## Key Facts
 
-- Battleship-v8 is the canonical gap list (126 gaps)
+- Battleship-v8 is the canonical gap list (125 gaps)
 - Vault/achievements.md is the archive — all completed + retired stale claims
 - Python upstream: 77 agent modules → 50 C; 88+ tools → 43 C; 31 gateways → 19 C
 - P1 count is 0

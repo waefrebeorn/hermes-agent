@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **126 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+Total: **125 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -254,12 +254,11 @@ All depth gaps (H01 priority, H02 async, H03 chaining) resolved. See vault Phase
 | 2 | V02 | Multiple vaults | 80 | P2 |
 | 3 | V03 | Vault sharing/export | 100 | P3 |
 
-## SECTOR 19: Security Depth (2 gaps)
+## SECTOR 19: Security Depth (1 gap)
 
-C tirith_inline_scan covers 6 vectors. S03 (credential leak detection), S04 (file path traversal depth), S05 (process arg injection) resolved.
+C tirith_inline_scan covers 6 vectors. S01 (cloud/service patterns), S03 (credential leak detection), S04 (file path traversal depth), S05 (process arg injection) resolved.
 |---|-----|---------|-----|----------|
-| 1 | S01 | cloud/service patterns in tírith_security.py | 200 | P2 |
-| 2 | S06 | DNS rebinding protection for web tool | 100 | P3 |
+| 1 | S06 | DNS rebinding protection for web tool | 100 | P3 |
 
 ## SECTOR 20: C-Only New Features (9 gaps)
 
@@ -371,9 +370,9 @@ Functions that exist in C but are significantly less capable than Python equival
 || S16: Prompt Cache | 0 |
 | S17: Shell Hooks | 0 |
 | S18: Vault Encrypt | 3 |
-|| S19: Security | 2 |
+|| S19: Security | 1 |
 || S20: New Features | 8 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-| **Total** | **126** |
+| **Total** | **125** |
 | (resolved items retired to vault/achievements.md) | |

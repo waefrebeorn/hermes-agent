@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 59: Cloud Metadata Endpoint Detection — S01 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| S01 | Added always-blocked cloud metadata endpoint patterns to url_is_always_blocked(): metadata.goog (Google Cloud), 100.100.100.200 (Alibaba Cloud), fd00:ec2 (AWS IPv6 metadata), ::ffff: (IPv4-mapped IPv6), 100.64 (CGNAT pre-DNS check). Complemented existing DNS-based checks in is_private_ipv4 (CGNAT 100.64.0.0/10 at line 335) and is_private_ipv6 (ULA fc00::/7 covers fd00:ec2 at line 353) | S19 | url_safety.c:url_is_always_blocked() — 5 new string patterns. Suite 228/0/21. 0 errors, 0 warnings |
+
 ## Phase 58: Skill Slash-Command Injection — A28 (2026-05-25)
 
 | ID | Description | Sector | Evidence |
