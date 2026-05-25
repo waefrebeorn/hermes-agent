@@ -21,6 +21,27 @@ Last updated: 2026-05-25
 |----|-------------|--------|----------|
 | I04 | Added cppcheck static analysis to c-build.yml CI pipeline — runs after test suite, --enable=all, --error-exitcode=1, suppresses missingIncludeSystem | S22 | .github/workflows/c-build.yml — new "Static analysis (cppcheck)" step. Suite 228/0/21 |
 
+## Phase 62: Stale Claims Sweep + Vault Key Rotation (2026-05-25)
+
+### Stale Claims Retired
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| M01 | anthropic_adapter — thinking block → reasoning extraction, tool_use block parsing, tool format conversion all fully implemented in provider_anthropic.c | S5 (stale) | provider_anthropic.c:187-201 (thinking config), 203-222 (tool format conversion), 449-516 (content block parser extracts thinking→reasoning, text→content, tool_use→tool_calls) |
+| M09 | model_metadata — provider_metadata.c has 25+ model entries with context_window, MODEL_CAP flags (VISION, FUNCTION_CALLING, STREAMING, THINKING, STRUCTURED_OUTPUT, CONTEXT_CACHING), input/output pricing | S5 (stale) | provider_metadata.c:57-90 (full model table), 112 (model_context_window()), 139 (context_window in JSON output) |
+| M12 | prompt_builder AGENTS.md/CLAUDE.md loading — system_prompt.c has full context file loading with truncation detection, cutoff limits | S5 (stale) | system_prompt.c:513-590 (AGENTS.md + CLAUDE.md loading), agent_loop.c:832 (context file loading in loop) |
+| M13 | stream_diag — Ttfb tracking, first_token_time, token_count, tokens_per_second, total_stream_time all fully implemented in llm_client.c | S5 (stale) | llm_client.c:1035-1038 (stream_ctx_t diag fields), 1058-1065 (first token timing), 1304-1314 (finalize_stream_diag) |
+| G11 | slack rich formatting — slack_send_blocks() Block Kit support exists with blocks JSON array | S8 (stale) | slack.c:71-95 (slack_send_blocks with blocks parameter) |
+| G14 | discord slash command registration — discord_register_slash_command() exists with full REST API | S8 (stale) | discord.c:212-255 (discord_register_slash_command) |
+| G15 | telegram inline query mode — telegram_answer_inline_query() exists, inline_query parsed in update handler | S8 (stale) | telegram.c:303-315 (answerInlineQuery), 659 (inline_query parsing) |
+| G19 | bluebubbles iMessage attachment handling — bluebubbles_send_attachment() fully implemented | S8 (stale) | bluebubbles.c:173-217 (send_attachment with file path, guid, name) |
+
+### Gap Closed
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V01 | Key rotation — vault_rotate_key() decrypts with old passphrase, re-encrypts with new. Two modes: in-memory (data already loaded) and file-based. Full rollback on failure. 13 new tests | 60 | P2 | vault.c:345-405 (vault_rotate_key), tests/test_vault.c:192-242 (13 rotation tests), vault (50 tests) |
+
 ## Phase 59: Cloud Metadata Endpoint Detection — S01 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

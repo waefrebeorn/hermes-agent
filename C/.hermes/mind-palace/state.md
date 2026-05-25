@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (118 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (110 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -32,10 +32,10 @@
 | S2 | Placeholder/Unwired | 11 | 0 | 1 | 10 |
 | S3 | Dead Code | 12 | 0 | 2 | 10 |
 | S4 | Missing Agent Modules | 10 | 0 | 6 | 4 |
-| S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
+| S5 | Agent Module Depth | 11 | 0 | 8 | 4 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
-| S8 | Gateway Depth | 14 | 0 | 13 | 2 |
+| S8 | Gateway Depth | 10 | 0 | 6 | 4 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 6 | 0 | 2 | 4 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
@@ -49,8 +49,8 @@
 | S19 | Security | 1 | 0 | 0 | 1 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
-| S22 | CI/Integration | 1 | 0 | 0 | 1 |
-| **Total** | **118** | **0** | **47** | **71** |
+| S22 | CI/Integration | 0 | 0 | 0 | 0 |
+| **Total** | **110** | **0** | **47** | **63** |
 
 ## Python Upstream Parity
 
@@ -63,6 +63,14 @@
 
 ## Stale Claims Retired This Session
 
+- **M01**: anthropic_adapter — thinking block reasoning extraction, tool_use parsing, tool format conversion all fully implemented
+- **M09**: model_metadata — provider_metadata.c has 25+ model entries with context_window, capability flags, pricing
+- **M12**: prompt_builder — AGENTS.md/CLAUDE.md loading in system_prompt.c
+- **M13**: stream_diag — Ttfb tracking, token rate, finalize_stream_diag all implemented
+- **G11**: slack rich formatting — slack_send_blocks() Block Kit support
+- **G14**: discord slash command registration — discord_register_slash_command() exists
+- **G15**: telegram inline query — telegram_answer_inline_query() exists
+- **G19**: bluebubbles attachment — bluebubbles_send_attachment() exists
 - **I01**: GitHub Actions CI for C build — c-build.yml has build+test+ASan+coverage+Docker+perf
 - **I02**: ASan in CI — asan job in c-build.yml
 - **I03**: Code coverage reporting — gcov/lcov in c-build.yml
@@ -77,6 +85,7 @@
 
 | ID | Description | Sector | Date |
 |----|-------------|--------|------|
+| V01 | Key rotation — vault_rotate_key() decrypt with old passphrase, re-encrypt with new, full rollback, 13 tests | S18 | 2026-05-25 |
 | S01 | Cloud metadata endpoint detection — metadata.goog, 100.100.100.200 (Alibaba), fd00:ec2 (AWS IPv6), ::ffff: (IPv4-mapped), 100.64 (CGNAT) pre-DNS blocking | S19 | 2026-05-25 |
 | I04 | Static analysis (cppcheck) in CI — added to c-build.yml | S22 | 2026-05-25 |
 | A28 | skill_commands — C port of Python skill_commands.py (scan, resolve, build_message) | S4 | 2026-05-25 |
