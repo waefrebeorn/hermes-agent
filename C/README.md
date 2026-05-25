@@ -7,7 +7,7 @@ One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  243/0/0 (206 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 154 .c + 66 .h = 220 files
-| Parity: ~78%   (~174 verified gaps remaining — see battleship-v8)
+| Parity: ~78%   (~156 verified gaps remaining — see battleship-v8)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tests:  243/0/0, 1 skipped
@@ -36,7 +36,7 @@ One binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||- [Battleship Roadmap (~174 Gaps)](#battleship-roadmap-174-gaps)
+||- [Battleship Roadmap (~156 Gaps)](#battleship-roadmap-174-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -497,7 +497,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
 | 8 | `da-v12-triple-audit.md` | Final Triple DA audit — methodology, findings, 8 verified stubs |
-|| 9 | `plans/battleship-v8.md` | Complete ~174-gap roadmap by sector (Triple DA verified) |
+|| 9 | `plans/battleship-v8.md` | Complete ~156-gap roadmap by sector (Triple DA verified) |
 | 10 | `plans/battleship-index.md` | Quick-reference dashboard |
 
 ### Vault (Documentation)
@@ -529,7 +529,7 @@ The DA process is the project's quality backbone — every claim is triple-verif
 
 ---
 
-## Battleship Roadmap (~174 Gaps)
+## Battleship Roadmap (~156 Gaps)
 
 The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by 22 sectors (S1-S22) with coordinate IDs.
 
@@ -565,7 +565,7 @@ The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps a
 
 | Priority | ID | What | LOC | Why |
 |----------|----|------|-----|-----|
-| P1 | A02 | context_compressor.py port | 1748 | Core agent infra missing |
+| P1 | A02 | context_compressor.py port | 1568 | Core agent infra missing |
 | P1 | A03 | conversation_compression.py port | 603 | Related to A02 |
 | P1 | D02 | Skill breakdown in insights | 80 | User-facing feature |
 | P1 | A23 | nous_rate_guard.py port | 325 | Rate limiting from Nous Portal |

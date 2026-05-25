@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **174 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **156 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -193,37 +193,37 @@ Confirmed bugs that need fixing.
 | 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
 | 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
 
-## SECTOR 12: Test Coverage Gaps (21 gaps)
+## SECTOR 12: Test Coverage (25 entries — 22 exist, 3 missing)
 
-C tools without dedicated test files.
+C tools with test file status.
 
 | # | ID | Module | Test File | Priority |
 |---|-------|--------|-----------|----------|
-| 1 | T01 | api_helpers.c | Missing | P2 |
-| 2 | T02 | approve.c (alias approval.c) | Missing | P2 |
-| 3 | T03 | clarify.c | ✅ test_clarify.c (8 tests) — null args, schema, error paths | P2 |
-| 4 | T04 | cronjob.c | Missing (has 23 tests elsewhere) | P2 |
-| 5 | T05 | delegate.c | Missing | P2 |
-| 6 | T06 | discord.c | Missing | P2 |
-| 7 | T07 | exec_code.c | Missing (has partial test) | P2 |
-| 8 | T08 | file.c (all 3 file tools) | Missing | P2 |
-| 9 | T09 | file_batch.c | Missing | P2 |
-| 10 | T10 | homeassistant.c | Missing | P2 |
-| 11 | T11 | image_gen.c | ✅ test_image_gen.c (8 tests) — null args, error paths, validation | P2 |
-| 12 | T12 | kanban.c | Missing | P2 |
-| 13 | T13 | mcp_tool.c | Missing | P2 |
-| 14 | T14 | memory.c | Missing | P2 |
-| 15 | T15 | patch.c | Missing | P2 |
-| 16 | T16 | process.c | Missing | P2 |
-| 17 | T17 | send_message.c | Missing | P2 |
-| 18 | T18 | session_search.c | Missing | P2 |
-| 19 | T19 | skills.c | Missing | P2 |
-| 20 | T20 | terminal.c | Missing | P2 |
-| 21 | T21 | tts.c | Missing | P2 |
-| 22 | T22 | video_gen.c | ✅ test_video_gen.c (5 tests) — null args, error paths | P2 |
-| 23 | T23 | vision.c | Missing | P2 |
-| 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) — state mgmt, config, argument validation | P2 |
-| 25 | T25 | web.c | Missing | P2 |
+| 1 | T01 | api_helpers.c | ✅ test_api_helpers.c exists | P2 |
+| 2 | T02 | approve.c | ❌ no test (security module, 553 LOC) | P2 |
+| 3 | T03 | clarify.c | ✅ test_clarify.c (8 tests) | P2 |
+| 4 | T04 | cronjob.c | ✅ test_cronjob.c exists (has 23 tests elsewhere) | P2 |
+| 5 | T05 | delegate.c | ✅ test_delegate.c (4 tests) — in test_runner as delegate_tool | P2 |
+| 6 | T06 | discord.c | ❌ no test (token gate prevents validation testing) | P2 |
+| 7 | T07 | exec_code.c | ✅ test_exec_code.c exists (partial) | P2 |
+| 8 | T08 | file.c | ✅ test_file.c exists | P2 |
+| 9 | T09 | file_batch.c | ✅ test_file_batch.c exists | P2 |
+| 10 | T10 | homeassistant.c | ✅ test_homeassistant.c exists | P2 |
+| 11 | T11 | image_gen.c | ✅ test_image_gen.c (8 tests) | P2 |
+| 12 | T12 | kanban.c | ✅ test_kanban.c exists | P2 |
+| 13 | T13 | mcp_tool.c | ❌ no test (complex, 1300+ LOC) | P2 |
+| 14 | T14 | memory.c | ✅ test_memory.c exists | P2 |
+| 15 | T15 | patch.c | ✅ test_patch.c exists | P2 |
+| 16 | T16 | process.c | ✅ test_process.c exists | P2 |
+| 17 | T17 | send_message.c | ✅ test_send_message.c exists | P2 |
+| 18 | T18 | session_search.c | ✅ test_session_search.c exists | P2 |
+| 19 | T19 | skills.c | ✅ test_skills.c exists | P2 |
+| 20 | T20 | terminal.c | ✅ test_terminal.c exists | P2 |
+| 21 | T21 | tts.c | ✅ test_tts.c exists | P2 |
+| 22 | T22 | video_gen.c | ✅ test_video_gen.c (5 tests) | P2 |
+| 23 | T23 | vision.c | ✅ test_vision.c exists | P2 |
+| 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) | P2 |
+| 25 | T25 | web.c | ✅ test_web.c exists | P2 |
 
 ## SECTOR 13: API Server Depth (5 gaps)
 
@@ -397,7 +397,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S9: Config | 0 |
 || S10: Library | 9 |
 || S11: Bug Fixes | 2 |
-|| S12: Test Coverage | 21 |
+|| S12: Test Coverage | 3 |
 | S13: API Server | 5 |
 | S14: TUI | 8 |
 | S15: Curator | 0 |
@@ -405,8 +405,8 @@ Functions that exist in C but are significantly less capable than Python equival
 | S17: Shell Hooks | 3 |
 | S18: Vault Encrypt | 3 |
 | S19: Security | 5 |
-| S20: New Features | 10 |
+| S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **174** |
+||| **Total** | **156** |
 | (resolved items retired to vault/achievements.md) | |

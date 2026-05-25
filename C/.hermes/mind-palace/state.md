@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (174 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (156 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -38,8 +38,8 @@
 | S8 | Gateway Depth | 17 | 0 | 15 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 || S10 | Library Depth | 9 | 0 | 4 | 5 |
-| S11 | Bug Fixes | 2 | 0 | 1 | 1 |
-| S12 | Test Coverage | 21 | 0 | 21 | 0 |
+|| S11 | Bug Fixes | 2 | 0 | 1 | 1 |
+|| S12 | Test Coverage | 3 | 0 | 3 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 8 | 0 | 7 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 9 | 0 | 1 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-|| **Total** | **174** | **0** | **99** | **75** |
+|| **Total** | **156** | **0** | **80** | **76** |
 
 ## Python Upstream Parity
 
