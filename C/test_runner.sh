@@ -2346,6 +2346,17 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
 else skip "mcp_tool (compilation failed)"
 fi &
 
+# MCP stream test (L30)
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_mcp_stream.c" \
+    "$CDIR/lib/libmcp/mcp.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_mcp_stream -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_mcp_stream > /dev/null 2>&1; then ok "mcp_stream (11 tests)"
+    else fail "mcp_stream (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_mcp_stream
+else skip "mcp_stream (compilation failed)"
+fi &
+
 # ==============================================
 # 2. Plugin tests
 # ==============================================

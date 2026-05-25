@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **153 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **152 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -167,7 +167,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 2 | C11 | agent.mixture_of_agents | ✅ Config keys added: moa_enabled, moa_model, moa_strategy, moa_workers — YAML path agent.mixture_of_agents.* | P3 |
 | 3 | C17 | agent.checkpoint.* | ✅ Already implemented — struct has 8 fields at hermes.h:846-854, defaults + YAML reader at config.c:490-496,1515-1526,2084 | P3 |
 
-## SECTOR 10: Library Depth (7 gaps)
+## SECTOR 10: Library Depth (6 gaps)
 
 Libraries ported but missing features.
 
@@ -179,7 +179,6 @@ Libraries ported but missing features.
 | 4 | L13 | libcrypto | RSA key generation | 150 | P3 |
 | 5 | L22 | libdb | Batch operations | 40 | P3 |
 | 6 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
-| 7 | L30 | libmcp | Streaming response support | 100 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (2 gaps)
 
@@ -392,7 +391,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S7: Tool Depth | 2 |
 | S8: Gateway | 17 |
 || S9: Config | 0 |
-||| S10: Library | 7 |
+||| S10: Library | 6 |
 || S11: Bug Fixes | 2 |
 || S12: Test Coverage | 3 |
 | S13: API Server | 5 |
@@ -405,5 +404,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **153** |
+||| **Total** | **152** |
 | (resolved items retired to vault/achievements.md) | |

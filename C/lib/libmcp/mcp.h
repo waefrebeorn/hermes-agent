@@ -248,6 +248,20 @@ int  mcp_server_list_tools(mcp_server_t *srv, mcp_tool_t **tools_out);
 char *mcp_server_call_tool(mcp_server_t *srv, const char *tool_name,
                             const char *args_json);
 
+/* Call a tool with streaming response support.
+ * Sends tools/call request. Received notifications/chunks are delivered
+ * to the callback. Return non-zero from callback to abort streaming.
+ * Returns the final result text (malloc'd) on success, NULL on error.
+ * Caller must free the returned string. */
+typedef int (*mcp_stream_callback_t)(const char *chunk, size_t len,
+                                      bool is_final, void *userdata);
+
+char *mcp_server_call_tool_stream(mcp_server_t *srv, const char *tool_name,
+                                   const char *args_json,
+                                   mcp_stream_callback_t callback,
+                                   void *userdata,
+                                   int stream_timeout_ms);
+
 /* ================================================================
  *  P67: Resource access
  * ================================================================ */

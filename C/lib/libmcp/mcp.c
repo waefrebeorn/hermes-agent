@@ -1296,6 +1296,191 @@ char *mcp_server_call_tool(mcp_server_t *srv, const char *tool_name,
 }
 
 /* ================================================================
+ *  Streaming tool call (L30)
+ * ================================================================ */
+
+/* Read any JSON-RPC message (notification or response) from transport.
+ * Returns parsed json_t on success, NULL on timeout/error.
+ * Does NOT filter by request ID — returns ANY valid JSON-RPC message. */
+static json_t *transport_read_any(mcp_server_t *srv, int timeout_ms) {
+    if (srv->transport_type == MCP_TRANSPORT_STDIO) {
+        int max_reads = 100;
+        while (max_reads-- > 0) {
+            /* Accumulate until we hit \\n */
+            while (1) {
+                char *nl = (char *)memchr(srv->read_buf, '\n', srv->read_len);
+                if (nl) {
+                    size_t line_len = (size_t)(nl - srv->read_buf);
+                    srv->read_buf[line_len] = '\0';
+
+                    char *jerr = NULL;
+                    json_t *result = json_parse(srv->read_buf, &jerr);
+                    if (jerr) { free(jerr); }
+
+                    /* Shift buffer */
+                    size_t remaining = srv->read_len - line_len - 1;
+                    if (remaining > 0)
+                        memmove(srv->read_buf, nl + 1, remaining);
+                    srv->read_len = remaining;
+
+                    if (result) return result;
+                    continue;
+                }
+
+                /* Need more data */
+                struct timeval tv;
+                tv.tv_sec = timeout_ms / 1000;
+                tv.tv_usec = (timeout_ms % 1000) * 1000;
+
+                fd_set fds;
+                FD_ZERO(&fds);
+                FD_SET(srv->stdio.stdout_fd, &fds);
+
+                int ret = select(srv->stdio.stdout_fd + 1, &fds, NULL, NULL,
+                                 timeout_ms > 0 ? &tv : NULL);
+                if (ret <= 0) return NULL;
+
+                ssize_t n = read(srv->stdio.stdout_fd,
+                                 srv->read_buf + srv->read_len,
+                                 sizeof(srv->read_buf) - srv->read_len - 1);
+                if (n <= 0) return NULL;
+                srv->read_len += (size_t)n;
+                srv->read_buf[srv->read_len] = '\0';
+            }
+        }
+        return NULL;
+    }
+
+    /* For SSE/HTTP transports: no-op — streaming not supported on those transports yet */
+    (void)timeout_ms;
+    return NULL;
+}
+
+char *mcp_server_call_tool_stream(mcp_server_t *srv, const char *tool_name,
+                                   const char *args_json,
+                                   mcp_stream_callback_t callback,
+                                   void *userdata,
+                                   int stream_timeout_ms)
+{
+    if (!srv || !srv->initialized || !tool_name) return NULL;
+
+    /* Build request (same params as non-streaming) */
+    json_t *params = json_object();
+    json_set(params, "name", json_string(tool_name));
+
+    if (args_json && args_json[0]) {
+        char *err = NULL;
+        json_t *args = json_parse(args_json, &err);
+        if (args) {
+            json_set(params, "arguments", args);
+        } else {
+            free(err);
+            json_set(params, "arguments", json_object());
+        }
+    } else {
+        json_set(params, "arguments", json_object());
+    }
+
+    /* Generate request ID */
+    static int g_req_id = 0;
+    char id[32];
+    snprintf(id, sizeof(id), "stream-%d", ++g_req_id);
+
+    char *msg = build_request(id, "tools/call", params);
+    if (!msg) { json_free(params); return NULL; }
+
+    if (!transport_send(srv, msg)) {
+        free(msg); json_free(params); return NULL;
+    }
+    free(msg);
+
+    /* Enter streaming read loop */
+    int timeout = stream_timeout_ms > 0 ? stream_timeout_ms : 30000;
+    json_t *final_result = NULL;
+    char *response_str = NULL;
+
+    while (1) {
+        json_t *msg_json = transport_read_any(srv, timeout);
+        if (!msg_json) {
+            /* Timeout or EOF — stop if we have a final result */
+            if (final_result) break;
+            json_free(params);
+            return NULL;
+        }
+
+        const char *msg_id = json_get_str(msg_json, "id", "");
+        const char *method = json_get_str(msg_json, "method", "");
+
+        if (method[0]) {
+            /* It's a notification/method call */
+            json_t *msg_params = json_obj_get(msg_json, "params");
+            if (msg_params) {
+                /* Extract text content for the callback */
+                json_t *content = json_obj_get(msg_params, "content");
+                if (content && callback) {
+                    const char *text = json_get_str(content, "text", "");
+                    if (text[0]) {
+                        if (callback(text, strlen(text), false, userdata) != 0) {
+                            /* Callback aborted */
+                            json_free(msg_json);
+                            break;
+                        }
+                    }
+                }
+            }
+            json_free(msg_json);
+            continue;
+        }
+
+        if (msg_id[0] && strcmp(msg_id, id) == 0) {
+            /* This is our final response */
+            final_result = msg_json;
+            json_t *result = json_obj_get(msg_json, "result");
+            if (result) {
+                json_t *content = json_obj_get(result, "content");
+                if (content && json_len(content) > 0) {
+                    json_t *first = json_get(content, 0);
+                    if (first) {
+                        const char *text = json_get_str(first, "text", "");
+                        response_str = strdup(text);
+                    }
+                }
+                if (!response_str) {
+                    response_str = json_serialize(result);
+                }
+                if (callback) {
+                    callback(response_str ? response_str : "",
+                             response_str ? strlen(response_str) : 0,
+                             true, userdata);
+                }
+            }
+            break;
+        }
+
+        /* Unmatched message — queue as incoming if it's a request */
+        if (msg_id[0] && method[0] && srv->incoming_count < MCP_MAX_INCOMING) {
+            int idx = srv->incoming_count;
+            snprintf(srv->incoming_ids[idx], sizeof(srv->incoming_ids[0]), "%s", msg_id);
+            snprintf(srv->incoming_methods[idx], sizeof(srv->incoming_methods[0]), "%s", method);
+            json_t *p = json_obj_get(msg_json, "params");
+            if (p) { char *pstr = json_serialize(p);
+                snprintf(srv->incoming_params[idx], sizeof(srv->incoming_params[0]), "%s", pstr);
+                free(pstr);
+            }
+            srv->incoming_count++;
+        }
+
+        json_free(msg_json);
+    }
+
+    if (final_result) json_free(final_result);
+    json_free(params);
+    return response_str;
+}
+
+/* ================================================================
+ *  Tool list cleanup
+/* ================================================================
  *  Tool list cleanup
  * ================================================================ */
 
