@@ -10,37 +10,64 @@
 #include <ctype.h>
 
 char *agent_generate_title(llm_config_t *cfg, const char *first_message) {
-    (void)cfg; /* Title gen could use LLM in future */
+    (void)cfg;
 
     if (!first_message || !*first_message)
         return strdup("New Session");
 
-    /* Extract first 6 words as title */
     char buf[256];
     size_t pos = 0;
-    int words = 0;
-    bool in_word = false;
+    bool in_code_block = false;
 
+    buf[0] = '\0';
+
+    /* Extract first meaningful sentence — skip code blocks */
     for (const char *p = first_message; *p && pos < sizeof(buf) - 3; p++) {
+        /* Track code block boundaries */
+        if (*p == '`' && *(p+1) == '`' && *(p+2) == '`') {
+            in_code_block = !in_code_block;
+            p += 2;
+            continue;
+        }
+        if (in_code_block) continue;
+
+        /* Skip leading whitespace/newlines */
+        if (pos == 0 && (*p == ' ' || *p == '\n' || *p == '\r')) continue;
+
         unsigned char c = (unsigned char)*p;
-        if (isspace(c) || c == '\n' || c == '\r') {
-            if (in_word) {
-                in_word = false;
-                if (words < 6) buf[pos++] = ' ';
-            }
+        if (c == '\n') {
+            /* Convert newline to space, stop on double newline */
+            if (*(p+1) == '\n') break;
+            if (pos > 0 && buf[pos-1] != ' ') buf[pos++] = ' ';
+        } else if (c == ' ') {
+            /* Collapse consecutive spaces */
+            if (pos > 0 && buf[pos-1] != ' ') buf[pos++] = ' ';
         } else if (isprint(c)) {
-            if (!in_word) {
-                in_word = true;
-                words++;
-                if (words > 6) break; /* Stop after reading all of word 6 */
-            }
             buf[pos++] = (char)c;
+            /* Stop at sentence-ending punctuation followed by space then EOS/newline */
+            if ((c == '.' || c == '!' || c == '?') && pos < sizeof(buf) - 2) {
+                const char *next = p + 1;
+                while (*next == ' ' || *next == '\n') next++;
+                if (*next == '\0' || *next == '\n') break;
+            }
         }
     }
+
     buf[pos] = '\0';
 
     /* Trim trailing space */
     while (pos > 0 && buf[pos-1] == ' ') buf[--pos] = '\0';
+
+    /* Cap at 80 chars */
+    if (pos > 80) {
+        buf[80] = '\0';
+        pos = 80;
+        while (pos > 0 && buf[pos] != ' ') pos--;
+        if (pos > 0) buf[pos] = '\0';
+    }
+
+    /* Trim trailing period */
+    while (pos > 0 && buf[pos-1] == '.') buf[--pos] = '\0';
 
     if (pos == 0) return strdup("New Session");
     return strdup(buf);

@@ -366,3 +366,9 @@ The following items from battleship-v8 were verified as stale — code already i
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | W09 | skill_bundle_apply() — implement apply/install for skill bundles (was dead code: parsed but couldn't install) | S3 | skill_bundles.c:200-216, skill_bundles.h:57-60 |
+
+## Phase 16: Title Generation Improvement — P07 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| P07 | title.c — improved extractive title: first sentence with code-block skipping, whitespace collapsing, 80-char cap, sentence-ending punctuation detection (was placeholder: "(void)cfg — Title gen could use LLM in future") | S2 | title.c:12-76, test_title.c: tests updated for sentence-based extraction |

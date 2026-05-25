@@ -4,7 +4,7 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-251 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+250 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 

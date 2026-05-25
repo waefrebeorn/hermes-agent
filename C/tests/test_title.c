@@ -1,8 +1,8 @@
 /*
  * test_title.c -- Tests for session title generation.
  *
- * Tests: normal message → first 6 words, short message, NULL/empty,
- * message with newlines, unprintable chars, single word, exactly 6 words.
+ * Tests: sentence extraction, NULL/empty, newlines, code block skipping,
+ * trailing spaces, non-printable chars, 80-char cap.
  */
 
 #include "hermes_agent.h"
@@ -33,13 +33,19 @@ int main(void) {
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("first 6 words extracted as title");
-        char *t = agent_generate_title(NULL, "This is a test message for the session title");
-        if (t && strcmp(t, "This is a test message for") == 0) { PASS; free(t); }
+        TEST("extracts content up to sentence-ending punctuation at paragraph break");
+        char *t = agent_generate_title(NULL, "This is a test message.\n\nMore text after.");
+        if (t && strcmp(t, "This is a test message") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("short message (under 6 words) uses all words");
+        TEST("extracts full content when no clear sentence boundary");
+        char *t = agent_generate_title(NULL, "This is a test message for the session");
+        if (t && strcmp(t, "This is a test message for the session") == 0) { PASS; free(t); }
+        else { FAIL(t ? t : "NULL"); free(t); }
+    }
+    {
+        TEST("short message (under sentence) uses all words");
         char *t = agent_generate_title(NULL, "Hello world");
         if (t && strcmp(t, "Hello world") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
@@ -51,27 +57,45 @@ int main(void) {
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("exactly 6 words");
-        char *t = agent_generate_title(NULL, "one two three four five six");
-        if (t && strcmp(t, "one two three four five six") == 0) { PASS; free(t); }
+        TEST("stops at period at end of string");
+        char *t = agent_generate_title(NULL, "Hello world.");
+        if (t && strcmp(t, "Hello world") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("message with newlines");
+        TEST("stops at double-newline paragraph break");
+        char *t = agent_generate_title(NULL, "Hello world!\n\nMore text.");
+        if (t && strcmp(t, "Hello world!") == 0) { PASS; free(t); }
+        else { FAIL(t ? t : "NULL"); free(t); }
+    }
+    {
+        TEST("message with newlines collapses to spaces");
         char *t = agent_generate_title(NULL, "First line\nSecond line\nThird line");
         if (t && strcmp(t, "First line Second line Third line") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("message with trailing spaces");
+        TEST("double newline stops extraction");
+        char *t = agent_generate_title(NULL, "First paragraph\n\nSecond paragraph");
+        if (t && strcmp(t, "First paragraph") == 0) { PASS; free(t); }
+        else { FAIL(t ? t : "NULL"); free(t); }
+    }
+    {
+        TEST("message with trailing spaces collapsed");
         char *t = agent_generate_title(NULL, "  Trimmed   title   ");
         if (t && strcmp(t, "Trimmed title") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
     }
     {
-        TEST("message with non-printable chars");
+        TEST("non-printable chars skipped");
         char *t = agent_generate_title(NULL, "Hello\x01\x02World");
         if (t && strcmp(t, "HelloWorld") == 0) { PASS; free(t); }
+        else { FAIL(t ? t : "NULL"); free(t); }
+    }
+    {
+        TEST("code blocks skipped in title extraction");
+        char *t = agent_generate_title(NULL, "Some text\n```\ncode block\n```\nMore text.");
+        if (t && strcmp(t, "Some text More text") == 0) { PASS; free(t); }
         else { FAIL(t ? t : "NULL"); free(t); }
     }
 

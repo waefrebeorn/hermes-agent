@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **251** (battleship-v8) | W09 resolved — skill_bundle_apply() |
+| Gap count | **250** (battleship-v8) | P07 resolved — title extraction improved |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v22 (previous session)
