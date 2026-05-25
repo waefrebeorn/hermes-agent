@@ -1,5 +1,5 @@
 # BATTLESHIP — Hermes C Translation Gap Audit
-**400 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
+**395 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
 
 ## Legend
 - 🟥 **F-N-F** = Form Not Function (code compiles but doesn't work)
@@ -10,13 +10,13 @@
 
 ---
 
-## SECTOR 1: Agent Loop — 54 GAPS
+## SECTOR 1: Agent Loop — 49 GAPS
 
-### Core Loop Defects (F-N-F) — 8 gaps
-1. 🟥 **Tool call loop broken** — `agent_loop.c:192-200` returns content instead of executing tool calls in multi-turn loop; the TODO at line 202 is DEAD CODE after `return`
-2. 🟥 **Tool result injection missing** — No `message_new_tool()` call after tool execution
-3. 🟥 **No tool call JSON parsing** — Agent can't parse `tool_calls` array from LLM response
-4. 🟥 **No iteration counter** — `iteration_count` tracked but doesn't enforce `max_iterations` properly
+### Core Loop Defects (F-N-F) — 4 gaps resolved, 4 remain
+1. ✅ **Tool call loop fixed** — `agent_loop.c:173-191` now executes tools and loops back
+2. ✅ **Tool result injection fixed** — `message_new_tool()` called after tool execution
+3. ✅ **Tool call JSON parsing fixed** — `llm_client.c` extracts `tool_calls` array from JSON response
+4. 🟥 **No iteration counter enforcement** — `iteration_count` tracked but `max_iterations` uses simple `<` not `<=`
 5. 🟥 **No interrupt handling** — `state->interrupted` flag exists but no signal handler sets it
 6. 🟥 **No error recovery** — LLM failure returns generic "LLM call returned NULL" without retry
 7. 🟥 **No context window tracking** — No token counting; can exceed context limit silently
@@ -33,7 +33,7 @@
 16. ⬜ **No custom provider support** — No provider base URL configuration per-request
 
 ### LLM Client Defects (F-N-F) — 5 gaps
-17. 🟥 **Auth header malformed** — `llm_client.c:116` has truncated "...ype: application/json" — Content-Type broken
+17. ✅ **Auth header fixed** — Content-Type properly set to `application/json`
 18. 🟥 **No streaming support** — `llm_chat_completion` blocks for full response
 19. 🟥 **No reasoning token extraction** — No parsing for reasoning_content in non-OpenAI formats
 20. 🟥 **No error handling for non-JSON responses** — LLM returning HTML/plain text causes null

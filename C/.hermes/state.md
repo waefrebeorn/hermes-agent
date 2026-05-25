@@ -25,9 +25,9 @@ make       # → hermes binary, 386KB, 0 warnings
 - `cli_display.c` — ANSI escape code wrappers, 248 lines
 
 ### Phase 2: Agent Core 🟧 (Partial)
-- `agent_loop.c` (218 lines) — Loop runs, basic message flow works
+- `agent_loop.c` (203 lines) — Loop runs, tool execution with multi-turn loop works
 - `context.c` (160 lines) — Message push/pop/clear/truncate works
-- `llm_client.c` (195 lines) — OpenAI chat completions request/parse works
+- `llm_client.c` (215 lines) — OpenAI chat completions request/parse works, tool_calls extracted
 - `title.c` (46 lines) — Simple extractive title (6 words)
 - `config.c` (166 lines) — YAML config + .env loading works
 - `cli.c` (156 lines) — Interactive REPL loop runs
@@ -66,15 +66,15 @@ Top 10 Critical Defects:
 
 | # | Defect | File | Impact |
 |---|--------|------|--------|
-| 1 | **Tool call loop broken** — returns instead of looping | agent_loop.c:192-200 | Agent can't use tools in multi-turn |
-| 2 | **Auth header malformed** — `"...ype: application/json"` | llm_client.c:116 | LLM API calls fail |
+| 1 | **Tool call loop** — fixed now executes tools and loops | agent_loop.c:173-191 | Tools work in multi-turn |
+| 2 | **Auth header** — fixed Content-Type properly set | llm_client.c:113-121 | LLM API calls work |
 | 3 | **web_search is alias for web_get** — no real search | web.c:71-73 | Can't search web |
 | 4 | **Jobs are memory-only** — lost on restart | scheduler.c | Data loss |
-| 5 | **cron_list_jobs() returns "[]"** — hardcoded stub | jobs.c:19 | Can't list jobs |
+| 5 | **cron_list_jobs() returns empty array** — hardcoded stub | jobs.c:19 | Can't list jobs |
 | 6 | **No patch/search tools** — only read/write | file.c | Can't edit files |
 | 7 | **No readline/autocomplete** — raw fgets | cli.c | Bad UX |
 | 8 | **Display has no spinner/progress/panel** — declarations but no code | display.h vs cli_display.c | Lies to callers |
-| 9 | **state.md claimed all ✅** — completely false | state.md (OLD) | Misleading roadmap |
+| 9 | **state.md claimed all all done** — completely false | state.md (OLD) | Misleading roadmap |
 | 10 | **Only 4 tools registered** — Python has 40+ | tool_init.c | Severely limited agent |
 
 ## Architecture Limits
@@ -104,8 +104,8 @@ make          # Full binary ✅
 |-------|--------|----------|
 | Compiles | ✅ | 0 warnings, 386KB binary |
 | --version | ✅ | "WuBu Hermes v0.14.0-wubu" |
-| Tool calling | 🟥 | Broken — returns before tool loop |
-| LLM call | 🟥 | Auth header malformed |
+| Tool calling | ✅ | Fixed — tools execute and loop back |
+| LLM call | ✅ | Auth header fixed |
 | web search | 🟥 | Alias for GET, no search |
 | cron persist | 🟥 | Memory-only |
 | JSON parser | ✅ | test_json.c all pass |
