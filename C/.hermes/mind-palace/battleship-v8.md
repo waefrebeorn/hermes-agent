@@ -188,14 +188,14 @@ Confirmed bugs that need fixing.
 | 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
 | 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
 
-## SECTOR 12: Test Coverage (25 entries — 22 exist, 3 missing)
+## SECTOR 12: Test Coverage (25 entries — 23 exist, 2 missing)
 
 C tools with test file status.
 
 | # | ID | Module | Test File | Priority |
 |---|-------|--------|-----------|----------|
 | 1 | T01 | api_helpers.c | ✅ test_api_helpers.c exists | P2 |
-| 2 | T02 | approve.c | ❌ no test (security module, 553 LOC) | P2 |
+| 2 | T02 | approve.c | ✅ test_approve.c (34 tests) | P2 |
 | 3 | T03 | clarify.c | ✅ test_clarify.c (8 tests) | P2 |
 | 4 | T04 | cronjob.c | ✅ test_cronjob.c exists (has 23 tests elsewhere) | P2 |
 | 5 | T05 | delegate.c | ✅ test_delegate.c (4 tests) — in test_runner as delegate_tool | P2 |

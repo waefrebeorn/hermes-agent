@@ -12,7 +12,7 @@
 ## Plans Directory
 | File | Purpose | Status |
 |------|---------|--------|
-| `battleship-v8.md` | Active gap roadmap (143 gaps, 22 sectors) | ✅ Current |
+| `battleship-v8.md` | Active gap roadmap (142 gaps, 22 sectors) | ✅ Current |
 | `battleship-v7.md` | Previous roadmap (stale) | ❌ Superseded |
 
 ## Vault

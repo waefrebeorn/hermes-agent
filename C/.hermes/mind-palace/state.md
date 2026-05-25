@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (143 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (142 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -39,7 +39,7 @@
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
 ||| S10 | Library Depth | 8 | 0 | 3 | 5 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
-|| S12 | Test Coverage | 3 | 0 | 3 | 0 |
+|| S12 | Test Coverage | 2 | 0 | 2 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 6 | 0 | 5 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **143** | **0** | **70** | **73** |
+||| **Total** | **142** | **0** | **69** | **73** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,7 @@
 | D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| T02 | approve.c — 34 tests for pattern matching, cache, yolo mode, URL safety | S12 | 2026-05-25 |
 | U02 | TUI session browser with metadata/search - title, msg count, model, time | S14 | 2026-05-25 |
 | U01 | TUI image display - wired sixel/kitty image viewer | S14 | 2026-05-25 |
 | D07 | Modal terminal backend — run_command_modal() via `modal run` | S7 | 2026-05-25 |
