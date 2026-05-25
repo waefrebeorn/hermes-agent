@@ -44,6 +44,8 @@ void registry_init_discord(void);
 void registry_init_mcp(void);
 void registry_init_file_batch(void);
 
+void registry_init_feishu_tools(void);
+
 /* Register all tools */
 void tools_init_all(void) {
     /* P168: Initialize file sandbox before any tool registration */
@@ -85,6 +87,9 @@ void tools_init_all(void) {
 
     /* F15: Batch file ops */
     registry_init_file_batch();
+
+    /* D22: Feishu doc/drive tools */
+    registry_init_feishu_tools();
 
     /* P150: Assign toolsets for enabled/disabled filtering */
     registry_set_toolset("browser_navigate", "browser");
