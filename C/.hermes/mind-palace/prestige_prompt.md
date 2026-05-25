@@ -1,4 +1,4 @@
-# Hermes C — Prestige Prompt (v34 — 2026-05-24 Code-Verified)
+# Hermes C — Prestige Prompt (v35 — 2026-05-24 Code-Verified)
 
 ## Verified State
 
@@ -15,7 +15,7 @@
 | Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **857+** |
-| Real gap count | **223** (battleship-v8, 22 sectors) |
+| Real gap count | **222** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 15 gaps)

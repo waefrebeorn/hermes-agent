@@ -472,6 +472,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | B14 | Plugin load errors now propagated to user — `plugin_registry_discover()` logs each failed load to stderr with `plugin_error()` detail; main.c startup prints loaded count; memory.c fallback path logs `plugin_error()` on load failure | S11 | lib/libplugin/plugin.c:648-650, src/main.c:182, src/tools/memory.c:1567-1570 |
 
+## Phase 39: Bug Fix — B11 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B11 | Gateway config validation on startup — `setup_email()` now validates IMAP/SMTP/sendmail config exists before returning true; startup log prints platform count and requested list | S11 | src/gateway/server.c:1249-1257, src/gateway/server.c:1823-1824 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

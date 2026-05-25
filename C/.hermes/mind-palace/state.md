@@ -1,4 +1,4 @@
-# Hermes C — State Dashboard (v36 — 2026-05-24)
+# Hermes C — State Dashboard (v37 — 2026-05-24)
 
 ## Build Metrics (code-verified)
 
@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (223 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (222 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -38,7 +38,7 @@
 | Gateway Platform Depth | 18 | 0 | 15 | 3 |
 | Configuration | **3** | 0 | **0** | 3 |
 | Library Depth | 27 | 0 | 19 | 8 |
-| Bug Fixes | 7 | 0 | 5 | 2 |
+| Bug Fixes | 5 | 0 | 4 | 1 |
 | Test Coverage | 25 | 0 | 25 | 0 |
 | API Server Depth | 5 | 0 | 5 | 0 |
 | TUI Depth | 8 | 0 | 7 | 1 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **223** | **0** | **145** | **78** |
+| **Total** | **222** | **0** | **145** | **77** |
 
 ## Python Upstream Parity
 
@@ -90,6 +90,7 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | A03 | conversation_compression.py — orchestration done via agent_loop + auxiliary_client | S4 | 2026-05-24 |
 | S07, S08 | Plugin memory vtable import_json + export_json — now wired | S1 | 2026-05-24 |
 | B14 | Plugin load errors propagated — discover logs each failure via plugin_error(); main.c startup prints count; memory.c fallback logs load error | S11 | 2026-05-24 |
+| B11 | Gateway config validation — setup_email() validates IMAP/SMTP/sendmail config; startup logs platform count | S11 | 2026-05-24 |
 
 ## Next Priority Queue (top 15)
 

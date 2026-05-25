@@ -1246,6 +1246,16 @@ static bool setup_whatsapp(void) {
 static bool setup_email(void) {
     const char *from = getenv("EMAIL_FROM");
     if (from) email_set_from(from);
+
+    /* Validate: email needs IMAP (for incoming) or SMTP/sendmail (for outgoing) */
+    const char *imap = getenv("EMAIL_IMAP_SERVER");
+    const char *smtp = getenv("EMAIL_SMTP_SERVER");
+    const char *cmd = getenv("EMAIL_SEND_CMD");
+    if (!imap && !smtp && !cmd) {
+        fprintf(stderr, "Warning: neither EMAIL_IMAP_SERVER nor EMAIL_SMTP_SERVER nor"
+                        " EMAIL_SEND_CMD set. Email will not function.\n");
+        return false;
+    }
     return true;
 }
 
@@ -1809,6 +1819,9 @@ int hermes_gateway_main(int argc, char **argv) {
         fprintf(stderr, "Error: No platforms could be started.\n");
         goto cleanup;
     }
+
+    printf("[gateway] %d platform(s) running, %s configured\n",
+           g_gw.platform_count, platforms_buf);
 
     /* Setup signal handler */
     signal(SIGINT, handle_signal);

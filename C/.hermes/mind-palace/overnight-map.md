@@ -1,4 +1,4 @@
-# Hermes C — Overnight Navigation Map (v31 — 2026-05-24)
+# Hermes C — Overnight Navigation Map (v32 — 2026-05-24)
 
 ## State Verified (2026-05-24)
 
@@ -9,19 +9,19 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **223** (battleship-v8) | B14 — plugin load errors propagated |
+| Gap count | **222** (battleship-v8) | B11 — gateway config validation |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v30 (previous session)
+## What Changed Since v31 (previous session)
 
-- **B14 closed**: Plugin load errors now propagated — plugin_registry_discover() logs each failed load via plugin_error(); main.c startup prints loaded count; memory.c fallback path logs error on load failure
-- Gap count 224 → 223 after B14 closure
+- **B11 closed**: Gateway config validation — setup_email() now validates IMAP/SMTP config; startup logs platform count
+- Gap count 223 → 222 after B11 closure
 
-## Resolved Since v30
+## Resolved Since v31
 
 | ID | Description |
 |----|-------------|
-| B14 | Plugin load errors propagated — discover logs each failure via plugin_error(); main.c startup prints count; memory.c fallback logs load error |
+| B11 | Gateway config validation — setup_email() validates IMAP/SMTP config; startup logs platform count |
 
 ## Current Priority Queue
 
