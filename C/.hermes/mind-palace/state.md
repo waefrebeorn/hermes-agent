@@ -38,7 +38,7 @@
 | Gateway Platform Depth | 18 | 0 | 15 | 3 |
 | Configuration | **3** | 0 | **0** | 3 |
 | Library Depth | 27 | 0 | 19 | 8 |
-| Bug Fixes | 3 | 0 | 2 | 1 |
+| Bug Fixes | 2 | 0 | 1 | 1 |
 | Test Coverage | 25 | 0 | 25 | 0 |
 | API Server Depth | 5 | 0 | 5 | 0 |
 | TUI Depth | 8 | 0 | 7 | 1 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **219** | **0** | **142** | **77** |
+| **Total** | **218** | **0** | **141** | **77** |
 
 ## Python Upstream Parity
 

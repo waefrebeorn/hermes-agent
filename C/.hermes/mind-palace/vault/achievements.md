@@ -496,6 +496,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-----------|---------|----------|
 | P10 | "CDP not connected" — fallback message, CDP not wired | CDP client fully implemented in browser.c: WebSocket connect, config/env URL resolution (CAMOFOX_WS_URL/CHROME_WS_URL), cdp_get_url/set_url, stub_cdp_handler for CDP-dependent tools | browser.c:1190-1207, browser.c:1172-1178 |
 
+## Phase 43: Stale Claim Retired — B16 (2026-05-24)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| B16 | OOM not handled in `db_list_with_meta` loop | `calloc` at db.c:521 already has NULL check at line 522 that frees `ids` and returns NULL — OOM is properly handled | db.c:521-527 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

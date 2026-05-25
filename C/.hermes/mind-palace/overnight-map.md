@@ -9,19 +9,19 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **219** (battleship-v8) | P10 retired stale |
+| Gap count | **218** (battleship-v8) | B16 retired stale |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v34 (previous session)
+## What Changed Since v35 (previous session)
 
-- **P10 retired stale**: CDP client already fully implemented in browser.c (WebSocket, config/env URL, stub handler)
-- Gap count 220 → 219 after P10 stale retirement
+- **B16 retired stale**: db_list_with_meta already has OOM check at calloc via NULL guard (db.c:522)
+- Gap count 219 → 218 after B16 stale retirement
 
-## Resolved Since v34
+## Resolved Since v35
 
 | ID | Description |
 |----|-------------|
-| P10 | Stale claim retired — CDP client already implemented in browser.c |
+| B16 | Stale claim retired — OOM check already present in db_list_with_meta |
 
 ## Current Priority Queue
 
