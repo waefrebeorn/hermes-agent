@@ -389,6 +389,8 @@ static const slash_cmd_t slash_commands[] = {
     {"/skin",    "List/reload skins", ""},
     {"/image",   "Display an image file", "<path>"},
     {"/gateway", "Show gateway status dashboard", ""},
+    {"/cron",    "Show cron job viewer", ""},
+    {"/logs",    "Show log viewer", ""},
     {NULL, NULL, NULL}
 };
 
@@ -657,6 +659,8 @@ typedef struct {
         MODE_CONFIG_EDIT,
         MODE_IMAGE_VIEW,
         MODE_GATEWAY_STATUS,
+        MODE_CRON_VIEW,
+        MODE_LOG_VIEW,
         MODE_HELP,
     } modal_mode;
 } tui_global_state_t;
@@ -2289,6 +2293,116 @@ static void tui_draw_gateway_status(void) {
     doupdate();
 }
 
+/* Draw cron job viewer overlay — U07 */
+static void tui_draw_cron_viewer(void) {
+    WINDOW *win = tui.panes[PANE_HISTORY].win;
+    if (!win) return;
+
+    werase(win);
+
+    int w_rows = tui.panes[PANE_HISTORY].rows;
+
+    wattron(win, A_BOLD | COLOR_PAIR(1));
+    mvwprintw(win, 0, 0, " CRON JOBS ");
+    wattroff(win, A_BOLD | COLOR_PAIR(1));
+
+    int y = 2;
+    mvwprintw(win, y++, 0, " Cron Dir:       %s",
+              tui.agent && tui.agent->config.cron.dir[0] ?
+              tui.agent->config.cron.dir : "default");
+    mvwprintw(win, y++, 0, " Max Jobs:       %d",
+              tui.agent ? tui.agent->config.cron.max_concurrent_jobs : 5);
+    mvwprintw(win, y++, 0, " Job Timeout:    %ds",
+              tui.agent ? tui.agent->config.cron.job_timeout : 300);
+    mvwprintw(win, y++, 0, " Retention:      %d days",
+              tui.agent ? tui.agent->config.cron.retention_days : 7);
+    mvwprintw(win, y++, 0, " Notify Failure: %s",
+              tui.agent && tui.agent->config.cron.notify_on_failure ? "Yes" : "No");
+    mvwprintw(win, y++, 0, " Poll Interval:  %ds",
+              tui.agent ? tui.agent->config.cron.scheduler_poll_interval : 60);
+    y++;
+    mvwprintw(win, y++, 0, " Use /cron list or cron CLI to manage jobs");
+    mvwprintw(win, y++, 0, " Use hermes cron:add <name> <schedule> <cmd>");
+
+    wattron(win, A_DIM | COLOR_PAIR(10));
+    mvwprintw(win, w_rows - 1, 0, " Press any key to close ");
+    wattroff(win, A_DIM | COLOR_PAIR(10));
+
+    wnoutrefresh(win);
+    doupdate();
+}
+
+/* Draw log viewer overlay — U08 */
+static void tui_draw_log_viewer(void) {
+    WINDOW *win = tui.panes[PANE_HISTORY].win;
+    if (!win) return;
+
+    werase(win);
+
+    int w_rows = tui.panes[PANE_HISTORY].rows;
+    int w_cols = tui.panes[PANE_HISTORY].cols;
+
+    wattron(win, A_BOLD | COLOR_PAIR(1));
+    mvwprintw(win, 0, 0, " LOG VIEWER ");
+    wattroff(win, A_BOLD | COLOR_PAIR(1));
+
+    char log_dir[HERMES_PATH_MAX] = "";
+    hermes_log_dir(log_dir, sizeof(log_dir));
+
+    int y = 2;
+    mvwprintw(win, y++, 0, " Log Dir:  %s", log_dir);
+    mvwprintw(win, y++, 0, " Files:    agent.log, errors.log, gateway.log");
+    y++;
+
+    /* Try to show tail of agent.log */
+    char log_path[HERMES_PATH_MAX + 32];
+    snprintf(log_path, sizeof(log_path), "%s/agent.log", log_dir);
+    FILE *f = fopen(log_path, "r");
+    if (f) {
+        /* Seek near end and read last N lines */
+        char buf[2048];
+        int lines_shown = 0;
+        int max_lines = w_rows - y - 2;
+
+        /* Go to end, read backwards for lines */
+        fseek(f, 0, SEEK_END);
+        long pos = ftell(f);
+        long read_start = pos - (max_lines * 80); /* estimate ~80 chars per line */
+        if (read_start < 0) read_start = 0;
+        fseek(f, read_start, SEEK_SET);
+
+        /* Read from estimated position */
+        while (fgets(buf, sizeof(buf), f) && lines_shown < max_lines) {
+            /* Strip newline */
+            size_t blen = strlen(buf);
+            if (blen > 0 && buf[blen-1] == '\n') buf[blen-1] = '\0';
+            if (blen > 0 && buf[blen-2] == '\r') buf[blen-2] = '\0';
+
+            /* Truncate long lines to fit terminal width */
+            if ((int)strlen(buf) >= w_cols - 1)
+                buf[w_cols - 4] = '\0';
+
+            mvwprintw(win, y, 0, " %s", buf);
+            y++;
+            lines_shown++;
+        }
+        fclose(f);
+
+        if (lines_shown == 0) {
+            mvwprintw(win, y++, 0, " (empty log)");
+        }
+    } else {
+        mvwprintw(win, y++, 0, " (no agent.log found)");
+    }
+
+    wattron(win, A_DIM | COLOR_PAIR(10));
+    mvwprintw(win, w_rows - 1, 0, " Press any key to close ");
+    wattroff(win, A_DIM | COLOR_PAIR(10));
+
+    wnoutrefresh(win);
+    doupdate();
+}
+
 /* Create FIFO for RPC communication */
 static bool tui_gateway_init(void) {
     /* Remove old FIFO if exists */
@@ -2695,6 +2809,16 @@ static void tui_process_input(const char *line) {
             tui_redraw_history();
             return;
 
+        } else if (strcmp(line, "/logs") == 0) {
+            tui.modal_mode = MODE_LOG_VIEW;
+            tui_draw_log_viewer();
+            return;
+
+        } else if (strcmp(line, "/cron") == 0) {
+            tui.modal_mode = MODE_CRON_VIEW;
+            tui_draw_cron_viewer();
+            return;
+
         } else if (strcmp(line, "/gateway") == 0) {
             tui.modal_mode = MODE_GATEWAY_STATUS;
             tui_draw_gateway_status();
@@ -2757,6 +2881,14 @@ static int tui_handle_modal_input(int ch) {
         case MODE_IMAGE_VIEW:
             return tui_image_viewer_handle(ch);
         case MODE_GATEWAY_STATUS:
+            tui.modal_mode = MODE_NORMAL;
+            tui_redraw_history();
+            return 1;
+        case MODE_CRON_VIEW:
+            tui.modal_mode = MODE_NORMAL;
+            tui_redraw_history();
+            return 1;
+        case MODE_LOG_VIEW:
             tui.modal_mode = MODE_NORMAL;
             tui_redraw_history();
             return 1;
@@ -3119,6 +3251,8 @@ int tui_fullscreen_run(agent_state_t *state) {
                 case MODE_CONFIG_EDIT:    tui_draw_config_editor(); break;
                 case MODE_IMAGE_VIEW:     tui_draw_image_viewer(); break;
                 case MODE_GATEWAY_STATUS: tui_draw_gateway_status(); break;
+                case MODE_CRON_VIEW:      tui_draw_cron_viewer(); break;
+                case MODE_LOG_VIEW:       tui_draw_log_viewer(); break;
                 case MODE_HELP:           break; /* help stays until dismissed */
                 default: break;
             }
