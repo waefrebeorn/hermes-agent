@@ -460,6 +460,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-----------|---------|----------|
 | B09 | Session metadata not saved on /title | `cmd_title()` calls `agent_save_meta(state)` immediately after setting title; `agent_save_meta` persists `user_title` to DB via `meta.title` | commands.c:1752, agent_loop.c:363-366
 
+## Phase 37: Bug Fix — B13 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B13 | skills_hub_fetch_catalog — added fprintf(stderr) error messages for HTTP client creation failure, network request failure, and JSON parse failure (was: all three failures returned false silently) | S11 | skills_hub.c:95-115 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
