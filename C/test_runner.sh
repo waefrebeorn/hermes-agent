@@ -69,7 +69,7 @@ run_lib_test() {
 
 run_lib_test "json"      "tests/test_json.c"           "lib/libjson"            "$CDIR/lib/libjson/json.c"
 run_lib_test "protobuf"  "tests/test_protobuf.c"       "lib/libprotobuf"        "$CDIR/lib/libprotobuf/protobuf.c"
-run_lib_test "http"      "tests/test_http.c"           "lib/libhttp"            "$CDIR/lib/libhttp/http.c -lssl -lcrypto"
+run_lib_test "http"      "tests/test_http.c"           "lib/libhttp"            "$CDIR/lib/libhttp/http.c -lssl -lcrypto -lz"
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"

@@ -1,7 +1,7 @@
 CC = gcc
 AR = ar
 CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -I include
-LDFLAGS = -lssl -lcrypto -ldl -lpthread
+LDFLAGS = -lssl -lcrypto -ldl -lpthread -lz
 LIBS = -lm
 
 # Optional ncurses full-screen TUI (enabled when ncurses is available)
@@ -369,7 +369,7 @@ test-libs:
 	@echo "=== Testing libjson ==="
 	@gcc -O2 -Wall -Wextra -I lib/libjson lib/libjson/json.c tests/test_json.c -o /tmp/t_json -lm 2>/dev/null; /tmp/t_json 2>&1 || echo "(no test runner)"
 	@echo "=== Testing libhttp ==="
-	@gcc -O2 -Wall -Wextra -I lib/libhttp lib/libhttp/http.c tests/test_http.c -o /tmp/t_http -lssl -lcrypto 2>/dev/null; /tmp/t_http 2>&1 || echo "(no test runner)"
+	@gcc -O2 -Wall -Wextra -I lib/libhttp lib/libhttp/http.c tests/test_http.c -o /tmp/t_http -lssl -lcrypto -lz 2>/dev/null; /tmp/t_http 2>&1 || echo "(no test runner)"
 	@echo "=== Testing libyaml ==="
 	@gcc -O2 -Wall -Wextra -I lib/libyaml lib/libyaml/yaml.c tests/test_yaml.c -o /tmp/t_yaml -lm 2>/dev/null; /tmp/t_yaml 2>&1 || echo "(no test runner)"
 	@echo "=== Testing libcrypto ==="

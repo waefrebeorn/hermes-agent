@@ -124,6 +124,14 @@ typedef struct {
 void http_client_enable_cookies(http_t *h, bool enable);
 void http_client_clear_cookies(http_t *h);
 
+/* === Redirect following === */
+/* Set max redirects to follow (0 = disable, default 5). Call before requests. */
+void http_client_set_max_redirects(http_t *h, int max_redirects);
+
+/* === Content decompression (gzip/deflate) === */
+/* Enable automatic gzip/deflate decompression. Default: disabled. */
+void http_client_set_decompress(http_t *h, bool enable);
+
 /* Internal http_request hooks */
 void http_cookie_parse_set_cookie(http_t *h, const char *header_value);
 char *http_cookie_build_header(http_t *h, const char *url);

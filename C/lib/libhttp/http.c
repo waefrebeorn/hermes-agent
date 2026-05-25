@@ -19,6 +19,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+/* zlib for gzip/deflate decompression */
+#include <zlib.h>
+
 /* ================================================================
  *  Internal helpers
  * ================================================================ */
@@ -46,6 +49,8 @@ struct http_t {
     int      timeout_sec;
     int      max_retries;
     int      backoff_ms;
+    int      max_redirects;    /* 0 = disabled, default 5 */
+    bool     decompress;       /* auto-decompress gzip/deflate */
     SSL_CTX *ssl_ctx;
     bool     ssl_init;
     char     proxy[512];
@@ -267,6 +272,8 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
     c->ssl_ctx = NULL;
     c->ssl_init = false;
     c->proxy[0] = '\0';
+    c->max_redirects = 5;  /* default: follow up to 5 redirects */
+    c->decompress = false; /* default: return raw response */
 
     /* Auto-detect proxy from environment (HTTPS_PROXY > HTTP_PROXY > ALL_PROXY) */
     const char *env_keys[] = {"HTTPS_PROXY", "https_proxy", "HTTP_PROXY",
@@ -306,8 +313,12 @@ void http_client_set_proxy(http_t *h, const char *proxy_url) {
         h->proxy[0] = '\0';
 }
 
+/* Forward declaration for decompression function defined below */
+static char *http_decompress_body(const char *compressed, size_t compressed_len,
+                                   size_t *decompressed_len);
+
 /* ================================================================
- *  Internal request (with retry)
+ *  Core request logic
  * ================================================================ */
 
 static http_resp_t *do_request(http_t *h, http_method_t method,
@@ -510,6 +521,10 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
             }
         }
 
+        /* Auto-add Accept-Encoding for decompression */
+        if (h->decompress)
+            REQ_APPEND("Accept-Encoding: gzip, deflate\r\n");
+
         if (body && body_len > 0)
             REQ_APPEND("Content-Length: %zu\r\n", body_len);
 
@@ -652,6 +667,25 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         }
         free(resp_buf);
 
+        /* L07: Auto-decompress gzip/deflate body if enabled */
+        if (h->decompress && resp->body && resp->body_len > 0) {
+            const char *ce = strstr(resp->headers, "Content-Encoding:");
+            if (!ce) ce = strstr(resp->headers, "content-encoding:");
+            if (ce) {
+                bool is_gzip = strstr(ce, "gzip") != NULL;
+                bool is_deflate = strstr(ce, "deflate") != NULL;
+                if (is_gzip || is_deflate) {
+                    size_t dec_len = 0;
+                    char *dec = http_decompress_body(resp->body, resp->body_len, &dec_len);
+                    if (dec) {
+                        free(resp->body);
+                        resp->body = dec;
+                        resp->body_len = dec_len;
+                    }
+                }
+            }
+        }
+
         /* Retry on server errors (5xx) if configured */
         if (resp->status >= 500 && attempt <= h->max_retries) {
             http_resp_free(resp);
@@ -660,9 +694,10 @@ static http_resp_t *do_request(http_t *h, http_method_t method,
         }
 
         /* L06: Redirect following — handle 3xx responses */
-        if ((resp->status == 301 || resp->status == 302 ||
+        if (h->max_redirects > 0 &&
+            (resp->status == 301 || resp->status == 302 ||
              resp->status == 303 || resp->status == 307 || resp->status == 308) &&
-            redirect_count < 5) {
+            redirect_count < h->max_redirects) {
             /* Extract Location header from response headers */
             const char *loc = strstr(resp->headers, "Location:");
             if (!loc) loc = strstr(resp->headers, "location:");
@@ -1091,4 +1126,77 @@ char *http_cookie_build_header(http_t *h, const char *url) {
 
     if (total == 0) return NULL;
     return strdup(buf);
+}
+
+/* ================================================================
+ *  Gzip/Deflate decompression
+ * ================================================================ */
+
+/**
+ * Decompress gzip or deflate data using zlib.
+ * Returns malloc'd buffer on success, NULL on error.
+ * Caller must free() the result.
+ */
+static char *http_decompress_body(const char *compressed, size_t compressed_len,
+                                   size_t *decompressed_len) {
+    if (!compressed || compressed_len == 0) return NULL;
+
+    z_stream strm;
+    memset(&strm, 0, sizeof(strm));
+
+    /* Auto-detect gzip, zlib, or raw deflate format */
+    int ret = inflateInit2(&strm, 15 + 32);
+    if (ret != Z_OK) return NULL;
+
+    strm.next_in = (unsigned char *)compressed;
+    strm.avail_in = (uInt)compressed_len;
+
+    size_t out_cap = compressed_len * 4 + 1024;
+    char *out = (char *)malloc(out_cap);
+    if (!out) { inflateEnd(&strm); return NULL; }
+    size_t out_len = 0;
+
+    do {
+        if (out_len + 32768 >= out_cap) {
+            out_cap *= 2;
+            char *new_out = (char *)realloc(out, out_cap);
+            if (!new_out) { free(out); inflateEnd(&strm); return NULL; }
+            out = new_out;
+        }
+        strm.next_out = (unsigned char *)(out + out_len);
+        strm.avail_out = (uInt)(out_cap - out_len);
+
+        ret = inflate(&strm, Z_NO_FLUSH);
+        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR) {
+            free(out);
+            inflateEnd(&strm);
+            return NULL;
+        }
+        out_len = strm.total_out;
+    } while (ret != Z_STREAM_END && strm.avail_in > 0);
+
+    inflateEnd(&strm);
+
+    if (ret != Z_STREAM_END) {
+        free(out);
+        return NULL;
+    }
+
+    out[out_len] = '\0';
+    if (decompressed_len) *decompressed_len = out_len;
+    return out;
+}
+
+/* ================================================================
+ *  Public setters
+ * ================================================================ */
+
+void http_client_set_max_redirects(http_t *h, int max_redirects) {
+    if (!h) return;
+    h->max_redirects = max_redirects > 0 ? max_redirects : 0;
+}
+
+void http_client_set_decompress(http_t *h, bool enable) {
+    if (!h) return;
+    h->decompress = enable;
 }

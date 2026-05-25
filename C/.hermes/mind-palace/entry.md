@@ -15,13 +15,13 @@ make tui && ./hermes-tui          # ncurses TUI (experimental)
 
 ## Quick Stats
 ```
-Suite:   239/0/0  (202 test files, zero failures)
-Binary:  29MB     (dynamic ELF, 0 warnings)
-Source:  153 .c + 66 .h = 219 files
-Tools:   85 registered
+Suite:   243/0/0  (206 test files, zero failures)
+Binary:  30MB     (dynamic ELF, 0 warnings)
+Source:  154 .c + 66 .h = 220 files
+Tools:   84 registered
 Gateway: 19 platforms
 Plugins: 10 .so
-Parity:  ~65%    (312 gaps remaining — battleship v8)
+Parity:  ~78%    (174 gaps remaining — battleship v8)
 ```
 
 ## Key Paths
