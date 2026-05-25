@@ -195,6 +195,52 @@ char *datetime_format_utc(time_t ts, const char *fmt) {
     return strdup(buf);
 }
 
+/* ─── Timezone ─────────────────────────────────────────── */
+
+int datetime_localtime_offset(void) {
+    time_t now = time(NULL);
+    struct tm tm_utc;
+    if (!gmtime_r(&now, &tm_utc)) return 0;
+    tm_utc.tm_isdst = -1;
+    time_t as_utc = mktime(&tm_utc);
+    return (int)difftime(as_utc, now);
+}
+
+int datetime_tz_offset(const char *tz_name) {
+    if (!tz_name) return 0;
+    time_t now = time(NULL);
+    struct tm tm_utc;
+    if (!gmtime_r(&now, &tm_utc)) return 0;
+    tm_utc.tm_isdst = -1;
+
+    char *saved_tz = getenv("TZ");
+    char *saved_copy = saved_tz ? strdup(saved_tz) : NULL;
+    setenv("TZ", tz_name, 1);
+    tzset();
+    time_t    t_tz = mktime(&tm_utc);
+    if (saved_copy) { setenv("TZ", saved_copy, 1); } else { unsetenv("TZ"); }
+    tzset();
+    free(saved_copy);
+    return (int)difftime(now, t_tz);
+}
+
+char *datetime_format_tz(time_t ts, const char *tz_name, const char *fmt) {
+    if (!tz_name || !fmt) return NULL;
+    char *saved_tz = getenv("TZ");
+    char *saved_copy = saved_tz ? strdup(saved_tz) : NULL;
+    setenv("TZ", tz_name, 1);
+    tzset();
+    struct tm result;
+    char buf[256];
+    char *ret = NULL;
+    if (localtime_r(&ts, &result) && strftime(buf, sizeof(buf), fmt, &result) > 0)
+        ret = strdup(buf);
+    if (saved_copy) { setenv("TZ", saved_copy, 1); } else { unsetenv("TZ"); }
+    tzset();
+    free(saved_copy);
+    return ret;
+}
+
 /* ================================================================
  *  Relative time
  * ================================================================ */

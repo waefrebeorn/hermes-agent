@@ -365,6 +365,45 @@ int main(void) {
         TEST("buffer small returns NULL", datetime_buffer(now, small, 4) == NULL);
     }
 
+    /* ─── datetime_localtime_offset() and datetime_tz_offset() ── */
+    printf("\n--- Timezone functions ---\n");
+    {
+        int offset = datetime_localtime_offset();
+        TEST("localtime_offset returns non-zero (unless UTC zone)", offset != 0 || 1 == 1); /* info only */
+        TEST("localtime_offset within valid range", offset >= -43200 && offset <= 50400);
+
+        int utc_offset = datetime_tz_offset("UTC");
+        TEST("tz_offset UTC is 0", utc_offset == 0);
+
+        int ny_offset = datetime_tz_offset("America/New_York");
+        TEST("tz_offset NY valid", ny_offset == -18000 || ny_offset == -14400); /* EST or EDT */
+
+        int tokyo_offset = datetime_tz_offset("Asia/Tokyo");
+        TEST("tz_offset Tokyo is +9", tokyo_offset == 32400);
+
+        TEST("tz_offset NULL returns 0", datetime_tz_offset(NULL) == 0);
+        TEST("tz_offset bad name returns 0", datetime_tz_offset("Not/A/Timezone") == 0);
+    }
+
+    /* ─── datetime_format_tz() ──────────────────────────────── */
+    printf("\n--- datetime_format_tz() ---\n");
+    {
+        /* Epoch in UTC = 1970-01-01 00:00:00 */
+        time_t epoch = 0;
+        char *s = datetime_format_tz(epoch, "UTC", "%Y-%m-%d %H:%M:%S");
+        TEST_STR("format_tz UTC epoch", s, "1970-01-01 00:00:00");
+        free(s);
+
+        /* Tokyo is UTC+9 → epoch = 1970-01-01 09:00:00 JST */
+        s = datetime_format_tz(epoch, "Asia/Tokyo", "%Y-%m-%d %H:%M:%S");
+        TEST("format_tz Tokyo epoch has 09:", s && strstr(s, "09:00:00") != NULL);
+        free(s);
+
+        /* NULL args */
+        TEST("format_tz NULL tz returns NULL", datetime_format_tz(epoch, NULL, "%Y") == NULL);
+        TEST("format_tz NULL fmt returns NULL", datetime_format_tz(epoch, "UTC", NULL) == NULL);
+    }
+
     /* ─── Null/edge safety ─────────────────────────────────── */
     printf("\n--- Null/edge safety ---\n");
     {

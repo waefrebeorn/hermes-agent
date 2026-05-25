@@ -48,6 +48,11 @@ char *datetime_format(time_t ts, const char *fmt);
 /** datetime_format_utc(ts, fmt) — Same but in UTC. Caller free(). */
 char *datetime_format_utc(time_t ts, const char *fmt);
 
+/** datetime_format_tz(ts, tz_name, fmt) — Format time_t in named timezone.
+ *  tz_name: e.g. "America/New_York", "Europe/London", "Asia/Tokyo".
+ *  Returns NULL on error. Caller free(). */
+char *datetime_format_tz(time_t ts, const char *tz_name, const char *fmt);
+
 /* ─── Relative time ───────────────────────────────────────── */
 
 /** datetime_describe(ts) — Relative description of timestamp vs now.
@@ -94,6 +99,16 @@ bool datetime_same_day(time_t a, time_t b);
 
 /** datetime_day_start(ts) — Midnight (00:00:00) of ts's calendar day. */
 time_t datetime_day_start(time_t ts);
+
+/* ─── Timezone ───────────────────────────────────────────── */
+
+/** datetime_localtime_offset(void) — Local timezone offset from UTC in seconds.
+ *  Positive east of UTC (e.g. UTC+2 = +7200). Returns 0 on error. */
+int datetime_localtime_offset(void);
+
+/** datetime_tz_offset(tz_name) — Get named timezone offset from UTC in seconds.
+ *  tz_name: e.g. "America/New_York". Returns 0 on error. */
+int datetime_tz_offset(const char *tz_name);
 
 /* ─── Utilities ───────────────────────────────────────────── */
 

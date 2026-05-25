@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **215** (battleship-v8) | L08 — JSON pointer queries added |
+| Gap count | **214** (battleship-v8) | L27 — timezone functions added |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)

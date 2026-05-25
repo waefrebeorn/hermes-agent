@@ -568,3 +568,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | L28 | datetime_parse_iso8601 — added fractional seconds parsing with proper timezone offset handling for RFC 3339 compliance (.123Z, .999+05:00) | S10 | datetime.c:91-96, test_datetime.c: fractional seconds tests, datetime_parse_rfc3339() alias |
+
+## Phase 18: Timezone Functions — L27 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L27 | datetime_localtime_offset(), datetime_tz_offset(), datetime_format_tz() — named-timezone formatting and offset queries | S10 | datetime.h: timezone API section, datetime.c: ~70 LOC, test_datetime.c: 11 new timezone tests |
