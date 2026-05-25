@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <strings.h>
 #include <time.h>
+#include <sys/stat.h>
 
 /* ================================================================
  *  Gateway state
@@ -96,6 +97,39 @@ int gw_queue_depth(void) {
     int depth = (g_gw.msg_queue_head - g_gw.msg_queue_tail + GW_QUEUE_MAX) % GW_QUEUE_MAX;
     pthread_mutex_unlock(&g_gw.queue_mutex);
     return depth;
+}
+
+/* ================================================================
+ *  Gateway stderr log-to-file with rotation (B15)
+ * ================================================================ */
+
+#define GW_LOG_MAX_BYTES (10 * 1024 * 1024)  /* 10 MB before rotation */
+#define GW_LOG_PATH_MAX 512
+
+static FILE *g_gw_log_fp = NULL;
+static char  g_gw_log_path[GW_LOG_PATH_MAX] = {0};
+
+/** Open gateway log file, rotate if >10 MB, for persistent log capture. */
+static void gw_log_open(void) {
+    const char *home = getenv("SLERMES_HOME");
+    if (!home) home = getenv("HOME");
+    if (!home) return;
+
+    snprintf(g_gw_log_path, sizeof(g_gw_log_path),
+             "%s/.slermes/logs/gateway.log", home);
+
+    struct stat st;
+    if (stat(g_gw_log_path, &st) == 0 && st.st_size > GW_LOG_MAX_BYTES) {
+        char old[GW_LOG_PATH_MAX];
+        snprintf(old, sizeof(old), "%s.1", g_gw_log_path);
+        rename(g_gw_log_path, old);
+    }
+
+    g_gw_log_fp = fopen(g_gw_log_path, "a");
+}
+
+static void gw_log_close(void) {
+    if (g_gw_log_fp) { fclose(g_gw_log_fp); g_gw_log_fp = NULL; }
 }
 
 /* ================================================================
@@ -1653,6 +1687,9 @@ int hermes_gateway_main(int argc, char **argv) {
     g_gw.tg_offset = 0;
     pthread_mutex_init(&g_gw.agent_mutex, NULL);
 
+    /* Open log file with rotation (B15) */
+    gw_log_open();
+
     /* P101: Initialize message queue and HTTP pool */
     gw_queue_init();
     g_gw.observe_buffer[0] = '\0';
@@ -1866,6 +1903,7 @@ cleanup:
     pthread_cond_destroy(&g_gw.queue_cond);
     agent_free(&g_gw.agent);
     http_client_free(g_gw.http);
+    gw_log_close();
     printf("[gateway] Shutdown complete\n");
     return g_gw.platform_count > 0 ? 0 : 1;
 }

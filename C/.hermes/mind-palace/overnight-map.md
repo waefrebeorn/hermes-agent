@@ -1,4 +1,4 @@
-# Hermes C — Overnight Navigation Map (v33 — 2026-05-24)
+# Hermes C — Overnight Navigation Map (v34 — 2026-05-24)
 
 ## State Verified (2026-05-24)
 
@@ -9,19 +9,19 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **221** (battleship-v8) | B12 — cron session context wired |
+| Gap count | **220** (battleship-v8) | B15 — gateway log rotation |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v32 (previous session)
+## What Changed Since v33 (previous session)
 
-- **B12 closed**: Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel in both gateway and standalone cron modes
-- Gap count 222 → 221 after B12 closure
+- **B15 closed**: Gateway log rotation — gw_log_open/close writes to ~/.slermes/logs/gateway.log with 10 MB rotation
+- Gap count 221 → 220 after B15 closure
 
-## Resolved Since v32
+## Resolved Since v33
 
 | ID | Description |
 |----|-------------|
-| B12 | Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel |
+| B15 | Gateway log rotation — gw_log_open writes to ~/.slermes/logs/gateway.log with 10MB rotation |
 
 ## Current Priority Queue
 

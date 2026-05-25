@@ -1,4 +1,4 @@
-# Hermes C — State Dashboard (v38 — 2026-05-24)
+# Hermes C — State Dashboard (v39 — 2026-05-24)
 
 ## Build Metrics (code-verified)
 
@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (221 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (220 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -38,7 +38,7 @@
 | Gateway Platform Depth | 18 | 0 | 15 | 3 |
 | Configuration | **3** | 0 | **0** | 3 |
 | Library Depth | 27 | 0 | 19 | 8 |
-| Bug Fixes | 4 | 0 | 3 | 1 |
+| Bug Fixes | 3 | 0 | 2 | 1 |
 | Test Coverage | 25 | 0 | 25 | 0 |
 | API Server Depth | 5 | 0 | 5 | 0 |
 | TUI Depth | 8 | 0 | 7 | 1 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **221** | **0** | **144** | **77** |
+| **Total** | **220** | **0** | **143** | **77** |
 
 ## Python Upstream Parity
 
@@ -92,6 +92,7 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | B14 | Plugin load errors propagated — discover logs each failure via plugin_error(); main.c startup prints count; memory.c fallback logs load error | S11 | 2026-05-24 |
 | B11 | Gateway config validation — setup_email() validates IMAP/SMTP/sendmail config; startup logs platform count | S11 | 2026-05-24 |
 | B12 | Cron session context — HERMES_CRON_NOTIFY_CHANNEL env var wires notification delivery channel | S11 | 2026-05-24 |
+| B15 | Gateway log rotation — gw_log_open writes to ~/.slermes/logs/gateway.log with 10MB rotation | S11 | 2026-05-24 |
 
 ## Next Priority Queue (top 15)
 

@@ -484,6 +484,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | B12 | Cron jobs now inherit gateway session context — `HERMES_CRON_NOTIFY_CHANNEL` env var wires the notification delivery channel in both gateway and standalone cron modes; gateway startup logs the configured channel | S11 | src/gateway/server.c:1833-1841, src/cron/scheduler.c:190-196 |
 
+## Phase 41: Bug Fix — B15 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B15 | Gateway log rotation — `gw_log_open/create` writes to `~/.slermes/logs/gateway.log` with 10 MB rotation to `.1`; called at gateway startup/cleanup | S11 | src/gateway/server.c:101-131, 1694, 1909 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
