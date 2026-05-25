@@ -573,6 +573,8 @@ typedef struct {
     char description[256];
 } config_entry_t;
 
+#define CONFIG_SEARCH_MAX 128
+
 typedef struct {
     config_entry_t entries[CONFIG_KEY_MAX];
     int count;
@@ -582,6 +584,8 @@ typedef struct {
     bool edit_mode;         /* editing value */
     char edit_buf[256];
     int edit_pos;
+    char search[CONFIG_SEARCH_MAX];
+    bool search_mode;
 } config_editor_state_t;
 
 /* ==================================================================
@@ -1787,6 +1791,8 @@ static void tui_config_editor_init(void) {
     tui.config_editor.selected = 0;
     tui.config_editor.scroll_offset = 0;
     tui.config_editor.edit_mode = false;
+    tui.config_editor.search_mode = false;
+    tui.config_editor.search[0] = '\0';
 
     /* Populate with key config entries */
     struct { const char *k; const char *v; const char *d; } cfg_entries[] = {
@@ -1843,19 +1849,37 @@ static void tui_draw_config_editor(void) {
     mvwprintw(win, 0, 0, " CONFIG EDITOR ");
     wattroff(win, A_BOLD | COLOR_PAIR(1));
 
+    /* Search bar */
+    mvwprintw(win, 1, 0, " Search: %s", tui.config_editor.search);
+    if (tui.config_editor.search_mode) {
+        wattron(win, A_BLINK);
+        mvwaddch(win, 1, 9 + strlen(tui.config_editor.search), '|');
+        wattroff(win, A_BLINK);
+    }
+
     /* Header */
     wattron(win, A_DIM | COLOR_PAIR(10));
-    mvwprintw(win, 1, 0, " %-25s %-25s %s", "Key", "Value", "Description");
+    mvwprintw(win, 2, 0, " %-25s %-25s %s", "Key", "Value", "Description");
     wattroff(win, A_DIM | COLOR_PAIR(10));
 
     /* Separator */
-    mvwhline(win, 2, 0, ACS_HLINE, w_cols - 1);
+    mvwhline(win, 3, 0, ACS_HLINE, w_cols - 1);
 
     /* Entries */
-    int y = 3;
-    for (int i = tui.config_editor.scroll_offset;
+    int y = 4;
+    int search_len = tui.config_editor.search[0] ? (int)strlen(tui.config_editor.search) : 0;
+    for (int i = 0;
          i < tui.config_editor.count && y < w_rows - 2;
          i++) {
+
+        /* Apply search filter: case-insensitive key match */
+        if (search_len > 0) {
+            if (strncasecmp(tui.config_editor.entries[i].key, tui.config_editor.search, (size_t)search_len) != 0 &&
+                strstr_lower(tui.config_editor.entries[i].description, tui.config_editor.search) == false)
+                continue;
+        }
+
+        if (i < tui.config_editor.scroll_offset) continue;
 
         bool selected = (i == tui.config_editor.selected);
         if (selected)
@@ -1874,7 +1898,7 @@ static void tui_draw_config_editor(void) {
 
     /* Help bar */
     wattron(win, A_DIM | COLOR_PAIR(10));
-    mvwprintw(win, w_rows - 1, 0, " [Enter] edit [s] set [g] get [e] explain [q] quit ");
+    mvwprintw(win, w_rows - 1, 0, " [Enter] edit [g] get value [e] explain [/] search [q] quit ");
     wattroff(win, A_DIM | COLOR_PAIR(10));
 
     wnoutrefresh(win);
@@ -1883,6 +1907,21 @@ static void tui_draw_config_editor(void) {
 
 /* Handle config editor input */
 static int tui_config_editor_handle(int ch) {
+    if (tui.config_editor.search_mode) {
+        if (ch == 27 || ch == '\n') {
+            tui.config_editor.search_mode = false;
+        } else if (ch == KEY_BACKSPACE || ch == 127) {
+            size_t slen = strlen(tui.config_editor.search);
+            if (slen > 0) tui.config_editor.search[slen - 1] = '\0';
+        } else if (ch >= 32 && ch <= 126) {
+            size_t slen = strlen(tui.config_editor.search);
+            if (slen < CONFIG_SEARCH_MAX - 1) {
+                tui.config_editor.search[slen] = (char)ch;
+                tui.config_editor.search[slen + 1] = '\0';
+            }
+        }
+        return 0;
+    }
     if (tui.config_editor.edit_mode) {
         if (ch == '\n' || ch == '\r') {
             /* Save edited value */
@@ -1929,16 +1968,37 @@ static int tui_config_editor_handle(int ch) {
                     sizeof(tui.config_editor.edit_buf) - 1);
             break;
 
-        case 's':
-            /* 'set' — show the set prompt (handled via edit mode) */
+        case 'g': {
+            /* 'get' — show current value as history message */
+            char buf[1024];
+            snprintf(buf, sizeof(buf), "%s = %s  (%s)",
+                     tui.config_editor.entries[tui.config_editor.selected].key,
+                     tui.config_editor.entries[tui.config_editor.selected].value,
+                     tui.config_editor.entries[tui.config_editor.selected].description);
+            tui_history_add(MSG_ROLE_INFO, buf, false);
+            tui_redraw_history();
             break;
+        }
 
-        case 'g':
-            /* 'get' — show current value */
+        case 'e': {
+            /* 'explain' — show description as history message */
+            char buf[1024];
+            snprintf(buf, sizeof(buf), "  â¢ %s: %s
+  Default: %s
+  Current: %s",
+                     tui.config_editor.entries[tui.config_editor.selected].key,
+                     tui.config_editor.entries[tui.config_editor.selected].description,
+                     /* Use stored value as both default and current for now */
+                     tui.config_editor.entries[tui.config_editor.selected].value,
+                     tui.config_editor.entries[tui.config_editor.selected].value);
+            tui_history_add(MSG_ROLE_INFO, buf, false);
+            tui_redraw_history();
             break;
+        }
 
-        case 'e':
-            /* 'explain' — show description */
+        case '/':
+            tui.config_editor.search_mode = true;
+            tui.config_editor.search[0] = '\0';
             break;
     }
 

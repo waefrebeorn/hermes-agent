@@ -225,18 +225,17 @@ C tools with test file status.
 C api_server.c (~1255 LOC, 16 endpoints) vs Python api_server.py (~3500 lines).
 All API server gaps resolved (E01-E05). See vault Phases 54-55.
 
-## SECTOR 14: TUI Depth (6 gaps)
+## SECTOR 14: TUI Depth (5 gaps)
 
 C tui_fullscreen.c (~3800 lines) vs Python TUI (Ink/React, ~5000 lines).
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
 | 1 | U03 | Skill browser/list | 100 | P2 |
-| 2 | U04 | Config editor | 150 | P2 |
-| 3 | U05 | Plugin manager | 100 | P3 |
-| 4 | U06 | Gateway status dashboard | 120 | P2 |
-| 5 | U07 | Cron job viewer | 80 | P2 |
-| 6 | U08 | Log viewer (tail -f in TUI) | 100 | P2 |
+| 2 | U05 | Plugin manager | 100 | P3 |
+| 3 | U06 | Gateway status dashboard | 120 | P2 |
+| 4 | U07 | Cron job viewer | 80 | P2 |
+| 5 | U08 | Log viewer (tail -f in TUI) | 100 | P2 |
 
 ## SECTOR 15: Curator Depth (0 gaps — all resolved)
 
