@@ -28,7 +28,7 @@ static void install_safe_stdio(void) {
 
 static void print_banner(void) {
     printf("WuBu Hermes v%s\n", HERMES_VERSION);
-    printf("C Translation — 147 gaps remaining — E01 E02 E05 done\n");
+    printf("C Translation — 146 gaps remaining — D22 E01 E02 E05 done\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
 

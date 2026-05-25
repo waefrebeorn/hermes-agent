@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **147 active gaps** across 22 sectors (resolved items retired to vault Phase 55+).
+Total: **146 active gaps** across 22 sectors (resolved items retired to vault Phase 56+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -118,7 +118,7 @@ Python subdirectory modules with NO C equivalent.
 | 21 | T27 | codex_event_projector.py | Codex event projector | P3 |
 | 22 | T28 | codex_app_server.py | Codex app server transport | P3 |
 
-## SECTOR 7: Missing Tool Features — Depth Gaps (2 gaps)
+## SECTOR 7: Missing Tool Features — Depth Gaps (1 gap)
 
 Existing C tools missing features that Python has.
 
@@ -130,8 +130,7 @@ Existing C tools missing features that Python has.
 | 4 | D11 | computer_use.c | ✅ Vision routing: vision→som fallback with notification, `vision_fallback` flag in capture response | P2 |
 | 5 | D14 | browser.c | ✅ Browser supervisor: cdp_supervisor_ping(), Browser.getVersion health check, connection state/command stats tracking, browser_supervisor tool registered | P2 |
 | 6 | D15 | browser.c | ✅ Camofox session save/load/delete to <home>/browser_auth/camofox/sessions/<task>.json | P2 |
-| 7 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
-| 8 | D23 | web.c | Web search provider abstraction — ✅ STALE: web_search_registry.c (239+217 test) | 0 | P2 |
+| 7 | D23 | web.c | Web search provider abstraction — ✅ STALE: web_search_registry.c (239+217 test) | 0 | P2 |
 
 ## SECTOR 8: Gateway Platform Depth (17 gaps)
 
@@ -380,7 +379,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S4: Missing Agent | 12 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
-|| S7: Tool Depth | 2 |
+|| S7: Tool Depth | 1 |
 | S8: Gateway | 17 |
 || S9: Config | 0 |
 ||| S10: Library | 6 |
@@ -396,5 +395,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **147** |
+||| **Total** | **146** |
 | (resolved items retired to vault/achievements.md) | |

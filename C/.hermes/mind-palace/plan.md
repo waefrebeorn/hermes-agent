@@ -4,7 +4,7 @@
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-147 gaps is a checklist. Every ✅ without runtime verification is a lie.
+146 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 
@@ -20,14 +20,13 @@ Every Python library, provider adapter, tool function, config key → C structs,
 | Gateways | 19 platforms | `ls src/gateway/platforms/` |
 | Plugins | 10 C plugins | `ls src/plugins/` |
 | Stubs | 0 real | all resolved |
-|| Real gaps | 147 (22 sectors, 0 P1) | battleship-v8 |
+|| Real gaps | 146 (22 sectors, 0 P1) | battleship-v8 |
 | API server | 1015 LOC, 12 endpoints | `wc -l src/api_server.c` |
 
-## Next Actions (top 6)
+## Next Actions (top 5)
 
-1. □ D22 — Feishu doc/drive tool support (150 LOC, S7)
-2. □ N02 — Mixture of Agents tool (300 LOC, S20)
-3. □ U01 — TUI image display — code exists but unwired (150 LOC, S14)
-4. □ U02 — TUI session browser with search (200 LOC, S14)
-5. □ T04-T25 — Test coverage for remaining untested modules (S12)
-6. □ U04 — TUI config editor (150 LOC, S14)
+1. □ N02 — Mixture of Agents tool (300 LOC, S20)
+2. □ U01 — TUI image display — code exists but unwired (150 LOC, S14)
+3. □ U02 — TUI session browser with search (200 LOC, S14)
+4. □ T04-T25 — Test coverage for remaining untested modules (S12)
+5. □ U04 — TUI config editor (150 LOC, S14)

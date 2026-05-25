@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 56: Feishu Doc/Drive Tools — D22 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| D22 | Feishu doc/drive tool support — `feishu_doc_read` (GET /docx/v1/documents/{id}/raw_content), `feishu_drive_list` (GET /drive/v1/files). Auth via FEISHU_APP_ID + FEISHU_APP_SECRET env vars, tenant token caching. | S7 | src/tools/feishu_tools.c — handle_feishu_doc_read, handle_feishu_drive_list, feishu_get_token |
+
 ## Phase 55: Token-Buffer SSE Streaming — E02 (2026-05-25)
 
 | ID | Description | Sector | Evidence |
