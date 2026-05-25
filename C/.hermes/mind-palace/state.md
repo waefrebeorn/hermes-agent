@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (127 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (126 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -31,7 +31,7 @@
 | S1 | Stubs | 0 | 0 | 0 | 0 |
 | S2 | Placeholder/Unwired | 11 | 0 | 1 | 10 |
 | S3 | Dead Code | 12 | 0 | 2 | 10 |
-| S4 | Missing Agent Modules | 12 | 0 | 8 | 4 |
+| S4 | Missing Agent Modules | 11 | 0 | 7 | 4 |
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
 | S7 | Tool Depth | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **127** | **0** | **54** | **73** |
+| **Total** | **126** | **0** | **53** | **73** |
 
 ## Python Upstream Parity
 
@@ -70,6 +70,7 @@
 
 | ID | Description | Sector | Date |
 |----|-------------|--------|------|
+| A28 | skill_commands — C port of Python skill_commands.py (scan, resolve, build_message) | S4 | 2026-05-25 |
 | T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
 | D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion | S7 | 2026-05-25 |
 | D15 | Camofox session persistence — save/load/delete browser state | S7 | 2026-05-25 |

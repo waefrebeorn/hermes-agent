@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **127 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
+Total: **126 active gaps** across 22 sectors (resolved items retired to vault Phase 57+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -47,7 +47,7 @@ Functions fully implemented but never called. Wire or remove.
 | 12 | W15 | cli/config.c:325 | Fragmented config — "Handled by get_slermes_home()" | 30 | P3 |
 | 13 | W16 | context_engine.c:91/100 | Default on_session_start/end = noop | 10 | P3 |
 
-## SECTOR 4: Missing Agent Modules — Truly Unported (12 gaps)
+## SECTOR 4: Missing Agent Modules — Truly Unported (11 gaps)
 
 Python agent modules with NO C equivalent at all. Not merged, not aliased.
 
@@ -57,15 +57,14 @@ Python agent modules with NO C equivalent at all. Not merged, not aliased.
 | 2 | A01 | insights | Full session insights engine (931 LOC Python) | 931 | P1 |
 | 3 | A11 | curator_backup | Curator backup state management | 150 | P2 |
 | 4 | A25 | process_bootstrap | Subprocess bootstrap helpers | 167 | P2 |
-| 5 | A28 | skill_commands | Skill slash-command injection | 200 | P2 |
-| 6 | A31 | title_generator | Session title generation | 150 | P2 |
-| 7 | A32 | tool_dispatch_helpers | Tool call dispatch helpers | 180 | P2 |
-| 8 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
-| 9 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
-| 10 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
-| 11 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
-| 12 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
-| 13 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
+| 5 | A31 | title_generator | Session title generation | 150 | P2 |
+| 6 | A32 | tool_dispatch_helpers | Tool call dispatch helpers | 180 | P2 |
+| 7 | A33 | tool_executor | Tool execution orchestration | 350 | P2 |
+| 8 | A36 | agent_runtime_helpers | Runtime state management helpers | 120 | P3 |
+| 9 | A37 | async_utils | Async coroutine utilities (N/A for C) | 80 | P3 |
+| 10 | A41 | display | CLI spinner/banner/UI rendering (C has inline, no standalone module) | 500 | P2 |
+| 11 | A10 | credential_sources | Multi-source credential resolution | 200 | P2 |
+| 12 | A07 | codex_responses_adapter | OpenAI Codex Responses API adapter | 300 | P3 |
 
 ## SECTOR 5: Agent Modules — Partial Merge Depth (15 gaps)
 
@@ -357,7 +356,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S1: Stubs | 0 |
 || S2: Placeholder | 11 |
 || S3: Dead Code | 12 |
-|| S4: Missing Agent | 12 |
+|| S4: Missing Agent | 11 |
 || S5: Agent Depth | 15 |
 || S6: Subdirectory | 22 |
 || S7: Tool Depth | 0 |
@@ -376,5 +375,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 8 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **127** |
+| **Total** | **126** |
 | (resolved items retired to vault/achievements.md) | |
