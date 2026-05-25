@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 58: Skill Slash-Command Injection — A28 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| A28 | skill_commands.c — port Python skill_commands.py to C: scan skills dir, parse frontmatter, build /slug→name/desc/path cache, resolve user input (underscore→hyphen normalization), build formatted invocation messages with activation note/skill dir/supporting files/user args, re-scan with diff. Wired into commands_dispatch fallthrough (cli.c, tui_fullscreen.c) so unknown /cmd checks ~/.hermes/skills/ | S4 | skill_commands.c — 7 public API functions (skill_cmd_scan, get, get_all, resolve, build_message, rescan); commands.c — new commands_try_skill() function; cli.c + tui_fullscreen.c — fallback wiring. Suite 228/0/21. 0 errors, 0 warnings |
+
 ## Phase 57: Mixture of Agents Tool — N02 (2026-05-25)
 
 | ID | Description | Sector | Evidence |
