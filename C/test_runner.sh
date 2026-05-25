@@ -2592,6 +2592,21 @@ else skip "clarify (compilation failed)"
 fi
 
 # ==============================================
+# File Sync Tests (D08)
+# ==============================================
+echo ""; echo "=== File Sync Tests ==="
+INCDIRS=$(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done)
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" $INCDIRS \
+    "$CDIR/tests/test_file_sync.c" \
+    "$CDIR/lib/libfile_sync/file_sync.c" \
+    -o /tmp/hermes_test_file_sync -lm 2>/dev/null && [[ -x /tmp/hermes_test_file_sync ]]; then
+    if /tmp/hermes_test_file_sync > /dev/null 2>&1; then ok "file_sync (14 tests)"
+    else fail "file_sync (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_file_sync
+else skip "file_sync (compilation failed)"
+fi
+
+# ==============================================
 # Voice Mode Tests (P131-P135)
 # ==============================================
 echo ""; echo "=== Voice Mode Tests ==="
