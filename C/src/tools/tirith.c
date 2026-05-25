@@ -135,6 +135,41 @@ bool tirith_has_suspicious_url(const char *command) {
     return false;
 }
 
+/* S02: Port scan detection — flag commands that look like network scanning */
+static bool tirith_has_port_scan(const char *command) {
+    if (!command) return false;
+
+    /* Known port scanning tools */
+    const char *scan_tools[] = {
+        "nmap ", "masscan ", "zmap ", "hping3 ", "hping ",
+        "unicornscan ", "zenmap "
+    };
+    for (size_t i = 0; i < sizeof(scan_tools)/sizeof(scan_tools[0]); i++) {
+        if (strstr(command, scan_tools[i])) return true;
+    }
+
+    /* Bash /dev/tcp or /dev/udp pseudo-device (used for port probes) */
+    if (strstr(command, "/dev/tcp/") || strstr(command, "/dev/udp/"))
+        return true;
+
+    /* netcat / nc with verbose scan flags (-zv = port scan mode) */
+    const char *nc_patterns[] = {
+        "nc -z", "nc -zv", "netcat -z", "ncat -z",
+        "nc -v -z", "nc -w1 -z"
+    };
+    for (size_t i = 0; i < sizeof(nc_patterns)/sizeof(nc_patterns[0]); i++) {
+        if (strstr(command, nc_patterns[i])) return true;
+    }
+
+    /* Sequential port range in curl/wget (mass connection attempts) */
+    /* Matches patterns like :80-100 or ports=1-1024 */
+    if (strstr(command, ":1-") || strstr(command, ":0-") ||
+        strstr(command, "ports=1-") || strstr(command, "portrange"))
+        return true;
+
+    return false;
+}
+
 tirith_verdict_t tirith_inline_scan(const char *command) {
     if (!command) return TIRITH_ALLOW;
 
@@ -145,6 +180,9 @@ tirith_verdict_t tirith_inline_scan(const char *command) {
         return TIRITH_BLOCK;
 
     if (tirith_has_env_injection(command))
+        return TIRITH_BLOCK;
+
+    if (tirith_has_port_scan(command))
         return TIRITH_BLOCK;
 
     /* Command substitution is common in legitimate use, just warn */

@@ -608,6 +608,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | L05 | http_cookie_parse_set_cookie() + http_cookie_build_header() — automatic Set-Cookie parsing on responses, Cookie header injection on requests, domain/path/secure matching, cookie jar lifecycle | S10 | http.h: cookie_t struct + API, http.c: ~80 LOC cookie jar + wired into do_request, verified with unit test |
 
+## Phase 25: Port Scan Detection — S02 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| S02 | Port scan detection in tirith security scanner — detects nmap/masscan/zmap/hping3, /dev/tcp pseudo-devices, nc -zv patterns, sequential port ranges | S19 | tirith.c:tirith_has_port_scan() — 7 scan tool patterns, 6 nc patterns, /dev/tcp//dev/udp detection, port range patterns; wired into tirith_inline_scan(); 5 tests all PASS |
+
 ## Phase 24: Atomic File Writes — F01 (2026-05-24)
 
 | ID | Description | Sector | Evidence |

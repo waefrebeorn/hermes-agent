@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-|| Gap count | **196** (battleship-v8) | D05/D06/R02/R03/R05 retired + L11/L31/R07/L05 closed |
+|| Gap count | **195** (battleship-v8) | +F01 (atomic writes) + S02 (port scan) |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)

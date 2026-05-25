@@ -241,6 +241,34 @@ int main(void) {
         else { FAIL("expected WARN"); }
     }
 
+    /* S02: Port scan detection */
+    printf("\n--- port_scan ---\n");
+    {
+        TEST("nmap command returns BLOCK");
+        if (tirith_inline_scan("nmap -sT localhost") == TIRITH_BLOCK) { PASS; }
+        else { FAIL("expected BLOCK"); }
+    }
+    {
+        TEST("masscan command returns BLOCK");
+        if (tirith_inline_scan("masscan 10.0.0.1/24") == TIRITH_BLOCK) { PASS; }
+        else { FAIL("expected BLOCK"); }
+    }
+    {
+        TEST("/dev/tcp pseudo-device returns BLOCK");
+        if (tirith_inline_scan("echo test > /dev/tcp/host/80") == TIRITH_BLOCK) { PASS; }
+        else { FAIL("expected BLOCK"); }
+    }
+    {
+        TEST("nc -zv port scan returns BLOCK");
+        if (tirith_inline_scan("nc -zv localhost 1-1024") == TIRITH_BLOCK) { PASS; }
+        else { FAIL("expected BLOCK"); }
+    }
+    {
+        TEST("harmless command returns ALLOW");
+        if (tirith_inline_scan("ls -la /tmp") == TIRITH_ALLOW) { PASS; }
+        else { FAIL("expected ALLOW"); }
+    }
+
     /* ============================================================
      *  tirith_policy_init / add_rule / get_rule / remove_rule / clear
      * ============================================================ */

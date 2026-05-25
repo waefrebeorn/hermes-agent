@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **196 active gaps** across 22 sectors (resolved items retired to vault Phase 24+).
+Total: **195 active gaps** across 22 sectors (resolved items retired to vault Phase 25+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -285,16 +285,15 @@ All curator features (status, run, review) implemented in CLI commands.c + curat
 | 2 | V02 | Multiple vaults | 80 | P2 |
 | 3 | V03 | Vault sharing/export | 100 | P3 |
 
-## SECTOR 19: Security Depth (6 gaps)
+## SECTOR 19: Security Depth (5 gaps)
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
 | 1 | S01 | cloud/service patterns in tírith_security.py | 200 | P2 |
-| 2 | S02 | Port scan detection in terminal tool | 50 | P2 |
-| 3 | S03 | Credential leak detection in tool outputs | 100 | P2 |
-| 4 | S04 | File path traversal depth (recursive pattern) | 60 | P2 |
-| 5 | S05 | Process argument injection detection | 80 | P2 |
-| 6 | S06 | DNS rebinding protection for web tool | 100 | P3 |
+| 2 | S03 | Credential leak detection in tool outputs | 100 | P2 |
+| 3 | S04 | File path traversal depth (recursive pattern) | 60 | P2 |
+| 4 | S05 | Process argument injection detection | 80 | P2 |
+| 5 | S06 | DNS rebinding protection for web tool | 100 | P3 |
 
 ## SECTOR 20: C-Only New Features (10 gaps)
 
@@ -407,9 +406,9 @@ Functions that exist in C but are significantly less capable than Python equival
 | S16: Prompt Cache | 5 |
 | S17: Shell Hooks | 3 |
 | S18: Vault Encrypt | 3 |
-| S19: Security | 6 |
+| S19: Security | 5 |
 | S20: New Features | 10 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-| **Total** | **196** |
+| **Total** | **195** |
 | (resolved items retired to vault/achievements.md) | |
