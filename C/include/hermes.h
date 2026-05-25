@@ -571,6 +571,7 @@ typedef struct {
 typedef struct {
     char  dirs[1024];             /* plugin_dirs (comma-separated) */
     char  enabled[1024];          /* enabled_plugins (comma-separated) */
+    char  memory_provider[128];   /* plugins.memory.provider: name of memory plugin (e.g. honcho) */
 } plugin_config_t;
 
 /* ================================================================

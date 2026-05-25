@@ -1227,6 +1227,8 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (pdirs) snprintf(cfg->plugin.dirs, sizeof(cfg->plugin.dirs), "%s", pdirs);
     const char *pen = yaml_get_string(doc, "plugin.enabled");
     if (pen) snprintf(cfg->plugin.enabled, sizeof(cfg->plugin.enabled), "%s", pen);
+    const char *pmem = yaml_get_string(doc, "plugins.memory.provider");
+    if (pmem) snprintf(cfg->plugin.memory_provider, sizeof(cfg->plugin.memory_provider), "%s", pmem);
 
     /* P14: MCP section */
     int mto = yaml_get_int(doc, "mcp_servers.timeout", 0);
