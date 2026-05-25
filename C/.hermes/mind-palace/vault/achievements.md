@@ -405,6 +405,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | C10 | plugins.memory.provider — added `char memory_provider[128]` to plugin_config_t, YAML reader via `yaml_get_string(doc, "plugins.memory.provider")` | S9 | hermes.h:574, config.c:1230
 
+## Phase 28: Config Key Implementation — C12 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| C12 | credentials.sources — added `char credential_sources[512]` to hermes_config_t, YAML reader via `yaml_get_string(doc, "credentials.sources")` | S9 | hermes.h:961, config.c:1095 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |

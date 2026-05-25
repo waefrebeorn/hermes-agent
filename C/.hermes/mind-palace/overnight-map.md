@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **235** (battleship-v8) | B08 retired stale — credential_store_save exists in mcp_tool.c |
+| Gap count | **234** (battleship-v8) | C12 closed — credentials.sources config |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v29 (previous session)
@@ -19,6 +19,8 @@
 - **Phase 22 stale cleanup**: 4 battleship-v8 claims retired to vault (G01, D16, G10, L03)
 - **C06 closed**: gateway.secret_rotation config key added
 - **C07 closed**: tools.environments config key added
+- **C10 closed**: plugins.memory.provider config key added
+- **C12 closed**: credentials.sources config key added
 - Gap count 239 → 238 after C07 closure
 - Gap count 245 → 240 after stale retirement
 
