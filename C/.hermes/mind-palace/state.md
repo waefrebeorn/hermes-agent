@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (252 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (251 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -30,7 +30,7 @@
 |----------|------|-----|-----|------|
 | Confirmed Stubs | 0 | 0 | 0 | 0 |
 | Placeholder/Unwired | 14 | 0 | 4 | 10 |
-| Dead Code | 13 | 0 | 2 | 11 |
+| Dead Code | 12 | 0 | 2 | 10 |
 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **252** | **0** | **166** | **90** |
+| **Total** | **251** | **0** | **165** | **90** |
 
 ## Python Upstream Parity
 

@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **252 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
+Total: **251 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -31,7 +31,7 @@ Code patterns found by stub hunt: `placeholder`, `for future`, `no-op`, `not sup
 | 13 | P13 | commands.c:2239 | cmd_restart — "Use /exit and re-launch" message | 5 | P3 |
 | 14 | P14 | commands.c:1696 | cmd_background — "background mode not available" | 5 | P3 |
 
-## SECTOR 3: Dead Code / Unused Functions (13 gaps)
+## SECTOR 3: Dead Code / Unused Functions (12 gaps)
 
 Functions fully implemented but never called. Wire or remove.
 
@@ -44,8 +44,7 @@ Functions fully implemented but never called. Wire or remove.
 | 5 | W06 | tui_fullscreen.c:1947 | tui_display_image_sixel — unused | 35 | P3 |
 | 6 | W07 | tui_fullscreen.c:1984 | tui_display_image_kitty — unused | 50 | P3 |
 | 7 | W08 | tui_fullscreen.c:2035 | tui_display_image — unused orchestrator | 30 | P3 |
-| 8 | W09 | skill_bundles.c:17 | Bundle loader can parse but no apply/install | 80 | P2 |
-| 9 | W11 | memory.c:1412 | plugin_delete — returns false, never used | 20 | P3 |
+| 8 | W11 | memory.c:1412 | plugin_delete — returns false, never used | 20 | P3 |
 | 10 | W12 | server.c:96 | Default port 8080 (unchanged) | 10 | P3 |
 | 11 | W14 | feishu.c:506 | Image upload implemented but unwired (dup) | 40 | P3 |
 | 12 | W15 | cli/config.c:325 | Fragmented config — "Handled by get_slermes_home()" | 30 | P3 |

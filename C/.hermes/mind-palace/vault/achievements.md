@@ -360,3 +360,9 @@ The following items from battleship-v8 were verified as stale — code already i
 | S13 | plat.shutdown = NULL — stalely listed as stub; gw_platform_shutdown_all() has NULL check, polling platforms don't need cleanup | S1 | server.c:941 (`if (shutdown)` guard check exists), comment at line 1729 explains intentional NULL |
 | S16 | fal_provider.generate = NULL — stalely listed as stub; tool uses video_generate_handler directly, no `->generate()` call exists | S1 | video_gen.c:219-220 (NULL with comment), no callers of `->generate` in codebase |
 | W13 | plat.shutdown = NULL — duplicate of S13, removed from dead-code sector | S3 | Removed from battleship SECTOR 3 as duplicate stale claim |
+
+## Phase 15: Skill Bundle Apply — W09 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| W09 | skill_bundle_apply() — implement apply/install for skill bundles (was dead code: parsed but couldn't install) | S3 | skill_bundles.c:200-216, skill_bundles.h:57-60 |

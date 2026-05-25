@@ -15,6 +15,9 @@
 #include <unistd.h>
 #include <ctype.h>
 
+/* Forward declaration: skill_install_from_hub in tools/skills.c */
+bool skill_install_from_hub(const char *slug, char *error_out, size_t err_sz);
+
 /* -----------------------------------------------------------------
  *  Helpers
  * ================================================================ */
@@ -195,6 +198,23 @@ const skill_bundle_t *skill_bundle_find(const skill_bundle_registry_t *reg, cons
             return &reg->bundles[i];
     }
     return NULL;
+}
+
+int skill_bundle_apply(const skill_bundle_t *bundle, char *error_out, size_t err_sz) {
+    if (!bundle) return -1;
+
+    int success = 0;
+    for (int i = 0; i < bundle->skill_count; i++) {
+        char err[256] = "";
+        if (skill_install_from_hub(bundle->skills[i], err, sizeof(err))) {
+            success++;
+        } else {
+            if (error_out && err_sz > 0)
+                snprintf(error_out, err_sz, "Failed to install '%s': %s",
+                         bundle->skills[i], err);
+        }
+    }
+    return success;
 }
 
 void skill_bundles_print(const skill_bundle_registry_t *reg) {

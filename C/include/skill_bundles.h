@@ -54,6 +54,11 @@ int skill_bundles_scan(skill_bundle_registry_t *reg);
 /* Find a bundle by slug (e.g. "backend-dev"). Returns NULL if not found. */
 const skill_bundle_t *skill_bundle_find(const skill_bundle_registry_t *reg, const char *slug);
 
+/* Apply a bundle: install all skills in the bundle via skill_install_from_hub().
+ * Returns number of successfully installed skills, or -1 on error.
+ * If error_out is non-NULL, stores the first error message. */
+int skill_bundle_apply(const skill_bundle_t *bundle, char *error_out, size_t err_sz);
+
 /* Print all bundles to stdout for display. */
 void skill_bundles_print(const skill_bundle_registry_t *reg);
 

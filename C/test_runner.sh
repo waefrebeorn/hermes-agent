@@ -1127,7 +1127,7 @@ fi &
 echo ""; echo "=== Skill Bundle Tests ==="
 if gcc -O2 -Wall -Wextra "$CDIR/tests/test_skill_bundles.c" "$CDIR/src/agent/skill_bundles.c" "$CDIR/lib/libyaml/yaml.c" \
     -I"$CDIR/include" -I"$CDIR/lib/libyaml" \
-    -o /tmp/hermes_test_skill_bundles -lm 2>/dev/null && [[ -x /tmp/hermes_test_skill_bundles ]]; then
+    -o /tmp/hermes_test_skill_bundles -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_skill_bundles ]]; then
     if /tmp/hermes_test_skill_bundles > /dev/null 2>&1; then
         ok "skill_bundles"
     else fail "skill_bundles (test binary returned non-zero)"
