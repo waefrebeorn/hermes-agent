@@ -26,18 +26,19 @@ static char *xstrdup(const char *s) {
     return d;
 }
 
-/* Resolve HERMES_HOME. Default: ~/.hermes */
+/* Resolve HERMES_HOME. Default: ~/.slermes */
 static void get_hermes_home(char *buf, size_t sz) {
-    const char *env = getenv("HERMES_HOME");
-    if (env) {
-        snprintf(buf, sz, "%s", env);
+    const char *home = getenv("SLERMES_HOME");
+    if (!home) home = getenv("HERMES_HOME");
+    if (home) {
+        snprintf(buf, sz, "%s", home);
         return;
     }
-    const char *home = getenv("HOME");
-    if (home)
-        snprintf(buf, sz, "%s/.hermes", home);
+    const char *home_env = getenv("HOME");
+    if (home_env)
+        snprintf(buf, sz, "%s/.slermes", home_env);
     else
-        snprintf(buf, sz, "/tmp/.hermes");
+        snprintf(buf, sz, "/tmp/.slermes");
 }
 
 /* ================================================================
@@ -171,13 +172,14 @@ bool hermes_config_init(const char *config_dir) {
     if (config_dir && config_dir[0]) {
         snprintf(dir, sizeof(dir), "%s", config_dir);
     } else {
-        const char *home = getenv("HERMES_HOME");
+        const char *home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HERMES_HOME");
         if (!home) home = getenv("HOME");
         if (!home) { fprintf(stderr, "Error: cannot determine home.\n"); return false; }
-        if (getenv("HERMES_HOME"))
+        if (getenv("SLERMES_HOME") || getenv("HERMES_HOME"))
             snprintf(dir, sizeof(dir), "%s", home);
         else
-            snprintf(dir, sizeof(dir), "%s/.hermes", home);
+            snprintf(dir, sizeof(dir), "%s/.slermes", home);
     }
 
     struct stat st;
@@ -210,7 +212,7 @@ bool hermes_config_init(const char *config_dir) {
         }
     }
 
-    printf("\nHermes config initialized at %s\n", dir);
-    printf("Next: edit %s/.env, then run ./hermes\n", dir);
+    printf("\nSlermes config initialized at %s\n", dir);
+    printf("Next: edit %s/.env, then run ./slermes\n", dir);
     return true;
 }

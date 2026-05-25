@@ -1,0 +1,26 @@
+.TH SLERMES 1 "2026-05-25" "WuBu Slermes Agent" "User Commands"
+.SH NAME
+slermes \- AI agent CLI for conversation and tool execution
+.SH SYNOPSIS
+.B slermes
+[\fIoptions\fR] [\fImessage\fR]
+.SH DESCRIPTION
+Slermes is the C translation of the Hermes AI agent. It runs as a CLI
+for conversation, tool execution, and gateway messaging.
+.SH COMMANDS
+.B init
+Create default config.yaml and .env template.
+.P
+.B doctor
+Run system diagnostics (config, API keys, version).
+.P
+.B completions
+Generate shell completion scripts (bash, zsh, install).
+.SH FILES
+.I ~/.slermes/config.yaml
+User configuration.
+.P
+.I ~/.slermes/.env
+Environment variables (API keys).
+.SH SEE ALSO
+GitHub: https://github.com/waefrebeorn/hermes-agent

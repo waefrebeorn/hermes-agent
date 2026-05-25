@@ -36,10 +36,10 @@ phase3: $(PHASE3_OBJ)
 phase4: $(PHASE4_OBJ)
 	@echo "Phase 4 complete: $(words $(PHASE4_OBJ)) objects"
 
-phase5: hermes
-	@echo "Phase 5 complete: hermes binary built"
+phase5: slermes
+	@echo "Phase 5 complete: slermes binary built"
 
-hermes: $(PHASE5_OBJ) src/main.o
+slermes: $(PHASE5_OBJ) src/main.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 # Pattern rule for .c files
@@ -51,7 +51,7 @@ digest:
 	python3 digest.py
 
 # Test
-test: hermes
+test: slermes
 	@echo "Tests TBD"
 
 # Check what changed since last git pull
@@ -66,22 +66,22 @@ COMPLETION_DIR ?= $(PREFIX)/share/bash-completion/completions
 ZSH_COMPLETION_DIR ?= $(PREFIX)/share/zsh/site-functions
 
 # U02: make install
-install: hermes hermes.1
+install: slermes slermes.1
 	install -d $(DESTDIR)$(BINDIR)
-	install -m 755 hermes $(DESTDIR)$(BINDIR)/hermes
+	install -m 755 slermes $(DESTDIR)$(BINDIR)/slermes
 	install -d $(DESTDIR)$(MANDIR)
-	install -m 644 hermes.1 $(DESTDIR)$(MANDIR)/hermes.1
+	install -m 644 slermes.1 $(DESTDIR)$(MANDIR)/slermes.1
 	install -d $(DESTDIR)$(COMPLETION_DIR)
-	install -m 644 contrib/completions/hermes.bash $(DESTDIR)$(COMPLETION_DIR)/hermes
+	install -m 644 contrib/completions/slermes.bash $(DESTDIR)$(COMPLETION_DIR)/slermes
 	install -d $(DESTDIR)$(ZSH_COMPLETION_DIR)
-	install -m 644 contrib/completions/_hermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_hermes
-	@echo "hermes installed to $(DESTDIR)$(BINDIR)/"
+	install -m 644 contrib/completions/_slermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_slermes
+	@echo "slermes installed to $(DESTDIR)$(BINDIR)/"
 
 # U12: make uninstall
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/hermes $(DESTDIR)$(MANDIR)/hermes.1
-	rm -f $(DESTDIR)$(COMPLETION_DIR)/hermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_hermes
+	rm -f $(DESTDIR)$(BINDIR)/slermes $(DESTDIR)$(MANDIR)/slermes.1
+	rm -f $(DESTDIR)$(COMPLETION_DIR)/slermes $(DESTDIR)$(ZSH_COMPLETION_DIR)/_slermes
 
 clean:
-	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
+	rm -f slermes src/*.o src/*/*.o src/*/*/*.o
 	rm -rf digest_output/

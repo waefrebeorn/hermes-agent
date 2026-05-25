@@ -10,7 +10,7 @@
 #include <string.h>
 
 static void print_banner(void) {
-    printf("WuBu Hermes v%s\n", HERMES_VERSION);
+    printf("WuBu Slermes v%s\n", HERMES_VERSION);
     printf("C Translation — Phase 5 target\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
@@ -26,12 +26,12 @@ int main(int argc, char **argv) {
             const char *shell = getenv("SHELL");
             if (!shell) shell = "/bin/bash";
             if (strstr(shell, "zsh"))
-                printf("Add to ~/.zshrc:\n  source <(hermes completions zsh)\n");
+                printf("Add to ~/.zshrc:\n  source <(slermes completions zsh)\n");
             else
-                printf("Add to ~/.bashrc:\n  source <(hermes completions bash)\n");
+                printf("Add to ~/.bashrc:\n  source <(slermes completions bash)\n");
             return 0;
         }
-        printf("Usage: hermes completions {bash|zsh|install}\n");
+        printf("Usage: slermes completions {bash|zsh|install}\n");
         return 0;
     }
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             hermes_config_load_env(&cfg);
         } else {
             printf("  Config: NOT FOUND\n");
-            printf("  Run: hermes init\n");
+            printf("  Run: slermes init\n");
         }
 
         printf("\n-- API Keys --\n");
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
         printf("\n-- Summary --\n");
         printf("  Config: %s\n", cfg.model[0] ? "ready" : "needs setup");
-        printf("  Run: hermes init if missing, then ./hermes\n");
+        printf("  Run: slermes init if missing, then ./slermes\n");
         return 0;
     }
 
