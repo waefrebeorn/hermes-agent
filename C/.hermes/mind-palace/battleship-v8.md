@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **152 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **149 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -221,18 +221,15 @@ C tools with test file status.
 | 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) | P2 |
 | 25 | T25 | web.c | ✅ test_web.c exists | P2 |
 
-## SECTOR 13: API Server Depth (5 gaps)
+## SECTOR 13: API Server Depth (2 gaps)
 
-C api_server.c (750+ lines, was 457) vs Python api_server.py (~3500 lines).
-E01 partial: tools listing, agent status, health/detailed, capabilities added + server wired into `hermes api-server` CLI.
+C api_server.c (1015 LOC, 13 handlers) vs Python api_server.py (~3500 lines).
+E03/E04/E05 done. Remaining: E01/E02 (minor feature gaps).
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
-| 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~40% done, see E01a | 900 | P2 |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming added (stream=true query param), ~60% done | 200 | P2 |
-| 3 | E03 | Session CRUD via HTTP | 300 | P2 |
-| 4 | E04 | MCP serve mode | 200 | P2 |
-| 5 | E05 | Webhook endpoint for gateways | 250 | P2 |
+| 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~80% done, remaining: config, service info, metrics | 300 | P2 |
+| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming functional (word-by-word), needs token-buffer streaming | 100 | P2 |
 
 ## SECTOR 14: TUI Depth (8 gaps)
 
@@ -394,7 +391,7 @@ Functions that exist in C but are significantly less capable than Python equival
 ||| S10: Library | 6 |
 || S11: Bug Fixes | 2 |
 || S12: Test Coverage | 3 |
-| S13: API Server | 5 |
+| S13: API Server | 3 |
 | S14: TUI | 8 |
 | S15: Curator | 0 |
 || S16: Prompt Cache | 3 |
@@ -404,5 +401,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **152** |
+||| **Total** | **149** |
 | (resolved items retired to vault/achievements.md) | |

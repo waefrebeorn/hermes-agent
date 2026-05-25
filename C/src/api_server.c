@@ -791,6 +791,38 @@ static void handle_agent_status(int fd) {
     json_free(root);
 }
 
+/* ── Webhook endpoint (E05) ─────────────────────────────────────── */
+
+/* Handle POST /webhook/:platform — accepts generic webhook payloads.
+ * Logs the incoming webhook and returns acknowledgment. */
+static void handle_webhook(int fd, const char *body, const char *platform) {
+    if (!platform || !platform[0]) {
+        send_error(fd, 400, "missing platform");
+        close(fd);
+        return;
+    }
+    if (!body || !body[0]) {
+        send_error(fd, 400, "empty body");
+        close(fd);
+        return;
+    }
+
+    json_t *resp = json_object();
+    json_set(resp, "status", json_string("ok"));
+    json_set(resp, "platform", json_string(platform));
+    json_set(resp, "received", json_bool(true));
+    json_set(resp, "body_size", json_number((double)strlen(body)));
+
+    /* Log */
+    fprintf(stderr, "[webhook] POST /webhook/%s — %zu bytes\n",
+            platform, body ? strlen(body) : 0);
+
+    char *s = json_serialize(resp);
+    send_json(fd, 200, "OK", s ? s : "{}");
+    free(s);
+    json_free(resp);
+}
+
 /* ── Request dispatch ───────────────────────────────────────────── */
 
 static void dispatch_request(int client_fd, const char *method,
@@ -830,6 +862,10 @@ static void dispatch_request(int client_fd, const char *method,
         handle_tools_list(client_fd);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/agent/status") == 0) {
         handle_agent_status(client_fd);
+    } else if (strcmp(method, "POST") == 0 && strncmp(path, "/webhook/", 9) == 0) {
+        /* Extract platform from path: /webhook/telegram, /webhook/discord, etc. */
+        const char *platform = path + 9;
+        handle_webhook(client_fd, body, platform);
     } else {
         send_error(client_fd, 404, "not found");
     }
