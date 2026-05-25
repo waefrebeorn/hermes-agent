@@ -159,6 +159,7 @@ bool tirith_has_command_substitution(const char *command);
 
 /* Inline check: environment variable expansion in shell args */
 bool tirith_has_env_injection(const char *command);
+bool tirith_has_arg_injection(const char *command);
 
 /* Full inline security scan (all above checks). Returns TIRITH_BLOCK if any fail. */
 tirith_verdict_t tirith_inline_scan(const char *command);

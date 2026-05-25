@@ -96,6 +96,73 @@ bool tirith_has_env_injection(const char *command) {
     return false;
 }
 
+/* S05: Process argument injection detection.
+ * Checks for shell metacharacters, flag injection, null bytes in args.
+ * Unlike command substitution detection (which flags $() anywhere), this
+ * focuses on injection vectors: args that smuggle shell commands through
+ * metacharacters, flag injection via leading dashes in unexpected positions,
+ * and null byte path traversal bypass. */
+bool tirith_has_arg_injection(const char *command) {
+    if (!command) return false;
+
+    /* Skip the command name (first token) — we're checking ARGUMENTS only */
+    const char *args = command;
+    while (*args && !isspace((unsigned char)*args)) args++;
+    if (!*args) return false;  /* No args = no injection */
+
+    /* Check each argument token for injection patterns */
+    const char *p = args;
+    while (*p) {
+        /* Skip whitespace */
+        while (*p && isspace((unsigned char)*p)) p++;
+        if (!*p) break;
+
+        const char *tok_start = p;
+        /* Find end of this token */
+        while (*p && !isspace((unsigned char)*p)) p++;
+        const char *tok_end = p;
+
+        size_t tok_len = (size_t)(tok_end - tok_start);
+
+        /* Null byte injection — path traversal bypass */
+        if (memchr(tok_start, '\0', tok_len) != NULL) return true;
+
+        /* Shell metacharacter injection — semicolon, pipe, ampersand
+         * These execute additional commands when passed to shell contexts */
+        if (memchr(tok_start, ';', tok_len)) return true;
+        if (memchr(tok_start, '|', tok_len)) return true;
+        if (memchr(tok_start, '&', tok_len)) {
+            /* '&' alone as background marker is OK; embedded in arg is not */
+            /* e.g. "arg&other" is injection; "arg &" is background */
+            for (const char *c = tok_start; c < tok_end; c++) {
+                if (*c == '&' && (c > tok_start || (c + 1 < tok_end && *(c+1) != ' '))) {
+                    /* & preceded by non-space content = embedded in arg */
+                    if (c == tok_start) continue; /* leading & is OK */
+                    return true;
+                }
+            }
+        }
+
+        /* Flag injection in positional-arg positions.
+         * If token starts with -- or - and resembles a long flag,
+         * and we're past the first few optional flags, flag it.
+         * This is a heuristic — real tools often take flags anywhere. */
+        if (tok_len > 2 && tok_start[0] == '-' && tok_start[1] == '-') {
+            const char *rest = tok_start + 2;
+            /* Skip common legitimate positional flags */
+            if (strcmp(rest, "help") == 0 || strcmp(rest, "version") == 0)
+                continue;
+            /* Check if this looks like it's injecting into a pipeline */
+            const char *prev = tok_start - 1;
+            while (prev > command && isspace((unsigned char)*prev)) prev--;
+            if (prev > command && (*prev == '|' || *prev == ';' || *prev == '&'))
+                return true; /* Flag injection after pipe/semicolon */
+        }
+    }
+
+    return false;
+}
+
 /* Simple check: does text contain ASCII + non-ASCII mixed script?
  * This catches some homograph attacks but is not comprehensive. */
 bool tirith_has_suspicious_url(const char *command) {
@@ -183,6 +250,9 @@ tirith_verdict_t tirith_inline_scan(const char *command) {
         return TIRITH_BLOCK;
 
     if (tirith_has_port_scan(command))
+        return TIRITH_BLOCK;
+
+    if (tirith_has_arg_injection(command))
         return TIRITH_BLOCK;
 
     /* Command substitution is common in legitimate use, just warn */

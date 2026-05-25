@@ -4,12 +4,12 @@
 
 | Metric | Value | Change from v38 |
 |--------|-------|-----------------|
-| Suite | 243/0/0 (206 files) | ✅ +voice_mode, suite up from 241 |
+| Suite | 228/0/21 (207 files) | ✅ shell_hooks shutdown fix, tirith S05 |
 | Tools registered | 84 | ✅ |
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ |
 | Build | 30MB, 0 warnings | ✅ |
-| Gap count | **130** (battleship-v8) | G20 resolved |
+| Gap count | **132** (battleship-v8) | S05 resolved, H03 stale retired |
 | Source .c files | 154 | +1 |
 | Library dirs | 59 | +1 |
 | API server | 1015 LOC | 12 endpoints |

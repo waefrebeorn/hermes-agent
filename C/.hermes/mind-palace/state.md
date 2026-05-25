@@ -1,10 +1,10 @@
-# Hermes C — State Dashboard (v49 — 2026-05-25)
+# Hermes C — State Dashboard (v50 — 2026-05-25)
 
 ## Build Metrics (code-verified)
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **224/0/21** — 207 test files | 2026-05-25 |
+|| Suite | **228/0/21** — 207 test files | 2026-05-25 |
 | Binary | **30MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **154** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |
@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (130 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (132 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -34,23 +34,23 @@
 | S4 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
-| S7 | Tool Depth | 1 | 0 | 0 | 1 |
-| S8 | Gateway Depth | 16 | 0 | 14 | 2 |
+| S7 | Tool Depth | 0 | 0 | 0 | 0 |
+| S8 | Gateway Depth | 15 | 0 | 13 | 2 |
 | S9 | Config/Environment | 0 | 0 | 0 | 0 |
-||| S10 | Library Depth | 8 | 0 | 3 | 5 |
+||| S10 | Library Depth | 6 | 0 | 2 | 4 |
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
 || S12 | Test Coverage | 2 | 0 | 2 | 0 |
-| S13 | API Server | 5 | 0 | 5 | 0 |
+| S13 | API Server | 0 | 0 | 0 | 0 |
 | S14 | TUI Depth | 1 | 0 | 0 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
-| S16 | Prompt Caching | 2 | 0 | 1 | 1 |
+| S16 | Prompt Caching | 3 | 0 | 2 | 1 |
 | S17 | Shell Hooks | 0 | 0 | 0 | 0 |
 | S18 | Vault Encryption | 3 | 0 | 2 | 1 |
-| S19 | Security | 5 | 0 | 3 | 2 |
+| S19 | Security | 4 | 0 | 2 | 2 |
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **130** | **0** | **58** | **73** |
+||| **Total** | **132** | **0** | **56** | **76** |
 
 ## Python Upstream Parity
 
@@ -81,7 +81,9 @@
 | G18 | Webhook custom HMAC algorithms - SHA1, MD5, configurable algorithm dispatch | S8 | 2026-05-25 |
 | H02 | Shell hook async execution - fork fire-and-forget, async flag | S17 | 2026-05-25 |
 | H03 | Shell hook return value chaining - chain callback, pass output to next | S17 | 2026-05-25 |
-| H01 | Shell hook priority ordering - priority field, JSON parse, qsort | S17 | 2026-05-25 |
+|| H01 | Shell hook priority ordering - priority field, JSON parse, qsort | S17 | 2026-05-25 |
+|| B11 | Shell hook shutdown - unregister mismatch (shell_hook_callback v chain_callback) | S11 | 2026-05-25 |
+|| S05 | Process argument injection detection - metacharacter, flag, null byte scanning | S19 | 2026-05-25 |
 | P06 | Per-provider cache config - provider_cache_find, prompt_cache_set_provider_config | S16 | 2026-05-25 |
 | U03 | TUI skill browser - list skills from ~/.hermes/skills/ | S14 | 2026-05-25 |
 | U07 | TUI cron job viewer - config, commands, guide | S14 | 2026-05-25 |

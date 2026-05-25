@@ -392,8 +392,8 @@ int shell_hooks_register_all(void) {
  * Clean up all shell hook registrations.
  */
 void shell_hooks_shutdown(void) {
+    hook_reset_all();
     for (int i = 0; i < g_hook_count; i++) {
-        hook_unregister(g_hooks[i].event, shell_hook_callback, &g_hooks[i]);
         if (g_hooks[i].matcher_valid)
             regfree(&g_hooks[i].matcher_re);
     }
