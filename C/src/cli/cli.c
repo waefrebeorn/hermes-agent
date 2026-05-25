@@ -73,15 +73,14 @@ int hermes_cli_main(int argc, char **argv) {
     if (slash) *slash = '\0';
 
     /* Check for one-shot mode */
-    if (argc > 1) {
-        /* Concatenate args as message */
-        size_t total = 0;
-        for (int i = 1; i < argc; i++)
-            total += strlen(argv[i]) + 1;
-        char *msg = (char *)malloc(total + 1);
-        msg[0] = '\0';
-        for (int i = 1; i < argc; i++) {
-            if (i > 1) strcat(msg, " ");
+    if (argc >= 3 && strcmp(argv[1], "-q") == 0) {
+        /* -q "query" mode */
+        char *msg = strdup(argv[2]);
+        for (int i = 3; i < argc; i++) {
+            char *tmp = realloc(msg, strlen(msg) + strlen(argv[i]) + 2);
+            if (!tmp) break;
+            msg = tmp;
+            strcat(msg, " ");
             strcat(msg, argv[i]);
         }
 
@@ -91,6 +90,12 @@ int hermes_cli_main(int argc, char **argv) {
         free(msg);
         agent_free(&g_cli.agent);
         return 0;
+    }
+
+    /* Unknown flags */
+    if (argc > 1 && argv[1][0] == '-') {
+        printf("Usage: hermes [-q \"query\"] [--version] [gateway|cron]\n");
+        return 1;
     }
 
     /* Interactive mode */
@@ -117,26 +122,8 @@ int hermes_cli_main(int argc, char **argv) {
                 g_cli.running = false;
                 break;
             }
-            if (strcmp(input, "/help") == 0) {
-                printf("Commands:\n");
-                printf("  /exit, /quit  — Exit\n");
-                printf("  /help         — This help\n");
-                printf("  /clear        — Clear context\n");
-                printf("  /model        — Show current model\n");
-                continue;
-            }
-            if (strcmp(input, "/clear") == 0) {
-                context_clear(&g_cli.agent);
-                display_printf(DISPLAY_YELLOW, DISPLAY_NORMAL,
-                               "Context cleared.\n");
-                continue;
-            }
-            if (strcmp(input, "/model") == 0) {
-                printf("Model: %s\n", g_cli.config.model);
-                printf("Provider: %s\n", g_cli.config.provider);
-                printf("Base URL: %s\n", g_cli.config.base_url);
-                continue;
-            }
+            commands_dispatch(input, &g_cli.agent);
+            continue;
         }
 
         /* Run agent */

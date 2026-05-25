@@ -58,6 +58,11 @@ char *agent_run_conversation(agent_state_t *state,
                               const char *system_message);
 char *agent_chat(agent_state_t *state, const char *message);
 
+/* === CLI Commands (commands.c) === */
+bool commands_dispatch(const char *input, agent_state_t *state);
+
+/* === Cron (scheduler.c) === */
+
 /* === Title (title.c) === */
 char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 
