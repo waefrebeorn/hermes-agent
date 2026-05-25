@@ -551,6 +551,7 @@ typedef struct {
 
 typedef struct {
     char sessions[SESSION_LIST_MAX][64]; /* session IDs */
+    session_meta_t meta[SESSION_LIST_MAX]; /* session metadata */
     int  count;
     int  selected;
     int  scroll_offset;
@@ -1525,6 +1526,20 @@ static void tui_input_insert_char(char ch) {
  *  P195: SESSION BROWSER
  * ================================================================== */
 
+/* Case-insensitive substring match helper */
+static bool strstr_lower(const char *haystack, const char *needle) {
+    if (!haystack || !needle || !*needle) return false;
+    size_t nlen = strlen(needle);
+    while (*haystack) {
+        if (tolower((unsigned char)*haystack) == tolower((unsigned char)needle[0])) {
+            if (strncasecmp(haystack, needle, nlen) == 0)
+                return true;
+        }
+        haystack++;
+    }
+    return false;
+}
+
 /* Draw session browser overlay */
 static void tui_draw_session_browser(void) {
     WINDOW *win = tui.panes[PANE_HISTORY].win;
@@ -1550,7 +1565,7 @@ static void tui_draw_session_browser(void) {
 
     /* Header */
     wattron(win, A_DIM | COLOR_PAIR(10));
-    mvwprintw(win, 2, 0, " %-20s %-10s %-15s %s", "Session ID", "Messages", "Model", "Actions");
+    mvwprintw(win, 2, 0, " %-20s %-10s %-15s %-12s", "Title", "Messages", "Model", "Updated");
     wattroff(win, A_DIM | COLOR_PAIR(10));
 
     /* Separator */
@@ -1563,18 +1578,20 @@ static void tui_draw_session_browser(void) {
          i < tui.sessions.count && y < w_rows - 2;
          i++) {
 
-        /* Apply search filter: case-insensitive substring match */
+        /* Apply search filter: case-insensitive across ID, title, and model */
         if (search_len > 0) {
-            const char *sid = tui.sessions.sessions[i];
             bool match = false;
-            for (const char *p = sid; *p; p++) {
-                if (tolower((unsigned char)*p) == tolower((unsigned char)tui.sessions.search[0])) {
-                    if (strncasecmp(p, tui.sessions.search, (size_t)search_len) == 0) {
-                        match = true;
-                        break;
-                    }
-                }
-            }
+            /* Search session ID */
+            if (strncasecmp(tui.sessions.sessions[i], tui.sessions.search, (size_t)search_len) == 0)
+                match = true;
+            /* Search title */
+            if (!match && tui.sessions.meta[i].title[0] &&
+                strstr_lower(tui.sessions.meta[i].title, tui.sessions.search))
+                match = true;
+            /* Search model */
+            if (!match && tui.sessions.meta[i].model[0] &&
+                strstr_lower(tui.sessions.meta[i].model, tui.sessions.search))
+                match = true;
             if (!match)
                 continue;
         }
@@ -1583,7 +1600,26 @@ static void tui_draw_session_browser(void) {
         if (selected)
             wattron(win, A_REVERSE | COLOR_PAIR(13));
 
-        mvwprintw(win, y, 0, " %-20s", tui.sessions.sessions[i]);
+        /* Title or session ID (fallback) */
+        const char *title = tui.sessions.meta[i].title[0] ?
+                            tui.sessions.meta[i].title : tui.sessions.sessions[i];
+        mvwprintw(win, y, 0, " %-20.20s", title);
+
+        /* Message count */
+        mvwprintw(win, y, 22, "%3d msgs", tui.sessions.meta[i].message_count);
+
+        /* Model name */
+        mvwprintw(win, y, 30, "%-15.15s", tui.sessions.meta[i].model);
+
+        /* Last updated time */
+        struct tm *tm_info = localtime(&tui.sessions.meta[i].updated_at);
+        char time_buf[16];
+        if (tm_info) {
+            strftime(time_buf, sizeof(time_buf), "%m-%d %H:%M", tm_info);
+        } else {
+            snprintf(time_buf, sizeof(time_buf), "unknown");
+        }
+        mvwprintw(win, y, 46, "%-12s", time_buf);
 
         if (selected)
             wattroff(win, A_REVERSE | COLOR_PAIR(13));
@@ -1725,6 +1761,7 @@ void tui_fullscreen_session_browse(void) {
             for (int i = 0; i < max_sessions; i++) {
                 strncpy(tui.sessions.sessions[i], list[i].id,
                         sizeof(tui.sessions.sessions[0]) - 1);
+                tui.sessions.meta[i] = list[i].meta; /* copy metadata */
                 tui.sessions.count++;
             }
             /* Free the list — each entry's meta doesn't need deep free

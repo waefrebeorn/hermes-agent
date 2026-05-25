@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (144 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (143 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -41,7 +41,7 @@
 || S11 | Bug Fixes | 2 | 0 | 1 | 1 |
 || S12 | Test Coverage | 3 | 0 | 3 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
-| S14 | TUI Depth | 7 | 0 | 6 | 1 |
+| S14 | TUI Depth | 6 | 0 | 5 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
 | S16 | Prompt Caching | 3 | 0 | 2 | 1 |
 | S17 | Shell Hooks | 3 | 0 | 3 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 8 | 0 | 0 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **144** | **0** | **71** | **73** |
+||| **Total** | **143** | **0** | **70** | **73** |
 
 ## Python Upstream Parity
 
@@ -77,6 +77,7 @@
 | D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
 | C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
 | C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| U02 | TUI session browser with metadata/search - title, msg count, model, time | S14 | 2026-05-25 |
 | U01 | TUI image display - wired sixel/kitty image viewer | S14 | 2026-05-25 |
 | D07 | Modal terminal backend — run_command_modal() via `modal run` | S7 | 2026-05-25 |
 | D08 | file_sync library — collect mkdir upload_all (14 tests) | S7 | 2026-05-25 |
@@ -104,8 +105,8 @@
 | Rank | ID | Description | LOC | Sector |
 |------|----|-------------|-----|--------|
 | 2 | U02 | TUI session browser with search | 200 | S14 |
-| 2 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
-| 3 | N03 | Feishu doc and drive tools | 250 | S20 |
+| 1 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
+| 2 | N03 | Feishu doc and drive tools | 250 | S20 |
 | 5 | U04 | TUI config editor | 150 | S14 |
 | 6 | U03 | Skill browser/list | 100 | S14 |
 | 7 | U05 | Plugin manager | 100 | S14 |

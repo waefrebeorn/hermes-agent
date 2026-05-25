@@ -15,7 +15,7 @@
 | Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **858+** |
-|| Real gap count | **144** (battleship-v8, 22 sectors) |
+|| Real gap count | **143** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 12 gaps)
@@ -23,14 +23,14 @@
 | Rank | ID | Description | LOC | Sector | Why Now |
 |------|----|-------------|-----|--------|---------|
 | 2 | U02 | TUI session browser with search | 200 | S14 | TUI depth |
-| 2 | T04 | Test coverage for untested modules | 200 | S12 | Test coverage |
-| 3 | U04 | TUI config editor | 150 | S14 | TUI depth |
-| 4 | N03 | Feishu doc and drive tools | 250 | S20 | New feature |
-| 5 | N04 | Microsoft Graph auth + client | 300 | S20 | New feature |
-| 6 | N05 | LSP protocol client (IDE integration) | 500 | S20 | New feature |
-| 7 | U06 | Gateway status dashboard | 120 | S14 | TUI depth |
-| 8 | U07 | Cron job viewer | 80 | S14 | TUI depth |
-| 9 | U08 | Log viewer (tail -f in TUI) | 100 | S14 | TUI depth |
+| 1 | T04 | Test coverage for untested modules | 200 | S12 | Test coverage |
+| 2 | U04 | TUI config editor | 150 | S14 | TUI depth |
+| 3 | N03 | Feishu doc and drive tools | 250 | S20 | New feature |
+| 4 | N04 | Microsoft Graph auth + client | 300 | S20 | New feature |
+| 5 | N05 | LSP protocol client (IDE integration) | 500 | S20 | New feature |
+| 6 | U06 | Gateway status dashboard | 120 | S14 | TUI depth |
+| 7 | U07 | Cron job viewer | 80 | S14 | TUI depth |
+| 8 | U08 | Log viewer (tail -f in TUI) | 100 | S14 | TUI depth |
 
 ## Phase Status
 
@@ -48,7 +48,7 @@
 
 - battleship-v7 had 16 stale claims — v8 verified each item against source
 - battleship-v8 uses Triple DA: stub hunt (all keywords), Python-vs-C module comparison, form-not-function depth check
-- Remainder count (144) is bounded: 72 P2 + 73 P3 items are depth/coverage
+- Remainder count (143) is bounded: 72 P2 + 73 P3 items are depth/coverage
 - 0 P1 items remain
 - Python has 77 agent modules → C has 50 (26 direct matches + 24 C-only)
 - Python has 88+ tool files → C has 43 tool modules
