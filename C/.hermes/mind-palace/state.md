@@ -1,26 +1,26 @@
-# Hermes C — State Dashboard (v34 — 2026-05-24)
+# Hermes C — State Dashboard (v35 — 2026-05-24)
 
 ## Build Metrics (code-verified)
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **238/0/0** — 202 test files | 2026-05-24 |
+| Suite | **239/0/0** — 202 test files | 2026-05-24 |
 | Binary | **29MB ELF**, 0 warnings | 2026-05-24 |
 | Source `.c` files | **153** | 2026-05-24 |
 | Headers | **66** | 2026-05-24 |
 | Library directories | **58** | 2026-05-24 |
-| Tools registered | **85** (all real handlers) | 2026-05-24 |
+| Tools registered | **83** (all real handlers) | 2026-05-24 |
 | CLI commands | **79** | 2026-05-24 |
 | Gateway platforms | **19** | 2026-05-24 |
-| Agent `.c` modules | **50** | 2026-05-24 |
+| Agent `.c` modules | **51** | 2026-05-24 |
 | Provider modules | **11** (all with tests) | 2026-05-24 |
 | Provider test files | **11** | 2026-05-24 |
 | C plugins | **10** | 2026-05-24 |
-| Git commits | **820+** | 2026-05-24 |
+| Git commits | **857+** | 2026-05-24 |
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (246 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (240 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -34,10 +34,10 @@
 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | Missing Subdirectory Modules | 22 | 0 | 12 | 10 |
-| Tool Depth Gaps | 12 | 0 | 10 | 2 |
-| Gateway Platform Depth | 25 | 0 | 21 | 4 |
+| Tool Depth Gaps | 11 | 0 | 9 | 2 |
+| Gateway Platform Depth | 18 | 0 | 15 | 3 |
 | Configuration | **14** | 0 | **10** | 4 |
-| Library Depth | 28 | 0 | 20 | 8 |
+| Library Depth | 27 | 0 | 19 | 8 |
 | Bug Fixes | 11 | 0 | 9 | 2 |
 | Test Coverage | 25 | 0 | 25 | 0 |
 | API Server Depth | 5 | 0 | 5 | 0 |
@@ -50,7 +50,7 @@
 | C-Only New Features | 10 | 0 | 4 | 6 |
 | Refactoring | 10 | 0 | 2 | 8 |
 | Integration & CI | 7 | 0 | 6 | 1 |
-| **Total** | **245**| **246** | **0** | **164** | **82** |
+| **Total** | **240**| **240** | **0** | **161** | **79** |
 
 ## Python Upstream Parity
 

@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **245 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
+Total: **240 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -135,36 +135,33 @@ Existing C tools missing features that Python has.
 | 7 | D13 | browser.c | Browser dialog handling | 80 | P2 |
 | 8 | D14 | browser.c | Browser supervisor | 200 | P2 |
 | 9 | D15 | browser.c | Camofox browser state management | 150 | P2 |
-| 10 | D16 | memory.c | Plugin memory provider interface | 280 | P2 |
-| 11 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
-| 12 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
+| 10 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
+| 11 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
 
-## SECTOR 8: Gateway Platform Depth (20 gaps)
+## SECTOR 8: Gateway Platform Depth (18 gaps)
 
 C gateways with minimal or incomplete implementations vs Python.
 
 | # | ID | Platform | Missing Feature | LOC | Priority |
 |---|---------|----------|----------------|-----|----------|
-| 1 | G01 | homeassistant | No conversation loop, one-way notify only | 200 | P2 |
-| 2 | G03 | qqbot | post_api marked __attribute__((unused)) dead code | 25 | P3 |
-| 3 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
-| 4 | G09 | feishu | feishu_upload_image implemented but never called | 40 | P3 |
-| 5 | G10 | signal | Attachment support | 60 | P2 |
-| 6 | G11 | slack | Rich message formatting blocks | 100 | P2 |
-| 7 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
-| 8 | G13 | matrix | End-to-end encryption | 200 | P3 |
-| 9 | G14 | discord | Slash command registration | 100 | P2 |
-| 10 | G15 | telegram | Inline query mode | 80 | P2 |
-| 11 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
-| 12 | G17 | email | Multi-account support | 100 | P2 |
-| 13 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
-| 14 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
-| 15 | G20 | weixin | Rich media messages | 80 | P2 |
-| 16 | G21 | yuanbao | Group management commands | 100 | P2 |
-| 17 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
-| 18 | G23 | platform/* | No codex_response platform | 150 | P3 |
-| 19 | G24 | platform/* | No webhook_server platform | 200 | P3 |
-| 20 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
+| 1 | G03 | qqbot | post_api marked __attribute__((unused)) dead code | 25 | P3 |
+| 2 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
+| 3 | G09 | feishu | feishu_upload_image implemented but never called | 40 | P3 |
+| 4 | G11 | slack | Rich message formatting blocks | 100 | P2 |
+| 5 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
+| 6 | G13 | matrix | End-to-end encryption | 200 | P3 |
+| 7 | G14 | discord | Slash command registration | 100 | P2 |
+| 8 | G15 | telegram | Inline query mode | 80 | P2 |
+| 9 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
+| 10 | G17 | email | Multi-account support | 100 | P2 |
+| 11 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
+| 12 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
+| 13 | G20 | weixin | Rich media messages | 80 | P2 |
+| 14 | G21 | yuanbao | Group management commands | 100 | P2 |
+| 15 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
+| 16 | G23 | platform/* | No codex_response platform | 150 | P3 |
+| 17 | G24 | platform/* | No webhook_server platform | 200 | P3 |
+| 18 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
 
 ## SECTOR 9: Configuration & Environment (14 gaps)
 
@@ -187,7 +184,7 @@ Missing config keys, env vars, or settings that Python handles but C doesn't.
 | 13 | C19 | cron.scheduler.* | Cron scheduler config | 30 | P2 |
 | 14 | C20 | tools.browser.* | Browser-specific config (timeout, user-agent, etc.) | 20 | P2 |
 
-## SECTOR 10: Library Depth (28 gaps)
+## SECTOR 10: Library Depth (27 gaps)
 
 Libraries ported but missing features.
 
@@ -195,32 +192,31 @@ Libraries ported but missing features.
 |---|--------|---------|----------------|-----|----------|
 | 1 | L01 | libhttp | HTTP/2 support | 500 | P3 |
 | 2 | L02 | libhttp | Connection pooling | 200 | P2 |
-| 3 | L03 | libhttp | Retry with backoff | 80 | P2 |
-| 4 | L04 | libhttp | Multipart form data | 100 | P2 |
-| 5 | L05 | libhttp | Cookie jar | 60 | P2 |
-| 6 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
-| 7 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
-| 8 | L08 | libjson | JSON pointer queries | 60 | P2 |
-| 9 | L09 | libjson | JSON schema validation | 200 | P3 |
-| 10 | L10 | libjson | Streaming parse | 150 | P3 |
-| 11 | L11 | libyaml | Multi-document YAML | 40 | P2 |
-| 12 | L12 | libcrypto | AES encryption | 200 | P2 |
-| 13 | L13 | libcrypto | RSA key generation | 150 | P3 |
-| 14 | L14 | libcrypto | JWT decode (signed tokens) | 80 | P2 |
-| 15 | L18 | libdb | Session pruning by age | 50 | P2 |
-| 16 | L19 | libdb | Session tags CRUD | 40 | P2 |
-| 17 | L20 | libdb | Branch/parent session navigation | 60 | P2 |
-| 18 | L21 | libdb | Export/import JSON | 50 | P2 |
-| 19 | L22 | libdb | Batch operations | 40 | P3 |
-| 20 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
-| 21 | L24 | libbase64 | URL-safe base64 | 15 | P2 |
-| 22 | L25 | libhash | LRU cache eviction | 40 | P2 |
-| 23 | L26 | libhash | TTL-based expiry | 30 | P2 |
-| 24 | L27 | libdatetime | Timezone support | 50 | P2 |
-| 25 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
-| 26 | L29 | libglob | Recursive glob | 25 | P2 |
-| 27 | L30 | libmcp | Streaming response support | 100 | P2 |
-| 28 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
+| 3 | L04 | libhttp | Multipart form data | 100 | P2 |
+| 4 | L05 | libhttp | Cookie jar | 60 | P2 |
+| 5 | L06 | libhttp | Redirect following (configurable) | 50 | P2 |
+| 6 | L07 | libhttp | gzip/deflate decompression | 120 | P2 |
+| 7 | L08 | libjson | JSON pointer queries | 60 | P2 |
+| 8 | L09 | libjson | JSON schema validation | 200 | P3 |
+| 9 | L10 | libjson | Streaming parse | 150 | P3 |
+| 10 | L11 | libyaml | Multi-document YAML | 40 | P2 |
+| 11 | L12 | libcrypto | AES encryption | 200 | P2 |
+| 12 | L13 | libcrypto | RSA key generation | 150 | P3 |
+| 13 | L14 | libcrypto | JWT decode (signed tokens) | 80 | P2 |
+| 14 | L18 | libdb | Session pruning by age | 50 | P2 |
+| 15 | L19 | libdb | Session tags CRUD | 40 | P2 |
+| 16 | L20 | libdb | Branch/parent session navigation | 60 | P2 |
+| 17 | L21 | libdb | Export/import JSON | 50 | P2 |
+| 18 | L22 | libdb | Batch operations | 40 | P3 |
+| 19 | L23 | libregex | Full PCRE support (not just POSIX) | 500 | P3 |
+| 20 | L24 | libbase64 | URL-safe base64 | 15 | P2 |
+| 21 | L25 | libhash | LRU cache eviction | 40 | P2 |
+| 22 | L26 | libhash | TTL-based expiry | 30 | P2 |
+| 23 | L27 | libdatetime | Timezone support | 50 | P2 |
+| 24 | L28 | libdatetime | RFC 3339 parsing | 30 | P2 |
+| 25 | L29 | libglob | Recursive glob | 25 | P2 |
+| 26 | L30 | libmcp | Streaming response support | 100 | P2 |
+| 27 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
 
 ## SECTOR 11: Bug Fixes & Known Issues (11 gaps)
 
@@ -378,7 +374,6 @@ Features in Python that would benefit C.
 | 9 | R10 | Consolidate SLERMES_HOME vs HERMES_HOME | Some files use SLERMES_HOME, some HERMES_HOME | 20 | P2 |
 | 10 | R11 | Remove trailing whitespace across codebase | Pre-commit catches new, existing files have it | 5 | P3 |
 
-## SECTOR 22: Integration & CI (16 gaps)
 ## SECTOR 22: Integration & CI (7 gaps)
 | # | ID | Task | Description | Priority |
 |---|-----|------|-------------|----------|
@@ -440,28 +435,28 @@ Functions that exist in C but are significantly less capable than Python equival
 ## Summary
 
 | Sector | Count |
-|--------|-------|
-| S1: | 5 |
-| S2: | 14 |
-| S3: | 14 |
-| S4: | 12 |
-| S5: | 15 |
-| S6: | 22 |
-| S7: | 11 |
-| S8: | 25 |
-| S9: | 14 |
-| S10: | 28 |
-| S11: | 11 |
-| S12: | 25 |
-| S13: | 5 |
-| S14: | 8 |
-| S15: | 3 |
-| S16: | 5 |
-| S17: | 3 |
-| S18: | 3 |
-| S19: | 6 |
-| S20: | 10 |
-| S21: | 10 |
-| S22: | 7 |
-| **Total** | **258** |
+||--------|-------|
+|| S1: Stubs | 0 |
+|| S2: Placeholder | 13 |
+|| S3: Dead Code | 12 |
+|| S4: Missing Agent | 12 |
+|| S5: Agent Depth | 15 |
+|| S6: Subdirectory | 22 |
+|| S7: Tool Depth | 11 |
+|| S8: Gateway | 18 |
+|| S9: Config | 14 |
+|| S10: Library | 27 |
+|| S11: Bug Fixes | 11 |
+|| S12: Test Coverage | 25 |
+|| S13: API Server | 5 |
+|| S14: TUI | 8 |
+|| S15: Curator | 3 |
+|| S16: Prompt Cache | 5 |
+|| S17: Shell Hooks | 3 |
+|| S18: Vault Encrypt | 3 |
+|| S19: Security | 6 |
+|| S20: New Features | 10 |
+|| S21: Refactoring | 10 |
+|| S22: CI/Integrate | 7 |
+|| **Total** | **240** |
 | (resolved items retired to vault/achievements.md) | |

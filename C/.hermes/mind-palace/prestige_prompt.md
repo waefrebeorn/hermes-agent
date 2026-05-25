@@ -1,53 +1,51 @@
-# Hermes C — Prestige Prompt (v32 — 2026-05-24 Code-Verified)
+# Hermes C — Prestige Prompt (v33 — 2026-05-24 Code-Verified)
 
 ## Verified State
 
 | Metric | Value |
 |--------|-------|
-| Suite | **238/0/0** — 202 test files |
+| Suite | **239/0/0** — 202 test files |
 | Binary | **29MB ELF**, 0 errors, 0 warnings |
 | Source .c files | **153** |
 | Library dirs | **58** |
-| Tools registered | **85** — all real handlers |
+| Tools registered | **83** — all real handlers |
 | CLI commands | **79** |
 | Gateway platforms | **19** |
 | C provider modules | **11** — all with tests |
-| Agent .c modules | **50** |
+| Agent .c modules | **51** |
 | C plugins | **10** |
 | Git commits | **857+** |
-| Real gap count | **245** (battleship-v8, 22 sectors) |
+| Real gap count | **240** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
-## Priority Queue (top 20 gaps)
+## Priority Queue (top 15 gaps)
 
 | Rank | ID | Description | LOC | Sector | Why Now |
 |------|----|-------------|-----|--------|---------|
 | 1 | A02 | context_compressor.py port (1748 LOC) [pruning done] | 1748 | S4 | Core agent infra missing — tool result pruning implemented |
 | 2 | A03 | conversation_compression.py port | 603 | S4 | Related to A02 |
-| 6 | D16 | Plugin memory provider interface | 280 | S7 | Memory system incomplete |
-| 7 | D17-D20 | Memory import/export/hash/compress/prioritize | 150 | S7 | File backend depth |
-| 8 | G01 | Home Assistant conversation loop | 200 | S8 | Gateway depth |
-| 9 | G04 | DingTalk inbound polling | 80 | S8 | Gateway depth |
-| 10 | G05 | WeCom inbound polling | 80 | S8 | Gateway depth |
-| 11 | G06 | SMS inbound webhook wiring | 50 | S8 | Gateway depth |
-| 12 | T01-T25 | Test coverage for 25 untested modules | — | S12 | Coverage gap |
-| 13 | C06 | gateway.secret_rotation | 30 | S9 | Config depth |
-| 14 | C10 | Skill auto-install config | 25 | S9 | Config depth |
-| 15 | C11 | Session auto-save compression level | 15 | S9 | Config depth |
-| 16 | F01 | File backend atomic writes | 30 | S11 | Bug fix |
-| 17 | F02 | Terminal stdout truncation detection | 20 | S11 | Bug fix |
-| 18 | E01 | API server health endpoint | 150 | S13 | API server depth |
-| 19 | E02 | API server /v1/models | 200 | S13 | API server depth |
-| 20 | G22 | Missing 10 gateway platforms | 3000 | S8 | Parity gap |
+| 3 | D17-D20 | Memory import/export/hash/compress/prioritize | 150 | S7 | File backend depth |
+| 4 | C06 | gateway.secret_rotation | 30 | S9 | Config depth |
+| 5 | C10 | Skill auto-install config | 25 | S9 | Config depth |
+| 6 | C11 | Session auto-save compression level | 15 | S9 | Config depth |
+| 7 | F01 | File backend atomic writes | 30 | S11 | Bug fix |
+| 8 | F02 | Terminal stdout truncation detection | 20 | S11 | Bug fix |
+| 9 | E01 | API server health endpoint | 150 | S13 | API server depth |
+| 10 | E02 | API server /v1/models | 200 | S13 | API server depth |
+| 11 | G22 | Missing 10 gateway platforms | 3000 | S8 | Parity gap |
+| 12 | A35 | background_review — review agent | 587 | S4 | Missing agent module |
+| 13 | A01 | insights — full session insights engine | 931 | S4 | Missing agent module |
+| 14 | A11 | curator_backup — state management | 150 | S4 | Missing agent module |
+| 15 | A25 | process_bootstrap — subprocess helpers | 167 | S4 | Missing agent module |
 
 ## Phase Status
 
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Config/DEPS | ✅ Complete | 58 libs, YAML config, secrets |
-| Agent/CLI | ~60% | 50 C modules + 42 missing/partial from Python |
-| Tools | ~85% | 85 tools registered, 18 depth gaps |
-| Gateway | ~61% | 19 platforms, 25 depth gaps |
+| Agent/CLI | ~60% | 51 C modules + 42 missing/partial from Python |
+| Tools | ~83% | 83 tools registered, 11 depth gaps |
+| Gateway | ~62% | 19 platforms, 18 depth gaps |
 | Build/Link | ✅ Complete | 29MB, 0 warnings, pre-commit hooks |
 | Stubs | 0 remaining | All resolved — plugin vtable + gateway + video gen stubs cleared |
 | Dead code | 15 items (mostly P3) | Image display fns, qqbot post_api |

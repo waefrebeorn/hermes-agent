@@ -371,12 +371,21 @@ The following items from battleship-v8 were verified as stale — code already i
 | CLI commands | 79 | ✅ grep verify |
 | Gateway platforms | 19 | ✅ ls verify |
 | Agent .c modules | 50 | ✅ ls verify |
-| C provider modules | 11 | ✅ ls verify |
-| Provider test files | 11 | ✅ ls verify |
-| Plugins | 10 | ✅ ls verify |
-| Git commits | 847+ | ✅ log verify |
-| Python agent modules | 77 | ✅ ls verify |
-| Python tools | 88+ | ✅ ls verify |
+|| C provider modules | 11 | ✅ ls verify |
+|| Provider test files | 11 | ✅ ls verify |
+|| Plugins | 10 | ✅ ls verify |
+|| Git commits | 847+ | ✅ log verify |
+|| Python agent modules | 77 | ✅ ls verify |
+|| Python tools | 88+ | ✅ ls verify |
+
+## Phase 22: Battleship-v8 Stale Claims Retired — Round 2 (2026-05-24)
+
+ID | Old Claim | Reality | Evidence
+----|-----------|---------|----------
+G01 | homeassistant — "No conversation loop, one-way notify only" | `ha_poll_messages()` exists with full HTTP polling loop | homeassistant.c:74
+D16 | memory.c — "Plugin memory provider interface" | `memory_storage_plugin_init()` with plugin registry, full prototype in header | hermes_memory.h:318-322
+G10 | signal — "Attachment support" | `signal_send_attachment()` + attachment parser in inbound handler | signal.c:162, 275-282, 370-372
+L03 | libhttp — "Retry with backoff" | `http_new_with_retry()`, `max_retries`, `backoff_ms`, exponential backoff sleep | libhttp/http.c:47-48, 257-262, 392-393
 
 ## Phase 12: A02 Context Compressor Closure (2026-05-24)
 
