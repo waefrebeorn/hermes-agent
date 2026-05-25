@@ -1,6 +1,6 @@
 /*
  * tui_fullscreen.c — Full ncurses TUI for Hermes C (P189-P200).
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  *
  * Implements 12 phases:
  *   P189: Layout     — split panes (history | input | tool feed | status)
@@ -3242,7 +3242,7 @@ bool tui_fullscreen_init(void) {
 
     /* Welcome messages */
     tui_history_add(MSG_ROLE_INFO,
-                    "WuBu Hermes C v" HERMES_VERSION " — Full ncurses TUI", true);
+                    "WuBu Slermes C v" HERMES_VERSION " — Full ncurses TUI", true);
     tui_history_add(MSG_ROLE_INFO,
                     "Type /help for commands. P189-P200 fully implemented.", false);
     tui_history_add(MSG_ROLE_INFO, "", false);

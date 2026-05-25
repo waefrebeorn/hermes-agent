@@ -6,7 +6,7 @@
  * X11/xdotool (Linux), or noop (testing/fallback). Schema mirrors Python's
  * tools/computer_use/ Python package.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

@@ -9,7 +9,7 @@
  * 4. Strip all sibling keys from $ref nodes
  * 5. Collapse tuple-style items arrays to single schema
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "moonshot_schema.h"

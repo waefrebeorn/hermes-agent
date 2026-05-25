@@ -3,7 +3,7 @@
  * File-based JSON storage under ~/.slermes/kanban/.
  * Each task = one JSON file. Task links in links.json.
  * Gated on HERMES_KANBAN_TASK env or config toolset.
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

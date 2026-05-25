@@ -2,7 +2,7 @@
  * weixin.c — WeChat (iLink Bot API) gateway for Hermes C.
  * Long-poll getupdates for inbound messages + sendmessage for outbound.
  * Configuration via env vars: WEIXIN_TOKEN, WEIXIN_ACCOUNT_ID.
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

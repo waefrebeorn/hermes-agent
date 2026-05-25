@@ -2,7 +2,7 @@
  * msgraph_webhook.c — Microsoft Graph webhook gateway for Hermes C.
  * Raw socket HTTP server for incoming change notifications.
  * Handles subscription validation (GET) and change notification (POST).
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

@@ -5,7 +5,7 @@
  * vtable pattern. Each backend (cua-driver via MCP, Linux X11, noop) implements
  * the function table.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #ifndef HERMES_COMPUTER_USE_H

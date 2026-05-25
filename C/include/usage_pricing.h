@@ -7,7 +7,7 @@
  * Per-model and per-family pricing for cost estimation.
  * Python equivalent: agent/usage_pricing.py
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include <stdbool.h>

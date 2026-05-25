@@ -1749,7 +1749,7 @@ int hermes_gateway_main(int argc, char **argv) {
     if (g_gw.config.cdp_url[0])
         cdp_set_url(g_gw.config.cdp_url);
 
-    printf("[gateway] WuBu Hermes Gateway v%s\n", HERMES_VERSION);
+    printf("[gateway] WuBu Slermes Gateway v%s\n", HERMES_VERSION);
 
     /* Determine platforms to run */
     platform_def_t all_platforms[] = {

@@ -1,5 +1,5 @@
 /*
- * main.c — WuBu Hermes C entry point.
+ * main.c — WuBu Slermes C entry point.
  *
  * Phase 5 target: full hermes binary equivalent.
  * Current: dispatches to CLI or gateway based on argv.
@@ -27,8 +27,8 @@ static void install_safe_stdio(void) {
 }
 
 static void print_banner(void) {
-    printf("WuBu Hermes v%s\n", HERMES_VERSION);
-    printf("C Translation — 107 gaps remaining — P08 done\n");
+    printf("WuBu Slermes v%s\n", HERMES_VERSION);
+    printf("Slermes C Translation\n");
     printf("Build: %s %s\n", __DATE__, __TIME__);
 }
 
@@ -51,23 +51,51 @@ int main(int argc, char **argv) {
         return hermes_cron_main(argc - 1, argv + 1);
     }
 
+    if (argc > 1 && strcmp(argv[1], "init") == 0) {
+        extern bool hermes_config_init(const char *);
+        hermes_config_init(NULL);
+        return 0;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "doctor") == 0) {
+        printf("=== Slermes Doctor ===\n\n");
+        printf("-- Binary --\n  Version: %s\n\n", HERMES_VERSION);
+        printf("-- Config --\n");
+        hermes_config_t cfg;
+        if (hermes_config_load(&cfg, NULL)) {
+            printf("  Config OK\n  Model: %s\n  Provider: %s\n",
+                   cfg.model[0] ? cfg.model : "(not set)",
+                   cfg.provider[0] ? cfg.provider : "(not set)");
+        } else {
+            printf("  Config: NOT FOUND (run: slermes init)\n");
+        }
+        printf("-- API Keys --\n");
+        const char *keys[] = {"OPENAI_API_KEY", "ANTHROPIC_API_KEY", NULL};
+        int nk = 0;
+        for (int i = 0; keys[i]; i++) if (getenv(keys[i])) nk++;
+        printf("  %d key(s) found\n", nk);
+        if (!nk) printf("  Edit ~/.slermes/.env to add keys\n");
+        printf("\n-- Summary --\n  slermes ready\n");
+        return 0;
+    }
+
     if (argc > 1 && strcmp(argv[1], "completions") == 0) {
         /* Print shell completion script */
         if (argc > 2) {
             if (strcmp(argv[2], "bash") == 0) {
                 printf("# hermes bash completion — source: . <(hermes completions bash)\n");
-                printf("_hermes_completions() {\n");
+                printf("_slermes_completions() {\n");
                 printf("    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
                 printf("    local opts=\"--help -h --version -v --session gateway cron api-server api_server --tui completions status dump logs tools plugins secrets skills model config history sessions usage insights copy\"\n");
                 printf("    if [[ $COMP_CWORD -eq 1 ]]; then\n");
                 printf("        COMPREPLY=($(compgen -W \"$opts\" -- \"$cur\"))\n");
                 printf("    fi\n");
                 printf("}\n");
-                printf("complete -F _hermes_completions hermes\n");
+                printf("complete -F _slermes_completions slermes\n");
                 return 0;
             }
             if (strcmp(argv[2], "zsh") == 0) {
-                printf("#compdef hermes\n");
+                printf("#compdef slermes\n");
                 printf("_hermes() {\n");
                 printf("    local -a opts\n");
                 printf("    opts=(\n");
@@ -92,11 +120,20 @@ int main(int argc, char **argv) {
                 printf("    )\n");
                 printf("    _arguments $opts\n");
                 printf("}\n");
-                printf("_hermes \"$@\"\n");
+                printf("_slermes \"$@\"\n");
+                return 0;
+            }
+            if (strcmp(argv[2], "install") == 0) {
+                const char *shell = getenv("SHELL");
+                if (!shell) shell = "/bin/bash";
+                if (strstr(shell, "zsh"))
+                    printf("Add to ~/.zshrc:\n  source <(slermes completions zsh)\n");
+                else
+                    printf("Add to ~/.bashrc:\n  source <(slermes completions bash)\n");
                 return 0;
             }
         }
-        printf("Usage: hermes completions {bash|zsh}\n");
+        printf("Usage: slermes completions {bash|zsh|install}\n");
         return 0;
     }
 

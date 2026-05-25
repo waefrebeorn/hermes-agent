@@ -2,7 +2,7 @@
  * skill_bundles.c -- Skill bundle loader for C Hermes.
  * Scans ~/.slermes/skill-bundles/YAML files and provides lookup by slug.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "skill_bundles.h"

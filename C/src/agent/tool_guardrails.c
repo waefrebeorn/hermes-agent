@@ -2,7 +2,7 @@
  * tool_guardrails.c — Per-turn tool call loop detection.
  * Port of Python agent/tool_guardrails.py (475 lines).
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  * ================================================================ */
 
 #include "hermes_tool_guardrails.h"

@@ -15,7 +15,7 @@
  *     - test-driven-development
  *   instruction: Optional extra guidance
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include <stdbool.h>

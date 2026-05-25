@@ -22,7 +22,7 @@ Backed by the honcho plugin (in-memory array store).
  *   - SQLite (persistent, indexed)
  *   - Plugin (delegates to a PLUGIN_MEMORY plugin via plugin_interface_t)
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

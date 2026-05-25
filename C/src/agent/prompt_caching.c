@@ -7,7 +7,7 @@
  * Strategy: up to 4 cache_control breakpoints —
  *   system prompt (if present) + last 3 non-system messages
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "prompt_caching.h"

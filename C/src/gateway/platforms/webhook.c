@@ -7,7 +7,7 @@
  *       with exponential backoff retry, custom headers, and per-endpoint
  *       rate limiting.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

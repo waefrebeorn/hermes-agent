@@ -3,7 +3,7 @@
 
 /*
  * tui_fullscreen.h — Full ncurses TUI for Hermes C (P189-P200).
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  *
  * 12 phases:
  *   P189: Layout — split panes (message history | input | tool feed | status bar)

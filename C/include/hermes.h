@@ -1,6 +1,6 @@
 /**
  * @defgroup hermes Main API
- * @brief Master header for WuBu Hermes C implementation.
+ * @brief Master header for WuBu Slermes C implementation.
  *
  * Defines core types: provider_config_t, agent_state_t, message_t,
  * tool_call_t, llm_config_t, llm_response_t, gateway_config_t,
@@ -12,7 +12,7 @@
 #define HERMES_H
 
 /*
- * hermes.h — Master header for WuBu Hermes C implementation.
+ * hermes.h — Master header for WuBu Slermes C implementation.
  * Defines core types, config, and forward declarations.
  */
 
@@ -1016,6 +1016,9 @@ void hermes_config_defaults(hermes_config_t *cfg);
 bool hermes_config_diff(const hermes_config_t *active, cfg_diff_t *diff);
 
 /* P20: Config import/export */
+/* U01: Config init — create default config.yaml + .env template */
+bool hermes_config_init(const char *config_dir);
+
 bool hermes_config_export(const hermes_config_t *cfg, const char *path);
 bool hermes_config_import(hermes_config_t *cfg, const char *path);
 

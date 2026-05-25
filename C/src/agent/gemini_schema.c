@@ -8,7 +8,7 @@
  *
  * Build: gcc ... -Iinclude -Ilib/libjson lib/libjson/json.c src/agent/gemini_schema.c
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "gemini_schema.h"

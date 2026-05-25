@@ -3,7 +3,7 @@
  *
  * Per-model and per-family pricing. Python equivalent: agent/usage_pricing.py
  *
- * MIT License -- WuBu Hermes Project
+ * MIT License -- WuBu Slermes Project
  */
 
 #include "usage_pricing.h"

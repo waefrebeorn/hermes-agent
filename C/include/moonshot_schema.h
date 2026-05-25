@@ -6,7 +6,7 @@
  * handling: missing type repair, anyOf/type conflict resolution,
  * enum cleanup, $ref sibling stripping, and tuple items collapsing.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #ifndef MOONSHOT_SCHEMA_H

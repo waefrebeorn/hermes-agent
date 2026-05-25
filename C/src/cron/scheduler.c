@@ -212,6 +212,6 @@ int hermes_cron_main(int argc, char **argv) {
         }
     }
 
-    printf("[cron] WuBu Hermes Cron v%s\n", HERMES_VERSION);
+    printf("[cron] WuBu Slermes Cron v%s\n", HERMES_VERSION);
     return cron_run_loop(60);
 }

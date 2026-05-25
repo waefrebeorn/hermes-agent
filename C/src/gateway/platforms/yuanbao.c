@@ -2,7 +2,7 @@
  * yuanbao.c — Yuanbao (Tencent) WebSocket gateway for Hermes C.
  * Uses libwebsocket + libprotobuf for the Yuanbao protocol stack.
  * ConnMsg → Head+Data → business payloads.
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

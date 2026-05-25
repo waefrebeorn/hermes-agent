@@ -204,7 +204,7 @@ static void print_banner(void) {
 
     /* Agent info line */
     display_printf_hex("#FFD700", DISPLAY_BOLD,
-        "  WuBu Hermes v%s — C Translation\n", HERMES_VERSION);
+        "  WuBu Slermes v%s — C Translation\n", HERMES_VERSION);
     display_printf_hex("#A0A0A0", DISPLAY_DIM,
         "  Model: %s  Provider: %s\n",
         g_cli.config.model[0] ? g_cli.config.model : "(default)",
@@ -438,7 +438,7 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Check for help flag */
     if (arg_has_help || (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))) {
-        printf("Usage: hermes [options] [message...]\n");
+        printf("Usage: slermes [options] [message...]\n");
         printf("Options:\n");
         printf("  --help, -h         Show this help message\n");
         printf("  --version, -v      Show version information\n");
@@ -478,7 +478,7 @@ int hermes_cli_main(int argc, char **argv) {
         if (arg_start < argc && argv[arg_start][0] != '-' && argv[arg_start][0] != '/') {
             /* Special case: version prints banner */
             if (strcmp(argv[arg_start], "version") == 0) {
-                printf("WuBu Hermes v%s\n", HERMES_VERSION);
+                printf("WuBu Slermes v%s\n", HERMES_VERSION);
                 printf("C Translation — Phase 5 target\n");
                 printf("Build: %s %s\n", __DATE__, __TIME__);
                 agent_free(&g_cli.agent);
@@ -603,7 +603,7 @@ int hermes_cli_main(int argc, char **argv) {
         g_le = line_edit_create(cli_complete, NULL);
         if (g_le) {
             char hist_path[1024];
-            snprintf(hist_path, sizeof(hist_path), "%s/.hermes_history",
+            snprintf(hist_path, sizeof(hist_path), "%s/.slermes_history",
                      g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : getenv("HOME") ?: ".");
             line_edit_load_history(g_le, hist_path);
         }

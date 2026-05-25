@@ -2,7 +2,7 @@
  * context_references.c — @file:@folder:@git:@url reference expander.
  * Port of Python agent/context_references.py (518 lines).
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes_context_refs.h"

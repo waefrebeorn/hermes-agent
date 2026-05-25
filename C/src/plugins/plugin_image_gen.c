@@ -9,7 +9,7 @@
  *   gcc -O2 -fPIC -shared -I ../../include -I ../../lib/libplugin \
  *       plugin_image_gen.c -o plugin_image_gen.so
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #define _GNU_SOURCE

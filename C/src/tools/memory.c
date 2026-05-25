@@ -9,7 +9,7 @@
  *   - SQLite (via libdb)
  *   - Plugin (delegates to PLUGIN_MEMORY plugin)
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes.h"

@@ -1,6 +1,6 @@
 /*
  * config.c — Config loading for Hermes C.
- * Reads ~/.hermes/config.yaml + ~/.hermes/.env
+ * Reads ~/.slermes/config.yaml + ~/.slermes/.env
  * Merges env vars over YAML.
  */
 
@@ -388,7 +388,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->agent.api_max_retries = 3;
     cfg->agent.clarify_timeout = 300;
     snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "auto");
-    cfg->agent.skill_search_paths[0] = '\0';  /* empty = default ~/.hermes/skills */
+    cfg->agent.skill_search_paths[0] = '\0';  /* empty = default ~/.slermes/skills */
     cfg->agent.model_metadata_path[0] = '\0'; /* empty = use hardcoded model data */
     cfg->agent.moa_enabled = false;
     cfg->agent.moa_workers = 3;
@@ -3698,8 +3698,8 @@ void hermes_file_permissions_harden(const char *hermes_home,
         snprintf(path, sizeof(path), "%s/.slermes/vault.dat", hermes_home);
         if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
             chmod(path, 0600);
-        /* And ~/.hermes/ location */
-        snprintf(path, sizeof(path), "%s/.hermes/vault.dat", hermes_home);
+        /* And ~/.slermes/ location */
+        snprintf(path, sizeof(path), "%s/.slermes/vault.dat", hermes_home);
         if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
             chmod(path, 0600);
     }
@@ -3804,5 +3804,53 @@ bool hermes_config_check_reload(hermes_config_t *cfg, const char *config_dir) {
     }
 
     fprintf(stderr, "Config reloaded successfully.\n");
+    return true;
+}
+
+/* U01: Config init — create default config.yaml + .env template */
+bool hermes_config_init(const char *config_dir) {
+    char dir[4096];
+    if (config_dir && config_dir[0]) {
+        snprintf(dir, sizeof(dir), "%s", config_dir);
+    } else {
+        const char *home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (!home) { fprintf(stderr, "Error: cannot determine home.\n"); return false; }
+        if (getenv("SLERMES_HOME") || getenv("HERMES_HOME"))
+            snprintf(dir, sizeof(dir), "%s", home);
+        else
+            snprintf(dir, sizeof(dir), "%s/.slermes", home);
+    }
+    struct stat st;
+    if (stat(dir, &st) != 0) mkdir(dir, 0700);
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/config.yaml", dir);
+    if (stat(path, &st) == 0) {
+        printf("Config already exists at %s\n", path);
+    } else {
+        hermes_config_t cfg;
+        hermes_config_defaults(&cfg);
+        hermes_config_export(&cfg, path);
+        printf("Created: %s\n", path);
+    }
+    snprintf(path, sizeof(path), "%s/.env", dir);
+    if (stat(path, &st) == 0) {
+        printf("Env file already exists at %s\n", path);
+    } else {
+        FILE *f = fopen(path, "w");
+        if (f) {
+            fprintf(f, "# Slermes API Keys\\n");
+            fprintf(f, "#OPENAI_API_KEY=sk-...\\n");
+            fprintf(f, "#ANTHROPIC_API_KEY=sk-ant-...\\n");
+            fprintf(f, "#GOOGLE_API_KEY=AIza...\\n");
+            fprintf(f, "#DEEPSEEK_API_KEY=sk-...\\n");
+            fprintf(f, "#XAI_API_KEY=xai-...\n");
+            fclose(f);
+            printf("Created: %s (edit to add API keys)\n", path);
+        }
+    }
+    printf("\nSlermes config initialized at %s\n", dir);
+    printf("Next: edit %s/.env, then run ./slermes\n", dir);
     return true;
 }

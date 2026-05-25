@@ -2,7 +2,7 @@
  * manual_compression_feedback.c — User-facing summaries for manual compression.
  *
  * Port of Python agent/manual_compression_feedback.py (49 lines).
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "manual_compression_feedback.h"

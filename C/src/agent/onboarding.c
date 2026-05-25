@@ -5,7 +5,7 @@
  * Shows one-time hints the first time a user hits a behavior fork.
  * State tracked in HERMES_HOME/onboarding.json (simple flat JSON).
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes_onboarding.h"

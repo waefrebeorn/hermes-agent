@@ -8,7 +8,7 @@
  * CLAUDE.md, .cursorrules) in those directories and returns formatted hint
  * text that gets appended to the tool result.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes_subdir_hints.h"

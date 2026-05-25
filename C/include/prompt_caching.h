@@ -4,7 +4,7 @@
  * Port of Python agent/prompt_caching.py (79 lines).
  * Places up to 4 cache_control breakpoints: system + last 3 non-system.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #ifndef PROMPT_CACHING_H

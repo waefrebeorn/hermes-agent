@@ -5,7 +5,7 @@
  * Maps user's reasoning_config onto LM Studio's OpenAI-compatible
  * vocabulary, then clamps against the model's allowed_options.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "lmstudio_reasoning.h"

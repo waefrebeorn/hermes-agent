@@ -2,7 +2,7 @@
  * plugin_ext.c — Agent-side plugin API extensions.
  * P126-P129: Config injection, lifecycle orchestration, plugin listing.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #include "hermes_plugin.h"

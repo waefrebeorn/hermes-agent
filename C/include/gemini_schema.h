@@ -5,7 +5,7 @@
  * Strips OpenAI-flavored JSON Schema keys that Gemini's Schema object
  * rejects, then recursively sanitizes nested properties/items/anyOf.
  *
- * MIT License — WuBu Hermes Project
+ * MIT License — WuBu Slermes Project
  */
 
 #ifndef GEMINI_SCHEMA_H

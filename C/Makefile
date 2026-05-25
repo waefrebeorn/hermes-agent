@@ -60,22 +60,22 @@ phase3: $(PHASE3_OBJ)
 phase4: $(PHASE4_OBJ)
 	@echo "Phase 4 complete: $(words $(PHASE4_OBJ)) objects"
 
-phase5: hermes
-	@echo "Phase 5 complete: hermes binary built"
+phase5: slermes
+	@echo "Phase 5 complete: slermes binary built"
 
-hermes: $(PHASE5_OBJ) src/main.o $(LIB_OBJ)
+slermes: $(PHASE5_OBJ) src/main.o $(LIB_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 # ncurses full-screen TUI build (shared libs from system)
 tui: $(PHASE5_OBJ) $(TUI_OBJ) src/main.o $(LIB_OBJ)
-	$(CC) $(CFLAGS) -DHAS_NCURSES_TUI -o hermes-tui $^ $(LDFLAGS) $(LIBS) \
+	$(CC) $(CFLAGS) -DHAS_NCURSES_TUI -o slermes-tui $^ $(LDFLAGS) $(LIBS) \
 		-L lib/libncurses/lib -lncursesw -ltinfo
 	@echo "hermes-tui built with ncurses TUI support"
 
 # Fuzz test harness (T08)
 fuzz: CFLAGS += -DFUZZ_TESTING -O1 -g
 fuzz: tests/fuzz_harness.o $(LIB_OBJ)
-	$(CC) $(CFLAGS) $(LIB_INCS) -o hermes-fuzz tests/fuzz_harness.o $(LIB_OBJ) $(LDFLAGS) $(LIBS)
+	$(CC) $(CFLAGS) $(LIB_INCS) -o slermes-fuzz tests/fuzz_harness.o $(LIB_OBJ) $(LDFLAGS) $(LIBS)
 	@echo "Fuzz harness built — run with: ./hermes-fuzz"
 
 # Pattern rule for .c files
@@ -361,7 +361,7 @@ sync-all: upstream-merge phase5
 	@echo "Super Fork sync complete."
 
 # Test
-test: hermes
+test: slermes
 	bash test_runner.sh
 
 # Test all standalone libraries
@@ -404,7 +404,7 @@ docs:
 	fi
 
 clean:
-	rm -f hermes src/*.o src/*/*.o src/*/*/*.o
+	rm -f slermes src/*.o src/*/*.o src/*/*/*.o
 	rm -f $(LIB_OBJ) $(LIB_A)
 	rm -rf digest_output/
 
