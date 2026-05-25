@@ -80,6 +80,19 @@ unsigned char *hermes_encrypt(const unsigned char *plaintext, size_t pt_len,
 unsigned char *hermes_decrypt(const unsigned char *ciphertext, size_t ct_len,
                                const unsigned char *key, size_t *out_len);
 
+/* === AES-256-GCM Encryption (L12) === */
+/* Encrypt plaintext with AES-256-GCM. Returns malloc'd buffer containing
+ * IV (12 bytes) + ciphertext + tag (16 bytes). Caller free(). */
+unsigned char *crypto_aes_encrypt(const unsigned char *plaintext, size_t pt_len,
+                                   const unsigned char *key, size_t key_len,
+                                   size_t *out_len);
+
+/* Decrypt AES-256-GCM. Input must be IV (12) + ciphertext + tag (16).
+ * Returns malloc'd plaintext. NULL on error (wrong key, tampered data). */
+unsigned char *crypto_aes_decrypt(const unsigned char *input, size_t input_len,
+                                   const unsigned char *key, size_t key_len,
+                                   size_t *out_len);
+
 #ifdef __cplusplus
 }
 #endif

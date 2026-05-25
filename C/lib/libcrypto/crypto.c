@@ -353,3 +353,140 @@ unsigned char *hermes_decrypt(const unsigned char *ciphertext, size_t ct_len,
     *out_len = bin_len;
     return result;
 }
+
+/* ================================================================
+ *  AES-256-GCM Encryption (L12)
+ * ================================================================ */
+
+#define AES_GCM_IV_LEN   12
+#define AES_GCM_TAG_LEN  16
+#define AES_GCM_KEY_LEN  32  /* AES-256 */
+
+unsigned char *crypto_aes_encrypt(const unsigned char *plaintext, size_t pt_len,
+                                   const unsigned char *key, size_t key_len,
+                                   size_t *out_len) {
+    if (!plaintext || !key || key_len < 1 || !out_len) return NULL;
+
+    /* Derive 256-bit key via SHA-256 if needed */
+    unsigned char aes_key[AES_GCM_KEY_LEN];
+    if (key_len >= AES_GCM_KEY_LEN) {
+        memcpy(aes_key, key, AES_GCM_KEY_LEN);
+    } else {
+        crypto_sha256(key, key_len, aes_key);
+    }
+
+    /* Generate random IV */
+    unsigned char iv[AES_GCM_IV_LEN];
+    if (RAND_bytes(iv, AES_GCM_IV_LEN) != 1) return NULL;
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return NULL;
+
+    int ok = 0;
+    unsigned char *result = NULL;
+    size_t result_len = 0;
+
+    do {
+        if (EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL) != 1) break;
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_LEN, NULL) != 1) break;
+        if (EVP_EncryptInit_ex(ctx, NULL, NULL, aes_key, iv) != 1) break;
+
+        /* Allocate output: IV + ciphertext (max pt_len + block) + tag */
+        size_t alloc = AES_GCM_IV_LEN + pt_len + 16 + AES_GCM_TAG_LEN;
+        result = (unsigned char *)calloc(alloc, 1);
+        if (!result) break;
+
+        /* Write IV at start */
+        memcpy(result, iv, AES_GCM_IV_LEN);
+
+        /* Encrypt plaintext */
+        int outl = 0;
+        unsigned char *ct_buf = result + AES_GCM_IV_LEN;
+        if (EVP_EncryptUpdate(ctx, ct_buf, &outl, plaintext, (int)pt_len) != 1) break;
+        int ct_len = outl;
+
+        if (EVP_EncryptFinal_ex(ctx, ct_buf + ct_len, &outl) != 1) break;
+        ct_len += outl;
+        result_len = AES_GCM_IV_LEN + (size_t)ct_len;
+
+        /* Get authentication tag */
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_LEN,
+                                 result + result_len) != 1) break;
+        result_len += AES_GCM_TAG_LEN;
+
+        ok = 1;
+    } while (0);
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!ok) {
+        free(result);
+        result = NULL;
+        result_len = 0;
+    }
+
+    *out_len = result_len;
+    return result;
+}
+
+unsigned char *crypto_aes_decrypt(const unsigned char *input, size_t input_len,
+                                   const unsigned char *key, size_t key_len,
+                                   size_t *out_len) {
+    if (!input || !key || key_len < 1 || !out_len) return NULL;
+    if (input_len < AES_GCM_IV_LEN + AES_GCM_TAG_LEN + 1) return NULL;
+
+    /* Derive 256-bit key */
+    unsigned char aes_key[AES_GCM_KEY_LEN];
+    if (key_len >= AES_GCM_KEY_LEN) {
+        memcpy(aes_key, key, AES_GCM_KEY_LEN);
+    } else {
+        crypto_sha256(key, key_len, aes_key);
+    }
+
+    const unsigned char *iv = input;
+    const unsigned char *ct = input + AES_GCM_IV_LEN;
+    size_t ct_len = input_len - AES_GCM_IV_LEN - AES_GCM_TAG_LEN;
+    const unsigned char *tag = input + input_len - AES_GCM_TAG_LEN;
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return NULL;
+
+    int ok = 0;
+    unsigned char *plaintext = NULL;
+
+    do {
+        if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL) != 1) break;
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_LEN, NULL) != 1) break;
+        if (EVP_DecryptInit_ex(ctx, NULL, NULL, aes_key, iv) != 1) break;
+
+        plaintext = (unsigned char *)calloc(ct_len + 16, 1);
+        if (!plaintext) break;
+
+        int outl = 0;
+        if (EVP_DecryptUpdate(ctx, plaintext, &outl, ct, (int)ct_len) != 1) break;
+        int pt_len = outl;
+
+        /* Set expected tag before Final */
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_LEN,
+                                 (void *)tag) != 1) break;
+
+        if (EVP_DecryptFinal_ex(ctx, plaintext + pt_len, &outl) != 1) {
+            /* Authentication failed — wrong key or tampered data */
+            break;
+        }
+        pt_len += outl;
+
+        *out_len = (size_t)pt_len;
+        ok = 1;
+    } while (0);
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!ok) {
+        free(plaintext);
+        plaintext = NULL;
+        *out_len = 0;
+    }
+
+    return plaintext;
+}
