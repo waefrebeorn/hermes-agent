@@ -574,3 +574,17 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | L27 | datetime_localtime_offset(), datetime_tz_offset(), datetime_format_tz() — named-timezone formatting and offset queries | S10 | datetime.h: timezone API section, datetime.c: ~70 LOC, test_datetime.c: 11 new timezone tests |
+
+## Phase 19: S10 Stale Retirement + L31 @every Duration (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L14 | crypto_jwt_encode/crypto_jwt_decode already fully implemented | S10 (stale) | crypto.c:126,162 |
+| L18 | db_prune_by_age already fully implemented | S10 (stale) | db.c:543, db.h:117 |
+| L20 | db_branch and parent_id infrastructure already implemented | S10 (stale) | db.c:688, db.h:56-57 |
+| L21 | db_export_json and db_export_markdown already implemented | S10 (stale) | db.c:587,614 |
+| L24 | base64url_encode/base64url_decode already implemented | S10 (stale) | base64.c:165,177 |
+| L25 | LRU cache eviction misclassified — libhash is hashing, no cache infra | S10 (stale) | libhash is SHA-256/MD5 only |
+| L26 | TTL-based expiry misclassified — needs cache library, not hashing | S10 (stale) | libhash is hashing only |
+| L29 | glob_find/walk_dir already implements recursive glob | S10 (stale) | glob.c:93-135, glob.h:37 |
+| L31 | @every N[m|h] duration syntax added to cron (L31 closed) | S10 (closed) | cron.c:145-166 is_special() |

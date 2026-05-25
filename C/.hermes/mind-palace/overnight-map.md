@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **214** (battleship-v8) | L27 — timezone functions added |
+| Gap count | **205** (battleship-v8) | L31 — @every cron, S10 stale sweep |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)

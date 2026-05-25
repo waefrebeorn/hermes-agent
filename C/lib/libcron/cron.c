@@ -142,6 +142,27 @@ static bool is_special(const char *expr, const char **result) {
             return true;
         }
     }
+    /* Handle @every N[s|m|h] — relative duration syntax */
+    if (strncmp(expr, "@every ", 7) == 0) {
+        const char *val_str = expr + 7;
+        char *end = NULL;
+        long val = strtol(val_str, &end, 10);
+        if (end && val > 0 && val <= 1000000) {
+            while (*end == ' ') end++;
+            static char buf[32];
+            if (*end == 'm' || *end == '\0') {
+                snprintf(buf, sizeof(buf), "*/%ld * * * *", val);
+                *result = buf;
+                return true;
+            } else if (*end == 'h') {
+                snprintf(buf, sizeof(buf), "0 */%ld * * *", val);
+                *result = buf;
+                return true;
+            } else if (*end == 's') {
+                /* Sub-minute not expressible in cron; fall through */
+            }
+        }
+    }
     return false;
 }
 
