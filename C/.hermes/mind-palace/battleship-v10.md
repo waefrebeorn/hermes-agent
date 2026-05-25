@@ -1,23 +1,22 @@
-# Slermes C — Fresh Battleship v10 (Triple DA — 365 Gaps)
+# Slermes C — Fresh Battleship v10 (Triple DA — 357 Gaps)
 
 Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing, and command behavioral audit.
 
-Total: **365 active gaps** across 21 sectors.
+Total: **357 active gaps** across 20 sectors.
 
 ---
 
-## SECTOR 0A: Entry Point Integration (8 gaps)
+## SECTOR 0A: Entry Point Integration ✅ (8/8 — Phase 0a complete)
 
-| # | ID | Issue | File |
-|---|-----|-------|------|
-| 1 | I01 | Pipe mode reads all stdin as single blob — multi-line broken | cli.c:548-588 |
-| 2 | I02 | Unknown flags sent to LLM instead of error | main.c arg parser |
-| 3 | I03 | --tui flag treated as prompt text | main.c flag dispatch |
-| 4 | I04 | --session without value consumes wrong argv | main.c arg parser |
-| 5 | I05 | `logs` reads Python logs instead of slermes logs | commands.c:cmd_logs |
-| 6 | I06 | Config path yaml vs yml inconsistency | hermes_config.c |
-| 7 | I07 | DeepSeek provider sends wrong reasoning params | provider_deepseek.c |
-| 8 | I08 | Cron hangs forever with no jobs | jobs.c init |
+All 8 entry point gaps resolved in Phase 0a:
+- I01: Dynamic stdin buffer (no fixed 64KB cap)
+- I02: Unknown flags → error (not sent to LLM)
+- I03: --tui without ncurses → error
+- I04: --session requires value
+- I05: /logs uses hermes_log_dir() path resolution
+- I06: Fallback to config.yml if config.yaml missing
+- I07: DeepSeek V4 sends explicit thinking.type=enabled
+- I08: Cron exits early with message if no jobs
 
 ## SECTOR 0B: Display & Visual Parity (12 gaps)
 
@@ -219,10 +218,10 @@ Behaviors that work in Python but have NO equivalent in C, where a user would im
 | 9 | Library Depth | 15 |
 | 10 | Config Key Gaps | 8 |
 | 11 | Test Coverage Gaps | 5 |
-| **Total** | | **365** |
+| **Total** | | **357** |
 
 ## Phase Order
-1. **Phase 0a** — Entry Points (I01-I08)
+1. **Phase 0a** — Entry Points ✅ (I01-I08)
 2. **Phase 0b** — Display (V01-V12)
 3. **Phase 0c** — CLI Behavioral (A01-A40: fix args handling on 40 commands)
 4. **Phase 0d** — Missing Usages (U01-U15)

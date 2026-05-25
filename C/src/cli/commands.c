@@ -3821,9 +3821,11 @@ static void cmd_logs(const char *args, agent_state_t *state) {
 
     /* Build path: <hermes_home>/logs/<filename> */
     char path[1024];
-    snprintf(path, sizeof(path), "%s/logs/%s",
-             state->hermes_home[0] ? state->hermes_home : "~/.slermes",
-             filename);
+    {
+        char log_dir[512];
+        hermes_log_dir(log_dir, sizeof(log_dir));
+        snprintf(path, sizeof(path), "%s/%s", log_dir, filename);
+    }
 
     printf("=== %s ===\n", filename);
 

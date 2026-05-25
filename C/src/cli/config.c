@@ -620,6 +620,19 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
         get_slermes_home(hermes_home, sizeof(hermes_home));
 
     snprintf(cfg->config_path, sizeof(cfg->config_path), "%s/config.yaml", hermes_home);
+
+    /* I06: Fallback to config.yml if config.yaml doesn't exist */
+    {
+        struct stat st;
+        if (stat(cfg->config_path, &st) != 0) {
+            char yml_path[HERMES_PATH_MAX];
+            snprintf(yml_path, sizeof(yml_path), "%s/config.yml", hermes_home);
+            if (stat(yml_path, &st) == 0) {
+                snprintf(cfg->config_path, sizeof(cfg->config_path), "%s", yml_path);
+            }
+        }
+    }
+
     snprintf(cfg->env_path, sizeof(cfg->env_path), "%s/.env", hermes_home);
 
     /* N02: Secure parent dir — chmod 0700 on config directory.

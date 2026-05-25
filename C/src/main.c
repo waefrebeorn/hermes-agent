@@ -245,7 +245,6 @@ int main(int argc, char **argv) {
 
 #ifdef HAS_NCURSES_TUI
     if (argc > 1 && (strcmp(argv[1], "--tui") == 0 || strcmp(argv[1], "tui") == 0)) {
-        /* Agent state must be initialized before TUI can use it */
         hermes_config_t cfg;
         memset(&cfg, 0, sizeof(cfg));
         hermes_config_load(&cfg, NULL);
@@ -332,6 +331,11 @@ int main(int argc, char **argv) {
         int ret = tui_fullscreen_run(&agent_state);
         agent_free(&agent_state);
         return ret;
+    }
+#else
+    if (argc > 1 && (strcmp(argv[1], "--tui") == 0 || strcmp(argv[1], "tui") == 0)) {
+        fprintf(stderr, "Error: --tui requires ncurses (compile with HAS_NCURSES_TUI)\n");
+        return 1;
     }
 #endif
 

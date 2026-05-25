@@ -467,6 +467,11 @@ int hermes_cli_main(int argc, char **argv) {
             session_id = argv[2];
             snprintf(g_cli.session_arg, sizeof(g_cli.session_arg), "%s", session_id);
             arg_start = 3;
+        } else if (argc == 2 && strcmp(argv[1], "--session") == 0) {
+            fprintf(stderr, "Error: --session requires a session ID\n");
+            fprintf(stderr, "Usage: slermes --session <session_id> [message...]\n");
+            agent_free(&g_cli.agent);
+            return 1;
         }
 
         /* Check for -e/--eval batch mode */
@@ -509,6 +514,29 @@ int hermes_cli_main(int argc, char **argv) {
             }
         }
 
+        /* I02: Reject unknown flags instead of sending to LLM */
+        static const char *known_flags[] = {
+            "--help", "-h", "--json", "--session", "--eval", "-e",
+            "--version", "-v", NULL
+        };
+        for (int i = arg_start; i < argc; i++) {
+            if (argv[i][0] == '-') {
+                bool known = false;
+                for (int k = 0; known_flags[k]; k++) {
+                    if (strcmp(argv[i], known_flags[k]) == 0) {
+                        known = true;
+                        break;
+                    }
+                }
+                if (!known) {
+                    fprintf(stderr, "Error: unknown flag '%s'\n", argv[i]);
+                    fprintf(stderr, "Run 'slermes --help' for usage.\n");
+                    agent_free(&g_cli.agent);
+                    return 1;
+                }
+            }
+        }
+
         if (arg_start < argc) {
             /* Open DB and load session if specified */
             if (g_cli.agent.hermes_home[0]) {
@@ -546,10 +574,29 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* H09: Pipe input mode — non-interactive, no args, read from stdin */
     if (!g_cli.interactive && argc <= 1) {
-        char input[65536];
+        size_t cap = 65536;
         size_t pos = 0;
+        char *input = malloc(cap);
+        if (!input) {
+            fprintf(stderr, "Error: out of memory reading stdin\n");
+            agent_close_db(&g_cli.agent);
+            agent_free(&g_cli.agent);
+            return 1;
+        }
         int ch;
-        while (pos < sizeof(input) - 1 && (ch = fgetc(stdin)) != EOF) {
+        while ((ch = fgetc(stdin)) != EOF) {
+            if (pos >= cap - 1) {
+                cap *= 2;
+                char *tmp = realloc(input, cap);
+                if (!tmp) {
+                    fprintf(stderr, "Error: out of memory reading stdin\n");
+                    free(input);
+                    agent_close_db(&g_cli.agent);
+                    agent_free(&g_cli.agent);
+                    return 1;
+                }
+                input = tmp;
+            }
             input[pos++] = (char)ch;
         }
         input[pos] = '\0';
@@ -584,6 +631,7 @@ int hermes_cli_main(int argc, char **argv) {
 
         agent_close_db(&g_cli.agent);
         agent_free(&g_cli.agent);
+        free(input);
         return 0;
     }
 

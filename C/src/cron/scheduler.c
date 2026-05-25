@@ -212,6 +212,13 @@ int hermes_cron_main(int argc, char **argv) {
         }
     }
 
+    /* I08: Exit early with clear message if no jobs configured */
+    if (!g_jobs) {
+        printf("[cron] No jobs configured. Set HERMES_CRON_JOBS or use /cron add.\n");
+        printf("[cron] Example: HERMES_CRON_JOBS=\"ping|*/5 * * * *|curl example.com\"\n");
+        return 0;
+    }
+
     printf("[cron] WuBu Slermes Cron v%s\n", HERMES_VERSION);
     return cron_run_loop(60);
 }

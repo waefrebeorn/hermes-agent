@@ -119,6 +119,14 @@ static char *deepseek_build_request_body(const provider_t *p,
         json_object_set(root, "service_tier", json_new_string(p->config.service_tier));
     if (p->config.reasoning_effort[0])
         json_object_set(root, "reasoning_effort", json_new_string(p->config.reasoning_effort));
+    /* I07: DeepSeek V4 requires explicit thinking.type in every request.
+     * Without it, server defaults to thinking=ON and enforces reasoning_content
+     * echo contract. Always send explicit thinking block to match Python. */
+    {
+        json_t *thinking = json_new_object();
+        json_object_set(thinking, "type", json_new_string("enabled"));
+        json_object_set(root, "thinking", thinking);
+    }
     if (p->config.presence_penalty != 0.0f)
         json_object_set(root, "presence_penalty", json_new_number(p->config.presence_penalty));
     if (p->config.frequency_penalty != 0.0f)
