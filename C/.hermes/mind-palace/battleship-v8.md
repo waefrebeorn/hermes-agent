@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **248 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
+Total: **247 active gaps** across 22 sectors (resolved items retired to vault Phase 9+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -139,7 +139,7 @@ Existing C tools missing features that Python has.
 | 11 | D22 | send_message.c | Feishu doc/drive tool support | 150 | P3 |
 | 12 | D23 | web.c | Web search provider abstraction (DuckDuckGo/Tavily modular) | 100 | P2 |
 
-## SECTOR 8: Gateway Platform Depth (23 gaps)
+## SECTOR 8: Gateway Platform Depth (22 gaps)
 
 C gateways with minimal or incomplete implementations vs Python.
 
@@ -148,26 +148,25 @@ C gateways with minimal or incomplete implementations vs Python.
 | 1 | G01 | homeassistant | No conversation loop, one-way notify only | 200 | P2 |
 | 2 | G02 | qqbot | No inbound polling, webhook-only | 150 | P2 |
 | 3 | G03 | qqbot | post_api marked __attribute__((unused)) dead code | 25 | P3 |
-| 4 | G06 | sms | Webhook not wired for inbound | 50 | P2 |
-| 5 | G07 | mattermost | No bot-message filtering, relies on agent dedup | 30 | P2 |
-| 6 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
-| 7 | G09 | feishu | feishu_upload_image implemented but never called | 40 | P3 |
-| 8 | G10 | signal | Attachment support | 60 | P2 |
-| 9 | G11 | slack | Rich message formatting blocks | 100 | P2 |
-| 10 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
-| 11 | G13 | matrix | End-to-end encryption | 200 | P3 |
-| 12 | G14 | discord | Slash command registration | 100 | P2 |
-| 13 | G15 | telegram | Inline query mode | 80 | P2 |
-| 14 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
-| 15 | G17 | email | Multi-account support | 100 | P2 |
-| 16 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
-| 17 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
-| 18 | G20 | weixin | Rich media messages | 80 | P2 |
-| 19 | G21 | yuanbao | Group management commands | 100 | P2 |
-| 20 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
-| 21 | G23 | platform/* | No codex_response platform | 150 | P3 |
-| 22 | G24 | platform/* | No webhook_server platform | 200 | P3 |
-| 23 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
+| 4 | G07 | mattermost | No bot-message filtering, relies on agent dedup | 30 | P2 |
+| 5 | G08 | mattermost | One-channel only (no multi-channel support) | 200 | P2 |
+| 6 | G09 | feishu | feishu_upload_image implemented but never called | 40 | P3 |
+| 7 | G10 | signal | Attachment support | 60 | P2 |
+| 8 | G11 | slack | Rich message formatting blocks | 100 | P2 |
+| 9 | G12 | whatsapp | Interactive buttons/templates | 80 | P2 |
+| 10 | G13 | matrix | End-to-end encryption | 200 | P3 |
+| 11 | G14 | discord | Slash command registration | 100 | P2 |
+| 12 | G15 | telegram | Inline query mode | 80 | P2 |
+| 13 | G16 | email | STARTTLS support (commented as not working) | 40 | P2 |
+| 14 | G17 | email | Multi-account support | 100 | P2 |
+| 15 | G18 | webhook | Custom HMAC algorithms | 50 | P2 |
+| 16 | G19 | bluebubbles | iMessage attachment handling | 60 | P2 |
+| 17 | G20 | weixin | Rich media messages | 80 | P2 |
+| 18 | G21 | yuanbao | Group management commands | 100 | P2 |
+| 19 | G22 | platform/* | Missing 10 gateway platforms from Python | 3000 | P2 |
+| 20 | G23 | platform/* | No codex_response platform | 150 | P3 |
+| 21 | G24 | platform/* | No webhook_server platform | 200 | P3 |
+| 22 | G25 | platform/* | Unified platform registration (matching Python's GATEWAY_PLATFORMS) | 200 | P2 |
 
 ## SECTOR 9: Configuration & Environment (14 gaps)
 

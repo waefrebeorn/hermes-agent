@@ -53,6 +53,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 7. □ G01 — Home Assistant conversation loop (200 LOC)
 8. ✅ G04 — DingTalk inbound polling (80 LOC) — complete
 9. ✅ G05 — WeCom inbound polling (80 LOC) — complete
+10. ✅ G06 — SMS webhook wiring (50 LOC) — complete
 
 ## Recently Resolved
 

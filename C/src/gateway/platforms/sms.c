@@ -346,12 +346,81 @@ const char *sms_verify_webhook(const char *query_string) {
 }
 
 /* ──────────────────────────────────────────────
- *  Poll messages (no-op — SMS/Twilio is push-based via webhooks)
+ *  Webhook message queue — stores inbound SMS/MMS
+ * ────────────────────────────────────────────── */
+
+#define SMS_QUEUE_MAX 64
+
+typedef struct {
+    char chat_id[128];
+    char text[4096];
+    char sender_id[128];
+    time_t timestamp;
+} sms_msg_t;
+
+static sms_msg_t g_sms_queue[SMS_QUEUE_MAX];
+static int g_sms_head = 0;
+static int g_sms_tail = 0;
+static pthread_mutex_t g_sms_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void sms_queue_message(const char *chat_id, const char *text,
+                        const char *sender_id) {
+    pthread_mutex_lock(&g_sms_lock);
+    int next = (g_sms_tail + 1) % SMS_QUEUE_MAX;
+    if (next != g_sms_head) {
+        snprintf(g_sms_queue[g_sms_tail].chat_id, sizeof(g_sms_queue[g_sms_tail].chat_id), "%s", chat_id ? chat_id : "sms");
+        snprintf(g_sms_queue[g_sms_tail].text, sizeof(g_sms_queue[g_sms_tail].text), "%s", text ? text : "");
+        snprintf(g_sms_queue[g_sms_tail].sender_id, sizeof(g_sms_queue[g_sms_tail].sender_id), "%s", sender_id ? sender_id : "");
+        g_sms_queue[g_sms_tail].timestamp = time(NULL);
+        g_sms_tail = next;
+    }
+    pthread_mutex_unlock(&g_sms_lock);
+}
+
+/* Handle incoming Twilio webhook POST. Parses body and queues message. */
+void sms_handle_webhook(const char *body) {
+    if (!body || !body[0]) return;
+
+    json_node_t *parsed = sms_parse_webhook(body);
+    if (!parsed) return;
+
+    size_t n = json_len(parsed);
+    for (size_t i = 0; i < n; i++) {
+        json_node_t *update = json_get(parsed, i);
+        const char *from = json_get_str(update, "from", "");
+        const char *text = json_get_str(update, "text", "");
+        const char *to = json_get_str(update, "to", "");
+        if (from[0] && text[0]) {
+            sms_queue_message(from, text, to);
+        }
+    }
+    json_free(parsed);
+}
+
+/* ──────────────────────────────────────────────
+ *  Poll messages — reads from webhook message queue
  * ────────────────────────────────────────────── */
 
 json_node_t *sms_poll_messages(http_client_t *http) {
     (void)http;
-    return NULL;
+
+    pthread_mutex_lock(&g_sms_lock);
+    if (g_sms_head == g_sms_tail) {
+        pthread_mutex_unlock(&g_sms_lock);
+        return NULL;
+    }
+
+    json_node_t *results = json_array();
+    while (g_sms_head != g_sms_tail) {
+        json_node_t *msg = json_new_object();
+        json_set(msg, "chat_id", json_string(g_sms_queue[g_sms_head].chat_id));
+        json_set(msg, "text", json_string(g_sms_queue[g_sms_head].text));
+        json_set(msg, "sender_id", json_string(g_sms_queue[g_sms_head].sender_id));
+        json_append(results, msg);
+        g_sms_head = (g_sms_head + 1) % SMS_QUEUE_MAX;
+    }
+    pthread_mutex_unlock(&g_sms_lock);
+    return results;
 }
 
 /* ──────────────────────────────────────────────

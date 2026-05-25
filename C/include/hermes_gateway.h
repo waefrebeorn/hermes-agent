@@ -746,6 +746,9 @@ json_node_t *sms_parse_webhook(const char *body);
 
 /* Poll (no-op for SMS — inbound is webhook-driven) */
 json_node_t *sms_poll_messages(http_client_t *http);
+void sms_queue_message(const char *chat_id, const char *text,
+                        const char *sender_id);
+void sms_handle_webhook(const char *body);
 
 /* Update extractors */
 const char *sms_get_chat_id(json_node_t *update);

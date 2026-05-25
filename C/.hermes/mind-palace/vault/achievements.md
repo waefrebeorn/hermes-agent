@@ -333,6 +333,12 @@ The following items from battleship-v8 were verified as stale — code already i
 |----|-------------|--------|----------|
 | G05 | wecom_poll_messages — implemented webhook message queue + handle_webhook + poll function; wired thread_poll_wecom in server.c to poll messages; uses existing get_app_token() infrastructure | S8 | wecom.c:328-420, server.c:1408-1425 |
 
+## Phase 19: SMS Webhook Wiring — G06 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| G06 | sms_poll_messages — implemented webhook message queue + handle_webhook using existing sms_parse_webhook; wired thread_poll_sms in server.c to poll and process; bridge between Twilio webhook POST and gateway update pipeline | S8 | sms.c:348-418, server.c:1372-1390 |
+
 ## Current Verified State
 
 | Metric | Value | Verified |
