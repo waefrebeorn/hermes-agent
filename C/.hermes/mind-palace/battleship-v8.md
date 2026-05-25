@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **177 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **176 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -259,12 +259,12 @@ C tui_fullscreen.c (~3800 lines) vs Python TUI (Ink/React, ~5000 lines).
 
 All curator features (status, run, review) implemented in CLI commands.c + curator.c using llm_background_review. Retired to vault Phase 21.
 
-## SECTOR 16: Prompt Caching Depth (4 gaps)
+## SECTOR 16: Prompt Caching Depth (3 gaps)
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
 | 1 | P02 | Cache hit rate tracking — ✅ cache_track_hit/miss, get_stats_json, thread-safe atomics | P2 |
-| 2 | P03 | Automatic cache invalidation on system prompt change | 30 | P2 |
+| 2 | P03 | ✅ Auto-invalidation: hash-based sys prompt fingerprint, cache_is_valid check | P2 |
 | 3 | P04 | Multi-turn cache optimization | 50 | P2 |
 | 4 | P05 | Cache warmup on session load | 60 | P2 |
 | 5 | P06 | Per-provider cache config | 30 | P2 |
@@ -403,12 +403,12 @@ Functions that exist in C but are significantly less capable than Python equival
 | S13: API Server | 5 |
 | S14: TUI | 8 |
 | S15: Curator | 0 |
-|| S16: Prompt Cache | 4 |
+|| S16: Prompt Cache | 3 |
 | S17: Shell Hooks | 3 |
 | S18: Vault Encrypt | 3 |
 | S19: Security | 5 |
 | S20: New Features | 10 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-|| **Total** | **177** |
+|| **Total** | **176** |
 | (resolved items retired to vault/achievements.md) | |
