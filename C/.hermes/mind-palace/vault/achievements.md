@@ -588,3 +588,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | L26 | TTL-based expiry misclassified — needs cache library, not hashing | S10 (stale) | libhash is hashing only |
 | L29 | glob_find/walk_dir already implements recursive glob | S10 (stale) | glob.c:93-135, glob.h:37 |
 | L31 | @every N[m|h] duration syntax added to cron (L31 closed) | S10 (closed) | cron.c:145-166 is_special() |
+
+## Phase 20: Multi-Document YAML — L11 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| L11 | yaml_parse_multi() — parse multi-document YAML streams with --- document separators | S10 | yaml.h:66-74, yaml.c: added ~100 LOC, verified 3 docs parsed correctly |

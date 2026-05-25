@@ -460,3 +460,103 @@ void yaml_free(yaml_doc_t *doc) {
     if (doc->root) free_entry(doc->root);
     free(doc);
 }
+
+/* ─── Multi-document support ─────────────────────────── */
+
+yaml_doc_t **yaml_parse_multi(const char *input, size_t *count, char **error_msg) {
+    if (count) *count = 0;
+    if (!input) {
+        if (error_msg) *error_msg = strdup("NULL input");
+        return NULL;
+    }
+
+    /* Count documents by splitting on --- */
+    size_t cap = 8, n = 0;
+    yaml_doc_t **docs = (yaml_doc_t **)malloc(cap * sizeof(yaml_doc_t *));
+    if (!docs) { if (error_msg) *error_msg = strdup("OOM"); return NULL; }
+
+    const char *p = input;
+    const char *doc_start = input;
+
+    /* Skip leading whitespace before first doc */
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+    doc_start = p;
+
+    while (*p) {
+        /* Look for \n---\n or \n---$ or ^--- (document separator) */
+        if ((p == input || *(p-1) == '\n') && p[0] == '-' && p[1] == '-' && p[2] == '-'
+            && (p[3] == '\n' || p[3] == '\r' || p[3] == '\0'
+                || p[3] == ' ' || p[3] == '\t')) {
+            /* Parse document from doc_start to p */
+            size_t doc_len = (size_t)(p - doc_start);
+            /* Trim trailing whitespace */
+            while (doc_len > 0 && (doc_start[doc_len-1] == ' ' ||
+                   doc_start[doc_len-1] == '\t' || doc_start[doc_len-1] == '\n' ||
+                   doc_start[doc_len-1] == '\r'))
+                doc_len--;
+
+            if (doc_len > 0) {
+                char *doc_text = (char *)malloc(doc_len + 1);
+                if (doc_text) {
+                    memcpy(doc_text, doc_start, doc_len);
+                    doc_text[doc_len] = '\0';
+                    yaml_doc_t *doc = yaml_parse(doc_text, NULL);
+                    free(doc_text);
+                    if (doc) {
+                        if (n >= cap) {
+                            cap *= 2;
+                            yaml_doc_t **new_docs = (yaml_doc_t **)realloc(docs, cap * sizeof(yaml_doc_t *));
+                            if (!new_docs) { free(docs); return NULL; }
+                            docs = new_docs;
+                        }
+                        docs[n++] = doc;
+                    }
+                }
+            }
+
+            /* Skip past --- and trailing newline */
+            p += 3;
+            while (*p == ' ' || *p == '\t') p++;
+            if (*p == '\n') p++;
+            else if (*p == '\r') { p++; if (*p == '\n') p++; }
+            doc_start = p;
+            continue;
+        }
+        p++;
+    }
+
+    /* Parse final document (after last --- or only doc) */
+    const char *end = p;
+    while (end > doc_start && (*(end-1) == ' ' || *(end-1) == '\t' ||
+           *(end-1) == '\n' || *(end-1) == '\r'))
+        end--;
+    size_t final_len = (size_t)(end - doc_start);
+
+    if (final_len > 0) {
+        char *doc_text = (char *)malloc(final_len + 1);
+        if (doc_text) {
+            memcpy(doc_text, doc_start, final_len);
+            doc_text[final_len] = '\0';
+            yaml_doc_t *doc = yaml_parse(doc_text, NULL);
+            free(doc_text);
+            if (doc) {
+                if (n >= cap) {
+                    cap++;
+                    yaml_doc_t **new_docs = (yaml_doc_t **)realloc(docs, cap * sizeof(yaml_doc_t *));
+                    if (!new_docs) { free(docs); return NULL; }
+                    docs = new_docs;
+                }
+                docs[n++] = doc;
+            }
+        }
+    }
+
+    if (n == 0) {
+        free(docs);
+        if (error_msg) *error_msg = strdup("No valid YAML documents found");
+        return NULL;
+    }
+
+    if (count) *count = n;
+    return docs;
+}

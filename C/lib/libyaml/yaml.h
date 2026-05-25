@@ -64,6 +64,15 @@ char **yaml_map_keys(const yaml_doc_t *doc, const char *path, size_t *count);
 /* Free document */
 void yaml_free(yaml_doc_t *doc);
 
+/* ─── Multi-document support ──────────────────────────── */
+
+/** yaml_parse_multi(input, *count, *error_msg) — Parse multi-document YAML.
+ *  Splits on `---` separators, parses each document separately.
+ *  Returns array of yaml_doc_t pointers (caller frees each with yaml_free
+ *  and free() the array). Sets *count to number of documents parsed.
+ *  Returns NULL on error. */
+yaml_doc_t **yaml_parse_multi(const char *input, size_t *count, char **error_msg);
+
 #ifdef __cplusplus
 }
 #endif

@@ -9,7 +9,7 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-| Gap count | **205** (battleship-v8) | L31 — @every cron, S10 stale sweep |
+| Gap count | **204** (battleship-v8) | L11 — multi-document YAML |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v35 (previous session)
