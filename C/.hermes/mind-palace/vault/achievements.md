@@ -334,6 +334,15 @@ The following items from battleship-v8 were verified as stale — code already i
 | G05 | wecom_poll_messages — implemented webhook message queue + handle_webhook + poll function; wired thread_poll_wecom in server.c to poll messages; uses existing get_app_token() infrastructure | S8 | wecom.c:328-420, server.c:1408-1425 |
 
 ## Phase 19: SMS Webhook Wiring — G06 (2026-05-24)
+## Phase 20: Mattermost Bot-Message Filtering — G07 (2026-05-24)
+
+
+
+| ID | Description | Sector | Evidence |
+
+|----|-------------|--------|----------|
+
+| G07 | mattermost_poll_messages — added bot user ID lookup via /users/me, self-message filtering; removed dedup comment | S8 | mattermost.c:23,135-160 |
 
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|

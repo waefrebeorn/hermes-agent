@@ -20,6 +20,7 @@
 static char server_url[1024] = "http://localhost:8065";
 static char bot_token[512] = "";
 static char channel_id[128] = "";
+static char bot_user_id[128] = "";   /* set on first poll for self-filtering */
 static char last_post_id[128] = "";  /* track last seen post ID */
 
 void mattermost_set_url(const char *url) {
@@ -134,16 +135,34 @@ json_node_t *mattermost_poll_messages(http_client_t *http) {
         if (last_post_id[0] && strcmp(pid, last_post_id) <= 0)
             continue;
 
+        /* Fetch bot user ID on first poll to enable self-message filtering */
+        if (!bot_user_id[0]) {
+            char me_url[2048];
+            snprintf(me_url, sizeof(me_url), "%s%s/users/me", server_url, MATTERMOST_API);
+            char me_headers[512];
+            snprintf(me_headers, sizeof(me_headers), "Authorization: Bearer %s", bot_token);
+            http_response_t *me_resp = http_get_with_headers(http, me_url, me_headers);
+            if (me_resp && me_resp->status == 200) {
+                json_node_t *me = json_parse(me_resp->body, NULL);
+                if (me) {
+                    const char *uid = json_get_str(me, "id", "");
+                    if (uid[0]) snprintf(bot_user_id, sizeof(bot_user_id), "%s", uid);
+                    json_free(me);
+                }
+            }
+            if (me_resp) http_response_free(me_resp);
+        }
+
+        /* Skip bot's own messages */
+        const char *user_id = json_get_str(post, "user_id", "");
+        if (bot_user_id[0] && user_id[0] && strcmp(user_id, bot_user_id) == 0)
+            continue;
+
         /* Update last seen */
         if (!last_post_id[0] || strcmp(pid, last_post_id) > 0)
             snprintf(last_post_id, sizeof(last_post_id), "%s", pid);
 
-        /* Skip own messages (bot messages have a "props.from_webhook" or
-         * check user_id against bot's user ID — for simplicity skip if
-         * "pending_post_id" not set or user_id is "bot") */
-        /* We can't easily skip bot messages without knowing bot user ID,
-         * so we'll filter by the message not being from the bot user.
-         * For now, accept all and let agent handle duplicates. */
+        /* Skip own messages — use bot_user_id lookup for self-filtering */
 
         /* Build update wrapper */
         json_node_t *update = json_new_object();

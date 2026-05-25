@@ -54,6 +54,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 8. ✅ G04 — DingTalk inbound polling (80 LOC) — complete
 9. ✅ G05 — WeCom inbound polling (80 LOC) — complete
 10. ✅ G06 — SMS webhook wiring (50 LOC) — complete
+11. ✅ G07 — Mattermost bot-message filtering (30 LOC) — complete
 
 ## Recently Resolved
 
