@@ -20,7 +20,7 @@
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (154 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (148 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -50,7 +50,7 @@
 | S20 | New Features | 9 | 0 | 1 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-||| **Total** | **149** | **0** | **76** | **73** |
+||| **Total** | **148** | **0** | **75** | **73** |
 
 ## Python Upstream Parity
 
@@ -92,19 +92,20 @@
 || E05 | API server webhook endpoint — POST /webhook/:platform, JSON acknowledgment, 23 unit tests | S13 | 2026-05-25 |
 || L30 | libmcp streaming response — mcp_server_call_tool_stream, transport_read_any | S10 | 2026-05-25 |
 || L02 | libhttp connection pooling — pool_acquire/release, http_client_set_pool, LRU eviction | S10 | 2026-05-25 |
-|| L04 | libhttp multipart form data — builder API, boundary generation, http_post_multipart | S10 | 2026-05-25 |
+|| E01 | REST API config/service/metrics endpoints — handle_config_get, handle_service_info, handle_metrics_get, request counter, start time | S13 | 2026-05-25 |
+||| L04 | libhttp multipart form data — builder API, boundary generation, http_post_multipart | S10 | 2026-05-25 |
 
 ## Next Priority Queue (top 10)
 
 | Rank | ID | Description | LOC | Sector |
 |------|----|-------------|-----|--------|
-| 1 | E01 | API server health endpoint + REST endpoints | 1500 | S13 |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | S13 |
-| 3 | D22 | Feishu doc/drive tool support | 150 | S7 |
-| 4 | N02 | Mixture of Agents tool | 300 | S20 |
-| 5 | U01 | TUI image display (sixel/kitty/iterm2) — code exists but unwired | 150 | S14 |
-| 6 | U02 | TUI session browser with search | 200 | S14 |
-| 7 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
-| 8 | N03 | Feishu doc and drive tools | 250 | S20 |
-| 9 | U04 | TUI config editor | 150 | S14 |
-| 10 | E03 | Session CRUD via HTTP | 300 | S13 |
+| 1 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE token-buffer streaming | 100 | S13 |
+| 2 | D22 | Feishu doc/drive tool support | 150 | S7 |
+| 3 | N02 | Mixture of Agents tool | 300 | S20 |
+| 4 | U01 | TUI image display (sixel/kitty/iterm2) — code exists but unwired | 150 | S14 |
+| 5 | U02 | TUI session browser with search | 200 | S14 |
+| 6 | T04-T25 | Test coverage for remaining untested modules | — | S12 |
+| 7 | N03 | Feishu doc and drive tools | 250 | S20 |
+| 8 | U04 | TUI config editor | 150 | S14 |
+| 9 | U03 | Skill browser/list | 100 | S14 |
+| 10 | U05 | Plugin manager | 100 | S14 |

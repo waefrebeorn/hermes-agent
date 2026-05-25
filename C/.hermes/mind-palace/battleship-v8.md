@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **149 active gaps** across 22 sectors (resolved items retired to vault Phase 27+).
+Total: **148 active gaps** across 22 sectors (resolved items retired to vault Phase 54+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -221,15 +221,14 @@ C tools with test file status.
 | 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) | P2 |
 | 25 | T25 | web.c | ✅ test_web.c exists | P2 |
 
-## SECTOR 13: API Server Depth (2 gaps)
+## SECTOR 13: API Server Depth (1 gap)
 
 C api_server.c (1015 LOC, 13 handlers) vs Python api_server.py (~3500 lines).
-E03/E04/E05 done. Remaining: E01/E02 (minor feature gaps).
+E01/E03/E04/E05 done. Remaining: E02 (minor feature gap).
 
 | # | ID | Feature | LOC | Priority |
 |---|-----|---------|-----|----------|
-| 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~80% done, remaining: config, service info, metrics | 300 | P2 |
-| 2 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming functional (word-by-word), needs token-buffer streaming | 100 | P2 |
+| 1 | E02 | OpenAI-compatible /v1/chat/completions proxy — SSE streaming functional (word-by-word), needs token-buffer streaming | 100 | P2 |
 
 ## SECTOR 14: TUI Depth (8 gaps)
 
@@ -401,5 +400,5 @@ Functions that exist in C but are significantly less capable than Python equival
 | S20: New Features | 9 |
 | S21: Refactoring | 9 |
 | S22: CI/Integrate | 7 |
-||| **Total** | **149** |
+||| **Total** | **148** |
 | (resolved items retired to vault/achievements.md) | |

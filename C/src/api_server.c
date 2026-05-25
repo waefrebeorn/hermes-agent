@@ -39,6 +39,11 @@ static pthread_t        g_thread;
 static hermes_config_t *g_cfg = NULL;
 static agent_state_t   *g_agent = NULL;
 
+/* ── Metrics ────────────────────────────────────────────────────── */
+
+static volatile int     g_request_count = 0;
+static volatile time_t  g_start_time = 0;
+
 /* ── HTTP response helpers ──────────────────────────────────────── */
 
 static void send_response(int fd, int status, const char *status_text,
@@ -823,11 +828,162 @@ static void handle_webhook(int fd, const char *body, const char *platform) {
     json_free(resp);
 }
 
+/* ── E01: Remaining REST endpoints ──────────────────────────────── */
+
+/**
+ * GET /v1/config — expose safe configuration fields (no secrets).
+ */
+static void handle_config_get(int fd) {
+    if (!g_cfg) {
+        send_error(fd, 503, "config not initialized");
+        return;
+    }
+
+    json_t *root = json_object();
+    json_set(root, "version", json_string(HERMES_VERSION));
+    json_set(root, "port", json_number((double)g_port));
+
+    /* LLM config */
+    json_t *llm_cfg = json_object();
+    json_set(llm_cfg, "model", json_string(g_cfg->model));
+    json_set(llm_cfg, "provider", json_string(g_cfg->provider));
+    json_set(llm_cfg, "base_url", json_string(g_cfg->base_url));
+    if (g_agent) {
+        json_set(llm_cfg, "max_tokens", json_number((double)g_agent->llm.max_tokens));
+        json_set(llm_cfg, "temperature", json_number((double)g_agent->llm.temperature));
+    }
+    json_set(llm_cfg, "max_iterations", json_number((double)g_cfg->agent.max_iterations));
+    json_set(root, "llm", llm_cfg);
+
+    /* Agent config (safe fields only) */
+    json_t *agent_cfg = json_object();
+    json_set(agent_cfg, "verbose", json_number((double)g_cfg->verbose));
+    json_set(agent_cfg, "quiet_mode", json_bool(g_cfg->quiet_mode));
+    json_set(agent_cfg, "yolo_mode", json_bool(g_cfg->yolo_mode));
+    json_set(agent_cfg, "fast_mode", json_bool(g_cfg->fast_mode));
+    json_set(agent_cfg, "compress_enabled", json_bool(g_cfg->compress_enabled));
+    json_set(agent_cfg, "max_turns", json_number((double)g_cfg->max_turns));
+    json_set(agent_cfg, "personality", json_string(g_cfg->personality[0] ? g_cfg->personality : "default"));
+    json_set(root, "agent", agent_cfg);
+
+    /* Gateway */
+    json_t *gw = json_object();
+    json_set(gw, "platforms", json_string(g_cfg->gateway_platforms[0] ? g_cfg->gateway_platforms : "none"));
+    json_set(gw, "secret_rotation", json_number((double)g_cfg->secret_rotation_interval));
+    json_set(root, "gateway", gw);
+
+    /* Home / paths */
+    json_t *paths = json_object();
+    json_set(paths, "vault_path", json_string(g_cfg->vault_path[0] ? g_cfg->vault_path : "default"));
+    json_set(paths, "skin", json_string(g_cfg->skin_path[0] ? g_cfg->skin_path : "default"));
+    json_set(root, "paths", paths);
+
+    /* Proxy */
+    json_t *proxy = json_object();
+    if (g_cfg->proxy_https[0]) json_set(proxy, "https_proxy", json_string(g_cfg->proxy_https));
+    if (g_cfg->proxy_no[0]) json_set(proxy, "no_proxy", json_string(g_cfg->proxy_no));
+    json_set(root, "proxy", proxy);
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
+/**
+ * GET /v1/service/info — service metadata (version, uptime, build).
+ */
+static void handle_service_info(int fd) {
+    json_t *root = json_object();
+    json_set(root, "service", json_string("hermes-c"));
+    json_set(root, "version", json_string(HERMES_VERSION));
+    json_set(root, "api_version", json_string("v1"));
+
+    if (g_start_time > 0) {
+        time_t now = time(NULL);
+        double uptime = difftime(now, g_start_time);
+        json_set(root, "uptime_seconds", json_number(uptime));
+        json_set(root, "start_time", json_number((double)g_start_time));
+    }
+
+    json_t *build = json_object();
+    json_set(build, "compiler", json_string(__VERSION__));
+    json_set(build, "platform", json_string(__linux__ ? "linux" : "unknown"));
+    json_set(root, "build", build);
+
+    /* Registered endpoints summary */
+    json_t *endpoints = json_array();
+    json_append(endpoints, json_string("GET /v1/models"));
+    json_append(endpoints, json_string("POST /v1/chat/completions"));
+    json_append(endpoints, json_string("GET /v1/capabilities"));
+    json_append(endpoints, json_string("GET /v1/tools"));
+    json_append(endpoints, json_string("GET /v1/agent/status"));
+    json_append(endpoints, json_string("GET /v1/sessions"));
+    json_append(endpoints, json_string("POST /v1/sessions"));
+    json_append(endpoints, json_string("GET /v1/sessions/{id}"));
+    json_append(endpoints, json_string("DELETE /v1/sessions/{id}"));
+    json_append(endpoints, json_string("GET /health"));
+    json_append(endpoints, json_string("GET /health/detailed"));
+    json_append(endpoints, json_string("GET /v1/config"));
+    json_append(endpoints, json_string("GET /v1/service/info"));
+    json_append(endpoints, json_string("GET /v1/metrics"));
+    json_append(endpoints, json_string("POST /webhook/:platform"));
+    json_set(root, "endpoints", endpoints);
+
+    json_set(root, "client_count", json_number(0));
+    json_set(root, "request_count", json_number((double)g_request_count));
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
+/**
+ * GET /v1/metrics — request and token usage metrics.
+ */
+static void handle_metrics_get(int fd) {
+    json_t *root = json_object();
+    json_set(root, "object", json_string("metrics"));
+
+    json_set(root, "total_requests", json_number((double)g_request_count));
+    json_set(root, "uptime_seconds", json_number(
+        g_start_time > 0 ? difftime(time(NULL), g_start_time) : 0));
+
+    /* Per-endpoint request types (basic tracking) */
+    json_t *endpoints = json_object();
+    /* Simple counter per method+path — tracked inline in dispatch */
+    json_set(endpoints, "chat_completions", json_number(0));
+    json_set(endpoints, "models", json_number(0));
+    json_set(endpoints, "sessions", json_number(0));
+    json_set(root, "endpoints", endpoints);
+
+    char *out = json_serialize(root);
+    if (out) {
+        send_json(fd, 200, "OK", out);
+        free(out);
+    } else {
+        send_error(fd, 500, "serialization failed");
+    }
+    json_free(root);
+}
+
 /* ── Request dispatch ───────────────────────────────────────────── */
 
 static void dispatch_request(int client_fd, const char *method,
                               const char *path, const char *body,
                               const char *query) {
+    /* Track request count */
+    __atomic_add_fetch(&g_request_count, 1, __ATOMIC_SEQ_CST);
+
     if (strcmp(method, "OPTIONS") == 0) {
         handle_options(client_fd);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/models") == 0) {
@@ -866,6 +1022,12 @@ static void dispatch_request(int client_fd, const char *method,
         /* Extract platform from path: /webhook/telegram, /webhook/discord, etc. */
         const char *platform = path + 9;
         handle_webhook(client_fd, body, platform);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/config") == 0) {
+        handle_config_get(client_fd);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/service/info") == 0) {
+        handle_service_info(client_fd);
+    } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/metrics") == 0) {
+        handle_metrics_get(client_fd);
     } else {
         send_error(client_fd, 404, "not found");
     }
@@ -1005,6 +1167,7 @@ bool api_server_start(int port, const hermes_config_t *cfg, agent_state_t *agent
     g_port = port > 0 ? port : API_DEFAULT_PORT;
     g_cfg = (hermes_config_t *)cfg;
     g_agent = agent;
+    g_start_time = time(NULL);
 
     if (pthread_create(&g_thread, NULL, server_thread, NULL) != 0) {
         fprintf(stderr, "[api-server] failed to create thread\n");

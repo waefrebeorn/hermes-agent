@@ -9,9 +9,17 @@
  *   GET  /v1/capabilities        — machine-readable API capabilities
  *   GET  /v1/tools               — list all registered tools
  *   GET  /v1/agent/status        — current agent state
+ *   GET  /v1/config              — active configuration (safe fields)
+ *   GET  /v1/service/info        — service metadata (version, uptime)
+ *   GET  /v1/metrics             — request/usage metrics
  *   GET  /health                 — simple health check
  *   GET  /health/detailed        — rich health + system info
- *   OPTIONS /*                    - CORS preflight
+ *   GET  /v1/sessions            — list sessions
+ *   POST /v1/sessions            — create session
+ *   GET  /v1/sessions/{id}       — get session details
+ *   DELETE /v1/sessions/{id}     — delete session
+ *   POST /webhook/:platform      — webhook endpoint
+ *   OPTIONS /*                   — CORS preflight
  *
  * Usage:
  *   ./hermes api-server [port]

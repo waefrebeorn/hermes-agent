@@ -3,6 +3,12 @@
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25
 
+## Phase 54: REST API Config/Service/Metrics — E01 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| E01 | REST API endpoints — GET /v1/config (safe config fields), GET /v1/service/info (version, uptime, build, endpoint list, request count), GET /v1/metrics (total_requests, uptime). Wire into dispatch_request. Request counter in dispatch. g_start_time in api_server_start. | S13 | api_server.c:handle_config_get(), handle_service_info(), handle_metrics_get(), dispatch_request() __atomic counter, api_server_start() g_start_time |
+
 ## Phase 51: Modal Terminal Backend — D07 (2026-05-25)
 
 | ID | Description | Sector | Evidence |

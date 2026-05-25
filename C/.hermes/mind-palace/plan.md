@@ -4,7 +4,7 @@
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-149 gaps is a checklist. Every ✅ without runtime verification is a lie.
+148 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 
@@ -20,16 +20,15 @@ Every Python library, provider adapter, tool function, config key → C structs,
 | Gateways | 19 platforms | `ls src/gateway/platforms/` |
 | Plugins | 10 C plugins | `ls src/plugins/` |
 | Stubs | 0 real | all resolved |
-|| Real gaps | 149 (22 sectors, 0 P1) | battleship-v8 |
+|| Real gaps | 148 (22 sectors, 0 P1) | battleship-v8 |
 | API server | 1015 LOC, 12 endpoints | `wc -l src/api_server.c` |
 
-## Next Actions (top 8)
+## Next Actions (top 7)
 
-1. □ E01 — REST API endpoints ~40% done (900 LOC remaining, S13)
-2. □ E02 — OpenAI /v1/chat/completions proxy + SSE (~60% done, 200 LOC, S13)
-3. □ E03 — Session CRUD via HTTP (300 LOC, S13)
-4. □ D22 — Feishu doc/drive tool support (150 LOC, S7)
-5. □ N02 — Mixture of Agents tool (300 LOC, S20)
-6. □ U01 — TUI image display — code exists but unwired (150 LOC, S14)
-7. □ U02 — TUI session browser with search (200 LOC, S14)
-8. □ T04-T25 — Test coverage for remaining untested modules (S12)
+1. □ E02 — OpenAI /v1/chat/completions proxy + SSE token-buffer (~85% done, 100 LOC, S13)
+2. □ D22 — Feishu doc/drive tool support (150 LOC, S7)
+3. □ N02 — Mixture of Agents tool (300 LOC, S20)
+4. □ U01 — TUI image display — code exists but unwired (150 LOC, S14)
+5. □ U02 — TUI session browser with search (200 LOC, S14)
+6. □ T04-T25 — Test coverage for remaining untested modules (S12)
+7. □ U04 — TUI config editor (150 LOC, S14)
