@@ -4,7 +4,7 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-193 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+182 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 
@@ -16,10 +16,10 @@ All code is text — consumed, understood, rewritten in C. Every Python library,
 
 | Item | Value |
 |------|-------|
-|| Suite | 240/0/0 (203 test files) |
+|| Suite | 241/0/0 (203 test files) |
 | Binary | 29MB, 0 errors, 0 warnings |
 | CLI | 79 real cmds, tab completion, history, table output |
-| Tools | 83 registered — all real handlers |
+| Tools | 84 registered — all real handlers |
 | Agent | 51 .c modules |
 | Gateways | 19 platforms |
 | Providers | 11 C modules — ALL with dedicated test files |

@@ -1,26 +1,26 @@
-# Hermes C Translation — Plan (v28 — 2026-05-24)
+# Hermes C Translation — Plan (v29 — 2026-05-25)
 
 ## Mission
 
 P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 Every Python library, provider adapter, tool function, config key → C structs, function pointers, switch statements.
-312 gaps is a checklist. Every ✅ without runtime verification is a lie.
+182 gaps is a checklist. Every ✅ without runtime verification is a lie.
 
 ## Verified State
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| Suite | 240/0/0 (203 files) | `test_runner.sh` |
+| Suite | 241/0/0 (203 files) | `test_runner.sh` |
 | Binary | 29MB, 0 errors, 0 warnings | `make` |
 | Source files | 153 .c, 66 .h | `ls` |
 | Libraries | 58 | `lib/lib*` |
-| Tools | 85 registered | `registry_register` grep |
+| Tools | 84 registered | `registry_register` grep |
 | CLI | 79 commands | `commands.c` grep |
 | Providers | 11 modules, all tested | `ls src/agent/provider_*.c` + tests |
 | Gateways | 19 platforms | `ls src/gateway/platforms/` |
 | Plugins | 10 C plugins | `ls src/plugins/` |
-| Stubs | 9 real (1 P1) | battleship-v8 |
-| Real gaps | 266 (22 sectors, 5 P1) | battleship-v8, resolved items stripped |
+| Stubs | 0 real | all resolved |
+| Real gaps | 182 (22 sectors, 0 P1) | battleship-v8, resolved items stripped |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | Upstream check |
 
 ## Milestones

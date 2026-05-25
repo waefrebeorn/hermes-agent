@@ -1,26 +1,26 @@
-# Hermes C — State Dashboard (v42 — 2026-05-25)
+# Hermes C — State Dashboard (v43 — 2026-05-25)
 
 ## Build Metrics (code-verified)
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-|| Suite | **240/0/0** — 203 test files | 2026-05-25 |
+| Suite | **241/0/0** — 203 test files | 2026-05-25 |
 | Binary | **29MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **153** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |
 | Library directories | **58** | 2026-05-25 |
-| Tools registered | **83** (all real handlers) | 2026-05-25 |
+| Tools registered | **84** (all real handlers) | 2026-05-25 |
 | CLI commands | **79** | 2026-05-25 |
 | Gateway platforms | **19** | 2026-05-25 |
 | Agent `.c` modules | **51** | 2026-05-25 |
 | Provider modules | **11** (all with tests) | 2026-05-25 |
 | Provider test files | **11** | 2026-05-25 |
 | C plugins | **10** | 2026-05-25 |
-| Git commits | **858+** | 2026-05-25 |
+| Git commits | **866+** | 2026-05-25 |
 
 ## Battleship Status
 
-- **Active:** battleship-v8 (193 verified gaps across 22 sectors)
+- **Active:** battleship-v8 (182 verified gaps across 22 sectors)
 - **Retired:** battleship-v7 (all stale claims moved to vault)
 - **Vault:** achievements.md updated with all completed work and retired stale claims
 
@@ -34,12 +34,12 @@
 | S4 | Missing Agent Modules | 12 | 0 | 8 | 4 |
 | S5 | Agent Module Depth | 15 | 0 | 12 | 3 |
 | S6 | Missing Subdirectory | 22 | 0 | 12 | 10 |
-| S7 | Tool Depth | 8 | 0 | 6 | 2 |
+| S7 | Tool Depth | 3 | 0 | 1 | 2 |
 | S8 | Gateway Depth | 17 | 0 | 15 | 2 |
-| S9 | Config/Environment | 3 | 0 | 0 | 3 |
+| S9 | Config/Environment | 0 | 0 | 0 | 0 |
 | S10 | Library Depth | 11 | 0 | 5 | 6 |
 | S11 | Bug Fixes | 2 | 0 | 1 | 1 |
-| S12 | Test Coverage | 25 | 0 | 25 | 0 |
+| S12 | Test Coverage | 23 | 0 | 23 | 0 |
 | S13 | API Server | 5 | 0 | 5 | 0 |
 | S14 | TUI Depth | 8 | 0 | 7 | 1 |
 | S15 | Curator | 0 | 0 | 0 | 0 |
@@ -50,7 +50,7 @@
 | S20 | New Features | 10 | 0 | 2 | 8 |
 | S21 | Refactoring | 9 | 0 | 2 | 7 |
 | S22 | CI/Integration | 7 | 0 | 6 | 1 |
-| | **Total** | **193** | **0** | **119** | **74** |
+| | **Total** | **182** | **0** | **105** | **77** |
 
 ## Python Upstream Parity
 
@@ -61,28 +61,27 @@
 | Gateway platforms | 31 | 19 | 61% |
 | Plugins | 138 dirs (many optional-shared) | 10 C plugins | core plugins done |
 
-## Known Stale Claims Retired
+## Stale Claims Retired This Session
 
-16 items from battleship-v7 proven stale — see vault/achievements.md Phase 8 for full table.
-Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs existed), S03/S04 (set_value fixed), B01 (buffer overflow fixed), L15-L17 (message queries added).
+- **D23**: Web search provider abstraction — web_search_registry.c (239 LOC + 217 test) already exists
 
 ## Recently Resolved
 
-| ID | Description | Sector | This Session |
-|----|-------------|--------|-------------|
-| L11 | yaml_parse_multi() — multi-document YAML (--- separator) | S10 | 2026-05-24 |
-| L31 | @every N[m\|h] duration syntax in cron | S10 | 2026-05-24 |
-| R07 | make check target — combined lint + build + test | S21 | 2026-05-24 |
-| L05 | HTTP cookie jar — Set-Cookie parse + Cookie header build | S10 | 2026-05-24 |
-| D05 | Docker backend stale — run_command_docker() already exists | S7 | 2026-05-24 |
-| D06 | SSH backend stale — run_command_ssh() already exists | S7 | 2026-05-24 |
-| R02,R03,R05 | Curator stale — /curator with status/run all implemented | S15 | 2026-05-24 |
-| F01 | File backend atomic writes — mkstemp+fsync+rename | S11 | 2026-05-24 |
-|| D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion, connection state, command stats | S7 | 2026-05-25 |
-|| E01 | REST API endpoints added (capabilities, tools, health/detailed, agent/status) — 40% done, server wired into CLI | S13 | 2026-05-25 |
-| S02 | Port scan detection — nmap/masscan/nc/zmap/dev/tcp detection in tirith | S19 | 2026-05-24 |
-| L19 | Session tags CRUD — db_tag_add/remove/list/find | S10 | 2026-05-24 |
-| L06 | HTTP redirect following — 301/302/303/307/308, relative URL resolution | S10 | 2026-05-24 |
+| ID | Description | Sector | Date |
+|----|-------------|--------|------|
+| T24 | voice_mode.c — 20 tests (state mgmt, config, args) | S12 | 2026-05-25 |
+| D14 | Browser supervisor — cdp_supervisor_ping() with Browser.getVersion | S7 | 2026-05-25 |
+| D15 | Camofox session persistence — save/load/delete browser state | S7 | 2026-05-25 |
+| D10 | Computer use backend registry — register/list/clear backends, CU_BACKEND env | S7 | 2026-05-25 |
+| D11 | Vision routing — vision→som fallback with notification | S7 | 2026-05-25 |
+| C08 | Config key agent.codex_runtime (auto\|codex_app_server) | S9 | 2026-05-25 |
+| C11 | MoA config keys (enabled, model, strategy, workers) | S9 | 2026-05-25 |
+| D07 | Modal terminal backend — run_command_modal() via `modal run` | S7 | 2026-05-25 |
+| T03 | clarify.c — 8 tests (null args, schema, error paths) | S12 | 2026-05-25 |
+| C17 | agent.checkpoint.* — already implemented (8 fields, YAML reader) | S9 | 2026-05-25 |
+| I01 | GitHub Actions CI — already exists (.github/workflows) | S22 | 2026-05-25 |
+| G22 | Missing gateway platforms — both Python and C have ~19 (partially stale) | S8 | 2026-05-25 |
+| D23 | Web search provider abstraction — web_search_registry.c exists | S7 | 2026-05-25 |
 
 ## Next Priority Queue (top 10)
 
@@ -90,11 +89,11 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 |------|----|-------------|-----|--------|
 | 1 | E01 | API server health endpoint + REST endpoints | 1500 | S13 |
 | 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | S13 |
-| 3 | D07 | terminal.c — Modal/Daytona/singularity backends | 500 | S7 |
-| 4 | G22 | Missing 10 gateway platforms from Python | 3000 | S8 |
-| 5 | D14 | Browser supervisor | 200 | S7 |
-| 6 | N01 | Bitwarden Secrets Manager integration | 200 | S20 |
-| 7 | C08 | agent.codex_app_server config | 40 | S9 |
-| 8 | C11 | agent.mixture_of_agents config | 30 | S9 |
-| 9 | F01 | File backend atomic writes | 30 | S11 |
-| 10 | T01-T25 | Test coverage for untested modules | — | S12 |
+| 3 | D08 | terminal.c — Environment file sync | 150 | S7 |
+| 4 | N01 | Bitwarden Secrets Manager integration | 200 | S20 |
+| 5 | D22 | Feishu doc/drive tool support | 150 | S7 |
+| 6 | N02 | Mixture of Agents tool | 300 | S20 |
+| 7 | U01 | TUI image display (sixel/kitty/iterm2) — code exists but unwired | 150 | S14 |
+| 8 | U02 | TUI session browser with search | 200 | S14 |
+| 9 | T04-T25 | Test coverage for 23 remaining untested modules | — | S12 |
+| 10 | N03 | Feishu doc and drive tools | 250 | S20 |

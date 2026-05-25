@@ -1,18 +1,26 @@
-# Hermes C — Overnight Navigation Map (v37 — 2026-05-25)
+# Hermes C — Overnight Navigation Map (v38 — 2026-05-25)
 
 ## State Verified (2026-05-25)
 
 | Metric | Value | Change from v29 |
 |--------|-------|-----------------|
-|| Suite | 240/0/0 (203 files) | ✅ +voice_mode |
-| Tools registered | 83 | ✅ |
+|| Suite | 241/0/0 (203 files) | ✅ +voice_mode |
+| Tools registered | 84 | ✅ |
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-|| Gap count | **193** (battleship-v8) | E01 ~40% done |
+|| Gap count | **182** (battleship-v8) | E01 ~40% done |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
 ## What Changed Since v36 (2026-05-25)
+
+### Session 2 (2026-05-25)
+- **T03 closed**: Added clarify test coverage (8 tests, suite 241/0/0)
+- **D23 retired stale**: Web search provider abstraction — web_search_registry.c exists (239+217 test)
+- **C17/I01/G22 retired stale**: Checkpoint config, CI, gateway platform count
+- **Doc sweep**: state/v43, prestige/v40, plan/v29, overnight/v38 update
+- **Gap count**: 193 → 182 (11 resolved: 8 implemented + 3 stale)
+- **Suite**: 240→241/0/0, Tools: 83→84
 
 - **E01 ~40%**: Added REST API endpoints (capabilities, tools, health/detailed, agent/status) to api_server.c
 - **E01 wired**: `hermes api-server [port]` CLI command added (like mcp-serve)
