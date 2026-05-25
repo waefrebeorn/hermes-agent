@@ -1,22 +1,22 @@
-# Hermes C — State Dashboard (v41 — 2026-05-24)
+# Hermes C — State Dashboard (v42 — 2026-05-25)
 
 ## Build Metrics (code-verified)
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **239/0/0** — 202 test files | 2026-05-24 |
-| Binary | **29MB ELF**, 0 warnings | 2026-05-24 |
-| Source `.c` files | **153** | 2026-05-24 |
-| Headers | **66** | 2026-05-24 |
-| Library directories | **58** | 2026-05-24 |
-| Tools registered | **83** (all real handlers) | 2026-05-24 |
-| CLI commands | **79** | 2026-05-24 |
-| Gateway platforms | **19** | 2026-05-24 |
-| Agent `.c` modules | **51** | 2026-05-24 |
-| Provider modules | **11** (all with tests) | 2026-05-24 |
-| Provider test files | **11** | 2026-05-24 |
-| C plugins | **10** | 2026-05-24 |
-| Git commits | **857+** | 2026-05-24 |
+| Suite | **239/0/0** — 202 test files | 2026-05-25 |
+| Binary | **29MB ELF**, 0 warnings | 2026-05-25 |
+| Source `.c` files | **153** | 2026-05-25 |
+| Headers | **66** | 2026-05-25 |
+| Library directories | **58** | 2026-05-25 |
+| Tools registered | **83** (all real handlers) | 2026-05-25 |
+| CLI commands | **79** | 2026-05-25 |
+| Gateway platforms | **19** | 2026-05-25 |
+| Agent `.c` modules | **51** | 2026-05-25 |
+| Provider modules | **11** (all with tests) | 2026-05-25 |
+| Provider test files | **11** | 2026-05-25 |
+| C plugins | **10** | 2026-05-25 |
+| Git commits | **858+** | 2026-05-25 |
 
 ## Battleship Status
 
@@ -78,6 +78,7 @@ Key retired items: D09 (CUA existed), D12 (CDP existed), S01/S02 (browser stubs 
 | D06 | SSH backend stale — run_command_ssh() already exists | S7 | 2026-05-24 |
 | R02,R03,R05 | Curator stale — /curator with status/run all implemented | S15 | 2026-05-24 |
 | F01 | File backend atomic writes — mkstemp+fsync+rename | S11 | 2026-05-24 |
+| E01 | REST API endpoints added (capabilities, tools, health/detailed, agent/status) — 40% done, server wired into CLI | S13 | 2026-05-25 |
 | S02 | Port scan detection — nmap/masscan/nc/zmap/dev/tcp detection in tirith | S19 | 2026-05-24 |
 | L19 | Session tags CRUD — db_tag_add/remove/list/find | S10 | 2026-05-24 |
 | L06 | HTTP redirect following — 301/302/303/307/308, relative URL resolution | S10 | 2026-05-24 |

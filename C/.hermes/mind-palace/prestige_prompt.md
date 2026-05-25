@@ -1,4 +1,4 @@
-# Hermes C — Prestige Prompt (v38 — 2026-05-24 Code-Verified)
+# Hermes C — Prestige Prompt (v39 — 2026-05-25 Code-Verified)
 
 ## Verified State
 
@@ -14,15 +14,15 @@
 | C provider modules | **11** — all with tests |
 | Agent .c modules | **51** |
 | C plugins | **10** |
-| Git commits | **857+** |
-||| Real gap count | **193** (battleship-v8, 22 sectors) |
+| Git commits | **858+** |
+|| Real gap count | **193** (battleship-v8, 22 sectors) |
 | P1 gaps | **0** |
 
 ## Priority Queue (top 15 gaps)
 
 | Rank | ID | Description | LOC | Sector | Why Now |
 |------|----|-------------|-----|--------|---------|
-| 1 | E01 | API server health endpoint + REST endpoints | 1500 | S13 | Core infra for API mode |
+| 1 | E01 | REST API endpoints (agents, tools, sessions, health) — ~40% done | 900 | S13 | Core infra for API mode. 5 endpoints added this session |
 | 2 | E02 | OpenAI-compatible /v1/chat/completions proxy | 500 | S13 | Required for API server parity |
 | 3 | D07 | Modal/Daytona/singularity terminal backends | 500 | S7 | Last remaining terminal depth |
 | 4 | G22 | Missing 10 gateway platforms | 3000 | S8 | Parity gap |

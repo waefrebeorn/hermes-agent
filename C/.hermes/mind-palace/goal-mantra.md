@@ -4,12 +4,12 @@ P0: WuBu Slermes — C Translation. 1:1 parity with Python Hermes.
 
 All code is text — consumed, understood, rewritten in C. Every Python library, provider adapter, tool function, config key — transmuted into C structs, function pointers, switch statements.
 
-196 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
+193 gaps is a checklist. Do not stop. Every ✅ without runtime verification is a lie.
 
 ## What Exists
 
 - `/home/wubu/hermes-agent-dev/C/` — 153 src .c, 66 .h, 58 libs, 202 test files, 29MB binary
-- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (196 gaps), vault/achievements.md
+- `/home/wubu/hermes-agent-dev/C/.hermes/mind-palace/` — battleship-v8 (193 gaps), vault/achievements.md
 - Remote: `wubu=git@github.com:waefrebeorn/hermes-agent.git` (~857 commits)
 
 ## Verified State
@@ -24,7 +24,7 @@ All code is text — consumed, understood, rewritten in C. Every Python library,
 | Gateways | 19 platforms |
 | Providers | 11 C modules — ALL with dedicated test files |
 | Stubs | 0 real |
-| Gaps | 194 verified across 22 sectors |
+| Gaps | 193 verified across 22 sectors |
 | P1 priority | 0 |
 
 ## Stale Claims Cancelled
@@ -50,12 +50,14 @@ The remaining 193 gaps are verified open.
 - 20 config gaps + 28 library depth + 15 bugs + 25 test coverage
 - Plus: API server, TUI, curator, prompt caching, shell hooks, vault, security, CI
 
-## Top 10 P1 Gaps
+## Top Priority Gaps
 
-||| 1. D16 — Plugin memory provider interface (280 LOC)
-||| 2. G01 — Home Assistant conversation loop (200 LOC)
-||| 3. G06 — SMS inbound webhook wiring (50 LOC)
-||| 4. G07 — Mattermost bot-message filtering (30 LOC)
+From prestige_prompt.md v39:
+1. **E01** — REST API endpoints ~40% done (900 LOC remaining)
+2. **E02** — OpenAI-compatible /v1/chat/completions proxy + SSE (500 LOC)
+3. **E03** — Session CRUD via HTTP (300 LOC)
+4. **D07** — Modal/Daytona/singularity terminal backends (500 LOC)
+5. **G22** — Missing 10 gateway platforms (3000 LOC)
 ## The Loop
 
 1. Read state.md → prestige_prompt.md → battleship-v8.md → overnight-map.md

@@ -1,6 +1,6 @@
-# Hermes C — Overnight Navigation Map (v36 — 2026-05-24)
+# Hermes C — Overnight Navigation Map (v37 — 2026-05-25)
 
-## State Verified (2026-05-24)
+## State Verified (2026-05-25)
 
 | Metric | Value | Change from v29 |
 |--------|-------|-----------------|
@@ -9,10 +9,16 @@
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
 | Build | 29MB, 0 warnings | ✅ |
-|| Gap count | **193** (battleship-v8) | +L06 (http redirect following) |
+|| Gap count | **193** (battleship-v8) | E01 ~40% done |
 | Python modules scanned | 77 agent, 88+ tools, 31 gateways | ✅ |
 
-## What Changed Since v35 (previous session)
+## What Changed Since v36 (2026-05-25)
+
+- **E01 ~40%**: Added REST API endpoints (capabilities, tools, health/detailed, agent/status) to api_server.c
+- **E01 wired**: `hermes api-server [port]` CLI command added (like mcp-serve)
+- **api_server.c** grew 457 → ~690 lines (+233)
+- 7 endpoints now available: models, chat, capabilities, tools, agent/status, health, health/detailed
+- Suite still 239/0/0, build 0 warnings
 
 - **L05 closed**: Added HTTP cookie jar (Set-Cookie parse, Cookie build, domain/path/secure matching, wire into do_request)
 - **L31 closed**: @every N[m|h] duration syntax in cron core
@@ -27,6 +33,7 @@
 
 | ID | Description |
 |----|-------------|
+| E01 | REST API endpoints ~40% — capabilities, tools, health/detailed, agent/status, CLI wiring |
 | L11 | yaml_parse_multi() — multi-document YAML parser |
 | L31 | @every N[m|h] cron duration syntax |
 | R07 | make check target |
@@ -35,12 +42,12 @@
 
 ## Current Priority Queue
 
-From prestige_prompt.md v38:
-1. **E01** — API server health endpoint + REST endpoints (1500 LOC)
-2. **E02** — OpenAI-compatible /v1/chat/completions proxy (500 LOC)
-3. **D07** — Modal/Daytona/singularity terminal backends (500 LOC)
-4. **G22** — Missing 10 gateway platforms from Python (3000 LOC)
-5. **D14** — Browser supervisor (200 LOC)
+From prestige_prompt.md v39:
+1. **E01** — REST API endpoints ~40% done (capabilities, tools, health/detailed, agent/status done)
+2. **E02** — OpenAI-compatible /v1/chat/completions proxy (500 LOC, next in S13)
+3. **E03** — Session CRUD via HTTP (300 LOC)
+4. **D07** — Modal/Daytona/singularity terminal backends (500 LOC)
+5. **G22** — Missing 10 gateway platforms from Python (3000 LOC)
 
 ## Key Facts
 
