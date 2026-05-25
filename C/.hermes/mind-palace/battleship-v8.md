@@ -2,7 +2,7 @@
 
 Generated 2026-05-31 by systematic Triple DA audit: stub hunt (placeholder, TODO, FIXME, stub, scaffolding, "for brevity", "for later", "not yet"), Python-vs-C module comparison, tool depth analysis, upstream scan. All prior stale claims retired to vault.
 
-Total: **227 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
+Total: **226 active gaps** across 22 sectors (resolved items retired to vault Phase 10+).
 
 ## SECTOR 1: Confirmed Stubs (0 gaps)
 
@@ -206,7 +206,7 @@ Libraries ported but missing features.
 | 26 | L30 | libmcp | Streaming response support | 100 | P2 |
 | 27 | L31 | libcron | Extended cron syntax (@every, @daily shorthands) | 30 | P2 |
 
-## SECTOR 11: Bug Fixes & Known Issues (10 gaps)
+## SECTOR 11: Bug Fixes & Known Issues (9 gaps)
 
 Confirmed bugs that need fixing.
 
@@ -214,14 +214,13 @@ Confirmed bugs that need fixing.
 |---|-----|-----|------|-----|----------|
 | 1 | B02 | Suite 237→262 gap (25 tests missing vs Python coverage) | test_runner.sh | 25 | P2 |
 | 2 | B04 | No ANSI color on Windows terminals | display.c | 30 | P3 |
-| 3 | B07 | Config reload doesn't reload plugins | commands.c (cmd_reload) | 30 | P2 |
-| 4 | B09 | Session metadata not saved on /title | commands.c (cmd_title checks agent_save_meta) | 10 | P2 |
-| 5 | B11 | Gateway platforms don't validate config on startup | server.c | 50 | P2 |
-| 6 | B12 | Cron jobs don't inherit gateway session context | cron/scheduler.c | 60 | P2 |
-| 7 | B13 | Skill hub fails silently on network error | skills_hub.c | 20 | P2 |
-| 8 | B14 | Plugin load errors not propagated to user | plugin.c | 30 | P2 |
-| 9 | B15 | No log rotation for gateway logs | gateway/server.c | 40 | P2 |
-| 10 | B16 | OOM not handled in `db_list_with_meta` loop | db.c:522 (calloc NULL check) | 5 | P3 |
+| 3 | B09 | Session metadata not saved on /title | commands.c (cmd_title checks agent_save_meta) | 10 | P2 |
+| 4 | B11 | Gateway platforms don't validate config on startup | server.c | 50 | P2 |
+| 5 | B12 | Cron jobs don't inherit gateway session context | cron/scheduler.c | 60 | P2 |
+| 6 | B13 | Skill hub fails silently on network error | skills_hub.c | 20 | P2 |
+| 7 | B14 | Plugin load errors not propagated to user | plugin.c | 30 | P2 |
+| 8 | B15 | No log rotation for gateway logs | gateway/server.c | 40 | P2 |
+| 9 | B16 | OOM not handled in `db_list_with_meta` loop | db.c:522 (calloc NULL check) | 5 | P3 |
 
 ## SECTOR 12: Test Coverage Gaps (25 gaps)
 
@@ -433,7 +432,7 @@ Functions that exist in C but are significantly less capable than Python equival
 || S8: Gateway | 18 |
 || S9: Config | 3 |
 || S10: Library | 27 |
-|| S11: Bug Fixes | 10 |
+|| S11: Bug Fixes | 9 |
 || S12: Test Coverage | 25 |
 || S13: API Server | 5 |
 || S14: TUI | 8 |
@@ -445,5 +444,5 @@ Functions that exist in C but are significantly less capable than Python equival
 || S20: New Features | 10 |
 || S21: Refactoring | 10 |
 || S22: CI/Integrate | 7 |
-|| **Total** | **227** |
+|| **Total** | **226** |
 | (resolved items retired to vault/achievements.md) | |

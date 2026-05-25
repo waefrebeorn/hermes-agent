@@ -448,6 +448,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|--------|----------|
 | P12 | cmd_toolsets — replaced hardcoded toolset list with dynamic iteration of registry (registry_get_count/name/toolset). Groups tools by toolset, handles unknown toolsets as "core" | S2 | commands.c:2049-2085
 
+## Phase 35: Bug Fix — B07 (2026-05-24)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| B07 | cmd_reload — added plugin registry shutdown + reinit to /reload command. Shuts down old plugin_registry (hermes_plugin_shutdown), creates new one (hermes_plugin_init) from updated config | S11 | commands.c:2194-2197 |
+
 ## Phase 27: Stale Claim Retired — B08 (2026-05-24)
 
 | ID | Old Claim | Reality | Evidence |
