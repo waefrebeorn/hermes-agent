@@ -224,7 +224,7 @@ C tools without dedicated test files.
 | 21 | T21 | tts.c | Missing | P2 |
 | 22 | T22 | video_gen.c | Missing | P2 |
 | 23 | T23 | vision.c | Missing | P2 |
-| 24 | T24 | voice_mode.c | Missing | P2 |
+| 24 | T24 | voice_mode.c | ✅ test_voice_mode.c (20 tests) — state mgmt, config, argument validation | P2 |
 | 25 | T25 | web.c | Missing | P2 |
 
 ## SECTOR 13: API Server Depth (5 gaps)

@@ -4,7 +4,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Suite | **239/0/0** — 202 test files |
+|| Suite | **240/0/0** — 203 test files |
 | Binary | **29MB ELF**, 0 errors, 0 warnings |
 | Source .c files | **153** |
 | Library dirs | **58** |

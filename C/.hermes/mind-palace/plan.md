@@ -10,7 +10,7 @@ Every Python library, provider adapter, tool function, config key → C structs,
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| Suite | 238/0/0 (202 files) | `test_runner.sh` |
+| Suite | 240/0/0 (203 files) | `test_runner.sh` |
 | Binary | 29MB, 0 errors, 0 warnings | `make` |
 | Source files | 153 .c, 66 .h | `ls` |
 | Libraries | 58 | `lib/lib*` |

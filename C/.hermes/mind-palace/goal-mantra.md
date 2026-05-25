@@ -16,7 +16,7 @@ All code is text — consumed, understood, rewritten in C. Every Python library,
 
 | Item | Value |
 |------|-------|
-| Suite | 239/0/0 (202 test files) |
+|| Suite | 240/0/0 (203 test files) |
 | Binary | 29MB, 0 errors, 0 warnings |
 | CLI | 79 real cmds, tab completion, history, table output |
 | Tools | 83 registered — all real handlers |

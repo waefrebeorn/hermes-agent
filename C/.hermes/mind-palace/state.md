@@ -4,7 +4,7 @@
 
 | Metric | Value | As Of |
 |--------|-------|-------|
-| Suite | **239/0/0** — 202 test files | 2026-05-25 |
+|| Suite | **240/0/0** — 203 test files | 2026-05-25 |
 | Binary | **29MB ELF**, 0 warnings | 2026-05-25 |
 | Source `.c` files | **153** | 2026-05-25 |
 | Headers | **66** | 2026-05-25 |

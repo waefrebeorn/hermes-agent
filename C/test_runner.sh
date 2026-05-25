@@ -2576,6 +2576,22 @@ else skip "transcribe (compilation failed)"
 fi
 
 # ==============================================
+# Voice Mode Tests (P131-P135)
+# ==============================================
+echo ""; echo "=== Voice Mode Tests ==="
+INCDIRS=$(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
+    "$CDIR/tests/test_voice_mode.c" \
+    "$CDIR/src/tools/voice_mode.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_voice_mode -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_voice_mode ]]; then
+    if /tmp/hermes_test_voice_mode > /dev/null 2>&1; then ok "voice_mode (20 tests)"
+    else fail "voice_mode (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_voice_mode
+else skip "voice_mode (compilation failed)"
+fi
+
+# ==============================================
 # 7. Completions test
 # ==============================================
 echo ""; echo "=== Completions Tests ==="

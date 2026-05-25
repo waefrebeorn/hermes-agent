@@ -1,7 +1,15 @@
 # Hermes C Translation — Vault of Achievements
 
 All completed work archived here. Clears the active gap list for fresh battleship generation.
-Last updated: 2026-05-31
+Last updated: 2026-05-25
+
+## Phase 46: Voice Mode Test Coverage — T24 (2026-05-25)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T24 | `voice_mode.c` — 20 test coverage tests: voice enable/disable state machine, device configuration, ASR command config, voice_record/voice_transcribe null safety, voice_speak null safety, voice_listen no-crash, mode idempotency | S12 | tests/test_voice_mode.c, test_runner.sh added |
+
+## Phase 45: Library Feature — L08 (2026-05-24)
 
 ## Phase 1: Foundation (Sessions 1-20)
 

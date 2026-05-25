@@ -4,7 +4,7 @@
 
 | Metric | Value | Change from v29 |
 |--------|-------|-----------------|
-| Suite | 239/0/0 (202 files) | ✅ |
+|| Suite | 240/0/0 (203 files) | ✅ +voice_mode |
 | Tools registered | 83 | ✅ |
 | CLI commands | 79 | ✅ |
 | Real stubs | 0 (all resolved) | ✅ 17 resolved |
