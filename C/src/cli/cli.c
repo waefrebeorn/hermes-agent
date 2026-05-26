@@ -366,6 +366,7 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Initialize skin (loads from config.skin_path, falls back to default) */
     cli_skin_init();
+    display_set_skin(g_skin);
 
     /* Initialize agent */
     agent_init(&g_cli.agent);
@@ -767,6 +768,15 @@ int hermes_cli_main(int argc, char **argv) {
             } else {
                 printf("Error: No response\n");
             }
+        }
+
+        /* Show status bar after each response (if enabled) */
+        if (g_cli.interactive && g_cli.config.display.statusbar) {
+            display_statusbar(
+                g_cli.agent.llm.model,
+                g_cli.agent.session_id,
+                g_cli.agent.user_turn_count,
+                0);
         }
     }
 

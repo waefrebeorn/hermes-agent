@@ -4,7 +4,7 @@
      4|A user must not be able to tell the difference between C slermes and Python hermes.
      5|
      6|## State
-     7|354 gaps across 20 sectors (battleship-v10). 85 tools, 79 CLI, 19 gateways.
+     7|353 gaps across 20 sectors (battleship-v10). 85 tools, 79 CLI, 19 gateways.
      8|Suite 226/0/23. Binary 30MB.
      9|
     10|## Phase Order

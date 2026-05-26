@@ -143,6 +143,17 @@ void display_panel_hex(const char *title, const char *content, const char *borde
 /* Horizontal rule with TrueColor hex */
 void display_hr_hex(const char *hex_fg);
 
+/* ================================================================
+ *  Status Bar
+ * ================================================================ */
+
+/* Display a status bar line showing model, session, and context info.
+ * Uses skin colors (status_bar_bg, status_bar_text, status_bar_dim)
+ * when a skin is active via display_set_skin(). Pass NULL fg_bg to use
+ * terminal defaults. */
+void display_statusbar(const char *model, const char *session_id,
+                       int turn_count, int context_pct);
+
 /* Print an ASCII table with headers and aligned columns.
  * columns: number of columns
  * headers: array of column header strings (NULL for no header)

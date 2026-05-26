@@ -744,6 +744,92 @@ void display_hr_hex(const char *hex_fg) {
 }
 
 /* ================================================================
+ *  Status Bar
+ * ================================================================ */
+
+/* Get a hex color from the active skin or fallback, parsed into RGB.
+ * Returns true if color was available. */
+static bool skin_color_rgb(const char *key, const char *fallback_hex,
+                           int *r, int *g, int *b) {
+    if (!g_display_skin) return ansi_parse_hex(fallback_hex, r, g, b);
+    const char *val = skin_get(g_display_skin, key, NULL);
+    if (!val) val = fallback_hex;
+    return ansi_parse_hex(val, r, g, b);
+}
+
+/* Display a status bar line */
+void display_statusbar(const char *model, const char *session_id,
+                        int turn_count, int context_pct) {
+    if (!is_tty) return;
+
+    /* Get skin colors */
+    int bg_r, bg_g, bg_b, fg_r, fg_g, fg_b, dim_r, dim_g, dim_b;
+    int good_r, good_g, good_b, warn_r, warn_g, warn_b;
+    int bad_r, bad_g, bad_b, crit_r, crit_g, crit_b;
+
+    if (!skin_color_rgb("colors.status_bar_bg", "#1a1a2e", &bg_r, &bg_g, &bg_b))
+        { bg_r=26; bg_g=26; bg_b=46; }
+    if (!skin_color_rgb("colors.status_bar_strong", "#FFD700", &fg_r, &fg_g, &fg_b))
+        { fg_r=255; fg_g=215; fg_b=0; }
+    skin_color_rgb("colors.status_bar_dim", "#8B8682", &dim_r, &dim_g, &dim_b);
+    skin_color_rgb("colors.status_bar_good", "#8FBC8F", &good_r, &good_g, &good_b);
+    skin_color_rgb("colors.status_bar_warn", "#FFD700", &warn_r, &warn_g, &warn_b);
+    skin_color_rgb("colors.status_bar_bad", "#FF8C00", &bad_r, &bad_g, &bad_b);
+    skin_color_rgb("colors.status_bar_critical", "#FF6B6B", &crit_r, &crit_g, &crit_b);
+
+    /* Determine context color based on percentage */
+    int ctx_r, ctx_g, ctx_b;
+    if (context_pct < 50) { ctx_r=good_r; ctx_g=good_g; ctx_b=good_b; }
+    else if (context_pct < 75) { ctx_r=warn_r; ctx_g=warn_g; ctx_b=warn_b; }
+    else if (context_pct < 90) { ctx_r=bad_r; ctx_g=bad_g; ctx_b=bad_b; }
+    else { ctx_r=crit_r; ctx_g=crit_g; ctx_b=crit_b; }
+
+    /* Get terminal width */
+    int w = display_width();
+    if (w > 100) w = 100;
+    if (w < 40) { w = 40; } /* Minimum */
+
+    /* Build status bar segments: [model] | [session] | [context%] | [turns] */
+    char left[256], right[256];
+    snprintf(left, sizeof(left), " %s ", model ? model : "default");
+    snprintf(right, sizeof(right), " ctx:%d%% t:%d %s",
+             context_pct, turn_count, session_id ? session_id : "");
+
+    /* Truncate if too long */
+    int max_left = w / 2 - 4;
+    if ((int)strlen(left) > max_left) left[max_left] = '\0';
+    if ((int)strlen(right) > w - (int)strlen(left) - 4)
+        right[w - (int)strlen(left) - 4] = '\0';
+
+    /* Paint background */
+    printf("\n\x1B[48;2;%d;%d;%dm", bg_r, bg_g, bg_b);
+
+    /* Left: model in fg color */
+    printf("\x1B[38;2;%d;%d;%dm%s", fg_r, fg_g, fg_b, left);
+
+    /* Right: aligned, session in dim, context in context color */
+    int pad = w - (int)strlen(left) - (int)strlen(right);
+    if (pad < 1) pad = 1;
+    for (int i = 0; i < pad; i++) putchar(' ');
+
+    /* Session/turn in dim */
+    printf("\x1B[38;2;%d;%d;%dm", dim_r, dim_g, dim_b);
+    for (const char *p = right; *p; p++) {
+        if (*p == '%') {
+            /* Context percentage in context color */
+            printf("\x1B[38;2;%d;%d;%dm%%\x1B[38;2;%d;%d;%dm",
+                   ctx_r, ctx_g, ctx_b, dim_r, dim_g, dim_b);
+        } else {
+            putchar(*p);
+        }
+    }
+
+    /* Reset */
+    printf("\x1B[0m\n");
+    fflush(stdout);
+}
+
+/* ================================================================
  *  Panel / Box
  * ================================================================ */
 

@@ -792,3 +792,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|-----|----------|----------|
 | V03 | Banner upgraded with skin-driven panel border, gradient from skin banner_accent, stats summary (tools/gateways/providers/suite), and TrueColor hex panel via display_panel_hex(). display_hr_hex() added for horizontal rules with hex color. Banner now wraps in Unicode box-drawing panel (┌─┐ / └─┘) with skin-colored border. | ~120 | P2 | src/cli/display_core.c (display_panel_hex, display_hr_hex); include/hermes_display.h (declarations); src/cli/cli.c (print_banner skin-driven gradient + panel + stats) |
 
+## Phase 15: CLI Status Bar — V04 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V04 | CLI status bar with skin-driven TrueColor background/foreground/dim colors, context percentage color coding (good/warn/bad/critical from skin), model/session/turn display, terminal-width-aware truncation, wired into CLI main loop after each response. display_set_skin() called during CLI init. skin_color_rgb() helper added. | ~120 | P2 | src/cli/display_core.c (display_statusbar, skin_color_rgb); include/hermes_display.h (declaration); src/cli/cli.c (wiring after agent_chat, display_set_skin call) |
+
