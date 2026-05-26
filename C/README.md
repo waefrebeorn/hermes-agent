@@ -4,14 +4,14 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
-|Suite:  226/0/23 (213 test files, completes in <60s)
+|Suite:  226/0/23 (214 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 439 .c files (src/ + lib/ + tests/): 419K LOC
-| Parity:  ~30%   (184 sector gaps, 300+ function-level — see battleship-v11)
-| Stubs:  Phase 0a complete (8 entry points fixed). 40 CLI commands ignore args.
+| Parity:  ~30%   (182 sector gaps, 300+ function-level — see battleship-v11)
+| Stubs:  Phase 0 entry: F01+F05 fixed. 8 remaining (F02-F10). 40 CLI commands ignore args.
 | Display: 5 gaps (markdown, TUI, banner, progress, errors)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|CLI:    79 cmd_ functions (all real) — tab completion, history, table output
+|CLI:    78 cmd_ functions (all real) — tab completion, history, table output
 |Tools:  85 registered handlers — all real implementations
 |Libraries: 59 C modules — zero external deps beyond libc+libssl
 |Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
@@ -32,12 +32,12 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [LLM Providers (10)](#llm-providers-11)
 - [Plugins (10 .c, 0 .so)](#plugins-10-c-0-so)
 - [Libraries (59 Units)](#libraries-59-units)
-- [CLI Commands (79 Slash, Real)](#cli-commands-79-slash-real)
+- [CLI Commands (78 Slash, Real)](#cli-commands-78-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||- [Battleship Roadmap (346 Gaps)](#battleship-roadmap-300-gaps)
+|||- [Battleship Roadmap (182 Gaps)](#battleship-roadmap-182-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)

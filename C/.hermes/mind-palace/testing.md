@@ -7,7 +7,7 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**226 passed, 0 failed, 23 skipped** (213 test files, zero failures).
+**226 passed, 0 failed, 23 skipped** (214 test files, zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |

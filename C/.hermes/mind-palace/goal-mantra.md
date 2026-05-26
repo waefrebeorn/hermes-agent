@@ -3,8 +3,8 @@
 P0: Full 1:1 functional, behavioral, visual, and integration parity with Python Hermes.
 A user must not be able to tell the difference between C slermes and Python hermes.
 
-## State
-184 sector gaps (300+ function-level) across 15 sectors (battleship-v10). 85 tools, 79 CLI, 19 gateways.
+Suite **226/0/23**, 85 tools, 78 commands, 19 gateways, 10 providers, 59 libs.
+182 sector gaps (300+ function-level) across 15 sectors (battleship-v11). 85 tools in binary.
 Suite 226/0/23. Binary 30MB.
 
 ## Phase Order

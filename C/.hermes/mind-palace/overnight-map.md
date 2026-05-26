@@ -1,12 +1,14 @@
-# Slermes C — Overnight Map (v11 — 346 Gaps)
+# Slermes C — Overnight Map (v12 — 182 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v11.md — 184 sector gaps, 20 sectors
-- **State:** state.md — build metrics, stub stats
+- **Battleship:** battleship-v11.md — 182 sector gaps, 15 sectors
+- **State:** state.md (v8) — build metrics, entry points fixed
 - **Goal:** goal-mantra.md — loop, phase order
 
-## Phase 0a (8) — Entry Points
-I01 pipe multi-line → I02 unknown flags → I03 --tui → I04 --session → I05 logs → I06 config → I07 DeepSeek → I08 cron zero-state
+## Phase 0 Entry Points
+- ✅ F01: Multi-line pipe (fgets line-by-loop)
+- ✅ F05: --json standalone emits JSON status
+- Remaining: F02 (C logger gap), F03 (--json cmd output), F06-F10 (partially functional)
 
 ## Phase 0b (1) — Display
 V10 markdown + D12 TUI parity + D13 banner parity + D14 tool progress + D15 error formatting

@@ -1,17 +1,21 @@
-# Slermes C — State Dashboard (v7 — 2026-05-25)
+# Slermes C — State Dashboard (v8 — 2026-05-26)
 
 ## Build Metrics
-Suite 226/0/23. Binary 30MB. 83 tools (72 unique registry_register), 79 CLI, 19 gateways, 10 providers, 60 libs.
+Suite 226/0/23. Binary 30MB. 85 tools (46 .c files), 78 slash commands, 19 gateways, 10 providers, 59 libs, 52 agent modules, 226 source .c files, 214 test files.
+
+## Entry Points Fixed (Session 2026-05-26)
+- ✅ F01: Multi-line pipe reads stdin line by line (fgets loop, not fgetc blob)
+- ✅ F05: --json standalone emits JSON status instead of blank output
+- F04, F06, F07, F08 already functional from prior sessions
 
 ## Triple DA Findings
-**187 sector gaps (300+ function-level) across 15 sectors (battleship-v11)**
+**182 sector gaps (300+ function-level) across 15 sectors (battleship-v11)**
 
 | Sector | Category | Gaps |
 |--------|----------|------|
-|| 0A | Entry Points | 8 ✅ (Phase 0a complete) |
-| 0B | Display Parity | 5 missing (V10 + D12-D15) |
-| 0C | CLI Args Ignored | 40 commands discard input |
-| 0D | Usage Behavior | 15 Python patterns absent |
+| 0 | Entry Points | 8 remaining (F02-F03, F06-F10 partial) |
+| 0b | Display Parity | 1 (V10 markdown rendering) |
+| 0c | CLI Args Ignored | 40 commands discard input |
 | 1 | Agent Modules | 4 P1 critical |
 | 2 | Tool Functions | 140 missing |
 | 3 | Gateways | 19 depth gaps |
@@ -25,11 +29,10 @@ Suite 226/0/23. Binary 30MB. 83 tools (72 unique registry_register), 79 CLI, 19 
 | 11 | Tests | 5 coverage gaps |
 
 ## Key Stub Stats
-- Phase 0a complete — 8 entry points fixed. Remaining: 187 sector gaps (300+ function-level) across 15 sectors.
--
--
+- Phase 0 entry points: F01,F05 resolved this session. F02 (log path exists but C logger absent), F03 (command JSON output design gap).
+- Phase 0b display: V01-V09 resolved in prior sessions. V10 markdown rendering pending.
 - 40 CLI commands ignore args — Phase 0c continues
--
+- Battleship-v11: 182 active gaps. Some claims may be stale — verify against code.
 
 ## Usage
 ```

@@ -1,7 +1,8 @@
-# Slermes C -- Prestige Prompt (v10 -- 184 Sector Gaps)
+# Slermes C — Prestige Prompt (v11 — 182 Sector Gaps)
 
-## Phase 0 -- Entry Points (10)
-F01 multi-line pipe -> F02 logs -> F03 --json pipe -> F04 slermes chat -> F05 --json standalone -> F06 background stub -> F07 agents stub -> F08 restart stub -> F09 tool count -> F10 review unwired
+## Phase 0 — Entry Points (8 remaining)
+F02 C logger -> F03 --json cmd output -> F06 background stub -> F07 agents stub -> F08 restart stub -> F09 tool count -> F10 review unwired
+**Done:** F01 (multi-line pipe), F05 (--json standalone)
 
 ## Phase 0b -- Display (5)
 V10 markdown -> D12 TUI parity -> D13 banner parity -> D14 tool progress -> D15 error formatting

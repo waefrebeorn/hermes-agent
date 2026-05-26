@@ -1,19 +1,21 @@
-# Slermes C — Plan (v10 — 346 Gaps)
+# Slermes C — Plan (v12 — 182 Gaps)
 
 ## Verified State
-Suite 226/0/23. Binary 30MB. 85 tools, 79 CLI, 19 gateways, 10 providers, 60 libs.
+Suite 226/0/23. Binary 30MB. 85 tools, 78 commands, 19 gateways, 10 providers, 59 libs.
 
-## Gap Count: 184 sector-level across 15 sectors (battleship-v11)
-- Phase 0b: 5 display gaps (V10 markdown + TUI + banner + progress + errors)
+## Gap Count: 182 sector-level across 15 sectors (battleship-v11)
+- Phase 0 entry points: 8 remaining (F02-F10 partial/stale)
+- Phase 0b: 5 display gaps (V10 markdown + D12-D15)
+- Phase 0c: 40 CLI commands ignore args
 - Phase 1: 4 critical agent modules
 - Phase 2: 193 tool depth + gateway + provider + agent depth
 - Phase 3: 24 missing tools + sub-modules + plugins
 - Phase 4: 28 library + config + test coverage
 
-## First Actions
-1. V10: Implement markdown rendering for LLM responses
-2. Phase 0c: Fix 40 CLI commands that ignore args (S8) (A01-A40)
-3. Phase 0d: Add 15 missing Python usage patterns (stale)
+## Session Actions (2026-05-26)
+- ✅ F01: Multi-line pipe fix (fgets line-by-line)
+- ✅ F05: --json standalone JSON status
+- Remaining: next gap from prestige order
 
 ## Vault
 - achievements.md: All resolved gaps and stale claims

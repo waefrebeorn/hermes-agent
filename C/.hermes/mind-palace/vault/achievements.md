@@ -854,3 +854,12 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | LOC | Priority | Evidence |
 |----|-------------|-----|----------|----------|
 | V09 | Prompt symbol from skin branding (prompt_symbol) instead of hardcoded "hermes>". Both line_edit and fgets() prompt paths updated. Falls back to "hermes>" when no skin loaded. | ~10 | P2 | src/cli/cli.c (both prompt paths) |
+
+---
+
+## Phase 21: Multi-Line Pipe + JSON Standalone (2026-05-26)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| F01 | Multi-line pipe reads stdin line by line — replaced fgetc blob-read (all stdin into one buffer, stripping only trailing newlines) with fgets loop processing each line independently. `/help` then `/exit` pipe now works correctly instead of "Unknown command: /help\n/exit". | ~30 | P0 | src/cli/cli.c:618-682 (pipe input mode) |
+| F05 | `--json` standalone emits JSON status object when no piped input provided, instead of blank output. Uses `!db_open` (no lines processed) to detect empty stdin. | ~10 | P1 | src/cli/cli.c:670-678 (json empty-stdin guard) |
