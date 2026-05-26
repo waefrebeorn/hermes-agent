@@ -2047,17 +2047,45 @@ bool commands_get_yolo(void) { return g_yolo_mode != 0; }
 
 /* /usage: Show token usage and session statistics */
 static void cmd_usage(const char *args, agent_state_t *state) {
-    (void)args;
     size_t total_chars = 0;
     for (size_t i = 0; i < state->message_count; i++) {
         if (state->messages[i]->content)
             total_chars += strlen(state->messages[i]->content);
     }
+
+    if (args && args[0]) {
+        if (strcmp(args, "tokens") == 0) {
+            printf("Token usage:\n");
+            printf("  Input:       %d tokens\n", state->session_input_tokens);
+            printf("  Output:      %d tokens\n", state->session_output_tokens);
+            printf("  Total:       %d tokens\n", state->session_total_tokens);
+            if (state->session_cache_read_tokens > 0)
+                printf("  Cache read:  %d tokens\n", state->session_cache_read_tokens);
+            if (state->session_reasoning_tokens > 0)
+                printf("  Reasoning:   %d tokens\n", state->session_reasoning_tokens);
+            return;
+        }
+        if (strcmp(args, "cost") == 0) {
+            printf("Cost:\n");
+            if (state->session_estimated_cost_usd > 0.0)
+                printf("  Est. cost:   $%.6f\n", state->session_estimated_cost_usd);
+            else
+                printf("  Cost tracking not available for this provider.\n");
+            return;
+        }
+        printf("Usage: /usage [tokens|cost]\n");
+        return;
+    }
+
     printf("Session statistics:\n");
     printf("  Messages:    %zu\n", state->message_count);
     printf("  Total chars: %zu\n", total_chars);
     printf("  Est. tokens: ~%zu\n", (total_chars + 3) / 4);
     printf("  Iterations:  %d\n", state->iteration_count);
+    if (state->session_total_tokens > 0)
+        printf("  Tokens:      %d in / %d out\n", state->session_input_tokens, state->session_output_tokens);
+    if (state->session_estimated_cost_usd > 0.0)
+        printf("  Est. cost:   $%.6f\n", state->session_estimated_cost_usd);
 }
 
 /* /plugins: List installed plugins and their status */
