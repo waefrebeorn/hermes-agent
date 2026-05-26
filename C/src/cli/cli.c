@@ -10,6 +10,7 @@
 #include "hermes_json.h"
 #include "hermes_xai_retirement.h"
 #include "hermes_logger.h"
+#include "hermes_markdown.h"
 #include "ansi.h"
 #include "plugin.h"
 #include "line_edit.h"
@@ -677,11 +678,15 @@ int hermes_cli_main(int argc, char **argv) {
             if (g_cli.json_output) {
                 cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
             } else {
+                /* V10: Render markdown in responses */
+                char *rendered = resp ? hermes_markdown_render(resp, 0) : NULL;
+                const char *display_text = rendered ? rendered : (resp ? resp : "(no response)");
                 const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
                 if (border && border[0] == '#')
-                    display_panel_hex("Response", resp ? resp : "(no response)", border);
+                    display_panel_hex("Response", display_text, border);
                 else
-                    display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
+                    display_panel("Response", display_text, DISPLAY_CYAN);
+                free(rendered);
             }
             free(resp);
             free(msg);
@@ -760,11 +765,15 @@ int hermes_cli_main(int argc, char **argv) {
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
                 } else {
+                    /* V10: Render markdown in responses */
+                    char *rendered = resp ? hermes_markdown_render(resp, 0) : NULL;
+                    const char *display_text = rendered ? rendered : (resp ? resp : "(no response)");
                     const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
                     if (border && border[0] == '#')
-                        display_panel_hex("Response", resp ? resp : "(no response)", border);
+                        display_panel_hex("Response", display_text, border);
                     else
-                        display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
+                        display_panel("Response", display_text, DISPLAY_CYAN);
+                    free(rendered);
                 }
                 free(resp);
             }
@@ -879,11 +888,15 @@ start_interactive:
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, "ok");
                 } else {
+                    /* V10: Render markdown in responses */
+                    char *rendered = resp ? hermes_markdown_render(resp, 0) : NULL;
+                    const char *display_text = rendered ? rendered : (resp ? resp : "(no response)");
                     const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
                     if (border && border[0] == '#')
-                        display_panel_hex("Response", resp, border);
+                        display_panel_hex("Response", display_text, border);
                     else
-                        display_panel("Response", resp, DISPLAY_CYAN);
+                        display_panel("Response", display_text, DISPLAY_CYAN);
+                    free(rendered);
                 }
             }
             free(resp);
