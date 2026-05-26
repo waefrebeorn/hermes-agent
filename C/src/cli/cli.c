@@ -708,17 +708,24 @@ int hermes_cli_main(int argc, char **argv) {
         /* P19: Check SIGHUP-based config reload before each input */
         hermes_config_check_reload(&g_cli.config, NULL);
 
-        if (g_cli.interactive && g_le) {
-            /* Use line editor with tab completion and history */
-            char *line = line_edit_read(g_le, "\nhermes> ");
-            if (!line) break;  /* EOF/Ctrl-D/Ctrl-C */
-            strncpy(input, line, sizeof(input) - 1);
-            input[sizeof(input) - 1] = '\0';
-            free(line);
-        } else {
+        /* Get prompt symbol from skin branding or fallback */
+    const char *prompt_symbol = NULL;
+    if (g_skin) prompt_symbol = skin_get_branding(g_skin, "prompt_symbol", NULL);
+    if (!prompt_symbol) prompt_symbol = "hermes>";
+
+    if (g_cli.interactive && g_le) {
+        /* Use line editor with tab completion and history */
+        char prompt[64];
+        snprintf(prompt, sizeof(prompt), "\n%s ", prompt_symbol);
+        char *line = line_edit_read(g_le, prompt);
+        if (!line) break;  /* EOF/Ctrl-D/Ctrl-C */
+        strncpy(input, line, sizeof(input) - 1);
+        input[sizeof(input) - 1] = '\0';
+        free(line);
+    } else {
             if (g_cli.interactive)
                 display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
-                               "\nhermes> ");
+                               "\n%s ", prompt_symbol);
             fflush(stdout);
             if (!fgets(input, sizeof(input), stdin)) break;
         }

@@ -1,9 +1,9 @@
-     1|# Slermes C — Plan (v8 — 347 Gaps)
+     1|# Slermes C — Plan (v8 — 346 Gaps)
      2|
      3|## Verified State
      4|Suite 226/0/23. Binary 30MB. 85 tools, 79 CLI, 19 gateways, 10 providers, 59 libs.
      5|
-     6|## Gap Count: 347 across 20 sectors (battleship-v10)
+     6|## Gap Count: 346 across 20 sectors (battleship-v10)
      7|     8|- Phase 0b: 9 display/visual parity
      9|- Phase 1: 4 critical agent modules
     10|- Phase 2: 193 tool depth + gateway + provider + agent depth

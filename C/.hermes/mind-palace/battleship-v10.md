@@ -2,7 +2,7 @@
 
 Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing, and command behavioral audit.
 
-Total: **347 active gaps** across 20 sectors.
+Total: **346 active gaps** across 20 sectors.
 
 ---
 
@@ -18,12 +18,11 @@ All 8 entry point gaps resolved in Phase 0a:
 - I07: DeepSeek V4 sends explicit thinking.type=enabled
 - I08: Cron exits early with message if no jobs
 
-## SECTOR 0B: Display & Visual Parity (2 gaps)
+## SECTOR 0B: Display & Visual Parity (1 gap)
 
 | # | ID | Feature | Python Source | C State |
 |---|-----|---------|-------------|---------|
-| 9 | V09 | Prompt input (tab complete, history, multiline) | prompt_toolkit | fgets() via line_edit |
-| 10 | V10 | Markdown rendering for LLM responses | rich markdown | Basic table parsing only |
+| 9 | V10 | Markdown rendering for LLM responses | rich markdown | Basic table parsing only |
 | 16 | V12 | Tool emoji registry (per-tool emoji) | skin_engine | None |
 
 ## SECTOR 0C: CLI Behavioral Parity — Commands That Ignore Args (40 gaps)
@@ -195,7 +194,7 @@ Behaviors that work in Python but have NO equivalent in C, where a user would im
 | Sector | Category | Gaps |
 |--------|----------|------|
 | 0A | Entry Point Integration | 8 |
-| 0B | Display & Visual Parity | 2 |
+| 0B | Display & Visual Parity | 1 |
 | 0C | CLI Behavioral Parity (args ignored) | 40 |
 | 0D | Missing Usages (Python behavior gaps) | 15 |
 | 1 | P1 Critical Agent Modules | 4 |
@@ -209,7 +208,7 @@ Behaviors that work in Python but have NO equivalent in C, where a user would im
 | 9 | Library Depth | 15 |
 | 10 | Config Key Gaps | 8 |
 | 11 | Test Coverage Gaps | 5 |
-| **Total** | | **347** |
+| **Total** | | **346** |
 
 ## Phase Order
 1. **Phase 0a** — Entry Points ✅ (I01-I08)

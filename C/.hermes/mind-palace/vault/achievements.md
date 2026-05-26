@@ -824,3 +824,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|-----|----------|----------|
 | V08 | 256-color ANSI palette support — display_set_fg_256() and display_set_bg_256() for [38;5;Nm and [48;5;Nm sequences. Clamp to 0-255 range. | ~20 | P3 | src/cli/display_core.c (display_set_fg_256, display_set_bg_256); include/hermes_display.h (declarations) |
 
+## Phase 20: Prompt Skin Symbol — V09 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V09 | Prompt symbol from skin branding (prompt_symbol) instead of hardcoded "hermes>". Both line_edit and fgets() prompt paths updated. Falls back to "hermes>" when no skin loaded. | ~10 | P2 | src/cli/cli.c (both prompt paths) |
+
