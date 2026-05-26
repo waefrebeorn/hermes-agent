@@ -3,12 +3,12 @@
 ```
 Suite:   226/0/23  (213 test files, zero failures)
 Binary:  30MB     (dynamic ELF, 0 warnings)
-Tools:   85      (46 .c files, all real handlers)
+Tools:   83      (46 .c files, all real handlers)
 CLI:     79      (slash commands, all real)
 Gateways:19      (platforms)
 Providers:10     (.c modules)
 Libs:    59      (lib/*/)
-Gaps:    184 (300+ function-level)     (battleship-v10, ~35,600 LOC to port)
+Gaps:    187 (300+ function-level)     (battleship-v10, ~35,600 LOC to port)
 Parity:  ~25% (verified Triple DA v11)    (CLI + tools ahead, adapters/plugins behind)
 ```
 

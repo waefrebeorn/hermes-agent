@@ -202,6 +202,23 @@ Total: **184 sector gaps (300+ function-level)** across 15 sectors.
 
 ---
 
+
+
+## DA Audit Findings (2026-05-25)
+
+### Discrepancies Found
+
+| # | Issue | Details | Impact |
+|---|-------|---------|--------|
+| F09-ext | Tool count discrepancy | Banner hardcodes "85 tools", CLI runtime says 83, unique registry_register calls = 72. 11 tools registered via non-standard mechanism or counted in CLI but not in registry_register grep | Metrics unreliable |
+| F17 | Banner count hardcoded | cli.c:242 hardcodes "Tools: 85" — should derive from state->tools.count | Wrong number displayed |
+| F18 | tool_usage + exec_code not in registry grep | CLI counts 83, only 72 found via registry_register. 11 tools registered dynamically or via registry_register_ex variants | Tool inventory unclear |
+
+### No Stale Claims Found
+
+All S0 (10 form-not-function) and S1 (15 confirmed stubs) remain valid.
+Context engine noops, memory noops, shutdown NULL, unused functions all confirmed.
+
 ## Sector Summary
 
 | Sector | Description | Gap Count |
@@ -272,6 +289,23 @@ Total: **184 sector gaps (300+ function-level)** across 15 sectors.
 | 181 | R03 | Error type system | Mixed return codes | Uniform err_t across all modules |
 | 182 | R04 | Config key expansion | ~20 keys | Full 60+ Python config keys |
 | 183 | R05 | Per-platform gateway config | Global config only | Per-platform auth/timeout/endpoint |
+
+
+
+## DA Audit Findings (2026-05-25)
+
+### Discrepancies Found
+
+| # | Issue | Details | Impact |
+|---|-------|---------|--------|
+| F09-ext | Tool count discrepancy | Banner hardcodes "85 tools", CLI runtime says 83, unique registry_register calls = 72. 11 tools registered via non-standard mechanism or counted in CLI but not in registry_register grep | Metrics unreliable |
+| F17 | Banner count hardcoded | cli.c:242 hardcodes "Tools: 85" — should derive from state->tools.count | Wrong number displayed |
+| F18 | tool_usage + exec_code not in registry grep | CLI counts 83, only 72 found via registry_register. 11 tools registered dynamically or via registry_register_ex variants | Tool inventory unclear |
+
+### No Stale Claims Found
+
+All S0 (10 form-not-function) and S1 (15 confirmed stubs) remain valid.
+Context engine noops, memory noops, shutdown NULL, unused functions all confirmed.
 
 ## Sector Summary (Complete)
 
