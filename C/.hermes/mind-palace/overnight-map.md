@@ -1,24 +1,29 @@
-# Slermes C — Overnight Map (v19 — 1,889 Gaps)
+# Slermes C — Overnight Map (v21 — 1,889 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v14.md — 1,889 function-level parity gaps, 11 layers, Triple DA v14
-- **State:** state.md (v14) — 42% function parity, Phase 1 CLI Args done ✅
-- **Phase Order:** Display (8/16) → CLI Args ✅ → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
-- **Goal:** goal-mantra.md (v19)
+- **Battleship:** battleship-v15.md — 1,889 function-level parity gaps, ~374 items, 11 layers
+- **State:** state.md (v16) — ~43% parity, Phase 1 CLI Args ✅, DA v15 findings documented
+- **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
+- **Goal:** goal-mantra.md (v21)
 
-## Phase 0 — Display (16 gaps) — 8/16 done
-inline diffs (V02), multi-line input (V05 ✅), rich errors (V06 ✅), TUI parity (V07-V08), voice mode (V09), /recap (V10 ✅), tips (V11 ✅), NO_COLOR (V12 ✅), output helpers (V13 ✅), skin full parity (V14), spinner full (V15), tool feed (V16 ✅)
+## DA v15 Alert
+Phase 2 provider deepen claims are STALE. Verify each against source before implementing.
+Recommended: skip Phase 2 deepen entirely, go straight to Phase 3 tool features, or port non-OpenAI providers (copilot, opencode-zen, openai-codex).
+
+## Phase 0 — Display (16 gaps) — 14/16 done
+V01-V06 ✅, V10-V16 ✅. Remaining: V07 TUI, V08 Python TUI, V09 voice.
 
 ## Phase 1 — CLI Args (40 gaps) — ✅ ALL DONE
-All 40 commands wired with proper argument parsing. 13 explicitly wired (/status, /usage, /tools, /sessions, /profile, /reload, /fast, /footer, /copy, /new, /compress, /statusbar, /voice, /commands [page]) + 27 naturally arg-less validated.
+All 80 commands wired with proper argument processing.
 
-## Phase 2 — Provider Parity (26)
-Deepen 8 existing + port 18 missing providers. Next: pick first provider to deepen (e.g. anthropic thinking blocks) or port (e.g. gmi).
+## Phase 2 — Provider Parity (~20 real gaps)
+Deepen claims mostly stale. Port non-OpenAI-compatible providers.
 
-## Phase 3-11 (414+ items, 1,889 function gaps)
+## Phase 3-11 (374 items, 1,889 function gaps)
 Tool features → Missing tools → Gateway → Agent modules → Plugins → Libraries → Security → Tests → Config
 
 ## Key Metrics
-- 1,889 function gaps = number of Python functions without C equivalents
-- Each gap = 1 or more Python functions to port
-- 3,251 Python total vs 1,362 C total = 42% function parity
+- 72 unique tools, 80 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
+- Suite: 226/0/24, 215 test files, 160 src .c files
+- Binary: 30MB
+- ~1,839 function gaps estimated = ~43% parity

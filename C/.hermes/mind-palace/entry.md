@@ -1,15 +1,15 @@
-# Slermes C — Entry Point (v5)
+# Slermes C — Entry Point (v7)
 
 ```
-Suite:   226/0/23  (213 test files, zero failures)
+Suite:   226/0/24  (215 test files, zero failures)
 Binary:  30MB     (dynamic ELF, 0 warnings)
-Tools:   72      (registered, 85 at runtime with MCP)
-CLI:     97      (slash commands)
+Tools:   72      (unique, registry_register)
+CLI:     80      (slash commands with handlers)
 Gateways:19      (platforms)
-Providers:9      (.c modules)
+Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)
-Gaps:    316     (15 sectors, battleship-v13 Triple DA)
-Parity:  ~24%    (verified Triple DA v13 — 83K C vs 451K Python)
+Gaps:    ~374    (items across 11 phases, battleship-v15 Triple DA)
+Parity:  ~43%    (function-level — ~1,412 C vs ~3,251 Python)
 ```
 
 ## Orientation
@@ -17,5 +17,10 @@ Parity:  ~24%    (verified Triple DA v13 — 83K C vs 451K Python)
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v13.md` (316 gaps across 15 sectors)
+- **Battleship:** `battleship-v15.md` (~374 items across 11 phases)
 - **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)
+
+## Phase Progress
+- Phase 0 (Display): 14/16 done (V07 TUI, V08 Python TUI, V09 voice)
+- Phase 1 (CLI Args): ✅ ALL DONE (40 commands wired)
+- Phase 2 (Provider Parity): NEXT — deepen 8 + port 18

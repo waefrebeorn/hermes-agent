@@ -4,18 +4,18 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
-|Suite:  226/0/23 (213 test files, completes in <60s)
-|Binary: 30MB    (dynamic ELF, -O2 -g)
-|Source: 432 .c files (src/ + lib/ + tests/): 108K C LOC
-| Parity:  ~42%   (1,889 function-level gaps — see battleship-v14 1:1 Parity)
-| Stubs:  Phase 0a all resolved. 40 CLI commands ignore args. 10 form-not-function.
-| Display: 16 gaps (inline diffs, multi-line, rich errors, TUI, voice, recap, tips, helpers)
-|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|CLI:    97 cmd_ functions — 72 unique tools registered
-|Tools:  72 registered (85 at runtime with MCP dynamic)
-|Libraries: 59 C modules — zero external deps beyond libc+libssl
-|Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-|Providers: 9 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
+||Suite:  226/0/24 (215 test files, completes in <60s)
+||Binary: 30MB    (dynamic ELF, -O2 -g)
+||Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
+|| Parity:  ~43%   (~1,839 function-level gaps — see battleship-v15 1:1 Parity)
+|Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 80 commands wired.
+|Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||CLI:    80 cmd_ functions — 72 unique tools registered
+||Tools:  72 registered (85 at runtime with MCP dynamic)
+||Libraries: 59 C modules — zero external deps beyond libc+libssl
+||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+||Providers: 9 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -27,9 +27,9 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (85 Registered)](#all-tools-85-registered)
+- [All Tools (89 Registered)](#all-tools-89-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
-- [LLM Providers (10)](#llm-providers-11)
+- [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c-0-so)
 - [Libraries (59 Units)](#libraries-59-units)
 - [CLI Commands (118 Slash, Real)](#cli-commands-78-slash-real)
@@ -160,7 +160,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (85 Registered)
+## All Tools (89 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -323,7 +323,7 @@ All platforms implement `(init, send, poll, shutdown)` lifecycle. They run co-op
 
 ---
 
-## LLM Providers (9)
+## LLM Providers (10)
 
 Every provider implements the same interface: `(init, chat, stream, count_tokens, build_headers, parse_response)`. OpenAI-compatible providers share the generic adapter; native providers have hand-tuned implementations.
 

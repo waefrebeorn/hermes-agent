@@ -60,4 +60,41 @@ All Sector 1 (Confirmed Stubs), Sector 2 (Placeholder), Sector 3 (Dead Code) ite
 - TUI dead code (tui_alloc_pair, tui_wprint_role, tui_display_image_*) are real code, not stubs
 - qqbot.c post_api marked `__attribute__((unused))` — architecture choice
 - background_review function IS wired (called from commands.c + skill_mgmt.c), despite "NOT YET WIRED" comment
-- Battleship v9 replaces v8 as canonical
+| Battleship v9 replaces v8 as canonical |
+
+## Phase Epsilon — Display + CLI Args (May 26)
+
+### Phase 0 — Display Parity (6 items resolved)
+| ID | Item | Type | Status |
+|----|------|------|--------|
+| V02 | Inline diffs | Stale claim | ✅ Already wired in C (`display_show_diff`) |
+| V05 | Multi-line input | Implemented | ✅ Backslash continuation in cli.c |
+| V06 | Rich errors | Implemented | ✅ `display_print_error_rich()` with bold red + dim yellow |
+| V10 | /recap command | Implemented | ✅ Turn counts, tool usage, files, latest messages |
+| V11 | Tips display | Implemented | ✅ `display_show_tip()` with 30 tips |
+| V13 | Output helpers | Implemented | ✅ `print_info/success/warning/error/header` wrappers matching Python |
+| V14 | Skin parity | Implemented | ✅ `/skin list` + `skin_load_preset` with 5 built-in skins |
+| V15 | Spinner parity | Stale claim | ✅ Already matches Python's faces/verbs/spinner types |
+| V16 | Tool feed parity | Stale claim | ✅ Already wired in C (`┊` prefix activity feed) |
+
+### Phase 1 — CLI Args (40 items resolved)
+| ID | Range | Item | Status |
+|----|-------|------|--------|
+| A01-A06 | A01-A06 | Initial batch wired prev session | ✅ |
+| A07 | /fast | Fast mode toggle | ✅ |
+| A08 | /footer | Footer toggle | ✅ |
+| A09 | /copy | Clipboard copy | ✅ |
+| A10 | /new | New session | ✅ |
+| A11 | /compress | Context compression | ✅ |
+| A12 | /statusbar | Status bar toggle | ✅ |
+| A13 | /voice | Voice mode | ✅ |
+| A14 | /commands [page] | Paged command listing | ✅ |
+| A15-A40 | Remaining | Arg-less commands validated | ✅ |
+
+### Stale Battleship Claims Found
+| Item | Claim | Reality |
+|------|-------|---------|
+| Anthropic | Missing thinking blocks | ✅ Has thinking, caching, tool_use stream |
+| xAI | Missing reasoning_effort | ✅ Already implemented |
+| OpenAI | Missing strict mode/service_tier | ✅ Already implemented |
+| OpenRouter | Missing HTTP-Referer/X-Title | ✅ Already implemented |

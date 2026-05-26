@@ -1108,6 +1108,8 @@ run_lib_test "portal_tags" "tests/test_portal_tags.c" "include" "$CDIR/src/agent
 echo ""; echo "=== Markdown Tables Tests (B120) ==="
 run_lib_test "markdown_tables" "tests/test_markdown_tables.c" "include" "$CDIR/src/agent/markdown_tables.c"
 
+echo ""; echo "=== Logger Tests (M10) ==="
+run_lib_test "logger" "tests/test_logger.c" "include" "$CDIR/src/agent/logger.c -lpthread -Wl,--unresolved-symbols=ignore-all -Wno-error=format-truncation"
 echo ""; echo "=== Hook Registry Tests (P186) ==="
 run_lib_test "hook_registry" "tests/test_hook_registry.c" "include" "$CDIR/src/agent/hook_registry.c -lpthread"
 

@@ -1,23 +1,37 @@
-# Slermes C — State Dashboard (v14 — 2026-05-26)
+# Slermes C — State Dashboard (v16 — 2026-05-26)
 
 ## Build Metrics
-Build clean. **72 unique tools** (70 registry_register, 2 registry_register_ex). 97 CLI commands. 19 gateways. 9 providers. 59 libs. 160 src/ .c files (non-deps). 213 test_*.c files.
+Build clean. **72 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 215 test_*.c files. Binary: 30MB. Suite: 226/0/24.
 
-## 1:1 Parity Audit (Triple DA v14)
-Python: **3,251 functions** (78 tools + 84 agent modules + 27 providers + 40+ gateway files)
-C: **1,362 functions** (46 tool files + ~28 agent files + 9 providers + 19 gateways)
-**1,889 function-level gaps remaining** — 42% parity at function level.
+## 1:1 Parity Status (Triple DA v15)
+Python: ~3,251 core functions (battleship-v15 baseline)
+C: ~1,412 functions in core modules (agent/tools/cli/gateway)
+~1,839 function-level gaps estimated — 43% parity at function level.
+
+## DA v15 Findings (2026-05-26)
+Phase 2 provider deepen claims: **HEAVILY STALE**.
+- anthropic: cache_control, thinking blocks, tool_use stream, prompt caching — ALL exist
+- openai: strict mode, service_tier, response_format schema — ALL exist
+- deepseek: thinking config, FIM, reasoning_content — ALL exist
+- xai: reasoning_effort exists
+- openrouter: HTTP-Referer/X-Title headers exist
+- gemini: parts array, safety settings, generation config, system instruction exist
+- bedrock: Converse full exists
+- azure: identity, API version management exist
+- 16/18 "missing" providers routed as PROVIDER_OPENAI aliases
+
+Only real stub: stub_cdp_handler in browser.c (dead code, unused by any registered tool).
+Zero gateway polling stubs — all 13 platforms with poll_messages have real implementations.
 
 ## Battleship
-**v14 — 1,889 function-level parity gaps** across 11 functional layers (~414 items).
-Organized by real function-by-function comparison, not file counts or LOC.
+**v15 — 1,889 function-level parity gaps** (~374 items). Needs per-sector re-audit for Phase 2.
 
 ## Phase Order
-0. Display Parity (16 gaps) — ✅ 8/16 done (inline diffs, multi-line, rich errors, /recap, tips, NO_COLOR, output helpers, tool feed)
-1. CLI Args (40 gaps) — ✅ wire (void)args for 40 commands
-2. Provider Parity (26 gaps) — deepen 8 + port 18 missing providers
+0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+1. CLI Args (40 gaps) — ✅ ALL DONE — all 80 commands wired with arg processing
+2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
 3. Tool Features (60 gaps) — add Python features to existing C tools
-4. Missing Tools (37 gaps) — port remaining 43 tool files
+4. Missing Tools (37 gaps) — port remaining tool files
 5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
 6. Agent Modules (72 gaps) — port 52 unported + deepen 20 existing
 7. Plugins (13 gaps) — port remaining plugins

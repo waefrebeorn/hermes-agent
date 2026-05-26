@@ -1,12 +1,12 @@
-# Slermes C — Goal Mantra (v19)
+# Slermes C — Goal Mantra (v21)
 
 P0: Full 1:1 drop-in replacement for Python Hermes.
-**1,889 function-level parity gaps** (battleship-v14). 42% parity at function level.
+**1,889 function-level parity gaps** (battleship-v15). ~43% parity.
 
 ## Phase Order
-0. Display Parity (16) — 8/16 done
+0. Display Parity (16 gaps) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
-2. Provider Parity (26) — deepen 8 + port 18 missing providers
+2. Provider Parity (~20) — deepen claims stale per DA v15; port uncommon API providers
 3. Tool Features (60) — add missing features to existing C tools
 4. Missing Tools (37) — port unported Python tool files
 5. Gateway (51) — missing platform modules, deepening, infrastructure
@@ -17,6 +17,13 @@ P0: Full 1:1 drop-in replacement for Python Hermes.
 10. Test Coverage (51) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 2 — Provider Parity (26)
-Deepen 8 existing: anthropic (thinking blocks, tool_use stream, caching), openai (strict mode, schema), deepseek (thinking config), gemini (native adapter), bedrock (converse full), azure (identity adapter), openrouter (headers/routing), xai (API features)
-Port 18 missing: gmi, copilot, copilot-acp, ollama-cloud, huggingface, openai-codex, opencode-zen, alibaba, minimax, stepfun, zai, xiaomi, nous, novita, nvidia, arcee, azure-foundry, ai-gateway
+## Next: Phase 2 — Provider Parity (~20 real gaps)
+DA v15 confirmed: 8 deepen claims mostly stale (features already in C).
+Real gaps: port non-OpenAI-compatible providers (copilot, opencode-zen, openai-codex).
+Pick first gap from battleship-v15 Sector 3B that's not a PROVIDER_OPENAI alias.
+
+## Doc Discipline
+After every implementation pass: update ALL walkway files + README + banner + battleship + testing + entry + index. Barnacle hunt stale numbers with search_files after every patch batch.
+
+## Session Loop
+read state.md → battleship → prestige → pick first unclosed gap → implement → build → test → update ALL docs → search_files for stale numbers → vault resolved gap → commit → repeat. No questions, no choices.

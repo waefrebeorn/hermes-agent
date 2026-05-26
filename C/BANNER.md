@@ -1,39 +1,45 @@
-     1|# BANNER — WuBu Slermes C Translation
-     2|
-     3|```
-     4|  __        __           _   ____  _  
-     5|  \ \      / /__  _ __ | | |  _ \| |__  _ __ ___  ___ ___  ___  _ _
-     6|   \ \ /\ / / _ \| '_ \| | | |_) | '_ \| '__/ _ \/ __/ __|/ _ \| '__|
-     7|    \ V  V / (_) | | | | | |  __/| | | | | | |  __/\__ \__ \ (_) | |  
-     8|     \_/\_/ \___/|_| |_|_| |_|   |_| |_|_|  \___||___/___/\___/|_|  
-     9|  
-    10|   ╔══════════════════════════════════════════════════════════════╗
-    11|   ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
-    12|   ║  v0.14.0-wubu  │  5,411 LOC  │  401KB binary  │  15 warns   ║
-    13|   ║  292 gaps identified  │  43 FNF  │  198 missing             ║
-    14|   ╚══════════════════════════════════════════════════════════════╝
-    15|  
-    16|   Fixed:   Tool call loop ✅ │ Auth header ✅ │ web_search ✅
-    17|   Fixed:   Cron persistence ✅ │ cron_list ✅
-    18|   Working: Foundation deps ✅ │ Agent core 🟧 │ Tools 🟧
-    19|   Working: Gateway 🟧 │ Cron/Adv 🟧
-    20|   Missing: 46 features │ 25 tools │ 17 platforms
-    21|  
-    22|   Build: make          Run: ./hermes --version
-    23|   Audit: battleship.md  State: state.md  Goal: goal-mantra.md
-    24|```
-    25|
-    26|**Color version** (ANSI):
-    27|```
-    28|\x1b[36m  __        __           _   ____  _                                \x1b[0m
-    29|\x1b[36m  \ \      / /__  _ __ | | |  _ \| |__  _ __ ___  ___ ___  ___  _ _ \x1b[0m
-    30|\x1b[36m   \ \ /\ / / _ \| '_ \| | | |_) | '_ \| '__/ _ \/ __/ __|/ _ \| '__|\x1b[0m
-    31|\x1b[36m    \ V  V / (_) | | | | | |  __/| | | | | |  __/\__ \__ \ (_) | |   \x1b[0m
-    32|\x1b[36m     \_/\_/ \___/|_| |_|_| |_|   |_| |_|_|  \___||___/___/\___/|_|   \x1b[0m
-    33|\x1b[33m╔══════════════════════════════════════════════════════════════╗\x1b[0m
-    34|\x1b[33m║\x1b[0m  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               \x1b[33m║\x1b[0m
-    35|\x1b[33m║\x1b[0m  v0.14.0-wubu  │  5,411 LOC  │  401KB binary  │  15 warns   \x1b[33m║\x1b[0m
-    36|\x1b[33m║\x1b[0m  292 gaps identified  │  43 FNF  │  198 missing             \x1b[33m║\x1b[0m
-    37|\x1b[33m╚══════════════════════════════════════════════════════════════╝\x1b[0m
-    38|```
-    39|
+# BANNER — WuBu Slermes C Translation
+
+```
+  __        __           _   ____  _  
+  \ \      / /__  _ __ | | |  _ \| |__  _ __ ___  ___ ___  ___  _ _
+   \ \ /\ / / _ \| '_ \| | | |_) | '_ \| '__/ _ \/ __/ __|/ _ \| '__|
+    \ V  V / (_) | | | | | |  __/| | | | | | |  __/\__ \__ \ (_) | |  
+     \_/\_/ \___/|_| |_|_| |_|   |_| |_|_|  \___||___/___/\___/|_|  
+
+   ╔══════════════════════════════════════════════════════════════╗
+   ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
+   ║  v0.15.0-wubu  │  30MB binary  │  0 warnings                ║
+   ║  374 items (Phase 1 ✅, Display 14/16, Phase 2 stale)       ║
+   ╚══════════════════════════════════════════════════════════════╝
+
+   Fixed:   Tool call loop ✅ │ Auth header ✅ │ web_search ✅
+   Fixed:   Cron persistence ✅ │ cron_list ✅ │ Logger tests ✅
+   Working: Foundation deps ✅ │ Agent core 🟧 │ Tools 🟧
+   Working: Gateway 🟧 │ Cron/Adv 🟧
+   DA v15:  Phase 2 deepen claims HEAVILY STALE — verify before impl
+
+## Phase Order
+
+Phase 0 — Display: 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+Phase 1 — CLI Args: ✅ ALL DONE (40 commands wired)
+Phase 2 — Provider Parity (26) — deepen 8 + port 18
+Phase 3 — Tool Features (60) — add missing features
+Phase 4 — Missing Tools (37) — port unported
+Phase 5 — Gateway (51) — platforms + deepening + infra
+Phase 6 — Agent Modules (72) — unported modules
+Phase 7 — Plugins (13) — port remaining
+Phase 8 — Libraries (19) — missing features
+Phase 9 — Security (15) — hardening
+Phase 10 — Tests (51) — coverage
+Phase 11 — Config/Infra (10) — expansion
+
+## Build Metrics
+- Suite: 226/0/23 (214 test files, zero failures)
+- Tools: 74 unique (72 registry_register + 2 registry_register_ex)
+- CLI: 98 commands (117 total incl section headers)
+- Providers: 10 (.c modules)
+- Gateways: 19 (platforms)
+- Libs: 59 (lib/*/)
+- Source .c files: 166 (src/)
+- Test .c files: 214 (tests/)
