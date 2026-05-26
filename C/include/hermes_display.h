@@ -102,11 +102,14 @@ void display_spinner_start(display_spinner_t *sp, const char *label);
 void display_spinner_tick(display_spinner_t *sp);
 void display_spinner_stop(display_spinner_t *sp, const char *done_msg);
 
-/* Kawaii spinner with animated face cycles */
+/* Kawaii spinner with animated face cycles + verb + wings */
 typedef struct {
     int    frame;
     char  *label;
     char   face[64];       /* current face emoji/kaomoji */
+    char   verb[64];       /* current thinking verb (empty for waiting) */
+    char   wing_left[16];  /* left wing decoration */
+    char   wing_right[16]; /* right wing decoration */
     bool   active;
     bool   thinking;       /* true=thinking faces, false=waiting faces */
     double start_time;     /* seconds since epoch */
@@ -115,6 +118,9 @@ typedef struct {
 void display_kawaii_start(display_kawaii_t *sp, const char *label, bool thinking);
 void display_kawaii_tick(display_kawaii_t *sp);
 void display_kawaii_stop(display_kawaii_t *sp, const char *done_msg);
+
+/* Set the display skin for skin-driven styling. Pass NULL to unset. */
+void display_set_skin(void *skin);
 
 /* Tool activity feed — build one-line preview from tool name + args JSON */
 /* Returns malloc'd string (caller free) or NULL if no preview possible. */

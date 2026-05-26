@@ -1,4 +1,4 @@
-/* Test skin engine — default skin + ANSI colors */
+/* Test skin engine — default skin + ANSI colors + TrueColor + built-in skins */
 #include "skin.h"
 #include <stdio.h>
 #include <string.h>
@@ -25,8 +25,8 @@ int main(void) {
     TEST("skin name is default", s && strcmp(skin_name(s), "default") == 0);
 
     /* Key lookup (dotted path) */
-    const char *banner = skin_get(s, "colors.banner", "cyan");
-    TEST("banner color default is cyan", banner && strcmp(banner, "cyan") == 0);
+    const char *banner = skin_get(s, "colors.banner_title", "#FFD700");
+    TEST("banner_title default is hex", banner && strcmp(banner, "#FFD700") == 0);
 
     /* Missing key returns fallback */
     const char *missing = skin_get(s, "colors.nonexistent", "fallback");
@@ -34,7 +34,15 @@ int main(void) {
 
     /* Boolean lookup */
     bool bold = skin_get_bool(s, "format.banner_bold", false);
-    TEST("banner_bold returns bool", bold == true || bold == false);
+    TEST("banner_bold is true", bold == true);
+
+    /* Branding */
+    const char *agent = skin_get_branding(s, "agent_name", "default");
+    TEST("branding agent_name not null", agent != NULL);
+    TEST("branding agent_name contains Slermes", agent && strstr(agent, "Slermes") != NULL);
+
+    const char *prompt_sym = skin_get_branding(s, "prompt_symbol", "?");
+    TEST("branding prompt_symbol not null", prompt_sym != NULL);
 
     /* ANSI color resolution */
     const char *red_ansi = skin_ansi_color("red");
@@ -53,44 +61,75 @@ int main(void) {
     const char *invalid = skin_ansi_color("not-a-color");
     TEST("invalid color returns default", invalid != NULL);
 
-    /* Skin color convenience */
-    const char *banner_resolved = skin_color(s, "banner");
-    TEST("skin_color returns banner color", banner_resolved != NULL);
+    /* TrueColor hex support */
+    const char *hex_gold = skin_ansi_color("#FFD700");
+    TEST("hex #FFD700 not null", hex_gold != NULL);
+    TEST("hex #FFD700 contains 38;2", hex_gold && strstr(hex_gold, "38;2") != NULL);
+    TEST("hex #FFD700 contains 255", hex_gold && strstr(hex_gold, "255") != NULL);
+    TEST("hex #FFD700 contains 215", hex_gold && strstr(hex_gold, "215") != NULL);
+    TEST("hex #FFD700 contains 0", hex_gold && strstr(hex_gold, "0") != NULL);
+
+    const char *hex_crimson = skin_ansi_color("#DC143C");
+    TEST("hex #DC143C not null", hex_crimson != NULL);
+    TEST("hex #DC143C contains 220", hex_crimson && strstr(hex_crimson, "220") != NULL);
+
+    const char *hex_invalid = skin_ansi_color("#GGG");
+    TEST("invalid hex returns empty", hex_invalid && hex_invalid[0] == '\0');
+
+    /* Skin color via hex */
+    const char *banner_color = skin_color(s, "banner_title");
+    TEST("skin_color banner_title not null", banner_color != NULL);
+    TEST("skin_color banner_title has ANSI", banner_color && banner_color[0] == '\033');
 
     /* Apply color with FG/bold output */
     const char *fg = NULL;
     int bold_flag = 0;
-    skin_apply_color(s, "banner", &fg, &bold_flag);
+    skin_apply_color(s, "banner_title", &fg, &bold_flag);
     TEST("skin_apply_color sets fg", fg != NULL);
     TEST("skin_apply_color fg non-empty", fg && fg[0] != 0);
 
-    /* Symbol lookup (dotted path) */
-    const char *prompt_sym = skin_get(s, "symbols.prompt", "?");
-    TEST("default prompt symbol not null", prompt_sym != NULL);
-
-    const char *tool_sym = skin_get(s, "symbols.tool", "?");
-    TEST("default tool symbol not null", tool_sym != NULL);
-
-    /* Format flags */
-    bool show_model = skin_get_bool(s, "format.show_model", true);
-    TEST("show_model returns bool", show_model == true || show_model == false);
+    /* Symbol lookup */
+    const char *prompt_sym2 = skin_get(s, "symbols.prompt", "?");
+    TEST("default prompt symbol not null", prompt_sym2 != NULL);
 
     /* NULL safety */
     const char *null_name = skin_name(NULL);
     TEST("skin_name(NULL) returns default", null_name != NULL);
 
-    const char *null_get = skin_get(NULL, "colors.banner", "fallback");
+    const char *null_get = skin_get(NULL, "colors.banner_title", "fallback");
     TEST("skin_get(NULL, ...) returns fallback", null_get && strcmp(null_get, "fallback") == 0);
 
     bool null_bool = skin_get_bool(NULL, "anything", true);
     TEST("skin_get_bool(NULL, ...) returns default", null_bool == true);
 
-    const char *null_color = skin_color(NULL, "banner");
+    const char *null_color = skin_color(NULL, "banner_title");
     TEST("skin_color(NULL, ...) not null", null_color != NULL);
 
     /* With overrides */
-    skin_t *s3 = skin_with_overrides("{\"colors\":{\"banner\":\"magenta\"}}");
+    skin_t *s3 = skin_with_overrides("{\"colors\":{\"banner_title\":\"magenta\"}}");
     TEST("skin_with_overrides creates skin", s3 != NULL);
+
+    /* Built-in skins enumeration */
+    int count = skin_builtin_count();
+    TEST("builtin skin count >= 5", count >= 5);
+    TEST("builtin skin 0 is default", count > 0 && strcmp(skin_builtin_name(0), "default") == 0);
+    TEST("builtin skin 1 is ares", count > 1 && strcmp(skin_builtin_name(1), "ares") == 0);
+    TEST("builtin skin 2 is mono", count > 2 && strcmp(skin_builtin_name(2), "mono") == 0);
+    TEST("builtin skin 3 is slate", count > 3 && strcmp(skin_builtin_name(3), "slate") == 0);
+    TEST("builtin skin 4 is daylight", count > 4 && strcmp(skin_builtin_name(4), "daylight") == 0);
+
+    /* Load built-in skins via JSON string */
+    skin_t *s_ares = skin_load_string(
+        "{\"name\":\"ares\"}"
+    );
+    TEST("loaded ares by JSON string", s_ares != NULL);
+    TEST("ares name matches", s_ares && strcmp(skin_name(s_ares), "ares") == 0);
+    skin_free(s_ares);
+    /* Just verify enumeration covers them all */
+    for (int i = 0; i < count; i++) {
+        const char *name = skin_builtin_name(i);
+        TEST("builtin skin name not null", name != NULL);
+    }
 
     /* Error handling */
     skin_t *bad = skin_load("/nonexistent/skin.json");

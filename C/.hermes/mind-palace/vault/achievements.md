@@ -775,3 +775,14 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | R02 | /curator review inline review — exists as /curator run subcommand | S15 (stale) | commands.c:2461-2505 — calls llm_background_review() |
 | R03 | /curator status — exists as default /curator subcommand | S15 (stale) | commands.c:2508-2525 — status display with run_count, last_run, duration |
 | R05 | /curator run — real agent review via llm_background_review() | S15 (stale) | commands.c:2491 + llm_client.c:1523-1569 — full LLM-based tool result review |
+## Phase 12: Skin Engine Upgrade — V01 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V01 | Skin engine upgrade — TrueColor hex support (#RRGGBB → 24-bit ANSI 38;2), expanded default skin with 23 color keys matching Python, 5 built-in skins (default/ares/mono/slate/daylight), branding section (agent_name/prompt_symbol/goodbye), skin enumeration API (skin_builtin_count/skin_builtin_name/skin_get_branding), JSON bool/number type handling fix in skin_get, dot-path string leaf fix (json_len guard removed) | ~400 | P2 | lib/libskin/skin.c (parse_hex_color, ansi_24bit_fg, 5 built-in JSON defs, skin_get_branding, skin_builtin_count, skin_builtin_name, expanded skin_with_overrides); lib/libskin/skin.h (branding + enumeration API); tests/test_skin.c (47 tests, all pass) |
+
+## Phase 13: KawaiiSpinner Upgrade — V02 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V02 | KawaiiSpinner upgrade — thinking verbs (15 verbs cycled during thinking), wings (left/right decorations from skin spinner.wings config), display_set_skin() wiring (g_display_skin global for skin-driven display), skin_get_json() API (raw JSON node access for array iteration), THINKING_VERBS fallback array (matching Python's 15 verb list) | ~120 | P2 | include/hermes_display.h (verb/wing fields); src/cli/display_core.c (THINKING_VERBS, display_set_skin, load_skin_wings, kawaii start/tick/stop updated with verb+wing display); lib/libskin/skin.h/c (skin_get_json); test_runner.sh (display test -I libskin) |

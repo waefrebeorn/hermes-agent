@@ -6,6 +6,7 @@
 
 #include "hermes_display.h"
 #include "hermes_json.h"
+#include "skin.h"
 #include "ansi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@
  * ================================================================ */
 
 static bool is_tty = false;
+static skin_t *g_display_skin = NULL;  /* active skin for display styling */
 
 #define ANSI_ESC "\x1B["
 
@@ -280,22 +282,66 @@ static const char *KAWAII_THINKING[] = {
 };
 static const int N_THINKING = 15;
 
+/* Thinking verbs — fallback when skin doesn't define spinner.thinking_verbs */
+static const char *THINKING_VERBS[] = {
+    "pondering", "contemplating", "musing", "cogitating", "ruminating",
+    "deliberating", "mulling", "reflecting", "processing", "reasoning",
+    "analyzing", "computing", "synthesizing", "formulating", "brainstorming",
+};
+static const int N_VERBS = 15;
+
+/* Set the skin pointer for display styling. Used by KawaiiSpinner to
+ * read spinner config (faces, verbs, wings) from the active skin. */
+void display_set_skin(void *skin) {
+    g_display_skin = (skin_t *)skin;
+}
+
+/* Load wings from skin spinner config. Returns true if wings set. */
+static bool load_skin_wings(char *left, size_t left_sz, char *right, size_t right_sz) {
+    if (!g_display_skin) return false;
+    const json_t *wings_arr = (const json_t *)skin_get_json(g_display_skin, "spinner.wings");
+    if (!wings_arr || wings_arr->type != JSON_ARRAY || json_len(wings_arr) == 0)
+        return false;
+    /* Get first wing pair */
+    const json_t *pair = json_get(wings_arr, 0);
+    if (!pair || pair->type != JSON_ARRAY || json_len(pair) < 2)
+        return false;
+    const json_t *l = json_get(pair, 0);
+    const json_t *r = json_get(pair, 1);
+    if (l && l->type == JSON_STRING) snprintf(left, left_sz, "%s", l->str_val);
+    if (r && r->type == JSON_STRING) snprintf(right, right_sz, "%s", r->str_val);
+    return left[0] != '\0' || right[0] != '\0';
+}
+
 void display_kawaii_start(display_kawaii_t *k, const char *label, bool thinking) {
     if (!k) return;
     k->frame = 0;
     k->active = true;
     k->thinking = thinking;
     k->face[0] = '\0';
+    k->verb[0] = '\0';
+    k->wing_left[0] = '\0';
+    k->wing_right[0] = '\0';
     k->label = label ? strdup(label) : NULL;
     struct timeval tv;
     gettimeofday(&tv, NULL);
     k->start_time = (double)tv.tv_sec + (double)tv.tv_usec / 1e6;
+    /* Load wings from skin */
+    load_skin_wings(k->wing_left, sizeof(k->wing_left),
+                    k->wing_right, sizeof(k->wing_right));
     /* Print initial state */
-    if (thinking)
+    if (thinking) {
         snprintf(k->face, sizeof(k->face), "%s", KAWAII_THINKING[0]);
-    else
+        snprintf(k->verb, sizeof(k->verb), "%s", THINKING_VERBS[0]);
+    } else {
         snprintf(k->face, sizeof(k->face), "%s", KAWAII_WAITING[0]);
-    printf("\r%s  %s", k->face, k->label ? k->label : "");
+    }
+    if (k->wing_left[0])
+        printf("\r%s%s  %s  %s", k->wing_left, k->face, k->label ? k->label : "", k->wing_right);
+    else if (thinking && k->verb[0])
+        printf("\r%s  %s  (%s)", k->face, k->label ? k->label : "", k->verb);
+    else
+        printf("\r%s  %s", k->face, k->label ? k->label : "");
     fflush(stdout);
 }
 
@@ -306,11 +352,18 @@ void display_kawaii_tick(display_kawaii_t *k) {
     const char *face;
     if (k->thinking) {
         face = KAWAII_THINKING[idx % N_THINKING];
+        const char *verb = THINKING_VERBS[idx % N_VERBS];
+        snprintf(k->verb, sizeof(k->verb), "%s", verb);
     } else {
         face = KAWAII_WAITING[idx % N_WAITING];
     }
     snprintf(k->face, sizeof(k->face), "%s", face);
-    printf("\r%s  %s", face, k->label ? k->label : "");
+    if (k->wing_left[0])
+        printf("\r%s%s  %s  %s", k->wing_left, face, k->label ? k->label : "", k->wing_right);
+    else if (k->thinking && k->verb[0])
+        printf("\r%s  %s  (%s)", face, k->label ? k->label : "", k->verb);
+    else
+        printf("\r%s  %s", face, k->label ? k->label : "");
     fflush(stdout);
 }
 
@@ -324,7 +377,10 @@ void display_kawaii_stop(display_kawaii_t *k, const char *done_msg) {
     else
         face = KAWAII_WAITING[idx % N_WAITING];
     if (is_tty) {
-        printf("\r%s  ", face);
+        if (k->wing_left[0])
+            printf("\r%s%s  ", k->wing_left, face);
+        else
+            printf("\r%s  ", face);
         if (done_msg) {
             display_printf(DISPLAY_GREEN, DISPLAY_NORMAL, "✓ ");
             printf("%s\n", done_msg);

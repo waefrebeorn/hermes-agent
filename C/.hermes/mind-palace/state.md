@@ -1,15 +1,15 @@
      1|# Slermes C — State Dashboard (v5 — 2026-05-25)
      2|
      3|## Build Metrics
-     4|Suite PENDING. Binary 30MB. 85 tools, 79 CLI, 19 gateways, 10 providers, 59 libs.
+     4|Suite 226/0/23. Binary 30MB. 85 tools, 79 CLI, 19 gateways, 10 providers, 59 libs.
      5|
      6|## Triple DA Findings
-     7|**357 gaps across 20 sectors (battleship-v10)**
+     7|**355 gaps across 20 sectors (battleship-v10)**
      8|
      9|| Sector | Category | Gaps |
     10||--------|----------|------|
     11||| 0A | Entry Points | 8 ✅ (Phase 0a complete) |
-    12|| 0B | Display Parity | 12 missing |
+    12|| 0B | Display Parity | 10 missing |
     13|| 0C | CLI Args Ignored | 40 commands discard input |
     14|| 0D | Usage Behavior | 15 Python patterns absent |
     15|| 1 | Agent Modules | 4 P1 critical |
@@ -25,7 +25,7 @@
     25|| 11 | Tests | 5 coverage gaps |
     26|
     27|## Key Stub Stats
-    28|- Phase 0a complete — 8 entry points fixed. Remaining: 357 gaps across 20 sectors.
+    28|- Phase 0a complete — 8 entry points fixed. Remaining: 355 gaps across 20 sectors.
     29|-
     30|-
     31|- 40 CLI commands ignore args — Phase 0c continues

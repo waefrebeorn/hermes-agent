@@ -1,10 +1,10 @@
-     1|# Slermes C — Prestige Prompt (v5 — 357 Gaps)
+     1|# Slermes C — Prestige Prompt (v7 — 355 Gaps)
      2|
      3|## Phase 0a — Entry Point Integration (8)
      4|I01 pipe multi-line → I02 unknown flags → I03 --tui → I04 --session → I05 logs → I06 config → I07 DeepSeek → I08 cron zero-state
      5|
-     6|## Phase 0b — Display & Visual (12)
-     7|V01 skin engine → V02 KawaiiSpinner → V03 banner → V04 status bar → V05 tool feed → V06 response box → V07 help → V08 256-color → V09 prompt → V10 markdown → V11 faces → V12 emoji
+     6|## Phase 0b — Display & Visual (11)
+     7|V02 KawaiiSpinner → V03 banner → V04 status bar → V05 tool feed → V06 response box → V07 help → V08 256-color → V09 prompt → V10 markdown → V11 faces → V12 emoji
      8|
      9|## Phase 1 — P1 Agent Modules (4)
     10|E01 error_classifier → E02 chat_completion_helpers → E03 tool_executor → E04 process_registry
