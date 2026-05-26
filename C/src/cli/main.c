@@ -6,11 +6,14 @@
 
 #include "hermes.h"
 #include "hermes_display.h"
+#include "hermes_logger.h"
 #include <stdio.h>
 
 /* CLI-specific initialization */
 void cli_init(void) {
     display_init();
+    hermes_log_init();
+    hermes_log(LOG_INFO, "cli", "CLI initialized");
 }
 
 /* CLI-specific cleanup */

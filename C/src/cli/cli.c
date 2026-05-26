@@ -9,6 +9,7 @@
 #include "hermes_skin.h"
 #include "hermes_json.h"
 #include "hermes_xai_retirement.h"
+#include "hermes_logger.h"
 #include "ansi.h"
 #include "plugin.h"
 #include "line_edit.h"
@@ -28,6 +29,7 @@ typedef struct {
     bool running;
     bool json_output;        /* H14: --json flag for JSON output mode */
     char session_arg[64];  /* --session id */
+    display_kawaii_t spinner;  /* KawaiiSpinner for LLM wait animation */
 } cli_state_t;
 
 /* Line editor instance (NULL in non-interactive mode) */
@@ -238,9 +240,10 @@ static void print_banner(void) {
         g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
 
     /* Stats summary line */
+    size_t tool_count = g_cli.agent.tools.count > 0 ? g_cli.agent.tools.count : registry_get_count();
     pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
-        "\x1B[2;38;2;%d;%d;%dm  Tools: 85  Gateways: 19  Providers: 10  Suite: 226/0/23\x1B[0m",
-        dr, dg, db);
+        "\x1B[2;38;2;%d;%d;%dm  Tools: %zu  Gateways: 19  Providers: 10  Suite: 226/0/23\x1B[0m",
+        dr, dg, db, tool_count);
 
     /* Display as panel with skin border color */
     const char *border_color = skin_get(g_skin, "colors.banner_border", "#CD7F32");
@@ -279,6 +282,9 @@ static void print_banner(void) {
 /* Streaming output callback — prints tokens directly to stdout */
 static int cli_stream_cb(const char *token, void *userdata) {
     (void)userdata;
+    /* Stop spinner on first token (if interactive) */
+    if (g_cli.interactive && g_cli.spinner.active)
+        display_kawaii_stop(&g_cli.spinner, NULL);
     printf("%s", token);
     fflush(stdout);
     return 0;
@@ -318,6 +324,46 @@ static char *cli_json_escape(const char *raw) {
 
 /* Print a JSON-formatted response to stdout.
  * Fields: response, session_id, status (ok/error) */
+/* H14: --json flag for JSON output mode */
+static bool g_json_cmd_active = false;
+static FILE *g_json_cmd_fp = NULL;
+static int g_json_cmd_saved_stdout = -1;
+
+/* Start capturing stdout for JSON wrapping */
+static void json_capture_start(void) {
+    if (!g_json_cmd_active) return;
+    fflush(stdout);
+    g_json_cmd_saved_stdout = dup(STDOUT_FILENO);
+    g_json_cmd_fp = tmpfile();
+    if (g_json_cmd_fp)
+        dup2(fileno(g_json_cmd_fp), STDOUT_FILENO);
+}
+
+/* Stop capture, restore stdout, return captured text (must free) */
+static char *json_capture_stop(void) {
+    if (!g_json_cmd_active || g_json_cmd_saved_stdout < 0) return NULL;
+    fflush(stdout);
+    dup2(g_json_cmd_saved_stdout, STDOUT_FILENO);
+    close(g_json_cmd_saved_stdout);
+    g_json_cmd_saved_stdout = -1;
+
+    if (!g_json_cmd_fp) return NULL;
+    rewind(g_json_cmd_fp);
+    long sz = 0;
+    char *buf = NULL;
+    if (fseek(g_json_cmd_fp, 0, SEEK_END) == 0) {
+        sz = ftell(g_json_cmd_fp);
+        rewind(g_json_cmd_fp);
+        if (sz > 0) {
+            buf = (char *)calloc(1, sz + 1);
+            if (buf) fread(buf, 1, sz, g_json_cmd_fp);
+        }
+    }
+    fclose(g_json_cmd_fp);
+    g_json_cmd_fp = NULL;
+    return buf;
+}
+
 static void cli_json_respond(const char *response, const char *session_id, const char *status) {
     char *esc_resp = cli_json_escape(response);
     printf("{\"response\":%s,\"session_id\":\"%s\",\"status\":\"%s\"}\n",
@@ -329,6 +375,8 @@ static void cli_json_respond(const char *response, const char *session_id, const
 
 int hermes_cli_main(int argc, char **argv) {
     display_init();
+    hermes_log_init();
+    hermes_log(LOG_INFO, "cli", "CLI initialized");
     memset(&g_cli, 0, sizeof(g_cli));
     g_cli.interactive = isatty(STDIN_FILENO);
     g_cli.running = true;
@@ -548,6 +596,12 @@ int hermes_cli_main(int argc, char **argv) {
                 agent_free(&g_cli.agent);
                 return 0;
             }
+            /* F04: "chat" subcommand enters interactive mode instead of sending "chat" to LLM */
+            if (strcmp(argv[arg_start], "chat") == 0) {
+                /* Don't send "chat" as a prompt — fall through to interactive mode below.
+                 * Skip the one-shot message processing, go directly to interactive loop. */
+                goto start_interactive;
+            }
             static const char *known_subcmds[] = {
                 "status", "dump", "logs", "tools", "plugins", "secrets",
                 "cron", "skills", "help", "commands", "model", "config",
@@ -614,7 +668,12 @@ int hermes_cli_main(int argc, char **argv) {
                 strcat(msg, argv[i]);
             }
 
+            /* Show spinner during LLM call */
+            if (g_cli.interactive)
+                display_kawaii_start(&g_cli.spinner, "thinking", true);
             char *resp = agent_chat(&g_cli.agent, msg);
+            if (g_cli.interactive)
+                display_kawaii_stop(&g_cli.spinner, NULL);
             if (g_cli.json_output) {
                 cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
             } else {
@@ -661,18 +720,43 @@ int hermes_cli_main(int argc, char **argv) {
                         cli_json_respond("Goodbye!", g_cli.agent.session_id, "ok");
                     break;
                 }
-                if (!commands_dispatch(line, &g_cli.agent)) {
-                    if (!commands_try_skill(line, &g_cli.agent)) {
-                        if (g_cli.json_output) {
-                            char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", line);
+                /* H14: In JSON mode, capture command output and wrap as JSON */
+                if (g_cli.json_output) {
+                    g_json_cmd_active = true;
+                    json_capture_start();
+                }
+                bool handled = commands_dispatch(line, &g_cli.agent);
+                if (g_cli.json_output) {
+                    char *captured = json_capture_stop();
+                    g_json_cmd_active = false;
+                    if (handled) {
+                        cli_json_respond(captured ? captured : "(ok)",
+                                         g_cli.agent.session_id, "ok");
+                    } else {
+                        /* Try skill dispatch */
+                        if (!commands_try_skill(line, &g_cli.agent)) {
+                            char err[512];
+                            snprintf(err, sizeof(err), "Unknown command: %s", line);
                             cli_json_respond(err, g_cli.agent.session_id, "error");
                         } else {
+                            cli_json_respond("(skill invoked)", g_cli.agent.session_id, "ok");
+                        }
+                    }
+                    free(captured);
+                } else {
+                    if (!handled) {
+                        if (!commands_try_skill(line, &g_cli.agent)) {
                             printf("Unknown command: %s\n", line);
                         }
                     }
                 }
             } else {
+                /* Show spinner during LLM call (pipe mode) */
+                if (g_cli.interactive && g_cli.running)
+                    display_kawaii_start(&g_cli.spinner, "thinking", true);
                 char *resp = agent_chat(&g_cli.agent, line);
+                if (g_cli.interactive && g_cli.running)
+                    display_kawaii_stop(&g_cli.spinner, NULL);
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
                 } else {
@@ -703,6 +787,7 @@ int hermes_cli_main(int argc, char **argv) {
         return 0;
     }
 
+start_interactive:
     /* Interactive mode */
     print_banner();
 
@@ -775,9 +860,9 @@ int hermes_cli_main(int argc, char **argv) {
             continue;
         }
 
-        /* Run agent */
+        /* Run agent — show spinner until first token arrives */
         if (g_cli.interactive)
-            display_printf(cli_skin_color("colors.dim", DISPLAY_WHITE), DISPLAY_DIM, "\n");
+            display_kawaii_start(&g_cli.spinner, "thinking", true);
         char *resp = agent_chat(&g_cli.agent, input);
         if (resp) {
             /* In streaming mode, content was already printed by callback.

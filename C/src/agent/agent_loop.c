@@ -18,6 +18,7 @@
 #include "budget_tracker.h"
 #include "hermes_subdir_hints.h"
 #include "hermes_onboarding.h"
+#include "hermes_logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,8 @@ static void sigint_handler(int sig) {
 
 void agent_init(agent_state_t *state) {
     memset(state, 0, sizeof(*state));
+    hermes_log_init();
+    hermes_log(LOG_INFO, "agent_loop", "Agent initialized");
     state->compress_tail_messages = 2;  /* P99b: default tail keep */
     state->compress_cooldown_secs = 30;         /* L02: default cooldown */
     state->compress_failure_cooldown_secs = 600; /* L02: default failure cooldown */
@@ -758,6 +761,8 @@ char *agent_run_conversation(agent_state_t *state,
     if (system_message && system_message[0])
         context_set_system(state, system_message);
 
+    hermes_log(LOG_INFO, "agent_loop", "Starting conversation (user msg: %.80s)", user_message ? user_message : "(null)");
+
     /* P92: Inject prefill message (before user message) */
     if (state->prefill[0]) {
         message_t *prefill_msg = message_new(state->prefill_role, state->prefill);
@@ -1370,6 +1375,25 @@ retry_done:
                 state->tool_event_cb(completed_type, works[i].tool_name,
                                      works[i].result, state->tool_event_data);
             }
+
+            /* Optional background review for sensitive tools. Activate by setting
+             * state->enable_background_review = true in agent init. */
+            if (state->enable_background_review && !tool_failed) {
+                char *review = llm_background_review(&state->llm,
+                    works[i].tool_name, works[i].tool_args, works[i].result);
+                if (review) {
+                    /* Append review to tool result as guidance */
+                    size_t rlen = strlen(works[i].result ? works[i].result : "");
+                    size_t vlen = strlen(review);
+                    char *updated = (char *)realloc(works[i].result, rlen + vlen + 64);
+                    if (updated) {
+                        snprintf(updated + rlen, vlen + 64, "\n\n[Background Review]\n%s", review);
+                        works[i].result = updated;
+                    }
+                    free(review);
+                }
+            }
+
             free(works[i].tool_name);
             free(works[i].tool_args);
             free(works[i].tool_id);
@@ -1396,14 +1420,20 @@ retry_done:
             /* G36: Partial results are preserved in context */
             state->partial_results_saved = true;
         }
+        hermes_log(LOG_WARNING, "agent_loop", "Conversation interrupted (type=%d)", state->interrupt_type);
         return strdup("Error: Interrupted");
     }
     /* G26: Hard budget limit — immediate stop, no grace call */
-    if (state->budget && budget_tracker_is_hard_exceeded(state->budget))
+    if (state->budget && budget_tracker_is_hard_exceeded(state->budget)) {
+        hermes_log(LOG_WARNING, "agent_loop", "Hard budget limit exceeded");
         return strdup("Error: Hard budget limit exceeded (immediate stop)");
+    }
     /* Soft budget exceeded */
-    if (state->budget && budget_tracker_is_exceeded(state->budget))
+    if (state->budget && budget_tracker_is_exceeded(state->budget)) {
+        hermes_log(LOG_WARNING, "agent_loop", "Budget exceeded (token/cost/turn limit)");
         return strdup("Error: Budget exceeded (token/cost/turn limit reached)");
+    }
+    hermes_log(LOG_INFO, "agent_loop", "Max iterations reached (%d)", state->max_iterations);
     return strdup("Error: Max iterations reached");
 }
 
