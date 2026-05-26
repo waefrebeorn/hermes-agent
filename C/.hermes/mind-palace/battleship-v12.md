@@ -237,7 +237,7 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 | 9 | V18 | Voice mode CLI | hermes_cli/voice.py (846 LOC) | C has voice_mode.c but it's basic — missing: recording, transcription, voice command dispatch | P2 |
 | 10 | V19 | /recap session summary | hermes_cli/session_recap.py (316 LOC) | C has no equivalent — /recap shows tool call counts, file edits, recent activity | P2 |
 | 11 | V20 | Startup tips display | hermes_cli/tips.py (485 LOC, 100+ tips) | C banner shows no tips at startup — Python shows random tip from corpus | P2 |
-| 12 | V21 | NO_COLOR / TERM=dumb support | hermes_cli/colors.py (38 LOC) | C uses isatty() only — no NO_COLOR env var check, no TERM=dumb detection | P2 |
+| 12 | V21 | NO_COLOR / TERM=dumb support | hermes_cli/colors.py (38 LOC) | display_init() checks NO_COLOR env var + TERM=dumb, forces is_tty=0 | P2 ✅ |
 | 13 | V22 | Structured CLI output helpers | hermes_cli/cli_output.py (78 LOC) | C has display_printf but no print_info/success/warning/error/header/prompt helpers | P2 |
 
 ---
