@@ -149,6 +149,9 @@ int skin_builtin_count(void);
 /* Get the name of the Nth built-in skin (0-indexed). Returns NULL if out of bounds. */
 const char *skin_builtin_name(int index);
 
+/* Load a built-in skin by name. Returns NULL if not found. */
+skin_t *skin_load_preset(const char *name);
+
 /* ================================================================
  *  Error handling
  * ================================================================ */

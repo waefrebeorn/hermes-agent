@@ -417,10 +417,16 @@ skin_t *skin_with_overrides(const char *overrides_json) {
     return s;
 }
 
+/* ================================================================
+ *  Built-in skin enumeration
+ * ================================================================ */
+
+/* Return the number of built-in skins available. */
 int skin_builtin_count(void) {
     return BUILTIN_SKIN_COUNT;
 }
 
+/* Get the name of the Nth built-in skin (0-indexed). Returns NULL if out of bounds. */
 const char *skin_builtin_name(int index) {
     const char *json = builtin_skin_json(index);
     if (!json) return NULL;
@@ -435,6 +441,26 @@ const char *skin_builtin_name(int index) {
     memcpy(buf, name_marker, len);
     buf[len] = '\0';
     return buf;
+}
+
+/* Load a built-in skin by name. Returns NULL if not found. */
+skin_t *skin_load_preset(const char *name) {
+    if (!name || !name[0]) return NULL;
+    int count = skin_builtin_count();
+    for (int i = 0; i < count; i++) {
+        const char *json = builtin_skin_json(i);
+        if (!json) continue;
+        /* Extract name from JSON */
+        const char *nm = strstr(json, "\"name\":\"");
+        if (!nm) continue;
+        nm += 8;
+        const char *end = strchr(nm, '"');
+        if (!end) continue;
+        size_t nlen = (size_t)(end - nm);
+        if (nlen == strlen(name) && strncmp(nm, name, nlen) == 0)
+            return skin_load_string(json);
+    }
+    return NULL;
 }
 
 /* ================================================================
