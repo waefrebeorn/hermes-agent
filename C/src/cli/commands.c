@@ -2255,7 +2255,20 @@ static void cmd_whoami(const char *args, agent_state_t *state) {
 
 /* /profile: Show active profile */
 static void cmd_profile(const char *args, agent_state_t *state) {
-    (void)args;
+    if (args && args[0]) {
+        if (strcmp(args, "home") == 0) {
+            printf("Home: %s\n", state->hermes_home[0] ? state->hermes_home :
+                   getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") : "~/.slermes");
+            return;
+        }
+        if (strcmp(args, "model") == 0) {
+            printf("Model: %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+            printf("Provider: %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+            return;
+        }
+        printf("Usage: /profile [home|model]\n");
+        return;
+    }
     printf("Home: %s\n", state->hermes_home[0] ? state->hermes_home :
            getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") : "~/.slermes");
     printf("Model: %s\n", state->llm.model[0] ? state->llm.model : "(default)");
