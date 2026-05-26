@@ -1632,7 +1632,22 @@ static void cmd_commands(const char *args, agent_state_t *state) {
 }
 
 static void cmd_tools(const char *args, agent_state_t *state) {
-    (void)args;
+    if (args && args[0]) {
+        /* Show details for a specific tool */
+        const char *tool_name = args;
+        for (size_t i = 0; i < state->tools.count; i++) {
+            if (strcmp(state->tools.tools[i].name, tool_name) == 0) {
+                printf("Tool:          %s\n", state->tools.tools[i].name);
+                printf("Description:   %s\n", state->tools.tools[i].description);
+                printf("Available:     %s\n", state->tools.tools[i].available ? "yes" : "no");
+                if (state->tools.tools[i].schema_json[0])
+                    printf("Schema:        %s\n", state->tools.tools[i].schema_json);
+                return;
+            }
+        }
+        printf("Tool not found: %s\n", tool_name);
+        return;
+    }
     printf("Registered tools (%zu):\n", state->tools.count);
     for (size_t i = 0; i < state->tools.count; i++) {
         printf("  %s", state->tools.tools[i].name);
