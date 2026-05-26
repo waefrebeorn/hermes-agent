@@ -1,0 +1,338 @@
+name: C Build & Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'C/**'
+      - '.github/workflows/c-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'C/**'
+      - '.github/workflows/c-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+
+      - name: Build Hermes C
+        run: |
+          # Clean stale dependency files from prior builds
+          find . -name '*.d' -delete 2>/dev/null || true
+          make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Quick smoke test
+        run: |
+          ./hermes --help
+        working-directory: C/
+
+      - name: Run test suite
+        run: bash test_runner.sh --verbose 2>&1
+        working-directory: C/
+
+      - name: Static analysis (cppcheck)
+        run: |
+          sudo apt-get install -y -qq cppcheck
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            --error-exitcode=1 \
+            -I include -I lib/libjson -I lib/libhttp -I lib/libyaml \
+            src/ 2>&1
+
+      - name: Build TUI
+        run: |
+          sudo apt-get install -y -qq libncurses-dev
+          make -j$(nproc) tui 2>&1
+          test -f hermes-tui
+        working-directory: C/
+
+      - name: Build plugins
+        run: make plugins 2>&1
+        working-directory: C/
+
+      - name: Upload artifacts (always)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: hermes-c-binaries-${{ github.sha }}
+          path: |
+            C/hermes
+            C/hermes-tui
+            C/src/plugins/*.so
+          retention-days: 7
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: build-output
+          path: C/
+          retention-days: 3
+
+  asan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+
+      - name: Build with AddressSanitizer
+        run: |
+          # Clean stale objects first
+          find . -name '*.o' -delete 2>/dev/null || true
+          make -j$(nproc) asan 2>&1
+        working-directory: C/
+
+      - name: Sanitizer smoke test
+        run: |
+          ./hermes --help
+        working-directory: C/
+
+      - name: Run test suite under ASan
+        run: bash test_runner.sh --verbose 2>&1
+        working-directory: C/
+
+  valgrind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev valgrind
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+          valgrind --version
+
+      - name: Build Hermes C (debug symbols)
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Valgrind leak check (hermes --help)
+        run: |
+          valgrind --leak-check=full --show-leak-kinds=all \
+            --track-origins=yes --error-exitcode=1 \
+            --errors-for-leak-kinds=all \
+            ./hermes --help 2>&1
+        working-directory: C/
+
+      - name: Valgrind leak check (test binaries)
+        run: |
+          # Run key test binaries under valgrind
+          for test_bin in /tmp/hermes_test_json /tmp/hermes_test_tokenizer /tmp/hermes_test_yaml; do
+            if [ -x "$test_bin" ]; then
+              echo "=== $test_bin ==="
+              valgrind --leak-check=full --show-leak-kinds=all \
+                --error-exitcode=1 --errors-for-leak-kinds=all \
+                "$test_bin" 2>&1 | tail -5
+            fi
+          done
+        working-directory: C/
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@5c3f82e026e7c63bf83dbdd8e9a1e60aab3ce32f  # v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t hermes-c -f C/Dockerfile .
+          docker run --rm hermes-c --help > /dev/null
+
+      - name: Check image size
+        run: docker images hermes-c --format "{{.Size}}"
+
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev lcov
+          echo "Tool versions"
+          gcc --version | head -1
+          make --version | head -1
+          lcov --version
+
+      - name: Build with coverage flags
+        run: |
+          find . -name '*.o' -delete 2>/dev/null || true
+          make -j$(nproc) coverage 2>&1
+        working-directory: C/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: coverage-report-${{ github.sha }}
+          path: C/coverage_html/
+          retention-days: 30
+
+      - name: Upload coverage data file
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: coverage-data-${{ github.sha }}
+          path: C/coverage-filtered.info
+          retention-days: 30
+
+  cve-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y -qq wget apt-transport-https gnupg
+          wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq trivy
+
+      - name: Scan system packages for CVEs
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            --ignore-unfixed /usr/lib/x86_64-linux-gnu/ 2>&1 | head -60
+
+      - name: Scan vendored C libraries
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            lib/ 2>&1 | head -60
+
+      - name: Scan binary for embedded dependencies
+        run: |
+          trivy fs --scanners vuln --severity CRITICAL,HIGH --exit-code 0 --format table \
+            hermes 2>&1 | head -60
+
+  crosscompile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install cross-compilation toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            gcc-aarch64-linux-gnu \
+            gcc-arm-linux-gnueabihf \
+            libssl-dev
+
+      - name: Cross-compile for linux-aarch64
+        run: |
+          bash scripts/cross-compile.sh linux-aarch64 2>&1
+          test -f hermes-aarch64
+          file hermes-aarch64 | grep -q aarch64 || echo "WARNING: binary may not be aarch64"
+
+      - name: Cross-compile for linux-armv7
+        run: |
+          bash scripts/cross-compile.sh linux-armv7 2>&1
+          test -f hermes-armv7
+
+      - name: Upload cross-compiled artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f48907cf14  # v6
+        with:
+          name: hermes-crosscompile-${{ github.sha }}
+          path: |
+            C/hermes-aarch64
+            C/hermes-armv7
+          retention-days: 7
+
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+          gcc --version | head -1
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1
+        working-directory: C/
+
+      - name: Performance gate
+        run: make perf-gate 2>&1
+        working-directory: C/

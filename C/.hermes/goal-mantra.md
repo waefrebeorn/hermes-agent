@@ -1,4 +1,4 @@
-     1|     1|# GOAL MANTRA — Hermes C Translation (HONEST)
+     1|     1|# GOAL MANTRA — Slermes C Translation (HONEST)
      2|     2|
      3|     3|**Mission:** Translate Hermes Agent Python → C for zero-dependency single-binary operation.
      4|     4|

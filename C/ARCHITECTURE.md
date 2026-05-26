@@ -1,8 +1,8 @@
-# Hermes C Architecture
+# Slermes C Architecture
 
 ## Overview
 
-Hermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
+Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
 
 ```
 |CLI / Gateway → Agent Loop → LLM Client → 10 Providers → HTTP/JSON

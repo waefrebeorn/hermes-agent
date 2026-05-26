@@ -1,6 +1,6 @@
 # Slermes C
 
-**Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**
+**Slermes — Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**
 One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
@@ -707,7 +707,7 @@ Key config sections: `provider`, `model`, `tools`, `gateway`, `plugins`, `cron`,
 ## Upstream
 
 - **Python Hermes Agent:** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)
-- **C fork:** [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes)
+- **Slermes repo:** [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes)
 - **Delta:** 0 behind upstream (183 Python commits merged), 400 ahead (C-specific commits)
 
 The upstream sync strategy:

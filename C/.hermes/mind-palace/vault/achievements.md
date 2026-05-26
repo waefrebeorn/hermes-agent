@@ -1,4 +1,4 @@
-# Hermes C Translation — Vault of Achievements
+# Slermes C Translation — Vault of Achievements
 
 All completed work archived here. Clears the active gap list for fresh battleship generation.
 Last updated: 2026-05-25

@@ -1,8 +1,8 @@
-# WuBu Hermes — Development Workspace
+# Slermes C
 
 **Location:** `~/hermes-agent-dev/`  
 **Tracks:** `wubu/main` (waefrebeorn/slermes fork)  
-**Purpose:** Development + C translation of Hermes Agent
+**Purpose:** Development + C translation (Slermes)
 
 This is the development workspace for WuBu Hermes — a fork of NousResearch/hermes-agent
 with the long-term goal of translating the entire agent into C for zero-dependency operation.

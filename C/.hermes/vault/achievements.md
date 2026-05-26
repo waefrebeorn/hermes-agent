@@ -41,7 +41,7 @@ All resolved gaps, stale claim retirements, and completed milestones. Vault is t
 - Renamed from hermes → slermes (binary, config dir, user-facing names)
 - Internal API names kept as `hermes_` for minimal code churn
 - SLERMES_HOME env var with HERMES_HOME fallback
-- pushed to github.com/waefrebeorn/hermes-agent tree/slermes
+- pushed to github.com/waefrebeorn/slermes tree/slermes
 
 ## Stale Claims Retired
 

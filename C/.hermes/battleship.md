@@ -1,4 +1,4 @@
-# BATTLESHIP — Hermes C Translation Gap Audit
+# BATTLESHIP — Slermes C Translation Gap Audit
 **292 GAPS** | Triple Devil's Advocate Verified | May 25, 2026
 
 ## Legend
@@ -38,7 +38,7 @@
 
 ### F-N-F (6)
 1. 🟥 **Non-OpenAI LLM providers** — Only OpenAI chat completions. No Anthropic, Google, DeepSeek, xAI, custom provider base URL support
-2. 🟥 **No streaming** — `llm_chat_completion` blocks for full response 
+2. 🟥 **No streaming** — `llm_chat_completion` blocks for full response
 3. 🟥 **No error recovery** — LLM failure returns NULL without retry
 4. 🟥 **No request timeout propagation** — HTTP timeout set but never checked mid-request
 5. 🟥 **No interrupt signal handler** — `state->interrupted` exists but no SIGINT handler sets it
@@ -46,7 +46,7 @@
 
 ### Partial (4)
 7. 🟧 **No session persistence** — `db.h` declares functions but agent never calls `db_save_message`
-8. 🟧 **No title gen from LLM** — `title.c` uses extractive (6 words), `(void)cfg` pattern 
+8. 🟧 **No title gen from LLM** — `title.c` uses extractive (6 words), `(void)cfg` pattern
 9. 🟧 **No reasoning token extraction** — Only handles `reasoning`, not non-OpenAI `reasoning_content`
 10. 🟧 **No JSON error handling** — Non-JSON LLM response causes null pointer
 

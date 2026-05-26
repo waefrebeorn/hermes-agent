@@ -1,24 +1,24 @@
-     1|# BANNER — WuBu Hermes C Translation
+     1|# BANNER — WuBu Slermes C Translation
      2|
      3|```
-     4|  __        __           _   ____  _                                
-     5|  \ \      / /__  _ __ | | |  _ \| |__  _ __ ___  ___ ___  ___  _ _ 
+     4|  __        __           _   ____  _  
+     5|  \ \      / /__  _ __ | | |  _ \| |__  _ __ ___  ___ ___  ___  _ _
      6|   \ \ /\ / / _ \| '_ \| | | |_) | '_ \| '__/ _ \/ __/ __|/ _ \| '__|
-     7|    \ V  V / (_) | | | | | |  __/| | | | | | |  __/\__ \__ \ (_) | |   
-     8|     \_/\_/ \___/|_| |_|_| |_|   |_| |_|_|  \___||___/___/\___/|_|   
-     9|                                                                      
+     7|    \ V  V / (_) | | | | | |  __/| | | | | | |  __/\__ \__ \ (_) | |  
+     8|     \_/\_/ \___/|_| |_|_| |_|   |_| |_|_|  \___||___/___/\___/|_|  
+     9|  
     10|   ╔══════════════════════════════════════════════════════════════╗
     11|   ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
     12|   ║  v0.14.0-wubu  │  5,411 LOC  │  401KB binary  │  15 warns   ║
     13|   ║  292 gaps identified  │  43 FNF  │  198 missing             ║
     14|   ╚══════════════════════════════════════════════════════════════╝
-    15|   
+    15|  
     16|   Fixed:   Tool call loop ✅ │ Auth header ✅ │ web_search ✅
     17|   Fixed:   Cron persistence ✅ │ cron_list ✅
     18|   Working: Foundation deps ✅ │ Agent core 🟧 │ Tools 🟧
     19|   Working: Gateway 🟧 │ Cron/Adv 🟧
     20|   Missing: 46 features │ 25 tools │ 17 platforms
-    21|   
+    21|  
     22|   Build: make          Run: ./hermes --version
     23|   Audit: battleship.md  State: state.md  Goal: goal-mantra.md
     24|```

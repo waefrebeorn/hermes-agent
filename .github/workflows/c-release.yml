@@ -1,0 +1,61 @@
+name: C Release
+
+# Creates GitHub releases when a version tag (v*) is pushed.
+# The release.sh script handles version bumping and tagging locally;
+# this workflow publishes the resulting tag as a GitHub Release
+# with the C binary attached.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: C/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev
+
+      - name: Build Hermes C
+        run: make -j$(nproc) 2>&1
+
+      - name: Build TUI
+        run: |
+          sudo apt-get install -y -qq libncurses-dev
+          make -j$(nproc) tui 2>&1
+
+      - name: Compress binary
+        run: |
+          gzip -k hermes
+          mv hermes.gz hermes-linux-x86_64.gz
+          if [ -f hermes-tui ]; then
+            gzip -k hermes-tui
+            mv hermes-tui.gz hermes-tui-linux-x86_64.gz
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@c95fe605939608b1a4c5807e3c1011ff801a2bb2  # v2
+        with:
+          name: Hermes C ${{ github.ref_name }}
+          body: |
+            ## Hermes C ${{ github.ref_name }}
+
+            Automated release from ${{ github.ref }}.
+          files: |
+            C/hermes-linux-x86_64.gz
+            C/hermes-tui-linux-x86_64.gz
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
