@@ -1,14 +1,14 @@
 # Slermes C — Entry Point (v7)
 
 ```
-Suite:   226/0/24  (215 test files, zero failures)
+Suite:   227/0/24  (215 test files, zero failures)
 Binary:  30MB     (dynamic ELF, 0 warnings)
 Tools:   72      (unique, registry_register)
 CLI:     80      (slash commands with handlers)
 Gateways:19      (platforms)
 Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)
-Gaps:    ~374    (items across 11 phases, battleship-v15 Triple DA)
+Gaps:    ~373    (items across 11 phases, battleship-v15 Triple DA)
 Parity:  ~43%    (function-level — ~1,412 C vs ~3,251 Python)
 ```
 
@@ -17,7 +17,7 @@ Parity:  ~43%    (function-level — ~1,412 C vs ~3,251 Python)
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v15.md` (~374 items across 11 phases)
+- **Battleship:** `battleship-v15.md` (~373 items across 11 phases)
 - **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)
 
 ## Phase Progress

@@ -2247,6 +2247,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "patch_tool (compilation failed)"
 fi &
 
+# V4A patch mode tests
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libfal_common" -I"$CDIR/lib/libenvpassthrough" \
+    "$CDIR/tests/test_patch_v4a.c" \
+    "$CDIR/src/tools/patch.c" "$CDIR/src/tools/registry.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libfal_common/fal_common.c" \
+    "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
+    -o /tmp/hermes_test_patch_v4a -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_patch_v4a > /dev/null 2>&1; then ok "patch_v4a (3 tests)"
+    else fail "patch_v4a (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_patch_v4a
+else skip "patch_v4a (compilation failed)"
+fi &
+
 # Process tool test (M39 — needs process.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_process.c" \

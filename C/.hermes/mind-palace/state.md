@@ -1,7 +1,7 @@
 # Slermes C — State Dashboard (v16 — 2026-05-26)
 
 ## Build Metrics
-Build clean. **72 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 215 test_*.c files. Binary: 30MB. Suite: 226/0/24.
+Build clean. **72 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 215 test_*.c files. Binary: 30MB. Suite: 227/0/24.
 
 ## 1:1 Parity Status (Triple DA v15)
 Python: ~3,251 core functions (battleship-v15 baseline)
@@ -24,7 +24,7 @@ Only real stub: stub_cdp_handler in browser.c (dead code, unused by any register
 Zero gateway polling stubs — all 13 platforms with poll_messages have real implementations.
 
 ## Battleship
-**v15 — 1,889 function-level parity gaps** (~374 items). Needs per-sector re-audit for Phase 2.
+**v15 — 1,889 function-level parity gaps** (~373 items). Phase 3 item #23 (patch V4A mode) closed.
 
 ## Phase Order
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)

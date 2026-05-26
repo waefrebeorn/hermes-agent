@@ -9,17 +9,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 /* Schema */
 static const char *SCHEMA_PATCH = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"path\":{\"type\":\"string\",\"description\":\"File path to edit\"},"
+      "\"mode\":{\"type\":\"string\",\"description\":\"replace (find+replace) or patch (V4A multi-file format)\",\"default\":\"replace\"},"
+      "\"path\":{\"type\":\"string\",\"description\":\"File path to edit (required for replace mode)\"},"
       "\"old_string\":{\"type\":\"string\",\"description\":\"Text to find (must be unique unless replace_all=true)\"},"
       "\"new_string\":{\"type\":\"string\",\"description\":\"Replacement text\"},"
-      "\"replace_all\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\",\"default\":false}"
+      "\"replace_all\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\",\"default\":false},"
+      "\"patch\":{\"type\":\"string\",\"description\":\"V4A patch content (required for patch mode): *** Begin Patch ... *** End Patch\"}"
     "},"
-    "\"required\":[\"path\",\"old_string\"]"
+    "\"required\":[]"
 "}";
 
 /* ================================================================
@@ -303,6 +306,472 @@ static int _fuzzy_find(const char *content, const char *pattern,
 }
 
 /* ================================================================
+ *  V4A Patch Format Parser
+ * ================================================================
+ *
+ * V4A format:
+ *   *** Begin Patch
+ *   *** Update File: path/to/file
+ *   @@ context hint @@
+ *    context line (space prefix)
+ *   -removed line (minus prefix)
+ *   +added line (plus prefix)
+ *   *** Add File: path/to/new
+ *   +new content
+ *   *** Delete File: path/to/old
+ *   *** End Patch
+ */
+
+/* Operation types */
+#define V4A_UPDATE 0
+#define V4A_ADD    1
+#define V4A_DELETE 2
+
+/* A single hunk line */
+typedef struct {
+    char prefix;   /* ' ', '-', '+' */
+    char *content;
+} v4a_hunk_line_t;
+
+/* A hunk (group of changes in a file) */
+typedef struct {
+    char *context_hint;
+    v4a_hunk_line_t *lines;
+    int nlines;
+} v4a_hunk_t;
+
+/* A single V4A operation */
+typedef struct {
+    int type;         /* V4A_UPDATE, V4A_ADD, V4A_DELETE */
+    char *file_path;
+    v4a_hunk_t *hunks;
+    int nhunks;
+} v4a_operation_t;
+
+/* Forward declaration */
+static void finalize_op(v4a_operation_t *op, v4a_hunk_t *hunk,
+                         bool *in_hunk, v4a_operation_t **ops, int *nops);
+
+/* Parse a V4A patch and return operations list. */
+static int parse_v4a_patch(const char *patch_content, v4a_operation_t **ops_out, int *nops_out, char **err_out)
+{
+    v4a_operation_t *ops = NULL;
+    int nops = 0;
+    v4a_operation_t cur_op;
+    v4a_hunk_t cur_hunk;
+    bool in_op = false, in_hunk = false;
+
+    char *buf = strdup(patch_content);
+    if (!buf) { *err_out = strdup("OOM"); return -1; }
+
+    /* Find Begin/End markers */
+    char *begin = strstr(buf, "*** Begin Patch");
+    if (!begin) begin = strstr(buf, "***Begin Patch");
+    char *end = strstr(buf, "*** End Patch");
+    if (!end) end = strstr(buf, "***End Patch");
+
+    if (!begin) begin = buf;
+    if (!end) end = buf + strlen(buf);
+
+    /* Skip past begin marker line */
+    char *body = begin;
+    if (begin > buf) {
+        char *nl = strchr(begin, '\n');
+        if (nl) body = nl + 1;
+    }
+
+    /* Split body into lines */
+    char **lines = NULL;
+    int nlines = 0;
+    {
+        size_t body_len = (size_t)(end - body);
+        char *work = malloc(body_len + 1);
+        if (!work) { free(buf); *err_out = strdup("OOM"); return -1; }
+        memcpy(work, body, body_len);
+        work[body_len] = '\0';
+
+        char *save = NULL;
+        char *tok = strtok_r(work, "\n", &save);
+        while (tok) {
+            char **tmp = realloc(lines, (nlines + 1) * sizeof(char *));
+            if (!tmp) { free(work); free(buf); *err_out = strdup("OOM"); return -1; }
+            lines = tmp;
+            lines[nlines++] = strdup(tok);
+            tok = strtok_r(NULL, "\n", &save);
+        }
+        free(work);
+    }
+
+    memset(&cur_op, 0, sizeof(cur_op));
+    memset(&cur_hunk, 0, sizeof(cur_hunk));
+
+    for (int i = 0; i < nlines; i++) {
+        const char *line = lines[i];
+
+        /* Check for file operation markers */
+        if (strncmp(line, "*** Update File:", 16) == 0) {
+            if (in_op) { finalize_op(&cur_op, &cur_hunk, &in_hunk, &ops, &nops); }
+            cur_op.type = V4A_UPDATE;
+            cur_op.file_path = strdup(line + 16);
+            while (*cur_op.file_path == ' ') {
+                memmove(cur_op.file_path, cur_op.file_path + 1, strlen(cur_op.file_path));
+            }
+            in_op = true;
+
+        } else if (strncmp(line, "*** Add File:", 13) == 0) {
+            if (in_op) { finalize_op(&cur_op, &cur_hunk, &in_hunk, &ops, &nops); }
+            cur_op.type = V4A_ADD;
+            cur_op.file_path = strdup(line + 13);
+            while (*cur_op.file_path == ' ') {
+                memmove(cur_op.file_path, cur_op.file_path + 1, strlen(cur_op.file_path));
+            }
+            in_op = true;
+
+        } else if (strncmp(line, "*** Delete File:", 16) == 0) {
+            if (in_op) { finalize_op(&cur_op, &cur_hunk, &in_hunk, &ops, &nops); }
+            cur_op.type = V4A_DELETE;
+            cur_op.file_path = strdup(line + 16);
+            while (*cur_op.file_path == ' ') {
+                memmove(cur_op.file_path, cur_op.file_path + 1, strlen(cur_op.file_path));
+            }
+            /* DELETE — save immediately, no hunks */
+            v4a_operation_t *tmp = realloc(ops, (nops + 1) * sizeof(v4a_operation_t));
+            if (tmp) { ops = tmp; ops[nops++] = cur_op; }
+            memset(&cur_op, 0, sizeof(cur_op));
+            in_op = false;
+
+        } else if (line[0] == '@' && line[1] == '@') {
+            if (in_op && in_hunk && cur_hunk.nlines > 0) {
+                v4a_hunk_t *tmp = realloc(cur_op.hunks, (cur_op.nhunks + 1) * sizeof(v4a_hunk_t));
+                if (tmp) { cur_op.hunks = tmp; cur_op.hunks[cur_op.nhunks++] = cur_hunk; }
+                memset(&cur_hunk, 0, sizeof(cur_hunk));
+            }
+            const char *hs = line + 2;
+            const char *he = strstr(hs, "@@");
+            if (he) {
+                size_t hlen = (size_t)(he - hs);
+                cur_hunk.context_hint = malloc(hlen + 1);
+                if (cur_hunk.context_hint) {
+                    memcpy(cur_hunk.context_hint, hs, hlen);
+                    cur_hunk.context_hint[hlen] = '\0';
+                }
+            }
+            in_hunk = true;
+
+        } else if (in_op && line[0] != '\0') {
+            if (!in_hunk) {
+                memset(&cur_hunk, 0, sizeof(cur_hunk));
+                in_hunk = true;
+            }
+            char prefix = ' ';
+            const char *content = line;
+            if (line[0] == '+' || line[0] == '-' || line[0] == ' ') {
+                prefix = line[0];
+                content = line + 1;
+            }
+            v4a_hunk_line_t *tmp = realloc(cur_hunk.lines, (cur_hunk.nlines + 1) * sizeof(v4a_hunk_line_t));
+            if (tmp) {
+                cur_hunk.lines = tmp;
+                cur_hunk.lines[cur_hunk.nlines].prefix = prefix;
+                cur_hunk.lines[cur_hunk.nlines].content = strdup(content);
+                cur_hunk.nlines++;
+            }
+        }
+    }
+
+    /* Save last op */
+    if (in_op) {
+        if (in_hunk && cur_hunk.nlines > 0) {
+            v4a_hunk_t *tmp = realloc(cur_op.hunks, (cur_op.nhunks + 1) * sizeof(v4a_hunk_t));
+            if (tmp) { cur_op.hunks = tmp; cur_op.hunks[cur_op.nhunks++] = cur_hunk; }
+        }
+        v4a_operation_t *tmp = realloc(ops, (nops + 1) * sizeof(v4a_operation_t));
+        if (tmp) { ops = tmp; ops[nops++] = cur_op; }
+    }
+
+    for (int i = 0; i < nlines; i++) free(lines[i]);
+    free(lines);
+    free(buf);
+
+    *ops_out = ops;
+    *nops_out = nops;
+    *err_out = NULL;
+    return 0;
+}
+
+/* Helper: finalize current operation and append to list */
+static void finalize_op(v4a_operation_t *op, v4a_hunk_t *hunk,
+                         bool *in_hunk, v4a_operation_t **ops, int *nops)
+{
+    if (*in_hunk && hunk->nlines > 0) {
+        v4a_hunk_t *tmp = realloc(op->hunks, (op->nhunks + 1) * sizeof(v4a_hunk_t));
+        if (tmp) { op->hunks = tmp; op->hunks[op->nhunks++] = *hunk; }
+        memset(hunk, 0, sizeof(*hunk));
+        *in_hunk = false;
+    }
+    v4a_operation_t *tmp = realloc(*ops, (*nops + 1) * sizeof(v4a_operation_t));
+    if (tmp) { *ops = tmp; (*ops)[*nops] = *op; (*nops)++; }
+    memset(op, 0, sizeof(*op));
+}
+
+/* Apply a V4A UPDATE hunk: search+replace in file buffer */
+static char *apply_v4a_hunk(const char *file_content, v4a_hunk_t *hunk,
+                             long *file_size_out, char **error_out)
+{
+    /* Build search string: ' ' or '-' prefix lines */
+    size_t search_len = 0;
+    for (int i = 0; i < hunk->nlines; i++) {
+        if (hunk->lines[i].prefix == ' ' || hunk->lines[i].prefix == '-') {
+            search_len += strlen(hunk->lines[i].content) + 1;
+        }
+    }
+    if (search_len == 0) search_len = 1;
+    char *search_str = calloc(search_len + 1, 1);
+    if (!search_str) { *error_out = strdup("OOM"); return NULL; }
+    size_t pos = 0;
+    for (int i = 0; i < hunk->nlines; i++) {
+        if (hunk->lines[i].prefix == ' ' || hunk->lines[i].prefix == '-') {
+            if (pos > 0) search_str[pos++] = '\n';
+            size_t clen = strlen(hunk->lines[i].content);
+            memcpy(search_str + pos, hunk->lines[i].content, clen);
+            pos += clen;
+        }
+    }
+    if (pos > 0 && search_str[pos-1] == '\n') search_str[--pos] = '\0';
+    search_str[pos] = '\0';
+
+    /* Build replacement string: ' ' or '+' prefix lines */
+    size_t repl_len = 0;
+    for (int i = 0; i < hunk->nlines; i++) {
+        if (hunk->lines[i].prefix == ' ' || hunk->lines[i].prefix == '+') {
+            repl_len += strlen(hunk->lines[i].content) + 1;
+        }
+    }
+    if (repl_len == 0) repl_len = 1;
+    char *repl_str = calloc(repl_len + 1, 1);
+    if (!repl_str) { free(search_str); *error_out = strdup("OOM"); return NULL; }
+    pos = 0;
+    for (int i = 0; i < hunk->nlines; i++) {
+        if (hunk->lines[i].prefix == ' ' || hunk->lines[i].prefix == '+') {
+            if (pos > 0) repl_str[pos++] = '\n';
+            size_t clen = strlen(hunk->lines[i].content);
+            memcpy(repl_str + pos, hunk->lines[i].content, clen);
+            pos += clen;
+        }
+    }
+    if (pos > 0 && repl_str[pos-1] == '\n') repl_str[--pos] = '\0';
+    repl_str[pos] = '\0';
+
+    /* Find search string in file content */
+    const char *match = strstr(file_content, search_str);
+    size_t offset, match_len;
+    bool fuzzy = false;
+
+    if (!match) {
+        /* Try fuzzy (line-trimmed) */
+        size_t ms, ml;
+        if (!_fuzzy_line_trimmed(file_content, search_str, &ms, &ml)) {
+            *error_out = malloc(256);
+            if (*error_out)
+                snprintf(*error_out, 256, "Hunk not found (tried exact + line-trimmed)");
+            free(search_str);
+            free(repl_str);
+            return NULL;
+        }
+        offset = ms;
+        match_len = ml;
+        fuzzy = true;
+    } else {
+        offset = (size_t)(match - file_content);
+        match_len = strlen(search_str);
+    }
+
+    long fsize = (long)strlen(file_content);
+    size_t newsize = fsize - match_len + repl_len + 1;
+    char *result = malloc(newsize);
+    if (!result) { free(search_str); free(repl_str); *error_out = strdup("OOM"); return NULL; }
+    memcpy(result, file_content, offset);
+    memcpy(result + offset, repl_str, repl_len);
+    memcpy(result + offset + repl_len, file_content + offset + match_len, fsize - offset - match_len);
+    result[newsize - 1] = '\0';
+    *file_size_out = (long)(newsize - 1);
+
+    free(search_str);
+    free(repl_str);
+    (void)fuzzy; /* could report in result */
+    return result;
+}
+
+/* Free V4A operations */
+static void free_v4a_operations(v4a_operation_t *ops, int nops)
+{
+    for (int i = 0; i < nops; i++) {
+        free(ops[i].file_path);
+        for (int j = 0; j < ops[i].nhunks; j++) {
+            free(ops[i].hunks[j].context_hint);
+            for (int k = 0; k < ops[i].hunks[j].nlines; k++) {
+                free(ops[i].hunks[j].lines[k].content);
+            }
+            free(ops[i].hunks[j].lines);
+        }
+        free(ops[i].hunks);
+    }
+    free(ops);
+}
+
+/* Apply a V4A patch — main entry point */
+static char *apply_v4a_patch(const char *patch_content)
+{
+    v4a_operation_t *ops = NULL;
+    int nops = 0;
+    char *err = NULL;
+
+    if (parse_v4a_patch(patch_content, &ops, &nops, &err) != 0 || err) {
+        char *out = malloc(512);
+        if (out) snprintf(out, 512, "{\"error\":\"Failed to parse V4A patch: %s\"}", err ? err : "unknown");
+        free(err);
+        return out;
+    }
+
+    json_node_t *results = json_new_array();
+    int total_changes = 0;
+    bool any_error = false;
+
+    for (int i = 0; i < nops; i++) {
+        json_node_t *op_result = json_new_object();
+        json_object_set(op_result, "file", json_new_string(ops[i].file_path ? ops[i].file_path : "?"));
+
+        switch (ops[i].type) {
+            case V4A_UPDATE: {
+                FILE *f = fopen(ops[i].file_path, "rb");
+                if (!f) {
+                    json_object_set(op_result, "error", json_new_string("Cannot open file for reading"));
+                    any_error = true; break;
+                }
+                fseek(f, 0, SEEK_END);
+                long fsize = ftell(f);
+                fseek(f, 0, SEEK_SET);
+                char *content = malloc((size_t)fsize + 1);
+                if (!content) { fclose(f); json_object_set(op_result, "error", json_new_string("OOM")); any_error = true; break; }
+                size_t br = fread(content, 1, (size_t)fsize, f);
+                fclose(f);
+                content[br] = '\0';
+
+                char *current = content;
+                long current_size = (long)br;
+                int hunks_applied = 0;
+                bool hunk_error = false;
+
+                for (int h = 0; h < ops[i].nhunks; h++) {
+                    char *hunk_err = NULL;
+                    long new_size = 0;
+                    char *new_content = apply_v4a_hunk(current, &ops[i].hunks[h], &new_size, &hunk_err);
+                    if (!new_content) {
+                        json_object_set(op_result, "error", json_new_string(hunk_err ? hunk_err : "Hunk apply failed"));
+                        free(hunk_err);
+                        hunk_error = true;
+                        break;
+                    }
+                    free(current);
+                    current = new_content;
+                    current_size = new_size;
+                    hunks_applied++;
+                    free(hunk_err);
+                }
+
+                if (!hunk_error && current) {
+                    f = fopen(ops[i].file_path, "w");
+                    if (!f) {
+                        json_object_set(op_result, "error", json_new_string("Cannot open file for writing"));
+                        any_error = true;
+                    } else {
+                        fwrite(current, 1, (size_t)current_size, f);
+                        fclose(f);
+                        json_object_set(op_result, "success", json_new_bool(true));
+                        json_object_set(op_result, "hunks_applied", json_new_number((double)hunks_applied));
+                        total_changes++;
+                    }
+                }
+                free(current);
+                break;
+            }
+
+            case V4A_ADD: {
+                size_t add_len = 0;
+                for (int h = 0; h < ops[i].nhunks; h++) {
+                    for (int k = 0; k < ops[i].hunks[h].nlines; k++) {
+                        if (ops[i].hunks[h].lines[k].prefix == '+')
+                            add_len += strlen(ops[i].hunks[h].lines[k].content) + 1;
+                    }
+                }
+                if (add_len > 0) add_len--; /* remove trailing \n count */
+
+                char *add_content = calloc(add_len + 1, 1);
+                if (!add_content) {
+                    json_object_set(op_result, "error", json_new_string("OOM"));
+                    any_error = true; break;
+                }
+                size_t ap = 0;
+                for (int h = 0; h < ops[i].nhunks; h++) {
+                    for (int k = 0; k < ops[i].hunks[h].nlines; k++) {
+                        if (ops[i].hunks[h].lines[k].prefix == '+') {
+                            size_t clen = strlen(ops[i].hunks[h].lines[k].content);
+                            if (ap > 0) add_content[ap++] = '\n';
+                            memcpy(add_content + ap, ops[i].hunks[h].lines[k].content, clen);
+                            ap += clen;
+                        }
+                    }
+                }
+
+                char dir_copy[4096];
+                snprintf(dir_copy, sizeof(dir_copy), "%s", ops[i].file_path);
+                char *slash = strrchr(dir_copy, '/');
+                if (slash) { *slash = '\0'; mkdir(dir_copy, 0755); }
+
+                FILE *f = fopen(ops[i].file_path, "w");
+                if (!f) {
+                    json_object_set(op_result, "error", json_new_string("Cannot open file for writing"));
+                    any_error = true; free(add_content); break;
+                }
+                if (add_len > 0) fwrite(add_content, 1, add_len, f);
+                fclose(f);
+                json_object_set(op_result, "success", json_new_bool(true));
+                json_object_set(op_result, "bytes_written", json_new_number((double)add_len));
+                total_changes++;
+                free(add_content);
+                break;
+            }
+
+            case V4A_DELETE: {
+                if (remove(ops[i].file_path) == 0) {
+                    json_object_set(op_result, "success", json_new_bool(true));
+                    json_object_set(op_result, "deleted", json_new_bool(true));
+                    total_changes++;
+                } else {
+                    json_object_set(op_result, "error", json_new_string("Cannot delete file"));
+                    any_error = true;
+                }
+                break;
+            }
+        }
+        json_append(results, op_result);
+    }
+
+    json_node_t *root = json_new_object();
+    json_object_set(root, "mode", json_new_string("patch"));
+    json_object_set(root, "results", results);
+    json_object_set(root, "operations", json_new_number((double)nops));
+    json_object_set(root, "total_changes", json_new_number((double)total_changes));
+    if (any_error) json_object_set(root, "partial", json_new_bool(true));
+    else json_object_set(root, "success", json_new_bool(true));
+
+    char *json_out = json_serialize(root);
+    json_free(root);
+    free_v4a_operations(ops, nops);
+    return json_out;
+}
+
+/* ================================================================
  *  Core patch logic
  * ================================================================ */
 
@@ -470,12 +939,26 @@ char *patch_handler(const char *args_json, const char *task_id) {
         return out;
     }
 
+    const char *mode = json_object_get_string(args, "mode", "replace");
+
+    if (strcmp(mode, "patch") == 0) {
+        const char *patch_content = json_object_get_string(args, "patch", NULL);
+        char *patch_dup = patch_content ? strdup(patch_content) : NULL;
+        json_free(args);
+        if (!patch_dup) {
+            return strdup("{\"error\":\"patch content required for mode='patch'\"}");
+        }
+        char *result = apply_v4a_patch(patch_dup);
+        free(patch_dup);
+        return result;
+    }
+
+    /* Default: replace mode */
     const char *path = json_object_get_string(args, "path", NULL);
     const char *old_string = json_object_get_string(args, "old_string", NULL);
     const char *new_string = json_object_get_string(args, "new_string", "");
     bool replace_all = json_object_get_bool(args, "replace_all", false);
 
-    /* strdup BEFORE json_free — values point into JSON tree */
     char *path_dup = path ? strdup(path) : NULL;
     char *old_str_dup = old_string ? strdup(old_string) : NULL;
     char *new_str_dup = new_string ? strdup(new_string) : NULL;
@@ -492,9 +975,12 @@ char *patch_handler(const char *args_json, const char *task_id) {
 /* Auto-registration */
 void registry_init_patch(void) {
     registry_register("patch",
-        "Find and replace text in a file. Uses exact string matching "
-        "with 4 fuzzy fallback strategies (line_trimmed, whitespace_normalized, "
-        "indentation_flexible). Returns a diff and the matching strategy used. "
-        "Set replace_all=true to replace all occurrences.",
+        "Find and replace text in a file, or apply a V4A multi-file patch. "
+        "Modes: 'replace' (default) — exact string matching with 4 fuzzy fallback strategies "
+        "(line_trimmed, whitespace_normalized, indentation_flexible). "
+        "'patch' — V4A multi-file format with *** Begin Patch / *** Update File: / "
+        "*** Add File: / *** Delete File: / *** End Patch markers. "
+        "Replace mode returns a diff and the matching strategy. "
+        "Patch mode returns per-operation results.",
         SCHEMA_PATCH, patch_handler);
 }

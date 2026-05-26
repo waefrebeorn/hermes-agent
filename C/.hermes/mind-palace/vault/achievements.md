@@ -1075,5 +1075,18 @@ All have Unicode/emoji animation frames matching Python parity.
 | V11 | 9 spinner frame arrays | display_core.c:298-370 (frame arrays + spinner_get_frame) |
 | V11 | spinner_type_t enum | hermes_display.h:109-120 (SPINNER_KAWAII through SPINNER_SPARKLE) |
 | V11 | display_parse_spinner_type() | display_core.c:361-381 (parses display.spinner_style config) |
-| V11 | Wired to kawaii spinner | cli.c:485 (sets g_cli.spinner.type from config) |
-| V11 | Frame display in start/tick/stop | display_core.c:428-440, 460-469, 488-493 |
+|| V11 | Wired to kawaii spinner | cli.c:485 (sets g_cli.spinner.type from config) |
+|| V11 | Frame display in start/tick/stop | display_core.c:428-440, 460-469, 488-493 |
+
+## Phase 62: Phase 3 Tool Features — Patch V4A Mode (2026-05-26)
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| P23 | V4A multi-file patch mode added to patch tool | src/tools/patch.c:310-780 (V4A parser, hunk applier, apply_v4a_patch) |
+| P23 | Schema extended with mode/patch params | src/tools/patch.c:14-28 |
+| P23 | Handler dispatches on mode="patch" vs "replace" | src/tools/patch.c:960-970 |
+| P23 | UPDATE operation — multi-hunk search-replace | src/tools/patch.c:540-685 (apply_v4a_hunk + apply loop) |
+| P23 | ADD operation — creates new files with content | src/tools/patch.c:690-745 |
+| P23 | DELETE operation — removes files | src/tools/patch.c:747-760 |
+| P23 | 3 tests in test_runner.sh | tests/test_patch_v4a.c — update, add, delete + fuzzy + no-begin-mark |
+| P23 | Suite: 227/0/24 (+1 new test) | test_runner.sh:2250-2261 |
