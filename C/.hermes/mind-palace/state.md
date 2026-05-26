@@ -1,36 +1,31 @@
-# Slermes C — State Dashboard (v11 — 2026-05-26)
+# Slermes C — State Dashboard (v12 — 2026-05-26)
 
 ## Build Metrics
-Build clean. **85 tools** (registry_register). 118 slash commands. 19 gateways. 10 providers. 59 libs. 164 src/ .c files. 214 test_*.c files.
+Build clean. **72 unique tools** (70 registry_register, 2 registry_register_ex). 97 CLI commands. 19 gateways. 9 providers. 59 libs. 160 src/ .c files (non-deps). 213 test_*.c files.
 
 ## Recent Milestones
+- **Triple DA v13**: Fresh 316-gap battleship across 15 sectors. All Phase 0a/b items vaulted.
 - **V10**: Rich markdown rendering (markdown_render.c) — headers, bold, italic, code, links
-- **F01/F05**: Pipe fix + --json standalone
-- **F02/F03/F04/F09**: C logger, --json pipe mode, chat subcommand, banner tool count
-- **F06-F10**: Stubs wired (background, agents, restart, review)
-- **S06-S10**: 5 stub functions wired to active code
-- **S11**: All 5 dead code entries (X01-X05) wired
-- **M04**: --profile flag wired
-- **S12 D13/D14**: Corrected stale claims (banner + tool feed are full parity)
-|- **V10b**: Streaming bug fix — 5 providers (OpenAI, Azure, Custom, OpenRouter, xAI) + llm_client.c fallback all had `data:` prefix assumption. HTTP layer strips prefix, raw JSON streamed to terminal. All 6 files fixed.
-|- **Agent linkage**: `agent_configure_from_config()` had ZERO callers. 28 config fields never wired to agent state (max_retries, temperature, top_p, fallback, etc.). FIXED: wired into CLI init path.
+- **V11**: Multi-spinner — 9 frame types implemented (dots/bounce/grow/arrows/star/moon/pulse/brain/sparkle)
+- **V21**: NO_COLOR / TERM=dumb support
+- **Agent linkage**: `agent_configure_from_config()` wired into CLI init — 28 config fields now active
+- **Streaming fix**: 5 providers + llm_client.c — `data:` prefix bug fixed across all providers
 
 ## Battleship
-**v12 — 168 active gaps** across 14 sectors.
+**v13 — 316 active gaps** across 15 sectors. All prior resolved items vaulted in Phases 60-70.
 
-## Display Parity (Phase 0b) — 10 gaps (V10 ✅, V21 ✅, V11 ✅)
-| ID | Gap | LOC Missing | Priority |
-|----|-----|-------------|----------|
-| V10 | Rich markdown rendering | ✅ ~1000 | P0 |
-| V11 | Inline edit diffs in agent loop | ~200 | P1 |
-| V12 | Dynamic banner stats from registry | ~50 | P1 |
-| V13 | Multiple spinner types (9 types) | ~100 | P2 |
-| V14 | Multi-line prompt input | ~500 | P2 |
-| V15 | Rich error formatting | ~100 | P2 |
-| V16 | TUI (ncurses) functional parity | ~2000 | P2 |
-| V17 | Python TUI ecosystem (ui-tui + tui_gateway) | ~15,220 | P2 |
-| V18 | Voice mode CLI infrastructure | ~846 | P2 |
-| V19 | /recap session summary | ~316 | P2 |
-| V20 | Startup tips system | ~485 | P2 |
-| V21 | NO_COLOR / TERM=dumb support | ~38 | P2 |
-| V22 | Structured CLI output helpers | ~78 | P2 |
+## Phase Order
+0b) Display & Visual: 16 gaps (S9)
+0c) CLI Args: 40 gaps (S1)
+1) Form-Not-Function: 10 gaps (S0)
+2) Missing Entry Points: 8 gaps (S2)
+3) Tool Depth: 28 gaps (S3)
+4) Missing Tool Ports: 20 gaps (S4)
+5) Gateway Depth: 49 gaps (S6+S10)
+6) Provider Parity: 30 gaps (S5)
+7) Agent Modules: 61 gaps (S7+S8)
+8) Security: 8 gaps (S12)
+9) Test Coverage: 20 gaps (S11)
+10) Refactoring: 10 gaps (S13)
+11) Library Depth: 16 gaps (S15)
+12) Ecosystem: 20 gaps (S14)

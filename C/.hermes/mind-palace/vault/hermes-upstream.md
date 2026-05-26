@@ -1,80 +1,83 @@
-# Hermes Upstream — Python Modules Not Ported to C
+# Hermes Upstream — C Translation Gap Analysis
 
-Last updated: 2026-05-25 (battleship-v11)
+## Python vs C Size Comparison
 
-## Agent Modules (10+ not ported, ~4500 LOC)
+| Metric | Python | C | C/Python Ratio |
+|--------|--------|---|----------------|
+| App LOC | 451,196 | 83,251 | 18.5% |
+| Test LOC | 462,886 | ~25,000 | 5.4% |
+| Tool files | 78 | 72 unique tools | 92% |
+| Agent modules | 82 | ~40 source files | 49% |
+| Model providers | 27 plugins | 9 providers | 33% |
+| Gateway files | 40+ files | 19 platforms | 48% |
+| Plugins | 17+ dirs | 10 .c files | 59% |
+| Test files | 1,220 | 213 | 17% |
+| Libraries | N/A (pip) | 59 units | N/A |
 
-| Module | Python LOC | C Status | Notes |
-|--------|-----------|----------|-------|
-| error_classifier | ~500 | Not ported | Classifies LLM errors into categories |
-| chat_completion_helpers | ~400 | Partial | Some in llm_client.c |
-| tool_executor | ~600 | Partial | Some in agent_loop.c |
-| process_registry | ~400 | Not ported | Background process lifecycle |
-| memory_manager | ~500 | Basic file-based | Python has multi-backend orchestration |
-| memory_provider | ~400 | Not ported | Plugin-based memory backends |
-| message_sanitization | ~300 | Partial | Helper for message cleanup |
-| insights | ~900 | Partial | cmd_insights is basic |
-| iteration_budget | ~200 | Partial | In agent_loop |
-| prompt_builder | ~600 | Partial | In system_prompt.c |
+## Python Modules Requiring Porting
 
-## Tool Files (15+ not ported, ~5000+ LOC)
+### Core Agent (46 modules, ~20K LOC)
+agent_init (~400), agent_runtime_helpers (~300), auxiliary_client (~500),
+background_review (~400), chat_completion_helpers (~400), codex_runtime (~800),
+context_compressor (~600), context_engine (~500), conversation_compression (~400),
+credential_sources (~300), curator (~1000), curator_backup (~300),
+error_classifier (~500), gemini_schema (~400), google_code_assist (~300),
+google_oauth (~400), memory_manager (~500), memory_provider (~400),
+onboarding (~500), plugin_llm (~400), portal_tags (~300), process_bootstrap (~400),
+retry_utils (~200), title_generator (~300), tool_dispatch_helpers (~400),
+tool_executor (~600), tool_result_classification (~300),
+manual_compression_feedback (~200), moonshot_schema (~300), models_dev (~400),
+tts_provider (~300), tts_registry (~200), transcription_provider (~300),
+transcription_registry (~200), video_gen_provider (~300), video_gen_registry (~200),
+web_search_provider (~300), web_search_registry (~200)
 
-| Tool Module | Python LOC | Notes |
-|------------|-----------|-------|
-| feishu_doc_tool.py | ~400 | Feishu/Lark document tools |
-| feishu_drive_tool.py | ~300 | Feishu drive integration |
-| microsoft_graph_auth.py | ~300 | Microsoft Graph OAuth |
-| microsoft_graph_client.py | ~400 | Microsoft Graph API client |
-| skills_guard.py | ~300 | Skill security guard system |
-| skill_provenance.py | ~200 | Skill origin tracking |
-| xai_http.py | ~200 | XAI HTTP client |
-| yuanbao_tools.py | ~300 | Tencent Yuanbao tools |
-| slack_blocks.py | ~400 | Slack Block Kit builder |
-| discord_tool.py | ~600 | Discord bot tools |
-| homeassistant_tool.py | ~500 | Home Assistant integration |
-| image_generation_tool.py | ~700 | Image gen tool features |
-| cronjob_tools.py | ~400 | Cron job management |
-| credential_files.py | ~300 | Credential file management |
+### Gateway Platforms (14 missing files, ~7K LOC)
+feishu_comment (1382), feishu_comment_rules (429), signal_rate_limit (369),
+telegram_network (259), wecom_callback (403), wecom_crypto (142),
+yuanbao_media (645), yuanbao_proto (1209), yuanbao_sticker (558),
+chunked_upload (200), keyboards (300), onboard (150), adapter (200),
+_http_client_limits (150)
 
-## Gateway Platform Files (14 not ported, ~10500+ LOC)
+### Tools (15 missing ports, ~3.5K LOC)
+microsoft_graph_auth (300), microsoft_graph_client (400), skills_guard (300),
+skills_ast_audit (250), skill_provenance (200), yuanbao_tools (300),
+slack_blocks (400), website_policy (250), tool_output_limits (200),
+tool_result_storage (200), threat_patterns (300), binary_extensions (100),
+debug_helpers (150), slash_confirm (100), neutts_synth (300)
 
-| Platform Module | Python LOC | Notes |
-|----------------|-----------|-------|
-| api_server.py | 3524 | Full API server implementation |
-| feishu_comment.py | 1382 | Feishu doc commenting system |
-| feishu_comment_rules.py | 429 | Comment auto-rules |
-| signal_rate_limit.py | 369 | Signal rate limiting |
-| telegram_network.py | 259 | Telegram network helpers |
-| wecom_callback.py | 403 | WeCom callback verification |
-| wecom_crypto.py | 142 | WeCom encryption |
-| yuanbao_media.py | 645 | Yuanbao media upload |
-| yuanbao_proto.py | 1209 | Yuanbao protocol (large!) |
-| yuanbao_sticker.py | 558 | Yuanbao stickers |
-| helpers.py | 278 | Gateway helpers |
-| _http_client_limits.py | 84 | HTTP client config |
-| base.py | 3812 | Base gateway platform class |
-| __init__.py | 45 | Package init |
+### Model Providers (18 missing, plugin-based)
+alibaba, arcee, ai-gateway, azure-foundry, copilot-acp, gmi, huggingface,
+kilocode, kimi-coding, minimax, nous, novita, nvidia, ollama-cloud,
+openai-codex, opencode-zen, qwen-oauth, stepfun, xiaomi, zai
 
-## Model Provider Plugins (20+ not ported)
+## Roadmap Extension
 
-All Python model providers are plugins (plugins/model-providers/*/).
-Only the core 10 providers are ported in C (provider_*.c).
-The full list of plugin providers: ai-gateway, alibaba, alibaba-coding-plan,
-anthropic, arcee, azure-foundry, bedrock, copilot, copilot-acp, custom,
-deepseek, gemini, gmi, huggingface, kilocode, kimi-coding, minimax, nous,
-novita, nvidia, ollama-cloud, openai-codex, opencode-zen, openrouter,
-qwen-oauth, stepfun, xai, xiaomi, zai.
+### Current Milestone: 316 verified gaps (battleship-v13)
 
-## Test Coverage Gap
+### Phase Order & Estimated Timeline (in sessions, not time)
+1. **Phase 0b (16 gaps)** — Display parity: inline diffs, multi-line, rich errors, TUI, voice, /recap, tips, output helpers
+2. **Phase 0c (40 gaps)** — CLI args: wire (void)args for 40 commands
+3. **Phase 1 (10 gaps)** — Form-not-function: fix entry points that do nothing
+4. **Phase 2 (8 gaps)** — Missing subcommands: init, doctor, version, completions, gateway, tui, interactive, logs
+5. **Phase 3 (28 gaps)** — Tool depth: add Python features to existing C tools
+6. **Phase 4 (20 gaps)** — Missing tool ports: port remaining Python tools
+7. **Phase 5 (49 gaps)** — Gateway depth: port missing platforms + deepen thin ones
+8. **Phase 6 (30 gaps)** — Provider parity: port 18+ missing model providers + deepen 9 existing
+9. **Phase 7 (61 gaps)** — Agent modules: port 46 agent modules + 15 infrastructure modules
+10. **Phase 8 (8 gaps)** — Security: URL safety, sandbox, encryption, approval, skills guard
+11. **Phase 9 (20 gaps)** — Test coverage: tests for untested major modules
+12. **Phase 10 (10 gaps)** — Refactoring: thread safety, memory pools, error types, config expansion
+13. **Phase 11 (16 gaps)** — Library depth: schema validation, HTTP/2, full regex, etc.
+14. **Phase 12 (20 gaps)** — Ecosystem: ACP, cron, gateways full, TUI, voice, plugins, etc.
 
-| Metric | Python | C | Coverage % |
-|--------|--------|---|------------|
-| Test files | ~1140 | 213 | 19% |
-| LOC | ~200,000 | 48,301 | 24% |
+### Key Dependencies
+- Phase 3-7 depend on Phase 0b-2 completing first (core infrastructure stable)
+- Phase 9 (test coverage) can run in parallel with any phase
+- Phase 12 (ecosystem) is final — depends on all prior phases completing
+- Phase 10-11 (refactoring) are ongoing — can be done incrementally
 
-## Total Upstream Delta
-
-- ~30,000+ LOC of Python agent/tool/gateway code not ported to C
-- 20+ model provider plugins not ported
-- 14 gateway modules not ported
-- ~80% test coverage gap
+### Verification Milestones
+- **~150 gaps closed**: C parity reaches 50% of Python app LOC
+- **~200 gaps closed**: Full CLI parity, all tools ported
+- **~250 gaps closed**: All providers ported, gateway platforms at parity
+- **~316 gaps closed**: Full parity with Python Hermes

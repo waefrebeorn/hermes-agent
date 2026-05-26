@@ -979,6 +979,52 @@ Replaced 5 manual field copies with single function call.
 | L06 | fallback_providers | empty | config value | agent_loop.c:148-149 |
 | L07-L26 | 20+ other fields | memset(0) | config values | agent_loop.c:110-150 |
 
+## Phase 70: Triple DA v13 — Fresh 316-Gap Battleship (2026-05-26)
+
+Exhaustive form-not-function audit + codebase-wide stub hunt covering 160 C source files
+vs 78 Python tools + 82 Python agent modules + 27 model providers + 40 gateway files.
+Fresh battleship v13 with **316 verified gaps** across 15 sectors.
+
+### Accomplishments Vaulted from Old Battleship
+All Phase 0a/b items verified alive in code and moved to archive:
+- F01-F10 (entry points: C logger, --json pipe, chat subcommand, dynamic banner, etc.)
+- V10, V21, V11 (markdown, NO_COLOR, multi-spinner)
+- All agent linkage fixes (28 fields)
+- Streaming fixes (5 providers + llm_client.c)
+- V11/V12 stale claims retired
+
+### New Gaps Discovered by Sector
+| Sector | Category | Count |
+|--------|----------|-------|
+| S0 | Form-Not-Function & Entry Points | 10 |
+| S1 | CLI Behavioral — (void)args | 40 |
+| S2 | Missing Entry Points | 8 |
+| S3 | Tool Depth Gaps | 28 |
+| S4 | Missing Tool Ports | 20 |
+| S5 | Provider Feature Gaps | 30 |
+| S6 | Gateway Platform Depth | 35 |
+| S7 | Agent Module Gaps | 46 |
+| S8 | Agent Core Infrastructure | 15 |
+| S9 | Display & Visual Parity | 16 |
+| S10 | Gateway Platform Deepening | 14 |
+| S11 | Test Coverage | 20 |
+| S12 | Security Gaps | 8 |
+| S13 | C-Only / Refactoring | 10 |
+| S14 | Python Ecosystem Gaps | 20 |
+| S15 | Library Depth | 16 |
+| | **Total** | **316** |
+
+### Key Metrics
+- Python app LOC: **451,196** vs C app LOC: **83,251** (18.5% of Python size)
+- Python tests: **462,886** LOC across 1,220 files vs C tests: ~**25K** across 213 files
+- Python tools: **78** files vs C unique tools: **72** registered
+- Python agent modules: **82** vs C agent modules: **~40**
+- Python model providers: **27** plugins vs C providers: **9**
+- Python gateway files: **40+** vs C gateway platforms: **19**
+- Python plugins: **17+** directories vs C plugins: **10**
+
+---
+
 ## Phase 68: Display Gaps — V21 NO_COLOR + Stale V11/V12 Retired (2026-05-26)
 
 ### V21: NO_COLOR / TERM=dumb support — IMPLEMENTED

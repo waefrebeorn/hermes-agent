@@ -1,22 +1,23 @@
-# Slermes C — Overnight Map (v16 — 168 Gaps)
+# Slermes C — Overnight Map (v17 — 316 Gaps)
 
 ## Navigation
-|- **Battleship:** battleship-v12.md — 168 gaps, 14 sectors, S12 rebuilt with 11 real display gaps (V10 ✅)
-- **State:** state.md (v10) — 13 display gaps documented
-- **Phase 0 entry points:** ALL DONE (F01-F10)
-- **Goal:** goal-mantra.md (v14)
-- **Vault:** Phase 64 (15 stale retired), Phase 65 (6 new display gaps)
+- **Battleship:** battleship-v13.md — 316 gaps, 15 sectors, Triple DA v13
+- **State:** state.md (v12) — fresh metrics from exhaustive audit
+- **Phase 0 entry points:** ALL DONE & VAULTED (F01-F10)
+- **Goal:** goal-mantra.md (v16)
+- **Vault:** Phase 69 (multi-spinner), Phase 70 (Triple DA v13)
 
-## Phase 0 Entry Points (4)
-**ALL DONE** — F02 (C logger), F03 (--json pipe), F04 (chat subcmd), F09 (banner tool count)
-
-## Phase 0b — Display (13)
-**V10 ✅ done**, **V21 ✅ done, V11 ✅ done** → V11 multi-spinner → V12 multi-line → V13 rich errors → V14 TUI parity → V15 Python TUI ecosystem → V16 voice mode → V17 /recap → V18 tips → V19 NO_COLOR → V20 output helpers
-
-**Note:** V17 is the biggest gap — 15,220 LOC of TUI ecosystem (ui-tui/ + tui_gateway/) with NO C equivalent.
+## Phase 0b — Display (16 gaps)
+V01-V16 — inline diffs, multi-line input, rich errors, TUI parity, Python TUI ecosystem, voice mode, /recap, tips, output helpers, skin full parity
 
 ## Phase 0c (40) — CLI Args
 A01-A40: 40 commands silently discard user input via (void)args
 
+## Phase 1 — Form-Not-Function (10)
+F01-F10: entry points that compile but do nothing
+
+## Phase 2-12 (250+ gaps)
+Missing entry points → Tool depth → Missing tools → Gateway depth → Provider parity → Agent modules → Security → Tests → Refactoring → Library depth → Ecosystem
+
 ## Key Insight
-The Python TUI ecosystem (Ink React + JSON-RPC gateway) dwarfs the C ncurses TUI by 4x+ LOC. If C wants full TUI parity, V17 is the single largest feature gap in the entire project.
+C codebase is ~24% of Python app code size. Massive gap in test coverage (213 C files vs 1,220 Python files). 27 Python model providers vs 9 C providers.

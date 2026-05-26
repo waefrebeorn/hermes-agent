@@ -4,18 +4,18 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 
 ```text
-|Suite:  226/0/23 (214 test files, completes in <60s)
+|Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
-|Source: 439 .c files (src/ + lib/ + tests/): 419K LOC
-| Parity:  ~30%   (182 sector gaps, 300+ function-level — see battleship-v12)
-| Stubs:  Phase 0 entry: F01+F05 fixed. 8 remaining (F02-F10). 40 CLI commands ignore args.
-| Display: 5 gaps (markdown, TUI, banner, progress, errors)
+|Source: 432 .c files (src/ + lib/ + tests/): 108K C LOC
+| Parity:  ~24%   (316 verified gaps — see battleship-v13 Triple DA)
+| Stubs:  Phase 0a all resolved. 40 CLI commands ignore args. 10 form-not-function.
+| Display: 16 gaps (inline diffs, multi-line, rich errors, TUI, voice, recap, tips, helpers)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|CLI:    78 cmd_ functions (all real) — tab completion, history, table output
-|Tools:  85 registered handlers — all real implementations
+|CLI:    97 cmd_ functions — 72 unique tools registered
+|Tools:  72 registered (85 at runtime with MCP dynamic)
 |Libraries: 59 C modules — zero external deps beyond libc+libssl
 |Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-|Providers: 10 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom + metadata)
+|Providers: 9 .c modules (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.

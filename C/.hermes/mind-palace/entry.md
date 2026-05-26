@@ -1,15 +1,15 @@
-# Slermes C — Entry Point (v4)
+# Slermes C — Entry Point (v5)
 
 ```
 Suite:   226/0/23  (213 test files, zero failures)
 Binary:  30MB     (dynamic ELF, 0 warnings)
-Tools:   83      (46 .c files, all real handlers)
-CLI:     79      (slash commands, all real)
+Tools:   72      (registered, 85 at runtime with MCP)
+CLI:     97      (slash commands)
 Gateways:19      (platforms)
-Providers:10     (.c modules)
+Providers:9      (.c modules)
 Libs:    59      (lib/*/)
-Gaps:    168 (294+ function-level)     (battleship-v12, ~35,600 LOC to port)
-Parity:  ~60% (verified Triple DA v12)    (CLI + tools ahead, adapters/plugins behind)
+Gaps:    316     (15 sectors, battleship-v13 Triple DA)
+Parity:  ~24%    (verified Triple DA v13 — 83K C vs 451K Python)
 ```
 
 ## Orientation
@@ -17,5 +17,5 @@ Parity:  ~60% (verified Triple DA v12)    (CLI + tools ahead, adapters/plugins b
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v12.md` (171 gaps across 14 sectors)
-- **Vault:** `.hermes/vault/` (achievements, historical data)
+- **Battleship:** `battleship-v13.md` (316 gaps across 15 sectors)
+- **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)

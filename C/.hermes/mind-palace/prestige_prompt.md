@@ -1,18 +1,13 @@
-# Slermes C — Prestige Prompt (v16 — 168 Sector Gaps)
+# Slermes C — Prestige Prompt (v17 — 316 Sector Gaps)
 
-## Phase 0 — Entry Points (4)
-**ALL DONE:** F01, F02, F03, F04, F05, F06, F07, F08, F09, F10
+## Phase 0b — Display (16)
+V01 markdown ✅ → V02 inline diffs → V03 dynamic banner ✅ → V04 multi-spinner ✅ → V05 multi-line → V06 rich errors → V07 TUI → V08 Python TUI → V09 voice → V10 /recap → V11 tips → V12 NO_COLOR ✅ → V13 output helpers → V14 skin → V15 spinner → V16 tool feed
 
-## Phase 0b — Display (10)
-**V10 done** (markdown render) → V21 NO_COLOR ✅, V11 multi-spinner ✅ → V12 multi-line → V13 rich errors → V14 TUI parity → V15 Python TUI ecosystem → V16 voice mode → V17 /recap → V18 tips → V19 V20 output helpers
+## Phase 1 — CLI Args (40)
+A01-A40: 40 commands ignore user input via (void)args
 
-## Phase 1 — Confirmed Stubs (10)
-S01-S05 context/memory/server noops + S11-S15 unsupported returns
-**S06-S10 retired to vault Phase 64**
+## Phase 2 — Missing Entry Points (8)
+M01 init → M02 doctor → M03 version → M04 completions → M05 gateway → M06 tui → M07 interactive → M08 logs
 
-## Sector 2 — Missing Entry Points (7)
-M01 deploy → M02 init → M03 doctor → M05 completions → M06 gateway → M07 tui → M08 features
-**M04 done**
-
-## Sectors 3-10, 13-14 (118 gaps)
-Tool depth → Missing tools → Gateways → Providers → Agent modules → CLI args → Tests → Security → Refactoring
+## Phase 3-12 (252 gaps)
+Tool depth (28) → Missing tools (20) → Providers (30) → Gateways (49) → Agent modules (61) → Security (8) → Tests (20) → Refactoring (10) → Library depth (16) → Ecosystem (20)
