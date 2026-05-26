@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 625 .c files (src/ + lib/ + tests/): 427K LOC
-| Parity:  ~30%   (353 verified gaps — see battleship-v10)
+| Parity:  ~30%   (350 verified gaps — see battleship-v10)
 | Stubs:  Phase 0a complete (8 entry points fixed). 40 CLI commands ignore args.
 | Display: 10 gaps — bare printf vs Python Rich + KawaiiSpinner
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, ~15 warnings

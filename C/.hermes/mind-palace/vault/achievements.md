@@ -798,3 +798,11 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|-----|----------|----------|
 | V04 | CLI status bar with skin-driven TrueColor background/foreground/dim colors, context percentage color coding (good/warn/bad/critical from skin), model/session/turn display, terminal-width-aware truncation, wired into CLI main loop after each response. display_set_skin() called during CLI init. skin_color_rgb() helper added. | ~120 | P2 | src/cli/display_core.c (display_statusbar, skin_color_rgb); include/hermes_display.h (declaration); src/cli/cli.c (wiring after agent_chat, display_set_skin call) |
 
+## Phase 16: Tool Emoji + Faces Stale — V05/V11/V12 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V05 | Tool activity feed — skin-driven tool_emojis from skin JSON (tool_emojis.<tool_name>), fallback to hardcoded per-tool emoji map. 18 tool emojis with skin overrides. | ~10 | P2 | src/cli/display_core.c (display_tool_activity skin_get for tool_emojis) |
+| V11 | Kawaii faces (15 waiting, 15 thinking, 15 verbs) — already fully implemented in V02. Battleship stale claim. | 0 | P2 | src/cli/display_core.c (KAWAII_WAITING:10, KAWAII_THINKING:15, THINKING_VERBS:15) |
+| V12 | Tool emoji registry — merged into V05. Skin tool_emojis config now feeds display_tool_activity. | 0 | P2 | Same as V05 |
+

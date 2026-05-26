@@ -516,28 +516,37 @@ void display_tool_activity(const char *tool_name, const char *preview,
                            display_color_t color) {
     if (!tool_name) return;
 
-    /* Emoji map */
-    const char *emoji = "⚡"; /* default */
-    if (strcmp(tool_name, "terminal") == 0) emoji = "$ ";
-    else if (strcmp(tool_name, "write_file") == 0) emoji = "📝";
-    else if (strcmp(tool_name, "read_file") == 0) emoji = "📖";
-    else if (strcmp(tool_name, "patch") == 0) emoji = "🩹";
-    else if (strcmp(tool_name, "web_search") == 0) emoji = "🔍";
-    else if (strcmp(tool_name, "search_files") == 0) emoji = "🔎";
-    else if (strcmp(tool_name, "execute_code") == 0) emoji = "🐍";
-    else if (strcmp(tool_name, "delegate_task") == 0) emoji = "📋";
-    else if (strcmp(tool_name, "vision_analyze") == 0) emoji = "👁️";
-    else if (strcmp(tool_name, "image_generate") == 0) emoji = "🎨";
-    else if (strcmp(tool_name, "text_to_speech") == 0) emoji = "🔊";
-    else if (strcmp(tool_name, "send_message") == 0) emoji = "📤";
-    else if (strcmp(tool_name, "memory") == 0) emoji = "🧠";
-    else if (strcmp(tool_name, "session_search") == 0) emoji = "📚";
-    else if (strcmp(tool_name, "skill_view") == 0 || strcmp(tool_name, "skill_manage") == 0) emoji = "🛠️";
-    else if (strcmp(tool_name, "cronjob") == 0) emoji = "⏰";
-    else if (strcmp(tool_name, "todo") == 0) emoji = "✅";
-    else if (strcmp(tool_name, "clarify") == 0) emoji = "❓";
-    else if (strcmp(tool_name, "browser_navigate") == 0 || strcmp(tool_name, "browser_click") == 0
-             || strcmp(tool_name, "browser_type") == 0) emoji = "🌐";
+    /* Emoji map — check skin tool_emojis first, fall back to hardcoded */
+    const char *emoji = NULL;
+    if (g_display_skin) {
+        char key[128];
+        snprintf(key, sizeof(key), "tool_emojis.%s", tool_name);
+        emoji = skin_get(g_display_skin, key, NULL);
+    }
+    if (!emoji) {
+        /* Hardcoded defaults per tool */
+        if (strcmp(tool_name, "terminal") == 0) emoji = "$ ";
+        else if (strcmp(tool_name, "write_file") == 0) emoji = "📝";
+        else if (strcmp(tool_name, "read_file") == 0) emoji = "📖";
+        else if (strcmp(tool_name, "patch") == 0) emoji = "🩹";
+        else if (strcmp(tool_name, "web_search") == 0) emoji = "🔍";
+        else if (strcmp(tool_name, "search_files") == 0) emoji = "🔎";
+        else if (strcmp(tool_name, "execute_code") == 0) emoji = "🐍";
+        else if (strcmp(tool_name, "delegate_task") == 0) emoji = "📋";
+        else if (strcmp(tool_name, "vision_analyze") == 0) emoji = "👁️";
+        else if (strcmp(tool_name, "image_generate") == 0) emoji = "🎨";
+        else if (strcmp(tool_name, "text_to_speech") == 0) emoji = "🔊";
+        else if (strcmp(tool_name, "send_message") == 0) emoji = "📤";
+        else if (strcmp(tool_name, "memory") == 0) emoji = "🧠";
+        else if (strcmp(tool_name, "session_search") == 0) emoji = "📚";
+        else if (strcmp(tool_name, "skill_view") == 0 || strcmp(tool_name, "skill_manage") == 0) emoji = "🛠️";
+        else if (strcmp(tool_name, "cronjob") == 0) emoji = "⏰";
+        else if (strcmp(tool_name, "todo") == 0) emoji = "✅";
+        else if (strcmp(tool_name, "clarify") == 0) emoji = "❓";
+        else if (strcmp(tool_name, "browser_navigate") == 0 || strcmp(tool_name, "browser_click") == 0
+                 || strcmp(tool_name, "browser_type") == 0) emoji = "🌐";
+        else emoji = "⚡";
+    }
 
     printf("  %s ", emoji);
     display_printf(color, DISPLAY_BOLD, "%s", tool_name);
