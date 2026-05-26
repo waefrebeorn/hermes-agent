@@ -13,7 +13,7 @@ C: **1,362 functions** (46 tool files + ~28 agent files + 9 providers + 19 gatew
 Organized by real function-by-function comparison, not file counts or LOC.
 
 ## Phase Order
-0. Display Parity (16 gaps) — inline diffs, multi-line, rich errors, TUI, voice, /recap, tips
+0. Display Parity (16 gaps) — ✅ 8/16 done (inline diffs, multi-line, rich errors, /recap, tips, NO_COLOR, output helpers, tool feed)
 1. CLI Args (40 gaps) — ✅ wire (void)args for 40 commands
 2. Provider Parity (26 gaps) — deepen 8 + port 18 missing providers
 3. Tool Features (60 gaps) — add Python features to existing C tools

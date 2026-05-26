@@ -4,7 +4,7 @@ P0: Full 1:1 drop-in replacement for Python Hermes.
 **1,889 function-level parity gaps** (battleship-v14). 42% parity at function level.
 
 ## Phase Order
-0. Display Parity (16) — 7/16 done
+0. Display Parity (16) — 8/16 done
 1. CLI Args (40) — ✅ ALL DONE
 2. Provider Parity (26) — deepen 8 + port 18 missing providers
 3. Tool Features (60) — add missing features to existing C tools

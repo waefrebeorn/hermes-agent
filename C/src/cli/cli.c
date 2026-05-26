@@ -848,18 +848,65 @@ start_interactive:
         /* Use line editor with tab completion and history */
         char prompt[64];
         snprintf(prompt, sizeof(prompt), "\n%s ", prompt_symbol);
+
+        /* Multi-line support: read initial line, then continue if backslash-ending */
         char *line = line_edit_read(g_le, prompt);
         if (!line) break;  /* EOF/Ctrl-D/Ctrl-C */
         strncpy(input, line, sizeof(input) - 1);
         input[sizeof(input) - 1] = '\0';
         free(line);
+
+        /* Backslash-continuation: if line ends with \, strip it and read next line */
+        size_t input_len = strlen(input);
+        while (input_len > 0 && input[input_len - 1] == '\\') {
+            input[input_len - 1] = '\0';  /* Remove trailing backslash */
+            input_len--;                   /* Update length */
+
+            /* Read continuation line with continuation prompt */
+            char prompt2[64];
+            snprintf(prompt2, sizeof(prompt2), "\n%s ", ">");
+            char *cont = line_edit_read(g_le, prompt2);
+            if (!cont) break;  /* EOF cancels continuation */
+
+            size_t cont_len = strlen(cont);
+            size_t remaining = sizeof(input) - input_len - 1;
+            if (remaining > cont_len)
+                remaining = cont_len;
+            if (remaining > 0) {
+                /* Add space to separate lines, then append continuation */
+                input[input_len] = ' ';
+                memcpy(input + input_len + 1, cont, remaining);
+                input[input_len + 1 + remaining] = '\0';
+                input_len = strlen(input);
+            }
+            free(cont);
+        }
     } else {
             if (g_cli.interactive)
                 display_printf(cli_skin_color("colors.prompt", DISPLAY_GREEN), DISPLAY_BOLD,
                                "\n%s ", prompt_symbol);
             fflush(stdout);
             if (!fgets(input, sizeof(input), stdin)) break;
+
+        /* Backslash-continuation in fallback mode */
+        size_t input_len = strlen(input);
+        while (input_len > 0 && input[input_len - 1] == '\\') {
+            input[input_len - 1] = '\0';
+            char cont[8192];
+            if (!fgets(cont, sizeof(cont), stdin)) break;
+            size_t cont_len = strlen(cont);
+            /* Strip trailing newline from continuation */
+            while (cont_len > 0 && (cont[cont_len-1] == '\n' || cont[cont_len-1] == '\r'))
+                cont[--cont_len] = '\0';
+            size_t remaining = sizeof(input) - strlen(input) - 1;
+            if (remaining > cont_len) remaining = cont_len;
+            if (remaining > 0) {
+                strcat(input, " ");
+                strncat(input, cont, remaining);
+            }
+            input_len = strlen(input);
         }
+    }
 
         /* Strip trailing newline */
         size_t len = strlen(input);
