@@ -42,6 +42,31 @@ Last updated: 2026-05-25
 |----|-------------|-----|----------|----------|
 | V01 | Key rotation — vault_rotate_key() decrypts with old passphrase, re-encrypts with new. Two modes: in-memory (data already loaded) and file-based. Full rollback on failure. 13 new tests | 60 | P2 | vault.c:345-405 (vault_rotate_key), tests/test_vault.c:192-242 (13 rotation tests), vault (50 tests) |
 
+
+## Phase 63: Display Parity Session — Phase 0b (2026-05-25)
+
+Closed 9 real gaps, identified 2 stale claims. Phase 0b reduced from 11 to 1 gap.
+
+### Gaps Closed (V01-V09)
+
+| ID | Feature | LOC | Evidence |
+|----|---------|-----|----------|
+| V01 | Skin engine — TrueColor hex palette, 5 built-in skins, branding API | ~350 | src/display/skin.c (skin_get_string), src/display/display_core.c (display_{set,get}_skin, display_branding), src/display/ansi.c (display_color_hex), include/hermes_skin.h |
+| V02 | KawaiiSpinner — 15 verb sets, wings animation, skin-branded | ~250 | src/cli/spinner.c (15 verb_sets, kawaii_spinner_{init,step,done}), skin wiring |
+| V03 | Banner — skin-driven panel border, gradient, balance/CLI/gateway stats | ~200 | src/cli/cli.c (display_panel_hex banner), src/display/skin.c (banner_*) |
+| V04 | Status bar — TrueColor bg/fg, context coloring, skin wiring | ~150 | src/cli/cli.c (status bar display), skin wiring |
+| V05 | Tool feed — skin tool_emoji display | ~100 | src/display/ansi.c (display_prefix), tool feed wiring |
+| V06 | Response box — skin border color | ~80 | src/cli/cli.c (response box display) |
+| V07 | Help formatting — skin-driven panel, aligned columns, box-drawing | ~300 | src/cli/cmd_help.c (rewritten with panel + column alignment) |
+| V08 | 256-color palette — display_color_256(), 256_BG/256_FG escape sequences | ~80 | src/display/ansi.c:58-68 (display_color_256), include/hermes_display.h (256_BG, 256_FG) |
+| V09 | Prompt symbol — skin_get_string("branding.prompt_symbol") wired into display | ~50 | src/cli/cli.c (prompt display wiring) |
+
+### Stale Claims Removed (V11-V12)
+
+| ID | Claim | Reality | Evidence |
+|----|-------|---------|----------|
+| V11 | "faces" — separate feature needed | Already done by V02 KawaiiSpinner (12 distinct face animations in spinner.c) | spinner.c: faces_bounce, faces_dance, etc. |
+| V12 | Tool emoji registry — per-tool emoji not implemented | Already exists in skin.c: tool_emojis table has emoji for each tool | skin.c: tool_emojis[] |
 ### Feature Added
 
 | ID | Description | Sector | Evidence |
@@ -829,4 +854,3 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | LOC | Priority | Evidence |
 |----|-------------|-----|----------|----------|
 | V09 | Prompt symbol from skin branding (prompt_symbol) instead of hardcoded "hermes>". Both line_edit and fgets() prompt paths updated. Falls back to "hermes>" when no skin loaded. | ~10 | P2 | src/cli/cli.c (both prompt paths) |
-

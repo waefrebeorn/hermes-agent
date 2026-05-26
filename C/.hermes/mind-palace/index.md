@@ -2,7 +2,7 @@
 
 ## Reading Order
 1. **state.md** — Current build metrics, summary stats
-2. **battleship-v10.md** — 300 gaps, 18 sectors (Active TODO list)
+2. **battleship-v10.md** — 346 gaps, 20 sectors (Active TODO list)
 3. **prestige_prompt.md** — Phase-ordered priority queue
 4. **goal-mantra.md** — Loop, rules, phase order
 5. **overnight-map.md** — Quick-start, Phase 0a fixes
@@ -12,4 +12,4 @@
 9. **testing.md** — Test coverage
 
 ## Previous
-battleship-v9 (75 gaps) → v10 (300 gaps, full function-level audit)
+battleship-v9 → v10 (346 gaps, 20 sectors) → v10 (346 gaps, 20 sectors, full function-level audit)

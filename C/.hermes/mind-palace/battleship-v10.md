@@ -1,4 +1,4 @@
-# Slermes C — Fresh Battleship v10 (Triple DA — 357 Gaps)
+# Slermes C — Fresh Battleship v10 (Triple DA — 346 Gaps)
 
 Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing, and command behavioral audit.
 
@@ -23,7 +23,6 @@ All 8 entry point gaps resolved in Phase 0a:
 | # | ID | Feature | Python Source | C State |
 |---|-----|---------|-------------|---------|
 | 9 | V10 | Markdown rendering for LLM responses | rich markdown | Basic table parsing only |
-| 16 | V12 | Tool emoji registry (per-tool emoji) | skin_engine | None |
 
 ## SECTOR 0C: CLI Behavioral Parity — Commands That Ignore Args (40 gaps)
 

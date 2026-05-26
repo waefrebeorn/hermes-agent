@@ -6,11 +6,11 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 ```text
 |Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
-|Source: 625 .c files (src/ + lib/ + tests/): 427K LOC
+|Source: 439 .c files (src/ + lib/ + tests/): 419K LOC
 | Parity:  ~30%   (346 verified gaps — see battleship-v10)
 | Stubs:  Phase 0a complete (8 entry points fixed). 40 CLI commands ignore args.
-| Display: 10 gaps — bare printf vs Python Rich + KawaiiSpinner
-|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, ~15 warnings
+| Display: 1 gap (V10 markdown rendering)
+|Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tools:  85 registered handlers — all real implementations
 |Libraries: 59 C modules — zero external deps beyond libc+libssl
@@ -27,9 +27,9 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (84 Registered)](#all-tools-84-registered)
+- [All Tools (85 Registered)](#all-tools-85-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
-- [LLM Providers (11)](#llm-providers-11)
+- [LLM Providers (10)](#llm-providers-11)
 - [Plugins (10 .c, 0 .so)](#plugins-10-c-0-so)
 - [Libraries (59 Units)](#libraries-59-units)
 - [CLI Commands (79 Slash, Real)](#cli-commands-79-slash-real)
@@ -37,7 +37,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||- [Battleship Roadmap (153 Gaps)](#battleship-roadmap-174-gaps)
+||- [Battleship Roadmap (346 Gaps)](#battleship-roadmap-174-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -52,7 +52,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 224/0/21
+bash test_runner.sh        # 226/0/23
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -71,7 +71,7 @@ docker run --rm hermes-c --help
 
 ### Smoke Test
 ```bash
-echo '/tools' | ./hermes     # List all 84 registered tools
+echo '/tools' | ./hermes     # List all 85 registered tools
 echo "/providers" | ./hermes # List provider configurations
 ```
 
@@ -99,7 +99,7 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ Tool call
                     ┌──────────▼──────────────┐
-                    │   84 Tool Registry       │
+                    │   85 Tool Registry       │
                     │  (file, web, terminal,   │
                     │   skills, MCP, kanban,   │
                     │   browser, delegate...)  │
@@ -138,8 +138,8 @@ make docs             # Doxygen HTML docs (if doxygen available)
 | Phase | What | Output |
 |-------|------|--------|
 || P1 | 59 library units (.o) | lib/*.o |
-| P2 | Agent core + CLI + 11 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 84 tool handlers | src/tools/*.o |
+| P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
+| P3 | 85 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -160,7 +160,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (84 Registered)
+## All Tools (85 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -425,7 +425,7 @@ The CLI uses a central command registry (`cli/commands.c`) with alias resolution
 - **S08** — video_gen.c fal_provider.generate = NULL (uses handler directly)
 - **S09** — commands.c cmd_background "background mode not available" message
 
-All are P2-P3. The 84 tools + 79 CLI commands are real implementations.
+All are P2-P3. The 85 tools + 79 CLI commands are real implementations.
 
 ---
 
@@ -461,7 +461,7 @@ waefrebeorn/hermes-agent/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   84 tool handler implementations
+│   │   ├── tools/                ←   85 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
 │   ├── lib/                      ←   59 library units (compiled directly, no .a)
@@ -530,7 +530,7 @@ The DA process is the project's quality backbone — every claim is triple-verif
 
 ---
 
-## Battleship Roadmap (153 Gaps)
+## Battleship Roadmap (346 Gaps)
 
 The battleship system tracks every gap needed to reach 1:1 Python parity. Gaps are organized by 22 sectors (S1-S22) with coordinate IDs.
 

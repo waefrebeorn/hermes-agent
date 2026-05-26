@@ -29,12 +29,12 @@ bash test_runner.sh --verbose    # Per-test output
 - file.c: 561 LOC (Python: 1,220) — missing glob, watch, diff, hex view
 
 ## Codebase Size
-- Source `.c` files: 625 (src/ + lib/ + tests/)
+- Source `.c` files: 439 (src/ + lib/ + tests/)
 - Source code lines: 84,164 (src/)
 - Library lines: 286,003 (lib/)
 - Test lines: 48,262 (tests/)
 - Header lines: 8,462 (include/)
-- Total: **~427K lines**
+- Total: **~419K lines**
 
 ## Known Gaps
 - No per-platform gateway integration tests (19 platforms)

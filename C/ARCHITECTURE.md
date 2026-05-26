@@ -5,13 +5,13 @@
 Hermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
 
 ```
-|CLI / Gateway → Agent Loop → LLM Client → 11 Providers → HTTP/JSON
+|CLI / Gateway → Agent Loop → LLM Client → 10 Providers → HTTP/JSON
                     ↓
-             Tool Registry (84 tools)
+             Tool Registry (85 tools)
                     ↓
              Plugin Registry (10 .so)
                     ↓
-             58 Library Modules
+             59 Library Modules
 ```
 
 ## Module Overview
@@ -27,7 +27,7 @@ Hermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provide
 | **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
 | **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
 |**Libraries** | Reusable C modules | `lib/lib*` | 59 |
-| **Tests** | Unit tests | `tests/test_*.c` | 206, 224/0/21 |
+| **Tests** | Unit tests | `tests/test_*.c` | 213, 226/0/23 |
 | **Config** | YAML/env configuration | `~/.slermes/` | ~322 keys |
 
 ## Core Data Flow
@@ -126,7 +126,7 @@ Provider categories:
 | libansi | ANSI terminal codes | none |
 
 ## Testing
-- **207 test files, 224/0/21 suite** (all passed, 0 failed, 1 skipped)
+- **207 test files, 226/0/23 suite** (all passed, 0 failed, 1 skipped)
 - **Pattern:** Each test is `int main(void)` returning 0 on pass
 - **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
@@ -147,7 +147,7 @@ make plugins             # Build 10 .so plugins
 ```
 
 ## Current State
-- **Suite:** 224/0/21 — 207 test files
+- **Suite:** 226/0/23 — 207 test files
 - **Binary:** 30MB ELF, 0 warnings
 - **Commits:** 817+ C-specific
 - **Upstream:** synced via battleship-v8
