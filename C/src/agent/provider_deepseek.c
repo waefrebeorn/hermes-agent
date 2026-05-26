@@ -224,6 +224,12 @@ static char *deepseek_build_request_body(const provider_t *p,
             }
             json_object_set(msg, "tool_calls", tcs);
         }
+        /* I07: DeepSeek V4 thinking mode requires reasoning_content echo-back
+         * from prior assistant messages. Without this, API returns error. */
+        if (messages[i]->role == MSG_ASSISTANT && messages[i]->reasoning) {
+            json_object_set(msg, "reasoning_content",
+                json_new_string(messages[i]->reasoning));
+        }
         json_array_append(msgs, msg);
     }
     json_object_set(root, "messages", msgs);
@@ -311,12 +317,10 @@ static provider_response_t *deepseek_parse_stream_chunk(const provider_t *p,
     if (!resp) return NULL;
     if (!chunk) { resp->content = strdup(""); return resp; }
 
-    const char *prefix = "data: ";
-    if (strncmp(chunk, prefix, 6) != 0) {
-        resp->content = strdup(chunk);
-        return resp;
-    }
-    const char *json_str = chunk + 6;
+    /* HTTP layer already strips "data: " prefix — handle both cases */
+    const char *json_str = chunk;
+    if (strncmp(chunk, "data: ", 6) == 0)
+        json_str = chunk + 6;
     if (strncmp(json_str, "[DONE]", 6) == 0) {
         resp->content = strdup("");
         return resp;
