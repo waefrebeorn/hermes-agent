@@ -1,6 +1,8 @@
 /*
  * todo.c — Task tracking tool for Hermes C.
- * Manages session task list. Backed by memory.
+ * Manages session task list. Backed by JSON file.
+ * Actions: add, done, list, update, search.
+ * Fields: id, content, status, priority (p0-p3).
  */
 
 #include "hermes.h"
@@ -65,6 +67,12 @@ char *todo_handler(const char *args_json, const char *task_id) {
             json_node_t *item = json_new_object();
             json_object_set(item, "content", json_new_string(content));
             json_object_set(item, "status", json_new_string("pending"));
+            const char *priority = json_object_get_string(args, "priority", NULL);
+            if (!priority || (strcmp(priority, "p0") != 0 && strcmp(priority, "p1") != 0
+                && strcmp(priority, "p2") != 0 && strcmp(priority, "p3") != 0)) {
+                priority = "p2";
+            }
+            json_object_set(item, "priority", json_new_string(priority));
             char id[32];
             snprintf(id, sizeof(id), "task_%zu", json_len(todos));
             json_object_set(item, "id", json_new_string(id));
@@ -74,11 +82,12 @@ char *todo_handler(const char *args_json, const char *task_id) {
             else
                 json_object_set(result, "error", json_new_string("save failed"));
         }
+
     } else if (strcmp(action, "done") == 0 || strcmp(action, "complete") == 0) {
         const char *id = json_object_get_string(args, "id", NULL);
         bool found = false;
         for (size_t i = 0; i < json_len(todos); i++) {
-            json_t *item = json_get(todos, i);
+            json_node_t *item = json_get(todos, i);
             const char *item_id = json_get_str(item, "id", "");
             if (id && strcmp(item_id, id) == 0) {
                 json_set(item, "status", json_string("completed"));
@@ -89,6 +98,61 @@ char *todo_handler(const char *args_json, const char *task_id) {
         json_object_set(result, "found", json_new_bool(found));
         if (found && save_todos(todos))
             json_object_set(result, "status", json_new_string("updated"));
+        else if (!found)
+            json_object_set(result, "error", json_new_string("Task not found"));
+
+    } else if (strcmp(action, "update") == 0) {
+        const char *id = json_object_get_string(args, "id", NULL);
+        if (!id) {
+            json_object_set(result, "error", json_new_string("Missing id"));
+        } else {
+            bool found = false;
+            for (size_t i = 0; i < json_len(todos); i++) {
+                json_node_t *item = json_get(todos, i);
+                const char *item_id = json_get_str(item, "id", "");
+                if (strcmp(item_id, id) == 0) {
+                    const char *content = json_object_get_string(args, "content", NULL);
+                    if (content) json_set(item, "content", json_string(content));
+                    const char *status = json_object_get_string(args, "status", NULL);
+                    if (status) json_set(item, "status", json_string(status));
+                    const char *priority = json_object_get_string(args, "priority", NULL);
+                    if (priority && (strcmp(priority, "p0") == 0 || strcmp(priority, "p1") == 0
+                        || strcmp(priority, "p2") == 0 || strcmp(priority, "p3") == 0))
+                        json_set(item, "priority", json_string(priority));
+                    found = true;
+                    break;
+                }
+            }
+            json_object_set(result, "found", json_new_bool(found));
+            if (found && save_todos(todos))
+                json_object_set(result, "status", json_new_string("updated"));
+            else if (!found)
+                json_object_set(result, "error", json_new_string("Task not found"));
+        }
+
+    } else if (strcmp(action, "search") == 0) {
+        const char *q = json_object_get_string(args, "query", NULL);
+        const char *status_filter = json_object_get_string(args, "status", NULL);
+        const char *priority_filter = json_object_get_string(args, "priority", NULL);
+
+        json_node_t *matches = json_new_array();
+        for (size_t i = 0; i < json_len(todos); i++) {
+            json_node_t *item = json_get(todos, i);
+            const char *item_content = json_get_str(item, "content", "");
+            const char *item_status = json_get_str(item, "status", "");
+            const char *item_pri = json_get_str(item, "priority", "");
+
+            /* Apply filters */
+            if (status_filter && strcmp(item_status, status_filter) != 0) continue;
+            if (priority_filter && strcmp(item_pri, priority_filter) != 0) continue;
+            if (q && strstr(item_content, q) == NULL) continue;
+
+            json_append(matches, json_copy(item));
+        }
+        json_object_set(result, "count", json_new_number((double)json_len(matches)));
+        json_object_set(result, "items", matches);
+        json_object_set(result, "total", json_new_number((double)json_len(todos)));
+
     } else {
         /* List all */
         json_object_set(result, "count", json_new_number((double)json_len(todos)));
@@ -104,14 +168,19 @@ char *todo_handler(const char *args_json, const char *task_id) {
 
 void registry_init_todo(void) {
     registry_register("todo",
-        "Manage session task list. Actions: add (create todo), done/complete (mark done), list (show all). "
+        "Manage session task list. Actions: add (create with priority p0-p3), "
+        "done/complete (mark done), update (edit content/status/priority), "
+        "search (filter by query, status, priority), list (show all). "
         "Backed by JSON file at HERMES_HOME/todo.json.",
         "{"
         "\"type\":\"object\","
         "\"properties\":{"
-          "\"action\":{\"type\":\"string\",\"description\":\"add | done | list\",\"default\":\"list\"},"
+          "\"action\":{\"type\":\"string\",\"enum\":[\"add\",\"done\",\"complete\",\"update\",\"search\",\"list\"],\"description\":\"Action to perform\",\"default\":\"list\"},"
           "\"content\":{\"type\":\"string\",\"description\":\"Task description (required for add)\"},"
-          "\"id\":{\"type\":\"string\",\"description\":\"Task ID to mark done\"}"
+          "\"id\":{\"type\":\"string\",\"description\":\"Task ID\"},"
+          "\"priority\":{\"type\":\"string\",\"enum\":[\"p0\",\"p1\",\"p2\",\"p3\"],\"description\":\"Priority level: p0=critical, p1=high, p2=normal, p3=low\",\"default\":\"p2\"},"
+          "\"status\":{\"type\":\"string\",\"enum\":[\"pending\",\"completed\"],\"description\":\"Task status (for update/search filter)\"},"
+          "\"query\":{\"type\":\"string\",\"description\":\"Search query substring (for search action)\"}"
         "},"
         "\"required\":[]"
         "}", todo_handler);

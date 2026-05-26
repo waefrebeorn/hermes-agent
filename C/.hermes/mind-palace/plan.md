@@ -11,7 +11,7 @@ Suite: 227/0/24, 215 test files, 160 src .c files. Binary: 30MB.
 - Only real stub: stub_cdp_handler in browser.c (dead code, unused)
 - Zero gateway polling stubs
 
-## Battleship v15: 1,889 function-level parity gaps (~369 items)
+## Battleship v15: 1,889 function-level parity gaps (~366 items)
 Phase 2 sector needs re-audit before next implementation pass.
 
 ## Phase Order

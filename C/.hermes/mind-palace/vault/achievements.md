@@ -1108,3 +1108,12 @@ All have Unicode/emoji animation frames matching Python parity.
 | A21 | Session TTL / timeout — ALREADY IN C | approval.c:401-410 (g_approval_timeout, approval_set_timeout/get_timeout) |
 | A21 | Auto-approve patterns (always-approve cache) — ALREADY IN C | approval.c:266-276 (prompt 'a' response saves to allowlist) |
 | A21 | Real remaining: gateway approval, sudo guard, hardline cmds | approval.c:224-280 (prompt uses stdin, not gateway-compatible) |
+
+## Phase 65: Phase 3 Tool Features — Todo Priority + Search (2026-05-26)
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| T20 | Priority levels p0-p3 added to todo | src/tools/todo.c:64-73 (add accepts priority param, defaults to p2) |
+| T20 | update action (edit content/status/priority) | src/tools/todo.c:96-121 (update by id) |
+| T20 | search/filter by query, status, priority | src/tools/todo.c:123-140 (search action with 3 filters) |
+| T20 | Registry/schema updated with new actions/fields | src/tools/todo.c:145-176 |
