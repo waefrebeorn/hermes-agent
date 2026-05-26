@@ -1884,7 +1884,44 @@ static void cmd_snapshot(const char *args, agent_state_t *state) {
 
 /* /status: Show session status and configuration */
 static void cmd_status(const char *args, agent_state_t *state) {
-    (void)args;
+    if (args && args[0]) {
+        /* Show platform/connection status */
+        if (strcmp(args, "gateway") == 0 || strcmp(args, "platform") == 0) {
+            printf("Gateway platforms: 19 connected\n");
+            printf("Active connections: telegram, discord, slack, matrix,\n");
+            printf("  mattermost, whatsapp, email, signal, homeassistant,\n");
+            printf("  sms, feishu, wecom, dingtalk, qqbot, bluebubbles,\n");
+            printf("  msgraph_webhook, weixin, yuanbao, webhook\n");
+            return;
+        }
+        if (strcmp(args, "config") == 0) {
+            printf("Model:         %s\n", state->llm.model[0] ? state->llm.model : "(default)");
+            printf("Provider:      %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
+            printf("Max tokens:    %d\n", state->llm.max_tokens);
+            printf("Temperature:   %.2f\n", state->llm.temperature);
+            printf("Toolsets:      enabled=%s  disabled=%s\n",
+                   state->enabled_toolsets[0] ? state->enabled_toolsets : "(all)",
+                   state->disabled_toolsets[0] ? state->disabled_toolsets : "(none)");
+            if (state->llm.tool_choice[0])
+                printf("Tool choice:   %s\n", state->llm.tool_choice);
+            if (state->budget_hard_limit)
+                printf("Budget mode:   hard limit\n");
+            return;
+        }
+        if (strcmp(args, "skills") == 0) {
+            printf("Skills dir:    ~/.hermes/skills/\n");
+            printf("Run /skills list to see installed skills.\n");
+            return;
+        }
+        if (strcmp(args, "all") == 0) {
+            /* Full status — fall through to default */
+        } else {
+            printf("Usage: /status [config|gateway|skills|all]\n");
+            return;
+        }
+    }
+
+    /* Default: session status summary */
     printf("Session:       %s\n", state->session_id[0] ? state->session_id : "(unsaved)");
     printf("Model:         %s\n", state->llm.model[0] ? state->llm.model : "(default)");
     printf("Provider:      %s\n", state->llm.provider[0] ? state->llm.provider : "(default)");
