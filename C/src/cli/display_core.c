@@ -296,6 +296,88 @@ void display_spinner_stop(display_spinner_t *sp, const char *done_msg) {
  *  Kawaii Spinner — animated faces for LLM wait
  * ================================================================ */
 
+/* V11: Spinner frame sets — mirrors Python KawaiiSpinner.SPINNERS */
+static const char *SPINNER_DOTS_FRAMES[] = {
+    "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏",
+};
+static const int N_DOTS = 10;
+
+static const char *SPINNER_BOUNCE_FRAMES[] = {
+    "⠁", "⠂", "⠄", "⡀", "⢀", "⠠", "⠐", "⠈",
+};
+static const int N_BOUNCE = 8;
+
+static const char *SPINNER_GROW_FRAMES[] = {
+    "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂",
+};
+static const int N_GROW = 14;
+
+static const char *SPINNER_ARROWS_FRAMES[] = {
+    "←", "↖", "↑", "↗", "→", "↘", "↓", "↙",
+};
+static const int N_ARROWS = 8;
+
+static const char *SPINNER_STAR_FRAMES[] = {
+    "✶", "✷", "✸", "✹", "✺", "✹", "✸", "✷",
+};
+static const int N_STAR = 8;
+
+static const char *SPINNER_MOON_FRAMES[] = {
+    "🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘",
+};
+static const int N_MOON = 8;
+
+static const char *SPINNER_PULSE_FRAMES[] = {
+    "◜", "◠", "◝", "◞", "◡", "◟",
+};
+static const int N_PULSE = 6;
+
+static const char *SPINNER_BRAIN_FRAMES[] = {
+    "🧠", "💭", "💡", "✨", "💫", "🌟", "💡", "💭",
+};
+static const int N_BRAIN = 8;
+
+static const char *SPINNER_SPARKLE_FRAMES[] = {
+    "⁺", "˚", "*", "✧", "✦", "✧", "*", "˚",
+};
+static const int N_SPARKLE = 8;
+
+/* Get the current spinner frame character for the given type + index.
+ * Returns the frame string, or NULL for kawaii face mode. */
+static const char *spinner_get_frame(spinner_type_t type, int idx) {
+    switch (type) {
+        case SPINNER_DOTS:    return SPINNER_DOTS_FRAMES[idx % N_DOTS];
+        case SPINNER_BOUNCE:  return SPINNER_BOUNCE_FRAMES[idx % N_BOUNCE];
+        case SPINNER_GROW:    return SPINNER_GROW_FRAMES[idx % N_GROW];
+        case SPINNER_ARROWS:  return SPINNER_ARROWS_FRAMES[idx % N_ARROWS];
+        case SPINNER_STAR:    return SPINNER_STAR_FRAMES[idx % N_STAR];
+        case SPINNER_MOON:    return SPINNER_MOON_FRAMES[idx % N_MOON];
+        case SPINNER_PULSE:   return SPINNER_PULSE_FRAMES[idx % N_PULSE];
+        case SPINNER_BRAIN:   return SPINNER_BRAIN_FRAMES[idx % N_BRAIN];
+        case SPINNER_SPARKLE: return SPINNER_SPARKLE_FRAMES[idx % N_SPARKLE];
+        default:              return NULL; /* kawaii face mode */
+    }
+}
+
+/* Parse a spinner style name (from display.spinner_style config) to type enum. */
+spinner_type_t display_parse_spinner_type(const char *style) {
+    if (!style || !style[0]) return SPINNER_KAWAII;
+    if (strcmp(style, "dots") == 0)    return SPINNER_DOTS;
+    if (strcmp(style, "bounce") == 0)  return SPINNER_BOUNCE;
+    if (strcmp(style, "grow") == 0)    return SPINNER_GROW;
+    if (strcmp(style, "arrows") == 0)  return SPINNER_ARROWS;
+    if (strcmp(style, "star") == 0)    return SPINNER_STAR;
+    if (strcmp(style, "moon") == 0)    return SPINNER_MOON;
+    if (strcmp(style, "pulse") == 0)   return SPINNER_PULSE;
+    if (strcmp(style, "brain") == 0)   return SPINNER_BRAIN;
+    if (strcmp(style, "sparkle") == 0) return SPINNER_SPARKLE;
+    if (strcmp(style, "kawaii") == 0)  return SPINNER_KAWAII;
+    /* Also match classic/default for compatibility */
+    if (strcmp(style, "classic") == 0 || strcmp(style, "default") == 0)
+        return SPINNER_KAWAII;
+    return SPINNER_KAWAII; /* fallback */
+}
+
 static const char *KAWAII_WAITING[] = {
     "(｡◕‿◕｡)", "(◕‿◕✿)", "٩(◕‿◕｡)۶", "(✿◠‿◠)", "( ˘▽˘)っ",
     "♪(´ε` )", "(◕ᴗ◕✿)", "ヾ(＾∇＾)", "(≧◡≦)", "(★ω★)",
@@ -357,18 +439,29 @@ void display_kawaii_start(display_kawaii_t *k, const char *label, bool thinking)
     load_skin_wings(k->wing_left, sizeof(k->wing_left),
                     k->wing_right, sizeof(k->wing_right));
     /* Print initial state */
-    if (thinking) {
-        snprintf(k->face, sizeof(k->face), "%s", KAWAII_THINKING[0]);
-        snprintf(k->verb, sizeof(k->verb), "%s", THINKING_VERBS[0]);
+    const char *frame = spinner_get_frame(k->type, 0);
+    if (frame) {
+        /* V11: Frame-based spinner */
+        if (k->wing_left[0])
+            printf("\r%s%s  %s  %s", k->wing_left, frame, k->label ? k->label : "", k->wing_right);
+        else if (thinking && k->verb[0])
+            printf("\r%s  %s  (%s)", frame, k->label ? k->label : "", k->verb);
+        else
+            printf("\r%s  %s", frame, k->label ? k->label : "");
     } else {
-        snprintf(k->face, sizeof(k->face), "%s", KAWAII_WAITING[0]);
+        if (thinking) {
+            snprintf(k->face, sizeof(k->face), "%s", KAWAII_THINKING[0]);
+            snprintf(k->verb, sizeof(k->verb), "%s", THINKING_VERBS[0]);
+        } else {
+            snprintf(k->face, sizeof(k->face), "%s", KAWAII_WAITING[0]);
+        }
+        if (k->wing_left[0])
+            printf("\r%s%s  %s  %s", k->wing_left, k->face, k->label ? k->label : "", k->wing_right);
+        else if (thinking && k->verb[0])
+            printf("\r%s  %s  (%s)", k->face, k->label ? k->label : "", k->verb);
+        else
+            printf("\r%s  %s", k->face, k->label ? k->label : "");
     }
-    if (k->wing_left[0])
-        printf("\r%s%s  %s  %s", k->wing_left, k->face, k->label ? k->label : "", k->wing_right);
-    else if (thinking && k->verb[0])
-        printf("\r%s  %s  (%s)", k->face, k->label ? k->label : "", k->verb);
-    else
-        printf("\r%s  %s", k->face, k->label ? k->label : "");
     fflush(stdout);
 }
 
@@ -376,21 +469,32 @@ void display_kawaii_tick(display_kawaii_t *k) {
     if (!k || !k->active || !is_tty) return;
     k->frame++;
     int idx = k->frame;
-    const char *face;
-    if (k->thinking) {
-        face = KAWAII_THINKING[idx % N_THINKING];
-        const char *verb = THINKING_VERBS[idx % N_VERBS];
-        snprintf(k->verb, sizeof(k->verb), "%s", verb);
+    const char *frame = spinner_get_frame(k->type, idx);
+    if (frame) {
+        /* V11: Frame-based spinner */
+        if (k->wing_left[0])
+            printf("\r%s%s  %s  %s", k->wing_left, frame, k->label ? k->label : "", k->wing_right);
+        else if (k->thinking && k->verb[0])
+            printf("\r%s  %s  (%s)", frame, k->label ? k->label : "", k->verb);
+        else
+            printf("\r%s  %s", frame, k->label ? k->label : "");
     } else {
-        face = KAWAII_WAITING[idx % N_WAITING];
+        const char *face;
+        if (k->thinking) {
+            face = KAWAII_THINKING[idx % N_THINKING];
+            const char *verb = THINKING_VERBS[idx % N_VERBS];
+            snprintf(k->verb, sizeof(k->verb), "%s", verb);
+        } else {
+            face = KAWAII_WAITING[idx % N_WAITING];
+        }
+        snprintf(k->face, sizeof(k->face), "%s", face);
+        if (k->wing_left[0])
+            printf("\r%s%s  %s  %s", k->wing_left, face, k->label ? k->label : "", k->wing_right);
+        else if (k->thinking && k->verb[0])
+            printf("\r%s  %s  (%s)", face, k->label ? k->label : "", k->verb);
+        else
+            printf("\r%s  %s", face, k->label ? k->label : "");
     }
-    snprintf(k->face, sizeof(k->face), "%s", face);
-    if (k->wing_left[0])
-        printf("\r%s%s  %s  %s", k->wing_left, face, k->label ? k->label : "", k->wing_right);
-    else if (k->thinking && k->verb[0])
-        printf("\r%s  %s  (%s)", face, k->label ? k->label : "", k->verb);
-    else
-        printf("\r%s  %s", face, k->label ? k->label : "");
     fflush(stdout);
 }
 
@@ -398,16 +502,20 @@ void display_kawaii_stop(display_kawaii_t *k, const char *done_msg) {
     if (!k) return;
     k->active = false;
     int idx = k->frame;
-    const char *face;
-    if (k->thinking)
-        face = KAWAII_THINKING[idx % N_THINKING];
-    else
-        face = KAWAII_WAITING[idx % N_WAITING];
+    const char *frame = spinner_get_frame(k->type, idx);
+    const char *display_char;
+    if (frame) {
+        display_char = frame;
+    } else if (k->thinking) {
+        display_char = KAWAII_THINKING[idx % N_THINKING];
+    } else {
+        display_char = KAWAII_WAITING[idx % N_WAITING];
+    }
     if (is_tty) {
         if (k->wing_left[0])
-            printf("\r%s%s  ", k->wing_left, face);
+            printf("\r%s%s  ", k->wing_left, display_char);
         else
-            printf("\r%s  ", face);
+            printf("\r%s  ", display_char);
         if (done_msg) {
             display_printf(DISPLAY_GREEN, DISPLAY_NORMAL, "✓ ");
             printf("%s\n", done_msg);

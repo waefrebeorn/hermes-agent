@@ -481,6 +481,9 @@ int hermes_cli_main(int argc, char **argv) {
     /* Apply compression config */
     g_cli.agent.compress_enabled = g_cli.config.compress_enabled;
 
+    /* V11: Set spinner type from config */
+    g_cli.spinner.type = display_parse_spinner_type(g_cli.config.display.spinner_style);
+
     /* Apply CDP URL for browser CDP tools */
     if (g_cli.config.cdp_url[0])
         cdp_set_url(g_cli.config.cdp_url);

@@ -106,10 +106,25 @@ void display_spinner_start(display_spinner_t *sp, const char *label);
 void display_spinner_tick(display_spinner_t *sp);
 void display_spinner_stop(display_spinner_t *sp, const char *done_msg);
 
+/* Spinner type enum — mirrors Python KawaiiSpinner.SPINNERS */
+typedef enum {
+    SPINNER_KAWAII = 0,  /* default: kawaii face cycles */
+    SPINNER_DOTS,        /* braille dots */
+    SPINNER_BOUNCE,      /* braille bouncing */
+    SPINNER_GROW,        /* growing block */
+    SPINNER_ARROWS,      /* rotating arrows */
+    SPINNER_STAR,        /* star sparkle */
+    SPINNER_MOON,        /* moon phases */
+    SPINNER_PULSE,       /* pulse arcs */
+    SPINNER_BRAIN,       /* brain emoji cycle */
+    SPINNER_SPARKLE,     /* sparkle glyphs */
+} spinner_type_t;
+
 /* Kawaii spinner with animated face cycles + verb + wings */
 typedef struct {
     int    frame;
     char  *label;
+    spinner_type_t type; /* which spinner frame set to use */
     char   face[64];       /* current face emoji/kaomoji */
     char   verb[64];       /* current thinking verb (empty for waiting) */
     char   wing_left[16];  /* left wing decoration */
@@ -122,6 +137,9 @@ typedef struct {
 void display_kawaii_start(display_kawaii_t *sp, const char *label, bool thinking);
 void display_kawaii_tick(display_kawaii_t *sp);
 void display_kawaii_stop(display_kawaii_t *sp, const char *done_msg);
+
+/* Parse spinner style name to type enum (for display.spinner_style config). */
+spinner_type_t display_parse_spinner_type(const char *style);
 
 /* Set the display skin for skin-driven styling. Pass NULL to unset. */
 void display_set_skin(void *skin);

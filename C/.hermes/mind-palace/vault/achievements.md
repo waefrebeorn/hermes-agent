@@ -996,3 +996,17 @@ Based on no-color.org specification.
 |----|-----------|---------|----------|
 | V11 | Inline edit diffs NOT called from cli_tool_event_cb | `display_inline_diff()` IS called at cli.c:147 for patch tool diffs | cli.c:143-153 |
 | V12 | Banner tool count hardcoded at cli.c:242 | Tool count dynamically derived via `registry_get_count()` at cli.c:256 | cli.c:256 |
+
+## Phase 69: V11 Multiple Spinner Types (2026-05-26)
+
+Added 9 spinner frame types from Python KawaiiSpinner.SPINNERS:
+dots, bounce, grow, arrows, star, moon, pulse, brain, sparkle.
+All have Unicode/emoji animation frames matching Python parity.
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| V11 | 9 spinner frame arrays | display_core.c:298-370 (frame arrays + spinner_get_frame) |
+| V11 | spinner_type_t enum | hermes_display.h:109-120 (SPINNER_KAWAII through SPINNER_SPARKLE) |
+| V11 | display_parse_spinner_type() | display_core.c:361-381 (parses display.spinner_style config) |
+| V11 | Wired to kawaii spinner | cli.c:485 (sets g_cli.spinner.type from config) |
+| V11 | Frame display in start/tick/stop | display_core.c:428-440, 460-469, 488-493 |
