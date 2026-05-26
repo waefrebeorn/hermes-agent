@@ -812,3 +812,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|-----|----------|----------|
 | V06 | Response box — all 3 display_panel("Response") calls in cli.c now check skin colors.response_border hex value first, falling back to DISPLAY_CYAN. Uses display_panel_hex() for TrueColor border. | ~15 | P2 | src/cli/cli.c (3 display_panel calls updated) |
 
+## Phase 18: Rich Help — V07 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V07 | Help command rewritten with skin-colored panel border, aligned two-column command listing (auto-computed max name width), ANSI accent-colored category headers (─ Session ─ / ─ Config ─ / ─ Tools & Info ─ / ─ Other ─), dynamic category boundary iteration instead of hardcoded indices. Removed unused print_commands_for(). | ~60 | P2 | src/cli/commands.c (cmd_help), test_runner.sh (added display_core/ansi/skin to cli_dispatch test) |
+

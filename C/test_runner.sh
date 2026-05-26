@@ -1870,9 +1870,13 @@ fi &
 
 # CLI dispatch test (T02: tests commands_dispatch, commands_get_all, handlers)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
+    -I"$CDIR/lib/libansi" -I"$CDIR/lib/libskin" \
     "$CDIR/tests/test_cli_dispatch.c" \
     "$CDIR/src/cli/commands.c" \
+    "$CDIR/src/cli/display_core.c" \
     "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libansi/ansi.c" \
+    "$CDIR/lib/libskin/skin.c" \
     -o /tmp/hermes_test_cli_dispatch -lm \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_cli_dispatch > /dev/null 2>&1; then ok "cli_dispatch (T02: 108 tests)"

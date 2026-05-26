@@ -4,7 +4,7 @@
      4|Suite 226/0/23. Binary 30MB. 85 tools, 79 CLI, 19 gateways, 10 providers, 59 libs.
      5|
      6|## Triple DA Findings
-     7|**349 gaps across 20 sectors (battleship-v10)**
+     7|**348 gaps across 20 sectors (battleship-v10)**
      8|
      9|| Sector | Category | Gaps |
     10||--------|----------|------|
@@ -25,7 +25,7 @@
     25|| 11 | Tests | 5 coverage gaps |
     26|
     27|## Key Stub Stats
-    28|- Phase 0a complete — 8 entry points fixed. Remaining: 349 gaps across 20 sectors.
+    28|- Phase 0a complete — 8 entry points fixed. Remaining: 348 gaps across 20 sectors.
     29|-
     30|-
     31|- 40 CLI commands ignore args — Phase 0c continues
