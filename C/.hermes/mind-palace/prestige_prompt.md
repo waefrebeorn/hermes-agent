@@ -4,7 +4,7 @@
 **ALL DONE:** F01, F02, F03, F04, F05, F06, F07, F08, F09, F10
 
 ## Phase 0b — Display (13)
-V10 markdown (P0) → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line input → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
+**V10 done** (markdown render) → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line input → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
 
 ## Phase 1 — Confirmed Stubs (10)
 S01-S05 context/memory/server noops + S11-S15 unsupported returns

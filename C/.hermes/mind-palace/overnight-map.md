@@ -1,7 +1,7 @@
 # Slermes C — Overnight Map (v15 — 171 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v12.md — 171 gaps, 14 sectors, S12 rebuilt with 13 real display gaps
+|- **Battleship:** battleship-v12.md — 171 gaps, 14 sectors, S12 rebuilt with 13 real display gaps (V10 ✅)
 - **State:** state.md (v10) — 13 display gaps documented
 - **Phase 0 entry points:** ALL DONE (F01-F10)
 - **Goal:** goal-mantra.md (v14)
@@ -11,7 +11,7 @@
 **ALL DONE** — F02 (C logger), F03 (--json pipe), F04 (chat subcmd), F09 (banner tool count)
 
 ## Phase 0b — Display (13)
-V10 markdown (P0) → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
+**V10 ✅ done** → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
 
 **Note:** V17 is the biggest gap — 15,220 LOC of TUI ecosystem (ui-tui/ + tui_gateway/) with NO C equivalent.
 

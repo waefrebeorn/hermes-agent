@@ -226,7 +226,7 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 
 | # | ID | Feature | Python Source | C State | Priority |
 |---|-----|---------|-------------|---------|----------|
-| 1 | V10 | Rich markdown rendering | `rich.markdown` | C handles tables only — no bold/italic/code/inline formatting | P0 |
+|| 1 | V10 | ✅ Rich markdown rendering | `rich.markdown` | render_md.c handles headers, bold, italic, code, links, lists, blockquotes, HRs with ANSI | P0 ✅ |
 | 2 | V11 | Inline edit diffs in agent loop | `agent/display.py:render_edit_diff_with_delta` | C has `display_inline_diff()` but NOT called from `cli_tool_event_cb` — diffs not shown inline | P1 |
 | 3 | V12 | Dynamic banner stats from registry | Derived from `state->tools.count` | Banner hardcodes `85 tools` at cli.c:242 — stale when tools change | P1 |
 | 4 | V13 | Multiple spinner types (9 types) | `KawaiiSpinner.SPINNERS` dict in display.py | C only has kawaii face spinner — no dots/bounce/grow/arrows/star/moon/pulse/brain/sparkle | P2 |

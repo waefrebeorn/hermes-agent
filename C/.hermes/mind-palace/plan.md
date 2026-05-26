@@ -5,7 +5,7 @@ Build clean. 85 tools, 118 slash commands, 19 gateways, 10 providers, 59 libs.
 
 ## Gap Count: **171 sector-level** across 14 sectors (battleship-v12)
 - Phase 0 entry points: **ALL DONE** (F01-F10)
-- Phase 0b: **13 display gaps** (V10 markdown → V22 output helpers)
+- Phase 0b: **12 display gaps** (V10 ✅ → V22 output helpers)
 - Phase 0c: 40 CLI commands ignore args
 - Phase 1-4: 118 remaining
 

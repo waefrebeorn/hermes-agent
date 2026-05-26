@@ -928,6 +928,14 @@ Systematic audit of Python display/CLI/TUI structures with NO equivalent in C. S
 | V20 | Startup tips system | hermes_cli/tips.py | 485 | C banner shows no tips — Python shows random tip from 100+ tip corpus at startup | P2 |
 | V21 | NO_COLOR / TERM=dumb support | hermes_cli/colors.py | 38 | C uses isatty() only — no NO_COLOR env var check, no TERM=dumb detection | P2 |
 | V22 | Structured CLI output helpers | hermes_cli/cli_output.py | 78 | C has display_printf but no print_info/success/warning/error/header/prompt helpers | P2 |
+## Phase 24 — V10 Rich Markdown Rendering
+
+First Phase 0b display gap resolved. Adds markdown-to-ANSI renderer.
+
+| ID | Description | Resolution | Evidence |
+|----|-------------|------------|----------|
+| V10 | LLM responses lack markdown formatting | Created markdown_render.c with ANSI escape rendering for headers (h1-h6 colored+bold), **bold**, *italic*, `inline code`, ```fenced blocks, [links](url), list bullets, blockquotes, and horizontal rules. Wired into all 3 non-streaming response display paths. | include/hermes_markdown.h, src/agent/markdown_render.c (475 LOC), src/cli/cli.c (3 display_panel call sites) |
+
 ## Phase 23 — Phase 0 Entry Points Complete (F02, F03, F04, F09)
 
 All 4 remaining Phase 0 entry point gaps resolved in one session.
