@@ -615,54 +615,44 @@ int hermes_cli_main(int argc, char **argv) {
         /* --session without prompt: fall through to interactive with session loaded */
     }
 
-    /* H09: Pipe input mode — non-interactive, no args, read from stdin */
+    /* H09: Pipe input mode — non-interactive, no args, read from stdin line by line */
     if (!g_cli.interactive && argc <= 1) {
-        size_t cap = 65536;
-        size_t pos = 0;
-        char *input = malloc(cap);
-        if (!input) {
-            fprintf(stderr, "Error: out of memory reading stdin\n");
-            agent_close_db(&g_cli.agent);
-            agent_free(&g_cli.agent);
-            return 1;
-        }
-        int ch;
-        while ((ch = fgetc(stdin)) != EOF) {
-            if (pos >= cap - 1) {
-                cap *= 2;
-                char *tmp = realloc(input, cap);
-                if (!tmp) {
-                    fprintf(stderr, "Error: out of memory reading stdin\n");
-                    free(input);
-                    agent_close_db(&g_cli.agent);
-                    agent_free(&g_cli.agent);
-                    return 1;
-                }
-                input = tmp;
+        char line[65536];
+        bool db_open = false;
+
+        while (fgets(line, sizeof(line), stdin)) {
+            /* Trim trailing newline */
+            size_t len = strlen(line);
+            while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
+                line[--len] = '\0';
+            if (len == 0) continue;
+
+            /* Open DB on first input (lazy) */
+            if (!db_open) {
+                db_open = true;
+                if (g_cli.agent.hermes_home[0])
+                    agent_open_db(&g_cli.agent);
             }
-            input[pos++] = (char)ch;
-        }
-        input[pos] = '\0';
 
-        /* Strip trailing newlines */
-        while (pos > 0 && (input[pos-1] == '\n' || input[pos-1] == '\r'))
-            input[--pos] = '\0';
-
-        if (pos > 0) {
-            /* Check for slash commands */
-            if (input[0] == '/') {
-                if (!commands_dispatch(input, &g_cli.agent)) {
-                    if (!commands_try_skill(input, &g_cli.agent)) {
+            if (line[0] == '/') {
+                /* Handle /exit and /quit specially */
+                if (strcmp(line, "/exit") == 0 || strcmp(line, "/quit") == 0) {
+                    if (g_cli.json_output)
+                        cli_json_respond("Goodbye!", g_cli.agent.session_id, "ok");
+                    break;
+                }
+                if (!commands_dispatch(line, &g_cli.agent)) {
+                    if (!commands_try_skill(line, &g_cli.agent)) {
                         if (g_cli.json_output) {
-                            char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", input);
+                            char err[512]; snprintf(err, sizeof(err), "Unknown command: %s", line);
                             cli_json_respond(err, g_cli.agent.session_id, "error");
                         } else {
-                            printf("Unknown command: %s\n", input);
+                            printf("Unknown command: %s\n", line);
                         }
                     }
                 }
             } else {
-                char *resp = agent_chat(&g_cli.agent, input);
+                char *resp = agent_chat(&g_cli.agent, line);
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
                 } else {
@@ -676,9 +666,20 @@ int hermes_cli_main(int argc, char **argv) {
             }
         }
 
-        agent_close_db(&g_cli.agent);
+        /* If json_output and no input was processed, emit a status */
+        if (g_cli.json_output && !db_open) {
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+                     "{\"response\":\"No input provided. Use pipe or args.\","
+                     "\"session_id\":\"%s\",\"status\":\"idle\"}",
+                     g_cli.agent.session_id ? g_cli.agent.session_id : "");
+            printf("%s\n", buf);
+        }
+
+        if (db_open) {
+            agent_close_db(&g_cli.agent);
+        }
         agent_free(&g_cli.agent);
-        free(input);
         return 0;
     }
 
