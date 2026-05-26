@@ -1090,3 +1090,12 @@ All have Unicode/emoji animation frames matching Python parity.
 | P23 | DELETE operation — removes files | src/tools/patch.c:747-760 |
 | P23 | 3 tests in test_runner.sh | tests/test_patch_v4a.c — update, add, delete + fuzzy + no-begin-mark |
 | P23 | Suite: 227/0/24 (+1 new test) | test_runner.sh:2250-2261 |
+
+## Phase 63: Phase 3 Tool Features — Skill Deps (2026-05-26)
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| S22 | skill_manage deps action added | src/tools/skill_mgmt.c:625-733 (action_deps function) |
+| S22 | YAML frontmatter depends_on parser | src/tools/skill_mgmt.c:650-708 |
+| S22 | Dependency resolution against skills dir | src/tools/skill_mgmt.c:712-726 |
+| S22 | Wired into handler dispatch | src/tools/skill_mgmt.c:792-793 (action="deps" branch) |

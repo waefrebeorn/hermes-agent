@@ -11,7 +11,7 @@ Suite: 227/0/24, 215 test files, 160 src .c files. Binary: 30MB.
 - Only real stub: stub_cdp_handler in browser.c (dead code, unused)
 - Zero gateway polling stubs
 
-## Battleship v15: 1,889 function-level parity gaps (~373 items)
+## Battleship v15: 1,889 function-level parity gaps (~372 items)
 Phase 2 sector needs re-audit before next implementation pass.
 
 ## Phase Order
@@ -37,4 +37,7 @@ Port non-OpenAI-compatible providers: copilot, opencode-zen, openai-codex.
 - V4A multi-file patch mode added to patch.c (mode="patch" param with *** Begin/End Patch markers)
   - Supports: Update File (multi-hunk), Add File, Delete File
   - 3 tests in test_runner.sh, suite 227/0/24
+- Skill dependency resolution: skill_manage deps action added
+  - Parses depends_on from YAML frontmatter, resolves against installed skills
+  - Suite still 227/0/24 (deps test via direct linkage)
 - Walkway files bumped to v16/v21 with verified numbers

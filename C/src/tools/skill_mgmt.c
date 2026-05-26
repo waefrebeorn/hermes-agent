@@ -625,6 +625,114 @@ static char *action_remove_file(json_node_t *args, const char *skills_dir) {
     char *s = json_serialize(result); json_free(result); return s;
 }
 
+/* Action: deps — check skill dependencies.
+ * Reads SKILL.md YAML frontmatter, finds depends_on, resolves each. */
+static char *action_deps(json_node_t *args, const char *skills_dir)
+{
+    const char *name = json_object_get_string(args, "name", NULL);
+    if (!name) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("name required"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+
+    char skill_path[MAX_PATH];
+    snprintf(skill_path, sizeof(skill_path), "%s/%s/SKILL.md", skills_dir, name);
+    char *content = read_skill_file(skill_path);
+    if (!content) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("Skill not found or cannot read SKILL.md"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+
+    /* Parse YAML frontmatter between --- markers */
+    if (strncmp(content, "---", 3) != 0) {
+        free(content);
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("No YAML frontmatter"));
+        json_object_set(r, "skill", json_new_string(name));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+
+    const char *fm_start = content + 3;
+    const char *nl = strchr(fm_start, '\n');
+    if (!nl) { free(content); return strdup("{\"error\":\"Malformed frontmatter\"}"); }
+    fm_start = nl + 1;
+
+    const char *fm_end = strstr(fm_start, "\n---");
+    if (!fm_end) { free(content); return strdup("{\"error\":\"No closing --- in frontmatter\"}"); }
+
+    size_t fm_len = (size_t)(fm_end - fm_start);
+    char *fm = malloc(fm_len + 1);
+    if (!fm) { free(content); return strdup("{\"error\":\"OOM\"}"); }
+    memcpy(fm, fm_start, fm_len);
+    fm[fm_len] = '\0';
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "skill", json_new_string(name));
+    json_node_t *deps = json_new_array();
+
+    char *line_save = NULL;
+    char *line = strtok_r(fm, "\n", &line_save);
+    bool in_deps = false;
+
+    while (line) {
+        while (*line == ' ') line++;
+        if (strncmp(line, "depends_on:", 11) == 0) {
+            in_deps = true;
+            const char *rest = line + 11;
+            while (*rest == ' ') rest++;
+            if (*rest == '-') {
+                while (*rest == ' ') rest++;
+                if (*rest == '-') { rest++; while (*rest == ' ') rest++; }
+                if (*rest) {
+                    size_t dlen = strlen(rest);
+                    while (dlen > 0 && (rest[dlen-1] == ' ' || rest[dlen-1] == '\r')) dlen--;
+                    char *dn = strndup(rest, dlen);
+                    if (dn) { json_append(deps, json_new_string(dn)); free(dn); }
+                }
+            }
+        } else if (in_deps && line[0] == '-') {
+            const char *rest = line + 1;
+            while (*rest == ' ') rest++;
+            if (*rest) {
+                size_t dlen = strlen(rest);
+                while (dlen > 0 && (rest[dlen-1] == ' ' || rest[dlen-1] == '\r')) dlen--;
+                char *dn = strndup(rest, dlen);
+                if (dn) { json_append(deps, json_new_string(dn)); free(dn); }
+            }
+        } else if (in_deps && line[0] != ' ' && line[0] != '\t') {
+            in_deps = false;
+        }
+        line = strtok_r(NULL, "\n", &line_save);
+    }
+
+    json_object_set(result, "dependencies", deps);
+
+    json_node_t *statuses = json_new_object();
+    int found = 0, missing = 0;
+    for (size_t i = 0; i < json_len(deps); i++) {
+        json_node_t *dep = json_get(deps, (int)i);
+        const char *dn = NULL;
+        if (dep && dep->type == JSON_STRING) dn = dep->str_val;
+        if (!dn || !*dn) continue;
+        struct stat st;
+        char dp[MAX_PATH];
+        snprintf(dp, sizeof(dp), "%s/%s/SKILL.md", skills_dir, dn);
+        if (stat(dp, &st) == 0) { json_object_set(statuses, dn, json_new_string("found")); found++; }
+        else { json_object_set(statuses, dn, json_new_string("missing")); missing++; }
+    }
+    json_object_set(result, "status", statuses);
+    json_object_set(result, "found", json_new_number((double)found));
+    json_object_set(result, "missing", json_new_number((double)missing));
+
+    char *json_out = json_serialize(result);
+    json_free(result);
+    free(fm);
+    free(content);
+    return json_out;
+}
+
 /* Main skill_manage handler — routes to action */
 char *skill_manage_handler(const char *args_json, const char *task_id) {
     (void)task_id;
@@ -682,6 +790,8 @@ char *skill_manage_handler(const char *args_json, const char *task_id) {
         result = action_write_file(args, skills_dir);
     else if (strcmp(action, "remove_file") == 0)
         result = action_remove_file(args, skills_dir);
+    else if (strcmp(action, "deps") == 0)
+        result = action_deps(args, skills_dir);
     else {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string(
