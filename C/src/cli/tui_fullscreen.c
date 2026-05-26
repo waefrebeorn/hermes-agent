@@ -181,35 +181,32 @@ static void tui_theme_init(void) {
 }
 
 /* Allocate color pair */
-static int __attribute__((unused)) tui_alloc_pair(int fg, int bg) {
+static int tui_alloc_pair(int fg, int bg) {
     int pair = tui_next_pair++;
     if (pair > COLOR_PAIRS - 1) pair = 100; /* wrap */
     init_pair(pair, fg, bg);
     return pair;
 }
 
-/* Apply a theme: register all color pairs */
+/* Apply a theme: register all color pairs using allocator */
 static void tui_apply_theme(const tui_theme_t *th) {
     if (!th) return;
-    /* We store color pair numbers by convention:
-     *   1 = status, 2 = prompt, 3 = user, 4 = assistant, 5 = system,
-     *   6 = tool, 7 = error, 8 = warn, 9 = hl, 10 = dim, 11 = border,
-     *   12 = tool_feed, 13 = selection
-     * This way external code can still use COLOR_PAIR(1-13).
-     */
-    init_pair(1,  th->status_fg, th->status_bg);
-    init_pair(2,  th->prompt_fg, th->prompt_bg);
-    init_pair(3,  th->user_fg, th->user_bg);
-    init_pair(4,  th->assistant_fg, th->assistant_bg);
-    init_pair(5,  th->system_fg, th->system_bg);
-    init_pair(6,  th->tool_fg, th->tool_bg);
-    init_pair(7,  th->error_fg, th->error_bg);
-    init_pair(8,  th->warn_fg, th->warn_bg);
-    init_pair(9,  th->hl_fg, th->hl_bg);
-    init_pair(10, th->dim_fg, th->dim_bg);
-    init_pair(11, th->border_fg, th->border_bg);
-    init_pair(12, th->tool_feed_fg, th->tool_feed_bg);
-    init_pair(13, th->sel_fg, th->sel_bg);
+    /* Reset allocator so pairs 1-13 map to known conventions */
+    tui_next_pair = 1;
+    tui_alloc_pair(th->status_fg, th->status_bg);       /* 1 = status */
+    tui_alloc_pair(th->prompt_fg, th->prompt_bg);       /* 2 = prompt */
+    tui_alloc_pair(th->user_fg, th->user_bg);           /* 3 = user */
+    tui_alloc_pair(th->assistant_fg, th->assistant_bg); /* 4 = assistant */
+    tui_alloc_pair(th->system_fg, th->system_bg);       /* 5 = system */
+    tui_alloc_pair(th->tool_fg, th->tool_bg);           /* 6 = tool */
+    tui_alloc_pair(th->error_fg, th->error_bg);         /* 7 = error */
+    tui_alloc_pair(th->warn_fg, th->warn_bg);           /* 8 = warn */
+    tui_alloc_pair(th->hl_fg, th->hl_bg);               /* 9 = hl */
+    tui_alloc_pair(th->dim_fg, th->dim_bg);             /* 10 = dim */
+    tui_alloc_pair(th->border_fg, th->border_bg);       /* 11 = border */
+    tui_alloc_pair(th->tool_feed_fg, th->tool_feed_bg); /* 12 = tool_feed */
+    tui_alloc_pair(th->sel_fg, th->sel_bg);             /* 13 = selection */
+    if (tui_next_pair < 14) tui_next_pair = 14; /* ensure next free pair */
 }
 
 /* Load skin from JSON file */
@@ -846,7 +843,7 @@ static void tui_history_add(msg_role_t role, const char *text, bool bold) {
 }
 
 /* Write a formatted line to a window with role coloring */
-static void __attribute__((unused)) tui_wprint_role(WINDOW *win, msg_role_t role, const char *text,
+static void tui_wprint_role(WINDOW *win, msg_role_t role, const char *text,
                              bool bold, bool dim) {
     if (!win) return;
 
@@ -1004,9 +1001,7 @@ static void tui_redraw_history(void) {
         wmove(win, y, 0);
 
         /* Print prefix in role color */
-        wattron(win, A_BOLD | COLOR_PAIR(line->color_pair));
-        wprintw(win, "%s", prefix);
-        wattroff(win, A_BOLD);
+        tui_wprint_role(win, line->role, prefix, true, false);
 
         /* Print message text with markdown rendering */
         int prefix_len = strlen(prefix);
@@ -1991,9 +1986,7 @@ static int tui_config_editor_handle(int ch) {
         case 'e': {
             /* 'explain' — show description as history message */
             char buf[1024];
-            snprintf(buf, sizeof(buf), "  â¢ %s: %s
-  Default: %s
-  Current: %s",
+            snprintf(buf, sizeof(buf), "  * %s: %s\n  Default: %s\n  Current: %s",
                      tui.config_editor.entries[tui.config_editor.selected].key,
                      tui.config_editor.entries[tui.config_editor.selected].description,
                      /* Use stored value as both default and current for now */

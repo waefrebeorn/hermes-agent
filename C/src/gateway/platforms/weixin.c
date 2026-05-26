@@ -55,7 +55,9 @@ static weixin_state_t g_wx;
  * ================================================================ */
 
 /* Build iLink headers as a single newline-separated string */
-static void __attribute__((unused)) build_headers(const char *body, char *hdr_buf, size_t hdr_sz) {
+static void build_headers(const char *body, char *hdr_buf, size_t hdr_sz,
+                           const char *override_token) {
+    const char *tok = override_token ? override_token : g_wx.token;
     snprintf(hdr_buf, hdr_sz,
         "Content-Type: application/json\n"
         "AuthorizationType: ilink_bot_token\n"
@@ -63,7 +65,7 @@ static void __attribute__((unused)) build_headers(const char *body, char *hdr_bu
         "Content-Length: %zu\n"
         "iLink-App-Id: bot\n"
         "iLink-App-ClientVersion: 131584",
-        g_wx.token, strlen(body));
+        tok, strlen(body));
 }
 
 /* POST to iLink API with full payload */
@@ -78,17 +80,10 @@ static char *wx_api_post(const char *endpoint, const char *payload_json,
              "%s,\"base_info\":{\"channel_version\":\"2.2.0\"}}",
              payload_json);
 
-    /* Build headers */
+    /* Build headers using shared helper */
     char headers[1024];
     const char *tok = override_token ? override_token : g_wx.token;
-    snprintf(headers, sizeof(headers),
-        "Content-Type: application/json\n"
-        "AuthorizationType: ilink_bot_token\n"
-        "Authorization: Bearer %s\n"
-        "Content-Length: %zu\n"
-        "iLink-App-Id: bot\n"
-        "iLink-App-ClientVersion: 131584",
-        tok, strlen(full_body));
+    build_headers(full_body, headers, sizeof(headers), tok);
 
     /* Create temporary http client for each request */
     http_t *h = http_new(timeout_ms > 0 ? (timeout_ms / 1000) : 15);

@@ -294,13 +294,10 @@ static provider_response_t *openrouter_parse_stream_chunk(const provider_t *p,
     if (!resp) return NULL;
     if (!chunk) { resp->content = strdup(""); return resp; }
 
-    /* SSE format: "data: {...}" or "data: [DONE]" */
-    const char *prefix = "data: ";
-    if (strncmp(chunk, prefix, 6) != 0) {
-        resp->content = strdup(chunk);
-        return resp;
-    }
-    const char *json_str = chunk + 6;
+/* SSE format: "data: {...}" — HTTP layer already strips prefix */
+      const char *json_str = chunk;
+      if (strncmp(chunk, "data: ", 6) == 0)
+          json_str = chunk + 6;
     if (strncmp(json_str, "[DONE]", 6) == 0) {
         resp->content = strdup("");
         return resp;

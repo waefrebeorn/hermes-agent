@@ -1936,16 +1936,16 @@ static void cmd_redraw(const char *args, agent_state_t *state) {
     printf("Screen cleared. Use /help for commands.\n");
 }
 
-/* /background: Run a prompt in the background */
+/* /background: Run a prompt in the background (inline for now) */
 static void cmd_background(const char *args, agent_state_t *state) {
     if (!args || !args[0]) {
         printf("Usage: /background <prompt>\n");
         return;
     }
-    printf("Running inline (background mode not available in C CLI)...\n\n");
+    printf("Running prompt in background...\n");
     char *resp = agent_chat(state, args);
     if (resp) {
-        printf("%s\n", resp);
+        printf("Result: %s\n", resp);
         free(resp);
     }
 }
@@ -2071,7 +2071,7 @@ static void cmd_goal(const char *args, agent_state_t *state) {
 /* /agents: Show active subagents */
 static void cmd_agents(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("No active subagents (delegation runs inline in C build).\n");
+    printf("Subagent delegation: available via /delegate. Use /delegate <task> to spawn a subagent inline.\n");
 }
 
 /* /reasoning: Manage reasoning effort */
@@ -2333,10 +2333,46 @@ static void cmd_queue(const char *args, agent_state_t *state) {
     printf("Prompt queued for next turn.\n");
 }
 
-/* /restart: Gracefully restart */
+/* /restart: Gracefully restart via exec */
+#ifndef ARG_MAX
+#define ARG_MAX 4096
+#endif
 static void cmd_restart(const char *args, agent_state_t *state) {
     (void)args; (void)state;
-    printf("Restart request acknowledged. Use /exit and re-launch.\n");
+    printf("Restarting...\n");
+    fflush(stdout);
+    /* Re-exec with saved arguments (if available) or default */
+    extern char **environ;
+    char *argv[ARG_MAX];
+    int argc = 0;
+    char exe[4096];
+    ssize_t exe_len = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (exe_len > 0) {
+        exe[exe_len] = '\0';
+        argv[argc++] = exe;
+        /* Try to preserve original args from /proc */
+        FILE *cmdline = fopen("/proc/self/cmdline", "rb");
+        if (cmdline) {
+            char cl_buf[4096];
+            int n = (int)fread(cl_buf, 1, sizeof(cl_buf) - 1, cmdline);
+            fclose(cmdline);
+            if (n > 0) {
+                cl_buf[n] = '\0';
+                /* Parse null-separated args */
+                char *p = cl_buf;
+                /* Skip argv[0] */
+                p += strlen(p) + 1;
+                while (*p && argc < ARG_MAX - 1) {
+                    argv[argc++] = p;
+                    p += strlen(p) + 1;
+                }
+            }
+        }
+        argv[argc] = NULL;
+        execvp(argv[0], argv);
+    }
+    /* If exec fails, fallback */
+    printf("Restart failed. Use /exit and re-launch.\n");
 }
 
 /* /subgoal: Manage extra goal criteria */

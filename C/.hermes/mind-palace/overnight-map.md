@@ -1,4 +1,4 @@
-# Slermes C — Overnight Map (v15 — 171 Gaps)
+# Slermes C — Overnight Map (v16 — 171 Gaps)
 
 ## Navigation
 |- **Battleship:** battleship-v12.md — 171 gaps, 14 sectors, S12 rebuilt with 13 real display gaps (V10 ✅)

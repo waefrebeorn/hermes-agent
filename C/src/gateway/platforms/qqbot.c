@@ -74,9 +74,8 @@ static bool post_webhook(http_client_t *http, json_node_t *root) {
     return ok;
 }
 
-/* Internal: POST to QQ Bot API endpoint (reserved for future API mode) */
-static bool __attribute__((unused)) post_api(const char *endpoint, json_node_t *root) {
-    (void)endpoint; (void)root;
+/* Public: POST to QQ Bot API endpoint (API mode, not webhook) */
+bool qqbot_post_api(const char *endpoint, json_node_t *root) {
     if (!g_qqbot_token[0]) return false;
 
     http_client_t *http = http_client_new(10);

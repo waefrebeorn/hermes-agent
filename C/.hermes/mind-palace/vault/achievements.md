@@ -946,3 +946,16 @@ All 4 remaining Phase 0 entry point gaps resolved in one session.
 | F03 | `--json` mode: slash commands output raw text | stdout capture via dup/dup2/tmpfile wraps handler output as JSON `{'response','session_id','status'}` when --json flag active. Fixes `printf '/status\n/exit\n' | ./slermes --json` mixed output. | src/cli/cli.c:326-368 (json_capture_start/stop), src/cli/cli.c:720-749 (dispatch wrapping) |
 | F04 | `slermes chat` sends "chat" as LLM prompt | Detects 'chat' subcommand at arg_start, `goto start_interactive` to fall through to interactive loop. No longer sends "chat" string to LLM. | src/cli/cli.c:597-601 (chat detection) |
 | F09 | Banner hardcodes "Tools: 85" | Derives from `registry_get_count()` at runtime with fallback to `g_cli.agent.tools.count`. Banner now shows actual registered tool count. | src/cli/cli.c:243-244 (dynamic tool_count) |
+
+## Phase 66: Streaming Bug Fixes (2026-05-26)
+
+Systemic `data:` prefix assumption in provider stream parsers. HTTP layer (`http.c:1024`) strips `data: ` prefix before calling `on_provider_stream_chunk`. All 5 OpenAI-compatible providers checked for prefix with inverted logic: `if NOT data: prefix → return raw JSON as content`. llm_client.c fallback tool call parser had the same bug.
+
+| ID | Description | File | Evidence |
+|----|-------------|------|----------|
+| S16 | provider_openai `data:` prefix assumption — raw JSON streamed to terminal | provider_openai.c:360-363 | strncmp(data:,6) != 0 → raw JSON bug, fixed to handle both cases |
+| S17 | provider_azure `data:` prefix assumption — same bug | provider_azure.c:255-257 | Same pattern, fixed |
+| S18 | provider_custom `data:` prefix assumption — same bug | provider_custom.c:251-253 | Same pattern, fixed |
+| S19 | provider_openrouter `data:` prefix assumption — same bug | provider_openrouter.c:294-297 | Same pattern, fixed |
+| S20 | provider_xai `data:` prefix assumption — same bug | provider_xai.c:263-265 | Same pattern, fixed |
+| S21 | llm_client.c fallback tool call `data:` check — dead code, never matched | llm_client.c:1112 | `if (strncmp(data, "data: ", 6) == 0)` never true, fix handles both cases |

@@ -263,7 +263,7 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 | 183 | R05 | Per-platform gateway config | Global config only | Per-platform auth/timeout/endpoint |
 
 
-## DA Audit Findings (2026-05-26, updated for v13 — Phase 0 entry points resolved)
+## DA Audit Findings (2026-05-26, updated for v13 — Phase 0 entry points resolved; streaming bugs found and fixed)
 
 ### Discrepancies Found
 
@@ -272,8 +272,10 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 | F09-ext | Tool count discrepancy | Banner hardcodes "85 tools", CLI runtime says 83, unique registry_register calls = 72. 11 tools registered via non-standard mechanism or counted in CLI but not in registry_register grep | Metrics unreliable |
 | F17 | Banner count hardcoded | cli.c:242 hardcodes "Tools: 85" — should derive from state->tools.count | Wrong number displayed |
 | F18 | tool_usage + exec_code not in registry grep | CLI counts 83, only 72 found via registry_register. 11 tools registered dynamically or via registry_register_ex variants | Tool inventory unclear |
+| S16-S20 | 5 providers streaming `data:` prefix assumption | HTTP layer (`http.c:1024`) strips `data:` prefix. All 5 OpenAI-compatible providers checked `if NOT prefix → return raw JSON`. Raw JSON streamed to terminal. Fixed: handle both cases. | Streaming completely broken for all OpenAI-compatible providers |
+| S21 | llm_client.c fallback tool call `data:` check dead code | Line 1112 checks `if (strncmp(data, "data: ", 6) == 0)` but HTTP layer already stripped it. Dead code — tool call streaming completely broken. Fixed: handle both cases. | Tool call streaming completely dead for all providers |
 
-### Stale Claims Retired to vault Phase 64
+### Stale Claims Retired to vault Phase 64 (2026-05-25)
 
 S0: F06-F08, F10 all wired. S1: S06-S10 all wired. S11: all 5 dead code entries (X01-X05) wired. S2: M04 (`--profile`) implemented. S12: D13/D14 claims corrected (banner + tool feed at full parity now).
 

@@ -1,4 +1,4 @@
-# Slermes C — State Dashboard (v10 — 2026-05-26)
+# Slermes C — State Dashboard (v11 — 2026-05-26)
 
 ## Build Metrics
 Build clean. **85 tools** (registry_register). 118 slash commands. 19 gateways. 10 providers. 59 libs. 164 src/ .c files. 214 test_*.c files.
@@ -12,12 +12,13 @@ Build clean. **85 tools** (registry_register). 118 slash commands. 19 gateways. 
 - **S11**: All 5 dead code entries (X01-X05) wired
 - **M04**: --profile flag wired
 - **S12 D13/D14**: Corrected stale claims (banner + tool feed are full parity)
+|- **V10b**: Streaming bug fix — 5 providers (OpenAI, Azure, Custom, OpenRouter, xAI) + llm_client.c fallback all had `data:` prefix assumption. HTTP layer strips prefix, raw JSON streamed to terminal. All 6 files fixed.
 
 ## Battleship
 **v12 — 171 active gaps** across 14 sectors.
 
 ## Display Parity (Phase 0b) — 12 gaps (V10 ✅)
-| ID | Gap | LOC Missing | Priority | 
+| ID | Gap | LOC Missing | Priority |
 |----|-----|-------------|----------|
 | V10 | Rich markdown rendering | ✅ ~1000 | P0 |
 | V11 | Inline edit diffs in agent loop | ~200 | P1 |

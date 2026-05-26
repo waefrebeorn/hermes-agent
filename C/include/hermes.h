@@ -336,6 +336,9 @@ typedef struct {
 
     /* G28-G30: Tool call loop guardrails controller */
     tool_guardrail_controller_t guardrails_ctrl;
+
+    /* G37: Optional background tool result review (see llm_background_review) */
+    bool enable_background_review;
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */

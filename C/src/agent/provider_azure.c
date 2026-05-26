@@ -258,9 +258,10 @@ static provider_response_t *azure_parse_stream_chunk(const provider_t *p,
     /* Null-safe */
     if (!chunk) { resp->content = strdup(""); return resp; }
 
-    const char *prefix = "data: ";
-    if (strncmp(chunk, prefix, 6) != 0) { resp->content = strdup(chunk); return resp; }
-    const char *json_str = chunk + 6;
+/* HTTP layer already strips "data: " prefix — handle both cases */
+      const char *json_str = chunk;
+      if (strncmp(chunk, "data: ", 6) == 0)
+          json_str = chunk + 6;
     if (strncmp(json_str, "[DONE]", 6) == 0) { resp->content = strdup(""); return resp; }
     char *err = NULL;
     json_t *root = json_parse(json_str, &err);

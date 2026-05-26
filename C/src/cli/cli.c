@@ -135,13 +135,25 @@ static int cli_tool_event_cb(const char *event_type, const char *tool_name,
     } else if (strcmp(event_type, "tool.completed") == 0) {
         /* Quick result summary */
         display_printf(DISPLAY_GREEN, DISPLAY_DIM, "  ┊ ✓ %s", tool_name);
-        /* Check if result has a compact success indicator */
+        /* Check if result has a compact success indicator or diff */
         if (args_or_result) {
             json_t *res = json_parse(args_or_result, NULL);
             if (res && res->type == JSON_OBJECT) {
+                /* V11: Show inline diff for patch tool */
+                if (strcmp(tool_name, "patch") == 0) {
+                    const char *diff_text = json_get_str(res, "diff", NULL);
+                    if (diff_text) {
+                        printf("\n");
+                        char *formatted = display_inline_diff(diff_text);
+                        if (formatted) {
+                            printf("%s", formatted);
+                            free(formatted);
+                        }
+                    }
+                }
                 const char *summary = json_get_str(res, "success", NULL);
                 if (!summary) summary = json_get_str(res, "output", NULL);
-                if (summary) {
+                if (summary && strcmp(tool_name, "patch") != 0) {
                     char truncated[80];
                     snprintf(truncated, sizeof(truncated), "%.77s", summary);
                     if (strlen(summary) > 77) strcat(truncated, "...");

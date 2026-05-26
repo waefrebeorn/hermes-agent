@@ -1108,70 +1108,70 @@ static int on_provider_stream_chunk(const char *data, size_t len, void *userdata
 
     /* Fallback: also try OpenAI-style delta parsing for tool calls.
      * This handles the case where parse_stream_chunk returns empty
-     * but the chunk has tool_call deltas (OpenAI format). */
-    if (strncmp(data, "data: ", 6) == 0) {
-        const char *json_str = data + 6;
-        if (strncmp(json_str, "[DONE]", 6) == 0) {
+     * but the chunk has tool_call deltas (OpenAI format).
+     * HTTP layer already strips "data: " prefix — handle both cases. */
+    const char *json_str = data;
+    if (strncmp(data, "data: ", 6) == 0)
+        json_str = data + 6;
+    if (strncmp(json_str, "[DONE]", 6) == 0) {
             ctx->streaming_done = true;
             return 0;
         }
 
-        char *err = NULL;
-        json_node_t *root = json_parse(json_str, &err);
-        if (!root) { free(err); return 0; }
+    char *err = NULL;
+    json_node_t *root = json_parse(json_str, &err);
+    if (!root) { free(err); return 0; }
 
-        json_node_t *choices = json_object_get(root, "choices");
-        if (choices && json_array_count(choices) > 0) {
-            json_node_t *choice = json_array_get(choices, 0);
-            json_node_t *delta = json_object_get(choice, "delta");
+    json_node_t *choices = json_object_get(root, "choices");
+    if (choices && json_array_count(choices) > 0) {
+        json_node_t *choice = json_array_get(choices, 0);
+        json_node_t *delta = json_object_get(choice, "delta");
 
-            /* OpenAI tool call deltas */
-            if (delta) {
-                json_node_t *tc_delta = json_object_get(delta, "tool_calls");
-                if (tc_delta && json_array_count(tc_delta) > 0) {
-                    for (size_t i = 0; i < json_array_count(tc_delta); i++) {
-                        json_node_t *tc = json_array_get(tc_delta, i);
-                        int idx = (int)json_object_get_number(tc, "index", 0);
-                        if (idx >= 64) continue;
-                        if (idx >= ctx->max_tc_idx) ctx->max_tc_idx = idx + 1;
-                        const char *id = json_object_get_string(tc, "id", NULL);
-                        if (id && id[0])
-                            snprintf(ctx->tc_id[idx], sizeof(ctx->tc_id[idx]), "%s", id);
-                        json_node_t *fn = json_object_get(tc, "function");
-                        if (fn) {
-                            const char *name = json_object_get_string(fn, "name", NULL);
-                            if (name && name[0])
-                                snprintf(ctx->tc_name[idx], sizeof(ctx->tc_name[idx]), "%s", name);
-                            const char *args_chunk = json_object_get_string(fn, "arguments", NULL);
-                            if (args_chunk && args_chunk[0]) {
-                                size_t cur = strlen(ctx->tc_args[idx]);
-                                size_t add = strlen(args_chunk);
-                                if (cur + add < sizeof(ctx->tc_args[idx]) - 1) {
-                                    memcpy(ctx->tc_args[idx] + cur, args_chunk, add);
-                                    ctx->tc_args[idx][cur + add] = '\0';
-                                }
+        /* OpenAI tool call deltas */
+        if (delta) {
+            json_node_t *tc_delta = json_object_get(delta, "tool_calls");
+            if (tc_delta && json_array_count(tc_delta) > 0) {
+                for (size_t i = 0; i < json_array_count(tc_delta); i++) {
+                    json_node_t *tc = json_array_get(tc_delta, i);
+                    int idx = (int)json_object_get_number(tc, "index", 0);
+                    if (idx >= 64) continue;
+                    if (idx >= ctx->max_tc_idx) ctx->max_tc_idx = idx + 1;
+                    const char *id = json_object_get_string(tc, "id", NULL);
+                    if (id && id[0])
+                        snprintf(ctx->tc_id[idx], sizeof(ctx->tc_id[idx]), "%s", id);
+                    json_node_t *fn = json_object_get(tc, "function");
+                    if (fn) {
+                        const char *name = json_object_get_string(fn, "name", NULL);
+                        if (name && name[0])
+                            snprintf(ctx->tc_name[idx], sizeof(ctx->tc_name[idx]), "%s", name);
+                        const char *args_chunk = json_object_get_string(fn, "arguments", NULL);
+                        if (args_chunk && args_chunk[0]) {
+                            size_t cur = strlen(ctx->tc_args[idx]);
+                            size_t add = strlen(args_chunk);
+                            if (cur + add < sizeof(ctx->tc_args[idx]) - 1) {
+                                memcpy(ctx->tc_args[idx] + cur, args_chunk, add);
+                                ctx->tc_args[idx][cur + add] = '\0';
                             }
                         }
                     }
                 }
+            }
 
-                /* OpenAI finish reason */
-                const char *finish = json_object_get_string(choice, "finish_reason", NULL);
-                if (finish && finish[0]) {
-                    ctx->streaming_done = true;
-                    snprintf(ctx->resp->finish_reason, sizeof(ctx->resp->finish_reason), "%s", finish);
-                    json_node_t *usage = json_object_get(root, "usage");
-                    if (usage) {
-                        ctx->resp->input_tokens = (int)json_object_get_number(usage, "prompt_tokens", 0);
-                        ctx->resp->output_tokens = (int)json_object_get_number(usage, "completion_tokens", 0);
-                    }
+            /* OpenAI finish reason */
+            const char *finish = json_object_get_string(choice, "finish_reason", NULL);
+            if (finish && finish[0]) {
+                ctx->streaming_done = true;
+                snprintf(ctx->resp->finish_reason, sizeof(ctx->resp->finish_reason), "%s", finish);
+                json_node_t *usage = json_object_get(root, "usage");
+                if (usage) {
+                    ctx->resp->input_tokens = (int)json_object_get_number(usage, "prompt_tokens", 0);
+                    ctx->resp->output_tokens = (int)json_object_get_number(usage, "completion_tokens", 0);
                 }
             }
         }
-
-        json_free(root);
     }
 
+    json_free(root);
     return 0;
 }
 

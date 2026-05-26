@@ -1,7 +1,7 @@
-# Slermes C — Goal Mantra (v14)
+# Slermes C — Goal Mantra (v15)
 
 P0: Full 1:1 parity with Python Hermes — functional, behavioral, visual, integration.
-**175 sector gaps** across 14 sectors (battleship-v12). 85 tools, 118 commands.
+**171 sector gaps** across 14 sectors (battleship-v12). 85 tools, 118 commands.
 
 ## Phase Order
 1. Phase 0b: 12 display/visual gaps remaining (V10 ✅ markdown — V11 inline diffs → V22 output helpers)

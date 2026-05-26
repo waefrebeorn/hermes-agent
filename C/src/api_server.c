@@ -130,7 +130,6 @@ static const char *find_body(const char *buf) {
  * Extracts the portion after '?' in the request line.
  */
 static void parse_query_params(const char *buf, char *query, size_t qlen) {
-    (void)parse_query_params; /* keep for future use (streaming) */
     query[0] = '\0';
     const char *q = strchr(buf, '?');
     if (!q) return;
@@ -378,7 +377,7 @@ static bool starts_with(const char *path, const char *prefix, char *suffix, size
 /**
  * GET /v1/sessions — list all sessions.
  */
-static void handle_sessions_list(int fd) {
+static void handle_sessions_list(int fd, const char *query) {
     if (!g_agent || !g_agent->db) {
         send_error(fd, 503, "database not initialized");
         return;
@@ -391,11 +390,21 @@ static void handle_sessions_list(int fd) {
         return;
     }
 
+    /* Apply ?limit=N query param */
+    size_t limit = count;
+    if (query && query[0]) {
+        const char *limit_str = get_query_param(query, "limit");
+        if (limit_str) {
+            long n = atol(limit_str);
+            if (n > 0 && (size_t)n < limit) limit = (size_t)n;
+        }
+    }
+
     json_t *root = json_object();
     json_set(root, "object", json_string("list"));
 
     json_t *data = json_array();
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < limit; i++) {
         json_t *s = json_object();
         json_set(s, "id", json_string(entries[i].id));
         if (entries[i].meta.title[0])
@@ -1005,7 +1014,7 @@ static void dispatch_request(int client_fd, const char *method,
     } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/chat/completions") == 0) {
         handle_post_chat(client_fd, body);
     } else if (strcmp(method, "GET") == 0 && strcmp(path, "/v1/sessions") == 0) {
-        handle_sessions_list(client_fd);
+        handle_sessions_list(client_fd, query);
     } else if (strcmp(method, "POST") == 0 && strcmp(path, "/v1/sessions") == 0) {
         handle_session_create(client_fd, body);
     } else if (strcmp(method, "GET") == 0 && strncmp(path, "/v1/sessions/", 13) == 0) {
@@ -1065,18 +1074,7 @@ static void handle_client(int client_fd) {
 
     /* Extract query string from request line (path portion after ?) */
     char query[2048] = "";
-    const char *qmark = strchr(buf, '?');
-    if (qmark && (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "POST ", 5) == 0)) {
-        /* Ensure qmark is within the first line (before \r\n) */
-        const char *line_end = strstr(buf, "\r\n");
-        if (qmark < line_end) {
-            const char *space = strchr(qmark, ' ');
-            size_t qlen = space ? (size_t)(space - qmark - 1) : strlen(qmark + 1);
-            if (qlen >= sizeof(query)) qlen = sizeof(query) - 1;
-            memcpy(query, qmark + 1, qlen);
-            query[qlen] = '\0';
-        }
-    }
+    parse_query_params(buf, query, sizeof(query));
 
     const char *body = find_body(buf);
     dispatch_request(client_fd, method, path, body, query);

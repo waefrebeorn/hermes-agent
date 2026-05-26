@@ -37,7 +37,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-|||- [Battleship Roadmap (182 Gaps)](#battleship-roadmap-182-gaps)
+|||- [Battleship Roadmap (171 Gaps)](#battleship-roadmap-171-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
