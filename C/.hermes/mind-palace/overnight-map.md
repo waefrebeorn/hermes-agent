@@ -1,7 +1,7 @@
 # Slermes C — Overnight Map (v21 — 1,889 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v15.md — 1,889 function-level parity gaps, ~372 items, 11 layers
+- **Battleship:** battleship-v15.md — 1,889 function-level parity gaps, ~369 items, 11 layers
 - **State:** state.md (v16) — ~43% parity, Phase 1 CLI Args ✅, DA v15 findings documented
 - **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
 - **Goal:** goal-mantra.md (v21)

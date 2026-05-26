@@ -1099,3 +1099,12 @@ All have Unicode/emoji animation frames matching Python parity.
 | S22 | YAML frontmatter depends_on parser | src/tools/skill_mgmt.c:650-708 |
 | S22 | Dependency resolution against skills dir | src/tools/skill_mgmt.c:712-726 |
 | S22 | Wired into handler dispatch | src/tools/skill_mgmt.c:792-793 (action="deps" branch) |
+
+## Phase 64: Phase 3 Stale Claims — Approval (2026-05-26)
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| A21 | Per-tool policies (allowlist) — ALREADY IN C | approval.c:298-395 (allowlist_add/remove/check, per-tool pattern matching) |
+| A21 | Session TTL / timeout — ALREADY IN C | approval.c:401-410 (g_approval_timeout, approval_set_timeout/get_timeout) |
+| A21 | Auto-approve patterns (always-approve cache) — ALREADY IN C | approval.c:266-276 (prompt 'a' response saves to allowlist) |
+| A21 | Real remaining: gateway approval, sudo guard, hardline cmds | approval.c:224-280 (prompt uses stdin, not gateway-compatible) |
