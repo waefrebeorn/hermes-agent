@@ -5,9 +5,10 @@
 - **State:** state.md (v13) — 42% function parity
 - **Phase Order:** Display → CLI Args → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
 - **Goal:** goal-mantra.md (v17)
+| V01 markdown ✅ → V02 inline diffs → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed
 
-## Phase 0 — Display (16 gaps)
-inline diffs (V02), multi-line input (V05), rich errors (V06), TUI parity (V07-V08), voice mode (V09), /recap (V10), tips (V11), output helpers (V13), skin full parity (V14), spinner full (V15), tool feed (V16)
+## Phase 0 — Display (16 gaps) — 7/16 done
+inline diffs (V02), multi-line input (V05), rich errors (V06 ✅), TUI parity (V07-V08), voice mode (V09), /recap (V10 ✅), tips (V11 ✅), output helpers (V13 ✅), skin full parity (V14), spinner full (V15), tool feed (V16)
 
 ## Phase 1 — CLI Args (40 gaps)
 A01-A40: 40 commands with (void)args that need to accept and process user input
