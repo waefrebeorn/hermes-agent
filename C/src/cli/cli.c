@@ -9,6 +9,7 @@
 #include "hermes_skin.h"
 #include "hermes_json.h"
 #include "hermes_xai_retirement.h"
+#include "ansi.h"
 #include "plugin.h"
 #include "line_edit.h"
 #include <stdio.h>
@@ -176,7 +177,7 @@ static int cli_tool_event_cb(const char *event_type, const char *tool_name,
 static void print_banner(void) {
     if (!g_cli.interactive) return;
 
-    /* ASCII art logo: OSSIFRAG in block letters with gradient */
+    /* ASCII art logo: OSSIFRAG in block letters */
     const char *logo_lines[] = {
         " █████╗ ██████╗ ███████╗███████╗       █████╗  ██████╗ ███████╗███╗   ██╗████████╗",
         "██╔══██╗██╔══██╗██╔════╝██╔════╝      ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝",
@@ -185,31 +186,68 @@ static void print_banner(void) {
         "██║  ██║██║  ██║███████╗███████║      ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║",
         "╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝      ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝",
     };
-    /* Gold-to-red gradient (Python: #A3261F → #EB6C32) */
-    int gradients[6][3] = {
-        {163, 38, 31},  /* #A3261F */
-        {183, 49, 34},  /* #B73122 */
-        {201, 60, 36},  /* #C93C24 */
-        {216, 74, 40},  /* #D84A28 */
-        {225, 90, 45},  /* #E15A2D */
-        {235, 108, 50}, /* #EB6C32 */
-    };
+    /* Skin-driven gradient: use banner_accent as base if available,
+     * otherwise fall back to classic Hermes gold gradient */
+    const char *accent_str = NULL;
+    if (g_skin) accent_str = skin_get(g_skin, "colors.banner_accent", NULL);
+    int start_r = 163, start_g = 38, start_b = 31;   /* #A3261F */
+    int end_r = 235, end_g = 108, end_b = 50;         /* #EB6C32 */
+    if (accent_str && accent_str[0] == '#') {
+        /* Try to parse the accent color and derive a gradient */
+        int ar, ag, ab;
+        if (ansi_parse_hex(accent_str, &ar, &ag, &ab)) {
+            /* Dim the accent for the start, brighten for the end */
+            start_r = ar * 2 / 3; start_g = ag * 2 / 3; start_b = ab * 2 / 3;
+            end_r = ar; end_g = ag; end_b = ab;
+        }
+    }
     for (int i = 0; i < 6; i++) {
-        display_set_fg_rgb(gradients[i][0], gradients[i][1], gradients[i][2]);
+        float t = (float)i / 5.0f;
+        int r = (int)(start_r + (end_r - start_r) * t);
+        int g = (int)(start_g + (end_g - start_g) * t);
+        int b = (int)(start_b + (end_b - start_b) * t);
+        display_set_fg_rgb(r, g, b);
         display_set_style(DISPLAY_BOLD);
         printf("%s", logo_lines[i]);
         display_reset();
         printf("\n");
     }
 
-    /* Agent info line */
-    display_printf_hex("#FFD700", DISPLAY_BOLD,
-        "  WuBu Slermes v%s — C Translation\n", HERMES_VERSION);
-    display_printf_hex("#A0A0A0", DISPLAY_DIM,
-        "  Model: %s  Provider: %s\n",
+    /* Build banner content lines */
+    char banner_lines[4096];
+    int pos = 0;
+    const char *title_color = skin_get(g_skin, "colors.banner_title", "#FFD700");
+    const char *text_color = skin_get(g_skin, "colors.banner_text", "#FFF8DC");
+    const char *dim_color = skin_get(g_skin, "colors.banner_dim", "#B8860B");
+
+    /* Parse colors for ANSI embedding */
+    int tr, tg, tb, dr, dg, db;
+    if (!ansi_parse_hex(title_color, &tr, &tg, &tb)) { tr=255; tg=215; tb=0; }
+    if (!ansi_parse_hex(dim_color, &dr, &dg, &db)) { dr=184; dg=134; db=11; }
+
+    /* Title line */
+    pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
+        "\x1B[1;38;2;%d;%d;%dm  WuBu Slermes v%s — C Translation\x1B[0m\n",
+        tr, tg, tb, HERMES_VERSION);
+
+    /* Model/Provider line */
+    pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
+        "\x1B[2;38;2;%d;%d;%dm  Model: %s  Provider: %s\x1B[0m\n",
+        dr, dg, db,
         g_cli.config.model[0] ? g_cli.config.model : "(default)",
         g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
-    display_printf_hex("#A0A0A0", DISPLAY_DIM,
+
+    /* Stats summary line */
+    pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
+        "\x1B[2;38;2;%d;%d;%dm  Tools: 85  Gateways: 19  Providers: 10  Suite: 226/0/23\x1B[0m",
+        dr, dg, db);
+
+    /* Display as panel with skin border color */
+    const char *border_color = skin_get(g_skin, "colors.banner_border", "#CD7F32");
+    display_panel_hex(" Slermes C ", banner_lines, border_color);
+
+    /* Hint line */
+    display_printf_hex(text_color, DISPLAY_DIM,
         "  Type /help for commands, /exit to quit\n");
 
     /* Auto-load goal from mind-palace */

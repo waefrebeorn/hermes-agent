@@ -137,6 +137,12 @@ void display_tool_activity(const char *tool_name, const char *preview,
 /* Print a box/panel around text (with word-wrap) */
 void display_panel(const char *title, const char *content, display_color_t color);
 
+/* Print a panel with TrueColor hex border color */
+void display_panel_hex(const char *title, const char *content, const char *border_hex);
+
+/* Horizontal rule with TrueColor hex */
+void display_hr_hex(const char *hex_fg);
+
 /* Print an ASCII table with headers and aligned columns.
  * columns: number of columns
  * headers: array of column header strings (NULL for no header)

@@ -683,6 +683,66 @@ char *display_word_wrap(const char *text, int max_width) {
     return out;
 }
 
+/* Panel with TrueColor hex border (wraps display_panel with hex→RGB) */
+void display_panel_hex(const char *title, const char *content, const char *border_hex) {
+    if (!content || !border_hex) return;
+    int r, g, b;
+    if (!ansi_parse_hex(border_hex, &r, &g, &b)) {
+        display_panel(title, content, DISPLAY_WHITE);
+        return;
+    }
+    int term_width = display_width();
+
+    /* Calculate inner width */
+    int inner = term_width > 80 ? 80 : (term_width < 40 ? 40 : term_width);
+    inner = (inner * 8) / 10;
+
+    /* Top border with title */
+    display_set_fg_rgb(r, g, b);
+    display_set_style(DISPLAY_BOLD);
+    if (title && title[0]) {
+        printf("\n\xE2\x94\x8C %s ", title);
+        int remaining = inner - (int)strlen(title) - 3;
+        for (int i = 0; i < remaining && i < 60; i++)
+            printf("\xE2\x94\x80");
+        printf("\xE2\x94\x90\n");
+    } else {
+        printf("\n\xE2\x94\x8C");
+        for (int i = 0; i < inner; i++)
+            printf("\xE2\x94\x80");
+        printf("\xE2\x94\x90\n");
+    }
+    display_reset();
+
+    /* Content */
+    printf("%s\n", content);
+
+    /* Bottom border */
+    display_set_fg_rgb(r, g, b);
+    display_set_style(DISPLAY_BOLD);
+    printf("\xE2\x94\x94");
+    for (int i = 0; i < inner; i++)
+        printf("\xE2\x94\x80");
+    printf("\xE2\x94\x98\n");
+    display_reset();
+    fflush(stdout);
+}
+
+/* Horizontal rule with TrueColor hex */
+void display_hr_hex(const char *hex_fg) {
+    if (!hex_fg) { display_hr(DISPLAY_WHITE); return; }
+    int r, g, b;
+    if (!ansi_parse_hex(hex_fg, &r, &g, &b)) { display_hr(DISPLAY_WHITE); return; }
+    int w = display_width();
+    if (w > 78) w = 78;
+    display_set_fg_rgb(r, g, b);
+    for (int i = 0; i < w; i++)
+        printf("\xE2\x94\x80");
+    printf("\n");
+    display_reset();
+    fflush(stdout);
+}
+
 /* ================================================================
  *  Panel / Box
  * ================================================================ */

@@ -786,3 +786,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | ID | Description | LOC | Priority | Evidence |
 |----|-------------|-----|----------|----------|
 | V02 | KawaiiSpinner upgrade — thinking verbs (15 verbs cycled during thinking), wings (left/right decorations from skin spinner.wings config), display_set_skin() wiring (g_display_skin global for skin-driven display), skin_get_json() API (raw JSON node access for array iteration), THINKING_VERBS fallback array (matching Python's 15 verb list) | ~120 | P2 | include/hermes_display.h (verb/wing fields); src/cli/display_core.c (THINKING_VERBS, display_set_skin, load_skin_wings, kawaii start/tick/stop updated with verb+wing display); lib/libskin/skin.h/c (skin_get_json); test_runner.sh (display test -I libskin) |
+## Phase 14: Rich Banner Upgrade — V03 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V03 | Banner upgraded with skin-driven panel border, gradient from skin banner_accent, stats summary (tools/gateways/providers/suite), and TrueColor hex panel via display_panel_hex(). display_hr_hex() added for horizontal rules with hex color. Banner now wraps in Unicode box-drawing panel (┌─┐ / └─┘) with skin-colored border. | ~120 | P2 | src/cli/display_core.c (display_panel_hex, display_hr_hex); include/hermes_display.h (declarations); src/cli/cli.c (print_banner skin-driven gradient + panel + stats) |
+
