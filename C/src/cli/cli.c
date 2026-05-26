@@ -475,6 +475,25 @@ int hermes_cli_main(int argc, char **argv) {
         }
     }
 
+    /* Parse --profile flag (order-independent, consumes value) */
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--profile") == 0) {
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                hermes_set_profile(argv[i + 1]);
+                /* Remove profile and its value from argv */
+                for (int j = i; j < argc - 2; j++)
+                    argv[j] = argv[j + 2];
+                argc -= 2;
+                i--; /* Re-check this position */
+            } else {
+                fprintf(stderr, "Error: --profile requires a profile name\n");
+                fprintf(stderr, "Usage: slermes --profile <name> [message...]\n");
+                agent_free(&g_cli.agent);
+                return 1;
+            }
+        }
+    }
+
     /* Check for help flag */
     if (arg_has_help || (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))) {
         printf("Usage: slermes [options] [message...]\n");
@@ -483,6 +502,7 @@ int hermes_cli_main(int argc, char **argv) {
         printf("  --version, -v      Show version information\n");
         printf("  --session <id>     Attach to a specific session\n");
         printf("  --json             JSON output mode (for scripting)\n");
+        printf("  --profile <name>   Use named config profile\n");
         printf("  gateway            Start the multi-platform gateway\n");
         printf("  cron               Run the cron scheduler\n");
         printf("  status             Show session status\n");
@@ -556,7 +576,7 @@ int hermes_cli_main(int argc, char **argv) {
         /* I02: Reject unknown flags instead of sending to LLM */
         static const char *known_flags[] = {
             "--help", "-h", "--json", "--session", "--eval", "-e",
-            "--version", "-v", NULL
+            "--version", "-v", "--profile", NULL
         };
         for (int i = arg_start; i < argc; i++) {
             if (argv[i][0] == '-') {
