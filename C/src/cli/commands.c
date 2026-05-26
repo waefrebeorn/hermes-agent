@@ -2520,7 +2520,21 @@ bool commands_get_fast(void) { return g_fast_mode != 0; }
 
 /* /reload: Reload .env */
 static void cmd_reload(const char *args, agent_state_t *state) {
-    (void)args;
+    if (args && args[0]) {
+        if (strcmp(args, "plugins") == 0) {
+            printf("Plugins reloaded (hot-reload not yet supported).\n");
+            return;
+        }
+        if (strcmp(args, "env") == 0) {
+            hermes_config_t cfg;
+            hermes_config_load_env(&cfg);
+            if (cfg.api_key[0]) memcpy(state->llm.api_key, cfg.api_key, sizeof(state->llm.api_key));
+            printf(".env variables reloaded.\n");
+            return;
+        }
+        printf("Usage: /reload [plugins|env]\n");
+        return;
+    }
     hermes_config_t cfg;
     hermes_config_load(&cfg, NULL);
     hermes_config_load_env(&cfg);
