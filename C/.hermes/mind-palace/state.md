@@ -1,31 +1,27 @@
-# Slermes C — State Dashboard (v12 — 2026-05-26)
+# Slermes C — State Dashboard (v13 — 2026-05-26)
 
 ## Build Metrics
 Build clean. **72 unique tools** (70 registry_register, 2 registry_register_ex). 97 CLI commands. 19 gateways. 9 providers. 59 libs. 160 src/ .c files (non-deps). 213 test_*.c files.
 
-## Recent Milestones
-- **Triple DA v13**: Fresh 316-gap battleship across 15 sectors. All Phase 0a/b items vaulted.
-- **V10**: Rich markdown rendering (markdown_render.c) — headers, bold, italic, code, links
-- **V11**: Multi-spinner — 9 frame types implemented (dots/bounce/grow/arrows/star/moon/pulse/brain/sparkle)
-- **V21**: NO_COLOR / TERM=dumb support
-- **Agent linkage**: `agent_configure_from_config()` wired into CLI init — 28 config fields now active
-- **Streaming fix**: 5 providers + llm_client.c — `data:` prefix bug fixed across all providers
+## 1:1 Parity Audit (Triple DA v14)
+Python: **3,251 functions** (78 tools + 84 agent modules + 27 providers + 40+ gateway files)
+C: **1,362 functions** (46 tool files + ~28 agent files + 9 providers + 19 gateways)
+**1,889 function-level gaps remaining** — 42% parity at function level.
 
 ## Battleship
-**v13 — 316 active gaps** across 15 sectors. All prior resolved items vaulted in Phases 60-70.
+**v14 — 1,889 function-level parity gaps** across 11 functional layers (~414 items).
+Organized by real function-by-function comparison, not file counts or LOC.
 
 ## Phase Order
-0b) Display & Visual: 16 gaps (S9)
-0c) CLI Args: 40 gaps (S1)
-1) Form-Not-Function: 10 gaps (S0)
-2) Missing Entry Points: 8 gaps (S2)
-3) Tool Depth: 28 gaps (S3)
-4) Missing Tool Ports: 20 gaps (S4)
-5) Gateway Depth: 49 gaps (S6+S10)
-6) Provider Parity: 30 gaps (S5)
-7) Agent Modules: 61 gaps (S7+S8)
-8) Security: 8 gaps (S12)
-9) Test Coverage: 20 gaps (S11)
-10) Refactoring: 10 gaps (S13)
-11) Library Depth: 16 gaps (S15)
-12) Ecosystem: 20 gaps (S14)
+0. Display Parity (16 gaps) — inline diffs, multi-line, rich errors, TUI, voice, /recap, tips
+1. CLI Args (40 gaps) — wire (void)args for 40 commands
+2. Provider Parity (26 gaps) — deepen 8 + port 18 missing providers
+3. Tool Features (60 gaps) — add Python features to existing C tools
+4. Missing Tools (37 gaps) — port remaining 43 tool files
+5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
+6. Agent Modules (72 gaps) — port 52 unported + deepen 20 existing
+7. Plugins (13 gaps) — port remaining plugins
+8. Libraries (19 gaps) — add missing library features
+9. Security (15 gaps) — security hardening
+10. Test Coverage (51 gaps) — tests for untested modules
+11. Config/Infra (10 gaps) — config expansion, refactoring

@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 432 .c files (src/ + lib/ + tests/): 108K C LOC
-| Parity:  ~24%   (316 verified gaps — see battleship-v13 Triple DA)
+| Parity:  ~42%   (1,889 function-level gaps — see battleship-v14 1:1 Parity)
 | Stubs:  Phase 0a all resolved. 40 CLI commands ignore args. 10 form-not-function.
 | Display: 16 gaps (inline diffs, multi-line, rich errors, TUI, voice, recap, tips, helpers)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings

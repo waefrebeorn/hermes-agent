@@ -1,17 +1,21 @@
-# Slermes C — Goal Mantra (v16)
+# Slermes C — Goal Mantra (v17)
 
-P0: Full 1:1 parity with Python Hermes — functional, behavioral, visual, integration.
-**316 sector gaps** across 15 sectors (battleship-v13). 72 unique tools, 97 commands.
+P0: Full 1:1 drop-in replacement for Python Hermes.
+**1,889 function-level parity gaps** (battleship-v14). 42% parity at function level.
 
 ## Phase Order
-0b) Display & Visual: 16 gaps remaining (V01-V16)
-0c) CLI Args: 40 commands ignoring (void)args (A01-A40)
-1) Form-Not-Function: 10 entry points (F01-F10)
-2) Phase 2-12: 250+ remaining gaps
-
-## Display Parity Status
-C has: banner (full), spinner (faces+verbs+wings), tool feed (┊+emoji), panels (box-draw+word-wrap+hex), status bar (skin colors), table (box-draw), diff (ANSI), truecolor, skin engine, line editor (tab-complete+history), multi-spinner (9 types), NO_COLOR support, dynamic banner.
-Missing: inline diffs, multi-line input, rich errors, working TUI, Python TUI ecosystem, voice mode, /recap, tips, output helpers, kawaii spinner full parity.
+0. Display Parity (16) — inline diffs, multi-line, rich errors, TUI, voice, /recap, tips, helpers
+1. CLI Args (40) — wire (void)args for 40 commands
+2. Provider Parity (26) — deepen 8 + port 18 missing providers
+3. Tool Features (60) — add missing features to existing C tools
+4. Missing Tools (37) — port unported Python tool files
+5. Gateway (51) — missing platform modules, deepening, infrastructure
+6. Agent Modules (72) — unported agent modules + deepen existing
+7. Plugins (13) — port remaining plugins
+8. Libraries (19) — missing library features
+9. Security (15) — hardening
+10. Test Coverage (51) — tests for untested modules
+11. Config/Infra (10) — config expansion, refactoring
 
 ## Loop
 Read battleship → pick first gap → implement → build → test → update ALL docs → vault → commit → repeat.
