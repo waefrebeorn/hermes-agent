@@ -61,6 +61,10 @@ void display_reset(void);
 void display_set_fg_rgb(int r, int g, int b);
 void display_set_bg_rgb(int r, int g, int b);
 
+/* 256-color palette foreground and background */
+void display_set_fg_256(int color);
+void display_set_bg_256(int color);
+
 /* Print formatted text with truecolor foreground */
 void display_printf_hex(const char *hex_fg, display_style_t style,
                         const char *fmt, ...);

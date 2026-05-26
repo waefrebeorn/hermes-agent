@@ -818,3 +818,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 |----|-------------|-----|----------|----------|
 | V07 | Help command rewritten with skin-colored panel border, aligned two-column command listing (auto-computed max name width), ANSI accent-colored category headers (─ Session ─ / ─ Config ─ / ─ Tools & Info ─ / ─ Other ─), dynamic category boundary iteration instead of hardcoded indices. Removed unused print_commands_for(). | ~60 | P2 | src/cli/commands.c (cmd_help), test_runner.sh (added display_core/ansi/skin to cli_dispatch test) |
 
+## Phase 19: 256-Color Palette — V08 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V08 | 256-color ANSI palette support — display_set_fg_256() and display_set_bg_256() for [38;5;Nm and [48;5;Nm sequences. Clamp to 0-255 range. | ~20 | P3 | src/cli/display_core.c (display_set_fg_256, display_set_bg_256); include/hermes_display.h (declarations) |
+

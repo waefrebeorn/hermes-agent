@@ -76,6 +76,24 @@ void display_set_fg_rgb(int r, int g, int b) {
     fflush(stdout);
 }
 
+/* 256-color palette foreground */
+void display_set_fg_256(int color) {
+    if (!is_tty) return;
+    if (color < 0) color = 0;
+    if (color > 255) color = 255;
+    printf(ANSI_ESC "38;5;%dm", color);
+    fflush(stdout);
+}
+
+/* 256-color palette background */
+void display_set_bg_256(int color) {
+    if (!is_tty) return;
+    if (color < 0) color = 0;
+    if (color > 255) color = 255;
+    printf(ANSI_ESC "48;5;%dm", color);
+    fflush(stdout);
+}
+
 void display_set_bg_rgb(int r, int g, int b) {
     if (!is_tty) return;
     if (r < 0) r = 0; if (r > 255) r = 255;
