@@ -7,9 +7,9 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  226/0/23 (213 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 439 .c files (src/ + lib/ + tests/): 419K LOC
-| Parity:  ~30%   (346 verified gaps — see battleship-v10)
+| Parity:  ~30%   (184 sector gaps, 300+ function-level — see battleship-v11)
 | Stubs:  Phase 0a complete (8 entry points fixed). 40 CLI commands ignore args.
-| Display: 1 gap (V10 markdown rendering)
+| Display: 5 gaps (markdown, TUI, banner, progress, errors)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |CLI:    79 cmd_ functions (all real) — tab completion, history, table output
 |Tools:  85 registered handlers — all real implementations
@@ -37,7 +37,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||- [Battleship Roadmap (346 Gaps)](#battleship-roadmap-174-gaps)
+||- [Battleship Roadmap (346 Gaps)](#battleship-roadmap-300-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)

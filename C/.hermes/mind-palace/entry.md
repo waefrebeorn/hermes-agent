@@ -1,4 +1,4 @@
-# Slermes C — Entry Point (v2)
+# Slermes C — Entry Point (v3)
 
 ```
 Suite:   226/0/23  (213 test files, zero failures)
@@ -8,8 +8,8 @@ CLI:     79      (slash commands, all real)
 Gateways:19      (platforms)
 Providers:10     (.c modules)
 Libs:    59      (lib/*/)
-Gaps:    346     (battleship-v10, ~35,600 LOC to port)
-Parity:  ~30%    (CLI + tools ahead, adapters/plugins behind)
+Gaps:    184 (300+ function-level)     (battleship-v10, ~35,600 LOC to port)
+Parity:  ~25% (verified Triple DA v11)    (CLI + tools ahead, adapters/plugins behind)
 ```
 
 ## Orientation

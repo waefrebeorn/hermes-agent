@@ -1,4 +1,4 @@
-# Slermes C — Walkway Index (v4)
+# Slermes C — Walkway Index (v5)
 
 ## Reading Order
 1. **state.md** — Current build metrics, summary stats

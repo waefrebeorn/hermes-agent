@@ -1,7 +1,7 @@
-# Slermes C — Overnight Map (v10 — 346 Gaps)
+# Slermes C — Overnight Map (v11 — 346 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v10.md — 346 gaps, 20 sectors
+- **Battleship:** battleship-v11.md — 184 sector gaps, 20 sectors
 - **State:** state.md — build metrics, stub stats
 - **Goal:** goal-mantra.md — loop, phase order
 
@@ -9,7 +9,7 @@
 I01 pipe multi-line → I02 unknown flags → I03 --tui → I04 --session → I05 logs → I06 config → I07 DeepSeek → I08 cron zero-state
 
 ## Phase 0b (1) — Display
-V10 markdown (9 closed this session: V01-V09 skin engine + spinner + banner + status bar + tool feed + response box + help + 256-color + prompt)
+V10 markdown + D12 TUI parity + D13 banner parity + D14 tool progress + D15 error formatting
 
 ## Phase 0c (40) — CLI Args
 A01-A40: 40 C commands use (void)args — silently discard user input. Python parses and respects all args.

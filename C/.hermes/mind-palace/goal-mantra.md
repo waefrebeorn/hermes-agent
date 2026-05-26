@@ -1,18 +1,18 @@
-# Slermes C — Goal Mantra (v10)
+# Slermes C — Goal Mantra (v11)
 
 P0: Full 1:1 functional, behavioral, visual, and integration parity with Python Hermes.
 A user must not be able to tell the difference between C slermes and Python hermes.
 
 ## State
-346 gaps across 20 sectors (battleship-v10). 85 tools, 79 CLI, 19 gateways.
+184 sector gaps (300+ function-level) across 15 sectors (battleship-v10). 85 tools, 79 CLI, 19 gateways.
 Suite 226/0/23. Binary 30MB.
 
 ## Phase Order
-1. Phase 0b: 1 display/visual parity (V10 markdown — make it look the same)
+1. Phase 0b: 5 display/visual gaps (markdown, TUI, banner, progress, errors) (V10 markdown — make it look the same)
 2. Phase 0c: 40 CLI commands ignoring args (make commands behave the same)
 3. Phase 0d: 15 missing usage patterns (make user experience identical)
 4. Phase 1: 4 P1 agent modules (critical backend)
-5. Phase 2: 193 tool/gateway/provider depth (function-level parity)
+5. Phase 3: 200+ (tool depth) tool/gateway/provider depth (function-level parity)
 6. Phase 3: 24 missing ports + plugins
 7. Phase 4: 28 library/config/tests
 
