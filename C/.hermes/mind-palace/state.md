@@ -1,4 +1,4 @@
-# Slermes C — State Dashboard (v13 — 2026-05-26)
+# Slermes C — State Dashboard (v14 — 2026-05-26)
 
 ## Build Metrics
 Build clean. **72 unique tools** (70 registry_register, 2 registry_register_ex). 97 CLI commands. 19 gateways. 9 providers. 59 libs. 160 src/ .c files (non-deps). 213 test_*.c files.
@@ -14,7 +14,7 @@ Organized by real function-by-function comparison, not file counts or LOC.
 
 ## Phase Order
 0. Display Parity (16 gaps) — inline diffs, multi-line, rich errors, TUI, voice, /recap, tips
-1. CLI Args (40 gaps) — wire (void)args for 40 commands
+1. CLI Args (40 gaps) — ✅ wire (void)args for 40 commands
 2. Provider Parity (26 gaps) — deepen 8 + port 18 missing providers
 3. Tool Features (60 gaps) — add Python features to existing C tools
 4. Missing Tools (37 gaps) — port remaining 43 tool files

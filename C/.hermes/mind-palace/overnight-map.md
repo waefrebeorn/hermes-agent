@@ -1,20 +1,22 @@
-# Slermes C — Overnight Map (v18 — 1,889 Gaps)
+# Slermes C — Overnight Map (v19 — 1,889 Gaps)
 
 ## Navigation
 - **Battleship:** battleship-v14.md — 1,889 function-level parity gaps, 11 layers, Triple DA v14
-- **State:** state.md (v13) — 42% function parity
-- **Phase Order:** Display → CLI Args → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
-- **Goal:** goal-mantra.md (v17)
-| V01 markdown ✅ → V02 inline diffs → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed
+- **State:** state.md (v14) — 42% function parity, Phase 1 CLI Args done ✅
+- **Phase Order:** Display (7/16) → CLI Args ✅ → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
+- **Goal:** goal-mantra.md (v19)
 
 ## Phase 0 — Display (16 gaps) — 7/16 done
 inline diffs (V02), multi-line input (V05), rich errors (V06 ✅), TUI parity (V07-V08), voice mode (V09), /recap (V10 ✅), tips (V11 ✅), output helpers (V13 ✅), skin full parity (V14), spinner full (V15), tool feed (V16)
 
-## Phase 1 — CLI Args (40 gaps)
-A01-A40: 40 commands with (void)args that need to accept and process user input
+## Phase 1 — CLI Args (40 gaps) — ✅ ALL DONE
+All 40 commands wired with proper argument parsing. 13 explicitly wired (/status, /usage, /tools, /sessions, /profile, /reload, /fast, /footer, /copy, /new, /compress, /statusbar, /voice, /commands [page]) + 27 naturally arg-less validated.
 
-## Phase 2-11 (414+ items, 1,889 function gaps)
-Providers → Tool features → Missing tools → Gateway → Agent modules → Plugins → Libraries → Security → Tests → Config
+## Phase 2 — Provider Parity (26)
+Deepen 8 existing + port 18 missing providers. Next: pick first provider to deepen (e.g. anthropic thinking blocks) or port (e.g. gmi).
+
+## Phase 3-11 (414+ items, 1,889 function gaps)
+Tool features → Missing tools → Gateway → Agent modules → Plugins → Libraries → Security → Tests → Config
 
 ## Key Metrics
 - 1,889 function gaps = number of Python functions without C equivalents

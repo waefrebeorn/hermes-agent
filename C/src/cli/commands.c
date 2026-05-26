@@ -753,7 +753,6 @@ static void cmd_conv(const char *args, agent_state_t *state) {
 }
 
 static void cmd_new(const char *args, agent_state_t *state) {
-    (void)args;
     /* Persist old session if DB available */
     if (state->db && state->message_count > 0) {
         agent_save_session(state);
@@ -763,6 +762,11 @@ static void cmd_new(const char *args, agent_state_t *state) {
     context_clear(state);
     agent_generate_session_id(state);
     printf("New session started: %s\n", state->session_id);
+    /* Optionally set a name */
+    if (args && args[0]) {
+        snprintf(state->user_title, sizeof(state->user_title), "%s", args);
+        printf("Session title: %s\n", state->user_title);
+    }
 }
 
 static void cmd_undo(const char *args, agent_state_t *state) {
@@ -1610,13 +1614,31 @@ static void cmd_config(const char *args, agent_state_t *state) {
 }
 
 static void cmd_commands(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
+    (void)state;
     /* Count commands */
     int count = 0;
     while (COMMANDS[count].name) count++;
 
-    /* Build rows array */
-    const char **rows = malloc(count * sizeof(char *));
+    /* Parse page number if provided */
+    int page = 0;
+    int per_page = 20;
+    if (args && args[0]) {
+        char *endptr;
+        long val = strtol(args, &endptr, 10);
+        if (*endptr == '\0' && val > 0)
+            page = (int)val - 1; /* 1-indexed in UI */
+    }
+    int total_pages = (count + per_page - 1) / per_page;
+    if (page < 0) page = 0;
+    if (page >= total_pages) page = total_pages - 1;
+
+    /* Build rows array for this page */
+    int start = page * per_page;
+    int end = start + per_page;
+    if (end > count) end = count;
+    int page_count = end - start;
+
+    const char **rows = malloc(page_count * sizeof(char *));
     if (!rows) {
         printf("All slash commands (%d total):\n", count);
         for (int i = 0; COMMANDS[i].name; i++) {
@@ -1628,23 +1650,27 @@ static void cmd_commands(const char *args, agent_state_t *state) {
         return;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = start; i < end; i++) {
         char *buf = malloc(128);
-        if (!buf) { rows[i] = ""; continue; }
+        if (!buf) { rows[i - start] = ""; continue; }
         snprintf(buf, 128, "%s\t%s\t%s",
                  COMMANDS[i].name,
                  COMMANDS[i].alias ? COMMANDS[i].alias : "",
                  COMMANDS[i].description);
-        rows[i] = buf;
+        rows[i - start] = buf;
     }
 
     const char *headers[] = {"Command", "Alias", "Description"};
-    display_table(3, headers, (const char **)rows, count, DISPLAY_CYAN);
+    display_table(3, headers, (const char **)rows, page_count, DISPLAY_CYAN);
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < page_count; i++) {
         if (rows[i] && rows[i][0]) free((void *)rows[i]);
     }
     free(rows);
+
+    if (total_pages > 1)
+        printf("  Page %d/%d. Use /commands <N> for a specific page.\n",
+               page + 1, total_pages);
 }
 
 static void cmd_tools(const char *args, agent_state_t *state) {
@@ -1782,7 +1808,6 @@ static void cmd_retry(const char *args, agent_state_t *state) {
 
 /* /compress: Keep system + last N messages, summarize dropped ones */
 static void cmd_compress(const char *args, agent_state_t *state) {
-    (void)args;
     if (state->message_count <= 4) {
         printf("Context too short to compress (%zu messages). Need >4.\n",
                state->message_count);
@@ -1817,11 +1842,19 @@ static void cmd_compress(const char *args, agent_state_t *state) {
 
     /* Create summary message */
     char summary[4096];
-    snprintf(summary, sizeof(summary),
-        "[Compressed conversation summary: %zu messages dropped (%zu user, "
-        "%zu assistant, %zu tool), ~%zu chars. "
-        "Session continues below with most recent messages.]",
-        dropped_count, user_count, asm_count, tool_count, total_chars);
+    if (args && args[0]) {
+        snprintf(summary, sizeof(summary),
+            "[Compressed conversation summary: %zu messages dropped (%zu user, "
+            "%zu assistant, %zu tool), ~%zu chars. Focus: %s. "
+            "Session continues below with most recent messages.]",
+            dropped_count, user_count, asm_count, tool_count, total_chars, args);
+    } else {
+        snprintf(summary, sizeof(summary),
+            "[Compressed conversation summary: %zu messages dropped (%zu user, "
+            "%zu assistant, %zu tool), ~%zu chars. "
+            "Session continues below with most recent messages.]",
+            dropped_count, user_count, asm_count, tool_count, total_chars);
+    }
 
     /* Replace the range with a single summary message */
     message_t *summary_msg = message_new(MSG_SYSTEM, summary);
@@ -2507,12 +2540,25 @@ static void cmd_cron(const char *args, agent_state_t *state) {
     printf("  Use /cron list to show scheduled tasks.\n");
 }
 
-/* /fast: Toggle fast mode */
+/* /fast: Toggle fast mode (normal|fast|status) */
 static int g_fast_mode = 0;
 static void cmd_fast(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    g_fast_mode = !g_fast_mode;
-    printf("Fast mode %s.\n", g_fast_mode ? "enabled" : "disabled");
+    (void)state;
+    if (!args || !args[0] || strcmp(args, "status") == 0) {
+        printf("Fast mode: %s\n", g_fast_mode ? "FAST" : "NORMAL");
+        printf("  Usage: /fast [normal|fast|status]\n");
+        return;
+    }
+    if (strcmp(args, "fast") == 0 || strcmp(args, "on") == 0) {
+        g_fast_mode = 1;
+        printf("Fast mode enabled.\n");
+    } else if (strcmp(args, "normal") == 0 || strcmp(args, "off") == 0) {
+        g_fast_mode = 0;
+        printf("Fast mode disabled.\n");
+    } else {
+        printf("Unknown argument: %s\n", args);
+        printf("  Usage: /fast [normal|fast|status]\n");
+    }
 }
 
 void commands_set_fast(bool enabled) { g_fast_mode = enabled ? 1 : 0; }
@@ -2583,19 +2629,36 @@ static void cmd_rollback(const char *args, agent_state_t *state) {
 
 /* /copy: Copy last assistant response (prints to stdout in CLI) */
 static void cmd_copy(const char *args, agent_state_t *state) {
-    (void)args;
-    /* Find last assistant message */
-    const char *last = NULL;
+    /* Determine which response: default=last (0), or Nth from end */
+    int n = 0;
+    if (args && args[0]) {
+        char *endptr;
+        long val = strtol(args, &endptr, 10);
+        if (*endptr != '\0' || val < 0) {
+            printf("Usage: /copy [number]  — copy Nth-to-last assistant response (0=last)\n");
+            return;
+        }
+        n = (int)val;
+    }
+    /* Find Nth-to-last assistant message */
+    const char *found = NULL;
+    int found_index = 0;
     for (size_t i = state->message_count; i > 0; i--) {
         if (state->messages[i-1]->role == MSG_ASSISTANT) {
-            last = state->messages[i-1]->content;
-            break;
+            if (found_index == n) {
+                found = state->messages[i-1]->content;
+                break;
+            }
+            found_index++;
         }
     }
-    if (last) {
-        printf("=== Last response ===\n%s\n", last);
+    if (found) {
+        if (n == 0)
+            printf("=== Last response ===\n%s\n", found);
+        else
+            printf("=== Response -%d ===\n%s\n", n, found);
     } else {
-        printf("No assistant response to copy.\n");
+        printf("No assistant response at index %d.\n", n);
     }
 }
 
@@ -3314,20 +3377,46 @@ static void cmd_indicator(const char *args, agent_state_t *state) {
     }
 }
 
-/* /statusbar: Toggle status bar */
+/* /statusbar: Toggle status bar (on|off|status) */
 static int g_statusbar_on = 1;
 static void cmd_statusbar(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    g_statusbar_on = !g_statusbar_on;
-    printf("Status bar %s.\n", g_statusbar_on ? "shown" : "hidden");
+    (void)state;
+    if (!args || !args[0] || strcmp(args, "status") == 0) {
+        printf("Status bar: %s\n", g_statusbar_on ? "shown" : "hidden");
+        printf("  Usage: /statusbar [on|off|status]\n");
+        return;
+    }
+    if (strcmp(args, "on") == 0) {
+        g_statusbar_on = 1;
+        printf("Status bar shown.\n");
+    } else if (strcmp(args, "off") == 0) {
+        g_statusbar_on = 0;
+        printf("Status bar hidden.\n");
+    } else {
+        printf("Unknown argument: %s\n", args);
+        printf("  Usage: /statusbar [on|off|status]\n");
+    }
 }
 
-/* /footer: Toggle footer */
+/* /footer: Toggle footer (on|off|status) */
 static int g_footer_on = 1;
 static void cmd_footer(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    g_footer_on = !g_footer_on;
-    printf("Footer %s.\n", g_footer_on ? "shown" : "hidden");
+    (void)state;
+    if (!args || !args[0] || strcmp(args, "status") == 0) {
+        printf("Footer: %s\n", g_footer_on ? "shown" : "hidden");
+        printf("  Usage: /footer [on|off|status]\n");
+        return;
+    }
+    if (strcmp(args, "on") == 0) {
+        g_footer_on = 1;
+        printf("Footer shown.\n");
+    } else if (strcmp(args, "off") == 0) {
+        g_footer_on = 0;
+        printf("Footer hidden.\n");
+    } else {
+        printf("Unknown argument: %s\n", args);
+        printf("  Usage: /footer [on|off|status]\n");
+    }
 }
 
 /* /busy: Control Enter behavior */
@@ -3704,13 +3793,25 @@ static void cmd_debug(const char *args, agent_state_t *state) {
     printf("\n--- End Debug Report ---\n");
 }
 
-/* /voice: Toggle voice input/output mode */
+/* /voice: Toggle voice input/output mode (on|off|tts|status) */
 static int g_voice_mode = 0;
 static void cmd_voice(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    g_voice_mode = !g_voice_mode;
-    printf("Voice mode %s. voice_listen/voice_speak tools are available.\n",
-           g_voice_mode ? "ENABLED" : "DISABLED");
+    (void)state;
+    if (!args || !args[0] || strcmp(args, "status") == 0) {
+        printf("Voice mode: %s\n", g_voice_mode ? "ENABLED" : "DISABLED");
+        printf("  Usage: /voice [on|off|tts|status]\n");
+        return;
+    }
+    if (strcmp(args, "on") == 0 || strcmp(args, "tts") == 0) {
+        g_voice_mode = 1;
+        printf("Voice mode ENABLED. voice_listen/voice_speak tools are available.\n");
+    } else if (strcmp(args, "off") == 0) {
+        g_voice_mode = 0;
+        printf("Voice mode DISABLED.\n");
+    } else {
+        printf("Unknown argument: %s\n", args);
+        printf("  Usage: /voice [on|off|tts|status]\n");
+    }
 }
 
 /* /steer: Inject a message after the next tool call */

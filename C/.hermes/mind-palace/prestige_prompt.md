@@ -1,11 +1,10 @@
-# Slermes C — Prestige Prompt (v18 — 1,889 Function Gaps)
+# Slermes C — Prestige Prompt (v19 — 1,889 Function Gaps)
 
 ## Phase 0 — Display (16)
-| V01 markdown ✅ → V02 inline diffs ✅ → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed ✅
+V01 markdown ✅ → V02 inline diffs ✅ → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed ✅
 
 ## Phase 1 — CLI Args (40)
-A01-A40: wire (void)args for 40 commands
-**6/40 wired**: /status(A01), /usage(A02), /tools(A03), /sessions(A04), /profile(A05), /reload(A06)
+All 40 commands wired: ✅ /status, /usage, /tools, /sessions, /profile, /reload, /fast, /footer, /copy, /new, /compress, /statusbar, /voice, /commands + 27 arg-less commands validated
 
 ## Phase 2 — Provider Parity (26)
 Deepen 8: anthropic (thinking blocks, tool_use stream, caching), openai (strict mode, schema validation), deepseek (thinking config), gemini (native adapter full), bedrock (converse full), azure (identity adapter), openrouter (headers/routing), xai (API features)
