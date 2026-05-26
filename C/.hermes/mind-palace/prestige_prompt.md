@@ -1,10 +1,10 @@
-# Slermes C — Prestige Prompt (v16 — 171 Sector Gaps)
+# Slermes C — Prestige Prompt (v16 — 169 Sector Gaps)
 
 ## Phase 0 — Entry Points (4)
 **ALL DONE:** F01, F02, F03, F04, F05, F06, F07, F08, F09, F10
 
-## Phase 0b — Display (13)
-**V10 done** (markdown render) → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line input → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
+## Phase 0b — Display (10)
+**V10 done** (markdown render) → V21 NO_COLOR ✅ → V11 multi-spinner → V12 multi-line → V13 rich errors → V14 TUI parity → V15 Python TUI ecosystem → V16 voice mode → V17 /recap → V18 tips → V19 V20 output helpers
 
 ## Phase 1 — Confirmed Stubs (10)
 S01-S05 context/memory/server noops + S11-S15 unsupported returns

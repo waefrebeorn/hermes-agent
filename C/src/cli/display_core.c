@@ -32,6 +32,15 @@ static skin_t *g_display_skin = NULL;  /* active skin for display styling */
 
 void display_init(void) {
     is_tty = isatty(STDOUT_FILENO);
+    /* V21: NO_COLOR env var or TERM=dumb disables color */
+    if (is_tty) {
+        const char *no_color = getenv("NO_COLOR");
+        if (no_color) // NO_COLOR set = disable colors (per no-color.org spec)
+            is_tty = 0;
+        const char *term = getenv("TERM");
+        if (term && strcmp(term, "dumb") == 0)
+            is_tty = 0;
+    }
     if (is_tty) {
         /* Enable alternate screen? No, keep it simple */
     }

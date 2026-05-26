@@ -8,7 +8,7 @@ CLI:     79      (slash commands, all real)
 Gateways:19      (platforms)
 Providers:10     (.c modules)
 Libs:    59      (lib/*/)
-Gaps:    171 (296+ function-level)     (battleship-v12, ~35,600 LOC to port)
+Gaps:    169 (294+ function-level)     (battleship-v12, ~35,600 LOC to port)
 Parity:  ~60% (verified Triple DA v12)    (CLI + tools ahead, adapters/plugins behind)
 ```
 

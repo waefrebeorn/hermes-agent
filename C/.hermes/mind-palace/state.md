@@ -16,9 +16,9 @@ Build clean. **85 tools** (registry_register). 118 slash commands. 19 gateways. 
 |- **Agent linkage**: `agent_configure_from_config()` had ZERO callers. 28 config fields never wired to agent state (max_retries, temperature, top_p, fallback, etc.). FIXED: wired into CLI init path.
 
 ## Battleship
-**v12 — 171 active gaps** across 14 sectors.
+**v12 — 169 active gaps** across 14 sectors.
 
-## Display Parity (Phase 0b) — 12 gaps (V10 ✅)
+## Display Parity (Phase 0b) — 10 gaps (V10 ✅, V21 ✅)
 | ID | Gap | LOC Missing | Priority |
 |----|-----|-------------|----------|
 | V10 | Rich markdown rendering | ✅ ~1000 | P0 |

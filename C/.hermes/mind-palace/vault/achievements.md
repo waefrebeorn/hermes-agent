@@ -978,3 +978,21 @@ Replaced 5 manual field copies with single function call.
 | L05 | fallback_model | empty | config value | agent_loop.c:146-147 |
 | L06 | fallback_providers | empty | config value | agent_loop.c:148-149 |
 | L07-L26 | 20+ other fields | memset(0) | config values | agent_loop.c:110-150 |
+
+## Phase 68: Display Gaps — V21 NO_COLOR + Stale V11/V12 Retired (2026-05-26)
+
+### V21: NO_COLOR / TERM=dumb support — IMPLEMENTED
+Added `NO_COLOR` env var and `TERM=dumb` checks to `display_init()` in display_core.c.
+When either is set, `is_tty` is forced to 0, suppressing all ANSI escape output.
+Based on no-color.org specification.
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| V21 | NO_COLOR env var check | display_core.c:35-37 |
+| V21 | TERM=dumb check | display_core.c:38-40 |
+
+### Stale Claims Retired
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| V11 | Inline edit diffs NOT called from cli_tool_event_cb | `display_inline_diff()` IS called at cli.c:147 for patch tool diffs | cli.c:143-153 |
+| V12 | Banner tool count hardcoded at cli.c:242 | Tool count dynamically derived via `registry_get_count()` at cli.c:256 | cli.c:256 |
