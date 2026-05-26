@@ -1,20 +1,16 @@
-# Slermes C — Goal Mantra (v11)
+# Slermes C — Goal Mantra (v14)
 
-P0: Full 1:1 functional, behavioral, visual, and integration parity with Python Hermes.
-A user must not be able to tell the difference between C slermes and Python hermes.
-
-Suite **226/0/23**, 85 tools, 78 commands, 19 gateways, 10 providers, 59 libs.
-182 sector gaps (300+ function-level) across 15 sectors (battleship-v11). 85 tools in binary.
-Suite 226/0/23. Binary 30MB.
+P0: Full 1:1 parity with Python Hermes — functional, behavioral, visual, integration.
+**175 sector gaps** across 14 sectors (battleship-v12). 85 tools, 118 commands.
 
 ## Phase Order
-1. Phase 0b: 5 display/visual gaps (markdown, TUI, banner, progress, errors) (V10 markdown — make it look the same)
-2. Phase 0c: 40 CLI commands ignoring args (make commands behave the same)
-3. Phase 0d: 15 missing usage patterns (make user experience identical)
-4. Phase 1: 4 P1 agent modules (critical backend)
-5. Phase 3: 200+ (tool depth) tool/gateway/provider depth (function-level parity)
-6. Phase 3: 24 missing ports + plugins
-7. Phase 4: 28 library/config/tests
+1. Phase 0b: 13 display/visual gaps (V10 markdown → V22 output helpers)
+2. Phase 0c: 40 CLI commands ignoring args
+3. Phase 1-4: 118 remaining
+
+## Display Parity Status
+C has: banner (full), spinner (faces+verbs+wings), tool feed (┊+emoji), panels (box-draw+word-wrap+hex), status bar (skin colors), table (box-draw), diff (ANSI), truecolor, skin engine, line editor (tab-complete+history).
+Missing: markdown rendering, inline diffs, dynamic banner stats, multi-spinner types, multi-line input, rich errors, working TUI, Python TUI ecosystem, voice mode, /recap, tips, NO_COLOR, output helpers.
 
 ## Loop
-Read battleship → pick first gap → implement → build → test → update ALL docs → vault resolved → commit → repeat. No questions, no choices, no stopping.
+Read battleship → pick first gap → implement → build → test → update ALL docs → vault → commit → repeat.

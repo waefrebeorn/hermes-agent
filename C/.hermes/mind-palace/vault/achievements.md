@@ -870,4 +870,71 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 
 | ID | Description | LOC | Priority | Evidence |
 |----|-------------|-----|----------|----------|
-| M04 | Added `--profile <name>` arg parsing to CLI: order-independent scan strips profile+value from argv before known_flags check, calls `hermes_set_profile()`. Profile infrastructure existed but was unwired. | ~20 | P2 | src/cli/cli.c:478-496 (--profile arg scan), :505 (help text), :579 (known_flags) |
+|| M04 | Added `--profile <name>` arg parsing to CLI: order-independent scan strips profile+value from argv before known_flags check, calls `hermes_set_profile()`. Profile infrastructure existed but was unwired. | ~20 | P2 | src/cli/cli.c:478-496 (--profile arg scan), :505 (help text), :579 (known_flags) |
+
+## Phase 64: Stale Battleship Claims Retired + Display Parity DA (2026-05-26)
+
+### Dead Code / Unwired — S11 (all 5 stale, wired in previous sessions)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| X01 | llm_background_review NOT YET WIRED — zero callers | Wired into agent_loop with toggle `enable_background_review` | llm_client.c:1522 (fn def), agent_loop.c (call site), agent_state_t.enable_background_review |
+| X02 | tui_alloc_pair unused | Wired into tui_apply_theme | tui_fullscreen.c:184 (fn), tui_fullscreen.c (call from theme init) |
+| X03 | tui_wprint_role unused | Wired into message prefix display | tui_fullscreen.c:835 (fn), active call sites in message rendering |
+| X04 | post_api() unused (weixin.c) — actually build_headers | Fixed — `***` placeholder replaced with `%s` using `g_wx.token`, DRY refactored | weixin.c:58 (build_headers), call from wx_api_post |
+| X05 | build_headers() unused (qqbot.c) — actually post_api | Exposed as non-static `qqbot_post_api()`, header declared | qqbot.c:77-78 (post_api unwired → wired), qqbot.h: declaration |
+
+### Confirmed Stubs — S1 entries S06-S10 (all resolved)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| S06 | api_server.c parse_query_params — query params discarded | Wired into HTTP dispatch, `?limit=N` on `/v1/sessions` | api_server.c:133 (now wired), handle_sessions_list uses get_query_param |
+| S07 | qqbot.c post_api unused | Exposed as `qqbot_post_api()` | qqbot.c:77-78, qqbot.h |
+| S08 | weixin.c build_headers unused | Fixed token usage, DRY refactored | weixin.c:58, wx_api_post |
+| S09 | tui_alloc_pair unused | Wired into tui_apply_theme | tui_fullscreen.c:184 |
+| S10 | tui_wprint_role unused | Wired into message prefix display | tui_fullscreen.c:849 |
+
+### Entry Points Fixed — S0 entries F06-F10
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| F06 | /background stub | Cleaned message, removed stale `#include` | commands.c (cmd_background rewired) |
+| F07 | /agents stub | Useful help text about delegation | commands.c (cmd_agents now helpful) |
+| F08 | /restart stub | Actual `exec()` restart implementation | commands.c (cmd_restart now exec's) |
+| F10 | llm_background_review NOT YET WIRED | Wired into agent_loop | llm_client.c:1522, agent_loop.c callers |
+
+### Missing Entry Points Fixed — M04
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| M04 | `--profile` not implemented | Order-independent scan with `hermes_set_profile()` | cli.c:478-496 |
+
+### Display Parity Claims Corrected — S12 entries D13, D14
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| D13 | Startup banner "basic panel only" | FULL banner: ASCII art logo with gradient, skin-driven colors (banner_accent, banner_border, banner_title, banner_dim), model/provider/stats display, goal-mantra loading from mind-palace | cli.c:178-277 (print_banner — 99 lines of banner code) |
+| D14 | Tool progress "basic prefix display" | FULL tool feed: `┊` prefix + per-tool emoji (20+ tools), tool_preview extraction from JSON args (30+ tool patterns with fallback loop), skin tool_emojis support, success/failure color coding | display_core.c:419-527 (tool_preview), 533-580 (tool_activity), cli.c:123-176 (tool_event_cb wired) |
+
+## Phase 65: Deep Display/TUI Audit — 6 New Display Parity Gaps (2026-05-26)
+
+Systematic audit of Python display/CLI/TUI structures with NO equivalent in C. S12 expanded from 7 to 13 gaps (175 total).
+
+| ID | Description | Python Source | LOC | C State | Priority |
+|----|-------------|-------------|-----|---------|----------|
+| V17 | Python TUI ecosystem unported | ui-tui/ (25 tsx files) + tui_gateway/ (8 py files) | 15,220 | C tui_fullscreen.c ~3800 LOC but no Ink React components, no JSON-RPC transport, no stream renderer, no markdown.tsx, no textInput.tsx, no thinking.tsx, no session/model picker, no agents overlay — entire TUI ecosystem missing | P2 |
+| V18 | Voice mode CLI infrastructure | hermes_cli/voice.py | 846 | C voice_mode.c is basic — missing recording, ASR transcription, voice command dispatch, voice activity detection | P2 |
+| V19 | /recap session summary | hermes_cli/session_recap.py | 316 | No C equivalent — shows tool call counts, edited files count, recent activity summary | P2 |
+| V20 | Startup tips system | hermes_cli/tips.py | 485 | C banner shows no tips — Python shows random tip from 100+ tip corpus at startup | P2 |
+| V21 | NO_COLOR / TERM=dumb support | hermes_cli/colors.py | 38 | C uses isatty() only — no NO_COLOR env var check, no TERM=dumb detection | P2 |
+| V22 | Structured CLI output helpers | hermes_cli/cli_output.py | 78 | C has display_printf but no print_info/success/warning/error/header/prompt helpers | P2 |
+## Phase 23 — Phase 0 Entry Points Complete (F02, F03, F04, F09)
+
+All 4 remaining Phase 0 entry point gaps resolved in one session.
+
+| ID | Description | Resolution | Evidence |
+|----|-------------|------------|----------|
+| F02 | C logger — `slermes logs` shows C logs | Created logger.c/hermes_logger.h with Python-compatible format. Writes agent.log and errors.log. Hooks into agent_init, cli_init, hermes_cli_main. Thread-safe with mutex. | src/agent/logger.c, include/hermes_logger.h, src/agent/agent_loop.c:56-57, src/cli/cli.c:337-338 |
+| F03 | `--json` mode: slash commands output raw text | stdout capture via dup/dup2/tmpfile wraps handler output as JSON `{'response','session_id','status'}` when --json flag active. Fixes `printf '/status\n/exit\n' | ./slermes --json` mixed output. | src/cli/cli.c:326-368 (json_capture_start/stop), src/cli/cli.c:720-749 (dispatch wrapping) |
+| F04 | `slermes chat` sends "chat" as LLM prompt | Detects 'chat' subcommand at arg_start, `goto start_interactive` to fall through to interactive loop. No longer sends "chat" string to LLM. | src/cli/cli.c:597-601 (chat detection) |
+| F09 | Banner hardcodes "Tools: 85" | Derives from `registry_get_count()` at runtime with fallback to `g_cli.agent.tools.count`. Banner now shows actual registered tool count. | src/cli/cli.c:243-244 (dynamic tool_count) |

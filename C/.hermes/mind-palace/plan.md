@@ -1,22 +1,19 @@
-# Slermes C — Plan (v12 — 182 Gaps)
+# Slermes C — Plan (v15 — 171 Gaps)
 
 ## Verified State
-Suite 226/0/23. Binary 30MB. 85 tools, 78 commands, 19 gateways, 10 providers, 59 libs.
+Build clean. 85 tools, 118 slash commands, 19 gateways, 10 providers, 59 libs.
 
-## Gap Count: 182 sector-level across 15 sectors (battleship-v11)
-- Phase 0 entry points: 8 remaining (F02-F10 partial/stale)
-- Phase 0b: 5 display gaps (V10 markdown + D12-D15)
+## Gap Count: **171 sector-level** across 14 sectors (battleship-v12)
+- Phase 0 entry points: **ALL DONE** (F01-F10)
+- Phase 0b: **13 display gaps** (V10 markdown → V22 output helpers)
 - Phase 0c: 40 CLI commands ignore args
-- Phase 1: 4 critical agent modules
-- Phase 2: 193 tool depth + gateway + provider + agent depth
-- Phase 3: 24 missing tools + sub-modules + plugins
-- Phase 4: 28 library + config + test coverage
+- Phase 1-4: 118 remaining
 
-## Session Actions (2026-05-26)
-- ✅ F01: Multi-line pipe fix (fgets line-by-line)
-- ✅ F05: --json standalone JSON status
-- Remaining: next gap from prestige order
+## Recent
+- Dead code sweep: 11 unwired functions wired
+- Display DA: 13 real gaps (was 7 — added V17-V22 from deep TUI audit)
+- Battleship v12: 15 stale claims retired, 6 new display gaps found, total 175
 
 ## Vault
-- achievements.md: All resolved gaps and stale claims
-- hermes-upstream.md: Python modules not ported
+- Phase 64: 15 stale claims retired
+- Phase 65: 6 new display/TUI gaps documented

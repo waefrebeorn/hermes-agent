@@ -1,23 +1,22 @@
-# Slermes C — Overnight Map (v12 — 182 Gaps)
+# Slermes C — Overnight Map (v15 — 171 Gaps)
 
 ## Navigation
-- **Battleship:** battleship-v11.md — 182 sector gaps, 15 sectors
-- **State:** state.md (v8) — build metrics, entry points fixed
-- **Goal:** goal-mantra.md — loop, phase order
+- **Battleship:** battleship-v12.md — 171 gaps, 14 sectors, S12 rebuilt with 13 real display gaps
+- **State:** state.md (v10) — 13 display gaps documented
+- **Phase 0 entry points:** ALL DONE (F01-F10)
+- **Goal:** goal-mantra.md (v14)
+- **Vault:** Phase 64 (15 stale retired), Phase 65 (6 new display gaps)
 
-## Phase 0 Entry Points
-- ✅ F01: Multi-line pipe (fgets line-by-loop)
-- ✅ F05: --json standalone emits JSON status
-- Remaining: F02 (C logger gap), F03 (--json cmd output), F06-F10 (partially functional)
+## Phase 0 Entry Points (4)
+**ALL DONE** — F02 (C logger), F03 (--json pipe), F04 (chat subcmd), F09 (banner tool count)
 
-## Phase 0b (1) — Display
-V10 markdown + D12 TUI parity + D13 banner parity + D14 tool progress + D15 error formatting
+## Phase 0b — Display (13)
+V10 markdown (P0) → V11 inline diffs → V12 dynamic banner → V13 multi-spinner → V14 multi-line → V15 rich errors → V16 TUI parity → V17 Python TUI ecosystem → V18 voice mode → V19 /recap → V20 tips → V21 NO_COLOR → V22 output helpers
+
+**Note:** V17 is the biggest gap — 15,220 LOC of TUI ecosystem (ui-tui/ + tui_gateway/) with NO C equivalent.
 
 ## Phase 0c (40) — CLI Args
-A01-A40: 40 C commands use (void)args — silently discard user input. Python parses and respects all args.
-
-## Phase 0d (15) — Usages
-U01 config format → U02 live edit → U03 auto-save → U04 resume → U05 multi-line → U06 errors → U07 tool progress → U08 profiles → U09 plugins → U10 gateway config → U11 MCP → U12 env detect → U13 tool tab-complete → U14 keyboard shortcuts → U15 graceful restart
+A01-A40: 40 commands silently discard user input via (void)args
 
 ## Key Insight
-40 commands accepting input that's silently discarded is the biggest single user-facing gap. Fix by replacing (void)args with arg parsing.
+The Python TUI ecosystem (Ink React + JSON-RPC gateway) dwarfs the C ncurses TUI by 4x+ LOC. If C wants full TUI parity, V17 is the single largest feature gap in the entire project.
