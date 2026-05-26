@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 |Suite:  226/0/23 (214 test files, completes in <60s)
 |Binary: 30MB    (dynamic ELF, -O2 -g)
 |Source: 439 .c files (src/ + lib/ + tests/): 419K LOC
-| Parity:  ~30%   (182 sector gaps, 300+ function-level — see battleship-v11)
+| Parity:  ~30%   (182 sector gaps, 300+ function-level — see battleship-v12)
 | Stubs:  Phase 0 entry: F01+F05 fixed. 8 remaining (F02-F10). 40 CLI commands ignore args.
 | Display: 5 gaps (markdown, TUI, banner, progress, errors)
 |Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
@@ -30,9 +30,9 @@ One static binary. Zero runtime deps beyond libc + libssl. 30MB ELF.
 - [All Tools (85 Registered)](#all-tools-85-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (10)](#llm-providers-11)
-- [Plugins (10 .c, 0 .so)](#plugins-10-c-0-so)
+- [Plugins (10 .c)](#plugins-10-c-0-so)
 - [Libraries (59 Units)](#libraries-59-units)
-- [CLI Commands (78 Slash, Real)](#cli-commands-78-slash-real)
+- [CLI Commands (118 Slash, Real)](#cli-commands-78-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
