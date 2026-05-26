@@ -5,7 +5,7 @@
 
 ## Phase 1 — CLI Args (40)
 A01-A40: wire (void)args for 40 commands
-**5/40 wired**: /status(A01), /usage(A02), /tools(A03), /sessions(A04), /profile(A05)
+**6/40 wired**: /status(A01), /usage(A02), /tools(A03), /sessions(A04), /profile(A05), /reload(A06)
 
 ## Phase 2 — Provider Parity (26)
 Deepen 8: anthropic (thinking blocks, tool_use stream, caching), openai (strict mode, schema validation), deepseek (thinking config), gemini (native adapter full), bedrock (converse full), azure (identity adapter), openrouter (headers/routing), xai (API features)
