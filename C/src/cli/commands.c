@@ -590,24 +590,40 @@ static void cmd_model(const char *args, agent_state_t *state) {
 }
 
 static void cmd_sessions(const char *args, agent_state_t *state) {
-    (void)args;
     if (!state->db) {
         printf("No session database available.\n");
         return;
     }
+    int limit = 0;
+    const char *search = NULL;
+    if (args && args[0]) {
+        char arg_copy[256];
+        snprintf(arg_copy, sizeof(arg_copy), "%s", args);
+        /* Check for -search filter */
+        const char *search_marker = strstr(arg_copy, "-search");
+        if (search_marker) {
+            search = search_marker + 8;
+            while (*search == ' ') search++;
+            ((char*)search_marker)[0] = '\0';
+        }
+        int parsed = atoi(arg_copy);
+        if (parsed > 0) limit = parsed;
+    }
     size_t count = 0;
-    char **list = db_list(state->db, &count);
-    if (!list || count == 0) {
-        printf("No saved sessions.\n");
-        if (list) free(list);
+    session_entry_t *entries = agent_session_list(&count, search, limit);
+    if (!entries || count == 0) {
+        printf("No saved sessions%s.\n", search ? " matching search" : "");
+        if (entries) free(entries);
         return;
     }
     printf("Saved sessions (%zu):\n", count);
     for (size_t i = 0; i < count; i++) {
-        printf("  %s\n", list[i]);
-        free(list[i]);
+        printf("  %s", entries[i].id);
+        if (entries[i].meta.title[0])
+            printf(" \u2014 %s", entries[i].meta.title);
+        printf("\n");
     }
-    free(list);
+    free(entries);
 }
 
 static void cmd_save(const char *args, agent_state_t *state) {
