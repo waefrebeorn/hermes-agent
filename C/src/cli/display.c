@@ -37,3 +37,33 @@ void cli_display_status(const char *msg) {
 void cli_display_thinking(void) {
     display_printf(DISPLAY_YELLOW, DISPLAY_DIM, "  thinking...\n");
 }
+
+/* ================================================================
+ *  Output Helpers — colored print wrappers (Python cli_output.py parity)
+ * ================================================================ */
+
+void display_print_info(const char *text) {
+    if (!text) return;
+    display_printf(DISPLAY_DEFAULT, DISPLAY_DIM, "  %s\n", text);
+}
+
+void display_print_success(const char *text) {
+    if (!text) return;
+    display_printf(DISPLAY_GREEN, DISPLAY_NORMAL, "✓ %s\n", text);
+}
+
+void display_print_warning(const char *text) {
+    if (!text) return;
+    display_printf(DISPLAY_YELLOW, DISPLAY_NORMAL, "⚠ %s\n", text);
+}
+
+void display_print_error(const char *text) {
+    if (!text) return;
+    display_printf(DISPLAY_RED, DISPLAY_NORMAL, "✗ %s\n", text);
+}
+
+void display_print_header(const char *text) {
+    if (!text) return;
+    printf("\n");
+    display_printf(DISPLAY_YELLOW, DISPLAY_BOLD, "  %s\n", text);
+}

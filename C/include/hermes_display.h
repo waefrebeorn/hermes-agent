@@ -156,6 +156,25 @@ char *display_inline_diff(const char *diff_text);
 void display_tool_activity(const char *tool_name, const char *preview,
                            display_color_t color);
 
+/* ================================================================
+ *  Output Helpers — colored print wrappers (Python cli_output.py parity)
+ * ================================================================ */
+
+/* Print a dim informational message with 2-space indent */
+void display_print_info(const char *text);
+
+/* Print a green success message with ✓ prefix */
+void display_print_success(const char *text);
+
+/* Print a yellow warning message with ⚠ prefix */
+void display_print_warning(const char *text);
+
+/* Print a red error message with ✗ prefix */
+void display_print_error(const char *text);
+
+/* Print a bold yellow header with leading newline */
+void display_print_header(const char *text);
+
 /* Print a box/panel around text (with word-wrap) */
 void display_panel(const char *title, const char *content, display_color_t color);
 
