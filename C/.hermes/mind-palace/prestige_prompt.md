@@ -1,7 +1,7 @@
 # Slermes C — Prestige Prompt (v18 — 1,889 Function Gaps)
 
 ## Phase 0 — Display (16)
-| V01 markdown ✅ → V02 inline diffs → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors → V07 TUI → V08 Python TUI → V09 voice → V10 /recap → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed
+| V01 markdown ✅ → V02 inline diffs → V03 banner ✅ → V04 spinner ✅ → V05 multi-line → V06 rich errors → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin → V15 spinner → V16 tool feed
 
 ## Phase 1 — CLI Args (40)
 A01-A40: wire (void)args for 40 commands
