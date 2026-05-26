@@ -7,7 +7,7 @@
  * Supersedes Python 'json' / 'jiter' / partially 'pydantic'.
  *
  * MIT License — WuBu Hermes Project
- * https://github.com/waefrebeorn/hermes-agent
+ * https://github.com/waefrebeorn/slermes
  *
  * Usage:
  *   json_t *doc = json_parse("{\"key\": \"value\"}", NULL);

@@ -450,7 +450,7 @@ All bugs discovered through DA audits and runtime testing.
 ## Project Structure
 
 ```
-waefrebeorn/hermes-agent/         ← Repo root
+waefrebeorn/slermes/         ← Repo root
 ├── C/                            ← All source code (canonical README lives here)
 │   ├── src/                      ← 154 .c files
 │   │   ├── agent/                ←   Provider adapters, LLM client, fallback routing,
@@ -707,7 +707,7 @@ Key config sections: `provider`, `model`, `tools`, `gateway`, `plugins`, `cron`,
 ## Upstream
 
 - **Python Hermes Agent:** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)
-- **C fork:** [waefrebeorn/hermes-agent](https://github.com/waefrebeorn/hermes-agent)
+- **C fork:** [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes)
 - **Delta:** 0 behind upstream (183 Python commits merged), 400 ahead (C-specific commits)
 
 The upstream sync strategy:

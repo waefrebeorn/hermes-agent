@@ -1,7 +1,7 @@
 # WuBu Hermes — Development Workspace
 
 **Location:** `~/hermes-agent-dev/`  
-**Tracks:** `wubu/main` (waefrebeorn/hermes-agent fork)  
+**Tracks:** `wubu/main` (waefrebeorn/slermes fork)  
 **Purpose:** Development + C translation of Hermes Agent
 
 This is the development workspace for WuBu Hermes — a fork of NousResearch/hermes-agent
@@ -10,7 +10,7 @@ with the long-term goal of translating the entire agent into C for zero-dependen
 ## Fork Structure
 
 ```
-waefrebeorn/hermes-agent  (GitHub)
+waefrebeorn/slermes  (GitHub)
   ├── wubu main                  ← All our commits + upstream. Default branch.
   ├── feat/c-translation         ← C/ directory translation work
   ├── feat/some-feature          ← Individual feature branches (for PRs)
@@ -22,7 +22,7 @@ waefrebeorn/hermes-agent  (GitHub)
 | Remote | URL | Direction |
 |--------|-----|-----------|
 | `origin` | `https://github.com/NousResearch/hermes-agent.git` | Pull upstream updates |
-| `wubu` | `git@github.com:waefrebeorn/hermes-agent.git` | Push our work |
+| `wubu` | `git@github.com:waefrebeorn/slermes.git` | Push our work |
 
 ## Workflow
 

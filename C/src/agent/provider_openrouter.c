@@ -54,14 +54,14 @@ static char *openrouter_build_headers(const provider_t *p, const char *api_key) 
             "Authorization: Bearer %s\r\n"
             "Content-Type: application/json\r\n"
             "Accept: application/json\r\n"
-            "HTTP-Referer: https://github.com/waefrebeorn/hermes-agent\r\n"
+            "HTTP-Referer: https://github.com/waefrebeorn/slermes\r\n"
             "X-Title: Hermes-C",
             api_key);
     } else {
         snprintf(headers, 1024,
             "Content-Type: application/json\r\n"
             "Accept: application/json\r\n"
-            "HTTP-Referer: https://github.com/waefrebeorn/hermes-agent\r\n"
+            "HTTP-Referer: https://github.com/waefrebeorn/slermes\r\n"
             "X-Title: Hermes-C");
     }
     return headers;
