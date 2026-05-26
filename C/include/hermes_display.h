@@ -175,6 +175,9 @@ void display_print_error(const char *text);
 /* Print a bold yellow header with leading newline */
 void display_print_header(const char *text);
 
+/* Display a random startup tip after banner */
+void display_show_tip(void);
+
 /* Print a box/panel around text (with word-wrap) */
 void display_panel(const char *title, const char *content, display_color_t color);
 

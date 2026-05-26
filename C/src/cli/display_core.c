@@ -1152,6 +1152,50 @@ void display_table(int columns, const char **headers,
 }
 
 /* ================================================================
+ *  Startup Tips (V11)
+ * ================================================================ */
+
+static const char *TIPS[] = {
+    "/background <prompt> runs a task in a separate session while your current one stays free.",
+    "/branch forks the current session to explore a different direction.",
+    "/compress manually compresses conversation context when things get long.",
+    "/rollback lists filesystem checkpoints — restore files the agent modified.",
+    "/title \"my project\" names your session — resume with /resume or -c.",
+    "/resume picks up where you left off in a named session.",
+    "/undo removes the last exchange from the conversation.",
+    "/retry resends your last message when response wasn't right.",
+    "/verbose cycles tool progress display: off → new → all.",
+    "/reasoning high increases thinking depth. /reasoning show displays it.",
+    "/model lets you switch models mid-session — try /model sonnet.",
+    "/skin changes the CLI theme — try ares, mono, slate, or charizard.",
+    "/statusbar toggles a bar showing model, tokens, context, cost.",
+    "/tools disable browser temporarily removes browser tools.",
+    "/cron manages scheduled tasks — recurring prompts to any platform.",
+    "/usage shows token usage, cost breakdown, session duration.",
+    "/insights shows usage analytics for the last 30 days.",
+    "/config shows your current configuration at a glance.",
+    "/stop kills all running background processes.",
+    "@file:path/to/file.py injects file contents into your message.",
+    "@folder:src/ injects a directory tree listing.",
+    "@diff injects unstaged git changes into the message.",
+    "@staged injects staged git changes (git diff --staged).",
+    "@url:https://... fetches a web page and injects its text content.",
+    "Ctrl+C during agent thinking returns you to the prompt without losing context.",
+    "Ctrl+W in the prompt line deletes the previous word.",
+    "Ctrl+A / Ctrl+E jump to start/end of the input line.",
+    "Up arrow recalls previous messages in the session.",
+    "--json flag outputs machine-readable JSON for CLI tools and scripts.",
+    "Tab completion works on slash commands, file paths, and tool names.",
+};
+
+#define TIPS_COUNT (int)(sizeof(TIPS) / sizeof(TIPS[0]))
+
+void display_show_tip(void) {
+    int idx = rand() % TIPS_COUNT;
+    display_printf_hex("#B8860B", DISPLAY_DIM, "  \xe2\x9c\xa6 Tip: %s\n", TIPS[idx]);
+}
+
+/* ================================================================
  *  Utility
  * ================================================================ */
 

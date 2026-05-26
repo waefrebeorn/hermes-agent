@@ -262,9 +262,12 @@ static void print_banner(void) {
     const char *border_color = skin_get(g_skin, "colors.banner_border", "#CD7F32");
     display_panel_hex(" Slermes C ", banner_lines, border_color);
 
-    /* Hint line */
+    /* Hint line + random tip */
     display_printf_hex(text_color, DISPLAY_DIM,
         "  Type /help for commands, /exit to quit\n");
+    if (g_cli.interactive) {
+        display_show_tip();
+    }
 
     /* Auto-load goal from mind-palace */
     if (g_cli.interactive) {
