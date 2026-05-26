@@ -39,6 +39,7 @@ static void cmd_conv(const char *args, agent_state_t *state);
 static void cmd_new(const char *args, agent_state_t *state);
 static void cmd_undo(const char *args, agent_state_t *state);
 static void cmd_history(const char *args, agent_state_t *state);
+static void cmd_recap(const char *args, agent_state_t *state);
 static void cmd_topic(const char *args, agent_state_t *state);
 static void cmd_config(const char *args, agent_state_t *state);
 static void cmd_commands(const char *args, agent_state_t *state);
@@ -120,6 +121,7 @@ static const command_def_t COMMANDS[] = {
     {"/load",   NULL,     "Load a session: /load <session_id>",            cmd_load},
     {"/sessions",NULL,    "List saved sessions",                           cmd_sessions},
     {"/stats",  NULL,     "Show current session statistics",               cmd_stats},
+    {"/recap",  NULL,     "Summarize recent session activity",               cmd_recap},
     {"/conv",   NULL,     "Show recent conversation messages",             cmd_conv},
     {"/history",NULL,     "Show full conversation history",                cmd_history},
 
@@ -391,6 +393,162 @@ static void cmd_help(const char *args, agent_state_t *state) {
     display_panel_hex(" Commands ", content, border);
     display_printf_hex(text_color, DISPLAY_DIM,
         "  Type /help <command> for details on a specific command.\n");
+}
+static void cmd_recap(const char *args, agent_state_t *state) {
+    (void)args;
+    size_t n = state->message_count;
+    if (n == 0) {
+        printf("No conversation to recap.\n");
+        return;
+    }
+
+    /* Count turns by role */
+    size_t user_count = 0, assistant_count = 0, tool_count = 0;
+    size_t recent_window = n > 20 ? n - 20 : 0;
+    size_t recent_user = 0, recent_assistant = 0;
+
+    /* Tool usage counting */
+#define MAX_TOOL_TYPES 64
+    char tool_names[MAX_TOOL_TYPES][64];
+    int tool_counts[MAX_TOOL_TYPES];
+    int tool_type_count = 0;
+
+    /* File tracking */
+#define MAX_FILES 16
+    char touched_files[MAX_FILES][128];
+    int file_count = 0;
+
+    /* Latest user prompt and assistant reply */
+    char latest_user[256] = "";
+    char latest_reply[256] = "";
+
+    for (size_t i = 0; i < n; i++) {
+        const message_t *msg = state->messages[i];
+        if (!msg) continue;
+
+        switch (msg->role) {
+            case MSG_USER:
+                user_count++;
+                if (i >= recent_window) recent_user++;
+                if (msg->content) {
+                    snprintf(latest_user, sizeof(latest_user), "%s", msg->content);
+                }
+                break;
+            case MSG_ASSISTANT:
+                assistant_count++;
+                if (i >= recent_window) recent_assistant++;
+                if (msg->content && msg->content[0]) {
+                    snprintf(latest_reply, sizeof(latest_reply), "%s", msg->content);
+                }
+                /* Count tool calls */
+                for (int t = 0; t < msg->tool_calls_count; t++) {
+                    tool_count++;
+                    /* Track tool name for counts */
+                    int found = 0;
+                    for (int k = 0; k < tool_type_count; k++) {
+                        if (strcmp(tool_names[k], msg->tool_calls[t].name) == 0) {
+                            tool_counts[k]++;
+                            found = 1;
+                            break;
+                        }
+                    }
+                    if (!found && tool_type_count < MAX_TOOL_TYPES) {
+                        snprintf(tool_names[tool_type_count], sizeof(tool_names[0]),
+                                 "%s", msg->tool_calls[t].name);
+                        tool_counts[tool_type_count] = 1;
+                        tool_type_count++;
+                    }
+                    /* Track file-editing tools */
+                    if ((strcmp(msg->tool_calls[t].name, "write_file") == 0 ||
+                         strcmp(msg->tool_calls[t].name, "patch") == 0 ||
+                         strcmp(msg->tool_calls[t].name, "read_file") == 0) &&
+                        file_count < MAX_FILES) {
+                        /* Try to extract path from args JSON */
+                        const char *args_str = msg->tool_calls[t].arguments;
+                        if (args_str && args_str[0]) {
+                            /* Simple JSON parse for "path" key */
+                            const char *path_key = strstr(args_str, "\"path\":");
+                            if (path_key) {
+                                path_key += 7; /* skip "path": */
+                                while (*path_key == ' ' || *path_key == '\"') path_key++;
+                                const char *end = strchr(path_key, '\"');
+                                if (end) {
+                                    size_t plen = (size_t)(end - path_key);
+                                    if (plen > sizeof(touched_files[0]) - 1)
+                                        plen = sizeof(touched_files[0]) - 1;
+                                    memcpy(touched_files[file_count], path_key, plen);
+                                    touched_files[file_count][plen] = '\0';
+                                    file_count++;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            case MSG_TOOL:
+                tool_count++;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /* Truncate long text */
+    if (strlen(latest_user) > 100) {
+        snprintf(latest_user + 97, sizeof(latest_user) - 97, "...");
+    }
+    if (strlen(latest_reply) > 150) {
+        snprintf(latest_reply + 147, sizeof(latest_reply) - 147, "...");
+    }
+
+    /* Format output */
+    printf("\nSession recap%s%s\n",
+           state->user_title[0] ? " - " : "",
+           state->user_title[0] ? state->user_title : "");
+
+    size_t win_user = n > 20 ? recent_user : user_count;
+    size_t win_asst = n > 20 ? recent_assistant : assistant_count;
+    printf("  Recent: %zu user turn%s / %zu assistant repl%s, %zu tool result%s\n",
+           win_user, win_user != 1 ? "s" : "",
+           win_asst, win_asst != 1 ? "ies" : "y",
+           tool_count, tool_count != 1 ? "s" : "");
+    if (n > 20 && (user_count != win_user || assistant_count != win_asst)) {
+        printf("  (of %zu/%zu total)\n", user_count, assistant_count);
+    }
+
+    /* Top tools */
+    if (tool_type_count > 0) {
+        printf("  Tools used: ");
+        int shown = 0;
+        for (int i = 0; i < tool_type_count && i < 5; i++) {
+            if (shown > 0) printf(", ");
+            printf("%s x %d", tool_names[i], tool_counts[i]);
+            shown++;
+        }
+        if (tool_type_count > 5)
+            printf(" (+%d more)", tool_type_count - 5);
+        printf("\n");
+    }
+
+    /* Files touched */
+    if (file_count > 0) {
+        printf("  Files touched: ");
+        for (int i = 0; i < file_count && i < 5; i++) {
+            if (i > 0) printf(", ");
+            printf("%s", touched_files[i]);
+        }
+        if (file_count > 5)
+            printf(" (+%d more)", file_count - 5);
+        printf("\n");
+    }
+
+    /* Latest messages */
+    if (latest_user[0])
+        printf("  Last ask: %s\n", latest_user);
+    if (latest_reply[0])
+        printf("  Last reply: %s\n", latest_reply);
+
+    printf("\n");
 }
 
 static void cmd_exit(const char *args, agent_state_t *state) {
