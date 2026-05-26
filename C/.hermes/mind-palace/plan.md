@@ -19,3 +19,4 @@ Build clean. 85 tools, 118 slash commands, 19 gateways, 10 providers, 59 libs.
 - Phase 64: 15 stale claims retired
 - Phase 65: 6 new display/TUI gaps documented
 - Phase 66: 6 streaming bug fixes (5 providers + llm_client.c fallback)
+- Phase 67: Agent config linkage — 28 unwired fields FIXED

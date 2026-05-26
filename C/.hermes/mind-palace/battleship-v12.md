@@ -263,7 +263,7 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 | 183 | R05 | Per-platform gateway config | Global config only | Per-platform auth/timeout/endpoint |
 
 
-## DA Audit Findings (2026-05-26, updated for v13 — Phase 0 entry points resolved; streaming bugs found and fixed)
+## DA Audit Findings (2026-05-26, updated for v14 — Phase 0 entry points resolved; streaming bugs found and fixed; agent linkage DA v1)
 
 ### Discrepancies Found
 
@@ -274,6 +274,52 @@ Context engine noops, memory noops, shutdown NULL, unused functions all confirme
 | F18 | tool_usage + exec_code not in registry grep | CLI counts 83, only 72 found via registry_register. 11 tools registered dynamically or via registry_register_ex variants | Tool inventory unclear |
 | S16-S20 | 5 providers streaming `data:` prefix assumption | HTTP layer (`http.c:1024`) strips `data:` prefix. All 5 OpenAI-compatible providers checked `if NOT prefix → return raw JSON`. Raw JSON streamed to terminal. Fixed: handle both cases. | Streaming completely broken for all OpenAI-compatible providers |
 | S21 | llm_client.c fallback tool call `data:` check dead code | Line 1112 checks `if (strncmp(data, "data: ", 6) == 0)` but HTTP layer already stripped it. Dead code — tool call streaming completely broken. Fixed: handle both cases. | Tool call streaming completely dead for all providers |
+
+## Agent Linkage DA Findings (2026-05-26)
+
+### Critical: agent_configure_from_config has ZERO callers
+
+`agent_configure_from_config()` in agent_loop.c line 96 exists to wire ALL config fields
+to agent state, but is NEVER called from the CLI init path. CLI calls `agent_init()` then
+manually copies only 4 fields (base_url, api_key, model, provider). 28 config fields stay
+at memset-zero values.
+
+| # | Issue | Details | Impact | Fix Status |
+|---|-------|---------|--------|------------|
+| L01 | `state->llm.max_retries` = 0 | Default api_max_retries=3 but never wired. CLI init doesn't call agent_configure_from_config. | Empty LLM response after tool execution = immediate failure. `[retry] Empty LLM response (attempt 1/0)` | ✅ FIXED: cli.c now calls agent_configure_from_config |
+| L02 | `state->llm.temperature` = 0.0 | Config temperature setting never reaches LLM | All responses at temp=0.0 (greedy/deterministic) | ✅ FIXED |
+| L03 | `state->llm.top_p` = 0.0 | Config top_p never reaches LLM | No nucleus sampling | ✅ FIXED |
+| L04 | `state->llm.max_tokens` = 0 | Config max_tokens never wired | LLM uses provider default | ✅ FIXED |
+| L05 | `state->llm.stop_sequences` empty | Config stop sequences ignored | Can't stop on custom sequences | ✅ FIXED |
+| L06 | `state->llm.presence_penalty` = 0.0 | Config penalty ignored | Less diverse responses | ✅ FIXED |
+| L07 | `state->llm.frequency_penalty` = 0.0 | Config penalty ignored | May repeat patterns | ✅ FIXED |
+| L08 | `state->llm.seed` = 0 | Config seed never wired | Non-deterministic output | ✅ FIXED |
+| L09 | `state->llm.logprobs` = false | Config logprobs ignored | Can't get log probabilities | ✅ FIXED |
+| L10 | `state->llm.top_logprobs` = 0 | Config top_logprobs ignored | Can't get top-k logprobs | ✅ FIXED |
+| L11 | `state->llm.service_tier` empty | Config service_tier ignored | Can't select service tier | ✅ FIXED |
+| L12 | `state->llm.reasoning_effort` empty | Config reasoning_effort ignored | Can't set thinking mode | ✅ FIXED |
+| L13 | `state->llm.response_format` empty | Config response_format ignored | Can't set JSON mode | ✅ FIXED |
+| L14 | `state->llm.tool_choice` empty | Config tool_choice ignored | Can't force tool use | ✅ FIXED |
+| L15 | `state->llm.parallel_tool_calls` false | Config parallel_tool_calls ignored | All tools sequential | ✅ FIXED |
+| L16 | `state->llm.max_tool_calls` = 0 | Config max_tool_calls ignored | No per-turn tool cap | ✅ FIXED |
+| L17 | `state->llm.fallback_model` empty | Config fallback_model ignored | No model fallback on failure | ✅ FIXED |
+| L18 | `state->llm.fallback_providers` empty | Config fallback_providers ignored | No provider chain on failure | ✅ FIXED |
+| L19 | `state->llm.json_mode` / `response_format_strict` false | Config json_mode ignored | Can't force structured output | ✅ FIXED |
+| L20 | `state->llm.safety_settings` empty | Config safety_settings ignored | Can't adjust safety filters | ✅ FIXED |
+| L21 | `state->llm.extra_body` empty | Config extra_body ignored | Can't send extra API params | ✅ FIXED |
+| L22 | `state->llm.candidate_count` = 0 | Config candidate_count ignored | Google Gemini n=1 always | ✅ FIXED |
+| L23 | `state->llm.n` = 0 | Config n ignored | Can't request multiple choices | ✅ FIXED |
+| L24 | `state->llm.top_k` = 0 | Config top_k ignored | Can't set top-k sampling | ✅ FIXED |
+| L25 | `state->llm.user` empty | Config user ignored | User ID not sent to API | ✅ FIXED |
+| L26 | `state->llm.metadata` empty | Config metadata ignored | Custom metadata not sent | ✅ FIXED |
+
+### Streaming `data:` Prefix Bug (resolved in prior session)
+
+| # | Issue | Details | Impact |
+|---|-------|---------|--------|
+| L27 | 5 providers streaming `data:` prefix assumption | HTTP layer (`http.c:1024`) strips `data: ` prefix. Providers checked `if NOT prefix -> return raw JSON`. Raw JSON streamed to terminal. | All OpenAI-compatible providers broken |
+| L28 | llm_client.c fallback tool call `data:` check dead code | Line 1112 `if (strncmp(data, "data: ", 6) == 0)` never true | Tool call streaming dead for all providers |
+
 
 ### Stale Claims Retired to vault Phase 64 (2026-05-25)
 

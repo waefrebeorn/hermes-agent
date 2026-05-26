@@ -464,12 +464,10 @@ int hermes_cli_main(int argc, char **argv) {
 
     /* Copy tools registry to agent */
     g_cli.agent.tools = *registry_get();
-    /* Copy config fields to agent */
-    memcpy(g_cli.agent.llm.base_url, g_cli.config.base_url, sizeof(g_cli.agent.llm.base_url));
-    memcpy(g_cli.agent.llm.api_key, g_cli.config.api_key, sizeof(g_cli.agent.llm.api_key));
-    memcpy(g_cli.agent.llm.model, g_cli.config.model, sizeof(g_cli.agent.llm.model));
-    memcpy(g_cli.agent.llm.provider, g_cli.config.provider, sizeof(g_cli.agent.llm.provider));
-    g_cli.agent.max_iterations = g_cli.config.max_turns;
+    /* Copy config fields to agent — agent_configure_from_config sets ALL
+     * llm config fields (max_retries, temperature, top_p, fallback, etc.)
+     * that were NEVER being wired before. This was the #1 linkage bug. */
+    agent_configure_from_config(&g_cli.agent, &g_cli.config);
     memcpy(g_cli.agent.hermes_home, g_cli.config.config_path,
            sizeof(g_cli.agent.hermes_home));
 

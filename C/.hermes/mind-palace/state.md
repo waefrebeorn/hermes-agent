@@ -13,6 +13,7 @@ Build clean. **85 tools** (registry_register). 118 slash commands. 19 gateways. 
 - **M04**: --profile flag wired
 - **S12 D13/D14**: Corrected stale claims (banner + tool feed are full parity)
 |- **V10b**: Streaming bug fix — 5 providers (OpenAI, Azure, Custom, OpenRouter, xAI) + llm_client.c fallback all had `data:` prefix assumption. HTTP layer strips prefix, raw JSON streamed to terminal. All 6 files fixed.
+|- **Agent linkage**: `agent_configure_from_config()` had ZERO callers. 28 config fields never wired to agent state (max_retries, temperature, top_p, fallback, etc.). FIXED: wired into CLI init path.
 
 ## Battleship
 **v12 — 171 active gaps** across 14 sectors.

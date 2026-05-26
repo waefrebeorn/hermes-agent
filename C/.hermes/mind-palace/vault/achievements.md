@@ -959,3 +959,22 @@ Systemic `data:` prefix assumption in provider stream parsers. HTTP layer (`http
 | S19 | provider_openrouter `data:` prefix assumption — same bug | provider_openrouter.c:294-297 | Same pattern, fixed |
 | S20 | provider_xai `data:` prefix assumption — same bug | provider_xai.c:263-265 | Same pattern, fixed |
 | S21 | llm_client.c fallback tool call `data:` check — dead code, never matched | llm_client.c:1112 | `if (strncmp(data, "data: ", 6) == 0)` never true, fix handles both cases |
+
+## Phase 67: Agent Config Linkage — 28 Unwired Fields (2026-05-26)
+
+`agent_configure_from_config()` had ZERO callers. CLI init only manually copied 4 fields.
+28 config parameters (max_retries, temperature, top_p, fallback, etc.) were never wired
+to agent state, all remaining at memset-zero values.
+
+**Fix:** Added `agent_configure_from_config(&g_cli.agent, &g_cli.config)` call to CLI init path.
+Replaced 5 manual field copies with single function call.
+
+| ID | Field | Before | After | Evidence |
+|----|-------|--------|-------|----------|
+| L01 | max_retries | 0 (no retries) | config value (default 3) | cli.c:469, agent_loop.c:145 |
+| L02 | temperature | 0.0 (greedy) | config value | agent_loop.c:111 |
+| L03 | top_p | 0.0 | config value | agent_loop.c:112 |
+| L04 | max_tokens | 0 (provider default) | config value | agent_loop.c:110 |
+| L05 | fallback_model | empty | config value | agent_loop.c:146-147 |
+| L06 | fallback_providers | empty | config value | agent_loop.c:148-149 |
+| L07-L26 | 20+ other fields | memset(0) | config values | agent_loop.c:110-150 |
