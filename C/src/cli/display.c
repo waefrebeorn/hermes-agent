@@ -62,6 +62,26 @@ void display_print_error(const char *text) {
     display_printf(DISPLAY_RED, DISPLAY_NORMAL, "✗ %s\n", text);
 }
 
+void display_print_error_rich(const char *error_msg, const char *suggestion) {
+    if (!error_msg) return;
+    /* Error header — bold red */
+    display_set_fg(DISPLAY_RED);
+    display_set_style(DISPLAY_BOLD);
+    printf("  ✗ Error: ");
+    display_reset();
+    /* Error message — red */
+    display_set_fg(DISPLAY_RED);
+    printf("%s\n", error_msg);
+    display_reset();
+    /* Suggestion — dim yellow if present */
+    if (suggestion && suggestion[0]) {
+        display_printf(DISPLAY_YELLOW, DISPLAY_DIM, "    ┊ %s\n", suggestion);
+    }
+    /* Separator line */
+    display_printf(DISPLAY_RED, DISPLAY_DIM,
+        "    └────────────────────────────────────\n");
+}
+
 void display_print_header(const char *text) {
     if (!text) return;
     printf("\n");

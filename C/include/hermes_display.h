@@ -175,6 +175,9 @@ void display_print_error(const char *text);
 /* Print a bold yellow header with leading newline */
 void display_print_header(const char *text);
 
+/* Print a rich error with contextual suggestion */
+void display_print_error_rich(const char *error_msg, const char *suggestion);
+
 /* Display a random startup tip after banner */
 void display_show_tip(void);
 
