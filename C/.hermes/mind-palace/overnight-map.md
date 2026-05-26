@@ -1,7 +1,7 @@
-     1|# Slermes C — Overnight Map (v9 — 350 Gaps)
+     1|# Slermes C — Overnight Map (v9 — 349 Gaps)
      2|
      3|## Navigation
-     4|- **Battleship:** battleship-v10.md — 350 gaps, 20 sectors
+     4|- **Battleship:** battleship-v10.md — 349 gaps, 20 sectors
      5|- **State:** state.md — build metrics, stub stats
      6|- **Goal:** goal-mantra.md — loop, phase order
      7|

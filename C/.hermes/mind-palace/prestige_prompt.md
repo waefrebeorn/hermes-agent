@@ -1,4 +1,4 @@
-     1|# Slermes C — Prestige Prompt (v8 — 350 Gaps)
+     1|# Slermes C — Prestige Prompt (v8 — 349 Gaps)
      2|
      3|## Phase 0a — Entry Point Integration (8)
      4|I01 pipe multi-line → I02 unknown flags → I03 --tui → I04 --session → I05 logs → I06 config → I07 DeepSeek → I08 cron zero-state

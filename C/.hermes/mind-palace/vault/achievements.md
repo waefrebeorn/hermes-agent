@@ -806,3 +806,9 @@ C07 | tools.environments — added `char environments[512]` to tools_config_t, Y
 | V11 | Kawaii faces (15 waiting, 15 thinking, 15 verbs) — already fully implemented in V02. Battleship stale claim. | 0 | P2 | src/cli/display_core.c (KAWAII_WAITING:10, KAWAII_THINKING:15, THINKING_VERBS:15) |
 | V12 | Tool emoji registry — merged into V05. Skin tool_emojis config now feeds display_tool_activity. | 0 | P2 | Same as V05 |
 
+## Phase 17: Response Box — V06 (2026-05-25)
+
+| ID | Description | LOC | Priority | Evidence |
+|----|-------------|-----|----------|----------|
+| V06 | Response box — all 3 display_panel("Response") calls in cli.c now check skin colors.response_border hex value first, falling back to DISPLAY_CYAN. Uses display_panel_hex() for TrueColor border. | ~15 | P2 | src/cli/cli.c (3 display_panel calls updated) |
+

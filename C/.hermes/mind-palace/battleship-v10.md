@@ -2,7 +2,7 @@
 
 Generated 2026-05-25 by exhaustive Triple DA: stub hunt (20+ patterns), Python-vs-C function-level comparison (75+ tool .py files vs 46 .c files), gateway depth audit, provider feature audit, dead code scan, upstream sync, live binary testing, and command behavioral audit.
 
-Total: **350 active gaps** across 20 sectors.
+Total: **349 active gaps** across 20 sectors.
 
 ---
 
@@ -18,15 +18,14 @@ All 8 entry point gaps resolved in Phase 0a:
 - I07: DeepSeek V4 sends explicit thinking.type=enabled
 - I08: Cron exits early with message if no jobs
 
-## SECTOR 0B: Display & Visual Parity (5 gaps)
+## SECTOR 0B: Display & Visual Parity (4 gaps)
 
 | # | ID | Feature | Python Source | C State |
 |---|-----|---------|-------------|---------|
-| 9 | V06 | Response box (colored border, label) | cli.py | Plain ANSI color |
-| 10 | V07 | Rich help (table formatting, categories) | cli.py rich tables | Raw text list |
-| 11 | V08 | ANSI 256/TrueColor (hex → 24-bit) | rich lib | 8 colors (30-37) |
-| 12 | V09 | Prompt input (tab complete, history, multiline) | prompt_toolkit | fgets() via line_edit |
-| 13 | V10 | Markdown rendering for LLM responses | rich markdown | Basic table parsing only |
+| 9 | V07 | Rich help (table formatting, categories) | cli.py rich tables | Raw text list |
+| 10 | V08 | ANSI 256/TrueColor (hex → 24-bit) | rich lib | 8 colors (30-37) |
+| 11 | V09 | Prompt input (tab complete, history, multiline) | prompt_toolkit | fgets() via line_edit |
+| 12 | V10 | Markdown rendering for LLM responses | rich markdown | Basic table parsing only |
 | 16 | V12 | Tool emoji registry (per-tool emoji) | skin_engine | None |
 
 ## SECTOR 0C: CLI Behavioral Parity — Commands That Ignore Args (40 gaps)
@@ -198,7 +197,7 @@ Behaviors that work in Python but have NO equivalent in C, where a user would im
 | Sector | Category | Gaps |
 |--------|----------|------|
 | 0A | Entry Point Integration | 8 |
-| 0B | Display & Visual Parity | 5 |
+| 0B | Display & Visual Parity | 4 |
 | 0C | CLI Behavioral Parity (args ignored) | 40 |
 | 0D | Missing Usages (Python behavior gaps) | 15 |
 | 1 | P1 Critical Agent Modules | 4 |
@@ -212,7 +211,7 @@ Behaviors that work in Python but have NO equivalent in C, where a user would im
 | 9 | Library Depth | 15 |
 | 10 | Config Key Gaps | 8 |
 | 11 | Test Coverage Gaps | 5 |
-| **Total** | | **350** |
+| **Total** | | **349** |
 
 ## Phase Order
 1. **Phase 0a** — Entry Points ✅ (I01-I08)

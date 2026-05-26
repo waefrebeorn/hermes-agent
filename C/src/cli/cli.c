@@ -598,7 +598,11 @@ int hermes_cli_main(int argc, char **argv) {
             if (g_cli.json_output) {
                 cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
             } else {
-                display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
+                const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
+                if (border && border[0] == '#')
+                    display_panel_hex("Response", resp ? resp : "(no response)", border);
+                else
+                    display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
             }
             free(resp);
             free(msg);
@@ -662,7 +666,11 @@ int hermes_cli_main(int argc, char **argv) {
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, resp ? "ok" : "error");
                 } else {
-                    display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
+                    const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
+                    if (border && border[0] == '#')
+                        display_panel_hex("Response", resp ? resp : "(no response)", border);
+                    else
+                        display_panel("Response", resp ? resp : "(no response)", DISPLAY_CYAN);
                 }
                 free(resp);
             }
@@ -758,7 +766,11 @@ int hermes_cli_main(int argc, char **argv) {
                 if (g_cli.json_output) {
                     cli_json_respond(resp, g_cli.agent.session_id, "ok");
                 } else {
-                    display_panel("Response", resp, DISPLAY_CYAN);
+                    const char *border = g_skin ? skin_get(g_skin, "colors.response_border", NULL) : NULL;
+                    if (border && border[0] == '#')
+                        display_panel_hex("Response", resp, border);
+                    else
+                        display_panel("Response", resp, DISPLAY_CYAN);
                 }
             }
             free(resp);
