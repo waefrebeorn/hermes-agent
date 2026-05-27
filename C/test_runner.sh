@@ -97,6 +97,21 @@ else
     fail "registry (compilation failed)"
 fi
 
+echo ""; echo "=== Skill Command Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_skill_commands.c" "$CDIR/src/agent/skill_commands.c" \
+    -o /tmp/hermes_test_sk -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_sk ]]; then
+    if /tmp/hermes_test_sk > /dev/null 2>&1; then
+        ok "skill_commands (19 tests)"
+    else
+        fail "skill_commands (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_sk
+else
+    fail "skill_commands (compilation failed)"
+fi
+
 echo ""; echo "=== Usage Pricing Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" \

@@ -17,8 +17,8 @@
 
 ## Build Metrics (v73)
 
-Suite: 270/0/0 — all pass, 0 skip. 84 tools, 98 CLI commands.
-172 src/ .c files, 234 tests, 65 libs, 19 gateways, 10 providers.
+Suite: 271/0/0 — all pass, 0 skip. 84 tools, 98 CLI commands.
+172 src/ .c files, 235 tests, 65 libs, 19 gateways, 10 providers.
 Binary: 30M. Build: 0 warnings.
 
 ## Gap Distribution
