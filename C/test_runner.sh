@@ -112,6 +112,21 @@ else
     fail "redact (compilation failed)"
 fi
 
+echo ""; echo "=== Markdown Render Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" \
+    "$CDIR/tests/test_markdown.c" "$CDIR/src/agent/markdown_render.c" \
+    -o /tmp/hermes_test_md -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_md ]]; then
+    if /tmp/hermes_test_md > /dev/null 2>&1; then
+        ok "markdown_render (23 tests)"
+    else
+        fail "markdown_render (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_md
+else
+    fail "markdown_render (compilation failed)"
+fi
+
 echo ""; echo "=== Sanitize Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
