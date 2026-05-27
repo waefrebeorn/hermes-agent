@@ -1,12 +1,12 @@
 # Slermes C — State Dashboard (v32 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **80 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 231/0/24.
+Build clean. **81 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 231/0/24.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)
 C: ~1,412 functions in core modules (agent/tools/cli/gateway)
-~351 item-level gaps (battleship-v16 rows).
+~350 item-level gaps (battleship-v16 rows).
 
 ## DA v16 Findings (2026-05-26)
 Phase 2 provider deepen claims: **HEAVILY STALE**.

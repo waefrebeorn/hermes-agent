@@ -8,8 +8,8 @@ CLI:     98      (slash commands with handlers)
 Gateways:19      (platforms)
 Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)
-Gaps:    ~364    (items across 11 phases, battleship-v16 Triple DA)
-|Parity:  item-level (~364 items — see battleship-v16)
+Gaps:    ~363    (items across 11 phases, battleship-v16 Triple DA)
+|Parity:  item-level (~363 items — see battleship-v16)
 ```
 
 ## Orientation
@@ -17,7 +17,7 @@ Gaps:    ~364    (items across 11 phases, battleship-v16 Triple DA)
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v16.md` (~364 items across 11 phases)
+- **Battleship:** `battleship-v16.md` (~363 items across 11 phases)
 - **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)
 
 ## Phase Progress
