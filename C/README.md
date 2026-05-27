@@ -4,15 +4,15 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||||| Suite:  259/0/0 (227 test files, completes in <60s)
+||||||| Suite:  259/0/0 (225 test files, completes in <60s)
 |||||| Binary: 30M    (dynamic ELF, -O2 -g)
-|||||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
+|||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
 ||||||||| Parity:  ~43%   (~297 item-level gaps — see battleship-v16)
 ||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
 |||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||CLI:    98 cmd_ functions — 83 unique tools registered
-|||||Tools:  83 registered (86 at runtime with MCP dynamic)
+|||||CLI:    98 cmd_ functions — 84 unique tools registered
+|||||Tools:  84 registered (87 at runtime with MCP dynamic)
 ||||Libraries: 59 C modules — zero external deps beyond libc+libssl
 ||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
 ||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
@@ -32,12 +32,12 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 - [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c-0-so)
 - [Libraries (59 Units)](#libraries-59-units)
-- [CLI Commands (118 Slash, Real)](#cli-commands-78-slash-real)
+- [CLI Commands (98 Slash, Real)](#cli-commands-98-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-|||- [Battleship Roadmap (171 Gaps)](#battleship-roadmap-171-gaps)
+|||- [Battleship Roadmap (~297 Gaps)](#battleship-roadmap-171-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -52,7 +52,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 230/0/25
+bash test_runner.sh        # 259/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -71,7 +71,7 @@ docker run --rm hermes-c --help
 
 ### Smoke Test
 ```bash
-echo '/tools' | ./hermes     # List all 85 registered tools
+echo '/tools' | ./hermes     # List all 84 registered tools
 echo "/providers" | ./hermes # List provider configurations
 ```
 
@@ -99,7 +99,7 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ Tool call
                     ┌──────────▼──────────────┐
-                    │   85 Tool Registry       │
+                    │   84 Tool Registry       │
                     │  (file, web, terminal,   │
                     │   skills, MCP, kanban,   │
                     │   browser, delegate...)  │
@@ -139,7 +139,7 @@ make docs             # Doxygen HTML docs (if doxygen available)
 |-------|------|--------|
 || P1 | 59 library units (.o) | lib/*.o |
 | P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 85 tool handlers | src/tools/*.o |
+| P3 | 84 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -160,7 +160,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (89 Registered)
+## All Tools (84 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -425,7 +425,7 @@ The CLI uses a central command registry (`cli/commands.c`) with alias resolution
 - **S08** — video_gen.c fal_provider.generate = NULL (uses handler directly)
 - **S09** — commands.c cmd_background "background mode not available" message
 
-All are P2-P3. The 85 tools + 79 CLI commands are real implementations.
+All are P2-P3. The 84 tools + 98 CLI commands are real implementations.
 
 ---
 
@@ -461,7 +461,7 @@ waefrebeorn/slermes/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   85 tool handler implementations
+│   │   ├── tools/                ←   84 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
 │   ├── lib/                      ←   59 library units (compiled directly, no .a)
