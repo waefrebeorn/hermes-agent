@@ -26,6 +26,7 @@ extern char *file_read_handler(const char *args_json, const char *task_id);
 extern char *file_write_handler(const char *args_json, const char *task_id);
 extern char *file_search_handler(const char *args_json, const char *task_id);
 extern char *file_diff_handler(const char *args_json, const char *task_id);
+extern char *file_perms_handler(const char *args_json, const char *task_id);
 
 static int passed = 0, failed = 0;
 
@@ -332,6 +333,28 @@ int main(void) {
         /* Test missing file */
         json_node_t *r = parse_result(file_diff_handler(
             "{\"path_a\":\"/tmp/hermes_test_nonexist.txt\",\"path_b\":\"/tmp/other.txt\"}", NULL));
+        TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
+        if (r) json_free(r);
+    }
+
+    /* ============ Permissions tests ============ */
+    printf("\n--- file_permissions tests ---\n");
+    {
+        /* Stat an existing file */
+        json_node_t *r = parse_result(file_perms_handler(
+            "{\"path\":\"/bin/ls\"}", NULL));
+        TEST("stat returns result", r != NULL);
+        if (r) {
+            const char *mode = json_object_get_string(r, "mode", "");
+            TEST("has mode field", mode != NULL && strlen(mode) >= 3);
+            TEST("has type field", json_object_get_string(r, "type", "") != NULL);
+            json_free(r);
+        }
+    }
+    {
+        /* Stat non-existent file */
+        json_node_t *r = parse_result(file_perms_handler(
+            "{\"path\":\"/tmp/hermes_test_nonexist_xyz\"}", NULL));
         TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
         if (r) json_free(r);
     }

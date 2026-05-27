@@ -499,13 +499,12 @@ The following items from battleship-v8 were verified as stale — code already i
 
 
 
-## Phase 67: Phase 3 Tool Features — File Diff (2026-05-26)
+## Phase 68: Phase 3 Tool Features — File Permissions (2026-05-26)
 
 | ID | Description | Evidence |
 |----|-------------|----------|
-| F18 | file_diff handler — unified diff between two files | src/tools/file.c:546-627 (handle_diff reads both files, calls difflib_unified_diff) |
-| F18 | difflib integration (difflib.h) for diff + ratio | include "difflib.h"; difflib_unified_diff + difflib_ratio calls |
-| F18 | Schema with path_a, path_b, context_lines params | src/tools/file.c:62-71 (SCHEMA_DIFF) |
-| F18 | Registered as file_diff tool | src/tools/file.c:658-661 (registry_register in registry_init_file) |
-| F18 | 5 new tests: diff output, added/removed lines, identical files similarity, missing file error | tests/test_file.c:286-340 |
-| F18 | Suite: 227/0/24 (file_tool 35→40 tests) | test_runner.sh — added difflib include path + source file |
+| F18 | file_permissions handler — stat + chmod | src/tools/file.c:635-705 (handle_perms: stat, chmod, metadata response) |
+| F18 | Schema: path (req), mode (opt, octal) | src/tools/file.c:78-87 (SCHEMA_PERMS) |
+| F18 | Returns mode, size, uid, gid, type, is_dir/file/link | src/tools/file.c:690-704 |
+| F18 | 3 tests: stat existing file (mode+type), missing file error | tests/test_file.c:343-361 |
+| F18 | Suite: 227/0/24 (file_tool 40→43) | test_runner.sh |

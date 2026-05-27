@@ -24,7 +24,7 @@ Only real stub: stub_cdp_handler in browser.c (dead code, unused by any register
 Zero gateway polling stubs — all 13 platforms with poll_messages have real implementations.
 
 ## Battleship
-**v15 — 1,886 function-level parity gaps** (~366 items). Phase 3: #23 patch V4A, #22 skill deps, #19 homeassistant, #18 file_diff closed.
+**v15 — 1,886 function-level parity gaps** (~366 items). Phase 3: #23 patch V4A, #22 skill deps, #19 homeassistant, #18 file_diff/permissions closed.
 
 ## Phase Order
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)

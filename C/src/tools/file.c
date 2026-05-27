@@ -73,6 +73,15 @@ static const char *SCHEMA_WRITE = "{"
         "\"required\":[\"path_a\",\"path_b\"]"
     "}";
 
+    static const char *SCHEMA_PERMS = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"path\":{\"type\":\"string\",\"description\":\"File path\"},"
+          "\"mode\":{\"type\":\"string\",\"description\":\"New permissions (e.g. 644, 755). Omit to just stat.\"}"
+        "},"
+        "\"required\":[\"path\"]"
+    "}";
+
     /* ================================================================
      *  P168: File Sandbox — Allowed directories & symlink attack prevention
      * ================================================================ */
@@ -620,6 +629,76 @@ static char *handle_diff(const char *args_json) {
     return json_out;
 }
 
+/* File permissions — stat file or change mode */
+static char *handle_perms(const char *args_json) {
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    char *err = NULL;
+    json_node_t *args = json_parse(args_json, &err);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *path = json_object_get_string(args, "path", NULL);
+    if (!path || !*path) {
+        json_free(args);
+        return strdup("{\"error\":\"Missing path\"}");
+    }
+
+    const char *mode_str = json_object_get_string(args, "mode", "");
+
+    /* If mode provided, try chmod */
+    if (mode_str && *mode_str) {
+        long mode_val = strtol(mode_str, NULL, 8);
+        if (mode_val <= 0) {
+            json_free(args);
+            return strdup("{\"error\":\"Invalid mode (use octal, e.g. 644)\"}");
+        }
+        if (chmod(path, (mode_t)mode_val) != 0) {
+            json_free(args);
+            char buf[512];
+            snprintf(buf, sizeof(buf), "{\"error\":\"chmod failed: %s\"}", strerror(errno));
+            return strdup(buf);
+        }
+    }
+
+    /* Stat the file */
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot stat %s: %s\"}", path, strerror(errno));
+        return strdup(buf);
+    }
+
+    /* Format mode as octal string */
+    char mode_oct[16];
+    snprintf(mode_oct, sizeof(mode_oct), "%03o", (unsigned)(st.st_mode & 0777));
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "path", json_new_string(path));
+    json_object_set(result, "mode", json_new_string(mode_oct));
+    json_object_set(result, "size", json_new_number((double)st.st_size));
+    json_object_set(result, "uid", json_new_number((double)st.st_uid));
+    json_object_set(result, "gid", json_new_number((double)st.st_gid));
+    json_object_set(result, "is_dir", json_new_bool(S_ISDIR(st.st_mode)));
+    json_object_set(result, "is_file", json_new_bool(S_ISREG(st.st_mode)));
+    json_object_set(result, "is_link", json_new_bool(S_ISLNK(st.st_mode)));
+
+    /* Add human-readable type */
+    const char *ftype = "other";
+    if (S_ISDIR(st.st_mode)) ftype = "directory";
+    else if (S_ISREG(st.st_mode)) ftype = "file";
+    else if (S_ISLNK(st.st_mode)) ftype = "symlink";
+    else if (S_ISCHR(st.st_mode)) ftype = "char_device";
+    else if (S_ISBLK(st.st_mode)) ftype = "block_device";
+    else if (S_ISFIFO(st.st_mode)) ftype = "fifo";
+    else if (S_ISSOCK(st.st_mode)) ftype = "socket";
+    json_object_set(result, "type", json_new_string(ftype));
+
+    char *json_out = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return json_out;
+}
+
 /* ================================================================
  *  Public handlers
  * ================================================================ */
@@ -644,6 +723,11 @@ char *file_diff_handler(const char *args_json, const char *task_id) {
     return handle_diff(args_json);
 }
 
+char *file_perms_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    return handle_perms(args_json);
+}
+
 /* Auto-registration */
 void registry_init_file(void) {
     registry_register("read_file",
@@ -659,4 +743,8 @@ void registry_init_file(void) {
         "Generate unified diff between two files. Shows added/removed/changed lines. "
         "Optional: context_lines (default: 3).",
         SCHEMA_DIFF, file_diff_handler);
+    registry_register("file_permissions",
+        "Get or set file permissions. Without 'mode', shows current permissions, "
+        "type, size, owner. With 'mode' (octal, e.g. 644), changes permissions.",
+        SCHEMA_PERMS, file_perms_handler);
 }
