@@ -83,6 +83,20 @@ run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredenti
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 
+echo ""; echo "=== Env Passthrough Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libenvpassthrough" \
+    "$CDIR/tests/test_env_passthrough.c" "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
+    -o /tmp/hermes_test_ep -lpthread 2>/dev/null && [[ -x /tmp/hermes_test_ep ]]; then
+    if /tmp/hermes_test_ep > /dev/null 2>&1; then
+        ok "env_passthrough (15 tests)"
+    else
+        fail "env_passthrough (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_ep
+else
+    fail "env_passthrough (compilation failed)"
+fi
+
 echo ""; echo "=== Tool Output Lib Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtooloutput" \
     "$CDIR/tests/test_tool_output.c" "$CDIR/lib/libtooloutput/tool_output.c" \
