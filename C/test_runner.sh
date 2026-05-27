@@ -1146,6 +1146,9 @@ run_lib_test "image_gen_registry" "tests/test_image_gen_registry.c" "include" "-
 echo ""; echo "=== Web Search Registry Tests ==="
 run_lib_test "web_search_registry" "tests/test_web_search_registry.c" "include" "$CDIR/src/tools/web_search_registry.c -lpthread"
 
+echo ""; echo "=== Video Analyze Tests ==="
+run_lib_test "video_analyze" "tests/test_video_analyze.c" "include" "-lm"
+
 echo ""; echo "=== Account Usage Tests ==="
 run_lib_test "account_usage" "tests/test_account_usage.c" "include" "$CDIR/src/tools/account_usage.c $CDIR/lib/libjson/json.c $CDIR/lib/libhttp/http.c -lssl -lcrypto -lm -lz"
 
