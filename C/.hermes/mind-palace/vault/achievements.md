@@ -128,3 +128,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T31 | image_generate: added negative_prompt + style params to schema + request body builder. C was missing these 2 params that Python supports via FAL's flux-pro API. | 1A | image_gen.c: SCHEMA + body building with negative_prompt/style |
 | - | 78 tools unchanged. Suite unchanged. | | |
+
+## Phase 16: web_get enrichment (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T32 | web_get: added method/headers/body params. C web_get only supported GET with default Accept header. Now supports GET/POST/PUT/DELETE methods, custom headers string, and request body for POST/PUT. Schema updated with 3 new optional params. | 1A | web.c: updated SCHEMA_GET + handler with method_str_to_enum(), headers string passthrough, body_len passthrough to http_request() |
+| - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 12→9. | |

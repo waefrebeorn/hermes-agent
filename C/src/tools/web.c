@@ -19,13 +19,25 @@ static const char *SCHEMA_GET = "{"
     "\"type\":\"object\","
     "\"properties\":{"
       "\"url\":{\"type\":\"string\",\"description\":\"URL to fetch\"},"
-      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30}"
+      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30},"
+      "\"method\":{\"type\":\"string\",\"description\":\"HTTP method: GET, POST, PUT, DELETE\",\"default\":\"GET\"},"
+      "\"headers\":{\"type\":\"string\",\"description\":\"Custom HTTP headers as 'Key: Value' lines (newline-separated)\"},"
+      "\"body\":{\"type\":\"string\",\"description\":\"Request body for POST/PUT requests\"}"
     "},"
     "\"required\":[\"url\"]"
-"}";
+"\"}";
+
+/* Resolve HTTP method string to enum */
+static http_method_t method_str_to_enum(const char *method) {
+    if (!method) return HTTP_GET;
+    if (strcasecmp(method, "POST") == 0) return HTTP_POST;
+    if (strcasecmp(method, "PUT") == 0) return HTTP_PUT;
+    if (strcasecmp(method, "DELETE") == 0) return HTTP_DELETE;
+    return HTTP_GET;
+}
 
 /* ================================================================
- *  HTTP GET handler
+ *  HTTP GET / POST / PUT / DELETE handler
  * ================================================================ */
 
 char *web_get_handler(const char *args_json, const char *task_id) {
@@ -39,17 +51,37 @@ char *web_get_handler(const char *args_json, const char *task_id) {
 
     const char *url = json_object_get_string(args, "url", NULL);
     int timeout = (int)json_object_get_number(args, "timeout", 30);
+    const char *method_str = json_object_get_string(args, "method", "GET");
+    const char *headers_str = json_object_get_string(args, "headers", NULL);
+    const char *body = json_object_get_string(args, "body", NULL);
+
+    /* Strdup values that survive json_free */
+    char *headers_copy = headers_str ? strdup(headers_str) : NULL;
+    char *body_copy = body ? strdup(body) : NULL;
+    char method_buf[16];
+    snprintf(method_buf, sizeof(method_buf), "%s", method_str ? method_str : "GET");
+    http_method_t method = method_str_to_enum(method_buf);
 
     json_free(args);
 
-    if (!url) return strdup("{\"error\":\"Missing url\"}");
+    if (!url) {
+        free(headers_copy);
+        free(body_copy);
+        return strdup("{\"error\":\"Missing url\"}");
+    }
 
     http_client_t *client = http_client_new(timeout);
-    http_response_t *resp = http_request(client, HTTP_GET, url,
-                                          "Accept: text/html,application/json", NULL, 0);
+    const char *default_headers = "Accept: text/html,application/json";
+    const char *use_headers = headers_copy ? headers_copy : default_headers;
+    http_response_t *resp = http_request(client, method, url,
+                                          use_headers,
+                                          body_copy,
+                                          body_copy ? strlen(body_copy) : 0);
 
     if (!resp) {
         http_client_free(client);
+        free(headers_copy);
+        free(body_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
     }
 
@@ -63,6 +95,8 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     json_free(result);
     http_response_free(resp);
     http_client_free(client);
+    free(headers_copy);
+    free(body_copy);
     return json_out;
 }
 
