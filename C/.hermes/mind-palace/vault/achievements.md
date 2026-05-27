@@ -228,3 +228,4 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 | - | 78 tools unchanged. Suite 231/0/24. | |
 | | **Phase 10 (2026-05-27)** | | |
 | | - | web_get: follow_redirects + max_redirects params. Phase 3: 26→25. | src/tools/web.c | web_get schema + handler |
+| | - | x_search: added lang param (ISO 639-1). Phase 3: 25→24. | src/tools/x_search.c | x_search schema + handler |

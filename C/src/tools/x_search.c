@@ -27,7 +27,8 @@ static const char *SCHEMA = "{"
       "\"enable_image_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze images in matching posts\",\"default\":false},"
       "\"enable_video_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze videos in matching posts\",\"default\":false},"
       "\"media_filter\":{\"type\":\"string\",\"description\":\"Filter by media type: 'images', 'videos', 'news', 'links', or empty for all\"},"
-      "\"max_results\":{\"type\":\"integer\",\"description\":\"Maximum number of results to return (1-50, default: 10)\",\"default\":10}"
+      "\"max_results\":{\"type\":\"integer\",\"description\":\"Maximum number of results to return (1-50, default: 10)\",\"default\":10},"
+      "\"lang\":{\"type\":\"string\",\"description\":\"Language filter (ISO 639-1 code, e.g., 'en', 'ja', 'es'). Restricts results to that language.\"}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -126,6 +127,9 @@ char *x_search_handler(const char *args_json, const char *task_id) {
     int max_results = (int)json_get_num(args, "max_results", 10);
     if (max_results > 0)
         json_set(tool_def, "max_results", json_number((double)max_results));
+    const char *lang = json_get_str(args, "lang", NULL);
+    if (lang && *lang)
+        json_set(tool_def, "lang", json_string(lang));
 
     /* Build request payload */
     json_node_t *payload = json_new_object();

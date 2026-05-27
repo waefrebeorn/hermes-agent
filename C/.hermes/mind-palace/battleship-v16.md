@@ -32,7 +32,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 12 | vision_tools | 22 | 6 | 16 | OCR (tesseract), face detection, barcode/QR, EXIF extraction, metadata, image classification, object detection, color analysis, text detection, landmark recognition |
 | 13 | image_generation_tool | 15 | 3 | 12 | Multi-provider (FAL, Replicate, Stability AI, OpenAI DALL-E), image-to-image, inpainting, outpainting, control nets. aspect_ratio, negative_prompt, style params added. |
 | 14 | web_tools | 25 | 14 | 6 | Cookie jar, session persistence, form fill, JS execution, screenshot, request/response intercept, rate limiting. method/headers/body + proxy + auth + follow_redirects + max_redirects params added to web_get. |
-| 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context. enable_image_understanding + enable_video_understanding added. |
+| 15 | x_search_tool | 14 | 4 | 9 | Advanced filters (geo), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context. enable_image_understanding + enable_video_understanding added. |
 | 16 | video_generation_tool | 12 | 3 | 4 | Multi-provider, aspect ratio, duration. model + reference_image_urls + style + motion_scale + loop params added. |
 | 17 | cronjob_tools | 17 | 13 | 0 | Parity achieved. timezone handling, pause/resume/run/update/list-named, job history (run log) all added. |
 | 18 | file_tools | 30 | 30 | 0 | Parity achieved. file_diff + perms + hex + syntax check + file_hash + file_merge + file_watch (inotify) added. |
