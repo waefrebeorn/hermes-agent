@@ -9,6 +9,12 @@
      |----|-------------|--------|----------|
      | V14 | Vision OCR — text extraction via tesseract binary. Calls vision_analysis.py ocr mode, returns extracted text + character count. | 1A | vision.c: analysis="ocr" handler + schema; vision_analysis.py: analyze_ocr() function using subprocess tesseract |
 
+     ## Phase 14: Phase 4 Missing Tool Port (2026-05-27)
+
+     | ID | Description | Sector | Evidence |
+     |----|-------------|--------|----------|
+     | P04 | video_analyze — new video analysis tool using ffprobe. Extracts video metadata (codec, resolution, duration, bitrate, framerate), audio stream info, and scene detection via ffprobe lavfi. Supports local files and remote URLs. | 1B | video_analyze.c: registry_init_video_analyze(), video_analyze_handler() with ffprobe JSON parsing; tool_init.c: registry_init_video_analyze(); Makefile: added video_analyze.o |
+
      ## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
      7|
      8|| ID | Description | Sector | Evidence |

@@ -51,6 +51,7 @@ void registry_init_file_watch(void);
 void registry_init_feishu_tools(void);
 void registry_init_file_merge(void);
 void registry_init_mixture_of_agents(void);
+void registry_init_video_analyze(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -109,6 +110,9 @@ void tools_init_all(void) {
     /* N02: Mixture of Agents tool */
     registry_init_mixture_of_agents();
 
+    /* P04: Video analysis tool */
+    registry_init_video_analyze();
+
     /* P150: Assign toolsets for enabled/disabled filtering */
     registry_set_toolset("browser_navigate", "browser");
     registry_set_toolset("browser_snapshot", "browser");
@@ -144,6 +148,7 @@ void tools_init_all(void) {
 
     registry_set_toolset("image_generate", "image_gen");
     registry_set_toolset("video_generate", "video_gen");
+    registry_set_toolset("video_analyze", "vision");
     registry_set_toolset("cronjob", "cron");
     registry_set_toolset("cron_cmd", "cron");
     registry_set_toolset("memory", "memory");

@@ -1,5 +1,5 @@
-# Slermes C — Plan (v63 — ~298 Items)
-Suite: 257/0/0, 224 test files. 83 tools, 98 CLI commands.
+# Slermes C — Plan (v64 — ~297 Items)
+Suite: 257/0/0, 225 test files. 84 tools, 98 CLI commands.
 Build clean. 30M binary. ~43% parity.
-Recent: vision OCR.
+Recent: video_analyze.
 Next: Phase 4 missing tools.

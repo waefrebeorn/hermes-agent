@@ -1,10 +1,10 @@
-# Slermes C — Goal Mantra (v63)
+# Slermes C — Goal Mantra (v64)
 
 ── STATE: battleship documents in C/.hermes/mind-palace/.
-   Suite: 257/0/0. Tools: 83. CLI: 98 commands.
+   Suite: 257/0/0. Tools: 84. CLI: 98 commands.
    Gateways: 19. Providers: 10. Libs: 59.
-   src/ .c: 146. Test files: 224. Binary: 30M.
-   ~298 item-level parity gaps (battleship-v16).
+   src/ .c: 146. Test files: 225. Binary: 30M.
+   ~297 item-level parity gaps (battleship-v16).
    Build: make -j$(nproc). Test: bash test_runner.sh.
 
 ── LOOP: read state.md → battleship → prestige → plan → overnight →
@@ -18,7 +18,7 @@
    Phase 1 — CLI Args: ✅ ALL DONE.
    Phase 2 — Provider Parity (~20 real, HEAVILY STALE).
    Phase 3 — Tool Features: ✅ ALL DONE.
-   Phase 4 — Missing Tools (46).
+   Phase 4 — Missing Tools (45).
    Phase 5-11: Gateway (51) → Agent (74) → Plugins (13) → Libs (19) → Security (15) → Tests (50) → Infra (10).
 
 ── DOC DISCIPLINE: after every implementation pass, update ALL walkway files

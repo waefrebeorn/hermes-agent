@@ -1,3 +1,3 @@
-# Slermes C — Index (v63)
-Suite: 257/0/0. 83 tools. 98 CLI. 19 gateways. 10 providers. 59 libs.
-146 src .c. 224 tests. 30M binary. ~298 parity gaps (battleship-v16).
+# Slermes C — Index (v64)
+Suite: 257/0/0. 84 tools. 98 CLI. 19 gateways. 10 providers. 59 libs.
+146 src .c. 225 tests. 30M binary. ~297 parity gaps (battleship-v16).
