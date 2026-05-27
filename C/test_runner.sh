@@ -80,6 +80,7 @@ run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
 run_lib_test "budget_config" "tests/test_budget_config.c" "lib/libbudgetconfig" "$CDIR/lib/libbudgetconfig/budget_config.c"
 run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredentialfiles" "$CDIR/lib/libcredentialfiles/credential_files.c"
+run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
 
 echo ""; echo "=== Threat Pattern Tests === "
