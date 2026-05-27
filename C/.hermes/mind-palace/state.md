@@ -1,10 +1,10 @@
-# Slermes C — State Dashboard (v50 — 2026-05-27)
+# Slermes C — State Dashboard (v51 — 2026-05-27)
 
 ## Build Metrics
 Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 257/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
-~312 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
+~311 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
 
 ## Recent (this session)
 - file_batch: added batch rename action. POSIX glob-based pattern matching with wildcard extraction/substitution. Supports "pattern" + "dest_pattern" params (e.g. pattern="*.txt" + dest_pattern="backup_*.md"). Falls back to files+dest for simple rename. Closes 1 tool-depth gap (batch rename).
@@ -17,6 +17,6 @@ Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[
 0. Display Parity (16) — 14/16 done
 1. CLI Args — ALL DONE
 2. Provider Parity (~20 real)
-3. Tool Features (13)
+3. Tool Features (12)
 4. Missing Tools (46)
 5-11: Gateway (51) → Agent (74) → Plugins (13) → Libs (19) → Security (15) → Tests (50) → Infra (10)

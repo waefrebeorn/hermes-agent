@@ -305,3 +305,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 |----|-------------|--------|----------|
 | F15-07 | Permission validation via `access()` — read check (R_OK) for stat/hash, write check (W_OK) for copy/move/delete/chmod/touch/convert/rename. Also checks parent dir writability for dest paths. | 1A (file_operations) | src/tools/file_batch.c — check_file_access(), check_parent_writable(), added per-action permission checks |
 | F15-08 | Dry-run mode — `dry_run` bool param. When true, reports what would happen (would_copy, would_move, would_delete, would_chmod, would_touch, would_convert, would_rename) without modifying any files. Includes dest path in response for applicable actions. | 1A (file_operations) | src/tools/file_batch.c — dry_run param in schema, `if (dry_run)` branches in every action in both loop and early-return rename block |
+
+## Phase 17: Geo location filter — x_search (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| XS-01 | Geo location filter for X search — added geo_lat, geo_long, geo_radius_km params. Builds geo JSON object with lat/long/radius_km and passes to xAI API tool definition. Default radius 25km. | 1A (x_search_tool) | src/tools/x_search.c — SCHEMA + handler geo block after lang |

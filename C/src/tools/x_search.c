@@ -29,7 +29,10 @@ static const char *SCHEMA = "{"
       "\"enable_video_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze videos in matching posts\",\"default\":false},"
       "\"media_filter\":{\"type\":\"string\",\"description\":\"Filter by media type: 'images', 'videos', 'news', 'links', or empty for all\"},"
       "\"max_results\":{\"type\":\"integer\",\"description\":\"Maximum number of results to return (1-50, default: 10)\",\"default\":10},"
-      "\"lang\":{\"type\":\"string\",\"description\":\"Language filter (ISO 639-1 code, e.g., 'en', 'ja', 'es'). Restricts results to that language.\"}"
+      "\"lang\":{\"type\":\"string\",\"description\":\"Language filter (ISO 639-1 code, e.g., 'en', 'ja', 'es'). Restricts results to that language.\"},"
+      "\"geo_lat\":{\"type\":\"number\",\"description\":\"Latitude for geographic search filter (e.g., 37.7749). Requires geo_long and geo_radius_km.\"},"
+      "\"geo_long\":{\"type\":\"number\",\"description\":\"Longitude for geographic search filter (e.g., -122.4194). Requires geo_lat and geo_radius_km.\"},"
+      "\"geo_radius_km\":{\"type\":\"number\",\"description\":\"Search radius in kilometers from geo coordinates. Requires geo_lat and geo_long.\"}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -186,6 +189,20 @@ char *x_search_handler(const char *args_json, const char *task_id) {
     const char *lang = json_get_str(args, "lang", NULL);
     if (lang && *lang)
         json_set(tool_def, "lang", json_string(lang));
+
+    /* Geo location filter */
+    double geo_lat = json_get_num(args, "geo_lat", 999.0);
+    double geo_long = json_get_num(args, "geo_long", 999.0);
+    double geo_radius = json_get_num(args, "geo_radius_km", 0);
+    bool has_geo = (geo_lat < 900.0 && geo_long < 900.0);
+    if (has_geo) {
+        if (geo_radius <= 0) geo_radius = 25.0;
+        json_node_t *geo_obj = json_new_object();
+        json_set(geo_obj, "lat", json_number(geo_lat));
+        json_set(geo_obj, "long", json_number(geo_long));
+        json_set(geo_obj, "radius_km", json_number(geo_radius));
+        json_set(tool_def, "geo", geo_obj);
+    }
 
     /* Build request payload */
     json_node_t *payload = json_new_object();
