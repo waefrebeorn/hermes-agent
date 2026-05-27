@@ -276,3 +276,9 @@ All 26 "missing tools" in the battleship's 1B section were verified as already i
 | 1B-stale-26 | path_security (2 fns, ~200 LOC) — "missing" | 1B | src/tools/path_security.c | Path traversal detection |
 
 Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_audit, neutts_synth, microsoft_graph_client, microsoft_graph_auth, mcp_oauth_manager, lazy_deps.
+
+## Phase 14: Batch chmod — file_batch tool depth (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| F15-01 | Batch chmod action — parse octal mode string, per-file sandbox check, apply chmod via POSIX chmod(), per-file result reporting with success/fail counts | 1A (file_operations) | src/tools/file_batch.c — parse_mode_string(), chmod_file(), chmod branch in file_batch_handler() |

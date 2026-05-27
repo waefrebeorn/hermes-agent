@@ -1,6 +1,6 @@
 /*
  * file_batch.c — F15: Batch file operations for Hermes C.
- * Multi-file copy, move, delete with progress reporting.
+ * Multi-file copy, move, delete, chmod with progress reporting.
  */
 
 #include "hermes.h"
@@ -19,12 +19,13 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
-      "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"}"
+      "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
+      "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"}"
     "},"
     "\"required\":[\"action\",\"files\"]"
-"}";
+"}" ;
 
 /* Buffer for file copy */
 #define COPY_BUF_SIZE 65536
@@ -85,6 +86,20 @@ static void build_dest_path(const char *dest, const char *src,
     }
 }
 
+/* Parse octal mode string (e.g. "755", "0644") to mode_t.
+ * Returns (mode_t)-1 on parse failure. */
+static mode_t parse_mode_string(const char *mode_str) {
+    if (!mode_str || !*mode_str) return (mode_t)-1;
+    char *end = NULL;
+    long val = strtol(mode_str, &end, 8);
+    if (*end != '\0' || val < 0 || val > 07777) return (mode_t)-1;
+    return (mode_t)val;
+}
+
+static bool chmod_file(const char *path, mode_t mode) {
+    return chmod(path, mode) == 0;
+}
+
 char *file_batch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -95,10 +110,11 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     const char *action = json_get_str(args, "action", "copy");
     json_t *files_node = json_obj_get(args, "files");
     const char *dest = json_get_str(args, "dest", NULL);
+    const char *mode_str = json_get_str(args, "mode", NULL);
 
     /* Validate action early */
     if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 &&
-        strcmp(action, "delete") != 0) {
+        strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0) {
         json_free(args);
         char buf[256];
         snprintf(buf, sizeof(buf), "{\"error\":\"Unknown action: %s\"}", action);
@@ -193,6 +209,27 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                 }
             }
 
+        } else if (strcmp(action, "chmod") == 0) {
+            mode_t mode = parse_mode_string(mode_str);
+            if (mode == (mode_t)-1) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error",
+                    json_string("Invalid mode string. Use octal e.g. '755', '0644'"));
+                fail_count++;
+            } else if (!sandbox_check_path(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Source path not allowed"));
+                fail_count++;
+            } else if (!chmod_file(src, mode)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string(strerror(errno)));
+                fail_count++;
+            } else {
+                json_set(entry, "status", json_string("chmod"));
+                json_set(entry, "mode", json_string(mode_str));
+                success_count++;
+            }
+
         } else {
             /* copy — handled in the copy/move/delete branches above */
             json_set(entry, "status", json_string("failed"));
@@ -216,8 +253,9 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete. "
-        "Accepts array of source paths and optional destination. "
+        "Batch file operations. Actions: copy, move, delete, chmod. "
+        "Accepts array of source paths, optional destination (copy/move), "
+        "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",
         SCHEMA, file_batch_handler);
 }

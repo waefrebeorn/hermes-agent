@@ -10,18 +10,18 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  30MB binary  │  0 warnings                ║
-   ║  ~320 items (Phase 1 ✅, Display 14/16, Phase 3 active)       ║
+   ║  ~319 items (Phase 1 ✅, Display 14/16, Phase 3 active)       ║
    ╚══════════════════════════════════════════════════════════════╝
 
    DA v16:  Phase 2 deepen claims HEAVILY STALE — verify before impl
    Recent:  web_get cookies + file_merge/file_watch tests
 
-## Phase Order (battleship-v16 ~320 items)
+## Phase Order (battleship-v16 ~319 items)
 
 Phase 0 — Display Parity (16): 14/16 done
 Phase 1 — CLI Args: ✅ ALL DONE (98 commands wired)
 Phase 2 — Provider Parity (~20 real, HEAVILY STALE)
-Phase 3 — Tool Features (21)
+Phase 3 — Tool Features (20)
 Phase 4 — Missing Tools (46)
 Phase 5 — Gateway (51) — platforms + deepening + infra
 Phase 6 — Agent Modules (74)
@@ -31,7 +31,7 @@ Phase 9 — Security (15)
 Phase 10 — Tests (50)
 Phase 11 — Config/Infra (10)
 
-## Build Metrics (v43)
+## Build Metrics (v44)
 - Suite: 257/0/0 (224 test files, zero failures)
 - Tools: 83 unique (registry_register)
 - CLI: 98 commands (COMMANDS[] table)

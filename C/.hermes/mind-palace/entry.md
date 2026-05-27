@@ -1,5 +1,5 @@
-# Entry (v43)
-- **State:** v43 — Suite 257/0/0 (zero skips)
+# Entry (v44)
+- **State:** v44 — Suite 257/0/0 (zero skips)
 - **Tools:** 83 registry_register | **CLI:** 98 commands | **Gateways:** 19 | **Providers:** 10
 - **Libs:** 59 | **src/ .c:** 146 | **Tests:** 224 | **Binary:** 30M
-- **Gaps:** ~320 (battleship-v16)
+- **Gaps:** ~319 (battleship-v16)
