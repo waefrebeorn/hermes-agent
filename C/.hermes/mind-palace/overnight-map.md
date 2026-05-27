@@ -1,6 +1,6 @@
-# Slermes C — Overnight Map (v56 — ~305 Items)
-- **State:** v56 — Suite 257/0/0
-- **Phase 3:** 7 gaps remaining.
+# Slermes C — Overnight Map (v57 — ~304 Items)
+- **State:** v57 — Suite 257/0/0
+- **Phase 3:** 6 gaps remaining.
 - Many battleship claims still STALE — verify before implementing.
-- Recent: image_gen img2img (image_url param).
+- Recent: web SSRF protection.
 - **Doc discipline:** update all after every pass.

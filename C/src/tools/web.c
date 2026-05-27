@@ -9,6 +9,7 @@
 #include "hermes_http.h"
 #include "hermes_tool_config.h"
 #include "base64.h"
+#include "hermes_url_safety.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,6 +90,16 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(cookies_copy);
         free(ua_copy);
         return strdup("{\"error\":\"Missing url\"}");
+    }
+
+    /* SSRF protection: block internal/private URLs */
+    if (!url_is_safe(url)) {
+        free(headers_copy);
+        free(body_copy);
+        free(proxy_copy);
+        free(cookies_copy);
+        free(ua_copy);
+        return strdup("{\"error\":\"URL blocked by SSRF protection: private or internal address\"}");
     }
 
     http_client_t *client = http_client_new(timeout);

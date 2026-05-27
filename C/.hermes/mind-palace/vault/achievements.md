@@ -344,3 +344,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 |----|-------------|--------|----------|
 | IG-03 | Image-to-image generation — added `image_url` (string, optional) param. When provided, passes as `image_url` field in FAL API request body for img2img generation. | 1A (image_generation_tool) | src/tools/image_gen.c — image_url param extraction, body construction included when present, schema entry with description |
 | VI-03 | Vision analysis helper script — separate Python script for PIL-based image analysis (colors + EXIF). | 1A (vision_tools) | src/tools/vision_analysis.py — analyze_colors(), analyze_exif() functions |
+
+## Phase 23: SSRF protection — web tool (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| WT-01 | SSRF protection — added url_is_safe() check before each HTTP request. Blocks private/internal IP addresses (loopback, RFC1918, link-local, etc.). Added hermes_url_safety.h include and url_safety.c to test compilation. | 1A (web_tools) | src/tools/web.c — SSRF check after URL validation, test_runner.sh — url_safety.c linked in web depth test |
