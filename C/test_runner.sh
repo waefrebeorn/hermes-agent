@@ -81,6 +81,20 @@ run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary
 run_lib_test "budget_config" "tests/test_budget_config.c" "lib/libbudgetconfig" "$CDIR/lib/libbudgetconfig/budget_config.c"
 run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
 
+echo ""; echo "=== Threat Pattern Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" -I"$CDIR/lib/libthreatpatterns" \
+    "$CDIR/tests/test_threat_patterns.c" "$CDIR/lib/libregex/hermes_regex.c" "$CDIR/lib/libthreatpatterns/threat_patterns.c" \
+    -o /tmp/hermes_test_threat_patterns -lm 2>/dev/null && [[ -x /tmp/hermes_test_threat_patterns ]]; then
+    if /tmp/hermes_test_threat_patterns > /dev/null 2>&1; then
+        ok "threat_patterns"
+    else
+        fail "threat_patterns (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_threat_patterns
+else
+    skip "threat_patterns (compilation failed)"
+fi &
+
 echo ""; echo "=== Tool Result Storage Tests (preview) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
     $(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done) \
