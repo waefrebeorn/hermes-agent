@@ -20,7 +20,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (48) — add missing features to existing C tools
+3. Tool Features (34) — add missing features to existing C tools
 4. Missing Tools (46) — port unported Python tool files (+10 newly found)
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (74) — 52 unported + 20 deepen + 2 unwired stubs
@@ -30,7 +30,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 10. Test Coverage (50) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 3 — Tool Features (47 remaining)
+## Next: Phase 3 — Tool Features (34 remaining)
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session

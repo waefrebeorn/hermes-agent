@@ -502,7 +502,7 @@ Each item above represents a discrete feature gap between C and Python. Items ar
 1. **Phase 0: Display Parity (16 gaps)** — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 2. **Phase 1: CLI Args (40 gaps)** — ✅ ALL DONE — all 40 commands wired
 3. **Phase 2: Provider Parity (26 gaps)** — Deepen 8 existing + port 18 missing providers
-4. **Phase 3: Tool Features (47 gaps)** — Add missing features to existing tools
+4. **Phase 3: Tool Features (34 gaps)** — Add missing features to existing tools
 5. **Phase 4: Missing Tools (46 gaps)** — Port remaining tool files (+10 new missing tools found in Triple DA stub hunt: feishu_drive_comment ×4, video_analyze, yuanbao ×5)
 6. **Phase 5: Gateway (51 gaps)** — Port 14 missing platform modules + deepen 20 platforms + 17 infrastructure
 7. **Phase 6: Agent Modules (74 gaps)** — Port 52 unported + deepen 20 existing + 2 unwired stubs (llm_background_review, api_server mock) |
