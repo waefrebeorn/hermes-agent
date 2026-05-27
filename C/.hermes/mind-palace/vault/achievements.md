@@ -184,3 +184,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T39 | send_message: added thread_id param for threaded conversations. C send_message was missing thread/topic support. Added to schema + extraction + result output. | 1A | send_message.c: SCHEMA + handler extraction + result |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 24: web_get user_agent param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T40 | web_get: added user_agent param for custom User-Agent header. C web_get used default User-Agent. Now supports custom UA. Prepended to headers string when set. | 1A | web.c: SCHEMA_GET + handler with User-Agent header building |
+| - | 78 tools unchanged. Suite 231/0/24. | |
