@@ -100,6 +100,170 @@ int gw_queue_depth(void) {
 }
 
 /* ================================================================
+ *  Gateway Approval — async approval prompt response collector
+ * ================================================================ */
+
+/* Pending approval state — set when approval prompt sent via gateway */
+static struct {
+    bool            pending;
+    char            platform[32];
+    char            chat_id[128];
+    char            response[64];
+    pthread_mutex_t mutex;
+    pthread_cond_t  cond;   /* signaled when response received */
+    /* Optional: poll function for same-platform response capture.
+       Polls for a message from chat_id, returns response text or NULL.
+       Must free returned string. */
+    char *(*poll_fn)(const char *chat_id);
+    int           poll_interval;
+} g_gw_approval = {false, "", "", "", PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, NULL, 0};
+
+/* Register a platform poll function to use during approval wait */
+void gw_approval_set_poll(char *(*fn)(const char *chat_id), int interval_sec) {
+    g_gw_approval.poll_fn = fn;
+    g_gw_approval.poll_interval = interval_sec > 0 ? interval_sec : 1;
+}
+
+/* Set context for pending approval — called from approval.c */
+void gw_approval_set_context(const char *platform, const char *chat_id) {
+    pthread_mutex_lock(&g_gw_approval.mutex);
+    snprintf(g_gw_approval.platform, sizeof(g_gw_approval.platform), "%s", platform ? platform : "");
+    snprintf(g_gw_approval.chat_id, sizeof(g_gw_approval.chat_id), "%s", chat_id ? chat_id : "");
+    pthread_mutex_unlock(&g_gw_approval.mutex);
+}
+
+/* Begin waiting for approval response — must be called before gw_approval_wait_response.
+   Sets the platform, chat_id context and marks pending. Thread-safe. */
+void gw_approval_begin(const char *platform, const char *chat_id) {
+    pthread_mutex_lock(&g_gw_approval.mutex);
+    g_gw_approval.pending = true;
+    g_gw_approval.response[0] = '\0';
+    snprintf(g_gw_approval.platform, sizeof(g_gw_approval.platform), "%s", platform ? platform : "");
+    snprintf(g_gw_approval.chat_id, sizeof(g_gw_approval.chat_id), "%s", chat_id ? chat_id : "");
+    pthread_mutex_unlock(&g_gw_approval.mutex);
+}
+
+/* Internal: check if a message matches pending approval and capture response.
+   Returns true if consumed. Caller must hold g_gw_approval.mutex. */
+static bool gw_approval_match(const char *platform, const char *chat_id, const char *text) {
+    if (!platform || !chat_id || !text) return false;
+
+    const char *trimmed = text;
+    while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+
+    /* Short responses only: y, n, a, yes, no, always */
+    if (strlen(trimmed) > 16) return false;
+
+    char lower[64];
+    snprintf(lower, sizeof(lower), "%s", trimmed);
+    for (char *p = lower; *p; p++) *p = (char)tolower((unsigned char)*p);
+
+    /* Only consume if it looks like an approval response */
+    if (lower[0] != 'y' && lower[0] != 'n' && lower[0] != 'a') return false;
+
+    snprintf(g_gw_approval.response, sizeof(g_gw_approval.response), "%s", lower);
+    g_gw_approval.pending = false;
+    pthread_cond_signal(&g_gw_approval.cond);
+    printf("[gateway] Approval response from %s/%s: %s\n", platform, chat_id, trimmed);
+    return true;
+}
+
+/* Called by approval.c (via callback) to wait for user's y/n/a response.
+   Runs inside agent_chat() — the poll thread that sent the prompt.
+   Uses short-polling with the platform's poll function to capture response. */
+static char *gw_approval_wait_response(int timeout_sec) {
+    struct timespec deadline;
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec += timeout_sec;
+
+    /* Get the platform/chat_id context that was set by approval_set_gateway_send.
+       The approval prompt has already been sent. We just mark ourselves pending
+       for response collection. */
+    pthread_mutex_lock(&g_gw_approval.mutex);
+    g_gw_approval.pending = true;
+    g_gw_approval.response[0] = '\0';
+    pthread_mutex_unlock(&g_gw_approval.mutex);
+
+    /* Short-poll loop: use the platform's poll function to check for responses */
+    while (timeout_sec > 0) {
+        struct timespec now;
+        clock_gettime(CLOCK_REALTIME, &now);
+        if (now.tv_sec >= deadline.tv_sec) break;
+
+        /* Check if response arrived via another thread (condvar signal) */
+        pthread_mutex_lock(&g_gw_approval.mutex);
+        if (g_gw_approval.response[0]) {
+            char *resp = strdup(g_gw_approval.response);
+            g_gw_approval.response[0] = '\0';
+            g_gw_approval.pending = false;
+            pthread_mutex_unlock(&g_gw_approval.mutex);
+            return resp;
+        }
+
+        /* If we have a poll function, do a short poll for new updates */
+        if (g_gw_approval.poll_fn) {
+            pthread_mutex_unlock(&g_gw_approval.mutex);
+            char *text = g_gw_approval.poll_fn(g_gw_approval.chat_id);
+            if (text) {
+                pthread_mutex_lock(&g_gw_approval.mutex);
+                if (g_gw_approval.pending) {
+                    gw_approval_match(g_gw_approval.platform, g_gw_approval.chat_id, text);
+                    if (g_gw_approval.response[0]) {
+                        char *resp = strdup(g_gw_approval.response);
+                        g_gw_approval.response[0] = '\0';
+                        g_gw_approval.pending = false;
+                        pthread_mutex_unlock(&g_gw_approval.mutex);
+                        free(text);
+                        return resp;
+                    }
+                }
+                pthread_mutex_unlock(&g_gw_approval.mutex);
+                free(text);
+            }
+        } else {
+            /* No poll function — wait on condvar with 1s timeout */
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            ts.tv_sec += 1;
+            pthread_cond_timedwait(&g_gw_approval.cond, &g_gw_approval.mutex, &ts);
+            pthread_mutex_unlock(&g_gw_approval.mutex);
+        }
+
+        timeout_sec--;
+
+        /* Sleep 1s between polls to avoid busy-waiting */
+        if (g_gw_approval.poll_fn) sleep(1);
+    }
+
+    /* Timeout — clean up */
+    pthread_mutex_lock(&g_gw_approval.mutex);
+    g_gw_approval.pending = false;
+    g_gw_approval.response[0] = '\0';
+    pthread_mutex_unlock(&g_gw_approval.mutex);
+    return NULL;
+}
+
+/* Check if an incoming message is an approval response.
+   Called from other platform threads (not the one that sent the prompt).
+   Returns true if consumed. */
+static bool gw_approval_check_response(const char *platform, const char *chat_id,
+                                         const char *text) {
+    pthread_mutex_lock(&g_gw_approval.mutex);
+    if (!g_gw_approval.pending) {
+        pthread_mutex_unlock(&g_gw_approval.mutex);
+        return false;
+    }
+    if (strcmp(g_gw_approval.platform, platform) != 0 ||
+        strcmp(g_gw_approval.chat_id, chat_id) != 0) {
+        pthread_mutex_unlock(&g_gw_approval.mutex);
+        return false;
+    }
+    bool consumed = gw_approval_match(platform, chat_id, text);
+    pthread_mutex_unlock(&g_gw_approval.mutex);
+    return consumed;
+}
+
+/* ================================================================
  *  Gateway stderr log-to-file with rotation (B15)
  * ================================================================ */
 
@@ -986,6 +1150,15 @@ static void process_update(const char *platform, const char *chat_id, const char
 
     printf("[gateway:%s] Message: %s\n", platform, text);
 
+    /* Check if this message is an approval response (for parallel platform threads) */
+    if (gw_approval_check_response(platform, chat_id, text))
+        return;
+
+    /* Set up approval send context for this platform/chat_id.
+       When a dangerous command triggers approval_prompt_user(), it will
+       use this context to send the prompt through the correct platform. */
+    approval_set_gateway_send(gw_platform_send, platform, chat_id);
+
     /* L08: Prepend any accumulated observe buffer before processing
      * a triggered message (one where the bot IS mentioned). */
     char *observe_ctx = gw_observe_consume(platform, chat_id);
@@ -1042,6 +1215,37 @@ static void process_update(const char *platform, const char *chat_id, const char
  *  Per-platform thread functions
  * ================================================================ */
 
+/* Telegram-specific: poll for a response from a specific chat_id.
+   Called during approval wait to short-poll Telegram for user's y/n/a response.
+   Returns strdup'd text or NULL. */
+static char *telegram_poll_for_response(const char *target_chat_id) {
+    if (!target_chat_id) return NULL;
+
+    json_node_t *root = telegram_get_updates(g_gw.http, g_gw.tg_offset, 5);
+    if (!root) return NULL;
+
+    json_node_t *result = json_obj_get(root, "result");
+    char *response = NULL;
+    if (result && json_len(result) > 0) {
+        size_t n = json_len(result);
+        for (size_t i = 0; i < n; i++) {
+            json_node_t *update = json_get(result, i);
+            double update_id = json_get_num(update, "update_id", 0);
+            if (update_id > 0)
+                g_gw.tg_offset = (int)update_id + 1;
+
+            const char *chat_id = telegram_get_chat_id(update);
+            const char *text = telegram_get_text(update);
+            if (chat_id && text && strcmp(chat_id, target_chat_id) == 0) {
+                response = strdup(text);
+                break;
+            }
+        }
+    }
+    json_free(root);
+    return response;
+}
+
 static void *thread_poll_telegram(void *arg) {
     (void)arg;
     printf("[gateway] Telegram polling (interval: %ds)\n", g_gw.poll_interval);
@@ -1050,6 +1254,10 @@ static void *thread_poll_telegram(void *arg) {
     telegram_get_me(g_gw.http);
     if (telegram_get_username()[0])
         printf("[gateway] Telegram bot: @%s\n", telegram_get_username());
+
+    /* Register approval poll function for Telegram.
+       During approval wait, the gateway will short-poll Telegram for the response. */
+    gw_approval_set_poll(telegram_poll_for_response, 1);
 
     while (g_gw.running) {
         json_node_t *root = telegram_get_updates(g_gw.http, g_gw.tg_offset, 30);
@@ -1870,6 +2078,10 @@ int hermes_gateway_main(int argc, char **argv) {
 
     /* Wire cron notifications through gateway */
     cron_notify_set_send_fn(gw_platform_send);
+
+    /* Wire approval prompts through gateway.
+       The platform+chat_id are set per-message in process_update(). */
+    approval_set_gateway_wait(gw_approval_wait_response);
 
     /* Set cron notification channel from env var (format: "platform:chat_id") */
     {

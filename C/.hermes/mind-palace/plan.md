@@ -18,7 +18,7 @@ Phase 2 sector needs re-audit before next implementation pass.
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (53) — add missing features to existing C tools
+3. Tool Features (52) — add missing features to existing C tools
 4. Missing Tools (37) — port unported Python tool files
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (72) — unported agent modules + deepen existing
@@ -28,10 +28,11 @@ Phase 2 sector needs re-audit before next implementation pass.
 10. Test Coverage (51) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 2 — Provider Parity
-Port non-OpenAI-compatible providers: copilot, opencode-zen, openai-codex.
+## Next: Phase 3 — Tool Features (52 remaining)
+Pick next unclosed gap from battleship-v15 1A table.
 
 ## Completed This Session
+- Approval gateway prompt (#21) — gateway approval callbacks (send/wait), Telegram short-poll response capture, cross-platform condvar signaling. approval_set_gateway_send/wait, gw_approval_wait_response, telegram_poll_for_response. Suite: 226/0/25.
 - Logger test suite (test_logger.c) — 20 tests, all pass
 - Triple DA v15 audit — found Phase 2 claims stale, documented in state.md
 - V4A multi-file patch mode added to patch.c (mode="patch" param with *** Begin/End Patch markers)

@@ -38,7 +38,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 18 | file_tools | 30 | 28 | 2 | Watch (inotify), binary ops, file compare, merge. file_diff + perms + hex + syntax check added. |
 | 19 | homeassistant_tool | 15 | 14 | 0 | All Python features implemented: domain+area filtering on list_entities, domain filter on list_services, entity_id+data+validation+blocked domains on call_service. ha_get_history added. |
 | 20 | todo_tool | 10 | 7 | 3 | Categories/tags, due dates, export. Priority (p0-p3), search/filter by priority+status, update action added. |
-| 21 | approval | 43 | 39 | 1 | Gateway approval (prompt via messaging platform instead of stdin), sudo guard patterns, hardline commands. Per-tool policies, session TTL, auto-approve patterns already in C. |
+|| 21 | approval | 43 | 39 | 0 | ✅ Gateway approval implemented: approval_set_gateway_send/wait callbacks, Telegram short-poll for response, cross-platform condvar. Per-tool policies, session TTL, auto-approve patterns already in C. |
 | 22 | skill_manager_tool | 22 | 19 | 3 | Skill versioning, skill rollback, skill diff, skill freeze. deps action added (check + resolve depends_on from frontmatter) |
 | 23 | patch | 12 | 14 | 0 | V4A multi-file patch mode implemented. Remaining: reverse patches, stats, context format support (minor) |
 

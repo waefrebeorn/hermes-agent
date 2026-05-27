@@ -96,6 +96,25 @@ void approval_set_allowlist_path(const char *path) {
     if (path) snprintf(g_allowlist_path, sizeof(g_allowlist_path), "%s", path);
 }
 
+static bool (*g_approval_send_fn)(const char *platform, const char *chat_id,
+                                   const char *text) = NULL;
+static char *(*g_approval_wait_fn)(int timeout_sec) = NULL;
+static const char *g_approval_platform = NULL;
+static const char *g_approval_chat_id = NULL;
+
+/* Set gateway send function and current chat context */
+void approval_set_gateway_send(bool (*fn)(const char *, const char *, const char *),
+                                const char *platform, const char *chat_id) {
+    g_approval_send_fn = fn;
+    g_approval_platform = platform;
+    g_approval_chat_id = chat_id;
+}
+
+/* Set gateway approval wait function — returns "y", "n", "a", or "" (timeout) */
+void approval_set_gateway_wait(char *(*fn)(int timeout_sec)) {
+    g_approval_wait_fn = fn;
+}
+
 /* P162: Forward declaration for approval timeout */
 static int g_approval_timeout;
 
@@ -228,6 +247,52 @@ static bool approval_prompt_user(const char *tool, const char *reason,
     fprintf(stderr, "  Reason: %s\n", reason);
     if (detail) fprintf(stderr, "  Detail: %s\n", detail);
     fprintf(stderr, "  Timeout: %ds\n", g_approval_timeout);
+
+    /* If gateway mode: send approval prompt via messaging platform */
+    if (g_approval_send_fn && g_approval_wait_fn &&
+        g_approval_platform && g_approval_chat_id) {
+        char prompt[2048];
+        snprintf(prompt, sizeof(prompt),
+            "⚠️ *Approve dangerous command?*\n\n`%s`\n\nReason: %s\nReply y/n/a(always)",
+            detail ? detail : tool, reason ? reason : "dangerous operation");
+        if (!g_approval_send_fn(g_approval_platform, g_approval_chat_id, prompt)) {
+            fprintf(stderr, "\n  → Denied (gateway send failed)\n");
+            audit_log_security("approval", tool, "denied", "gateway send failed", detail);
+            return false;
+        }
+        fprintf(stderr, "  → Sent approval prompt to %s/%s\n",
+                g_approval_platform, g_approval_chat_id);
+        /* Register pending approval context for gateway response collection */
+        gw_approval_set_context(g_approval_platform, g_approval_chat_id);
+        char *resp = g_approval_wait_fn(g_approval_timeout);
+        if (!resp || !resp[0]) {
+            free(resp);
+            fprintf(stderr, "\n  → Auto-denied (timeout after %ds)\n", g_approval_timeout);
+            audit_log_security("approval", tool, "timeout", reason, detail);
+            return false;
+        }
+        /* Normalize */
+        for (char *p = resp; *p; p++) *p = (char)tolower((unsigned char)*p);
+
+        bool approved = false;
+        if (resp[0] == 'y') {
+            approval_cache_add(tool, detail, true, false);
+            audit_log_security("approval", tool, "approved_once", reason, detail);
+            approved = true;
+        } else if (resp[0] == 'a') {
+            approval_cache_add(tool, detail, true, true);
+            approval_save_allowlist();
+            audit_log_security("approval", tool, "approved_always", reason, detail);
+            approved = true;
+        } else {
+            approval_cache_add(tool, detail, false, true);
+            audit_log_security("approval", tool, "denied", reason, detail);
+        }
+        free(resp);
+        return approved;
+    }
+
+    /* CLI mode: print prompt and wait for stdin */
     fprintf(stderr, "  Approve? [y/N/a(always)/n] ");
 
     /* If not interactive (piped input), deny by default */
@@ -398,6 +463,7 @@ bool allowlist_check(const char *tool, const char *command) {
  *  Approval Timeout (P162)
  * ================================================================ */
 
+/* Gateway approval callbacks — set by server.c when running in gateway mode */
 /* Default approval timeout in seconds */
 static int g_approval_timeout = 30;
 

@@ -97,4 +97,11 @@ All Sector 1 (Confirmed Stubs), Sector 2 (Placeholder), Sector 3 (Dead Code) ite
 | Anthropic | Missing thinking blocks | ✅ Has thinking, caching, tool_use stream |
 | xAI | Missing reasoning_effort | ✅ Already implemented |
 | OpenAI | Missing strict mode/service_tier | ✅ Already implemented |
-| OpenRouter | Missing HTTP-Referer/X-Title | ✅ Already implemented |
+|| OpenRouter | Missing HTTP-Referer/X-Title | ✅ Already implemented |
+
+## Phase Zeta — Phase 3 Tool Features (May 26)
+
+### #21 — Approval Gateway Prompt (1 item resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| Gateway approval prompt | Send dangerous command approval prompt through messaging platform instead of stdin. Telegram short-poll for y/n/a response with timeout. Cross-platform condvar signaling. | approval.c:approval_prompt_user, server.c:gw_approval_wait_response/telegram_poll_for_response/gw_approval_check_response |

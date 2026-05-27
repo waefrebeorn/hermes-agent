@@ -1113,6 +1113,13 @@ void approval_set_allowlist_path(const char *path);
 void approval_load_allowlist(void);
 void approval_save_allowlist(void);
 
+/* Gateway approval — wire messaging platform send/response for async approval prompts */
+void approval_set_gateway_send(bool (*fn)(const char *, const char *, const char *),
+                                const char *platform, const char *chat_id);
+void approval_set_gateway_wait(char *(*fn)(int timeout_sec));
+/* Called from approval.c during gateway path to register pending approval context */
+void gw_approval_set_context(const char *platform, const char *chat_id);
+
 /* P39: Approval cache query */
 int approval_cache_count(void);
 const char *approval_cache_entry(int index);

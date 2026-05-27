@@ -16,6 +16,7 @@
 #include <fnmatch.h>
 #include <ctype.h>
 #include "difflib.h"
+#include "hash.h"
 
 /* WSL path translation — convert Windows to /mnt/ form (static buf, single-thread) */
 static const char *wsl_translate_path(const char *path) {
@@ -97,6 +98,15 @@ static const char *SCHEMA_WRITE = "{"
         "\"properties\":{"
           "\"path\":{\"type\":\"string\",\"description\":\"File path to check\"},"
           "\"type\":{\"type\":\"string\",\"description\":\"File type override: python, sh, json, yaml, c. Auto-detected from extension if omitted.\"}"
+        "},"
+        "\"required\":[\"path\"]"
+    "}";
+
+    static const char *SCHEMA_HASH = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"path\":{\"type\":\"string\",\"description\":\"File path to hash\"},"
+          "\"algorithm\":{\"type\":\"string\",\"description\":\"Hash algorithm: sha256 (default), sha1, md5\"}"
         "},"
         "\"required\":[\"path\"]"
     "}";
@@ -912,6 +922,88 @@ static char *handle_syntax(const char *args_json) {
     }
 
     char *json_out = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return json_out;
+}
+
+/* File hash — compute SHA-256/SHA-1/MD5 checksum */
+static char *handle_hash(const char *args_json) {
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    char *err = NULL;
+    json_node_t *args = json_parse(args_json, &err);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *path = json_object_get_string(args, "path", NULL);
+    if (!path || !*path) {
+        json_free(args);
+        return strdup("{\"error\":\"Missing path\"}");
+    }
+
+    const char *algo = json_object_get_string(args, "algorithm", "sha256");
+    if (!algo || !*algo) algo = "sha256";
+
+    char *hash_hex = NULL;
+    if (strcmp(algo, "sha256") == 0) {
+        hash_hex = hash_sha256_file(path);
+    } else if (strcmp(algo, "sha1") == 0) {
+        /* Read file, hash manually */
+        FILE *f = fopen(path, "rb");
+        if (!f) {
+            json_free(args);
+            char buf[512];
+            snprintf(buf, sizeof(buf), "{\"error\":\"Cannot open %s: %s\"}", path, strerror(errno));
+            return strdup(buf);
+        }
+        fseek(f, 0, SEEK_END);
+        long sz = ftell(f);
+        rewind(f);
+        if (sz > 10485760) { fclose(f); json_free(args); return strdup("{\"error\":\"File too large (>10MB)\"}"); }
+        unsigned char *data = (unsigned char *)malloc(sz + 1);
+        if (!data) { fclose(f); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
+        size_t n = fread(data, 1, sz, f);
+        data[n] = '\0';
+        fclose(f);
+        hash_hex = hash_sha1_hex(data, n);
+        free(data);
+    } else if (strcmp(algo, "md5") == 0) {
+        FILE *f = fopen(path, "rb");
+        if (!f) {
+            json_free(args);
+            char buf[512];
+            snprintf(buf, sizeof(buf), "{\"error\":\"Cannot open %s: %s\"}", path, strerror(errno));
+            return strdup(buf);
+        }
+        fseek(f, 0, SEEK_END);
+        long sz = ftell(f);
+        rewind(f);
+        if (sz > 10485760) { fclose(f); json_free(args); return strdup("{\"error\":\"File too large (>10MB)\"}"); }
+        unsigned char *data = (unsigned char *)malloc(sz + 1);
+        if (!data) { fclose(f); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
+        size_t n = fread(data, 1, sz, f);
+        data[n] = '\0';
+        fclose(f);
+        hash_hex = hash_md5_hex(data, n);
+        free(data);
+    } else {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Unknown algorithm: %s (use sha256, sha1, md5)\"}", algo);
+        return strdup(buf);
+    }
+
+    if (!hash_hex) {
+        json_free(args);
+        return strdup("{\"error\":\"Hash computation failed\"}");
+    }
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "path", json_new_string(path));
+    json_object_set(result, "algorithm", json_new_string(algo));
+    json_object_set(result, "hash", json_new_string(hash_hex));
+
+    char *json_out = json_serialize(result);
+    free(hash_hex);
     json_free(result);
     json_free(args);
     return json_out;
