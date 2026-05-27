@@ -16,6 +16,12 @@
      | P04 | video_analyze — new video analysis tool using ffprobe. Extracts video metadata (codec, resolution, duration, bitrate, framerate), audio stream info, and scene detection via ffprobe lavfi. Supports local files and remote URLs. | 1B | video_analyze.c: registry_init_video_analyze(), video_analyze_handler() with ffprobe JSON parsing; tool_init.c: registry_init_video_analyze(); Makefile: added video_analyze.o |
 | T01 | video_analyze tests — 3 functional tests: ffprobe availability, JSON output parsing, schema handling. Suite: 258/0/0 (+1). | 10 | tests/test_video_analyze.c: test_has_video_extension(), test_ffprobe_parse(), test_video_analyze_empty_args() |
 | T02 | file_batch tests — 6 filesystem action tests: stat size, SHA-256 hash, touch create, stat type, chmod perms, readonly detection. Suite: 259/0/0 (+1). | 10 | tests/test_file_batch.c: test_stat_size(), test_hash_sha256(), test_touch_create(), test_stat_type(), test_chmod_perms(), test_chmod_readonly() |
+|
+|     ## Phase 15: Phase 4 Missing Tool Port (2026-05-27)
+|
+|     | ID | Description | Sector | Evidence |
+|     |----|-------------|--------|----------|
+|     | P05 | budget_config — configurable budget constants for tool result persistence. Ported from Python tools/budget_config.py. Provides defaults (result_size=100K, turn_budget=200K, preview=1500), pinned read_file=inf, per-tool overrides. 19/19 tests pass. Suite: 260/0/0 (+1). | 1B | lib/libbudgetconfig/budget_config.h + budget_config.c; tests/test_budget_config.c; Makefile / test_runner.sh wiring |
 
      ## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
      7|

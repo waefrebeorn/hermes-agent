@@ -78,6 +78,7 @@ run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$C
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
+run_lib_test "budget_config" "tests/test_budget_config.c" "lib/libbudgetconfig" "$CDIR/lib/libbudgetconfig/budget_config.c"
 
 
 echo ""; echo "=== Auxiliary Client Tests (B04) ==="
