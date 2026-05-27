@@ -362,3 +362,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | IG-05 | Save local toggle — added `save_local` (boolean, default true) param. When false, skips downloading/ writing the generated image to /tmp. Returns URL only for faster response. | 1A (image_generation_tool) | src/tools/image_gen.c — save_local param extraction, conditional download block, schema entry |
+
+## Phase 26: sort_order param — x_search (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| XS-03 | Sort order search param — added `sort_order` (string, "relevance" or "recency", default "relevance") param for controlling X search result ordering. | 1A (x_search_tool) | src/tools/x_search.c — sort_order schema entry, handler wiring in tool_def builder |

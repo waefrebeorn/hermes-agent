@@ -32,7 +32,8 @@ static const char *SCHEMA = "{"
       "\"lang\":{\"type\":\"string\",\"description\":\"Language filter (ISO 639-1 code, e.g., 'en', 'ja', 'es'). Restricts results to that language.\"},"
       "\"geo_lat\":{\"type\":\"number\",\"description\":\"Latitude for geographic search filter (e.g., 37.7749). Requires geo_long and geo_radius_km.\"},"
       "\"geo_long\":{\"type\":\"number\",\"description\":\"Longitude for geographic search filter (e.g., -122.4194). Requires geo_lat and geo_radius_km.\"},"
-      "\"geo_radius_km\":{\"type\":\"number\",\"description\":\"Search radius in kilometers from geo coordinates. Requires geo_lat and geo_long.\"}"
+      "\"geo_radius_km\":{\"type\":\"number\",\"description\":\"Search radius in kilometers from geo coordinates. Requires geo_lat and geo_long.\"},"
+      "\"sort_order\":{\"type\":\"string\",\"description\":\"Sort order: 'relevance' or 'recency' (default: relevance)\",\"default\":\"relevance\"}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -209,6 +210,11 @@ char *x_search_handler(const char *args_json, const char *task_id) {
         json_set(geo_obj, "radius_km", json_number(geo_radius));
         json_set(tool_def, "geo", geo_obj);
     }
+
+    /* Sort order */
+    const char *sort_order = json_get_str(args, "sort_order", NULL);
+    if (sort_order && *sort_order)
+        json_set(tool_def, "sort_order", json_string(sort_order));
     }
 
     /* Build request payload */
