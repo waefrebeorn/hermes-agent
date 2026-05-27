@@ -23,12 +23,15 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat | hash | rename\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat | hash | rename | convert\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
       "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
       "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"},"
       "\"pattern\":{\"type\":\"string\",\"description\":\"Glob pattern for batch rename (e.g. '*.txt'). Used with rename action instead of files array.\"},"
-      "\"dest_pattern\":{\"type\":\"string\",\"description\":\"Rename pattern. Use * to carry matched portion from glob (e.g. 'backup_*.md'). Required for rename action with pattern.\"}"
+      "\"dest_pattern\":{\"type\":\"string\",\"description\":\"Rename pattern. Use * to carry matched portion from glob (e.g. 'backup_*.md'). Required for rename action with pattern.\"},"
+      "\"case\":{\"type\":\"string\",\"description\":\"Case conversion for convert action: upper | lower | title\"},"
+      "\"line_endings\":{\"type\":\"string\",\"description\":\"Line ending conversion for convert action: lf | crlf | cr\"},"
+      "\"encoding\":{\"type\":\"string\",\"description\":\"Encoding conversion for convert action: utf-8 | latin1 | ascii\"}"
     "},"
     "\"required\":[\"action\"]"
 "}" ;
@@ -230,6 +233,151 @@ static char *apply_rename_pattern(const char *pattern, const char *dest_pattern,
 }
 
 
+
+/* Convert file case, line endings, or encoding. Writes in-place.
+   Returns true on success, false on error. */
+static bool convert_file(const char *path, const char *case_conv,
+                          const char *newline_style, const char *encoding) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return false;
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    if (fsize < 0 || fsize > 100 * 1024 * 1024) { fclose(f); return false; }
+    rewind(f);
+
+    char *data = (char *)malloc((size_t)fsize + 1);
+    if (!data) { fclose(f); return false; }
+    size_t nread = fread(data, 1, (size_t)fsize, f);
+    fclose(f);
+    if (nread != (size_t)fsize) { free(data); return false; }
+    data[nread] = '\0';
+
+    bool changed = false;
+    size_t new_len = nread;
+
+    /* Line ending conversion */
+    if (newline_style) {
+        /* Count newline types */
+        size_t lf_count = 0, crlf_count = 0, cr_count = 0;
+        for (size_t i = 0; i < nread; i++) {
+            if (data[i] == '\r' && i + 1 < nread && data[i + 1] == '\n') {
+                crlf_count++; i++;
+            } else if (data[i] == '\n') {
+                lf_count++;
+            } else if (data[i] == '\r') {
+                cr_count++;
+            }
+        }
+
+        size_t total_nl = lf_count + crlf_count + cr_count;
+        if (total_nl > 0) {
+            size_t out_size;
+            if (strcmp(newline_style, "crlf") == 0)
+                out_size = nread + cr_count + lf_count;  /* each \r or \n -> \r\n */
+            else if (strcmp(newline_style, "cr") == 0)
+                out_size = nread - lf_count - crlf_count;
+            else
+                out_size = nread - crlf_count - cr_count;  /* lf: \r\n -> \n, \r -> \n */
+
+            char *out = (char *)malloc(out_size + 1);
+            if (!out) { free(data); return false; }
+
+            size_t pos = 0;
+            for (size_t i = 0; i < nread; i++) {
+                if (data[i] == '\r' && i + 1 < nread && data[i + 1] == '\n') {
+                    /* CRLF pair */
+                    if (strcmp(newline_style, "crlf") == 0)
+                        { out[pos++] = '\r'; out[pos++] = '\n'; }
+                    else if (strcmp(newline_style, "cr") == 0)
+                        { out[pos++] = '\r'; }
+                    else
+                        { out[pos++] = '\n'; }
+                    i++;
+                    changed = true;
+                } else if (data[i] == '\n' || data[i] == '\r') {
+                    if (strcmp(newline_style, "crlf") == 0)
+                        { out[pos++] = '\r'; out[pos++] = '\n'; }
+                    else if (strcmp(newline_style, "cr") == 0)
+                        { out[pos++] = '\r'; }
+                    else
+                        { out[pos++] = '\n'; }
+                    changed = true;
+                } else {
+                    out[pos++] = data[i];
+                }
+            }
+            out[pos] = '\0';
+            free(data);
+            data = out;
+            new_len = pos;
+        }
+    }
+
+    /* Case conversion */
+    if (case_conv) {
+        if (strcmp(case_conv, "upper") == 0) {
+            for (size_t i = 0; i < new_len; i++) {
+                if (data[i] >= 'a' && data[i] <= 'z') {
+                    data[i] = data[i] - 32;
+                    changed = true;
+                }
+            }
+        } else if (strcmp(case_conv, "lower") == 0) {
+            for (size_t i = 0; i < new_len; i++) {
+                if (data[i] >= 'A' && data[i] <= 'Z') {
+                    data[i] = data[i] + 32;
+                    changed = true;
+                }
+            }
+        } else if (strcmp(case_conv, "title") == 0) {
+            bool new_word = true;
+            for (size_t i = 0; i < new_len; i++) {
+                if (data[i] >= 'a' && data[i] <= 'z' && new_word) {
+                    data[i] = data[i] - 32;
+                    new_word = false;
+                    changed = true;
+                } else if (data[i] >= 'A' && data[i] <= 'Z' && !new_word) {
+                    data[i] = data[i] + 32;
+                    changed = true;
+                } else if (data[i] == ' ' || data[i] == '\t' ||
+                           data[i] == '\n' || data[i] == '\r') {
+                    new_word = true;
+                } else {
+                    new_word = false;
+                }
+            }
+        }
+    }
+
+    /* Encoding conversion */
+    if (encoding) {
+        if (strcmp(encoding, "ascii") == 0) {
+            size_t wpos = 0;
+            for (size_t i = 0; i < new_len; i++) {
+                unsigned char c = (unsigned char)data[i];
+                if (c < 128) {
+                    data[wpos++] = data[i];
+                } else {
+                    data[wpos++] = '?';
+                    changed = true;
+                }
+            }
+            data[wpos] = '\0';
+            new_len = wpos;
+        }
+    }
+
+    if (!changed) { free(data); return true; }
+
+    f = fopen(path, "wb");
+    if (!f) { free(data); return false; }
+    size_t nwritten = fwrite(data, 1, new_len, f);
+    fclose(f);
+    free(data);
+    return nwritten == new_len;
+}
+
 char *file_batch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -243,7 +391,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     const char *mode_str = json_get_str(args, "mode", NULL);
 
     /* Validate action early */
-    if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 && strcmp(action, "rename") != 0 &&
+    if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 && strcmp(action, "rename") != 0 && strcmp(action, "convert") != 0 &&
         strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0 &&
         strcmp(action, "touch") != 0 && strcmp(action, "stat") != 0 && strcmp(action, "hash") != 0) {
         json_free(args);
@@ -433,6 +581,28 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 }
             }
 
+        } else if (strcmp(action, "convert") == 0) {
+            const char *case_conv = json_get_str(args, "case", NULL);
+            const char *newline_style = json_get_str(args, "line_endings", NULL);
+            const char *encoding = json_get_str(args, "encoding", NULL);
+
+            if (!case_conv && !newline_style && !encoding) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Specify at least one of: case, line_endings, encoding"));
+                fail_count++;
+            } else if (!sandbox_check_path(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Source path not allowed"));
+                fail_count++;
+            } else if (!convert_file(src, case_conv, newline_style, encoding)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string(strerror(errno)));
+                fail_count++;
+            } else {
+                json_set(entry, "status", json_string("converted"));
+                success_count++;
+            }
+
         } else if (strcmp(action, "chmod") == 0) {
             mode_t mode = parse_mode_string(mode_str);
             if (mode == (mode_t)-1) {
@@ -527,7 +697,7 @@ if (!files_node || files_node->type != JSON_ARRAY) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat, hash, rename. "
+        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat, hash, rename, convert. "
         "Accepts array of source paths, optional destination (copy/move), "
         "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",

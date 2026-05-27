@@ -292,3 +292,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | F15-05 | Batch rename action — POSIX glob-based pattern matching, wildcard extraction/substitution. Supports `pattern`+`dest_pattern` (e.g. `*.txt` → `backup_*.md`) and simple files+dest rename. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — extract_wildcard(), substitute_wildcard(), apply_rename_pattern(), early-return rename-with-pattern block, simple rename branch in loop |
+
+## Phase 15: Batch convert — file_batch tool depth (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| F15-06 | Batch convert — case conversion (upper/lower/title), line ending conversion (lf/crlf/cr), ASCII encoding strip. Reads file, transforms in-place, writes only if changed. 100MB cap. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — convert_file() handler, convert branch in loop |

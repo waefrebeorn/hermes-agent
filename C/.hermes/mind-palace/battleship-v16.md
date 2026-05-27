@@ -19,7 +19,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | # | Tool | Py Fns | C Fns | Gap | Missing Python Behaviors |
 |---|------|--------|-------|-----|--------------------------|
 | 1 | mcp_tool | 113 | 27 | 86 | SSE transport, OAuth flow, subscriptions, roots, sampling, tool discovery, resource templates, prompts, pagination, streaming, logging |
-| 2 | file_operations | 70 | 9 | 61 | Batch convert (encoding/case/line-endings), permission validation, dry-run mode, conflict resolution, undo capability |
+| 2 | file_operations | 70 | 10 | 60 | Permission validation, dry-run mode, conflict resolution, undo capability |
 | 3 | tts_tool | 67 | 9 | 58 | Multi-provider (OpenAI TTS, Elevenlabs, Azure, edge-tts), voice listing, voice preview, SSML support, speed control, streaming playback, audio format selection, word timestamps, emotion/emphasis, pronunciation lexicons |
 | 4 | browser | 82+51+7+29+2=171 | 38 | 133 | CDP autofill, PDF generation, HAR capture, multi-window, frames, network interception, cookie management, console monitoring, dialog handling, camofox cloud browser (29 fns), CDP tool (7 fns), supervisor (51 fns), dialog tool (2 fns), camofox state (2 fns), browser state persistence |
 | 5 | terminal_tool | 50 | 8 | 42 | SSH config parsing, Docker compose, Singularity, Daytona, env passthrough, session persist, signal handling, timeout management, pty modes, cgroup limits, container lifecycle, environment setup/teardown, output streaming |
