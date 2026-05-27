@@ -54,6 +54,9 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
     const char *negative_prompt = json_get_str(args, "negative_prompt", NULL);
     int seed = (int)json_get_num(args, "seed", 0);
     bool has_audio = json_get_bool(args, "audio", false);
+    const char *style = json_get_str(args, "style", NULL);
+    double motion_scale = json_get_num(args, "motion_scale", 0.5);
+    bool loop = json_get_bool(args, "loop", false);
 
     /* Prompt is required for generate */
     if (strcmp(operation, "generate") == 0 && (!prompt || !*prompt)) {
@@ -110,6 +113,23 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
 
     if (seed > 0) {
         n = snprintf(body + pos, rem, ",\"seed\":%d", seed);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+    }
+
+    if (style && *style) {
+        char esc_style[256];
+        fal_escape_json(style, esc_style, sizeof(esc_style));
+        n = snprintf(body + pos, rem, ",\"style\":\"%s\"", esc_style);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+    }
+
+    if (motion_scale != 0.5) {
+        n = snprintf(body + pos, rem, ",\"motion_scale\":%.2f", motion_scale);
+        if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+    }
+
+    if (loop) {
+        n = snprintf(body + pos, rem, ",\"loop\":true");
         if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
     }
 
@@ -253,6 +273,9 @@ void registry_init_video_gen(void) {
         "  \"negative_prompt\":{\"type\":\"string\",\"description\":\"What to avoid in the video\"},"
         "  \"audio\":{\"type\":\"boolean\",\"description\":\"Generate with audio track\",\"default\":false},"
         "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility\"},"
+        "  \"style\":{\"type\":\"string\",\"description\":\"Video style (e.g., cinematic, anime, realistic, 3d-animation)\"},"
+        "  \"motion_scale\":{\"type\":\"number\",\"description\":\"Motion intensity scale (0.0 to 1.0)\",\"default\":0.5},"
+        "  \"loop\":{\"type\":\"boolean\",\"description\":\"Loop the video seamlessly\",\"default\":false},"
         "  \"model\":{\"type\":\"string\",\"description\":\"Model override (e.g., fal-ai/veo3, fal-ai/video-consistency)\"},"
         "  \"reference_image_urls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Optional reference image URLs for style/consistency\"}"
         "},"

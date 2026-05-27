@@ -1,4 +1,4 @@
-# Slermes C — Plan (v32 — ~359 Items)
+# Slermes C — Plan (v32 — ~356 Items)
 
 ## Verified State
 Build clean. 78 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,7 +12,7 @@ Suite: 231/0/24, 220 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: ~359 item-level parity gaps
+## Battleship v16: ~356 item-level parity gaps
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
 Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 
@@ -20,7 +20,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (34) — add missing features to existing C tools
+3. Tool Features (31) — add missing features to existing C tools
 4. Missing Tools (46) — port unported Python tool files (+10 newly found)
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (74) — 52 unported + 20 deepen + 2 unwired stubs
@@ -30,7 +30,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 10. Test Coverage (50) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 3 — Tool Features (34 remaining)
+## Next: Phase 3 — Tool Features (31 remaining)
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session
