@@ -156,3 +156,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T35 | video_generate: added reference_image_urls param (JSON array of URL strings). C video_gen was missing reference image support that Python provides. Added to schema + body builder using json_serialize for clean array embedding. | 1A | video_gen.c: SCHEMA + body building with json_serialize(ref_imgs) |
 | - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 8→7. | |
+
+## Phase 20: web_search lang param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T36 | web_search: added lang filter param. C web_search was missing language filtering. Added to schema + search_searxng URL builder. Supports searxng backend (lang query param). | 1A | web.c: SCHEMA_SEARCH + search_searxng URL builder + handler extraction |
+| - | 78 tools unchanged. Suite 231/0/24. | |

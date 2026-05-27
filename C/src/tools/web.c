@@ -106,7 +106,8 @@ static const char *SCHEMA_SEARCH = "{"
     "\"properties\":{"
       "\"query\":{\"type\":\"string\",\"description\":\"Search query\"},"
       "\"backend\":{\"type\":\"string\",\"description\":\"Search backend: searxng/google/brave/tavily/firecrawl/xai (default: config)\"},"
-      "\"count\":{\"type\":\"number\",\"description\":\"Number of results (default: 5)\",\"default\":5}"
+      "\"count\":{\"type\":\"number\",\"description\":\"Number of results (default: 5)\",\"default\":5},"
+      "\"lang\":{\"type\":\"string\",\"description\":\"Language filter (e.g., en, de, fr, zh). Supported by searxng backend.\"}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -116,14 +117,17 @@ static const char *SCHEMA_SEARCH = "{"
  * ================================================================ */
 
 /* Perform a SearXNG search */
-static char *search_searxng(http_client_t *client, const char *query, int count) {
+static char *search_searxng(http_client_t *client, const char *query, int count, const char *lang) {
     const char *base_url = tool_config_get("searxng", "base_url");
     if (!base_url) base_url = getenv("SEARXNG_BASE_URL");
     if (!base_url) return strdup("{\"error\":\"SearXNG: SEARXNG_BASE_URL not set\"}");
 
     char url[1024];
-    snprintf(url, sizeof(url), "%s/search?q=%s&format=json&limit=%d",
+    int n = snprintf(url, sizeof(url), "%s/search?q=%s&format=json&limit=%d",
              base_url, query, count);
+    if (lang && lang[0]) {
+        snprintf(url + n, sizeof(url) - n, "&lang=%s", lang);
+    }
 
     http_response_t *resp = http_request(client, HTTP_GET, url, NULL, NULL, 0);
     if (!resp) return strdup("{\"error\":\"SearXNG: request failed\"}");
@@ -343,9 +347,14 @@ char *web_search_handler(const char *args_json, const char *task_id) {
 
     int count = (int)json_object_get_number(args, "count", 5);
     const char *backend_ptr = json_object_get_string(args, "backend", NULL);
+    const char *lang_ptr = json_object_get_string(args, "lang", NULL);
     char backend_buf[64] = "";
     if (backend_ptr) {
         snprintf(backend_buf, sizeof(backend_buf), "%s", backend_ptr);
+    }
+    char lang_buf[16] = "";
+    if (lang_ptr) {
+        snprintf(lang_buf, sizeof(lang_buf), "%s", lang_ptr);
     }
     json_free(args);
 
@@ -370,7 +379,7 @@ char *web_search_handler(const char *args_json, const char *task_id) {
     else if (strcmp(backend, "xai") == 0)
         result = search_xai(client, query, count);
     else /* searxng default */
-        result = search_searxng(client, encoded_query, count);
+        result = search_searxng(client, encoded_query, count, lang_buf);
 
     http_client_free(client);
     return result ? result : strdup("{\"error\":\"Search failed\"}");
