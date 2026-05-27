@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v32 — ~348 Items)
+# Slermes C — Prestige Prompt (v33 — ~348 Items)
 
 ## Phase 0 — Display (16)
 V01 markdown ✅ → V02 inline diffs ✅ → V03 banner ✅ → V04 spinner ✅ → V05 multi-line ✅ → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin ✅ → V15 spinner ✅ → V16 tool feed ✅

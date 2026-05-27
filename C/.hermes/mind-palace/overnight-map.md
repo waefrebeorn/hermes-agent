@@ -1,4 +1,4 @@
-# Slermes C — Overnight Map (v32 — ~348 Items)
+# Slermes C — Overnight Map (v33 — ~348 Items)
 
 ## Navigation
 - **Battleship:** battleship-v16.md — ~354 item-level gaps, 11 layers
@@ -25,6 +25,6 @@ Tool features (26) → Missing tools (46) → Gateway (51) → Agent modules (74
 
 ## Key Metrics
 - 78 unique tools, 98 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
-- Suite: 231/0/24, 220 test files, 160 src .c files
+- Suite: 229/0/26, 220 test files, 160 src .c files
 - Binary: 30M
 - ~354 items in battleship-v16

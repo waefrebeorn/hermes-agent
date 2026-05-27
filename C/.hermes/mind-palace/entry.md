@@ -1,7 +1,7 @@
 # Slermes C — Entry Point (v10)
 
 ```
-Suite:   231/0/24  (220 test files, zero failures)
+Suite:   229/0/26  (220 test files, zero failures)
 Binary:  30M     (dynamic ELF, 0 warnings)
 Tools:   78      (unique, registry_register)
 CLI:     98      (slash commands with handlers)

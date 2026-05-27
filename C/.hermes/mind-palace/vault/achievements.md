@@ -226,3 +226,5 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T45 | tts: added speed param (0.5-2.0). C TTS was missing speech speed control. Added to schema + extraction + espeak-ng -s flag + result output. | 1A | tts.c: SCHEMA + handler with espeak-ng speed integration |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+| | **Phase 10 (2026-05-27)** | | |
+| | - | web_get: follow_redirects + max_redirects params. Phase 3: 26→25. | src/tools/web.c | web_get schema + handler |

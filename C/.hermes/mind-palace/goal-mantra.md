@@ -1,4 +1,4 @@
-# Slermes C — Goal Mantra (v32)
+# Slermes C — Goal Mantra (v33)
 
 P0: Full 1:1 drop-in replacement for Python Hermes.
 **~348 item-level parity gaps** (battleship-v16).

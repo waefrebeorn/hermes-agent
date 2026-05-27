@@ -25,7 +25,9 @@ static const char *SCHEMA_GET = "{"
       "\"headers\":{\"type\":\"string\",\"description\":\"Custom HTTP headers as 'Key: Value' lines (newline-separated)\"},"
       "\"body\":{\"type\":\"string\",\"description\":\"Request body for POST/PUT requests\"},"
       "\"proxy\":{\"type\":\"string\",\"description\":\"HTTP proxy URL (e.g., http://proxy:8080). Uses CONNECT tunnel for HTTPS.\"},"
-      "\"user_agent\":{\"type\":\"string\",\"description\":\"Custom User-Agent header value. Default: libhttp/X.Y\"}"
+      "\"user_agent\":{\"type\":\"string\",\"description\":\"Custom User-Agent header value. Default: libhttp/X.Y\"},"
+      "\"follow_redirects\":{\"type\":\"boolean\",\"description\":\"Follow HTTP redirects (3xx). Default: true\",\"default\":true},"
+      "\"max_redirects\":{\"type\":\"integer\",\"description\":\"Max redirects to follow (0=unlimited, default: 5)\",\"default\":5}"
     "},"
     "\"required\":[\"url\"]"
 "}"; /* end SCHEMA_GET */
@@ -67,6 +69,10 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     char *auth_copy = auth ? strdup(auth) : NULL;
     char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
+
+    /* Redirect following params */
+    bool follow_redirects = json_object_get_bool(args, "follow_redirects", true);
+    int max_redirects_val = (int)json_object_get_number(args, "max_redirects", 5);
     char method_buf[16];
     snprintf(method_buf, sizeof(method_buf), "%s", method_str ? method_str : "GET");
     http_method_t method = method_str_to_enum(method_buf);
@@ -84,6 +90,12 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     http_client_t *client = http_client_new(timeout);
     if (proxy_copy && proxy_copy[0]) {
         http_client_set_proxy(client, proxy_copy);
+
+    if (!follow_redirects) {
+        http_client_set_max_redirects((http_t *)client, 0);
+    } else if (max_redirects_val > 0) {
+        http_client_set_max_redirects((http_t *)client, max_redirects_val);
+    }
     }
     /* Build headers string: prepend User-Agent if custom, then user headers */
     char ua_headers[8192];
