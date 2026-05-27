@@ -4,7 +4,7 @@
 - **Battleship:** battleship-v15.md — 1,885 function-level parity gaps, ~366 items, 11 layers
 - **State:** state.md (v16) — ~43% parity, Phase 1 CLI Args ✅, DA v15 findings documented
 - **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
-- **Goal:** goal-mantra.md (v21)
+- **Goal:** goal-mantra.md (v22)
 
 ## DA v15 Alert
 Phase 2 provider deepen claims are STALE. Verify each against source before implementing.
@@ -19,11 +19,11 @@ All 80 commands wired with proper argument processing.
 ## Phase 2 — Provider Parity (~20 real gaps)
 Deepen claims mostly stale. Port non-OpenAI-compatible providers.
 
-## Phase 3-11 (374 items, 1,889 function gaps)
+## Phase 3-11 (374 items, 1,885 function gaps)
 Tool features → Missing tools → Gateway → Agent modules → Plugins → Libraries → Security → Tests → Config
 
 ## Key Metrics
-- 72 unique tools, 80 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
-- Suite: 227/0/24, 215 test files, 160 src .c files
-- Binary: 30MB
-- ~1,836 function gaps estimated = ~43% parity
+- 77 unique tools, 80 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
+- Suite: 226/0/25, 216 test files, 166 src .c files
+- Binary: 31MB
+- ~1,834 function gaps estimated = ~43% parity

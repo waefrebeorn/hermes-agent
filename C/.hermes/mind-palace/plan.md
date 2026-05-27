@@ -1,8 +1,8 @@
-# Slermes C — Plan (v22 — 1,886 Function Gaps)
+# Slermes C — Plan (v23 — 1,885 Function Gaps)
 
 ## Verified State
-Build clean. 72 unique tools, 80 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
-Suite: 227/0/24, 215 test files, 160 src .c files. Binary: 30MB.
+Build clean. 77 unique tools, 80 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
+Suite: 226/0/25, 216 test files, 166 src .c files. Binary: 31MB.
 ~43% parity at function level (~1,412 C fns vs ~3,251 Python fns).
 
 ## DA v15 Key Findings
@@ -11,7 +11,7 @@ Suite: 227/0/24, 215 test files, 160 src .c files. Binary: 30MB.
 - Only real stub: stub_cdp_handler in browser.c (dead code, unused)
 - Zero gateway polling stubs
 
-## Battleship v15: 1,886 function-level parity gaps (~366 items)
+## Battleship v15: 1,885 function-level parity gaps (~366 items)
 Phase 2 sector needs re-audit before next implementation pass.
 
 ## Phase Order
@@ -37,12 +37,12 @@ Pick next unclosed gap from battleship-v15 1A table.
 - Triple DA v15 audit — found Phase 2 claims stale, documented in state.md
 - V4A multi-file patch mode added to patch.c (mode="patch" param with *** Begin/End Patch markers)
   - Supports: Update File (multi-hunk), Add File, Delete File
-  - 3 tests in test_runner.sh, suite 227/0/24
+  - 3 tests in test_runner.sh, suite 226/0/25
 - Skill dependency resolution: skill_manage deps action added
   - Parses depends_on from YAML frontmatter, resolves against installed skills
-  - Suite still 227/0/24 (deps test via direct linkage)
+  - Suite still 226/0/25 (deps test via direct linkage)
 - Walkway files bumped to v16/v21 with verified numbers
 - HomeAssistant tool: ha_list_entities domain/area filter, ha_list_services domain filter, ha_call_service validation+blocklist+entity_id+data. 25 tests.
-  - 3 gaps closed (#19 homeassistant). Suite: 227/0/24.
-- File diff + permissions: unified diff + stat/chmod via difflib. 8 tests (35→43). Suite: 227/0/24.
-- File hex view: hex dump with ASCII side panel, offset/limit. 5 tests (43→48). Suite: 227/0/24.
+  - 3 gaps closed (#19 homeassistant). Suite: 226/0/25.
+- File diff + permissions: unified diff + stat/chmod via difflib. 8 tests (35→43). Suite: 226/0/25.
+- File hex view: hex dump with ASCII side panel, offset/limit. 5 tests (43→48). Suite: 226/0/25.

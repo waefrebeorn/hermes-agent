@@ -9,8 +9,8 @@
 
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
-   ║  v0.15.0-wubu  │  30MB binary  │  0 warnings                ║
-   ║  374 items (Phase 1 ✅, Display 14/16, Phase 2 stale)       ║
+   ║  v0.15.0-wubu  │  31MB binary  │  0 warnings                ║
+   ║  374 items (Phase 1 ✅, Display 14/16, Phase 3 active)       ║
    ╚══════════════════════════════════════════════════════════════╝
 
    Fixed:   Tool call loop ✅ │ Auth header ✅ │ web_search ✅
@@ -23,8 +23,8 @@
 
 Phase 0 — Display: 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 Phase 1 — CLI Args: ✅ ALL DONE (40 commands wired)
-Phase 2 — Provider Parity (26) — deepen 8 + port 18
-Phase 3 — Tool Features (60) — add missing features
+Phase 2 — Provider Parity (26) — deepen 8 + port 18 (claims HEAVILY STALE)
+Phase 3 — Tool Features (52) — #21 approval ✅, 52 remaining
 Phase 4 — Missing Tools (37) — port unported
 Phase 5 — Gateway (51) — platforms + deepening + infra
 Phase 6 — Agent Modules (72) — unported modules
@@ -35,11 +35,11 @@ Phase 10 — Tests (51) — coverage
 Phase 11 — Config/Infra (10) — expansion
 
 ## Build Metrics
-- Suite: 226/0/23 (214 test files, zero failures)
-- Tools: 74 unique (72 registry_register + 2 registry_register_ex)
-- CLI: 98 commands (117 total incl section headers)
+- Suite: 226/0/25 (216 test files, zero failures)
+- Tools: 77 unique (registry_register)
+- CLI: 80 commands
 - Providers: 10 (.c modules)
 - Gateways: 19 (platforms)
 - Libs: 59 (lib/*/)
 - Source .c files: 166 (src/)
-- Test .c files: 214 (tests/)
+- Test .c files: 216 (tests/)

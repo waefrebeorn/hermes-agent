@@ -53,7 +53,7 @@ Read this first, then dive into sectors via `plans/battleship-v4.md`.
 - **Providers:** 9 native C (of 28 Python plugin providers)
 - **Libraries:** 59 lib/ directories
 - **True stubs:** 0 (all resolved)
-- **Binary:** 30MB ELF, 0 errors, 0 warnings
+- **Binary:** 31MB ELF, 0 errors, 0 warnings
 
 ## Active Gaps
 

@@ -1,4 +1,4 @@
-# Slermes C — Testing (v5 — 2026-05-26)
+# Slermes C — Testing (v6 — 2026-05-26)
 
 ## Suite
 ```bash
@@ -7,7 +7,7 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**226 passed, 0 failed, 24 skipped** (zero failures).
+**226 passed, 0 failed, 25 skipped** (zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |
@@ -26,7 +26,7 @@ bash test_runner.sh --verbose    # Per-test output
 - vision.c: 203 LOC (Python: 1,421) — missing OCR, face detection, barcode, EXIF
 - web.c: 466 LOC (Python: 1,561) — missing cookie jar, sessions, proxy, form fill
 - mcp_tool.c: 1,623 LOC (Python: 3,584) — missing SSE transport, OAuth, subscriptions
-- file.c: 561 LOC (Python: 1,220) — missing glob, watch, diff, hex view
+- file.c: 1,078 LOC (Python: 1,220) — missing glob, watch, binary ops
 
 ## Codebase Size
 - Source `.c` files: 449 (src/ + lib/ + tests/)
