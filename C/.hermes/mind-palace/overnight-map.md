@@ -1,5 +1,5 @@
-# Slermes C — Overnight Map (v65 — ~297 Items)
-- **State:** v65 — Suite 258/0/0
+# Slermes C — Overnight Map (v66 — ~297 Items)
+- **State:** v66 — Suite 259/0/0
 - **Phase 3:** ALL DONE.
 - **Phase 4:** 45 missing tools remain.
 - Many battleship claims still STALE — verify before implementing.
