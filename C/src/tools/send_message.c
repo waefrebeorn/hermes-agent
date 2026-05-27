@@ -17,7 +17,8 @@ static const char *SCHEMA = "{"
       "\"target\":{\"type\":\"string\",\"description\":\"'local' (save), 'stdout' (print), or 'platform:target' (e.g., telegram:-100123456)\"},"
       "\"message\":{\"type\":\"string\",\"description\":\"Message text to send\"},"
       "\"media_path\":{\"type\":\"string\",\"description\":\"F43: Optional file path to attach as media (image, audio, video, document)\"},"
-      "\"platform\":{\"type\":\"string\",\"description\":\"F42: Platform name override (e.g., 'telegram', 'discord') — overrides target parsing\"}"
+      "\"platform\":{\"type\":\"string\",\"description\":\"F42: Platform name override (e.g., 'telegram', 'discord') — overrides target parsing\"},"
+      "\"thread_id\":{\"type\":\"string\",\"description\":\"Thread/topic ID for platforms that support threaded conversations (e.g., Telegram topic ID)\"}"
     "},"
     "\"required\":[\"message\"]"
 "}";
@@ -34,6 +35,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     const char *message = json_object_get_string(args, "message", NULL);
     const char *media_path = json_object_get_string(args, "media_path", NULL);
     const char *platform_override = json_object_get_string(args, "platform", NULL);
+    const char *thread_id = json_object_get_string(args, "thread_id", NULL);
 
     json_node_t *result = json_new_object();
 
@@ -219,6 +221,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
             if (rc == 0) {
                 json_object_set(result, "status", json_new_string("sent"));
                 json_object_set(result, "platform", json_new_string(platform));
+                if (thread_id) json_object_set(result, "thread_id", json_new_string(thread_id));
             } else {
                 json_object_set(result, "status", json_new_string("error"));
                 char errbuf[256];
@@ -248,6 +251,7 @@ void registry_init_send_message(void) {
         "or 'platform:target' for platform routing (e.g., 'telegram:-100123456', "
         "'discord:#channel'). "
         "Use 'media_path' to attach files (images, audio, video, documents). "
-        "The MEDIA: prefix in message text is also supported for backward compat.",
+        "The MEDIA: prefix in message text is also supported for backward compat. "
+        "Optional 'thread_id' for threaded conversations (e.g., Telegram topic IDs).",
         SCHEMA, send_message_handler);
 }

@@ -177,3 +177,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T38 | web_extract: added format param (markdown/html). C web_extract was missing output format selection. Added to schema + delegate input. | 1A | web.c: SCHEMA_EXTRACT + handler extraction + delegate input |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 23: send_message thread_id param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T39 | send_message: added thread_id param for threaded conversations. C send_message was missing thread/topic support. Added to schema + extraction + result output. | 1A | send_message.c: SCHEMA + handler extraction + result |
+| - | 78 tools unchanged. Suite 231/0/24. | |
