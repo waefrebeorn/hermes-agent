@@ -45,6 +45,7 @@ void registry_init_mcp(void);
 void registry_init_file_batch(void);
 
 void registry_init_feishu_tools(void);
+void registry_init_file_merge(void);
 void registry_init_mixture_of_agents(void);
 
 /* Register all tools */
@@ -91,6 +92,9 @@ void tools_init_all(void) {
 
     /* D22: Feishu doc/drive tools */
     registry_init_feishu_tools();
+
+    /* F33: File merge tool */
+    registry_init_file_merge();
 
     /* N02: Mixture of Agents tool */
     registry_init_mixture_of_agents();

@@ -1,12 +1,12 @@
 # Slermes C — State Dashboard (v32 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **78 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 231/0/24.
+Build clean. **79 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 231/0/24.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)
 C: ~1,412 functions in core modules (agent/tools/cli/gateway)
-~356 item-level gaps (battleship-v16 rows).
+~355 item-level gaps (battleship-v16 rows).
 
 ## DA v16 Findings (2026-05-26)
 Phase 2 provider deepen claims: **HEAVILY STALE**.
@@ -28,13 +28,13 @@ Phase 2 provider deepen claims: **HEAVILY STALE**.
 Zero gateway polling stubs — all 13 platforms with poll_messages have real implementations.
 
 ## Battleship
-**v16 — ~356 item-level parity gaps**. Resolved items from v15 (#21 approval, #23 patch, #19 homeassistant) vaulted. 10 new missing tools added from Triple DA stub audit. 2 agent stubs documented. Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
+**v16 — ~355 item-level parity gaps**. Resolved items from v15 (#21 approval, #23 patch, #19 homeassistant) vaulted. 10 new missing tools added from Triple DA stub audit. 2 agent stubs documented. Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 
 ## Phase Order
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (34 gaps) — ✅ ALL DONE — all 98 commands wired with arg processing
 2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
-3. Tool Features (31 gaps) — add Python features to existing C tools
+3. Tool Features (30 gaps) — add Python features to existing C tools
 4. Missing Tools (46 gaps) — port remaining tool files (+10 newly found)
 5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
 6. Agent Modules (74 gaps) — port 52 unported + deepen 20 existing + 2 unwired stubs
