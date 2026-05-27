@@ -241,3 +241,38 @@
 |----|-------------|--------|----------|
 | U01 | osv_check: wired lib/libosv into mcp_tool connect_stdio_server. osv.c was fully implemented (282 LOC, 3 public functions) but never called. Now checks npx/uvx packages against OSV API for MAL-* advisories before connecting. Also added arg_count param to connect_stdio_server signature. | 1A (unwired stub) | src/tools/mcp_tool.c — #include "osv.h", osv_check_package_for_malware() in connect_stdio_server path, skip_server goto for cleanup |
    236|
+
+## Phase 13: Battleship-v16 1B Stale Claim Sweep (2026-05-27)
+
+All 26 "missing tools" in the battleship's 1B section were verified as already implemented in C. Moved to vault to clean up active gap list.
+
+| ID | Old Claim | Sector | Actual Location | Evidence |
+|----|-----------|--------|-----------------|----------|
+| 1B-stale-01 | skills_hub (192 fns, ~3500 LOC) — "missing" | 1B | src/skills_hub.c | Full implementation |
+| 1B-stale-02 | checkpoint_manager (39 fns, ~1000 LOC) — "missing" | 1B | src/agent/checkpoint.c | 253 LOC, init/save/rollback |
+| 1B-stale-03 | process_registry (38 fns, ~800 LOC) — "missing" | 1B | src/tools/process.c | 559 LOC, full lifecycle |
+| 1B-stale-04 | mcp_oauth (34 fns, ~900 LOC) — "missing" | 1B | src/tools/mcp_tool.c | OAuth flow in mcp_tool |
+| 1B-stale-05 | clarify_gateway (13 fns, ~300 LOC) — "missing" | 1B | src/tools/clarify.c | Full gateway clarify |
+| 1B-stale-06 | website_policy (11 fns, ~250 LOC) — "missing" | 1B | lib/libwebsite/website_policy.c | Robots.txt parser |
+| 1B-stale-07 | tool_result_storage (7 fns, ~200 LOC) — "missing" | 1B | src/tools/result_storage.c | Result caching |
+| 1B-stale-08 | threat_patterns (3 fns, ~300 LOC) — "missing" | 1B | src/tools/tirith.c | Security patterns |
+| 1B-stale-09 | tool_output_limits (5 fns, ~200 LOC) — "missing" | 1B | src/tools/tool_result.c | Output limits |
+| 1B-stale-10 | budget_config (2 fns, ~150 LOC) — "missing" | 1B | src/agent/budget_tracker.c | 313 LOC budget tracking |
+| 1B-stale-11 | debug_helpers (7 fns, ~150 LOC) — "missing" | 1B | lib/libdebug/debug_helpers.c | Debug logging helpers |
+| 1B-stale-12 | slash_confirm (6 fns, ~100 LOC) — "missing" | 1B | src/tools/approval.c | Confirmation dialogs |
+| 1B-stale-13 | tool_backend_helpers (9 fns, ~200 LOC) — "missing" | 1B | lib/libtoolbackend/tool_backend.c | Backend dispatch |
+| 1B-stale-14 | managed_tool_gateway (10 fns, ~300 LOC) — "missing" | 1B | lib/libmangateway/managed_gateway.c | Gateway exec |
+| 1B-stale-15 | env_passthrough (7 fns, ~100 LOC) — "missing" | 1B | lib/libenvpassthrough/env_passthrough.c | Env passthrough |
+| 1B-stale-16 | file_state (20 fns, ~400 LOC) — "missing" | 1B | lib/libfilestate/file_state.c | File state tracking |
+| 1B-stale-17 | fuzzy_match (28 fns, ~600 LOC) — "missing" | 1B | lib/libfuzzymatch/fuzzy_match.c | Fuzzy matching |
+| 1B-stale-18 | schema_sanitizer (9 fns, ~200 LOC) — "missing" | 1B | lib/libschemasanitizer/schema_sanitizer.c | Schema sanitization |
+| 1B-stale-19 | skills_sync (9 fns, ~400 LOC) — "missing" | 1B | lib/libskillsync/skills_sync.c | Skill sync |
+| 1B-stale-20 | skill_provenance (4 fns, ~200 LOC) — "missing" | 1B | lib/libskillusage/skill_provenance.c | Provenance tracking |
+| 1B-stale-21 | fallback_resolver (2 fns, ~100 LOC) — "missing" | 1B | src/agent/fallback_routing.c | Credential resolution |
+| 1B-stale-22 | xai_http (4 fns, ~200 LOC) — "missing" | 1B | lib/libxai_http/xai_http.c | xAI HTTP client |
+| 1B-stale-23 | osv_check (6 fns, ~200 LOC) — "missing" | 1B | lib/libosv/osv.c | OSV vuln DB |
+| 1B-stale-24 | interrupt (7 fns, ~200 LOC) — "missing" | 1B | lib/libinterrupt/interrupt.c | Cross-platform interrupt |
+| 1B-stale-25 | ansi_strip (1 fn, ~100 LOC) — "missing" | 1B | src/tools/ansi_strip.c | ANSI stripping |
+| 1B-stale-26 | path_security (2 fns, ~200 LOC) — "missing" | 1B | src/tools/path_security.c | Path traversal detection |
+
+Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_audit, neutts_synth, microsoft_graph_client, microsoft_graph_auth, mcp_oauth_manager, lazy_deps.
