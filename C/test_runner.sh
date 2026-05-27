@@ -83,6 +83,20 @@ run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredenti
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 
+echo ""; echo "=== Registry Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_registry.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_registry -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_registry ]]; then
+    if /tmp/hermes_test_registry > /dev/null 2>&1; then
+        ok "registry"
+    else
+        fail "registry (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_registry
+else
+    fail "registry (compilation failed)"
+fi
+
 echo ""; echo "=== Microsoft Graph Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" -I"$CDIR/lib/libmsgraph" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
