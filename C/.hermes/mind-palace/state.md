@@ -1,45 +1,39 @@
-# Slermes C — State Dashboard (v34 — 2026-05-27)
+# Slermes C — State Dashboard (v35 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **83 unique tools** (registry_register). 117 CLI commands (table entries). 19 gateways. 10 provider types + metadata utility. 59 libs. 165 src/ .c files (non-deps). 221 test_*.c files. Binary: 30M. Suite: 229/0/26.
+Build clean. **83 unique tools** (registry_register). 117 CLI commands (table entries). 19 gateways. 10 provider types + metadata utility. 59 libs. 165 src/ .c files (non-deps). 222 test_*.c files. Binary: 30M. Suite: 230/0/26.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)
 C: ~1,412 functions in core modules (agent/tools/cli/gateway)
-~347 item-level gaps (battleship-v16 rows).
+~346 item-level gaps (battleship-v16 rows).
 
 ## DA v16 Findings (2026-05-26)
 Phase 2 provider deepen claims: **HEAVILY STALE**.
-- anthropic: cache_control, thinking blocks, tool_use stream, prompt caching — ALL exist
-- openai: strict mode, service_tier, response_format schema — ALL exist
-- deepseek: thinking config, FIM, reasoning_content — ALL exist
-- xai: reasoning_effort exists
-- openrouter: HTTP-Referer/X-Title headers exist
-- gemini: parts array, safety settings, generation config, system instruction exist
-- bedrock: Converse full exists
-- azure: identity, API version management exist
+- anthropic, openai, deepseek, xai, openrouter, gemini, bedrock, azure deepen items — ALL exist
 - 16/18 "missing" providers routed as PROVIDER_OPENAI aliases
 
 **New stubs found in v16 audit:**
-- `llm_background_review` — fully implemented at llm_client.c:1518 but NOT YET WIRED into agent_loop background review path
-- `api_server.c` — mock fallback when g_agent is NULL echoes messages instead of dispatching through LLM
-- 10 missing tools from Python tree: feishu_drive_comment ×4, video_analyze, yuanbao ×4 (send_dm, query_group_info/members, send/search_sticker)
+- `llm_background_review` — implemented but unwired
+- `api_server.c` — mock fallback when g_agent is NULL
+- 10 missing tools: feishu_drive_comment x4, video_analyze, yuanbao x4
 
-Zero gateway polling stubs — all 19 platforms with poll_messages have real implementations.
+Zero gateway polling stubs.
 
-## Battleship
-**v16 — ~347 item-level parity gaps**. Resolved items from v15 vaulted. 10 new missing tools added from Triple DA stub audit. 2 agent stubs documented. Recent: web_get cookies param added (-1 Phase 3 gap).
+## Recent
+- web_get: added cookies param (Cookie header). Phase 3: 22->21.
+- test: added file_merge test (4 error-path tests). Suite: 229->230.
 
 ## Phase Order
-0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-1. CLI Args (34 gaps) — ✅ ALL DONE — all 117 commands wired with arg processing
-2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
+0. Display Parity (16 gaps) — 14/16 done
+1. CLI Args — ALL DONE
+2. Provider Parity (~20 real gaps) — deepen claims stale
 3. Tool Features (21 gaps) — add Python features to existing C tools
-4. Missing Tools (46 gaps) — port remaining tool files (+10 newly found)
-5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
-6. Agent Modules (74 gaps) — port 52 unported + deepen 20 existing + 2 unwired stubs
-7. Plugins (13 gaps) — port remaining plugins
-8. Libraries (19 gaps) — add missing library features
-9. Security (15 gaps) — security hardening
-10. Test Coverage (50 gaps) — tests for untested modules
-11. Config/Infra (10 gaps) — config expansion, refactoring
+4. Missing Tools (46 gaps) — port remaining tool files
+5. Gateway (51 gaps) — missing modules + deepen + infra
+6. Agent Modules (74 gaps) — 52 unported + 20 deepen + 2 unwired stubs
+7. Plugins (13 gaps)
+8. Libraries (19 gaps)
+9. Security (15 gaps)
+10. Test Coverage (50 gaps)
+11. Config/Infra (10 gaps)

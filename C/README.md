@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||| Suite:  229/0/26 (221 test files, completes in <60s)
+||||| Suite:  230/0/26 (222 test files, completes in <60s)
 ||||| Binary: 30M    (dynamic ELF, -O2 -g)
 ||||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
 |||||| Parity:  ~43%   (~347 item-level gaps — see battleship-v16)

@@ -1,4 +1,4 @@
-# Slermes C — Testing (v34 — 2026-05-27)
+# Slermes C — Testing (v35 — 2026-05-27)
 
 ## Suite
 ```bash
@@ -7,7 +7,7 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**229 passed, 0 failed, 26 skipped** (zero failures).
+**230 passed, 0 failed, 26 skipped** (zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |
@@ -17,11 +17,10 @@ bash test_runner.sh --verbose    # Per-test output
 | **Agent** | ~11 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer, subdir_hints, logger |
 | **CLI** | ~5 | commands, paths, display, TUI |
 | **Cron** | 4 | cron_lib, cron_tool, cron_sqlite, cron_extras |
-| **Tools** | ~30 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage, session_crud, shell_hooks, curator, usage_pricing |
+| **Tools** | ~31 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage, session_crud, shell_hooks, curator, usage_pricing, **file_merge** |
 | **Gateway** | ~5 | escape_mode, slack_blocks, discord_interactions, whatsapp_msg |
 | **Memory** | 1 | memory operations (basic SQLite) |
 
 ## Tool Depth Notes
-- browser.c: 1,598 LOC (Python: 3,796) — missing autofill, cookies, PDF, HAR export
-- web.c: 601 LOC — cookies param added to web_get
-- x_search.c: lang filter added to searxng backend
+- file_merge: 4 error-path tests added (null args, bad JSON, missing params)
+- web.c: 602 LOC — cookies param added to web_get

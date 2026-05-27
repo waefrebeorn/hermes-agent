@@ -22,7 +22,7 @@ static const char *SCHEMA = "{"
     "\"required\":[\"base_path\",\"modified_path\",\"output_path\"]"
 "}";
 
-static char *file_merge_handler(const char *args_json, const char *task_id) {
+char *file_merge_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
 
