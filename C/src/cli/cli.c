@@ -255,7 +255,7 @@ static void print_banner(void) {
     /* Stats summary line */
     size_t tool_count = g_cli.agent.tools.count > 0 ? g_cli.agent.tools.count : registry_get_count();
     pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
-        "\x1B[2;38;2;%d;%d;%dm  Tools: %zu  Gateways: 19  Providers: 10  Suite: 226/0/23\x1B[0m",
+        "\x1B[2;38;2;%d;%d;%dm  Tools: %zu  Gateways: 19  Providers: 10  Suite: 227/0/23\x1B[0m",
         dr, dg, db, tool_count);
 
     /* Display as panel with skin border color */
