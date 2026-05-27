@@ -350,3 +350,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | WT-01 | SSRF protection — added url_is_safe() check before each HTTP request. Blocks private/internal IP addresses (loopback, RFC1918, link-local, etc.). Added hermes_url_safety.h include and url_safety.c to test compilation. | 1A (web_tools) | src/tools/web.c — SSRF check after URL validation, test_runner.sh — url_safety.c linked in web depth test |
+
+## Phase 24: output_format param — image_gen (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| IG-04 | Output format parameter — added `output_format` (string, optional) param for controlling image output format (png, jpeg, webp). Passed as output_format field in FAL API request. | 1A (image_generation_tool) | src/tools/image_gen.c — output_format param extraction, body construction, schema entry |

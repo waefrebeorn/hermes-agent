@@ -31,6 +31,7 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     const char *negative_prompt = json_get_str(args, "negative_prompt", NULL);
     const char *style = json_get_str(args, "style", NULL);
     const char *image_url = json_get_str(args, "image_url", NULL);
+    const char *output_format = json_get_str(args, "output_format", NULL);
     int seed = (int)json_get_num(args, "seed", 0);
     int num_images = (int)json_get_num(args, "num_images", 1);
 
@@ -58,6 +59,10 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     if (image_url && *image_url) {
         pos += snprintf(body + pos, sizeof(body) - pos,
             ",\"image_url\":\"%s\"", image_url);
+    }
+    if (output_format && *output_format) {
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"output_format\":\"%s\"", output_format);
     }
     if (negative_prompt && *negative_prompt) {
         char esc_neg[2048];
@@ -193,7 +198,8 @@ void registry_init_image_gen(void) {
         "  \"style\":{\"type\":\"string\",\"description\":\"Style preset (e.g., realistic, anime, cinematic, digital-art, fantasy)\"},"
         "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility (0=random)\"},\""
         "  \"num_images\":{\"type\":\"integer\",\"description\":\"Number of images to generate (1-4)\",\"default\":1},\""
-        "  \"image_url\":{\"type\":\"string\",\"description\":\"Reference image URL for image-to-image generation (img2img). Provide a URL to an existing image as source.\"}\""
+        "  \"image_url\":{\"type\":\"string\",\"description\":\"Reference image URL for image-to-image generation (img2img). Provide a URL to an existing image as source. \"},\""
+        "  \"output_format\":{\"type\":\"string\",\"description\":\"Output image format: png, jpeg, webp (default: API default)\"}\""
         "},"
         "\"required\":[\"prompt\"]"
         "}",
