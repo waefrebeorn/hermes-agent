@@ -18,7 +18,7 @@ Phase 2 sector needs re-audit before next implementation pass.
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (57) — add missing features to existing C tools
+3. Tool Features (56) — add missing features to existing C tools
 4. Missing Tools (37) — port unported Python tool files
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (72) — unported agent modules + deepen existing
@@ -43,3 +43,4 @@ Port non-OpenAI-compatible providers: copilot, opencode-zen, openai-codex.
 - Walkway files bumped to v16/v21 with verified numbers
 - HomeAssistant tool: ha_list_entities domain/area filter, ha_list_services domain filter, ha_call_service validation+blocklist+entity_id+data. 25 tests.
   - 3 gaps closed (#19 homeassistant). Suite: 227/0/24.
+- File diff: unified diff via difflib library. 5 tests (35→40). Suite: 227/0/24.

@@ -2202,11 +2202,11 @@ else skip "memory_tool (compilation failed)"
 fi &
 
 # File tool test (M31 — needs file.c + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" -I"$CDIR/lib/libdifflib" \
     "$CDIR/tests/test_file.c" \
-    "$CDIR/src/tools/file.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/src/tools/file.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libdifflib/difflib.c" \
     -o /tmp/hermes_test_file -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_file > /dev/null 2>&1; then ok "file_tool (35 tests)"
+    if /tmp/hermes_test_file > /dev/null 2>&1; then ok "file_tool (40 tests)"
     else fail "file_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_file
 else skip "file_tool (compilation failed)"

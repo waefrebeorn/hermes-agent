@@ -15,6 +15,7 @@
 #include <libgen.h>
 #include <fnmatch.h>
 #include <ctype.h>
+#include "difflib.h"
 
 /* WSL path translation — convert Windows to /mnt/ form (static buf, single-thread) */
 static const char *wsl_translate_path(const char *path) {
@@ -50,21 +51,31 @@ static const char *SCHEMA_WRITE = "{"
       "\"content\":{\"type\":\"string\",\"description\":\"Content to write\"}"
     "},"
     "\"required\":[\"path\",\"content\"]"
-"}";
+    "}";
 
-static const char *SCHEMA_SEARCH = "{"
-    "\"type\":\"object\","
-    "\"properties\":{"
-      "\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern\"},"
-      "\"path\":{\"type\":\"string\",\"description\":\"Directory to search\"},"
-      "\"file_glob\":{\"type\":\"string\",\"description\":\"File glob filter\"}"
-    "},"
-    "\"required\":[\"pattern\"]"
-"}";
+    static const char *SCHEMA_SEARCH = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern\"},"
+          "\"path\":{\"type\":\"string\",\"description\":\"Directory to search\"},"
+          "\"file_glob\":{\"type\":\"string\",\"description\":\"File glob filter\"}"
+        "},"
+        "\"required\":[\"pattern\"]"
+    "}";
 
-/* ================================================================
- *  P168: File Sandbox — Allowed directories & symlink attack prevention
- * ================================================================ */
+    static const char *SCHEMA_DIFF = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"path_a\":{\"type\":\"string\",\"description\":\"First file path\"},"
+          "\"path_b\":{\"type\":\"string\",\"description\":\"Second file path\"},"
+          "\"context_lines\":{\"type\":\"number\",\"description\":\"Context lines (default: 3)\"}"
+        "},"
+        "\"required\":[\"path_a\",\"path_b\"]"
+    "}";
+
+    /* ================================================================
+     *  P168: File Sandbox — Allowed directories & symlink attack prevention
+     * ================================================================ */
 
 #define MAX_SANDBOX_DIRS 32
 
@@ -528,6 +539,87 @@ static char *handle_search(const char *args_json) {
     return json_out;
 }
 
+/* File diff — unified diff between two files */
+static char *handle_diff(const char *args_json) {
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    char *err = NULL;
+    json_node_t *args = json_parse(args_json, &err);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *path_a = json_object_get_string(args, "path_a", NULL);
+    const char *path_b = json_object_get_string(args, "path_b", NULL);
+    double ctx = json_object_get_number(args, "context_lines", -1.0);
+    int context_lines = (ctx >= 0) ? (int)ctx : 3;
+
+    if (!path_a || !path_b) {
+        json_free(args);
+        return strdup("{\"error\":\"Missing path_a or path_b\"}");
+    }
+
+    /* Read file A */
+    FILE *fa = fopen(path_a, "rb");
+    if (!fa) {
+        json_free(args);
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot open %s: %s\"}", path_a, strerror(errno));
+        return strdup(buf);
+    }
+    fseek(fa, 0, SEEK_END);
+    long size_a = ftell(fa);
+    if (size_a > 10485760) { fclose(fa); json_free(args); return strdup("{\"error\":\"File too large (>10MB)\"}"); }
+    rewind(fa);
+    char *content_a = (char *)malloc(size_a + 1);
+    if (!content_a) { fclose(fa); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
+    size_t read_a = fread(content_a, 1, size_a, fa);
+    content_a[read_a] = '\0';
+    fclose(fa);
+
+    /* Read file B */
+    FILE *fb = fopen(path_b, "rb");
+    if (!fb) {
+        free(content_a);
+        json_free(args);
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot open %s: %s\"}", path_b, strerror(errno));
+        return strdup(buf);
+    }
+    fseek(fb, 0, SEEK_END);
+    long size_b = ftell(fb);
+    if (size_b > 10485760) { fclose(fb); free(content_a); json_free(args); return strdup("{\"error\":\"File too large (>10MB)\"}"); }
+    rewind(fb);
+    char *content_b = (char *)malloc(size_b + 1);
+    if (!content_b) { fclose(fb); free(content_a); json_free(args); return strdup("{\"error\":\"OOM\"}"); }
+    size_t read_b = fread(content_b, 1, size_b, fb);
+    content_b[read_b] = '\0';
+    fclose(fb);
+
+    /* Generate diff */
+    char *diff_str = difflib_unified_diff(content_a, content_b, context_lines);
+    if (!diff_str) {
+        free(content_a); free(content_b); json_free(args);
+        return strdup("{\"error\":\"Diff generation failed\"}");
+    }
+
+    /* Compute similarity ratio */
+    double ratio = difflib_ratio(content_a, content_b);
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "path_a", json_new_string(path_a));
+    json_object_set(result, "path_b", json_new_string(path_b));
+    json_object_set(result, "diff", json_new_string(diff_str));
+    json_object_set(result, "similarity", json_new_number(ratio));
+    json_object_set(result, "size_a", json_new_number((double)read_a));
+    json_object_set(result, "size_b", json_new_number((double)read_b));
+
+    char *json_out = json_serialize(result);
+    free(diff_str);
+    free(content_a);
+    free(content_b);
+    json_free(result);
+    json_free(args);
+    return json_out;
+}
+
 /* ================================================================
  *  Public handlers
  * ================================================================ */
@@ -547,6 +639,11 @@ char *file_search_handler(const char *args_json, const char *task_id) {
     return handle_search(args_json);
 }
 
+char *file_diff_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    return handle_diff(args_json);
+}
+
 /* Auto-registration */
 void registry_init_file(void) {
     registry_register("read_file",
@@ -558,4 +655,8 @@ void registry_init_file(void) {
     registry_register("search_files",
         "Search file contents using grep. Returns matching lines with line numbers.",
         SCHEMA_SEARCH, file_search_handler);
+    registry_register("file_diff",
+        "Generate unified diff between two files. Shows added/removed/changed lines. "
+        "Optional: context_lines (default: 3).",
+        SCHEMA_DIFF, file_diff_handler);
 }

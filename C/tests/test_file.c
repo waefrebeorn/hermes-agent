@@ -25,6 +25,7 @@
 extern char *file_read_handler(const char *args_json, const char *task_id);
 extern char *file_write_handler(const char *args_json, const char *task_id);
 extern char *file_search_handler(const char *args_json, const char *task_id);
+extern char *file_diff_handler(const char *args_json, const char *task_id);
 
 static int passed = 0, failed = 0;
 
@@ -281,6 +282,59 @@ int main(void) {
     rmdir(tmpdir);
 
     sandbox_clear();
+
+    /* ============ Diff tests ============ */
+    printf("\n--- file_diff tests ---\n");
+    {
+        /* Create two files with differences */
+        FILE *fa = fopen("/tmp/hermes_test_diff_a.txt", "w");
+        fprintf(fa, "hello\nworld\n");
+        fclose(fa);
+        FILE *fb = fopen("/tmp/hermes_test_diff_b.txt", "w");
+        fprintf(fb, "hello\nthere\n");
+        fclose(fb);
+
+        char args[512];
+        snprintf(args, sizeof(args),
+            "{\"path_a\":\"/tmp/hermes_test_diff_a.txt\",\"path_b\":\"/tmp/hermes_test_diff_b.txt\"}");
+        json_node_t *r = parse_result(file_diff_handler(args, NULL));
+        if (r && json_object_get_string(r, "diff", NULL)) {
+            const char *diff = json_object_get_string(r, "diff", "");
+            TEST("diff output non-empty", strlen(diff) > 0);
+            TEST("diff shows added line", strstr(diff, "there") != NULL);
+            TEST("diff shows removed line", strstr(diff, "world") != NULL);
+        } else {
+            TEST("diff handler returned result", r != NULL);
+        }
+        if (r) json_free(r);
+        unlink("/tmp/hermes_test_diff_a.txt");
+        unlink("/tmp/hermes_test_diff_b.txt");
+    }
+    {
+        /* Test same file — identical diff */
+        FILE *fa = fopen("/tmp/hermes_test_same.txt", "w");
+        fprintf(fa, "identical\ncontent\n");
+        fclose(fa);
+        char args[512];
+        snprintf(args, sizeof(args),
+            "{\"path_a\":\"/tmp/hermes_test_same.txt\",\"path_b\":\"/tmp/hermes_test_same.txt\"}");
+        json_node_t *r = parse_result(file_diff_handler(args, NULL));
+        if (r) {
+            double ratio = json_object_get_number(r, "similarity", 0.0);
+            TEST("identical files similarity is 1.0", ratio >= 0.99);
+        } else {
+            TEST("same file diff returns result", r != NULL);
+        }
+        if (r) json_free(r);
+        unlink("/tmp/hermes_test_same.txt");
+    }
+    {
+        /* Test missing file */
+        json_node_t *r = parse_result(file_diff_handler(
+            "{\"path_a\":\"/tmp/hermes_test_nonexist.txt\",\"path_b\":\"/tmp/other.txt\"}", NULL));
+        TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
+        if (r) json_free(r);
+    }
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

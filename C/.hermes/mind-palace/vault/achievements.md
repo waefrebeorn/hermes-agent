@@ -499,16 +499,13 @@ The following items from battleship-v8 were verified as stale — code already i
 
 
 
-## Phase 66: Phase 3 Tool Features — HomeAssistant Full Parity (2026-05-26)
+## Phase 67: Phase 3 Tool Features — File Diff (2026-05-26)
 
 | ID | Description | Evidence |
 |----|-------------|----------|
-| H19 | ha_list_entities: domain+area filtering | src/tools/homeassistant.c:123-155 (ha_list_filtered), 157-175 (handler parses domain/area) |
-| H19 | ha_list_services: domain filtering | src/tools/homeassistant.c:193-248 (handler parses domain, filters response array) |
-| H19 | ha_call_service: entity_id param | src/tools/homeassistant.c:315 (json_get_str for entity_id), 327-332 (added to payload) |
-| H19 | ha_call_service: domain/service name validation | src/tools/homeassistant.c:46-57 (ha_valid_name — lowercase alphanumeric+underscore) |
-| H19 | ha_call_service: blocked service domains | src/tools/homeassistant.c:59-74 (ha_blocked_domain — 6 dangerous domains) |
-| H19 | ha_call_service: data JSON object merging | src/tools/homeassistant.c:263-297 (ha_build_payload — merges data object or service_data string) |
-| H19 | ha_get_history handler added | src/tools/homeassistant.c:369-397 (history/period endpoint with start/end time) |
-| H19 | 25 tests (13→25, +12 new) | tests/test_homeassistant.c — filtering, validation, blocked domains, data object |
-| H19 | Suite: 227/0/24 | test_runner.sh — homeassistant test count updated |
+| F18 | file_diff handler — unified diff between two files | src/tools/file.c:546-627 (handle_diff reads both files, calls difflib_unified_diff) |
+| F18 | difflib integration (difflib.h) for diff + ratio | include "difflib.h"; difflib_unified_diff + difflib_ratio calls |
+| F18 | Schema with path_a, path_b, context_lines params | src/tools/file.c:62-71 (SCHEMA_DIFF) |
+| F18 | Registered as file_diff tool | src/tools/file.c:658-661 (registry_register in registry_init_file) |
+| F18 | 5 new tests: diff output, added/removed lines, identical files similarity, missing file error | tests/test_file.c:286-340 |
+| F18 | Suite: 227/0/24 (file_tool 35→40 tests) | test_runner.sh — added difflib include path + source file |
