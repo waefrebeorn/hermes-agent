@@ -30,6 +30,8 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     const char *aspect_ratio = json_get_str(args, "aspect_ratio", "1:1");
     const char *negative_prompt = json_get_str(args, "negative_prompt", NULL);
     const char *style = json_get_str(args, "style", NULL);
+    int seed = (int)json_get_num(args, "seed", 0);
+    int num_images = (int)json_get_num(args, "num_images", 1);
 
     /* Get API key from shared helper (checks FAL_API_KEY, then SLERMES_FAL_KEY) */
     if (!fal_get_api_key()) {
@@ -61,6 +63,15 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     if (style && *style) {
         pos += snprintf(body + pos, sizeof(body) - pos,
             ",\"style\":\"%s\"", style);
+    }
+    if (seed > 0) {
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"seed\":%d", seed);
+    }
+    if (num_images > 1) {
+        if (num_images > 4) num_images = 4;
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"num_images\":%d", num_images);
     }
     snprintf(body + pos, sizeof(body) - pos, "}");
 
@@ -174,7 +185,9 @@ void registry_init_image_gen(void) {
         "  \"prompt\":{\"type\":\"string\",\"description\":\"Text description of the image to generate\"},"
         "  \"aspect_ratio\":{\"type\":\"string\",\"description\":\"Aspect ratio (e.g., 1:1, 16:9, 9:16)\"},"
         "  \"negative_prompt\":{\"type\":\"string\",\"description\":\"What to avoid in the generated image\"},"
-        "  \"style\":{\"type\":\"string\",\"description\":\"Style preset (e.g., realistic, anime, cinematic, digital-art, fantasy)\"}"
+        "  \"style\":{\"type\":\"string\",\"description\":\"Style preset (e.g., realistic, anime, cinematic, digital-art, fantasy)\"},"
+        "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility (0=random)\"},"
+        "  \"num_images\":{\"type\":\"integer\",\"description\":\"Number of images to generate (1-4)\",\"default\":1}"
         "},"
         "\"required\":[\"prompt\"]"
         "}",

@@ -317,3 +317,10 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | XS-02 | User search mode — added `search_type` param ("posts" or "users"). When "users", sets tool type to x_user_search and sets query directly. Handles, dates, media, geo filters skipped for user search since API doesn't support them. | 1A (x_search_tool) | src/tools/x_search.c — search_type parsing, conditional tool type in tool_def builder, else block closure |
+
+## Phase 19: Seed + num_images params — image_gen (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| IG-01 | Seed parameter — added `seed` (int, optional, 0=random) for reproducible image generation. When >0, passed as `seed` field to FAL API | 1A (image_generation_tool) | src/tools/image_gen.c — seed param extraction at line 34, body construction at line 66 |
+| IG-02 | Num images parameter — added `num_images` (int, optional, 1-4, default 1) for generating multiple images per prompt. Capped at 4. | 1A (image_generation_tool) | src/tools/image_gen.c — num_images param extraction at line 35, cap at 4, body construction at line 70 |
