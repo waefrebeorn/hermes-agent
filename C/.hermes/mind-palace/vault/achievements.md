@@ -170,3 +170,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T37 | web_get: added proxy param for HTTP proxy support. C web_get was missing proxy auth support. Added to schema + handler using http_client_set_proxy API. Supports HTTP proxy URL (CONNECT tunnel for HTTPS). | 1A | web.c: SCHEMA_GET + http_client_set_proxy(client, proxy_copy) |
 | - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 9→8. | |
+
+## Phase 22: web_extract format param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T38 | web_extract: added format param (markdown/html). C web_extract was missing output format selection. Added to schema + delegate input. | 1A | web.c: SCHEMA_EXTRACT + handler extraction + delegate input |
+| - | 78 tools unchanged. Suite 231/0/24. | |

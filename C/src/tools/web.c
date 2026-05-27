@@ -26,7 +26,7 @@ static const char *SCHEMA_GET = "{"
       "\"proxy\":{\"type\":\"string\",\"description\":\"HTTP proxy URL (e.g., http://proxy:8080). Uses CONNECT tunnel for HTTPS.\"}"
     "},"
     "\"required\":[\"url\"]"
-"\"}";
+"}"; /* end SCHEMA_GET */
 
 /* Resolve HTTP method string to enum */
 static http_method_t method_str_to_enum(const char *method) {
@@ -403,7 +403,8 @@ static const char *SCHEMA_EXTRACT = "{"
     "\"properties\":{"
       "\"url\":{\"type\":\"string\",\"description\":\"URL to extract content from\"},"
       "\"prompt\":{\"type\":\"string\",\"description\":\"What to extract from the page (e.g., 'key metrics', 'main arguments', 'pricing info')\",\"default\":\"Extract key information\"},"
-      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30}"
+      "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30},"
+      "\"format\":{\"type\":\"string\",\"description\":\"Output format: 'markdown' or 'html'\",\"default\":\"markdown\"}"
     "},"
     "\"required\":[\"url\"]"
 "}";
@@ -418,6 +419,7 @@ char *web_extract_handler(const char *args_json, const char *task_id) {
     const char *url = json_get_str(args, "url", NULL);
     const char *extract_prompt = json_get_str(args, "prompt", "Extract key information from this page");
     int timeout = (int)json_get_num(args, "timeout", 30);
+    const char *format = json_get_str(args, "format", "markdown");
 
     json_free(args);
 
@@ -442,6 +444,7 @@ char *web_extract_handler(const char *args_json, const char *task_id) {
     json_set(input, "url", json_string(url));
     json_set(input, "prompt", json_string(extract_prompt));
     json_set(input, "timeout", json_number((double)timeout));
+    json_set(input, "format", json_string(format));
     char *input_json = json_serialize(input);
     json_free(input);
 
