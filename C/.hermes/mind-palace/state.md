@@ -1,7 +1,7 @@
-# Slermes C — State Dashboard (v20 — 2026-05-26)
+# Slermes C — State Dashboard (v28 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **77 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 166 src/ .c files (non-deps). 219 test_*.c files. Binary: 31MB. Suite: 229/0/25.
+Build clean. **77 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 219 test_*.c files. Binary: 30M. Suite: 229/0/25.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)
@@ -32,7 +32,7 @@ Zero gateway polling stubs — all 13 platforms with poll_messages have real imp
 
 ## Phase Order
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-1. CLI Args (40 gaps) — ✅ ALL DONE — all 80 commands wired with arg processing
+1. CLI Args (40 gaps) — ✅ ALL DONE — all 98 commands wired with arg processing
 2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
 3. Tool Features (49 gaps) — add Python features to existing C tools
 4. Missing Tools (47 gaps) — port remaining tool files (+10 newly found)

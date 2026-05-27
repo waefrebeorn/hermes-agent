@@ -1,15 +1,15 @@
-# Slermes C — Walkway Index (v10)
+# Slermes C — Walkway Index (v28)
 
 ## Reading Order
-1. **state.md** — Current build metrics, summary stats (v17, DA v16 findings)
+1. **state.md** — Current build metrics, summary stats (v28, DA v16 findings)
 2. **battleship-v16.md** — ~373 items, 11 phases (Active TODO list)
-3. **prestige_prompt.md** — Phase-ordered priority queue (v25, DA stale claims documented)
-4. **goal-mantra.md** — Loop, rules, phase order (v23)
-5. **overnight-map.md** — Quick-start, Phase progression (v24)
-6. **plan.md** — Next actions summary (v25)
+3. **prestige_prompt.md** — Phase-ordered priority queue (v28, DA stale claims documented)
+4. **goal-mantra.md** — Loop, rules, phase order (v28)
+5. **overnight-map.md** — Quick-start, Phase progression (v28)
+6. **plan.md** — Next actions summary (v28)
 7. **vault/achievements.md** — Resolved gaps (historical)
 8. **vault/hermes-upstream.md** — Python modules not ported
-9. **testing.md** — Test coverage (v5)
+9. **testing.md** — Test coverage (v28)
 
 ## Previous
 battleship-v15 → v16 (~373 items, 10 new missing tools, 2 agent stubs documented)

@@ -1,4 +1,4 @@
-# Slermes C — Testing (v6 — 2026-05-26)
+# Slermes C — Testing (v28 — 2026-05-27)
 
 ## Suite
 ```bash

@@ -2,9 +2,9 @@
 
 ```
 Suite:   229/0/25  (219 test files, zero failures)
-Binary:  31MB     (dynamic ELF, 0 warnings)
+Binary:  30M     (dynamic ELF, 0 warnings)
 Tools:   77      (unique, registry_register)
-CLI:     80      (slash commands with handlers)
+CLI:     98      (slash commands with handlers)
 Gateways:19      (platforms)
 Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)

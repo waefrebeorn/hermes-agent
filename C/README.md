@@ -1,17 +1,17 @@
 # Slermes C
 
 **Slermes — Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**  
-One static binary. Zero runtime deps beyond libc + libssl. 31MB ELF.
+One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
 ||| Suite:  229/0/25 (219 test files, completes in <60s)
-||| Binary: 31MB    (dynamic ELF, -O2 -g)
+||| Binary: 30M    (dynamic ELF, -O2 -g)
 ||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
 ||| Parity:  ~43%   (~1,915 function-level gaps — see battleship-v16 1:1 Parity)
-|||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 80 commands wired.
+|||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
 |||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||CLI:    80 cmd_ functions — 77 unique tools registered
+|||CLI:    98 cmd_ functions — 77 unique tools registered
 |||Tools:  77 registered (85 at runtime with MCP dynamic)
 ||Libraries: 59 C modules — zero external deps beyond libc+libssl
 ||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
@@ -125,7 +125,7 @@ echo "/providers" | ./hermes # List provider configurations
 ## Build System
 
 ```bash
-make hermes           # Full binary (phase5) — 0 errors, 31MB
+make hermes           # Full binary (phase5) — 0 errors, 30M
 make plugins          # 10 .so shared objects
 make tui              # ncurses TUI → hermes-tui (experimental)
 make libs             # 59 library compilation units
