@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31MB ELF.
 
 ```text
-||| Suite:  228/0/25 (218 test files, completes in <60s)
+||| Suite:  229/0/25 (219 test files, completes in <60s)
 ||| Binary: 31MB    (dynamic ELF, -O2 -g)
 ||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
 ||| Parity:  ~43%   (~1,915 function-level gaps — see battleship-v16 1:1 Parity)
@@ -52,7 +52,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31MB ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 228/0/25
+bash test_runner.sh        # 229/0/25
 ./hermes --version         # v0.14.1+
 
 # Modes

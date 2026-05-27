@@ -1166,19 +1166,6 @@ char *browser_press_handler(const char *args_json, const char *task_id) {
 }
 
 /* ================================================================
- *  CDP-dependent browser stubs
- * ================================================================ */
-
-/* stub_cdp_handler: Placeholder for tools that need CDP server */
-static char *stub_cdp_handler(const char *args_json, const char *task_id) {
-    (void)args_json; (void)task_id;
-    return strdup(
-        "{"
-        "\"success\":false,"
-        "\"error\":\"Requires Camofox or Playwright CDP server. This text-based browser cannot execute JavaScript or take screenshots without an external browser engine.\""
-        "}");
-}
-
 /* ================================================================
  *  Browser Supervisor — CDP Health Monitor (D14)
  * ================================================================
@@ -1401,6 +1388,7 @@ static char *browser_vision_handler(const char *args_json, const char *task_id) 
     if (!args) return strdup("{\"error\":\"JSON parse error\"}");
 
     const char *question = json_object_get_string(args, "question", "Describe this page");
+    (void)question;
 
     /* Take screenshot via CDP */
     char *screenshot_resp = cdp_send_command("Page.captureScreenshot",
