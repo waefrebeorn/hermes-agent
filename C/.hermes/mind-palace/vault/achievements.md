@@ -11,6 +11,7 @@ Last updated: 2026-05-26
 | T23 | Patch V4A multi-file mode — patch-based editing with file-level patches | 1A | patch.c — V4A patch mode, registry |
 | T24 | Todo tool depth — merge/write modes, in_progress/cancelled status, summary counts with breakdown, normalized items | 1A | todo.c — merge/write/actions, build_summary(), normalize_item(), in_progress+cancelled status enum |
 | T25 | Cronjob pause/resume/run actions — pause (disable w/o remove), resume (re-enable), run (trigger immediately via cron_run_job) | 1A | cronjob.c — pause/resume/run actions, schema updated; cron_sqlite.c — cron_sqlite_get_command() |
+| T26 | Binary detection — wired has_binary_extension() into file.c read handler via lib/libbinary/binary.c. Removed stale #41 binary_extensions from missing tools list. | 1B | file.c — #include binary.h, is_binary detection in handle_read(); lib/libbinary/binary.c + binary.h |
 | T18 | File syntax check — auto-detect type from extension, type override param, registered as file_syntax tool | 1A | file.c:826-927 (handle_syntax), 5 tests |
 | T19 | HomeAssistant full parity — domain+area filtering, entity_id+data+validation+blocked domains, ha_get_history | 1A | homeassistant.c: ha_call_service, ha_get_history |
 | T22 | Skill deps — depends_on resolution from frontmatter | 1A | skill_mgmt.c: deps action |

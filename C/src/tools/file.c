@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include "difflib.h"
 #include "hash.h"
+#include "binary.h"
 
 /* WSL path translation — convert Windows to /mnt/ form (static buf, single-thread) */
 static const char *wsl_translate_path(const char *path) {
@@ -406,6 +407,15 @@ static char *handle_read(const char *args_json) {
     for (char *p = content; *p; p++) if (*p == '\n') total_lines++;
     if (fsize > 0 && content[fsize-1] != '\n') total_lines++;
 
+    /* Detect binary file */
+    bool is_binary = has_binary_extension(path);
+    if (!is_binary && fsize > 0) {
+        /* Content-based fallback: check for null bytes */
+        for (long i = 0; i < fsize && i < 4096; i++) {
+            if (content[i] == '\0') { is_binary = true; break; }
+        }
+    }
+
     /* Build result */
     json_node_t *result = json_new_object();
     json_object_set(result, "path", json_new_string(path));
@@ -414,6 +424,7 @@ static char *handle_read(const char *args_json) {
     json_object_set(result, "offset", json_new_number((double)offset));
     json_object_set(result, "limit", json_new_number((double)limit));
     json_object_set(result, "file_size", json_new_number((double)fsize));
+    json_object_set(result, "is_binary", json_new_bool(is_binary));
 
     char *json_out = json_serialize(result);
     json_free(result);

@@ -1,4 +1,4 @@
-# Slermes C — Plan (v28 — 1,914 Function Gaps)
+# Slermes C — Plan (v28 — 1,913 Function Gaps)
 
 ## Verified State
 Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,16 +12,16 @@ Suite: 229/0/25, 219 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: 1,914 function-level parity gaps (~373 items)
+## Battleship v16: 1,913 function-level parity gaps (~373 items)
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
-Recent: cronjob pause/resume/run added (-1 gap).
+Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 
 ## Phase Order
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (49) — add missing features to existing C tools
-4. Missing Tools (47) — port unported Python tool files (+10 newly found)
+3. Tool Features (48) — add missing features to existing C tools
+4. Missing Tools (46) — port unported Python tool files (+10 newly found)
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (74) — 52 unported + 20 deepen + 2 unwired stubs
 7. Plugins (13) — port remaining plugins
