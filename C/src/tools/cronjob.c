@@ -34,7 +34,7 @@ static const char *SCHEMA = "{"
 /* Forward declarations from scheduler.c */
 bool cron_add_job(const char *name, const char *schedule_expr, const char *command);
 void cron_remove_job(const char *name);
-/* Use SQLite store for real job listing instead of stub */
+/* Listing via SQLite store (cron_sqlite_list_to_json) */
 char *cron_sqlite_list_to_json(cron_sqlite_store_t *store);
 void cron_run_job(const char *name, const char *command);
 
