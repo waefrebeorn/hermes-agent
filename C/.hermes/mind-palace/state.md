@@ -1,15 +1,13 @@
-# Slermes C — State Dashboard (v41 — 2026-05-27)
+# Slermes C — State Dashboard (v42 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 245/0/12.
+Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 257/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
 ~346 item-level gaps (battleship-v16 rows).
 
 ## Recent (this session)
-- test_runner.sh: fixed logger test (SLERMES_HOME missing). Suite: 242/1/14 → 243/0/14.
-- test_runner.sh: fixed image_gen_registry + video_gen_registry tests (stub_vault.c for tool_config_get->vault_retrieve unresolved symbol). Suite: 243/0/14 → 245/0/12.
-- Stale numbers corrected: CLI 80→98, src/ .c 171→146.
+- test_runner.sh: added missing -lz (zlib) to all provider depth/full/smoke test compile lines. http.c uses zlib for gzip decompression (inflateInit2_/inflate/inflateEnd). Suite: 245/0/12 → 257/0/0 — all tests pass, zero skips.
 
 ## Phase Order
 0. Display Parity (16) — 14/16 done

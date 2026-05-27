@@ -595,7 +595,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     "$CDIR/lib/libskillsync/skills_sync.c" \
     "$CDIR/lib/libhash/hash.c" \
     "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_skills_sync > /dev/null 2>&1; then ok "skills_sync (43 tests)"
     else
         echo "  Skills sync test output:"
@@ -611,7 +611,7 @@ else
         "$CDIR/lib/libskillsync/skills_sync.c" \
         "$CDIR/lib/libhash/hash.c" \
         "$CDIR/lib/libjson/json.c" \
-        -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_skills_sync -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "skills_sync (compilation failed)"
 fi
 
@@ -1006,7 +1006,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
     "$CDIR/tests/test_tool_config.c" \
     "$CDIR/src/tools/tool_config.c" "$CDIR/src/agent/vault.c" \
     "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_tool_config > /dev/null 2>&1; then ok "tool_config (28 tests)"
     else
         echo "  Tool config test output:"
@@ -1020,7 +1020,7 @@ else
         "$CDIR/tests/test_tool_config.c" \
         "$CDIR/src/tools/tool_config.c" "$CDIR/src/agent/vault.c" \
         "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
-        -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto 2>&1 | head -5
+        -o /tmp/hermes_test_tool_config -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | head -5
     skip "tool_config (compilation failed)"
 fi
 
@@ -1279,7 +1279,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
     "$CDIR/tests/test_vault.c" \
     "$CDIR/src/agent/vault.c" \
     "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_vault -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_vault -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_vault > /dev/null 2>&1; then ok "vault (50 tests)"
     else
         echo "  Vault test output:"
@@ -1360,7 +1360,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_azure_depth > /dev/null 2>&1; then ok "azure_depth (9 tests)"
     else
         echo "  Azure depth test output:"
@@ -1380,7 +1380,7 @@ else
         "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "azure_depth (compilation failed)"
 fi
 
@@ -1396,7 +1396,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (14 tests)"
     else
         echo "  Bedrock depth test output:"
@@ -1416,7 +1416,7 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "bedrock_depth (compilation failed)"
 fi
 
@@ -1433,7 +1433,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_or_depth > /dev/null 2>&1; then ok "openrouter_depth (13 tests)"
     else
         echo "  OpenRouter depth test output:"
@@ -1454,7 +1454,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "openrouter_depth (compilation failed)"
 fi
 
@@ -1471,7 +1471,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (50 tests)"
     else
         echo "  Anthropic depth test output:"
@@ -1492,7 +1492,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "anthropic_depth (compilation failed)"
 fi
 
@@ -1509,7 +1509,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_goog_full > /dev/null 2>&1; then ok "google_full (40 tests)"
     else
         echo "  Google full test output:"
@@ -1530,7 +1530,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "google_full (compilation failed)"
 fi
 
@@ -1551,7 +1551,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (12 tests)"
     else
         echo "  Finish reason test output:"
@@ -1571,7 +1571,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "finish_reason (compilation failed)"
 fi
 
@@ -1588,7 +1588,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (7 tests)"
     else
         echo "  Google depth test output:"
@@ -1609,7 +1609,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "google_depth (compilation failed)"
 fi
 
@@ -1625,7 +1625,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (10 tests)"
     else
         echo "  JSON mode test output:"
@@ -1645,7 +1645,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "json_mode (compilation failed)"
 fi
 
@@ -1662,7 +1662,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_br_full -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_br_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_br_full > /dev/null 2>&1; then ok "bedrock_full (35 tests)"
     else
         echo "  Bedrock full test output:"
@@ -1683,7 +1683,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_br_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_br_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "bedrock_full (compilation failed)"
 fi
 
@@ -1700,7 +1700,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_az_full -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_az_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_az_full > /dev/null 2>&1; then ok "azure_full (45 tests)"
     else
         echo "  Azure full test output:"
@@ -1721,7 +1721,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_az_full -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_az_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "azure_full (compilation failed)"
 fi
 
@@ -1781,7 +1781,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_provsmoke -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_provsmoke -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_provsmoke > /dev/null 2>&1; then ok "provider_smoke (439 tests)"
     else fail "provider_smoke (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provsmoke
@@ -1800,7 +1800,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_proverr -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_proverr -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_proverr > /dev/null 2>&1; then ok "provider_error (M06: all providers error handling)"
     else
         echo "  Provider error test output:"
@@ -1820,7 +1820,7 @@ else
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_proverr -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_proverr -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "provider_error (M06: compilation failed)"
 fi
 
@@ -1866,7 +1866,7 @@ else
         "$CDIR/tests/test_skills_hub.c" \
         "$CDIR/src/skills_hub.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-        -o /tmp/hermes_test_hub -lm -lssl -lcrypto 2>&1 | sed 's/^/    /'
+        -o /tmp/hermes_test_hub -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "skills_hub (compilation failed)"
 fi
 
@@ -2388,7 +2388,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libcrypto/crypto.c" \
     "$CDIR/lib/libtooloutput/tool_output.c" \
-    -o /tmp/hermes_test_terminal -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_terminal -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (26 tests)"
     else fail "terminal_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_terminal

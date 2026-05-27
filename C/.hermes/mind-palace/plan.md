@@ -1,5 +1,5 @@
-# Slermes C — Plan (v41 — ~346 Items)
-Suite: 245/0/12, 224 test files. 83 tools, 98 CLI commands.
+# Slermes C — Plan (v42 — ~346 Items)
+Suite: 257/0/0, 224 test files. 83 tools, 98 CLI commands.
 Build clean. 30M binary. ~43% parity.
-Recent: logger test fixed (SLERMES_HOME env). Stale docs: CLI 80→98, src .c 171→146.
+Recent: all 12 provider depth tests fixed (missing -lz). Suite 257/0/0 zero skips.
 Next: Phase 3 features or Phase 4 missing tools.

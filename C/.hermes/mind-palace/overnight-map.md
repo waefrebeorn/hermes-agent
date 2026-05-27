@@ -1,6 +1,6 @@
-# Slermes C — Overnight Map (v41 — ~346 Items)
-- **State:** v41 — Suite 245/0/12
-- **Phase 3:** 21 gaps remaining (all large: mcp_tool, browser, tts, etc.)
-- Many small battleship claims STALE — verify before implementing.
-- Recent: logger test fix (SLERMES_HOME env). Suite +1.
+# Slermes C — Overnight Map (v42 — ~346 Items)
+- **State:** v42 — Suite 257/0/0
+- **Phase 3:** 21 gaps remaining.
+- Many battleship claims still STALE — verify before implementing.
+- Recent: 12 provider depth tests fixed (missing -lz). Suite 245/0/12 → 257/0/0.
 - **Doc discipline:** update all after every pass.
