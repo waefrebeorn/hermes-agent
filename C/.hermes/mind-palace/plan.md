@@ -1,4 +1,4 @@
-# Slermes C — Plan (v28 — 1,913 Function Gaps)
+# Slermes C — Plan (v28 — 1,912 Function Gaps)
 
 ## Verified State
 Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,7 +12,7 @@ Suite: 229/0/25, 219 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: 1,913 function-level parity gaps (~373 items)
+## Battleship v16: 1,912 function-level parity gaps (~373 items)
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
 Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 
@@ -30,7 +30,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 10. Test Coverage (51) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 3 — Tool Features (48 remaining)
+## Next: Phase 3 — Tool Features (47 remaining)
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session

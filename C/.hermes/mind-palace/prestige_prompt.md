@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v28 — 1,913 Function Gaps)
+# Slermes C — Prestige Prompt (v28 — 1,912 Function Gaps)
 
 ## Phase 0 — Display (16)
 V01 markdown ✅ → V02 inline diffs ✅ → V03 banner ✅ → V04 spinner ✅ → V05 multi-line ✅ → V06 rich errors ✅ → V07 TUI → V08 Python TUI → V09 voice → V10 /recap ✅ → V11 tips ✅ → V12 NO_COLOR ✅ → V13 output helpers ✅ → V14 skin ✅ → V15 spinner ✅ → V16 tool feed ✅
@@ -12,7 +12,7 @@ All 80 commands wired with proper argument parsing.
 Port targets (not OpenAI-compatible): copilot, copilot-acp, openai-codex, opencode-zen.
 16/18 "port 18" providers already routed as PROVIDER_OPENAI aliases.
 
-## Phase 3 — Tool Features (48)
+## Phase 3 — Tool Features (47)
 Deepen mcp_tool, file_ops, tts, browser, terminal, transcribe, send_message, delegate, voice, exec_code, discord, vision, image_gen, web, x_search, video_gen, cron, file, todo, skills.
 
 **Newly found missing tools (10):** feishu_drive_add_comment, feishu_drive_list_comments/list_comment_replies/reply_comment, video_analyze, yb_send_dm, yb_query_group_info/members, yb_send/search_sticker.

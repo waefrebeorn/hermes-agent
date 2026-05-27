@@ -92,3 +92,9 @@ Closed 9 real gaps (V01-V09: skin engine, KawaiiSpinner, banner, status bar, too
 ## Earlier Phases (1-8, 9-11)
 
 See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands, Tools, Gateway Platforms, Library Ports, Plugin System, Stale Claims Retired), Phases 9-11 (Battleship-v8 Stale Claims Retired, CLI Commands Depth, Agent Module Ports), and Phases 18-70 (per-gap closures).
+
+### cronjob update action (2026-05-27)
+- **Gap:** cronjob_tools update (edit job fields) — C had list/add/remove/config/pause/resume/run, missing `update` action
+- **Fix:** added `update` action handler to cronjob.c that modifies schedule, command, notify_on_complete, notify_on_failure, retry, backoff, and context_from via cron_sqlite_update_job API
+- **Evidence:** `src/tools/cronjob.c` — `update` action handler (~85 lines)
+- **Impact:** -1 gap (1,913→1,912), Phase 3 Tool Features 48→47

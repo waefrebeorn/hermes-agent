@@ -1,6 +1,6 @@
 /*
  * cronjob.c — Cron job scheduling tool for Hermes C.
- * Wraps the cron scheduler: list, add, remove, config actions.
+ * Wraps the cron scheduler: list, add, remove, config, update actions.
  * F26: Job notifications (notify_on_complete, notify_on_failure)
  * F28: Schedule validation (cron_parse at creation)
  * F29: Job retry with backoff (max_retries, backoff_sec)
@@ -13,14 +13,14 @@
 #include <string.h>
 #include <time.h>
 
-/* Schema — extended with notification, retry, pause/resume/run fields */
+/* Schema — extended with notification, retry, pause/resume/run, update fields */
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config | pause | resume | run\"},"
-      "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config/pause/resume/run)\"},"
-      "\"schedule\":{\"type\":\"string\",\"description\":\"Crontab expression or @hourly/@daily/@weekly (required for add)\"},"
-      "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for add)\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config | update | pause | resume | run\"},"
+      "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config/update/pause/resume/run)\"},"
+      "\"schedule\":{\"type\":\"string\",\"description\":\"Crontab expression or @hourly/@daily/@weekly (required for add, optional for update)\"},"
+      "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for add, optional for update)\"},"
       "\"context_from\":{\"type\":\"string\",\"description\":\"Chain input: job name whose output becomes context for this job\"},"
       "\"notify_on_complete\":{\"type\":\"boolean\",\"description\":\"Send notification on successful completion\"},"
       "\"notify_on_failure\":{\"type\":\"boolean\",\"description\":\"Send notification on job failure\"},"
@@ -190,6 +190,71 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
             json_object_set(result, "status", json_new_string("configured"));
         }
 
+    } else if (strcmp(action, "update") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name) {
+            json_object_set(result, "error", json_new_string("Missing name"));
+        } else {
+            bool any_update = false;
+            /* Update schedule if provided */
+            const char *schedule = json_object_get_string(args, "schedule", NULL);
+            if (schedule && schedule[0]) {
+                const char *validation_error = cron_validate_schedule(schedule);
+                if (validation_error) {
+                    json_object_set(result, "error", json_new_string(validation_error));
+                } else {
+                    any_update = cron_sqlite_update_job(g_cron_store, name, "schedule", schedule);
+                }
+            }
+            /* Update command (prompt/script) if provided */
+            const char *command = json_object_get_string(args, "command", NULL);
+            if (command && command[0]) {
+                if (cron_sqlite_update_job(g_cron_store, name, "command", command))
+                    any_update = true;
+            }
+            /* Update notification settings using cron_extras API */
+            if (json_obj_get(args, "notify_on_complete") != NULL) {
+                bool val = json_object_get_bool(args, "notify_on_complete", false);
+                if (cron_notify_on_complete(name, val))
+                    any_update = true;
+                cron_sqlite_update_job(g_cron_store, name, "notify_on_complete", val ? "true" : "false");
+            }
+            if (json_obj_get(args, "notify_on_failure") != NULL) {
+                bool val = json_object_get_bool(args, "notify_on_failure", true);
+                if (cron_notify_on_failure(name, val))
+                    any_update = true;
+                cron_sqlite_update_job(g_cron_store, name, "notify_on_failure", val ? "true" : "false");
+            }
+            /* Update retry settings using cron_extras API */
+            if (json_obj_get(args, "retry") != NULL) {
+                int retry = (int)json_object_get_number(args, "retry", 0);
+                int backoff = (int)json_object_get_number(args, "backoff", 60);
+                if (cron_job_set_retry(name, retry, backoff))
+                    any_update = true;
+                char buf[32];
+                snprintf(buf, sizeof(buf), "%d", retry);
+                cron_sqlite_update_job(g_cron_store, name, "max_retries", buf);
+                snprintf(buf, sizeof(buf), "%d", backoff);
+                cron_sqlite_update_job(g_cron_store, name, "backoff", buf);
+            }
+            /* Update context_from (job chaining) */
+            if (json_obj_get(args, "context_from") != NULL) {
+                const char *cf = json_object_get_string(args, "context_from", NULL);
+                if (cf && cf[0]) {
+                    if (cron_chain_set_context(name, cf))
+                        any_update = true;
+                    cron_sqlite_update_job(g_cron_store, name, "chain_from", cf);
+                }
+            }
+            if (any_update) {
+                json_object_set(result, "status", json_new_string("updated"));
+            } else {
+                /* Schedule validation error may have already set error */
+                if (!json_obj_get(result, "error"))
+                    json_object_set(result, "error", json_new_string("No changes or job not found"));
+            }
+        }
+
     } else if (strcmp(action, "pause") == 0) {
         const char *name = json_object_get_string(args, "name", NULL);
         if (!name) {
@@ -240,6 +305,7 @@ void registry_init_cronjob(void) {
     registry_register("cronjob",
         "Manage cron jobs. Actions: list (show all jobs), add (schedule a new job), "
         "remove (delete a job), config (update notification/retry settings), "
+        "update (edit schedule, command, notification, retry, chaining of an existing job), "
         "pause (disable without removing), resume (re-enable), run (trigger immediately). "
         "Supports schedule validation, per-job notifications (notify_on_complete, "
         "notify_on_failure), and automatic retry with exponential backoff.",
