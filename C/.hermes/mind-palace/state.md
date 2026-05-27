@@ -1,12 +1,13 @@
-# Slermes C — State Dashboard (v55 — 2026-05-27)
+# Slermes C — State Dashboard (v56 — 2026-05-27)
 
 ## Build Metrics
 Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 257/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
-~306 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
+~305 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
 
 ## Recent (this session)
+- image_gen: added image_url param for image-to-image generation (img2img). Pass a reference image URL to use as source for generation. Closes 1 tool-depth gap (img2img).
 - vision: added analysis param with color palette (dominant colors via PIL) and EXIF extraction modes. Closes 2 vision-tool gaps (color analysis, EXIF).
 - send_message: added reply_to_message_id param for replying to specific messages. Closes 1 tool-depth gap (reply_to).
 - image_gen: added seed + num_images params for reproducibility and multi-image generation. Closes 2 tool-depth gaps (seed param, multi-image).
@@ -20,6 +21,6 @@ Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[
 0. Display Parity (16) — 14/16 done
 1. CLI Args — ALL DONE
 2. Provider Parity (~20 real)
-3. Tool Features (8)
+3. Tool Features (7)
 4. Missing Tools (46)
 5-11: Gateway (51) → Agent (74) → Plugins (13) → Libs (19) → Security (15) → Tests (50) → Infra (10)

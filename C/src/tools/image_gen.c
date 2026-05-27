@@ -30,6 +30,7 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     const char *aspect_ratio = json_get_str(args, "aspect_ratio", "1:1");
     const char *negative_prompt = json_get_str(args, "negative_prompt", NULL);
     const char *style = json_get_str(args, "style", NULL);
+    const char *image_url = json_get_str(args, "image_url", NULL);
     int seed = (int)json_get_num(args, "seed", 0);
     int num_images = (int)json_get_num(args, "num_images", 1);
 
@@ -54,6 +55,10 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
         "{\"prompt\":\"%s\",\"aspect_ratio\":\"%s\"",
         esc_prompt, aspect_ratio);
 
+    if (image_url && *image_url) {
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"image_url\":\"%s\"", image_url);
+    }
     if (negative_prompt && *negative_prompt) {
         char esc_neg[2048];
         fal_escape_json(negative_prompt, esc_neg, sizeof(esc_neg));
@@ -107,13 +112,13 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
 
     /* Extract image URL from response */
     json_t *images = json_obj_get(result, "images");
-    const char *image_url = NULL;
+    const char *result_image_url = NULL;
     if (images && json_len(images) > 0) {
         json_t *first = json_get(images, 0);
-        if (first) image_url = json_get_str(first, "url", NULL);
+        if (first) result_image_url = json_get_str(first, "url", NULL);
     }
 
-    if (!image_url) {
+    if (!result_image_url) {
         char *s = json_serialize(result);
         char err[2048];
         snprintf(err, sizeof(err),
@@ -131,7 +136,7 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
         (long)time(NULL));
 
     http_t *dh = http_new(30);
-    http_resp_t *img_resp = http_get(dh, image_url, NULL);
+    http_resp_t *img_resp = http_get(dh, result_image_url, NULL);
     int dl_ok = 0;
     if (img_resp && img_resp->status == 200 && img_resp->body && img_resp->body_len > 0) {
         FILE *f = fopen(filename, "wb");
@@ -148,10 +153,10 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     char out[8192];
     if (dl_ok) {
         snprintf(out, sizeof(out),
-            "{\"success\":true,\"image\":\"%s\",\"local_path\":\"%s\"}", image_url, filename);
+            "{\"success\":true,\"image\":\"%s\",\"local_path\":\"%s\"}", result_image_url, filename);
     } else {
         snprintf(out, sizeof(out),
-            "{\"success\":true,\"image\":\"%s\",\"warning\":\"Could not download image\"}", image_url);
+            "{\"success\":true,\"image\":\"%s\",\"warning\":\"Could not download image\"}", result_image_url);
     }
 
     json_free(result);
@@ -186,8 +191,9 @@ void registry_init_image_gen(void) {
         "  \"aspect_ratio\":{\"type\":\"string\",\"description\":\"Aspect ratio (e.g., 1:1, 16:9, 9:16)\"},"
         "  \"negative_prompt\":{\"type\":\"string\",\"description\":\"What to avoid in the generated image\"},"
         "  \"style\":{\"type\":\"string\",\"description\":\"Style preset (e.g., realistic, anime, cinematic, digital-art, fantasy)\"},"
-        "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility (0=random)\"},"
-        "  \"num_images\":{\"type\":\"integer\",\"description\":\"Number of images to generate (1-4)\",\"default\":1}"
+        "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility (0=random)\"},\""
+        "  \"num_images\":{\"type\":\"integer\",\"description\":\"Number of images to generate (1-4)\",\"default\":1},\""
+        "  \"image_url\":{\"type\":\"string\",\"description\":\"Reference image URL for image-to-image generation (img2img). Provide a URL to an existing image as source.\"}\""
         "},"
         "\"required\":[\"prompt\"]"
         "}",

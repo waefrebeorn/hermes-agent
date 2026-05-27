@@ -337,4 +337,10 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 |----|-------------|--------|----------|
 | VI-01 | Color analysis — added `analysis="colors"` param. Extracts 8 dominant colors via Python PIL (Counter + getdata), returns hex codes. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py colors |
 | VI-02 | EXIF extraction — added `analysis="exif"` param. Reads EXIF tags via Python PIL (ExifTags), returns key:value pairs. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py exif |
+
+## Phase 22: Image-to-image (image_url param) — image_gen (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| IG-03 | Image-to-image generation — added `image_url` (string, optional) param. When provided, passes as `image_url` field in FAL API request body for img2img generation. | 1A (image_generation_tool) | src/tools/image_gen.c — image_url param extraction, body construction included when present, schema entry with description |
 | VI-03 | Vision analysis helper script — separate Python script for PIL-based image analysis (colors + EXIF). | 1A (vision_tools) | src/tools/vision_analysis.py — analyze_colors(), analyze_exif() functions |
