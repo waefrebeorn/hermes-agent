@@ -1,6 +1,6 @@
 /*
  * file_batch.c — F15: Batch file operations for Hermes C.
- * Multi-file copy, move, delete, chmod, touch with progress reporting.
+ * Multi-file copy, move, delete, chmod, touch, stat with progress reporting.
  */
 
 #include "hermes.h"
@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 
 /* Forward: sandbox from file.c */
 bool sandbox_check_path(const char *path);
@@ -20,7 +21,7 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
       "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
       "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"}"
@@ -112,6 +113,21 @@ static bool touch_file(const char *path) {
     return true;
 }
 
+/* Stat a file and return JSON object with size, mode, mtime. */
+static json_t *stat_file_json(const char *path) {
+    struct stat st;
+    if (stat(path, &st) != 0) return NULL;
+
+    json_t *j = json_object();
+    json_set(j, "size", json_number((double)st.st_size));
+    char mode_str[16];
+    snprintf(mode_str, sizeof(mode_str), "%o", (unsigned)(st.st_mode & 07777));
+    json_set(j, "mode", json_string(mode_str));
+    json_set(j, "mtime", json_number((double)st.st_mtime));
+    json_set(j, "is_dir", json_bool(S_ISDIR(st.st_mode) ? 1 : 0));
+    return j;
+}
+
 char *file_batch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -127,7 +143,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     /* Validate action early */
     if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 &&
         strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0 &&
-        strcmp(action, "touch") != 0) {
+        strcmp(action, "touch") != 0 && strcmp(action, "stat") != 0) {
         json_free(args);
         char buf[256];
         snprintf(buf, sizeof(buf), "{\"error\":\"Unknown action: %s\"}", action);
@@ -257,6 +273,24 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                 success_count++;
             }
 
+        } else if (strcmp(action, "stat") == 0) {
+            if (!sandbox_check_path(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Source path not allowed"));
+                fail_count++;
+            } else {
+                json_t *stat_j = stat_file_json(src);
+                if (!stat_j) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("ok"));
+                    json_set(entry, "file_info", stat_j);
+                    success_count++;
+                }
+            }
+
         } else {
             /* copy — handled in the copy/move/delete branches above */
             json_set(entry, "status", json_string("failed"));
@@ -280,7 +314,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete, chmod, touch. "
+        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat. "
         "Accepts array of source paths, optional destination (copy/move), "
         "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",
