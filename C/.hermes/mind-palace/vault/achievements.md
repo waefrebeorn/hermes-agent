@@ -508,3 +508,13 @@ The following items from battleship-v8 were verified as stale — code already i
 | F18 | Returns mode, size, uid, gid, type, is_dir/file/link | src/tools/file.c:690-704 |
 | F18 | 3 tests: stat existing file (mode+type), missing file error | tests/test_file.c:343-361 |
 | F18 | Suite: 227/0/24 (file_tool 40→43) | test_runner.sh |
+
+## Phase 69: Phase 3 Tool Features — File Hex View (2026-05-26)
+
+| ID | Description | Evidence |
+|----|-------------|----------|
+| F18 | file_hex handler — hex dump with ASCII side panel | src/tools/file.c:716-818 (handle_hex: reads file, formats 16-byte rows) |
+| F18 | Schema: path (req), offset (opt, default 0), limit (opt, default 256, max 4096) | src/tools/file.c:83-92 (SCHEMA_HEX) |
+| F18 | Registered as file_hex tool (75th unique tool) | src/tools/file.c:869-872 (registry_register) |
+| F18 | 5 tests: hex output, expected bytes, missing file | tests/test_file.c:363-395 |
+| F18 | Suite: 227/0/24 (file_tool 43→48) | test_runner.sh |

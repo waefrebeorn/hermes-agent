@@ -82,6 +82,16 @@ static const char *SCHEMA_WRITE = "{"
         "\"required\":[\"path\"]"
     "}";
 
+    static const char *SCHEMA_HEX = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"path\":{\"type\":\"string\",\"description\":\"File path\"},"
+          "\"offset\":{\"type\":\"number\",\"description\":\"Byte offset to start (default: 0)\"},"
+          "\"limit\":{\"type\":\"number\",\"description\":\"Max bytes to show (default: 256, max: 4096)\"}"
+        "},"
+        "\"required\":[\"path\"]"
+    "}";
+
     /* ================================================================
      *  P168: File Sandbox — Allowed directories & symlink attack prevention
      * ================================================================ */
@@ -699,6 +709,108 @@ static char *handle_perms(const char *args_json) {
     return json_out;
 }
 
+/* Hex view — dump file bytes as hex with ASCII side panel */
+static char *handle_hex(const char *args_json) {
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    char *err = NULL;
+    json_node_t *args = json_parse(args_json, &err);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *path = json_object_get_string(args, "path", NULL);
+    if (!path || !*path) {
+        json_free(args);
+        return strdup("{\"error\":\"Missing path\"}");
+    }
+
+    double off_val = json_object_get_number(args, "offset", 0.0);
+    long start_off = (off_val >= 0) ? (long)off_val : 0;
+    double lim_val = json_object_get_number(args, "limit", 256.0);
+    long max_bytes = (lim_val > 0) ? (long)lim_val : 256;
+    if (max_bytes > 4096) max_bytes = 4096;
+
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Cannot open %s: %s\"}", path, strerror(errno));
+        return strdup(buf);
+    }
+
+    /* Seek to offset */
+    if (start_off > 0 && fseek(f, start_off, SEEK_SET) != 0) {
+        fclose(f);
+        json_free(args);
+        return strdup("{\"error\":\"Seek failed\"}");
+    }
+
+    /* Read bytes */
+    unsigned char buf[4096];
+    long to_read = max_bytes < 4096 ? max_bytes : 4096;
+    size_t nread = fread(buf, 1, to_read, f);
+    fclose(f);
+
+    if (nread == 0) {
+        /* Get file size for reporting */
+        FILE *fs = fopen(path, "rb");
+        long fsize = 0;
+        if (fs) { fseek(fs, 0, SEEK_END); fsize = ftell(fs); fclose(fs); }
+        json_free(args);
+        json_node_t *r = json_new_object();
+        json_object_set(r, "path", json_new_string(path));
+        json_object_set(r, "offset", json_new_number((double)start_off));
+        json_object_set(r, "bytes_read", json_new_number(0.0));
+        json_object_set(r, "file_size", json_new_number((double)fsize));
+        json_object_set(r, "hex", json_new_string(""));
+        char *out = json_serialize(r);
+        json_free(r);
+        return out;
+    }
+
+    /* Build hex output */
+    char hex[16384];
+    int hex_len = 0;
+    char ascii[17];
+    ascii[16] = '\0';
+
+    int written = 0;
+    for (size_t i = 0; i < nread; i += 16) {
+        /* Offset */
+        hex_len += snprintf(hex + hex_len, sizeof(hex) - hex_len,
+            "%08lx  ", start_off + i);
+
+        /* Hex bytes */
+        int ascii_idx = 0;
+        for (int j = 0; j < 16; j++) {
+            if (i + j < nread) {
+                hex_len += snprintf(hex + hex_len, sizeof(hex) - hex_len,
+                    "%02x ", buf[i + j]);
+                ascii[ascii_idx++] = (buf[i + j] >= 32 && buf[i + j] < 127) ? buf[i + j] : '.';
+            } else {
+                hex_len += snprintf(hex + hex_len, sizeof(hex) - hex_len, "   ");
+                ascii[ascii_idx++] = ' ';
+            }
+        }
+        ascii[ascii_idx] = '\0';
+
+        /* ASCII panel */
+        hex_len += snprintf(hex + hex_len, sizeof(hex) - hex_len, " |%s|\n", ascii);
+        written += 16;
+
+        if (hex_len > (int)sizeof(hex) - 256) break;
+    }
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "path", json_new_string(path));
+    json_object_set(result, "offset", json_new_number((double)start_off));
+    json_object_set(result, "bytes_read", json_new_number((double)nread));
+    json_object_set(result, "hex", json_new_string(hex));
+
+    char *json_out = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return json_out;
+}
+
 /* ================================================================
  *  Public handlers
  * ================================================================ */
@@ -728,6 +840,11 @@ char *file_perms_handler(const char *args_json, const char *task_id) {
     return handle_perms(args_json);
 }
 
+char *file_hex_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    return handle_hex(args_json);
+}
+
 /* Auto-registration */
 void registry_init_file(void) {
     registry_register("read_file",
@@ -747,4 +864,8 @@ void registry_init_file(void) {
         "Get or set file permissions. Without 'mode', shows current permissions, "
         "type, size, owner. With 'mode' (octal, e.g. 644), changes permissions.",
         SCHEMA_PERMS, file_perms_handler);
+    registry_register("file_hex",
+        "View file contents as hexadecimal dump with ASCII side panel. "
+        "Optional: offset (byte offset), limit (max bytes, default 256, max 4096).",
+        SCHEMA_HEX, file_hex_handler);
 }

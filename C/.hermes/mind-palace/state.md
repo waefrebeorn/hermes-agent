@@ -30,7 +30,7 @@ Zero gateway polling stubs — all 13 platforms with poll_messages have real imp
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40 gaps) — ✅ ALL DONE — all 80 commands wired with arg processing
 2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
-3. Tool Features (56 gaps) — add Python features to existing C tools
+3. Tool Features (54 gaps) — add Python features to existing C tools
 4. Missing Tools (37 gaps) — port remaining tool files
 5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
 6. Agent Modules (72 gaps) — port 52 unported + deepen 20 existing

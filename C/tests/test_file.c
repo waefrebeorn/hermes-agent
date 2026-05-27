@@ -27,6 +27,7 @@ extern char *file_write_handler(const char *args_json, const char *task_id);
 extern char *file_search_handler(const char *args_json, const char *task_id);
 extern char *file_diff_handler(const char *args_json, const char *task_id);
 extern char *file_perms_handler(const char *args_json, const char *task_id);
+extern char *file_hex_handler(const char *args_json, const char *task_id);
 
 static int passed = 0, failed = 0;
 
@@ -355,6 +356,34 @@ int main(void) {
         /* Stat non-existent file */
         json_node_t *r = parse_result(file_perms_handler(
             "{\"path\":\"/tmp/hermes_test_nonexist_xyz\"}", NULL));
+        TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
+        if (r) json_free(r);
+    }
+
+    /* ============ Hex view tests ============ */
+    printf("\n--- file_hex tests ---\n");
+    {
+        /* Create a file with known content */
+        FILE *f = fopen("/tmp/hermes_test_hex.txt", "wb");
+        if (f) {
+            unsigned char data[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F}; /* "Hello" */
+            fwrite(data, 1, 5, f);
+            fclose(f);
+        }
+        json_node_t *r = parse_result(file_hex_handler(
+            "{\"path\":\"/tmp/hermes_test_hex.txt\"}", NULL));
+        TEST("hex returns result", r != NULL);
+        if (r) {
+            const char *hex = json_object_get_string(r, "hex", "");
+            TEST("hex output non-empty", hex && strlen(hex) > 0);
+            if (hex) TEST("hex contains expected bytes", strstr(hex, "48 65 6c") != NULL);
+            json_free(r);
+        }
+        unlink("/tmp/hermes_test_hex.txt");
+    }
+    {
+        json_node_t *r = parse_result(file_hex_handler(
+            "{\"path\":\"/tmp/hermes_test_nonexist_hex.txt\"}", NULL));
         TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
         if (r) json_free(r);
     }
