@@ -83,6 +83,20 @@ run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredenti
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 
+echo ""; echo "=== Website Policy Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
+    "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \
+    -o /tmp/hermes_test_ws -lm 2>/dev/null && [[ -x /tmp/hermes_test_ws ]]; then
+    if /tmp/hermes_test_ws > /dev/null 2>&1; then
+        ok "website (17 tests)"
+    else
+        fail "website (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_ws
+else
+    fail "website (compilation failed)"
+fi
+
 echo ""; echo "=== Env Passthrough Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libenvpassthrough" \
     "$CDIR/tests/test_env_passthrough.c" "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
