@@ -491,8 +491,8 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | Step | File | What It Contains |
 |------|------|-----------------|
 | 1 | `prestige_prompt.md` | Priority queue + current state snapshot |
-| 2 | `goal-mantra.md` | Perpetual goal + the loop (one-page session kickoff) |
-| 3 | `state.md` | Binary truth table — every sector's done/total |
+| 2 | `mind-palace/goal-mantra.md` | Perpetual goal + the loop (one-page session kickoff) |
+| 3 | `mind-palace/state.md` | Binary truth table — every sector's done/total |
 | 4 | `plan.md` | Phase completion + next steps sorted by priority |
 | 5 | `entry.md` | Build/run commands + architecture |
 | 6 | `overnight-map.md` | Session navigation + fallback task |
