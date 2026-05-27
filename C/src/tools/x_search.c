@@ -25,7 +25,8 @@ static const char *SCHEMA = "{"
       "\"from_date\":{\"type\":\"string\",\"description\":\"Start date YYYY-MM-DD\"},"
       "\"to_date\":{\"type\":\"string\",\"description\":\"End date YYYY-MM-DD\"},"
       "\"enable_image_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze images in matching posts\",\"default\":false},"
-      "\"enable_video_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze videos in matching posts\",\"default\":false}"
+      "\"enable_video_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze videos in matching posts\",\"default\":false},"
+      "\"media_filter\":{\"type\":\"string\",\"description\":\"Filter by media type: 'images', 'videos', 'news', 'links', or empty for all\"}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -118,6 +119,9 @@ char *x_search_handler(const char *args_json, const char *task_id) {
         json_set(tool_def, "enable_image_understanding", json_bool(true));
     if (json_get_bool(args, "enable_video_understanding", false))
         json_set(tool_def, "enable_video_understanding", json_bool(true));
+    const char *media_filter = json_get_str(args, "media_filter", NULL);
+    if (media_filter && *media_filter)
+        json_set(tool_def, "media_filter", json_string(media_filter));
 
     /* Build request payload */
     json_node_t *payload = json_new_object();

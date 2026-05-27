@@ -198,3 +198,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T41 | vision_analyze: added detail param (low/high/auto). C vision was missing detail level control. Added to schema + extraction + delegate script args. | 1A | vision.c: SCHEMA + handler extraction + delegate args |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 26: x_search media_filter param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T42 | x_search: added media_filter param (images/videos/news/links). C x_search was missing media type filtering. Added to schema + tool_def builder. | 1A | x_search.c: SCHEMA + tool_def builder with media_filter |
+| - | 78 tools unchanged. Suite 231/0/24. | |
