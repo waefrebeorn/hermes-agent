@@ -1,6 +1,6 @@
 /*
  * file_batch.c — F15: Batch file operations for Hermes C.
- * Multi-file copy, move, delete, chmod, touch, stat with progress reporting.
+ * Multi-file copy, move, delete, chmod, touch, stat, hash with progress reporting.
  */
 
 #include "hermes.h"
@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include "hash.h"
 
 /* Forward: sandbox from file.c */
 bool sandbox_check_path(const char *path);
@@ -21,7 +22,7 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat | hash\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
       "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
       "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"}"
@@ -115,6 +116,7 @@ static bool touch_file(const char *path) {
 
 /* Stat a file and return JSON object with size, mode, mtime. */
 static json_t *stat_file_json(const char *path) {
+
     struct stat st;
     if (stat(path, &st) != 0) return NULL;
 
@@ -125,6 +127,40 @@ static json_t *stat_file_json(const char *path) {
     json_set(j, "mode", json_string(mode_str));
     json_set(j, "mtime", json_number((double)st.st_mtime));
     json_set(j, "is_dir", json_bool(S_ISDIR(st.st_mode) ? 1 : 0));
+    return j;
+}
+
+/* Hash a file and return JSON with sha256 hex. */
+static json_t *hash_file_json(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+
+    /* Hash via libhash */
+    unsigned char buf[65536];
+    size_t n;
+    /* Simple incremental hash: we need EVP_MD_CTX from OpenSSL.
+       Since hash.h provides hash_sha256(data, len) only (no streaming),
+       read whole file into memory. 100MB cap for safety. */
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    if (fsize < 0 || fsize > 100 * 1024 * 1024) {
+        fclose(f);
+        return NULL;
+    }
+    rewind(f);
+    unsigned char *data = (unsigned char *)malloc((size_t)fsize);
+    if (!data) { fclose(f); return NULL; }
+    n = fread(data, 1, (size_t)fsize, f);
+    fclose(f);
+    if (n != (size_t)fsize) { free(data); return NULL; }
+
+    char *hex = hash_sha256_hex(data, n);
+    free(data);
+    if (!hex) return NULL;
+
+    json_t *j = json_object();
+    json_set(j, "sha256", json_string(hex));
+    free(hex);
     return j;
 }
 
@@ -143,7 +179,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     /* Validate action early */
     if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 &&
         strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0 &&
-        strcmp(action, "touch") != 0 && strcmp(action, "stat") != 0) {
+        strcmp(action, "touch") != 0 && strcmp(action, "stat") != 0 && strcmp(action, "hash") != 0) {
         json_free(args);
         char buf[256];
         snprintf(buf, sizeof(buf), "{\"error\":\"Unknown action: %s\"}", action);
@@ -291,6 +327,24 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                 }
             }
 
+        } else if (strcmp(action, "hash") == 0) {
+            if (!sandbox_check_path(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Source path not allowed"));
+                fail_count++;
+            } else {
+                json_t *hash_j = hash_file_json(src);
+                if (!hash_j) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("ok"));
+                    json_set(entry, "file_hash", hash_j);
+                    success_count++;
+                }
+            }
+
         } else {
             /* copy — handled in the copy/move/delete branches above */
             json_set(entry, "status", json_string("failed"));
@@ -314,7 +368,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat. "
+        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat, hash. "
         "Accepts array of source paths, optional destination (copy/move), "
         "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",
