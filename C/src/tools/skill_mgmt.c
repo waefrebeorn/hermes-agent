@@ -225,6 +225,73 @@ char *skill_view_handler(const char *args_json, const char *task_id) {
  *  skill_manage handler — full CRUD + file management
  * ================================================================ */
 
+/* ================================================================
+ *  Pin/Freeze support — .pinned marker file prevents deletion
+ * ================================================================ */
+
+#define PIN_FILENAME ".pinned"
+
+/* Check if a skill directory has a .pinned marker file */
+static bool is_pinned(const char *skill_dir) {
+    char pin_path[4096];
+    snprintf(pin_path, sizeof(pin_path), "%s/%s", skill_dir, PIN_FILENAME);
+    struct stat st;
+    return stat(pin_path, &st) == 0;
+}
+
+/* Pin a skill — create .pinned marker file */
+static char *action_pin(json_node_t *args, const char *skills_dir) {
+    const char *name = json_object_get_string(args, "name", NULL);
+    if (!name || !*name) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("Missing 'name'"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+    char skill_dir[4096];
+    skill_dir_path(skills_dir, name, skill_dir, sizeof(skill_dir));
+    struct stat st;
+    if (stat(skill_dir, &st) != 0) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("Skill not found"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+    char pin_path[4096];
+    snprintf(pin_path, sizeof(pin_path), "%s/%s", skill_dir, PIN_FILENAME);
+    FILE *f = fopen(pin_path, "w");
+    if (!f) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("Failed to create pin file"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+    fprintf(f, "pinned\n");
+    fclose(f);
+    json_node_t *r = json_new_object();
+    json_object_set(r, "ok", json_new_bool(true));
+    json_object_set(r, "action", json_new_string("pin"));
+    json_object_set(r, "name", json_new_string(name));
+    char *s = json_serialize(r); json_free(r); return s;
+}
+
+/* Unpin a skill — remove .pinned marker file */
+static char *action_unpin(json_node_t *args, const char *skills_dir) {
+    const char *name = json_object_get_string(args, "name", NULL);
+    if (!name || !*name) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string("Missing 'name'"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+    char skill_dir[4096];
+    skill_dir_path(skills_dir, name, skill_dir, sizeof(skill_dir));
+    char pin_path[4096];
+    snprintf(pin_path, sizeof(pin_path), "%s/%s", skill_dir, PIN_FILENAME);
+    unlink(pin_path);
+    json_node_t *r = json_new_object();
+    json_object_set(r, "ok", json_new_bool(true));
+    json_object_set(r, "action", json_new_string("unpin"));
+    json_object_set(r, "name", json_new_string(name));
+    char *s = json_serialize(r); json_free(r); return s;
+}
+
 /* Create a new skill with SKILL.md structure */
 static char *action_create(json_node_t *args, const char *skills_dir) {
     const char *name = json_object_get_string(args, "name", NULL);
@@ -543,6 +610,14 @@ static char *action_delete(json_node_t *args, const char *skills_dir) {
     if (stat(skill_dir, &st) != 0) {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string("Skill not found"));
+        char *s = json_serialize(r); json_free(r); return s;
+    }
+
+    /* Block deletion of pinned/frozen skills */
+    if (is_pinned(skill_dir)) {
+        json_node_t *r = json_new_object();
+        json_object_set(r, "error", json_new_string(
+            "Skill is pinned and cannot be deleted. Unpin it first using 'action: unpin'."));
         char *s = json_serialize(r); json_free(r); return s;
     }
 
@@ -873,10 +948,14 @@ char *skill_manage_handler(const char *args_json, const char *task_id) {
         free(backup);
         result = json_serialize(r);
         json_free(r);
-    } else {
+    } else if (strcmp(action, "pin") == 0)
+        result = action_pin(args, skills_dir);
+    else if (strcmp(action, "unpin") == 0)
+        result = action_unpin(args, skills_dir);
+    else {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string(
-            "Unknown action. Valid: create, edit, patch, delete, write_file, remove_file, deps, diff"));
+            "Unknown action. Valid: create, edit, patch, delete, write_file, remove_file, deps, diff, pin, unpin"));
         result = json_serialize(r);
         json_free(r);
     }

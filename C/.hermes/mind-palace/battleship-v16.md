@@ -37,7 +37,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 17 | cronjob_tools | 17 | 13 | 0 | Parity achieved. timezone handling, pause/resume/run/update/list-named, job history (run log) all added. |
 | 18 | file_tools | 30 | 30 | 0 | Parity achieved. file_diff + perms + hex + syntax check + file_hash + file_merge + file_watch (inotify) added. |
 | 20 | todo_tool | 10 | 10+ | 0 | Parity achieved: write/merge modes, in_progress/cancelled status, summary counts with breakdown, normalized items |
-| 22 | skill_manager_tool | 22 | 20 | 2 | Skill versioning, skill rollback, skill freeze. deps action + skill diff (backup-comparison via difflib) added. |
+| 22 | skill_manager_tool | 22 | 20 | 0 | Full parity. deps + diff + pin + unpin added. |
 | # | Missing Tool | Py Fns | Py LOC | Key Behaviors Missing |
 |---|-------------|--------|--------|----------------------|
 | 24 | skills_hub | 192 | ~3500 | Skill marketplace sync, catalog fetch, install/update/remove, version resolution, dependency graph, offline cache, metadata indexing |
@@ -473,7 +473,7 @@ Each "gap" above represents a single function-level behavioral difference — ma
 **Actual gap counts per layer:**
 | Layer | Gaps |
 |-------|------|
-| 1A: Ported tools missing features | 49 |
+| 1A: Ported tools missing features | 47 |
 | 1B: Unported tools | 46 |
 | 2A: Ported agents missing features | 22 |
 | 2B: Unported agents | 52 |
@@ -502,7 +502,7 @@ Each item above represents a discrete feature gap between C and Python. Items ar
 1. **Phase 0: Display Parity (16 gaps)** — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 2. **Phase 1: CLI Args (40 gaps)** — ✅ ALL DONE — all 40 commands wired
 3. **Phase 2: Provider Parity (26 gaps)** — Deepen 8 existing + port 18 missing providers
-4. **Phase 3: Tool Features (29 gaps)** — Add missing features to existing tools
+4. **Phase 3: Tool Features (22 gaps)** — Add missing features to existing tools
 5. **Phase 4: Missing Tools (46 gaps)** — Port remaining tool files (+10 new missing tools found in Triple DA stub hunt: feishu_drive_comment ×4, video_analyze, yuanbao ×5)
 6. **Phase 5: Gateway (51 gaps)** — Port 14 missing platform modules + deepen 20 platforms + 17 infrastructure
 7. **Phase 6: Agent Modules (74 gaps)** — Port 52 unported + deepen 20 existing + 2 unwired stubs (llm_background_review, api_server mock) |

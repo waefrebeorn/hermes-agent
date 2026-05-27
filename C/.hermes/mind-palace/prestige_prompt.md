@@ -12,7 +12,7 @@ All 80 commands wired with proper argument parsing.
 Port targets (not OpenAI-compatible): copilot, copilot-acp, openai-codex, opencode-zen.
 16/18 "port 18" providers already routed as PROVIDER_OPENAI aliases.
 
-## Phase 3 — Tool Features (26)
+## Phase 3 — Tool Features (22)
 Deepen mcp_tool, file_ops, tts, browser, terminal, transcribe, send_message, delegate, voice, exec_code, discord, vision, image_gen, web, x_search, video_gen, cron, file, todo, skills.
 
 **Newly found missing tools (10):** feishu_drive_add_comment, feishu_drive_list_comments/list_comment_replies/reply_comment, video_analyze, yb_send_dm, yb_query_group_info/members, yb_send/search_sticker.

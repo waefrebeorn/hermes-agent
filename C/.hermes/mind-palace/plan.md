@@ -30,7 +30,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 10. Test Coverage (50) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 3 — Tool Features (26 remaining)
+## Next: Phase 3 — Tool Features (22 remaining)
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session
