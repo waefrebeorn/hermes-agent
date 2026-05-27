@@ -8,6 +8,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "hermes_tool_config.h"
+#include "base64.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,12 +57,14 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *method_str = json_object_get_string(args, "method", "GET");
     const char *headers_str = json_object_get_string(args, "headers", NULL);
     const char *body = json_object_get_string(args, "body", NULL);
+    const char *auth = json_object_get_string(args, "auth", NULL);
     const char *proxy = json_object_get_string(args, "proxy", NULL);
     const char *user_agent = json_object_get_string(args, "user_agent", NULL);
 
     /* Strdup values that survive json_free */
     char *headers_copy = headers_str ? strdup(headers_str) : NULL;
     char *body_copy = body ? strdup(body) : NULL;
+    char *auth_copy = auth ? strdup(auth) : NULL;
     char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
     char method_buf[16];
@@ -84,9 +87,39 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     }
     /* Build headers string: prepend User-Agent if custom, then user headers */
     char ua_headers[8192];
+    /* Build auth header if auth param provided */
+    char auth_headers[4096];
     const char *default_headers = "Accept: text/html,application/json";
     const char *use_headers;
-    if (ua_copy && ua_copy[0]) {
+
+    if (auth_copy && auth_copy[0]) {
+        char *encoded = base64_encode((const unsigned char *)auth_copy, strlen(auth_copy));
+        if (encoded) {
+            if (ua_copy && ua_copy[0]) {
+                if (headers_copy && headers_copy[0]) {
+                    snprintf(auth_headers, sizeof(auth_headers),
+                             "User-Agent: %s\r\nAuthorization: Basic %s\r\n%s",
+                             ua_copy, encoded, headers_copy);
+                } else {
+                    snprintf(auth_headers, sizeof(auth_headers),
+                             "User-Agent: %s\r\nAuthorization: Basic %s",
+                             ua_copy, encoded);
+                }
+            } else {
+                if (headers_copy && headers_copy[0]) {
+                    snprintf(auth_headers, sizeof(auth_headers),
+                             "Authorization: Basic %s\r\n%s", encoded, headers_copy);
+                } else {
+                    snprintf(auth_headers, sizeof(auth_headers),
+                             "Authorization: Basic %s", encoded);
+                }
+            }
+            free(encoded);
+            use_headers = auth_headers;
+        } else {
+            use_headers = headers_copy ? headers_copy : default_headers;
+        }
+    } else if (ua_copy && ua_copy[0]) {
         if (headers_copy && headers_copy[0]) {
             snprintf(ua_headers, sizeof(ua_headers),
                      "User-Agent: %s\r\n%s", ua_copy, headers_copy);
@@ -124,6 +157,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     http_client_free(client);
     free(headers_copy);
     free(body_copy);
+    free(auth_copy);
     free(proxy_copy);
     free(ua_copy);
     return json_out;

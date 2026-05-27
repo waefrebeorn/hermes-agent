@@ -1,7 +1,7 @@
-# Slermes C — Overnight Map (v32 — ~355 Items)
+# Slermes C — Overnight Map (v32 — ~354 Items)
 
 ## Navigation
-- **Battleship:** battleship-v16.md — ~355 item-level gaps, 11 layers
+- **Battleship:** battleship-v16.md — ~354 item-level gaps, 11 layers
 - **State:** state.md (v32) — ~43% parity, Phase 1 CLI Args ✅ (98 commands), DA v16 findings documented
 - **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Missing Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
 - **Goal:** goal-mantra.md (v32)
@@ -20,11 +20,11 @@ All 80 commands wired with proper argument processing.
 ## Phase 2 — Provider Parity (~20 real gaps)
 Deepen claims mostly stale. Port non-OpenAI-compatible providers.
 
-## Phase 3-11 (~355 items)
-Tool features (30) → Missing tools (46) → Gateway (51) → Agent modules (74) → Plugins (13) → Libraries (19) → Security (15) → Tests (51) → Config (10)
+## Phase 3-11 (~354 items)
+Tool features (29) → Missing tools (46) → Gateway (51) → Agent modules (74) → Plugins (13) → Libraries (19) → Security (15) → Tests (51) → Config (10)
 
 ## Key Metrics
 - 78 unique tools, 98 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
 - Suite: 231/0/24, 220 test files, 160 src .c files
 - Binary: 30M
-- ~355 items in battleship-v16
+- ~354 items in battleship-v16
