@@ -121,3 +121,52 @@ void tool_result_cleanup(int max_age_seconds) {
     }
     closedir(dir);
 }
+
+/* ================================================================
+ *  Preview generation — truncate at last newline within max_chars
+ *  Port of Python tools/tool_result_storage.py::generate_preview().
+ * ================================================================ */
+
+/* Generate a preview of content, truncating at the last newline within max_chars.
+ * Returns a malloc'd preview string. Sets *has_more to true if content was truncated.
+ * Caller must free the returned string. */
+char *tool_result_generate_preview(const char *content, int max_chars, bool *has_more)
+{
+    if (!content) {
+        if (has_more) *has_more = false;
+        return strdup("");
+    }
+
+    size_t len = strlen(content);
+    if (len <= (size_t)max_chars) {
+        if (has_more) *has_more = false;
+        return strdup(content);
+    }
+
+    /* Truncate at last newline within max_chars */
+    int trunc_len = max_chars;
+    const char *start = content;
+    const char *end = content + max_chars;
+
+    /* Scan backwards from max_chars-1 to find last newline */
+    const char *p = end;
+    /* Handle max_chars == 0 edge case */
+    if (p > start) p--;
+
+    while (p > start && *p != '\n') p--;
+
+    /* Only use newline boundary if it's past the halfway point */
+    if (p > start && (size_t)(p - start) > (size_t)max_chars / 2)
+        trunc_len = (int)(p - start + 1);  /* include the newline */
+
+    char *preview = (char *)malloc((size_t)trunc_len + 1);
+    if (!preview) {
+        if (has_more) *has_more = true;
+        return strdup(content);  /* fallback */
+    }
+    memcpy(preview, content, (size_t)trunc_len);
+    preview[trunc_len] = '\0';
+
+    if (has_more) *has_more = true;
+    return preview;
+}

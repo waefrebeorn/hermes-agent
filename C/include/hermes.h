@@ -1493,6 +1493,9 @@ bool xai_is_model_retired(const char *model_name,
                            char *replacement_out, size_t replacement_sz,
                            char *reasoning_out, size_t reasoning_sz);
 
+/* P49: Tool result preview generation — truncate at last newline within max_chars */
+char *tool_result_generate_preview(const char *content, int max_chars, bool *has_more);
+
 /** @} */ /* end of hermes group */
 
 #endif /* HERMES_H */

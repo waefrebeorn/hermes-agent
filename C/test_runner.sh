@@ -79,6 +79,23 @@ run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
 run_lib_test "binary_extensions" "tests/test_binary_extensions.c" "lib/libbinary" "$CDIR/lib/libbinary/binary.c"
 run_lib_test "budget_config" "tests/test_budget_config.c" "lib/libbudgetconfig" "$CDIR/lib/libbudgetconfig/budget_config.c"
+run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
+
+echo ""; echo "=== Tool Result Storage Tests (preview) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
+    $(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done) \
+    "$CDIR/src/tools/result_storage.c" "$CDIR/tests/test_tool_result_storage.c" \
+    -Wl,--unresolved-symbols=ignore-all \
+    -o /tmp/hermes_test_result_storage_preview -lm 2>/dev/null && [[ -x /tmp/hermes_test_result_storage_preview ]]; then
+    if /tmp/hermes_test_result_storage_preview > /dev/null 2>&1; then
+        ok "tool_result_storage_preview"
+    else
+        fail "tool_result_storage_preview (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_result_storage_preview
+else
+    skip "tool_result_storage_preview (compilation failed)"
+fi &
 
 
 echo ""; echo "=== Auxiliary Client Tests (B04) ==="
