@@ -1,7 +1,7 @@
-# Slermes C — State Dashboard (v18 — 2026-05-26)
+# Slermes C — State Dashboard (v19 — 2026-05-26)
 
 ## Build Metrics
-Build clean. **77 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 166 src/ .c files (non-deps). 217 test_*.c files. Binary: 31MB. Suite: 227/0/25.
+Build clean. **77 unique tools** (registry_register). 80 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 166 src/ .c files (non-deps). 218 test_*.c files. Binary: 31MB. Suite: 228/0/25.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)

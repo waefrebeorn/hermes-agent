@@ -103,7 +103,7 @@ static char *query_model(http_client_t *http, const char *model,
 
 /* ── MoA Tool Handler ───────────────────────────────────────────── */
 
-static char *handle_mixture_of_agents(const char *args_json, const char *task_id) {
+char *handle_mixture_of_agents(const char *args_json, const char *task_id) {
     (void)task_id;
     json_t *req = json_parse(args_json, NULL);
     if (!req) return strdup("{\"error\":\"invalid JSON\"}");

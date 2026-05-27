@@ -2258,6 +2258,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "patch_tool (compilation failed)"
 fi &
 
+# Mixture of Agents test (N02 — needs mixture_of_agents.c + json lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_mixture_of_agents.c" \
+    "$CDIR/src/tools/mixture_of_agents.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_moa -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_moa > /dev/null 2>&1; then ok "mixture_of_agents (11 tests)"
+    else fail "mixture_of_agents (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_moa
+else skip "mixture_of_agents (compilation failed)"
+fi &
+
+rm -f /tmp/hermes_test_moa_old 2>/dev/null || true
+
 # V4A patch mode tests
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libfal_common" -I"$CDIR/lib/libenvpassthrough" \
     "$CDIR/tests/test_patch_v4a.c" \
