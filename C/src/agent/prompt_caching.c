@@ -141,15 +141,16 @@ int cache_get_invalidations(void) {
     return g_invalidations;
 }
 
+static int g_marked_count = 0;
+
 void cache_reset_invalidation(void) {
     g_sys_prompt_hash = 0;
     g_invalidations = 0;
     g_prompt_set_count = 0;
+    g_marked_count = 0;
 }
 
 /* ── Multi-turn optimization (P04 — already implemented) ── */
-
-static int g_marked_count = 0;
 
 void cache_set_marked_count(int count) {
     g_marked_count = count;

@@ -37,7 +37,7 @@ static void test_system_message_cached(void) {
     TEST("system ttl empty (5m)", msgs[0].cache_ttl[0] == '\0');
 }
 
-    40|static void test_system_and_3_non_system(void) {
+static void test_system_and_3_non_system(void) {
     cache_set_marked_count(0);
     pc_message_t msgs[8];
     memset(msgs, 0, sizeof(msgs));
@@ -59,6 +59,7 @@ static void test_system_message_cached(void) {
 }
 
 static void test_no_system_message(void) {
+    cache_set_marked_count(0);
     pc_message_t msgs[4];
     memset(msgs, 0, sizeof(msgs));
     msgs[0].role = 1; /* user — not system */
@@ -73,7 +74,7 @@ static void test_no_system_message(void) {
     TEST("no-system: msg2 cached", msgs[2].has_cache);
 }
 
-    75|static void test_1h_ttl(void) {
+static void test_1h_ttl(void) {
     cache_set_marked_count(0);
     pc_message_t msgs[2];
     memset(msgs, 0, sizeof(msgs));
@@ -98,6 +99,7 @@ static void test_native_anthropic_tool_msg(void) {
 
     /* Without native — tool message should NOT get cache */
     apply_anthropic_cache_control(msgs, &count, "5m", false);
+    cache_set_marked_count(0);
     TEST("non-native: tool not cached", !msgs[2].has_cache);
 
     /* With native — tool message SHOULD get cache */
@@ -252,7 +254,7 @@ static void test_multiturn_fresh_call_no_skip(void) {
     TEST("fresh: marked_count updated", cache_get_marked_count() == 3);
 }
 
-   253|static void test_multiturn_skips_old_messages(void) {
+static void test_multiturn_skips_old_messages(void) {
     cache_set_marked_count(0);
     pc_message_t msgs[5];
     memset(msgs, 0, sizeof(msgs));
