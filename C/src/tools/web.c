@@ -22,7 +22,8 @@ static const char *SCHEMA_GET = "{"
       "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30},"
       "\"method\":{\"type\":\"string\",\"description\":\"HTTP method: GET, POST, PUT, DELETE\",\"default\":\"GET\"},"
       "\"headers\":{\"type\":\"string\",\"description\":\"Custom HTTP headers as 'Key: Value' lines (newline-separated)\"},"
-      "\"body\":{\"type\":\"string\",\"description\":\"Request body for POST/PUT requests\"}"
+      "\"body\":{\"type\":\"string\",\"description\":\"Request body for POST/PUT requests\"},"
+      "\"proxy\":{\"type\":\"string\",\"description\":\"HTTP proxy URL (e.g., http://proxy:8080). Uses CONNECT tunnel for HTTPS.\"}"
     "},"
     "\"required\":[\"url\"]"
 "\"}";
@@ -54,10 +55,12 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *method_str = json_object_get_string(args, "method", "GET");
     const char *headers_str = json_object_get_string(args, "headers", NULL);
     const char *body = json_object_get_string(args, "body", NULL);
+    const char *proxy = json_object_get_string(args, "proxy", NULL);
 
     /* Strdup values that survive json_free */
     char *headers_copy = headers_str ? strdup(headers_str) : NULL;
     char *body_copy = body ? strdup(body) : NULL;
+    char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char method_buf[16];
     snprintf(method_buf, sizeof(method_buf), "%s", method_str ? method_str : "GET");
     http_method_t method = method_str_to_enum(method_buf);
@@ -67,10 +70,14 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     if (!url) {
         free(headers_copy);
         free(body_copy);
+        free(proxy_copy);
         return strdup("{\"error\":\"Missing url\"}");
     }
 
     http_client_t *client = http_client_new(timeout);
+    if (proxy_copy && proxy_copy[0]) {
+        http_client_set_proxy(client, proxy_copy);
+    }
     const char *default_headers = "Accept: text/html,application/json";
     const char *use_headers = headers_copy ? headers_copy : default_headers;
     http_response_t *resp = http_request(client, method, url,
@@ -82,6 +89,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         http_client_free(client);
         free(headers_copy);
         free(body_copy);
+        free(proxy_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
     }
 
@@ -97,6 +105,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     http_client_free(client);
     free(headers_copy);
     free(body_copy);
+    free(proxy_copy);
     return json_out;
 }
 

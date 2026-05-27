@@ -31,7 +31,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 11 | discord_tool | 35 | 18 | 17 | Slash command registration, modals, buttons, select menus, embeds, thread management, permission checks, audit log, voice channel, guild management, emoji management |
 | 12 | vision_tools | 22 | 6 | 16 | OCR (tesseract), face detection, barcode/QR, EXIF extraction, metadata, image classification, object detection, color analysis, text detection, landmark recognition |
 | 13 | image_generation_tool | 15 | 3 | 12 | Multi-provider (FAL, Replicate, Stability AI, OpenAI DALL-E), image-to-image, inpainting, outpainting, control nets. aspect_ratio, negative_prompt, style params added. |
-| 14 | web_tools | 25 | 13 | 9 | Cookie jar, session persistence, proxy auth, form fill, JS execution, screenshot, auth handling, request/response intercept, rate limiting. method/headers/body params added to web_get. |
+| 14 | web_tools | 25 | 13 | 8 | Cookie jar, session persistence, form fill, JS execution, screenshot, auth handling, request/response intercept, rate limiting. method/headers/body + proxy params added to web_get. |
 | 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context. enable_image_understanding + enable_video_understanding added. |
 | 16 | video_generation_tool | 12 | 3 | 7 | Multi-provider, aspect ratio, duration, style, motion scale, loop. model + reference_image_urls params added. |
 | 17 | cronjob_tools | 17 | 12+ | 1 | approval mode, job kill, job history. timezone handling added. pause/resume/run/update/list-named added. |

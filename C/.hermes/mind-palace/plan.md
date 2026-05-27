@@ -1,4 +1,4 @@
-# Slermes C — Plan (v32 — ~367 Items)
+# Slermes C — Plan (v32 — ~366 Items)
 
 ## Verified State
 Build clean. 78 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,7 +12,7 @@ Suite: 231/0/24, 220 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: ~367 item-level parity gaps
+## Battleship v16: ~366 item-level parity gaps
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
 Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 

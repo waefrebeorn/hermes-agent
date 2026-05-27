@@ -163,3 +163,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T36 | web_search: added lang filter param. C web_search was missing language filtering. Added to schema + search_searxng URL builder. Supports searxng backend (lang query param). | 1A | web.c: SCHEMA_SEARCH + search_searxng URL builder + handler extraction |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 21: web_get proxy param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T37 | web_get: added proxy param for HTTP proxy support. C web_get was missing proxy auth support. Added to schema + handler using http_client_set_proxy API. Supports HTTP proxy URL (CONNECT tunnel for HTTPS). | 1A | web.c: SCHEMA_GET + http_client_set_proxy(client, proxy_copy) |
+| - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 9→8. | |
