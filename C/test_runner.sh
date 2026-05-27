@@ -255,7 +255,7 @@ if gcc -O2 -Wall -Wextra \
     "$CDIR/lib/libosv/osv.c" \
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_osv -lssl -lcrypto -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_osv -lssl -lcrypto -lm -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_osv > /dev/null 2>&1; then ok "osv (25 tests)"
     else fail "osv (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_osv
@@ -272,7 +272,7 @@ if gcc -O2 -Wall -Wextra \
     "$CDIR/lib/libtranscribe/transcribe.c" \
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_transcribe -lssl -lcrypto -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_transcribe -lssl -lcrypto -lm -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcription"
     else fail "transcription (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_transcribe
@@ -289,7 +289,7 @@ if gcc -O2 -Wall -Wextra \
     "$CDIR/lib/libhttp/http.c" \
     "$CDIR/lib/libcrypto/crypto.c" \
     "$CDIR/lib/libbase64/base64.c" \
-    -o /tmp/hermes_test_mcp_oauth -lssl -lcrypto -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_mcp_oauth -lssl -lcrypto -lm -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_mcp_oauth > /dev/null 2>&1; then ok "mcp_oauth"
     else fail "mcp_oauth (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_mcp_oauth
@@ -303,7 +303,7 @@ if gcc -O2 -Wall -Wextra \
     "$CDIR/lib/libfal_common/fal_common.c" \
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_fal_common -lssl -lcrypto -lm > /dev/null 2>&1; then
+    -o /tmp/hermes_test_fal_common -lssl -lcrypto -lm -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_fal_common > /dev/null 2>&1; then ok "fal_common"
     else fail "fal_common (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_fal_common
@@ -1146,7 +1146,7 @@ echo ""; echo "=== Web Search Registry Tests ==="
 run_lib_test "web_search_registry" "tests/test_web_search_registry.c" "include" "$CDIR/src/tools/web_search_registry.c -lpthread"
 
 echo ""; echo "=== Account Usage Tests ==="
-run_lib_test "account_usage" "tests/test_account_usage.c" "include" "$CDIR/src/tools/account_usage.c $CDIR/lib/libjson/json.c $CDIR/lib/libhttp/http.c -lssl -lcrypto -lm"
+run_lib_test "account_usage" "tests/test_account_usage.c" "include" "$CDIR/src/tools/account_usage.c $CDIR/lib/libjson/json.c $CDIR/lib/libhttp/http.c -lssl -lcrypto -lm -lz"
 
 echo ""; echo "=== Skill Preprocessing Tests ==="
 run_lib_test "skill_preprocessing" "tests/test_skill_preprocessing.c" "include" "$CDIR/src/agent/skill_preprocessing.c"
@@ -1851,7 +1851,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_skills_hub.c" \
     "$CDIR/src/skills_hub.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
-    -o /tmp/hermes_test_hub -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_hub -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_hub > /dev/null 2>&1; then ok "skills_hub (17 tests)"
     else
         echo "  Skills hub test output:"
@@ -2370,7 +2370,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_web.c" \
     "$CDIR/src/tools/web.c" "$CDIR/src/tools/tool_config.c" "$CDIR/src/tools/registry.c" \
     "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_web -lm -lssl -lcrypto > /dev/null 2>&1; then
+    -o /tmp/hermes_test_web -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_web > /dev/null 2>&1; then ok "web_tool (22 tests)"
     else fail "web_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_web
@@ -2442,7 +2442,7 @@ fi &
 
 # Skill management tool test (skill_view + skill_manage — needs skill_mgmt.c + json)
 echo ""; echo "=== Skill Management Tests ==="
-if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" -I"$CDIR/lib/libdifflib" \
     "$CDIR/tests/test_skill_mgmt.c" \
     "$CDIR/src/tools/skill_mgmt.c" \
     "$CDIR/lib/libjson/json.c" \
@@ -2703,7 +2703,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
     "$CDIR/src/tools/transcribe.c" "$CDIR/src/tools/registry.c" \
     "$CDIR/lib/libtranscribe/transcribe.c" "$CDIR/lib/libhttp/http.c" \
     "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_transcribe -lssl -lcrypto -ldl -lm 2>/dev/null && [[ -x /tmp/hermes_test_transcribe ]]; then
+    -o /tmp/hermes_test_transcribe -lssl -lcrypto -ldl -lm -lz 2>/dev/null && [[ -x /tmp/hermes_test_transcribe ]]; then
     if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcribe"
     else fail "transcribe (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_transcribe
