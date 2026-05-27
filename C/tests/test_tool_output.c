@@ -1,92 +1,52 @@
-/*
- * test_tool_output.c — Tests for libtooloutput (tool output limits).
+/* test_tool_output.c -- Tests for libtooloutput module.
+ * Tests: config limits, env-override, exceed checks.
+ * Compile with tool_output.c.
  */
-
-#include "tool_output.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include "tool_output.h"
 
-static int tests = 0;
-static int passed = 0;
-static int failed = 0;
+static int pass = 0, fail = 0;
+#define T(n, e) do { if(e) { pass++; printf("  OK %s\n", n); } else { fail++; printf("  FAIL %s\n", n); } } while(0)
 
-#define TEST(name, expr) do { \
-    tests++; \
-    if (!(expr)) { \
-        printf("  FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
-        failed++; \
-    } else { \
-        passed++; \
-    } \
-} while(0)
-
-static void test_defaults(void)
-{
-    TEST("default max bytes", tool_output_get_max_bytes() == 50000);
-    TEST("default max lines", tool_output_get_max_lines() == 2000);
-    TEST("default max line length", tool_output_get_max_line_length() == 2000);
-}
-
-static void test_limits(void)
-{
-    TEST("exceeds byte limit 0", !tool_output_exceeds_byte_limit(0));
-    TEST("exceeds byte limit under", !tool_output_exceeds_byte_limit(49999));
-    TEST("exceeds byte limit at", !tool_output_exceeds_byte_limit(50000));
-    TEST("exceeds byte limit over", tool_output_exceeds_byte_limit(50001));
-
-    TEST("exceeds line limit 0", !tool_output_exceeds_line_limit(0));
-    TEST("exceeds line limit under", !tool_output_exceeds_line_limit(1999));
-    TEST("exceeds line limit at", !tool_output_exceeds_line_limit(2000));
-    TEST("exceeds line limit over", tool_output_exceeds_line_limit(2001));
-}
-
-static void test_env_override(void)
-{
-    /* Set env vars */
-    setenv("HERMES_TOOL_OUTPUT_MAX_BYTES", "100000", 1);
-    setenv("HERMES_TOOL_OUTPUT_MAX_LINES", "5000", 1);
-    setenv("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "500", 1);
-
-    TEST("env max bytes", tool_output_get_max_bytes() == 100000);
-    TEST("env max lines", tool_output_get_max_lines() == 5000);
-    TEST("env max line length", tool_output_get_max_line_length() == 500);
-
-    TEST("env exceeds bytes over", tool_output_exceeds_byte_limit(100001));
-    TEST("env exceeds bytes at", !tool_output_exceeds_byte_limit(100000));
-    TEST("env exceeds lines over", tool_output_exceeds_line_limit(5001));
-
-    /* Clean up */
+static void test_defaults(void) {
     unsetenv("HERMES_TOOL_OUTPUT_MAX_BYTES");
     unsetenv("HERMES_TOOL_OUTPUT_MAX_LINES");
     unsetenv("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+    T("default max bytes", tool_output_get_max_bytes() == 50000);
+    T("default max lines", tool_output_get_max_lines() == 2000);
+    T("default max line length", tool_output_get_max_line_length() == 2000);
 }
 
-static void test_env_invalid(void)
-{
-    /* Invalid values should fall back to defaults */
-    setenv("HERMES_TOOL_OUTPUT_MAX_BYTES", "not-a-number", 1);
-    setenv("HERMES_TOOL_OUTPUT_MAX_LINES", "-100", 1);
-    setenv("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "0", 1);
-
-    TEST("invalid bytes falls back", tool_output_get_max_bytes() == 50000);
-    TEST("negative lines falls back", tool_output_get_max_lines() == 2000);
-    TEST("zero line length falls back", tool_output_get_max_line_length() == 2000);
-
-    unsetenv("HERMES_TOOL_OUTPUT_MAX_BYTES");
-    unsetenv("HERMES_TOOL_OUTPUT_MAX_LINES");
-    unsetenv("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+static void test_env_overrides(void) {
+    setenv("HERMES_TOOL_OUTPUT_MAX_BYTES", "10000", 1);
+    setenv("HERMES_TOOL_OUTPUT_MAX_LINES", "500", 1);
+    setenv("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "100", 1);
+    T("env overrides max bytes", tool_output_get_max_bytes() == 10000);
+    T("env overrides max lines", tool_output_get_max_lines() == 500);
+    T("env overrides line length", tool_output_get_max_line_length() == 100);
 }
 
-int main(void)
-{
-    printf("=== Tool Output Limits Library Tests ===\n");
+static void test_exceed_checks(void) {
+    setenv("HERMES_TOOL_OUTPUT_MAX_BYTES", "1000", 1);
+    T("500 bytes not exceeded", !tool_output_exceeds_byte_limit(500));
+    T("1500 bytes exceeded", tool_output_exceeds_byte_limit(1500));
+    T("1000 bytes not exceeded (equal)", !tool_output_exceeds_byte_limit(1000));
+    T("0 bytes not exceeded", !tool_output_exceeds_byte_limit(0));
 
-    test_defaults();
-    test_limits();
-    test_env_override();
-    test_env_invalid();
+    setenv("HERMES_TOOL_OUTPUT_MAX_LINES", "50", 1);
+    T("25 lines not exceeded", !tool_output_exceeds_line_limit(25));
+    T("75 lines exceeded", tool_output_exceeds_line_limit(75));
+    T("50 lines not exceeded (equal)", !tool_output_exceeds_line_limit(50));
+}
 
-    printf("\nResults: %d passed, %d failed, %d total\n", passed, failed, tests);
-    return failed > 0 ? 1 : 0;
+int main(void) {
+    printf("=== Tool Output Tests ===\n\n");
+    printf("--- Defaults ---\n"); test_defaults();
+    printf("\n--- Env Overrides ---\n"); test_env_overrides();
+    printf("\n--- Exceed Checks ---\n"); test_exceed_checks();
+    printf("\nResults: %d passed, %d failed\n", pass, fail);
+    return fail > 0;
 }

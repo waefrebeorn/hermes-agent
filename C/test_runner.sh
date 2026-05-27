@@ -83,6 +83,20 @@ run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredenti
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 
+echo ""; echo "=== Tool Output Lib Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtooloutput" \
+    "$CDIR/tests/test_tool_output.c" "$CDIR/lib/libtooloutput/tool_output.c" \
+    -o /tmp/hermes_test_tool_output -lm 2>/dev/null && [[ -x /tmp/hermes_test_tool_output ]]; then
+    if /tmp/hermes_test_tool_output > /dev/null 2>&1; then
+        ok "tool_output (13 tests)"
+    else
+        fail "tool_output (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tool_output
+else
+    fail "tool_output (compilation failed)"
+fi
+
 echo ""; echo "=== Registry Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
     "$CDIR/tests/test_registry.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
