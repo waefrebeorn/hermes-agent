@@ -13,12 +13,12 @@
 #include <string.h>
 #include <time.h>
 
-/* Schema — extended with notification and retry fields */
+/* Schema — extended with notification, retry, pause/resume/run fields */
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config\"},"
-      "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config)\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config | pause | resume | run\"},"
+      "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config/pause/resume/run)\"},"
       "\"schedule\":{\"type\":\"string\",\"description\":\"Crontab expression or @hourly/@daily/@weekly (required for add)\"},"
       "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for add)\"},"
       "\"context_from\":{\"type\":\"string\",\"description\":\"Chain input: job name whose output becomes context for this job\"},"
@@ -34,12 +34,20 @@ static const char *SCHEMA = "{"
 bool cron_add_job(const char *name, const char *schedule_expr, const char *command);
 void cron_remove_job(const char *name);
 char *cron_list_jobs(void);
+void cron_run_job(const char *name, const char *command);
 
 /* Forward declarations from cron_extras.c */
 bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec);
 bool cron_notify_on_complete(const char *job_name, bool enabled);
 bool cron_notify_on_failure(const char *job_name, bool enabled);
 bool cron_chain_set_context(const char *job_name, const char *context_from);
+
+/* Forward declarations from cron_sqlite.c for pause/resume/run */
+struct cron_sqlite_store_t;
+extern struct cron_sqlite_store_t *g_cron_store;
+bool cron_sqlite_update_job(struct cron_sqlite_store_t *store, const char *name,
+                             const char *field, const char *value);
+char *cron_sqlite_get_command(struct cron_sqlite_store_t *store, const char *name);
 
 /* F28: Validate cron schedule expression using libcron */
 #include "../lib/libcron/cron.h"  /* for cron_parse */
@@ -182,6 +190,42 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
             json_object_set(result, "status", json_new_string("configured"));
         }
 
+    } else if (strcmp(action, "pause") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name) {
+            json_object_set(result, "error", json_new_string("Missing name"));
+        } else {
+            bool ok = cron_sqlite_update_job(g_cron_store, name, "active", "false");
+            json_object_set(result, "status", json_new_string(ok ? "paused" : "error"));
+            if (!ok) json_object_set(result, "error", json_new_string("Job not found"));
+        }
+
+    } else if (strcmp(action, "resume") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name) {
+            json_object_set(result, "error", json_new_string("Missing name"));
+        } else {
+            bool ok = cron_sqlite_update_job(g_cron_store, name, "active", "true");
+            json_object_set(result, "status", json_new_string(ok ? "resumed" : "error"));
+            if (!ok) json_object_set(result, "error", json_new_string("Job not found"));
+        }
+
+    } else if (strcmp(action, "run") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name) {
+            json_object_set(result, "error", json_new_string("Missing name"));
+        } else {
+            char *command = cron_sqlite_get_command(g_cron_store, name);
+            if (command) {
+                cron_run_job(name, command);
+                free(command);
+                json_object_set(result, "status", json_new_string("triggered"));
+            } else {
+                json_object_set(result, "status", json_new_string("error"));
+                json_object_set(result, "error", json_new_string("Job not found"));
+            }
+        }
+
     } else {
         json_object_set(result, "error", json_new_string("Unknown action"));
     }
@@ -195,7 +239,8 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
 void registry_init_cronjob(void) {
     registry_register("cronjob",
         "Manage cron jobs. Actions: list (show all jobs), add (schedule a new job), "
-        "remove (delete a job), config (update notification/retry settings). "
+        "remove (delete a job), config (update notification/retry settings), "
+        "pause (disable without removing), resume (re-enable), run (trigger immediately). "
         "Supports schedule validation, per-job notifications (notify_on_complete, "
         "notify_on_failure), and automatic retry with exponential backoff.",
         SCHEMA, cronjob_handler);

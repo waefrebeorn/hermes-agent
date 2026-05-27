@@ -12,6 +12,12 @@
 bool cron_add_job(const char *name, const char *schedule, const char *command);
 void cron_remove_job(const char *name);
 
+/* Forward declarations for pause/resume — provided by cron_sqlite.c */
+struct cron_sqlite_store_t;
+extern struct cron_sqlite_store_t *g_cron_store;
+bool cron_sqlite_update_job(struct cron_sqlite_store_t *store, const char *name,
+                             const char *field, const char *value);
+
 /* Forward declarations from cron_extras.c */
 void cron_chain_store_output(const char *job_name, const char *output);
 const char *cron_chain_get_context(const char *job_name);

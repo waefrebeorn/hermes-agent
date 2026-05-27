@@ -301,6 +301,17 @@ cron_job_entry_t *cron_sqlite_find(cron_sqlite_store_t *store, const char *name)
     return NULL;
 }
 
+/* Get job's command string (caller must free) */
+char *cron_sqlite_get_command(cron_sqlite_store_t *store, const char *name) {
+    if (!store || !name) return NULL;
+    for (int i = 0; i < store->count; i++) {
+        if (strcmp(store->jobs[i].name, name) == 0) {
+            return strdup(store->jobs[i].command);
+        }
+    }
+    return NULL;
+}
+
 int cron_sqlite_count(cron_sqlite_store_t *store) {
     return store ? store->count : 0;
 }

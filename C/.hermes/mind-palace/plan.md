@@ -1,4 +1,4 @@
-# Slermes C — Plan (v28 — 1,915 Function Gaps)
+# Slermes C — Plan (v28 — 1,914 Function Gaps)
 
 ## Verified State
 Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,8 +12,9 @@ Suite: 229/0/25, 219 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: 1,915 function-level parity gaps (~373 items)
+## Battleship v16: 1,914 function-level parity gaps (~373 items)
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
+Recent: cronjob pause/resume/run added (-1 gap).
 
 ## Phase Order
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
@@ -29,11 +30,10 @@ v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented
 10. Test Coverage (51) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
-## Next: Phase 3 — Tool Features (49 remaining)
+## Next: Phase 3 — Tool Features (48 remaining)
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session
-- Triple DA v16 audit: found 10 missing Python tools, 2 agent stubs, browser CDP dead code
-- Vaulted resolved v15 items (#21 approval, #23 patch, #19 homeassistant)
-- Built battleship-v16 with fresh 1,915 function gaps across ~373 items
-- Updated ALL walkway files, README, BANNER, entry, index, plan, prestige, overnight, goal-mantra
+- Cronjob tool: added pause/resume/run actions (3 Python features now in C)
+- Added cron_sqlite_get_command() helper for run action
+- Updated all walkway files + README + vault with T25 achievement
