@@ -44,6 +44,7 @@ void registry_init_discord(void);
 void registry_init_mcp(void);
 void registry_init_file_batch(void);
 
+void registry_init_file_watch(void);
 void registry_init_feishu_tools(void);
 void registry_init_file_merge(void);
 void registry_init_mixture_of_agents(void);
@@ -89,6 +90,9 @@ void tools_init_all(void) {
 
     /* F15: Batch file ops */
     registry_init_file_batch();
+
+    /* F34: File watch (inotify) */
+    registry_init_file_watch();
 
     /* D22: Feishu doc/drive tools */
     registry_init_feishu_tools();
