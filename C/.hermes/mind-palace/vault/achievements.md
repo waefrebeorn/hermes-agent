@@ -282,3 +282,4 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | F15-01 | Batch chmod action — parse octal mode string, per-file sandbox check, apply chmod via POSIX chmod(), per-file result reporting with success/fail counts | 1A (file_operations) | src/tools/file_batch.c — parse_mode_string(), chmod_file(), chmod branch in file_batch_handler() |
+| F15-02 | Batch touch action — update timestamps via utimensat() or create empty file via fopen("a"). Per-file sandbox check and result reporting | 1A (file_operations) | src/tools/file_batch.c — touch_file(), touch branch in file_batch_handler() |

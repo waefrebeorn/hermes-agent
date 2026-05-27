@@ -1,6 +1,6 @@
 /*
  * file_batch.c — F15: Batch file operations for Hermes C.
- * Multi-file copy, move, delete, chmod with progress reporting.
+ * Multi-file copy, move, delete, chmod, touch with progress reporting.
  */
 
 #include "hermes.h"
@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 /* Forward: sandbox from file.c */
 bool sandbox_check_path(const char *path);
@@ -19,7 +20,7 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
       "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
       "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"}"
@@ -100,6 +101,17 @@ static bool chmod_file(const char *path, mode_t mode) {
     return chmod(path, mode) == 0;
 }
 
+static bool touch_file(const char *path) {
+    /* Update timestamps. If file doesn't exist, create it. */
+    if (utimensat(AT_FDCWD, path, NULL, 0) == 0)
+        return true;
+    /* Create empty file */
+    FILE *f = fopen(path, "a");
+    if (!f) return false;
+    fclose(f);
+    return true;
+}
+
 char *file_batch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -114,7 +126,8 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
     /* Validate action early */
     if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 &&
-        strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0) {
+        strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0 &&
+        strcmp(action, "touch") != 0) {
         json_free(args);
         char buf[256];
         snprintf(buf, sizeof(buf), "{\"error\":\"Unknown action: %s\"}", action);
@@ -230,6 +243,20 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                 success_count++;
             }
 
+        } else if (strcmp(action, "touch") == 0) {
+            if (!sandbox_check_path(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Source path not allowed"));
+                fail_count++;
+            } else if (!touch_file(src)) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string(strerror(errno)));
+                fail_count++;
+            } else {
+                json_set(entry, "status", json_string("touched"));
+                success_count++;
+            }
+
         } else {
             /* copy — handled in the copy/move/delete branches above */
             json_set(entry, "status", json_string("failed"));
@@ -253,7 +280,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete, chmod. "
+        "Batch file operations. Actions: copy, move, delete, chmod, touch. "
         "Accepts array of source paths, optional destination (copy/move), "
         "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",
