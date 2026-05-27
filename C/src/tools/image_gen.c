@@ -34,6 +34,7 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     const char *output_format = json_get_str(args, "output_format", NULL);
     int seed = (int)json_get_num(args, "seed", 0);
     int num_images = (int)json_get_num(args, "num_images", 1);
+    bool save_local = json_get_bool(args, "save_local", true);
 
     /* Get API key from shared helper (checks FAL_API_KEY, then SLERMES_FAL_KEY) */
     if (!fal_get_api_key()) {
@@ -135,24 +136,26 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
         return strdup(err);
     }
 
-    /* Download the image to a local file */
-    char filename[256];
-    snprintf(filename, sizeof(filename), "/tmp/slermes_img_%ld.png",
-        (long)time(NULL));
-
-    http_t *dh = http_new(30);
-    http_resp_t *img_resp = http_get(dh, result_image_url, NULL);
+    /* Download the image to a local file (if save_local is true) */
+    char filename[256] = "";
     int dl_ok = 0;
-    if (img_resp && img_resp->status == 200 && img_resp->body && img_resp->body_len > 0) {
-        FILE *f = fopen(filename, "wb");
-        if (f) {
-            fwrite(img_resp->body, 1, img_resp->body_len, f);
-            fclose(f);
-            dl_ok = 1;
+    if (save_local) {
+        snprintf(filename, sizeof(filename), "/tmp/slermes_img_%ld.png",
+            (long)time(NULL));
+
+        http_t *dh = http_new(30);
+        http_resp_t *img_resp = http_get(dh, result_image_url, NULL);
+        if (img_resp && img_resp->status == 200 && img_resp->body && img_resp->body_len > 0) {
+            FILE *f = fopen(filename, "wb");
+            if (f) {
+                fwrite(img_resp->body, 1, img_resp->body_len, f);
+                fclose(f);
+                dl_ok = 1;
+            }
         }
+        if (img_resp) http_resp_free(img_resp);
+        if (dh) http_free(dh);
     }
-    if (img_resp) http_resp_free(img_resp);
-    if (dh) http_free(dh);
 
     /* Build response */
     char out[8192];
@@ -199,7 +202,8 @@ void registry_init_image_gen(void) {
         "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility (0=random)\"},\""
         "  \"num_images\":{\"type\":\"integer\",\"description\":\"Number of images to generate (1-4)\",\"default\":1},\""
         "  \"image_url\":{\"type\":\"string\",\"description\":\"Reference image URL for image-to-image generation (img2img). Provide a URL to an existing image as source. \"},\""
-        "  \"output_format\":{\"type\":\"string\",\"description\":\"Output image format: png, jpeg, webp (default: API default)\"}\""
+        "  \"output_format\":{\"type\":\"string\",\"description\":\"Output image format: png, jpeg, webp (default: API default)\"},\""
+        "  \"save_local\":{\"type\":\"boolean\",\"description\":\"Download and save the image locally. Set false to return URL only.\",\"default\":true}\""
         "},"
         "\"required\":[\"prompt\"]"
         "}",

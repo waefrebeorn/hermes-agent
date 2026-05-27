@@ -356,3 +356,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | IG-04 | Output format parameter — added `output_format` (string, optional) param for controlling image output format (png, jpeg, webp). Passed as output_format field in FAL API request. | 1A (image_generation_tool) | src/tools/image_gen.c — output_format param extraction, body construction, schema entry |
+
+## Phase 25: save_local param — image_gen (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| IG-05 | Save local toggle — added `save_local` (boolean, default true) param. When false, skips downloading/ writing the generated image to /tmp. Returns URL only for faster response. | 1A (image_generation_tool) | src/tools/image_gen.c — save_local param extraction, conditional download block, schema entry |
