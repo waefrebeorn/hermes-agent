@@ -6,7 +6,7 @@ Build clean. **72 unique tools** (registry_register). 80 CLI commands (table ent
 ## 1:1 Parity Status (Triple DA v15)
 Python: ~3,251 core functions (battleship-v15 baseline)
 C: ~1,412 functions in core modules (agent/tools/cli/gateway)
-~1,839 function-level gaps estimated — 43% parity at function level.
+~1,836 function-level gaps estimated — 43% parity at function level.
 
 ## DA v15 Findings (2026-05-26)
 Phase 2 provider deepen claims: **HEAVILY STALE**.
@@ -24,13 +24,13 @@ Only real stub: stub_cdp_handler in browser.c (dead code, unused by any register
 Zero gateway polling stubs — all 13 platforms with poll_messages have real implementations.
 
 ## Battleship
-**v15 — 1,889 function-level parity gaps** (~366 items). Phase 3: #23 patch V4A, #22 skill deps closed.
+**v15 — 1,886 function-level parity gaps** (~366 items). Phase 3: #23 patch V4A, #22 skill deps, #19 homeassistant closed.
 
 ## Phase Order
 0. Display Parity (16 gaps) — ✅ 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40 gaps) — ✅ ALL DONE — all 80 commands wired with arg processing
 2. Provider Parity (~20 real gaps) — deepen claims stale, only non-OpenAI providers remain
-3. Tool Features (60 gaps) — add Python features to existing C tools
+3. Tool Features (57 gaps) — add Python features to existing C tools
 4. Missing Tools (37 gaps) — port remaining tool files
 5. Gateway (51 gaps) — port 14 missing modules + deepen 20 platforms + 17 infra
 6. Agent Modules (72 gaps) — port 52 unported + deepen 20 existing

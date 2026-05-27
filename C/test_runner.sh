@@ -1042,7 +1042,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_homeassistant.c" \
     "$CDIR/src/tools/homeassistant.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_homeassistant -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_homeassistant > /dev/null 2>&1; then ok "homeassistant (13 tests)"
+    if /tmp/hermes_test_homeassistant > /dev/null 2>&1; then ok "homeassistant (25 tests)"
     else fail "homeassistant (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_homeassistant
 else skip "homeassistant (compilation failed)"

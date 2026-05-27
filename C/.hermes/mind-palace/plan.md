@@ -1,4 +1,4 @@
-# Slermes C — Plan (v21 — 1,889 Function Gaps)
+# Slermes C — Plan (v22 — 1,886 Function Gaps)
 
 ## Verified State
 Build clean. 72 unique tools, 80 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -11,14 +11,14 @@ Suite: 227/0/24, 215 test files, 160 src .c files. Binary: 30MB.
 - Only real stub: stub_cdp_handler in browser.c (dead code, unused)
 - Zero gateway polling stubs
 
-## Battleship v15: 1,889 function-level parity gaps (~366 items)
+## Battleship v15: 1,886 function-level parity gaps (~366 items)
 Phase 2 sector needs re-audit before next implementation pass.
 
 ## Phase Order
 0. Display (16) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 1. CLI Args (40) — ✅ ALL DONE
 2. Providers (~20 real) — non-OpenAI port targets
-3. Tool Features (60) — add missing features to existing C tools
+3. Tool Features (57) — add missing features to existing C tools
 4. Missing Tools (37) — port unported Python tool files
 5. Gateway (51) — missing platform modules, deepening, infrastructure
 6. Agent Modules (72) — unported agent modules + deepen existing
@@ -41,3 +41,5 @@ Port non-OpenAI-compatible providers: copilot, opencode-zen, openai-codex.
   - Parses depends_on from YAML frontmatter, resolves against installed skills
   - Suite still 227/0/24 (deps test via direct linkage)
 - Walkway files bumped to v16/v21 with verified numbers
+- HomeAssistant tool: ha_list_entities domain/area filter, ha_list_services domain filter, ha_call_service validation+blocklist+entity_id+data. 25 tests.
+  - 3 gaps closed (#19 homeassistant). Suite: 227/0/24.

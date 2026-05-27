@@ -26,4 +26,4 @@ Tool features → Missing tools → Gateway → Agent modules → Plugins → Li
 - 72 unique tools, 80 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
 - Suite: 227/0/24, 215 test files, 160 src .c files
 - Binary: 30MB
-- ~1,839 function gaps estimated = ~43% parity
+- ~1,836 function gaps estimated = ~43% parity
