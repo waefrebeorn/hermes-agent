@@ -98,7 +98,7 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 - **Gap:** cronjob_tools update (edit job fields) — C had list/add/remove/config/pause/resume/run, missing `update` action
 - **Fix:** added `update` action handler to cronjob.c that modifies schedule, command, notify_on_complete, notify_on_failure, retry, backoff, and context_from via cron_sqlite_update_job API
 - **Evidence:** `src/tools/cronjob.c` — `update` action handler (~85 lines)
-- **Impact:** -1 gap (1,913→1,912), Phase 3 Tool Features 48→47
+- **Impact:** -1 gap (~373→~372), Phase 3 Tool Features 48→47
 
 ### cronjob list action with real jobs & name filter (2026-05-27)
 - **Gap:** cron_list_jobs() returned `[]` stub in jobs.c. Also missing optional name filter in list action.

@@ -9,7 +9,7 @@ Gateways:19      (platforms)
 Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)
 Gaps:    ~373    (items across 11 phases, battleship-v16 Triple DA)
-|Parity:  ~43%    (function-level — ~1,912 C vs ~3,251 Python)
+|Parity:  item-level (~372 items — see battleship-v16)
 ```
 
 ## Orientation

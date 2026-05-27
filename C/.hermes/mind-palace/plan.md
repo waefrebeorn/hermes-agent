@@ -1,4 +1,4 @@
-# Slermes C — Plan (v28 — 1,912 Function Gaps)
+# Slermes C — Plan (v28 — ~372 Items)
 
 ## Verified State
 Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -12,7 +12,7 @@ Suite: 230/0/25, 220 test files, 160 src .c files. Binary: 30M.
 - **10 missing Python tools not in C:** feishu_drive_comment ×4, video_analyze, yuanbao ×4
 - Zero gateway polling stubs
 
-## Battleship v16: 1,912 function-level parity gaps (~373 items)
+## Battleship v16: ~372 item-level parity gaps
 v15 resolved items vaulted. 10 new missing tools added. 2 agent stubs documented.
 Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 
