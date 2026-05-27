@@ -21,6 +21,7 @@ static const char *SCHEMA = "{"
       "\"output_path\":{\"type\":\"string\",\"description\":\"Optional output file path\"},"
       "\"provider\":{\"type\":\"string\",\"description\":\"TTS backend: espeak (default), edge, elevenlabs, openai, xai\"},"
       "\"voice\":{\"type\":\"string\",\"description\":\"Voice/model (provider-specific: e.g., 'alloy' for openai, '21m00Tcm4TlvDq8ikWAM' for elevenlabs)\"},"
+      "\"speed\":{\"type\":\"number\",\"description\":\"Speech speed multiplier (0.5-2.0, default: 1.0). Edge/espeak providers.\"},"
       "\"max_chunk_duration_s\":{\"type\":\"integer\",\"description\":\"L10: Max seconds per audio chunk (default 60). Longer text is split.\"}"
     "},"
     "\"required\":[\"text\"]"
@@ -297,6 +298,7 @@ char *tts_handler(const char *args_json, const char *task_id) {
     const char *output_path = json_object_get_string(args, "output_path", NULL);
     const char *provider = json_object_get_string(args, "provider", "espeak");
     const char *voice = json_object_get_string(args, "voice", NULL);
+    double speed = json_object_get_number(args, "speed", 1.0);
     int max_chunk_s = (int)json_object_get_number(args, "max_chunk_duration_s", 60);
 
     json_node_t *result = json_new_object();
@@ -357,9 +359,12 @@ char *tts_handler(const char *args_json, const char *task_id) {
                 tts_escape_text(chunks[i], escaped, sizeof(escaped));
                 char cmd[65536];
                 if (strlen(escaped) < 10000) {
+                    int espeed = (int)(175.0 * speed); /* espeak default 175 wpm */
+                    if (espeed < 80) espeed = 80;
+                    if (espeed > 600) espeed = 600;
                     snprintf(cmd, sizeof(cmd),
-                             "espeak-ng -w '%s' -- '%s' 2>/dev/null",
-                             chunk_path, escaped);
+                             "espeak-ng -s %d -w '%s' -- '%s' 2>/dev/null",
+                             espeed, chunk_path, escaped);
                     ok = (system(cmd) == 0);
                 }
                 if (!ok) {
@@ -389,6 +394,7 @@ char *tts_handler(const char *args_json, const char *task_id) {
         json_object_set(result, "files", files);
         json_object_set(result, "chunk_count", json_new_number((double)nchunks));
         json_object_set(result, "provider", json_new_string(provider));
+        json_object_set(result, "speed", json_new_number(speed));
         if (all_ok)
             json_object_set(result, "status", json_new_string("generated"));
         else

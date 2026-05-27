@@ -219,3 +219,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T44 | transcribe: added language param for language hint. C transcribe was missing spoken language hint. Added to schema + handler extraction. | 1A | transcribe.c: SCHEMA + handler extraction |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 29: tts speed param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T45 | tts: added speed param (0.5-2.0). C TTS was missing speech speed control. Added to schema + extraction + espeak-ng -s flag + result output. | 1A | tts.c: SCHEMA + handler with espeak-ng speed integration |
+| - | 78 tools unchanged. Suite 231/0/24. | |
