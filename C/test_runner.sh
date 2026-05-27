@@ -97,6 +97,21 @@ else
     fail "registry (compilation failed)"
 fi
 
+echo ""; echo "=== Redact Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_redact.c" "$CDIR/src/agent/redact.c" \
+    -o /tmp/hermes_test_rd -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_rd ]]; then
+    if /tmp/hermes_test_rd > /dev/null 2>&1; then
+        ok "redact (14 tests)"
+    else
+        fail "redact (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_rd
+else
+    fail "redact (compilation failed)"
+fi
+
 echo ""; echo "=== Skill Command Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" -I"$CDIR/lib/libplugin" \

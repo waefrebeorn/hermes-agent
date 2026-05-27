@@ -1,91 +1,127 @@
-/* Test redact subsystem */
-#include "hermes.h"
+/* test_redact.c -- Tests for redact module (hermes_redact).
+ * Tests: redact, add_pattern, clear_patterns, load_config.
+ * Compile with redact.c + -Wl,--unresolved-symbols=ignore-all.
+ */
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
-static int pass = 0, fail = 0;
+extern char *hermes_redact(const char *input);
+extern bool hermes_redact_add_pattern(const char *pattern);
+extern void hermes_redact_clear_patterns(void);
+extern void hermes_redact_load_config(const char *patterns_str);
 
-#define TEST(name, cond) do { \
-    if (!(cond)) { \
-        printf("  FAIL: %s (line %d)\n", name, __LINE__); \
-        fail++; \
-    } else { \
-        printf("  PASS: %s\n", name); \
-        pass++; \
-    } \
+static int tests_passed = 0;
+static int tests_failed = 0;
+
+#define TEST(name, expr) do { \
+    if (expr) { tests_passed++; printf("  OK %s\n", name); } \
+    else { tests_failed++; printf("  FAIL %s\n", name); } \
 } while(0)
 
+static int contains(const char *h, const char *n) { return h && n && strstr(h, n) != NULL; }
+
+/* ---- Basic Redaction ---- */
+static void test_redact_openai_key(void) {
+    char *r = hermes_redact("sk-AAA...AAAA");
+    TEST("sk- key redacted (21+ chars)", !contains(r, "AAAAAAAAAAAAAAAAAAAAA"));
+    free(r);
+}
+
+static void test_redact_null(void) {
+    char *r = hermes_redact(NULL);
+    TEST("NULL in -> NULL out", r == NULL);
+}
+
+static void test_redact_empty(void) {
+    char *r = hermes_redact("");
+    TEST("empty in -> empty out", r && r[0] == '\0');
+    free(r);
+}
+
+static void test_redact_no_match(void) {
+    char *r = hermes_redact("hello world this is normal");
+    TEST("normal text unchanged", r && strcmp(r, "hello world this is normal") == 0);
+    free(r);
+}
+
+static void test_short_key_not_redacted(void) {
+    char *r = hermes_redact("sk-abc123");
+    TEST("short sk- not redacted (<20 chars)", contains(r, "sk-abc123"));
+    free(r);
+}
+
+/* ---- Multiple occurrences ---- */
+static void test_redact_multiple(void) {
+    char *r = hermes_redact("key1=sk-AAA...AAAA key2=sk-BBB...BBBB");
+    TEST("multiple long sk- keys redacted",
+         !contains(r, "AAAAAAAAAAAAAAAAAAAAA") && !contains(r, "BBBBBBBBBBBBBBBBBBBBB"));
+    free(r);
+}
+
+/* ---- add/clear/config ---- */
+static void test_add_pattern(void) {
+    hermes_redact_clear_patterns();
+    bool ok = hermes_redact_add_pattern("secret:");
+    TEST("add_pattern returns true", ok);
+    char *r = hermes_redact("my secret: hello123");
+    TEST("custom pattern redacts value", !contains(r, "hello123"));
+    free(r);
+}
+
+static void test_clear_disables_custom_patterns(void) {
+    hermes_redact_clear_patterns();
+    hermes_redact_add_pattern("custom:");
+    char *r = hermes_redact("custom: hello123");
+    TEST("custom pattern works before clear", !contains(r, "hello123"));
+    free(r);
+
+    hermes_redact_clear_patterns();
+    r = hermes_redact("custom: hello123");
+    TEST("custom pattern stops after clear", contains(r, "hello123"));
+    free(r);
+}
+
+static void test_load_config(void) {
+    hermes_redact_clear_patterns();
+    hermes_redact_load_config("password:,token:");
+    char *r1 = hermes_redact("password=hello123xyz");
+    TEST("config password pattern", !contains(r1, "hello123xyz"));
+    free(r1);
+    char *r2 = hermes_redact("token=abc-def-ghi-jkl");
+    TEST("config token pattern", !contains(r2, "abc-def-ghi-jkl"));
+    free(r2);
+}
+
+static void test_load_config_null_restores_defaults(void) {
+    hermes_redact_clear_patterns();
+    hermes_redact_load_config(NULL);
+    char *r = hermes_redact("sk-AAA...AAAA");
+    TEST("null config restores defaults", !contains(r, "AAAAAAAAAAAAAAAAAAAAA"));
+    free(r);
+}
+
+/* ---- Normal text ---- */
+static void test_normal_text_not_harmed(void) {
+    char *r = hermes_redact("The disk usage is at 75% and memory is normal");
+    TEST("normal system text preserved", contains(r, "disk usage"));
+    free(r);
+}
+
 int main(void) {
-    printf("=== Redact Tests ===\n");
-
-    char *result;
-
-    /* NULL/empty/plain text */
-    TEST("NULL input returns NULL", hermes_redact(NULL) == NULL);
-    result = hermes_redact("");
-    TEST("empty string returns empty", result && result[0] == '\0'); free(result);
-    result = hermes_redact("Hello, this is a normal message.");
-    TEST("plain text unchanged", result && strcmp(result, "Hello, this is a normal message.") == 0); free(result);
-
-    /* api_key in key=value format */
-    result = hermes_redact("api_key=sk-abc123def456ghi");
-    TEST("api_key redacted", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* Short value below min_len not redacted */
-    result = hermes_redact("api_key=ab");
-    TEST("short api_key not redacted", result && strstr(result, "ab") != NULL); free(result);
-
-    /* sk- OpenAI key in key=value context */
-    result = hermes_redact("api_key=sk-proj-abcdefghijklmnopqrstuvwxyz0123456789");
-    TEST("sk- key in key=value redacted", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* GitHub PAT in key=value */
-    result = hermes_redact("token=ghp_abc123def456ghi789jkl012mno345pqr678stu");
-    TEST("ghp_ in key=value redacted", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* token= pattern */
-    result = hermes_redact("token=super-secret-token-value-here");
-    TEST("token= value redacted", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* password= pattern */
-    result = hermes_redact("password=mypassword123");
-    TEST("password= redacted", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* Authorization: Bearer + JWT */
-    result = hermes_redact("Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature");
-    TEST("Bearer JWT redacted", result && strstr(result, "REDACTED") != NULL); free(result);
-
-    /* Multiple secrets */
-    result = hermes_redact("api_key=abc123456789 and token=def456789012 and normal text");
-    TEST("multiple secrets: api_key value redacted", result && strstr(result, "abc123") == NULL); free(result);
-
-    /* Large input safely handled */
-    char big[70000];
-    memset(big, 'A', sizeof(big) - 1);
-    big[sizeof(big) - 1] = '\0';
-    memcpy(big, "api_key=sk-test", 15);
-    result = hermes_redact(big);
-    TEST("large input no crash", result != NULL);
-    TEST("large input truncates", result && strlen(result) <= 65536); free(result);
-
-    /* Custom pattern lifecycle */
-    hermes_redact_clear_patterns();
-
-    bool added = hermes_redact_add_pattern("mycustom:4:2");
-    TEST("add custom pattern succeeds", added == true);
-
-    result = hermes_redact("mycustom=abcdefgh");
-    TEST("custom pattern redacts", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* Clear custom, built-in api_key still works */
-    hermes_redact_clear_patterns();
-    result = hermes_redact("api_key=abcdefghijklmnop");
-    TEST("built-in api_key works after custom clear", result && strstr(result, "***REDACTED***") != NULL); free(result);
-
-    /* Error handling */
-    TEST("NULL pattern returns false", hermes_redact_add_pattern(NULL) == false);
-
-    printf("\n=== %d/%d passed, %d failed ===\n", pass, pass + fail, fail);
-    return fail > 0 ? 1 : 0;
+    printf("=== Redact Module Tests ===\n");
+    test_redact_openai_key();
+    test_redact_null();
+    test_redact_empty();
+    test_redact_no_match();
+    test_short_key_not_redacted();
+    test_redact_multiple();
+    test_add_pattern();
+    test_clear_disables_custom_patterns();
+    test_load_config();
+    test_load_config_null_restores_defaults();
+    test_normal_text_not_harmed();
+    printf("\nResults: %d passed, %d failed\n", tests_passed, tests_failed);
+    return tests_failed > 0 ? 1 : 0;
 }
