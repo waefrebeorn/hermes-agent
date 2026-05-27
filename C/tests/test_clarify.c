@@ -1,138 +1,169 @@
 /*
- * test_clarify.c — Clarify tool unit tests
- * Tests JSON schema parsing, error handling, and response structure
+ * test_clarify.c — Tests for the clarify tool.
+ * Tests: basic query, choices, edge cases.
+ * Uses pipe to supply stdin input to fgets().
  */
 
-#include "hermes_json.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-/* External handler from clarify.c */
+/* We declare the handler directly (header not included in src/tools) */
 extern char *clarify_handler(const char *args_json, const char *task_id);
 
-static int passed = 0, failed = 0;
+static int tests_passed = 0;
+static int tests_failed = 0;
 
 #define TEST(name, expr) do { \
-    if (expr) { passed++; printf("  PASS: %s\n", name); } \
-    else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
+    if (expr) { \
+        tests_passed++; \
+        printf("  \xe2\x9c\x85 %s\n", name); \
+    } else { \
+        tests_failed++; \
+        printf("  \xe2\x9d\x8c %s\n", name); \
+    } \
 } while(0)
 
-int main(void) {
-    printf("=== Clarify Tests ===\n");
+/* Helper: Call clarify_handler with piped stdin input */
+static char *clarify_with_input(const char *args_json, const char *input)
+{
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return NULL;
 
-    /* Test 1: Null args → error */
-    {
-        char *result = clarify_handler(NULL, NULL);
-        TEST("null args returns error", result != NULL && strstr(result, "error") != NULL);
-        free(result);
-    }
+    /* Write input to pipe write end */
+    write(pipefd[1], input, strlen(input));
+    close(pipefd[1]);
 
-    /* Test 2: Empty JSON → error (missing required 'question') */
-    {
-        char *result = clarify_handler("{}", NULL);
-        TEST("empty json returns error", result != NULL && strstr(result, "error") != NULL);
-        free(result);
-    }
+    /* Save old stdin, replace with pipe read end */
+    int old_stdin = dup(STDIN_FILENO);
+    dup2(pipefd[0], STDIN_FILENO);
+    close(pipefd[0]);
 
-    /* Test 3: Missing question in args → error */
-    {
-        char *result = clarify_handler("{\"choices\":[\"a\",\"b\"]}", NULL);
-        TEST("missing question returns error", result != NULL && strstr(result, "error") != NULL);
-        free(result);
-    }
+    /* Call handler (reads from pipe) */
+    char *result = clarify_handler(args_json, "test_task");
 
-    /* Test 4: Invalid JSON → error */
-    {
-        char *result = clarify_handler("{invalid}", NULL);
-        TEST("invalid json returns error", result != NULL && strstr(result, "error") != NULL);
-        free(result);
-    }
+    /* Restore stdin */
+    dup2(old_stdin, STDIN_FILENO);
+    close(old_stdin);
 
-    /* Test 5: Schema constant parses as valid JSON */
-    {
-        static const char *SCHEMA = "{"
-            "\"type\":\"object\","
-            "\"properties\":{"
-              "\"question\":{\"type\":\"string\",\"description\":\"Question to ask the user\"},"
-              "\"choices\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Optional multiple choice options\",\"maxItems\":4}"
-            "},"
-            "\"required\":[\"question\"]"
-        "}";
-        json_node_t *parsed = json_parse(SCHEMA, NULL);
-        TEST("schema parses as valid JSON", parsed != NULL);
-        if (parsed) json_free(parsed);
-    }
+    return result;
+}
 
-    /* Test 6: Schema has 'required' field with 'question' */
+/* Helper: check if JSON result contains a key with expected value */
+static int json_has(const char *json, const char *key, const char *expected_val)
+{
+    if (!json) return 0;
+    char search_key[256];
+    snprintf(search_key, sizeof(search_key), "\"%s\":\"", key);
+    const char *start = strstr(json, search_key);
+    if (!start) return 0;
+    start += strlen(search_key);
+    /* Compare up to the closing quote */
+    size_t elen = strlen(expected_val);
+    return strncmp(start, expected_val, elen) == 0 && start[elen] == '"';
+}
+
+int main(void)
+{
+    printf("=== Clarify Tool Tests ===\n\n");
+
+    /* ── Basic question ── */
+    printf("-- Basic question --\n");
     {
-        static const char *SCHEMA = "{"
-            "\"type\":\"object\","
-            "\"properties\":{"
-              "\"question\":{\"type\":\"string\"},"
-              "\"choices\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4}"
-            "},"
-            "\"required\":[\"question\"]"
-        "}";
-        json_node_t *parsed = json_parse(SCHEMA, NULL);
-        int ok = 0;
-        if (parsed) {
-            json_node_t *req = json_object_get(parsed, "required");
-            if (req && json_array_count(req) >= 1) {
-                json_node_t *first = json_array_get(req, 0);
-                ok = (first && first->type == JSON_STRING && strcmp(first->str_val, "question") == 0);
-            }
-            json_free(parsed);
+        char *result = clarify_with_input(
+            "{\"question\":\"What is your name?\"}",
+            "Alice\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response contains Alice",
+                 json_has(result, "response", "Alice"));
+            free(result);
         }
-        TEST("schema requires question field", ok);
     }
 
-    /* Test 7: Schema limits choices to 4 max */
+    /* ── With choices ── */
+    printf("\n-- With choices --\n");
     {
-        static const char *SCHEMA = "{"
-            "\"type\":\"object\","
-            "\"properties\":{"
-              "\"choices\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4}"
-            "},"
-            "\"required\":[\"question\"]"
-        "}";
-        json_node_t *parsed = json_parse(SCHEMA, NULL);
-        int ok = 0;
-        if (parsed) {
-            json_node_t *props = json_object_get(parsed, "properties");
-            if (props) {
-                json_node_t *choices = json_object_get(props, "choices");
-                if (choices) {
-                    json_node_t *mi = json_object_get(choices, "maxItems");
-                    ok = (mi && mi->type == JSON_NUMBER && mi->num_val == 4);
-                }
-            }
-            json_free(parsed);
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick one\",\"choices\":[\"Red\",\"Green\",\"Blue\"]}",
+            "2\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response contains '2'", json_has(result, "response", "2"));
+            TEST("selected is Green", json_has(result, "selected", "Green"));
+            free(result);
         }
-        TEST("choices maxItems is 4", ok);
     }
 
-    /* Test 8: Schema has type=object */
+    /* ── Invalid choice number ── */
+    printf("\n-- Invalid choice --\n");
     {
-        static const char *SCHEMA = "{"
-            "\"type\":\"object\","
-            "\"properties\":{"
-              "\"question\":{\"type\":\"string\"},"
-              "\"choices\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4}"
-            "},"
-            "\"required\":[\"question\"]"
-        "}";
-        json_node_t *parsed = json_parse(SCHEMA, NULL);
-        int ok = 0;
-        if (parsed) {
-            json_node_t *type = json_object_get(parsed, "type");
-            ok = (type && type->type == JSON_STRING && strcmp(type->str_val, "object") == 0);
-            json_free(parsed);
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick one\",\"choices\":[\"A\",\"B\"]}",
+            "99\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response contains '99'", json_has(result, "response", "99"));
+            /* No 'selected' should be present */
+            TEST("no selected for invalid choice",
+                 !strstr(result, "\"selected\""));
+            free(result);
         }
-        TEST("schema type is object", ok);
     }
 
-    /* Results */
-    printf("\n=== Clarify Test Summary: %d passed, %d failed ===\n", passed, failed);
-    return failed > 0 ? 1 : 0;
+    /* ── Skip/cancel ── */
+    printf("\n-- Skip --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Continue?\"}",
+            "skip\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response is 'skip'", json_has(result, "response", "skip"));
+            free(result);
+        }
+    }
+
+    /* ── Null args ── */
+    printf("\n-- Null args --\n");
+    {
+        char *result = clarify_handler(NULL, "test");
+        TEST("result not null on NULL args", result != NULL);
+        if (result) {
+            TEST("error on NULL args", json_has(result, "error", "No args"));
+            free(result);
+        }
+    }
+
+    /* ── Missing question ── */
+    printf("\n-- Missing question --\n");
+    {
+        char *result = clarify_handler("{}", "test");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("error for missing question",
+                 json_has(result, "error", "Missing question"));
+            free(result);
+        }
+    }
+
+    /* ── Empty input ── */
+    printf("\n-- Empty input --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Say something\"}",
+            "\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("empty response handled",
+                 strstr(result, "\"response\"") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Summary ── */
+    printf("\n=== Results: %d passed, %d failed ===\n",
+           tests_passed, tests_failed);
+    return tests_failed > 0 ? 1 : 0;
 }

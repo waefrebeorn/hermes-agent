@@ -84,6 +84,20 @@ run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
 
+echo ""; echo "=== Clarify Tool Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_clarify.c" "$CDIR/src/tools/clarify.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_clarify -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_clarify ]]; then
+    if /tmp/hermes_test_clarify > /dev/null 2>&1; then
+        ok "clarify"
+    else
+        fail "clarify (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_clarify
+else
+    fail "clarify (compilation failed)"
+fi
+
 echo ""; echo "=== Threat Pattern Tests === "
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" -I"$CDIR/lib/libthreatpatterns" \
     "$CDIR/tests/test_threat_patterns.c" "$CDIR/lib/libregex/hermes_regex.c" "$CDIR/lib/libthreatpatterns/threat_patterns.c" \
