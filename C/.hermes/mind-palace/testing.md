@@ -1,4 +1,4 @@
-# Slermes C — Testing (v28 — 2026-05-27)
+# Slermes C — Testing (v29 — 2026-05-27)
 
 ## Suite
 ```bash
@@ -7,7 +7,7 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**226 passed, 0 failed, 25 skipped** (zero failures).
+**231 passed, 0 failed, 24 skipped** (zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |

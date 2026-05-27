@@ -106,3 +106,11 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 - **Evidence:** `src/cron/cron_sqlite.c` — `cron_sqlite_list_to_json()` function; `src/tools/cronjob.c` — list action with name filter
 - **Test fix:** Added `g_cron_store` + `cron_sqlite_list_to_json` stubs to test_cron_tool.c (25 cron tool tests pass)
 - **Impact:** Cron jobs now actually show up in /cron list. Named filter enables targeted lookup. 1 gap reduction in cronjob row (2→1).
+
+## Phase 13: file_hash Tool + Test Fix (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T28 | file_hash tool — registered SHA-256/SHA-1/MD5 file hashing tool using existing hash_sha256_file/hash_sha1_hex/hash_md5 functions from libhash. Was fully implemented (handle_hash + SCHEMA_HASH) but never registered. | 1A | file.c: registry_register("file_hash", ...); handle_hash() + file_hash_handler() |
+| T29 | file_tool test compilation fix — added missing -I libbinary and binary.c to test_runner.sh compilation. The test was SKIP'd due to `#include "binary.h"` not found. Also changed tmpdir from /tmp/hermes_test_file (conflicted with binary path) to /tmp/hermes_test_file_data. Added 5 hash test assertions (58 total). | 10 | test_runner.sh: binary.c + -I libbinary; test_file.c: tmpdir path, extern file_hash_handler, hash test cases |
+| - | 78 tools (was 77). Suite 231/0/24 (was 230/0/25 — file_tool test now runs instead of skip). | | |

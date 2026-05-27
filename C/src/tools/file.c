@@ -1059,6 +1059,11 @@ char *file_syntax_handler(const char *args_json, const char *task_id) {
     return handle_syntax(args_json);
 }
 
+char *file_hash_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    return handle_hash(args_json);
+}
+
 /* Auto-registration */
 void registry_init_file(void) {
     registry_register("read_file",
@@ -1086,4 +1091,8 @@ void registry_init_file(void) {
         "Check file syntax. Auto-detects type from extension (python, sh, json, yaml, c). "
         "Optional: type override. Returns valid=true/false and error messages.",
         SCHEMA_SYNTAX, file_syntax_handler);
+    registry_register("file_hash",
+        "Compute cryptographic hash of a file. Returns algorithm, hash, path. "
+        "Supports sha256 (default), sha1, md5.",
+        SCHEMA_HASH, file_hash_handler);
 }

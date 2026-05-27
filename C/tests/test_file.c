@@ -29,6 +29,7 @@ extern char *file_diff_handler(const char *args_json, const char *task_id);
 extern char *file_perms_handler(const char *args_json, const char *task_id);
 extern char *file_hex_handler(const char *args_json, const char *task_id);
 extern char *file_syntax_handler(const char *args_json, const char *task_id);
+extern char *file_hash_handler(const char *args_json, const char *task_id);
 
 static int passed = 0, failed = 0;
 
@@ -58,7 +59,7 @@ int main(void) {
     printf("=== File Tool Tests ===\n");
 
     /* ---- Setup: clean temp dir and sandbox ---- */
-    const char *tmpdir = "/tmp/hermes_test_file";
+    const char *tmpdir = "/tmp/hermes_test_file_data";
     char cmd[128];
     snprintf(cmd, sizeof(cmd), "rm -rf %s", tmpdir);
     if (system(cmd) != 0) { /* cleanup temp dir */ }
@@ -424,6 +425,42 @@ int main(void) {
             "{\"path\":\"/tmp/hermes_test_nonexist_syntax.py\"}", NULL));
         TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
         if (r) json_free(r);
+    }
+    {
+        /* Test file_hash — SHA-256 of a known file */
+        FILE *f = fopen("/tmp/hermes_test_hash.txt", "w");
+        fprintf(f, "hello world\n");
+        fclose(f);
+        json_node_t *r = parse_result(file_hash_handler(
+            "{\"path\":\"/tmp/hermes_test_hash.txt\"}", NULL));
+        if (r) {
+            const char *h = json_object_get_string(r, "hash", NULL);
+            TEST("file_hash returns hash", h != NULL);
+            if (h) {
+                TEST("file_hash sha256 correct length", strlen(h) == 64);
+            }
+            json_free(r);
+        }
+        unlink("/tmp/hermes_test_hash.txt");
+    }
+    {
+        /* Test file_hash with SHA-1 */
+        FILE *f2 = fopen("/tmp/hermes_test_hash2.txt", "w");
+        fprintf(f2, "test data\n");
+        fclose(f2);
+        json_node_t *r2 = parse_result(file_hash_handler(
+            "{\"path\":\"/tmp/hermes_test_hash2.txt\",\"algorithm\":\"sha1\"}", NULL));
+        if (r2) {
+            const char *h = json_object_get_string(r2, "hash", NULL);
+            TEST("file_hash sha1 returns hash", h != NULL);
+            if (h) {
+                TEST("file_hash sha1 correct length", strlen(h) == 40);
+            }
+            const char *algo = json_object_get_string(r2, "algorithm", NULL);
+            TEST("file_hash returns algorithm", algo != NULL && strcmp(algo, "sha1") == 0);
+            json_free(r2);
+        }
+        unlink("/tmp/hermes_test_hash2.txt");
     }
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);

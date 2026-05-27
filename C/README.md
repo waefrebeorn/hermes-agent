@@ -4,18 +4,18 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||| Suite:  230/0/25 (220 test files, completes in <60s)
-||| Binary: 30M    (dynamic ELF, -O2 -g)
-||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
-|||| Parity:  ~43%   (~372 item-level gaps — see battleship-v16)
-|||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
-|||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-|||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||CLI:    98 cmd_ functions — 77 unique tools registered
-|||Tools:  77 registered (85 at runtime with MCP dynamic)
-||Libraries: 59 C modules — zero external deps beyond libc+libssl
-||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-||Providers: 9 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
+|||| Suite:  231/0/24 (220 test files, completes in <60s)
+|||| Binary: 30M    (dynamic ELF, -O2 -g)
+|||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
+||||| Parity:  ~43%   (~372 item-level gaps — see battleship-v16)
+||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
+||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||||CLI:    98 cmd_ functions — 78 unique tools registered
+||||Tools:  78 registered (86 at runtime with MCP dynamic)
+|||Libraries: 59 C modules — zero external deps beyond libc+libssl
+|||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+|||Providers: 9 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.

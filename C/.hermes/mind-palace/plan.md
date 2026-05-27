@@ -1,8 +1,8 @@
-# Slermes C — Plan (v28 — ~372 Items)
+# Slermes C — Plan (v29 — ~372 Items)
 
 ## Verified State
-Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
-Suite: 230/0/25, 220 test files, 160 src .c files. Binary: 30M.
+Build clean. 78 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
+Suite: 231/0/24, 220 test files, 160 src .c files. Binary: 30M.
 ~43% parity at function level (~1,412 C fns vs ~3,251 Python fns).
 
 ## DA v16 Key Findings
@@ -34,6 +34,6 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, tts_tool are the biggest).
 
 ## Completed This Session
-- Cronjob tool: added pause/resume/run actions (3 Python features now in C)
-- Added cron_sqlite_get_command() helper for run action
-- Updated all walkway files + README + vault with T25 achievement
+- File tool: registered file_hash tool (SHA-256/SHA-1/MD5) — existed in code but was never registered
+- file_tool test: fixed compilation (added binary.h include path + binary.c) and added 5 hash tests
+- 78 tools (was 77), suite 231/0/24 (file_tool now runs instead of skip)

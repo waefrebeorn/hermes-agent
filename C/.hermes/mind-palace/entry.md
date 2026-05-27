@@ -1,14 +1,14 @@
-# Slermes C — Entry Point (v9)
+# Slermes C — Entry Point (v10)
 
 ```
-Suite:   230/0/25  (220 test files, zero failures)
+Suite:   231/0/24  (220 test files, zero failures)
 Binary:  30M     (dynamic ELF, 0 warnings)
-Tools:   77      (unique, registry_register)
+Tools:   78      (unique, registry_register)
 CLI:     98      (slash commands with handlers)
 Gateways:19      (platforms)
 Providers:9      (.c modules + metadata)
 Libs:    59      (lib/*/)
-Gaps:    ~373    (items across 11 phases, battleship-v16 Triple DA)
+Gaps:    ~372    (items across 11 phases, battleship-v16 Triple DA)
 |Parity:  item-level (~372 items — see battleship-v16)
 ```
 
@@ -17,7 +17,7 @@ Gaps:    ~373    (items across 11 phases, battleship-v16 Triple DA)
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v16.md` (~373 items across 11 phases)
+- **Battleship:** `battleship-v16.md` (~372 items across 11 phases)
 - **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)
 
 ## Phase Progress
