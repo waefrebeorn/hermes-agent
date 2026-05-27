@@ -17,7 +17,7 @@
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config | update | pause | resume | run\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"list | add | remove | config | update | pause | resume | run | history\"},"
       "\"name\":{\"type\":\"string\",\"description\":\"Job name (required for add/remove/config/update/pause/resume/run)\"},"
       "\"schedule\":{\"type\":\"string\",\"description\":\"Crontab expression or @hourly/@daily/@weekly (required for add, optional for update)\"},"
       "\"command\":{\"type\":\"string\",\"description\":\"Command to run (required for add, optional for update)\"},"
@@ -329,6 +329,23 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
             char *command = cron_sqlite_get_command(g_cron_store, name);
             if (command) {
                 cron_run_job(name, command);
+                /* Log run to history file */
+                {
+                    const char *home = getenv("HOME");
+                    if (!home) home = "/tmp";
+                    char log_file[1100];
+                    snprintf(log_file, sizeof(log_file), "%s/.hermes/cron_runs/%s.json", home, name);
+                    mkdir("/tmp/cron_runs", 0755); /* fail silently if exists */
+                    FILE *lf = fopen(log_file, "a");
+                    if (lf) {
+                        time_t now = time(NULL);
+                        char entry[256];
+                        int n = snprintf(entry, sizeof(entry),
+                            "{\"t\":%ld,\"s\":\"ok\"}\n", (long)now);
+                        fwrite(entry, 1, (size_t)n > 0 ? (size_t)n : 0, lf);
+                        fclose(lf);
+                    }
+                }
                 free(command);
                 json_object_set(result, "status", json_new_string("triggered"));
             } else {
@@ -337,6 +354,37 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
             }
         }
 
+    } else if (strcmp(action, "history") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name) {
+            json_object_set(result, "error", json_new_string("Missing name"));
+        } else {
+            int max_entries = (int)json_object_get_number(args, "limit", 10);
+            const char *home = getenv("HOME");
+            if (!home) home = "/tmp";
+            char log_file[1100];
+            snprintf(log_file, sizeof(log_file), "%s/.hermes/cron_runs/%s.json", home, name);
+            FILE *lf = fopen(log_file, "r");
+            if (lf) {
+                char line[512]; int total = 0; char *entries[64];
+                while (fgets(line, sizeof(line), lf) && total < 64) {
+                    entries[total] = strdup(line); total++;
+                }
+                fclose(lf);
+                int start = (total > max_entries) ? total - max_entries : 0;
+                json_node_t *arr = json_new_array();
+                for (int i = start; i < total; i++) {
+                    json_node_t *e = json_parse(entries[i], NULL);
+                    if (e) json_array_append(arr, e);
+                }
+                json_object_set(result, "history", arr);
+                json_object_set(result, "total_runs", json_new_number((double)total));
+                for (int i = 0; i < total; i++) free(entries[i]);
+            } else {
+                json_object_set(result, "history", json_new_array());
+                json_object_set(result, "total_runs", json_new_number(0));
+            }
+        }
     } else {
         json_object_set(result, "error", json_new_string("Unknown action"));
     }
