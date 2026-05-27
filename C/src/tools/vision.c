@@ -16,7 +16,8 @@ static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
       "\"image_url\":{\"type\":\"string\",\"description\":\"Path or URL to image file\"},"
-      "\"question\":{\"type\":\"string\",\"description\":\"Optional question about the image\"}"
+      "\"question\":{\"type\":\"string\",\"description\":\"Optional question about the image\"},"
+      "\"detail\":{\"type\":\"string\",\"description\":\"Detail level: 'low', 'high', or 'auto' (default). Controls image resolution for vision analysis.\"}"
     "},"
     "\"required\":[\"image_url\"]"
 "}";
@@ -105,6 +106,7 @@ char *vision_handler(const char *args_json, const char *task_id) {
 
     const char *image_url = json_object_get_string(args, "image_url", NULL);
     const char *question = json_object_get_string(args, "question", NULL);
+    const char *detail = json_object_get_string(args, "detail", NULL);
 
     json_node_t *result = json_new_object();
 
@@ -127,6 +129,7 @@ char *vision_handler(const char *args_json, const char *task_id) {
             json_object_set(result, "error", json_new_string("File too large (>50 MB)"));
         } else {
             json_object_set(result, "image_url", json_new_string(image_url));
+            if (detail) json_object_set(result, "detail", json_new_string(detail));
 
             /* Try to get image metadata via file command */
             if (is_local) {
@@ -171,9 +174,10 @@ char *vision_handler(const char *args_json, const char *task_id) {
                     }
 
                     /* Call Python Hermes agent for AI image description */
+                    const char *det = detail ? detail : "auto";
                     char *desc = run_cmd_full(
-                        "python3 '%s' '%s' '%s' 2>&1 | head -c 5000",
-                        script_path, image_url, question);
+                        "python3 '%s' '%s' '%s' '%s' 2>&1 | head -c 5000",
+                        script_path, image_url, question, det);
                 if (desc && strlen(desc) > 10 && !strstr(desc, "not found") &&
                     !strstr(desc, "error") && !strstr(desc, "timed out") &&
                     !strstr(desc, "Usage:")) {
