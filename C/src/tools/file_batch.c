@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <glob.h>
 #include "hash.h"
 
 /* Forward: sandbox from file.c */
@@ -22,14 +23,15 @@ bool sandbox_check_path(const char *path);
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat | hash\"},"
+      "\"action\":{\"type\":\"string\",\"description\":\"batch operation: copy | move | delete | chmod | touch | stat | hash | rename\"},"
       "\"files\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Source file paths\"},"
       "\"dest\":{\"type\":\"string\",\"description\":\"Destination path (for copy/move)\"},"
-      "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"}"
+      "\"mode\":{\"type\":\"string\",\"description\":\"File permission mode (octal, e.g. '755', '0644'). Required for chmod action.\"},"
+      "\"pattern\":{\"type\":\"string\",\"description\":\"Glob pattern for batch rename (e.g. '*.txt'). Used with rename action instead of files array.\"},"
+      "\"dest_pattern\":{\"type\":\"string\",\"description\":\"Rename pattern. Use * to carry matched portion from glob (e.g. 'backup_*.md'). Required for rename action with pattern.\"}"
     "},"
-    "\"required\":[\"action\",\"files\"]"
+    "\"required\":[\"action\"]"
 "}" ;
-
 /* Buffer for file copy */
 #define COPY_BUF_SIZE 65536
 
@@ -136,11 +138,8 @@ static json_t *hash_file_json(const char *path) {
     if (!f) return NULL;
 
     /* Hash via libhash */
-    unsigned char buf[65536];
     size_t n;
-    /* Simple incremental hash: we need EVP_MD_CTX from OpenSSL.
-       Since hash.h provides hash_sha256(data, len) only (no streaming),
-       read whole file into memory. 100MB cap for safety. */
+    /* Read whole file into memory. 100MB cap for safety. */
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
     if (fsize < 0 || fsize > 100 * 1024 * 1024) {
@@ -164,6 +163,73 @@ static json_t *hash_file_json(const char *path) {
     return j;
 }
 
+/* Glob wildcard helpers for batch rename */
+/* Extract the portion of filename that matched * in glob pattern.
+   E.g. pattern "prefix_*.txt", filename "prefix_foo.txt" -> "foo".
+   Returns strdup'd string or NULL on mismatch. */
+static char *extract_wildcard(const char *pattern, const char *filename) {
+    const char *star = strchr(pattern, '*');
+    if (!star) return strdup(filename);  /* no wildcard -> whole name is match */
+
+    /* Split pattern around * */
+    size_t prefix_len = (size_t)(star - pattern);
+    const char *suffix = star + 1;
+    size_t suffix_len = strlen(suffix);
+    size_t name_len = strlen(filename);
+
+    /* Check prefix match */
+    if (name_len < prefix_len) return NULL;
+    if (strncmp(filename, pattern, prefix_len) != 0) return NULL;
+
+    /* Check suffix match */
+    if (name_len < suffix_len) return NULL;
+    if (strcmp(filename + name_len - suffix_len, suffix) != 0) return NULL;
+
+    /* Extract the middle portion */
+    size_t mid_len = name_len - prefix_len - suffix_len;
+    char *portion = (char *)malloc(mid_len + 1);
+    if (!portion) return NULL;
+    memcpy(portion, filename + prefix_len, mid_len);
+    portion[mid_len] = '\0';
+    return portion;
+}
+
+/* Substitute * in dest_pattern with wildcard_value.
+   E.g. dest_pattern "renamed_*.md", value "foo" -> "renamed_foo.md".
+   Returns strdup'd string. */
+static char *substitute_wildcard(const char *dest_pattern, const char *wildcard_value) {
+    const char *star = strchr(dest_pattern, '*');
+    if (!star) return strdup(dest_pattern);
+
+    size_t prefix_len = (size_t)(star - dest_pattern);
+    const char *suffix = star + 1;
+
+    size_t total_len = prefix_len + strlen(wildcard_value) + strlen(suffix) + 1;
+    char *result = (char *)malloc(total_len);
+    if (!result) return NULL;
+
+    memcpy(result, dest_pattern, prefix_len);
+    result[prefix_len] = '\0';
+    strcat(result, wildcard_value);
+    strcat(result, suffix);
+    return result;
+}
+
+/* Rename a single file using pattern-based renaming.
+   pattern: glob pattern (e.g. "*.txt")
+   dest_pattern: rename template (e.g. "backup_*.md")
+   filename: actual matched filename
+   Returns new path or NULL on failure/extraction mismatch. */
+static char *apply_rename_pattern(const char *pattern, const char *dest_pattern,
+                                   const char *filename) {
+    char *wildcard = extract_wildcard(pattern, filename);
+    if (!wildcard) return NULL;
+    char *new_path = substitute_wildcard(dest_pattern, wildcard);
+    free(wildcard);
+    return new_path;
+}
+
+
 char *file_batch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -177,7 +243,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     const char *mode_str = json_get_str(args, "mode", NULL);
 
     /* Validate action early */
-    if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 &&
+    if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 && strcmp(action, "rename") != 0 &&
         strcmp(action, "delete") != 0 && strcmp(action, "chmod") != 0 &&
         strcmp(action, "touch") != 0 && strcmp(action, "stat") != 0 && strcmp(action, "hash") != 0) {
         json_free(args);
@@ -186,7 +252,73 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
         return strdup(buf);
     }
 
-    if (!files_node || files_node->type != JSON_ARRAY) {
+        /* Early return: rename with pattern uses glob, not files array */
+    if (strcmp(action, "rename") == 0) {
+        const char *pattern = json_get_str(args, "pattern", NULL);
+        const char *dest_pattern = json_get_str(args, "dest_pattern", NULL);
+        if (pattern && dest_pattern) {
+            json_t *result = json_object();
+            json_t *results_arr = json_array();
+            int success_count = 0, fail_count = 0;
+
+            glob_t globbuf;
+            int ret = glob(pattern, 0, NULL, &globbuf);
+            if (ret != 0) {
+                json_free(args);
+                json_free(result);
+                return strdup("{\"error\":\"Glob pattern failed\"}");
+            }
+
+            for (size_t g = 0; g < globbuf.gl_pathc; g++) {
+                const char *fpath = globbuf.gl_pathv[g];
+                json_t *entry = json_object();
+                json_set(entry, "source", json_string(fpath));
+
+                if (!sandbox_check_path(fpath)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string("Path not allowed"));
+                    fail_count++;
+                } else {
+                    char *new_path = apply_rename_pattern(pattern, dest_pattern, fpath);
+                    if (!new_path) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string("Pattern mismatch"));
+                        fail_count++;
+                    } else if (!sandbox_check_path(new_path)) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string("Dest path not allowed"));
+                        free(new_path);
+                        fail_count++;
+                    } else if (!move_file(fpath, new_path)) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        free(new_path);
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("renamed"));
+                        json_set(entry, "dest", json_string(new_path));
+                        free(new_path);
+                        success_count++;
+                    }
+                }
+                json_append(results_arr, entry);
+            }
+            globfree(&globbuf);
+
+            json_set(result, "results", results_arr);
+            json_set(result, "success_count", json_number(success_count));
+            json_set(result, "fail_count", json_number(fail_count));
+            json_set(result, "action", json_string(action));
+
+            char *json_out = json_serialize(result);
+            json_free(result);
+            json_free(args);
+            return json_out;
+        }
+        /* else: fall through to files-array rename in main loop */
+    }
+
+if (!files_node || files_node->type != JSON_ARRAY) {
         json_free(args);
         return strdup("{\"error\":\"'files' must be a non-empty array\"}");
     }
@@ -269,6 +401,33 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                     fail_count++;
                 } else {
                     json_set(entry, "status", json_string("moved"));
+                    json_set(entry, "dest", json_string(dst));
+                    success_count++;
+                }
+            }
+
+                } else if (strcmp(action, "rename") == 0) {
+            if (!dest) {
+                json_set(entry, "status", json_string("failed"));
+                json_set(entry, "error", json_string("Missing dest for rename"));
+                fail_count++;
+            } else {
+                char dst[4096];
+                build_dest_path(dest, src, dst, sizeof(dst));
+                if (!sandbox_check_path(src)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string("Source path not allowed"));
+                    fail_count++;
+                } else if (!sandbox_check_path(dst)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string("Dest path not allowed"));
+                    fail_count++;
+                } else if (!move_file(src, dst)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("renamed"));
                     json_set(entry, "dest", json_string(dst));
                     success_count++;
                 }
@@ -368,7 +527,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
 
 void registry_init_file_batch(void) {
     registry_register("file_batch",
-        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat, hash. "
+        "Batch file operations. Actions: copy, move, delete, chmod, touch, stat, hash, rename. "
         "Accepts array of source paths, optional destination (copy/move), "
         "and optional mode string (chmod, e.g. '755'). "
         "Returns per-file result with success/failure counts.",

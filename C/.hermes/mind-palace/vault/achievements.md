@@ -286,3 +286,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | F15-03 | Batch stat action — stat each file, returns JSON with size/mode/mtime/is_dir. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — stat_file_json(), stat branch in handler |
 | F15-04 | Batch hash action — SHA-256 via libhash hash_sha256_hex(). Reads file (100MB cap), computes hash, returns sha256 hex string. Per-file sandbox. | 1A (file_operations) | src/tools/file_batch.c — hash_file_json(), hash branch in handler |
 | TERM-01 | Fixed JSON schema bug in terminal.c: extra escaped quote after `modal` in backend description. Schema fragment `...modal\"}\",\"` produced invalid JSON — stray `"` between `}` and `,`. Lenient parsers tolerated it; strict validation would reject | 1A (terminal_tool) | src/tools/terminal.c line 36 — corrected `}\",\"` to `},\"` |
+
+## Phase 15: Batch rename — file_batch tool depth (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| F15-05 | Batch rename action — POSIX glob-based pattern matching, wildcard extraction/substitution. Supports `pattern`+`dest_pattern` (e.g. `*.txt` → `backup_*.md`) and simple files+dest rename. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — extract_wildcard(), substitute_wildcard(), apply_rename_pattern(), early-return rename-with-pattern block, simple rename branch in loop |
