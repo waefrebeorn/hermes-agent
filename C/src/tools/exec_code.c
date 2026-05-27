@@ -69,12 +69,12 @@ static char *run_python(const char *code, int timeout_sec, bool sandbox_mode) {
 
     if (cmd_prefix[0]) {
         snprintf(cmd, sizeof(cmd),
-                 "timeout %d %spython3 %s 2>&1 || true",
+                 "timeout %d %spython3 %s 2>&1; echo __EXIT__$?__",
                  timeout_sec > 0 ? timeout_sec : EXEC_DEFAULT_TIMEOUT,
                  cmd_prefix, tmp_path);
     } else {
         snprintf(cmd, sizeof(cmd),
-                 "timeout %d python3 %s 2>&1 || true",
+                 "timeout %d python3 %s 2>&1; echo __EXIT__$?__",
                  timeout_sec > 0 ? timeout_sec : EXEC_DEFAULT_TIMEOUT, tmp_path);
     }
 
@@ -109,7 +109,21 @@ static char *run_python(const char *code, int timeout_sec, bool sandbox_mode) {
         len += line_len;
     }
 
-    int exit_code = pclose(fp);
+    int exit_code = 0;
+
+    /* Strip __EXIT__ marker from end of output and parse real exit code */
+    if (len >= 12) {
+        char *marker = strstr(output, "__EXIT__");
+        if (marker && marker >= output + len - 16) {
+            *marker = '\0';
+            len = (size_t)(marker - output);
+            int parsed = atoi(marker + 8);
+            if (parsed >= 0 && parsed <= 255)
+                exit_code = parsed;
+        }
+    }
+
+    pclose(fp);
     unlink(tmp_path);
 
     json_node_t *result = json_new_object();
@@ -131,9 +145,13 @@ char *exec_code_handler(const char *args_json, const char *task_id) {
     json_node_t *args = json_parse(args_json, &err);
     if (!args) { free(err); return strdup("{\"error\":\"JSON parse\"}"); }
 
-    const char *code = json_object_get_string(args, "code", NULL);
+    const char *code_raw = json_object_get_string(args, "code", NULL);
     int timeout = (int)json_object_get_number(args, "timeout", EXEC_DEFAULT_TIMEOUT);
     bool sandbox = json_object_get_bool(args, "sandbox", false);
+
+    /* strdup code before freeing args — json_object_get_string returns pointer into tree */
+    char *code = code_raw ? strdup(code_raw) : NULL;
+
     json_free(args);
 
     if (!code) return strdup("{\"error\":\"Missing required 'code'\"}");
@@ -144,10 +162,13 @@ char *exec_code_handler(const char *args_json, const char *task_id) {
         char err[512];
         snprintf(err, sizeof(err),
                  "{\"error\":\"%s\"}", esc.reason);
+        free(code);
         return strdup(err);
     }
 
-    return run_python(code, timeout, sandbox);
+    char *result = run_python(code, timeout, sandbox);
+    free(code);
+    return result;
 }
 
 void registry_init_exec_code(void) {

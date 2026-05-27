@@ -1291,9 +1291,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "audit_rotate (compilation failed)"
 fi &
 
-# exec_code tool test (M41 — self-contained, no deps)
+# exec_code tool test (M41 — needs exec_code.c + json + sandbox_escape)
 echo ""; echo "=== exec_code Tool Tests (M41) ==="
-run_lib_test "exec_code" "tests/test_exec_code.c" "." ""
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_exec_code.c" \
+    "$CDIR/src/tools/exec_code.c" "$CDIR/lib/libjson/json.c" "$CDIR/src/sandbox_escape.c" \
+    -o /tmp/hermes_test_exec_code -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_exec_code > /dev/null 2>&1; then ok "exec_code_tool (4 tests)"
+    else fail "exec_code_tool (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_exec_code
+else skip "exec_code_tool (compilation failed)"
+fi &
 
 # TIRITH policy engine test (O13 — standalone, only needs tirith.c + fnmatch)
 echo ""; echo "=== TIRITH Policy Depth Tests (O13) ==="
