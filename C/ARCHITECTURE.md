@@ -27,7 +27,7 @@ Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provid
 | **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
 | **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
 |**Libraries** | Reusable C modules | `lib/lib*` | 59 |
-| **Tests** | Unit tests | `tests/test_*.c` | 232, 269/0/0 |
+| **Tests** | Unit tests | `tests/test_*.c` | 232, 270/0/0 |
 | **Config** | YAML/env configuration | `~/.slermes/` | ~322 keys |
 
 ## Core Data Flow
@@ -126,7 +126,7 @@ Provider categories:
 | libansi | ANSI terminal codes | none |
 
 ## Testing
-- **233 test files, 269/0/0 suite** (all passed, 0 failed, 0 skipped)
+- **234 test files, 270/0/0 suite** (all passed, 0 failed, 0 skipped)
 - **Pattern:** Each test is `int main(void)` returning 0 on pass
 - **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
@@ -140,14 +140,14 @@ Provider categories:
 ## Building
 ```bash
 make -j$(nproc)         # Full binary
-bash test_runner.sh      # 269/0/0
+bash test_runner.sh      # 270/0/0
 make tui                 # With ncurses TUI
 make docs                # Doxygen HTML docs
 make plugins             # Build 10 .so plugins
 ```
 
 ## Current State
-- **Suite:** 269/0/0 — 233 test files
+- **Suite:** 270/0/0 — 234 test files
 - **Binary:** 30MB ELF, 0 warnings
 - **Commits:** 817+ C-specific
 - **Upstream:** synced via battleship-v16

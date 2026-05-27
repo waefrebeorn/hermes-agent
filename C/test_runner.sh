@@ -97,6 +97,21 @@ else
     fail "registry (compilation failed)"
 fi
 
+echo ""; echo "=== Usage Pricing Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" \
+    "$CDIR/tests/test_usage_pricing.c" "$CDIR/src/agent/usage_pricing.c" "$CDIR/src/hermes_tokenizer.c" \
+    -o /tmp/hermes_test_usage -lm 2>/dev/null && [[ -x /tmp/hermes_test_usage ]]; then
+    if /tmp/hermes_test_usage > /dev/null 2>&1; then
+        ok "usage_pricing (33 tests)"
+    else
+        fail "usage_pricing (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_usage
+else
+    fail "usage_pricing (compilation failed)"
+fi
+
 echo ""; echo "=== Path Resolution (P21) Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
