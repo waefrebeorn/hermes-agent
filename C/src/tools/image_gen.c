@@ -28,6 +28,8 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
 
     const char *prompt = json_get_str(args, "prompt", "");
     const char *aspect_ratio = json_get_str(args, "aspect_ratio", "1:1");
+    const char *negative_prompt = json_get_str(args, "negative_prompt", NULL);
+    const char *style = json_get_str(args, "style", NULL);
 
     /* Get API key from shared helper (checks FAL_API_KEY, then SLERMES_FAL_KEY) */
     if (!fal_get_api_key()) {
@@ -44,11 +46,23 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     char esc_prompt[4096];
     fal_escape_json(prompt, esc_prompt, sizeof(esc_prompt));
 
-    /* Build request body */
-    char body[8192];
-    snprintf(body, sizeof(body),
-        "{\"prompt\":\"%s\",\"aspect_ratio\":\"%s\"}",
+    /* Build request body with optional params */
+    char body[16384];
+    int pos = snprintf(body, sizeof(body),
+        "{\"prompt\":\"%s\",\"aspect_ratio\":\"%s\"",
         esc_prompt, aspect_ratio);
+
+    if (negative_prompt && *negative_prompt) {
+        char esc_neg[2048];
+        fal_escape_json(negative_prompt, esc_neg, sizeof(esc_neg));
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"negative_prompt\":\"%s\"", esc_neg);
+    }
+    if (style && *style) {
+        pos += snprintf(body + pos, sizeof(body) - pos,
+            ",\"style\":\"%s\"", style);
+    }
+    snprintf(body + pos, sizeof(body) - pos, "}");
 
     /* Use shared FAL POST helper */
     http_resp_t *resp = fal_post_json(FAL_API_BASE, body, 60);
@@ -158,7 +172,9 @@ void registry_init_image_gen(void) {
         "\"type\":\"object\","
         "\"properties\":{"
         "  \"prompt\":{\"type\":\"string\",\"description\":\"Text description of the image to generate\"},"
-        "  \"aspect_ratio\":{\"type\":\"string\",\"description\":\"Aspect ratio (e.g., 1:1, 16:9, 9:16)\"}"
+        "  \"aspect_ratio\":{\"type\":\"string\",\"description\":\"Aspect ratio (e.g., 1:1, 16:9, 9:16)\"},"
+        "  \"negative_prompt\":{\"type\":\"string\",\"description\":\"What to avoid in the generated image\"},"
+        "  \"style\":{\"type\":\"string\",\"description\":\"Style preset (e.g., realistic, anime, cinematic, digital-art, fantasy)\"}"
         "},"
         "\"required\":[\"prompt\"]"
         "}",

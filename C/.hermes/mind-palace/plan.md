@@ -1,4 +1,4 @@
-# Slermes C — Plan (v30 — ~372 Items)
+# Slermes C — Plan (v31 — ~372 Items)
 
 ## Verified State
 Build clean. 78 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
@@ -38,3 +38,4 @@ Pick next unclosed gap from battleship-v16 1A table (mcp_tool, file_operations, 
 - file_tool test: fixed compilation (added binary.h include path + binary.c) and added 5 hash tests
 - 78 tools (was 77), suite 231/0/24 (file_tool now runs instead of skip)
 - x_search: added enable_image_understanding + enable_video_understanding params (parity with Python schema)
+- image_generate: added negative_prompt + style params (matching Python schema)

@@ -30,7 +30,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 10 | code_execution_tool | 26 | 5 | 21 | Multi-environment (local/Docker/SSH/Modal/Daytona), hermes_tools module generation, RPC server mode, result streaming, env setup/teardown, sandbox modes, dependency caching, timeout escalation |
 | 11 | discord_tool | 35 | 18 | 17 | Slash command registration, modals, buttons, select menus, embeds, thread management, permission checks, audit log, voice channel, guild management, emoji management |
 | 12 | vision_tools | 22 | 6 | 16 | OCR (tesseract), face detection, barcode/QR, EXIF extraction, metadata, image classification, object detection, color analysis, text detection, landmark recognition |
-| 13 | image_generation_tool | 15 | 3 | 12 | Multi-provider (FAL, Replicate, Stability AI, OpenAI DALL-E), style presets, aspect ratio, negative prompts, image-to-image, inpainting, outpainting, control nets |
+| 13 | image_generation_tool | 15 | 3 | 12 | Multi-provider (FAL, Replicate, Stability AI, OpenAI DALL-E), image-to-image, inpainting, outpainting, control nets. aspect_ratio, negative_prompt, style params added. |
 | 14 | web_tools | 25 | 13 | 12 | Cookie jar, session persistence, proxy auth, form fill, JS execution, screenshot, auth handling, request/response intercept, rate limiting |
 | 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context. enable_image_understanding + enable_video_understanding added. |
 | 16 | video_generation_tool | 12 | 3 | 9 | Multi-provider, aspect ratio, duration, style, motion scale, loop, seed, negative prompt |

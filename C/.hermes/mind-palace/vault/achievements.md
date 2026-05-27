@@ -121,3 +121,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T30 | x_search: added enable_image_understanding + enable_video_understanding boolean params. C x_search was missing these 2 features that Python has. Added to both schema and tool_def construction. | 1A | x_search.c: SCHEMA + handler tool_def builder |
 | - | 78 tools unchanged. Suite unchanged. 2 schema params closer to Python parity. | | |
+
+## Phase 15: image_generate enrichment (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T31 | image_generate: added negative_prompt + style params to schema + request body builder. C was missing these 2 params that Python supports via FAL's flux-pro API. | 1A | image_gen.c: SCHEMA + body building with negative_prompt/style |
+| - | 78 tools unchanged. Suite unchanged. | | |
