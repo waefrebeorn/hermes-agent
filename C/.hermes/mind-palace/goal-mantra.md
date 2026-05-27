@@ -1,11 +1,11 @@
 # Slermes C — Goal Mantra (v32)
 
 P0: Full 1:1 drop-in replacement for Python Hermes.
-**~366 item-level parity gaps** (battleship-v16).
+**~359 item-level parity gaps** (battleship-v16).
 
 ## Phase Order
 0. Display Parity (16 gaps) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-1. CLI Args (40) — ✅ ALL DONE
+1. CLI Args (34) — ✅ ALL DONE
 2. Provider Parity (~20) — deepen claims stale per DA v16; port uncommon API providers
 3. Tool Features (42) — add missing features to existing C tools
 4. Missing Tools (46) — port unported Python tool files (+10 newly found in v16 audit)
