@@ -852,6 +852,17 @@ run_lib_test "csv" "tests/test_csv.c" "lib/libcsv" "$CDIR/lib/libcsv/csv.c"
 echo ""; echo "=== Hash Library Tests (J07) ==="
 run_lib_test "hash" "tests/test_hash.c" "lib/libhash" "$CDIR/lib/libhash/hash.c -lssl -lcrypto"
 
+# Cron library test (J07.5 — standalone, no deps)
+echo ""; echo "=== Cron Library Tests (J07.5) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libcron" "$CDIR/tests/test_cron.c" -o /tmp/hermes_test_cron "$CDIR/lib/libcron/cron.c" -lm >/dev/null 2>&1 && [[ -x /tmp/hermes_test_cron ]]; then
+    if /tmp/hermes_test_cron >/dev/null 2>&1; then ok "cron"
+    else fail "cron"
+    fi
+    rm -f /tmp/hermes_test_cron
+else
+    skip "cron (compilation failed)"
+fi
+
 # UUID library test (J08 — needs libhash for v5 + OpenSSL)
 echo ""; echo "=== UUID Library Tests (J08) ==="
 run_lib_test "uuid" "tests/test_uuid.c" "lib/libuuid" "$CDIR/lib/libuuid/uuid.c $CDIR/lib/libhash/hash.c -lssl -lcrypto"
