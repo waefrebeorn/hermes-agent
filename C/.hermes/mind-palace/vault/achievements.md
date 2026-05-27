@@ -499,22 +499,13 @@ The following items from battleship-v8 were verified as stale — code already i
 
 
 
-## Phase 68: Phase 3 Tool Features — File Permissions (2026-05-26)
+## Phase 70: Phase 3 Tool Features — File Syntax Check (2026-05-26)
 
 | ID | Description | Evidence |
 |----|-------------|----------|
-| F18 | file_permissions handler — stat + chmod | src/tools/file.c:635-705 (handle_perms: stat, chmod, metadata response) |
-| F18 | Schema: path (req), mode (opt, octal) | src/tools/file.c:78-87 (SCHEMA_PERMS) |
-| F18 | Returns mode, size, uid, gid, type, is_dir/file/link | src/tools/file.c:690-704 |
-| F18 | 3 tests: stat existing file (mode+type), missing file error | tests/test_file.c:343-361 |
-| F18 | Suite: 227/0/24 (file_tool 40→43) | test_runner.sh |
-
-## Phase 69: Phase 3 Tool Features — File Hex View (2026-05-26)
-
-| ID | Description | Evidence |
-|----|-------------|----------|
-| F18 | file_hex handler — hex dump with ASCII side panel | src/tools/file.c:716-818 (handle_hex: reads file, formats 16-byte rows) |
-| F18 | Schema: path (req), offset (opt, default 0), limit (opt, default 256, max 4096) | src/tools/file.c:83-92 (SCHEMA_HEX) |
-| F18 | Registered as file_hex tool (75th unique tool) | src/tools/file.c:869-872 (registry_register) |
-| F18 | 5 tests: hex output, expected bytes, missing file | tests/test_file.c:363-395 |
-| F18 | Suite: 227/0/24 (file_tool 43→48) | test_runner.sh |
+| F18 | file_syntax handler — check file syntax via external tools | src/tools/file.c:826-927 (handle_syntax) |
+| F18 | Auto-detects type from extension (.py, .sh, .json, .yaml/.yml, .c/.h) | strrchr path -> extension mapping |
+| F18 | Type override param: python, sh, json, yaml, c | src/tools/file.c:96-100 (SCHEMA_SYNTAX) |
+| F18 | Registered as file_syntax tool (76th unique tool) | src/tools/file.c:985-989 (registry_register) |
+| F18 | 5 tests: valid python, invalid python, missing file | tests/test_file.c:392-433 |
+| F18 | Suite: 227/0/24 (file_tool 48->53) | test_runner.sh |

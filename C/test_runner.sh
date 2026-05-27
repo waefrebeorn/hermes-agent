@@ -2206,7 +2206,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_file.c" \
     "$CDIR/src/tools/file.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libdifflib/difflib.c" \
     -o /tmp/hermes_test_file -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_file > /dev/null 2>&1; then ok "file_tool (48 tests)"
+    if /tmp/hermes_test_file > /dev/null 2>&1; then ok "file_tool (53 tests)"
     else fail "file_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_file
 else skip "file_tool (compilation failed)"

@@ -28,6 +28,7 @@ extern char *file_search_handler(const char *args_json, const char *task_id);
 extern char *file_diff_handler(const char *args_json, const char *task_id);
 extern char *file_perms_handler(const char *args_json, const char *task_id);
 extern char *file_hex_handler(const char *args_json, const char *task_id);
+extern char *file_syntax_handler(const char *args_json, const char *task_id);
 
 static int passed = 0, failed = 0;
 
@@ -384,6 +385,43 @@ int main(void) {
     {
         json_node_t *r = parse_result(file_hex_handler(
             "{\"path\":\"/tmp/hermes_test_nonexist_hex.txt\"}", NULL));
+        TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
+        if (r) json_free(r);
+    }
+
+    /* ============ Syntax check tests ============ */
+    printf("\n--- file_syntax tests ---\n");
+    {
+        /* Create a valid Python file */
+        FILE *f = fopen("/tmp/hermes_test_syntax.py", "w");
+        fprintf(f, "x = 1\nprint(x)\n");
+        fclose(f);
+        json_node_t *r = parse_result(file_syntax_handler(
+            "{\"path\":\"/tmp/hermes_test_syntax.py\"}", NULL));
+        TEST("valid python returns result", r != NULL);
+        if (r) {
+            TEST("valid python is valid", json_object_get_bool(r, "valid", false));
+            json_free(r);
+        }
+        unlink("/tmp/hermes_test_syntax.py");
+    }
+    {
+        /* Create an invalid Python file */
+        FILE *f = fopen("/tmp/hermes_test_bad.py", "w");
+        fprintf(f, "x = \n");
+        fclose(f);
+        json_node_t *r = parse_result(file_syntax_handler(
+            "{\"path\":\"/tmp/hermes_test_bad.py\"}", NULL));
+        TEST("invalid python returns result", r != NULL);
+        if (r) {
+            TEST("invalid python is NOT valid", !json_object_get_bool(r, "valid", true));
+            json_free(r);
+        }
+        unlink("/tmp/hermes_test_bad.py");
+    }
+    {
+        json_node_t *r = parse_result(file_syntax_handler(
+            "{\"path\":\"/tmp/hermes_test_nonexist_syntax.py\"}", NULL));
         TEST("missing file returns error", r != NULL && strstr(json_serialize(r), "error") != NULL);
         if (r) json_free(r);
     }

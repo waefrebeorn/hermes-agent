@@ -92,6 +92,15 @@ static const char *SCHEMA_WRITE = "{"
         "\"required\":[\"path\"]"
     "}";
 
+    static const char *SCHEMA_SYNTAX = "{"
+        "\"type\":\"object\","
+        "\"properties\":{"
+          "\"path\":{\"type\":\"string\",\"description\":\"File path to check\"},"
+          "\"type\":{\"type\":\"string\",\"description\":\"File type override: python, sh, json, yaml, c. Auto-detected from extension if omitted.\"}"
+        "},"
+        "\"required\":[\"path\"]"
+    "}";
+
     /* ================================================================
      *  P168: File Sandbox — Allowed directories & symlink attack prevention
      * ================================================================ */
@@ -811,6 +820,103 @@ static char *handle_hex(const char *args_json) {
     return json_out;
 }
 
+/* Syntax check — verify file syntax via external tool */
+static char *handle_syntax(const char *args_json) {
+    if (!args_json) return strdup("{\"error\":\"No args\"}");
+    char *err = NULL;
+    json_node_t *args = json_parse(args_json, &err);
+    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+
+    const char *path = json_object_get_string(args, "path", NULL);
+    if (!path || !*path) {
+        json_free(args);
+        return strdup("{\"error\":\"Missing path\"}");
+    }
+
+    const char *type_override = json_object_get_string(args, "type", "");
+
+    /* Detect type from extension */
+    const char *ftype = type_override;
+    if (!ftype || !*ftype) {
+        const char *dot = strrchr(path, '.');
+        if (dot) {
+            dot++;
+            if (strcmp(dot, "py") == 0) ftype = "python";
+            else if (strcmp(dot, "sh") == 0) ftype = "sh";
+            else if (strcmp(dot, "json") == 0) ftype = "json";
+            else if (strcmp(dot, "yaml") == 0 || strcmp(dot, "yml") == 0) ftype = "yaml";
+            else if (strcmp(dot, "c") == 0 || strcmp(dot, "h") == 0) ftype = "c";
+        }
+    }
+
+    if (!ftype || !*ftype) {
+        json_free(args);
+        return strdup("{\"error\":\"Could not detect file type. Specify 'type' parameter.\"}");
+    }
+
+    /* Build the appropriate check command */
+    char cmd[4096];
+    (void)cmd;
+
+    if (strcmp(ftype, "python") == 0) {
+        snprintf(cmd, sizeof(cmd),
+            "python3 -c \"compile(open('%s').read() + '\\\\n', '%s', 'exec')\" 2>&1",
+            path, path);
+    } else if (strcmp(ftype, "sh") == 0) {
+        snprintf(cmd, sizeof(cmd), "bash -n '%s' 2>&1", path);
+    } else if (strcmp(ftype, "json") == 0) {
+        snprintf(cmd, sizeof(cmd),
+            "python3 -c \"import json; json.load(open('%s'))\" 2>&1", path);
+    } else if (strcmp(ftype, "yaml") == 0) {
+        snprintf(cmd, sizeof(cmd),
+            "python3 -c \"import yaml; yaml.safe_load(open('%s'))\" 2>&1", path);
+    } else if (strcmp(ftype, "c") == 0) {
+        snprintf(cmd, sizeof(cmd),
+            "gcc -fsyntax-only -x c '%s' 2>&1", path);
+    } else {
+        json_free(args);
+        char buf[512];
+        snprintf(buf, sizeof(buf), "{\"error\":\"Unknown file type: %s\"}", ftype);
+        return strdup(buf);
+    }
+
+    FILE *fp = popen(cmd, "r");
+    if (!fp) {
+        json_free(args);
+        return strdup("{\"error\":\"Failed to run syntax check\"}");
+    }
+
+    char output[8192];
+    output[0] = '\0';
+    size_t total = 0;
+    char line[1024];
+    while (fgets(line, sizeof(line), fp) && total < sizeof(output) - 1) {
+        size_t add = strlen(line);
+        if (total + add < sizeof(output)) {
+            memcpy(output + total, line, add + 1);
+            total += add;
+        }
+    }
+    int exit_code = pclose(fp);
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "path", json_new_string(path));
+    json_object_set(result, "type", json_new_string(ftype));
+    json_object_set(result, "valid", json_new_bool(exit_code == 0));
+
+    size_t out_len = strlen(output);
+    if (out_len > 0) {
+        /* Remove trailing newline */
+        if (out_len > 0 && output[out_len - 1] == '\n') output[out_len - 1] = '\0';
+        json_object_set(result, "error", json_new_string(output));
+    }
+
+    char *json_out = json_serialize(result);
+    json_free(result);
+    json_free(args);
+    return json_out;
+}
+
 /* ================================================================
  *  Public handlers
  * ================================================================ */
@@ -845,6 +951,11 @@ char *file_hex_handler(const char *args_json, const char *task_id) {
     return handle_hex(args_json);
 }
 
+char *file_syntax_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    return handle_syntax(args_json);
+}
+
 /* Auto-registration */
 void registry_init_file(void) {
     registry_register("read_file",
@@ -868,4 +979,8 @@ void registry_init_file(void) {
         "View file contents as hexadecimal dump with ASCII side panel. "
         "Optional: offset (byte offset), limit (max bytes, default 256, max 4096).",
         SCHEMA_HEX, file_hex_handler);
+    registry_register("file_syntax",
+        "Check file syntax. Auto-detects type from extension (python, sh, json, yaml, c). "
+        "Optional: type override. Returns valid=true/false and error messages.",
+        SCHEMA_SYNTAX, file_syntax_handler);
 }
