@@ -64,6 +64,74 @@ static void test_missing_query(void) {
     PASS();
 }
 
+/* Date validation tests */
+static void test_invalid_from_date_format(void) {
+    TEST("x_search_handler(bad from_date format) returns error");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"hello\",\"from_date\":\"bad-date\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "error") != NULL);
+    assert(strstr(result, "Invalid from_date") != NULL);
+    assert(strstr(result, "must be YYYY-MM-DD") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_invalid_to_date_format(void) {
+    TEST("x_search_handler(bad to_date format) returns error");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"hello\",\"to_date\":\"2024/01/01\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "error") != NULL);
+    assert(strstr(result, "Invalid to_date") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_from_date_after_to_date(void) {
+    TEST("x_search_handler(from_date after to_date) returns error");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"hello\",\"from_date\":\"2025-06-01\",\"to_date\":\"2024-01-01\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "error") != NULL);
+    assert(strstr(result, "from_date must not be after to_date") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_from_date_future(void) {
+    TEST("x_search_handler(from_date in future) returns error");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    /* Use year 2099 which is definitely in the future */
+    char *result = x_search_handler("{\"query\":\"hello\",\"from_date\":\"2099-12-25\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "error") != NULL);
+    assert(strstr(result, "is in the future") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_valid_dates_pass_api_key_check(void) {
+    TEST("x_search_handler(valid dates) passes validation, fails on API key");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    /* Valid dates should pass validation; the actual call will fail on xAI API call,
+     * but this test verifies no date validation error is returned */
+    char *result = x_search_handler("{\"query\":\"hello\",\"from_date\":\"2024-01-01\",\"to_date\":\"2024-12-31\"}", NULL);
+    assert(result != NULL);
+    /* Should NOT contain date validation error messages */
+    assert(strstr(result, "Invalid from_date") == NULL);
+    assert(strstr(result, "Invalid to_date") == NULL);
+    assert(strstr(result, "from_date must not be after to_date") == NULL);
+    assert(strstr(result, "is in the future") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
 int main(void) {
     printf("=== xAI Search Tool Tests ===\n");
 
@@ -71,6 +139,11 @@ int main(void) {
     test_null_args();
     test_bad_json();
     test_missing_query();
+    test_invalid_from_date_format();
+    test_invalid_to_date_format();
+    test_from_date_after_to_date();
+    test_from_date_future();
+    test_valid_dates_pass_api_key_check();
 
     printf("\n%d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;
