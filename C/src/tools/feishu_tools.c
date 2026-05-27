@@ -78,7 +78,7 @@ static const char *feishu_get_token(http_client_t *http) {
 /* ── Tool handlers ──────────────────────────────────────────────── */
 
 /* feishu_doc_read(doc_id) — read Feishu document as plain text */
-static char *handle_feishu_doc_read(const char *args_json, const char *task_id) {
+char *handle_feishu_doc_read(const char *args_json, const char *task_id) {
     (void)task_id;
     json_t *req = json_parse(args_json, NULL);
     if (!req) return strdup("{\"error\":\"invalid JSON\"}");
@@ -146,7 +146,7 @@ static char *handle_feishu_doc_read(const char *args_json, const char *task_id) 
 }
 
 /* feishu_drive_list(folder_token) — list files in a Feishu Drive folder */
-static char *handle_feishu_drive_list(const char *args_json, const char *task_id) {
+char *handle_feishu_drive_list(const char *args_json, const char *task_id) {
     (void)task_id;
     json_t *req = json_parse(args_json, NULL);
     if (!req) return strdup("{\"error\":\"invalid JSON\"}");

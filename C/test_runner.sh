@@ -2212,6 +2212,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "file_tool (compilation failed)"
 fi &
 
+# Feishu tools test (D22 — needs feishu_tools.c + json + http libs)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libdb" \
+    "$CDIR/tests/test_feishu_tools.c" \
+    "$CDIR/src/tools/feishu_tools.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.o" \
+    -o /tmp/hermes_test_feishu -lm -lssl -lcrypto -ldl -lpthread -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_feishu > /dev/null 2>&1; then ok "feishu_tools (20 tests)"
+    else fail "feishu_tools (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_feishu
+else skip "feishu_tools (compilation failed)"
+fi &
+
 # Vision tool test (M33 — needs vision.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_vision.c" \
