@@ -1,4 +1,4 @@
-# Slermes C — Plan (v44 — ~319 Items)
+# Slermes C — Plan (v45 — ~318 Items)
 Suite: 257/0/0, 224 test files. 83 tools, 98 CLI commands.
 Build clean. 30M binary. ~43% parity.
 Recent: file_batch chmod action added (batch chmod/chown parity).
