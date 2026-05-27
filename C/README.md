@@ -4,16 +4,16 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||||| Suite:  259/0/0 (225 test files, completes in <60s)
+||||||| Suite:  269/0/0 (233 test files, completes in <60s)
 |||||| Binary: 30M    (dynamic ELF, -O2 -g)
 |||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
-||||||||| Parity:  ~43%   (~297 item-level gaps — see battleship-v16)
+||||||||| Parity:  ~43%   (~288 item-level gaps — see battleship-v16)
 ||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
 |||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |||||CLI:    98 cmd_ functions — 84 unique tools registered
 |||||Tools:  84 registered (87 at runtime with MCP dynamic)
-||||Libraries: 59 C modules — zero external deps beyond libc+libssl
+||||Libraries: 65 C modules — zero external deps beyond libc+libssl
 ||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
 ||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
 ```
@@ -37,7 +37,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-|||- [Battleship Roadmap (~297 Gaps)](#battleship-roadmap-171-gaps)
+||||- [Battleship Roadmap (~288 Gaps)](#battleship-roadmap-171-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -52,7 +52,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 259/0/0
+bash test_runner.sh        # 269/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -128,7 +128,7 @@ echo "/providers" | ./hermes # List provider configurations
 make hermes           # Full binary (phase5) — 0 errors, 30M
 make plugins          # 10 .so shared objects
 make tui              # ncurses TUI → hermes-tui (experimental)
-make libs             # 59 library compilation units
+make libs             # 65 library compilation units
 make install-plugins  # Build + copy .so → ~/.hermes/plugins/
 make docs             # Doxygen HTML docs (if doxygen available)
 ```
@@ -137,7 +137,7 @@ make docs             # Doxygen HTML docs (if doxygen available)
 
 | Phase | What | Output |
 |-------|------|--------|
-|| P1 | 59 library units (.o) | lib/*.o |
+|| P1 | 65 library units (.o) | lib/*.o |
 | P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
 | P3 | 84 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
@@ -464,7 +464,7 @@ waefrebeorn/slermes/         ← Repo root
 │   │   ├── tools/                ←   84 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-│   ├── lib/                      ←   59 library units (compiled directly, no .a)
+│   ├── lib/                      ←   65 library units (compiled directly, no .a)
 │   │   ├── libjson/              ←   JSON parser/builder
 │   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
 │   │   ├── libmcp/               ←   MCP transport layer (stdio, server, SSE)

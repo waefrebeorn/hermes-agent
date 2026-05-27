@@ -400,3 +400,19 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | WT-02 | Body-less request mode — added `include_body` (boolean, default true) param. When false, returns only URL and status code without response body. Reduces token usage for connectivity checks. | 1A (web_tools) | src/tools/web.c — include_body schema entry, handler conditional body output |
+
+
+     ## Phase 16: Phase 4 Missing Tool Port — Second Batch (2026-05-27)
+
+     | ID | Description | Sector | Evidence |
+     |----|-------------|--------|----------|
+     | P06 | generate_preview — newline-aware truncation for agent results. Ports Python `truncated[:max_chars].rfind("\n")` logic. | 1B | result_storage.c: tool_result_generate_preview() — backward scan from max_chars-1 for newline; hermes.h: extern declaration; tests/test_result_storage.c: 15 tests |
+     | P07 | threat_patterns — Python→POSIX regex auto-translator (`pyre_to_posix`) + common threat pattern detection library. 252 Py LOC ported. | 1B | lib/libthreatpatterns/threat_patterns.h + .c; tests/test_threat_patterns.c: 24/24 tests |
+     | P08 | credential_files — credential file handling (parse, validate, store) for API key management. 436 Py LOC ported. | 1B | lib/libcredentialfiles/credential_files.h + .c; tests/test_credential_files.c: 36/36 tests |
+     | P09 | skills_ast_audit — text-pattern scanner for Python skill files (AST analysis). 133 Py LOC ported. | 1B | lib/libskillaudit/skill_audit.h + .c; tests/test_skill_audit.c: 16/16 tests |
+     | P10 | slash_confirm — confirmation prompt handler for dangerous slash commands. 167 Py LOC ported. | 1B | lib/libslashconfirm/slash_confirm.h + .c; tests/test_slash_confirm.c: 28/28 tests |
+     | P11 | clarify tests — new test suite for the clarify.c tool (untested until now). 16/16 pass. | 10 | tests/test_clarify.c: 16 test cases covering init, filter options, empty/full results |
+     | P12 | ms_graph — Microsoft Graph authentication + client combined library. Auth (device code grant, token refresh) + client (GET/POST with retry, pagination). | 1B | lib/libmsgraph/msgraph.h + .c; tests/test_msgraph.c: 21/21 tests |
+     | P13 | registry tests -- 38 test cases covering registration, lookup, list, edge cases | 10 | tests/test_registry.c: 38 tests; test_runner.sh: wired with json + ignore-all |
+     | P14 | paths tests — path resolution test suite for paths.c (hermes_constants port). 11/11 tests covering get_home, config_dir, data_dir, cache_dir, log_dir, resolve_path, profile set/get, display_home, subdir ordering. | 10 | tests/test_paths.c: 11 tests; test_runner.sh: wired as standalone compilation with -Wl,--unresolved-symbols=ignore-all |
+ — new test suite for registry.c tool registration system. | 10 | tests/test_registry.c: 38 test cases covering registration, lookup, list, edge cases |

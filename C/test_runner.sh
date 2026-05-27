@@ -97,6 +97,21 @@ else
     fail "registry (compilation failed)"
 fi
 
+echo ""; echo "=== Path Resolution (P21) Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_paths.c" "$CDIR/src/cli/paths.c" \
+    -o /tmp/hermes_test_paths -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_paths ]]; then
+    if /tmp/hermes_test_paths > /dev/null 2>&1; then
+        ok "paths (11 tests)"
+    else
+        fail "paths (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_paths
+else
+    fail "paths (compilation failed)"
+fi
+
 echo ""; echo "=== Microsoft Graph Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" -I"$CDIR/lib/libmsgraph" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
