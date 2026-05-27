@@ -7,8 +7,9 @@ Build clean. **83 unique tools** (registry_register). 98 CLI commands (COMMANDS[
 ~318 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
 
 ## Recent (this session)
-- file_batch: added batch chmod action (`mode` param, octal e.g. '755'). Parse mode string → mode_t, sandbox-checked per file, per-file result reporting. Closes 1 tool-depth gap for file_operations (batch chmod/chown).
-- file_batch: added batch touch action. Creates file if missing, updates timestamp if exists. Uses utimensat() + fopen("a") fallback. Closes 1 tool-depth gap (batch touch).
+- terminal.c: fixed JSON schema bug - stray escaped quote after `modal` in backend description. Schema parser was lenient but would reject at strict parse. Removed extra quote between `}` and `,`.
+- file_batch: added batch chmod action (`mode` param, octal e.g. '755'). Parse mode string -> mode_t, sandbox-checked per file, per-file result reporting. Closes 1 tool-depth gap for file_operations (batch chmod/chown).
+- file_batch: added batch touch action. Creates file if missing, updates timestamp if exists. Uses utimensat() + fopen() fallback. Closes 1 tool-depth gap (batch touch).
 
 ## Phase Order
 0. Display Parity (16) — 14/16 done
