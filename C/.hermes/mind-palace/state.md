@@ -1,4 +1,4 @@
-# Slermes C — State Dashboard (v29 — 2026-05-27)
+# Slermes C — State Dashboard (v30 — 2026-05-27)
 
 ## Build Metrics
 Build clean. **78 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 231/0/24.

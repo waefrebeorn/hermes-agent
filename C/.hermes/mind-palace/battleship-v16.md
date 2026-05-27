@@ -32,7 +32,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 12 | vision_tools | 22 | 6 | 16 | OCR (tesseract), face detection, barcode/QR, EXIF extraction, metadata, image classification, object detection, color analysis, text detection, landmark recognition |
 | 13 | image_generation_tool | 15 | 3 | 12 | Multi-provider (FAL, Replicate, Stability AI, OpenAI DALL-E), style presets, aspect ratio, negative prompts, image-to-image, inpainting, outpainting, control nets |
 | 14 | web_tools | 25 | 13 | 12 | Cookie jar, session persistence, proxy auth, form fill, JS execution, screenshot, auth handling, request/response intercept, rate limiting |
-| 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo, date), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context |
+| 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context. enable_image_understanding + enable_video_understanding added. |
 | 16 | video_generation_tool | 12 | 3 | 9 | Multi-provider, aspect ratio, duration, style, motion scale, loop, seed, negative prompt |
 | 17 | cronjob_tools | 17 | 12+ | 1 | approval mode, job kill, job history, timezone handling. pause/resume/run/update/list-named added. |
 | 18 | file_tools | 30 | 28 | 2 | Watch (inotify), binary ops (hash), file compare, merge. file_diff + perms + hex + syntax check + file_hash added. |

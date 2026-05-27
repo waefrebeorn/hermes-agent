@@ -114,3 +114,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 | T28 | file_hash tool — registered SHA-256/SHA-1/MD5 file hashing tool using existing hash_sha256_file/hash_sha1_hex/hash_md5 functions from libhash. Was fully implemented (handle_hash + SCHEMA_HASH) but never registered. | 1A | file.c: registry_register("file_hash", ...); handle_hash() + file_hash_handler() |
 | T29 | file_tool test compilation fix — added missing -I libbinary and binary.c to test_runner.sh compilation. The test was SKIP'd due to `#include "binary.h"` not found. Also changed tmpdir from /tmp/hermes_test_file (conflicted with binary path) to /tmp/hermes_test_file_data. Added 5 hash test assertions (58 total). | 10 | test_runner.sh: binary.c + -I libbinary; test_file.c: tmpdir path, extern file_hash_handler, hash test cases |
 | - | 78 tools (was 77). Suite 231/0/24 (was 230/0/25 — file_tool test now runs instead of skip). | | |
+
+## Phase 14: x_search enrichment (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T30 | x_search: added enable_image_understanding + enable_video_understanding boolean params. C x_search was missing these 2 features that Python has. Added to both schema and tool_def construction. | 1A | x_search.c: SCHEMA + handler tool_def builder |
+| - | 78 tools unchanged. Suite unchanged. 2 schema params closer to Python parity. | | |

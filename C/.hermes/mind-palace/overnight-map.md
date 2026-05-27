@@ -1,10 +1,10 @@
-# Slermes C — Overnight Map (v29 — ~372 Items)
+# Slermes C — Overnight Map (v30 — ~372 Items)
 
 ## Navigation
 - **Battleship:** battleship-v16.md — ~372 item-level gaps, 11 layers
-- **State:** state.md (v29) — ~43% parity, Phase 1 CLI Args ✅ (98 commands), DA v16 findings documented
+- **State:** state.md (v30) — ~43% parity, Phase 1 CLI Args ✅ (98 commands), DA v16 findings documented
 - **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Missing Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
-- **Goal:** goal-mantra.md (v29)
+- **Goal:** goal-mantra.md (v30)
 
 ## DA v16 Alert
 Phase 2 provider deepen claims are STALE. Verify each against source before implementing.

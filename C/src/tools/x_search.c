@@ -23,7 +23,9 @@ static const char *SCHEMA = "{"
       "\"allowed_x_handles\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Only search posts from these handles\"},"
       "\"excluded_x_handles\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Exclude posts from these handles\"},"
       "\"from_date\":{\"type\":\"string\",\"description\":\"Start date YYYY-MM-DD\"},"
-      "\"to_date\":{\"type\":\"string\",\"description\":\"End date YYYY-MM-DD\"}"
+      "\"to_date\":{\"type\":\"string\",\"description\":\"End date YYYY-MM-DD\"},"
+      "\"enable_image_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze images in matching posts\",\"default\":false},"
+      "\"enable_video_understanding\":{\"type\":\"boolean\",\"description\":\"Analyze videos in matching posts\",\"default\":false}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -111,6 +113,11 @@ char *x_search_handler(const char *args_json, const char *task_id) {
     if (from_date) json_set(tool_def, "from_date", json_string(from_date));
     const char *to_date = json_get_str(args, "to_date", NULL);
     if (to_date) json_set(tool_def, "to_date", json_string(to_date));
+
+    if (json_get_bool(args, "enable_image_understanding", false))
+        json_set(tool_def, "enable_image_understanding", json_bool(true));
+    if (json_get_bool(args, "enable_video_understanding", false))
+        json_set(tool_def, "enable_video_understanding", json_bool(true));
 
     /* Build request payload */
     json_node_t *payload = json_new_object();
