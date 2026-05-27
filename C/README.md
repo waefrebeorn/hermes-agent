@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 |||| Suite:  231/0/24 (220 test files, completes in <60s)
 |||| Binary: 30M    (dynamic ELF, -O2 -g)
 |||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
-||||| Parity:  ~43%   (~362 item-level gaps — see battleship-v16)
+||||| Parity:  ~43%   (~361 item-level gaps — see battleship-v16)
 ||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
 ||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 ||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings

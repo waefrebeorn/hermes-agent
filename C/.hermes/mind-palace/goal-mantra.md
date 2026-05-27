@@ -1,7 +1,7 @@
 # Slermes C — Goal Mantra (v32)
 
 P0: Full 1:1 drop-in replacement for Python Hermes.
-**~349 item-level parity gaps** (battleship-v16).
+**~348 item-level parity gaps** (battleship-v16).
 
 ## Phase Order
 0. Display Parity (16 gaps) — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)

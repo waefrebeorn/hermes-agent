@@ -1,4 +1,4 @@
-# Slermes C — Overnight Map (v32 — ~349 Items)
+# Slermes C — Overnight Map (v32 — ~348 Items)
 
 ## Navigation
 - **Battleship:** battleship-v16.md — ~354 item-level gaps, 11 layers
