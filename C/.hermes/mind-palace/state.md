@@ -1,7 +1,7 @@
-# Slermes C — State Dashboard (v36 — 2026-05-27)
+# Slermes C — State Dashboard (v37 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **83 unique tools** (registry_register). 117 CLI commands (table entries). 19 gateways. 10 provider types + metadata utility. 59 libs. 165 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 231/0/26.
+Build clean. **83 unique tools** (registry_register). 80 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 171 src/ .c files (non-deps). 224 test_*.c files. Binary: 30M. Suite: 231/0/26.
 
 ## 1:1 Parity Status (Triple DA v16)
 ~346 item-level gaps (battleship-v16 rows).

@@ -4,14 +4,14 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||| Suite:  231/0/26 (224 test files, completes in <60s)
-||||| Binary: 30M    (dynamic ELF, -O2 -g)
-||||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
-|||||| Parity:  ~43%   (~347 item-level gaps — see battleship-v16)
-|||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 117 commands wired.
+|||||| Suite:  231/0/26 (224 test files, completes in <60s)
+|||||| Binary: 30M    (dynamic ELF, -O2 -g)
+|||||| Source: 449 .c files (src/ + lib/ + tests/): 108K C LOC
+||||||| Parity:  ~43%   (~346 item-level gaps — see battleship-v16)
+||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 80 commands wired.
 |||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||CLI:    117 cmd_ functions — 83 unique tools registered
+|||||CLI:    80 cmd_ functions — 83 unique tools registered
 |||||Tools:  83 registered (86 at runtime with MCP dynamic)
 ||||Libraries: 59 C modules — zero external deps beyond libc+libssl
 ||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)

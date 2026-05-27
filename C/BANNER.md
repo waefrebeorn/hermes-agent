@@ -9,37 +9,34 @@
 
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
-   ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  373 items (Phase 1 ✅, Display 14/16, Phase 3 active)       ║
+   ║  v0.16.0-wubu  │  30MB binary  │  0 warnings                ║
+   ║  ~346 items (Phase 1 ✅, Display 14/16, Phase 3 active)       ║
    ╚══════════════════════════════════════════════════════════════╝
 
-   Fixed:   Tool call loop ✅ │ Auth header ✅ │ web_search ✅
-   Fixed:   Cron persistence ✅ │ cron_list ✅ │ Logger tests ✅
-   Working: Foundation deps ✅ │ Agent core 🟧 │ Tools 🟧
-   Working: Gateway 🟧 │ Cron/Adv 🟧
    DA v16:  Phase 2 deepen claims HEAVILY STALE — verify before impl
+   Recent:  web_get cookies + file_merge/file_watch tests
 
-## Phase Order
+## Phase Order (battleship-v16 ~346 items)
 
-Phase 0 — Display: 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-Phase 1 — CLI Args: ✅ ALL DONE (40 commands wired)
-Phase 2 — Provider Parity (26) — deepen 8 + port 18 (claims HEAVILY STALE)
-Phase 3 — Tool Features (49) — 49 remaining
-Phase 4 — Missing Tools (47) — 10 new found in v16 audit
+Phase 0 — Display Parity (16): 14/16 done
+Phase 1 — CLI Args: ✅ ALL DONE (80 commands wired)
+Phase 2 — Provider Parity (~20 real, HEAVILY STALE)
+Phase 3 — Tool Features (21)
+Phase 4 — Missing Tools (46)
 Phase 5 — Gateway (51) — platforms + deepening + infra
-Phase 6 — Agent Modules (74) — 52 unported + 20 deepen + 2 unwired stubs
-Phase 7 — Plugins (13) — port remaining
-Phase 8 — Libraries (19) — missing features
-Phase 9 — Security (15) — hardening
-Phase 10 — Tests (51) — coverage
-Phase 11 — Config/Infra (10) — expansion
+Phase 6 — Agent Modules (74)
+Phase 7 — Plugins (13)
+Phase 8 — Libraries (19)
+Phase 9 — Security (15)
+Phase 10 — Tests (50)
+Phase 11 — Config/Infra (10)
 
-## Build Metrics
-- Suite: 226/0/25 (216 test files, zero failures)
-- Tools: 77 unique (registry_register)
-- CLI: 80 commands
-- Providers: 10 (.c modules)
+## Build Metrics (v37)
+- Suite: 231/0/26 (224 test files, zero failures)
+- Tools: 83 unique (registry_register)
+- CLI: 80 commands (COMMANDS[] table)
+- Providers: 10 (.c modules + metadata)
 - Gateways: 19 (platforms)
 - Libs: 59 (lib/*/)
-- Source .c files: 166 (src/)
-- Test .c files: 216 (tests/)
+- Source .c files: 171 (src/)
+- Test .c files: 224 (tests/)
