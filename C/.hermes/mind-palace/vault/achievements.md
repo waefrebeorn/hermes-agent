@@ -142,3 +142,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T33 | video_generate: added model param (model override string). C video_gen was missing the model override param that Python supports. Added to schema + body builder. | 1A | video_gen.c: SCHEMA + body building with model |
 | - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 9→8. | |
+
+## Phase 18: cronjob timezone param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T34 | cronjob: added timezone param for per-job timezone. C cronjob was missing timezone support. Now stores/retrieves per-job timezone via cron_sqlite_update_job. Added to add/config/update actions. | 1A | cronjob.c: SCHEMA + handlers (add/config/update) |
+| - | 78 tools unchanged. Suite 231/0/24. timezone sub-gap closed. | |

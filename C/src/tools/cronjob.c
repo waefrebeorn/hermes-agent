@@ -25,7 +25,8 @@ static const char *SCHEMA = "{"
       "\"notify_on_complete\":{\"type\":\"boolean\",\"description\":\"Send notification on successful completion\"},"
       "\"notify_on_failure\":{\"type\":\"boolean\",\"description\":\"Send notification on job failure\"},"
       "\"retry\":{\"type\":\"integer\",\"description\":\"Max retries on failure (0=no retry)\",\"default\":0},"
-      "\"backoff\":{\"type\":\"integer\",\"description\":\"Base backoff seconds between retries (exponential)\",\"default\":60}"
+      "\"backoff\":{\"type\":\"integer\",\"description\":\"Base backoff seconds between retries (exponential)\",\"default\":60},"
+      "\"timezone\":{\"type\":\"string\",\"description\":\"Timezone for schedule (e.g., UTC, America/New_York). Default: system localtime\"}"
     "},"
     "\"required\":[\"action\"]"
 "}";
@@ -177,6 +178,12 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                             json_object_set(result, "context_from", json_new_string(context_from));
                         }
                     }
+
+                    /* Store timezone if provided */
+                    const char *tz = json_object_get_string(args, "timezone", NULL);
+                    if (tz && tz[0]) {
+                        cron_sqlite_update_job(g_cron_store, name, "timezone", tz);
+                    }
                 } else {
                     json_object_set(result, "status", json_new_string("error"));
                     json_object_set(result, "error", json_new_string("Failed to add job"));
@@ -202,6 +209,7 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
             bool has_notify_complete = json_obj_get(args, "notify_on_complete") != NULL;
             bool has_notify_failure = json_obj_get(args, "notify_on_failure") != NULL;
             bool has_retry = json_obj_get(args, "retry") != NULL;
+            bool has_timezone = json_obj_get(args, "timezone") != NULL;
 
             if (has_notify_complete)
                 cron_notify_on_complete(name, json_object_get_bool(args, "notify_on_complete", false));
@@ -211,6 +219,10 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                 int retry = (int)json_object_get_number(args, "retry", 0);
                 int backoff = (int)json_object_get_number(args, "backoff", 60);
                 cron_job_set_retry(name, retry, backoff);
+            }
+            if (has_timezone) {
+                const char *tz = json_object_get_string(args, "timezone", NULL);
+                if (tz) cron_sqlite_update_job(g_cron_store, name, "timezone", tz);
             }
 
             json_object_set(result, "status", json_new_string("configured"));
@@ -272,6 +284,14 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                     cron_sqlite_update_job(g_cron_store, name, "chain_from", cf);
                 }
             }
+            /* Update timezone */
+            if (json_obj_get(args, "timezone") != NULL) {
+                const char *tz = json_object_get_string(args, "timezone", NULL);
+                if (tz) {
+                    any_update = true;
+                    cron_sqlite_update_job(g_cron_store, name, "timezone", tz);
+                }
+            }
             if (any_update) {
                 json_object_set(result, "status", json_new_string("updated"));
             } else {
@@ -330,10 +350,10 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
 void registry_init_cronjob(void) {
     registry_register("cronjob",
         "Manage cron jobs. Actions: list (show all jobs), add (schedule a new job), "
-        "remove (delete a job), config (update notification/retry settings), "
-        "update (edit schedule, command, notification, retry, chaining of an existing job), "
+        "remove (delete a job), config (update notification/retry/timezone settings), "
+        "update (edit schedule, command, notification, retry, chaining, timezone of an existing job), "
         "pause (disable without removing), resume (re-enable), run (trigger immediately). "
         "Supports schedule validation, per-job notifications (notify_on_complete, "
-        "notify_on_failure), and automatic retry with exponential backoff.",
+        "notify_on_failure), automatic retry with exponential backoff, and per-job timezone.",
         SCHEMA, cronjob_handler);
 }
