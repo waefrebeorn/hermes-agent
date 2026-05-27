@@ -31,6 +31,27 @@ def analyze_exif(image_path):
     except Exception as e:
         return {"error": str(e)}
 
+def analyze_ocr(image_path):
+    """Extract text from image using tesseract OCR."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["tesseract", image_path, "stdout", "-l", "eng"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            text = result.stdout.strip()
+            if text:
+                return {"text": text, "length": len(text)}
+            return {"text": "", "length": 0, "note": "No text detected in image"}
+        return {"error": f"tesseract exited {result.returncode}: {result.stderr.strip()}"}
+    except FileNotFoundError:
+        return {"error": "tesseract not installed. Install: sudo apt install tesseract-ocr"}
+    except subprocess.TimeoutExpired:
+        return {"error": "OCR timed out after 30s"}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(json.dumps({"error": "Usage: vision_analysis.py <mode> <image_path>"}))
@@ -41,6 +62,8 @@ if __name__ == "__main__":
         result = analyze_colors(path)
     elif mode == "exif":
         result = analyze_exif(path)
+    elif mode == "ocr":
+        result = analyze_ocr(path)
     else:
         result = {"error": f"Unknown mode: {mode}"}
     print(json.dumps(result))

@@ -17,7 +17,8 @@ static const char *SCHEMA = "{"
     "\"properties\":{"
       "\"image_url\":{\"type\":\"string\",\"description\":\"Path or URL to image file\"},"
       "\"question\":{\"type\":\"string\",\"description\":\"Optional question about the image\"},"
-      "\"detail\":{\"type\":\"string\",\"description\":\"Detail level: 'low', 'high', or 'auto' (default). Controls image resolution for vision analysis.\"}"
+      "\"detail\":{\"type\":\"string\",\"description\":\"Detail level: 'low', 'high', or 'auto' (default). Controls image resolution for vision analysis.\"},"
+    "\"analysis\":{\"type\":\"string\",\"description\":\"Optional analysis type: 'colors' (dominant color palette), 'exif' (EXIF metadata), 'ocr' (text extraction via OCR). Requires local file path.\"}"
     "},"
     "\"required\":[\"image_url\"]"
 "}";
@@ -178,6 +179,17 @@ char *vision_handler(const char *args_json, const char *task_id) {
                         json_object_set(result, "exif", json_new_string(exif_data));
                     }
                     free(exif_data);
+                }
+
+                /* OCR text extraction via Python helper */
+                if (analysis && strcmp(analysis, "ocr") == 0) {
+                    char *ocr_data = run_cmd_full(
+                        "python3 src/tools/vision_analysis.py ocr '%s' 2>/dev/null",
+                        image_url);
+                    if (ocr_data && strlen(ocr_data) > 0) {
+                        json_object_set(result, "ocr", json_new_string(ocr_data));
+                    }
+                    free(ocr_data);
                 }
             }
 

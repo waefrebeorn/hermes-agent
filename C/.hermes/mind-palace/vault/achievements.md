@@ -1,9 +1,15 @@
      1|# Slermes C Translation — Vault of Achievements
      2|
      3|All completed work archived here. Clears the active gap list for fresh battleship generation.
-     4|Last updated: 2026-05-26
-     5|
-     6|## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
+     Last updated: 2026-05-27
+
+     ## Phase 13: Phase 3 Tool Features Completion (2026-05-27)
+
+     | ID | Description | Sector | Evidence |
+     |----|-------------|--------|----------|
+     | V14 | Vision OCR — text extraction via tesseract binary. Calls vision_analysis.py ocr mode, returns extracted text + character count. | 1A | vision.c: analysis="ocr" handler + schema; vision_analysis.py: analyze_ocr() function using subprocess tesseract |
+
+     ## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
      7|
      8|| ID | Description | Sector | Evidence |
      9||----|-------------|--------|----------|
