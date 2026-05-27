@@ -1,30 +1,24 @@
-# Slermes C — Overnight Map (v33 — ~348 Items)
+# Slermes C — Overnight Map (v34 — ~347 Items)
 
 ## Navigation
-- **Battleship:** battleship-v16.md — ~354 item-level gaps, 11 layers
-- **State:** state.md (v32) — ~43% parity, Phase 1 CLI Args ✅ (98 commands), DA v16 findings documented
-- **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools → Missing Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
-- **Goal:** goal-mantra.md (v32)
+- **Battleship:** battleship-v16.md — ~347 item-level gaps, 11 layers
+- **State:** state.md (v34) — ~43% parity, Phase 1 CLI Args ✅ (117 commands), DA v16 findings documented
+- **Phase Order:** Display (14/16) → CLI Args ✅ → Providers → Tools (21) → Missing Tools → Gateways → Agents → Plugins → Libraries → Security → Tests → Config
+- **Goal:** goal-mantra.md (v34)
 
 ## DA v16 Alert
 Phase 2 provider deepen claims are STALE. Verify each against source before implementing.
-**New stubs found:** 10 missing Python tools (feishu_drive_comment ×4, video_analyze, yuanbao ×5), 2 agent stubs (llm_background_review unwired, api_server mock fallback).
-Recommended: skip Phase 2 deepen entirely, go straight to Phase 3 tool features (30 gaps remaining).
+**New stubs found:** 10 missing Python tools (feishu_drive_comment ×4, video_analyze, yuanbao ×4), 2 agent stubs (llm_background_review unwired, api_server mock fallback).
+Recommended: skip Phase 2 deepen entirely, go straight to Phase 3 tool features (21 gaps remaining).
 
 ## Phase 0 — Display (16 gaps) — 14/16 done
 V01-V06 ✅, V10-V16 ✅. Remaining: V07 TUI, V08 Python TUI, V09 voice.
 
 ## Phase 1 — CLI Args (40 gaps) — ✅ ALL DONE
-All 80 commands wired with proper argument processing.
+All 117 commands wired with proper argument processing.
 
 ## Phase 2 — Provider Parity (~20 real gaps)
-Deepen claims mostly stale. Port non-OpenAI-compatible providers.
+All deepen claims stale per DA v16. Real port targets: copilot, copilot-acp, openai-codex, opencode-zen.
 
-## Phase 3-11 (~354 items)
-Tool features (26) → Missing tools (46) → Gateway (51) → Agent modules (74) → Plugins (13) → Libraries (19) → Security (15) → Tests (51) → Config (10)
-
-## Key Metrics
-- 78 unique tools, 98 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
-- Suite: 229/0/26, 220 test files, 160 src .c files
-- Binary: 30M
-- ~354 items in battleship-v16
+## Phase 3 — Tool Features (21 gaps)
+Web_get cookies param added (-1). Next: x_search filters (geo/media/user), web_get rate limiting, vision OCR, etc.

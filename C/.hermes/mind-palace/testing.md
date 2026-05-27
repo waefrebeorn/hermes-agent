@@ -1,4 +1,4 @@
-# Slermes C — Testing (v32 — 2026-05-27)
+# Slermes C — Testing (v34 — 2026-05-27)
 
 ## Suite
 ```bash
@@ -7,12 +7,12 @@ bash test_runner.sh              # Full suite
 bash test_runner.sh --verbose    # Per-test output
 ```
 
-**231 passed, 0 failed, 24 skipped** (zero failures).
+**229 passed, 0 failed, 26 skipped** (zero failures).
 
 ## Coverage by Area
 | Area | Files | Key Tests |
 |------|-------|-----------|
-| **Libraries** | ~58 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, toml, websocket, protobuf, dotenv, proc, template, skin, tui, display, ratelimit, rate_guard, filestate, tool_dispatch, etc. |
+| **Libraries** | ~59 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, websocket, protobuf, dotenv, proc, template, skin, tui, display, ratelimit, rate_guard, filestate, tool_dispatch, etc. |
 | **Providers** | 10 files | provider_error, anthropic/azure/bedrock/google/openrouter/xai/deepseek/custom depth, metadata, finish_reason, json_mode |
 | **Agent** | ~11 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer, subdir_hints, logger |
 | **CLI** | ~5 | commands, paths, display, TUI |
@@ -23,33 +23,5 @@ bash test_runner.sh --verbose    # Per-test output
 
 ## Tool Depth Notes
 - browser.c: 1,598 LOC (Python: 3,796) — missing autofill, cookies, PDF, HAR export
-- vision.c: 203 LOC (Python: 1,421) — missing OCR, face detection, barcode, EXIF
-- web.c: 466 LOC (Python: 1,561) — missing cookie jar, sessions, proxy, form fill
-- mcp_tool.c: 1,623 LOC (Python: 3,584) — missing SSE transport, OAuth, subscriptions
-- file.c: 1,078 LOC (Python: 1,220) — missing glob, watch, binary ops
-
-## Codebase Size
-- Source `.c` files: 449 (src/ + lib/ + tests/)
-- Source code lines: 84,164 (src/)
-- Library lines: 286,003 (lib/)
-- Test lines: 48,262 (tests/)
-- Header lines: 8,462 (include/)
-- Total: **~419K lines**
-
-## Known Gaps
-- No per-platform gateway integration tests (19 platforms)
-- No ACP protocol tests
-- No TUI component tests
-- No browser CDP or computer_use tests (external deps)
-- No environment backend tests (Docker, SSH)
-- No fuzz testing
-- No memory leak detection (valgrind/ASan in CI)
-
-## Build with Sanitizers
-```bash
-# AddressSanitizer
-make CFLAGS="-O1 -g -fsanitize=address" LDFLAGS="-fsanitize=address" slermes
-
-# UndefinedBehaviorSanitizer
-make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" slermes
-```
+- web.c: 601 LOC — cookies param added to web_get
+- x_search.c: lang filter added to searxng backend

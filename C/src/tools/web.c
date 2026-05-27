@@ -28,6 +28,7 @@ static const char *SCHEMA_GET = "{"
       "\"user_agent\":{\"type\":\"string\",\"description\":\"Custom User-Agent header value. Default: libhttp/X.Y\"},"
       "\"follow_redirects\":{\"type\":\"boolean\",\"description\":\"Follow HTTP redirects (3xx). Default: true\",\"default\":true},"
       "\"max_redirects\":{\"type\":\"integer\",\"description\":\"Max redirects to follow (0=unlimited, default: 5)\",\"default\":5}"
+      "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"}"
     "},"
     "\"required\":[\"url\"]"
 "}"; /* end SCHEMA_GET */
@@ -62,6 +63,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *auth = json_object_get_string(args, "auth", NULL);
     const char *proxy = json_object_get_string(args, "proxy", NULL);
     const char *user_agent = json_object_get_string(args, "user_agent", NULL);
+    const char *cookies = json_object_get_string(args, "cookies", NULL);
 
     /* Strdup values that survive json_free */
     char *headers_copy = headers_str ? strdup(headers_str) : NULL;
@@ -69,6 +71,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     char *auth_copy = auth ? strdup(auth) : NULL;
     char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
+    char *cookies_copy = cookies ? strdup(cookies) : NULL;
 
     /* Redirect following params */
     bool follow_redirects = json_object_get_bool(args, "follow_redirects", true);
@@ -83,6 +86,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(headers_copy);
         free(body_copy);
         free(proxy_copy);
+        free(cookies_copy);
         free(ua_copy);
         return strdup("{\"error\":\"Missing url\"}");
     }
@@ -143,8 +147,17 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     } else {
         use_headers = headers_copy ? headers_copy : default_headers;
     }
+    /* Inject Cookie header if cookies param provided */
+    char cookie_headers[4096];
+    const char *final_headers = use_headers;
+    if (cookies_copy && cookies_copy[0]) {
+        snprintf(cookie_headers, sizeof(cookie_headers),
+                 "Cookie: %s\r\n%s", cookies_copy,
+                 use_headers ? use_headers : "");
+        final_headers = cookie_headers;
+    }
     http_response_t *resp = http_request(client, method, url,
-                                          use_headers,
+                                          final_headers,
                                           body_copy,
                                           body_copy ? strlen(body_copy) : 0);
 
@@ -153,6 +166,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(headers_copy);
         free(body_copy);
         free(proxy_copy);
+        free(cookies_copy);
         free(ua_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
     }
@@ -171,6 +185,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     free(body_copy);
     free(auth_copy);
     free(proxy_copy);
+    free(cookies_copy);
     free(ua_copy);
     return json_out;
 }

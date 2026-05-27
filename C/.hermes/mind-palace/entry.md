@@ -1,15 +1,15 @@
-# Slermes C — Entry Point (v10)
+# Slermes C — Entry Point (v34)
 
 ```
-Suite:   229/0/26  (220 test files, zero failures)
+Suite:   229/0/26  (221 test files, zero failures)
 Binary:  30M     (dynamic ELF, 0 warnings)
-Tools:   78      (unique, registry_register)
-CLI:     98      (slash commands with handlers)
+Tools:   83      (unique, registry_register)
+CLI:     117     (slash commands with handlers)
 Gateways:19      (platforms)
-Providers:9      (.c modules + metadata)
+Providers:10     (.c modules + metadata)
 Libs:    59      (lib/*/)
-Gaps:    ~361    (items across 11 phases, battleship-v16 Triple DA)
-|Parity:  item-level (~361 items — see battleship-v16)
+Gaps:    ~347    (items across 11 phases, battleship-v16 Triple DA)
+Parity:  item-level (~347 items — see battleship-v16)
 ```
 
 ## Orientation
@@ -17,14 +17,4 @@ Gaps:    ~361    (items across 11 phases, battleship-v16 Triple DA)
 - **Binary:** `slermes` (was `hermes`)
 - **Config:** `~/.slermes/` (env: `SLERMES_HOME`)
 - **Mind palace:** `.hermes/mind-palace/`
-- **Battleship:** `battleship-v16.md` (~361 items across 11 phases)
-- **Vault:** `.hermes/mind-palace/vault/` (achievements, historical data)
-
-## Phase Progress
-- Phase 0 (Display): 14/16 done (V07 TUI, V08 Python TUI, V09 voice)
-- Phase 1 (CLI Args): ✅ ALL DONE (40 commands wired)
-- Phase 2 (Provider Parity): claims HEAVILY STALE per DA v16
-- Phase 3 (Tool Features): 34 remaining
-- Phase 4 (Missing Tools): 46 — 10 new found in v16 audit
-- Phase 5 (Gateway): 51
-- Phase 6 (Agent Modules): 74 — 2 unwired stubs found (llm_background_review, api_server mock)
+- **Battleship:** `battleship-v16.md` (~347 items across 11 phases)
