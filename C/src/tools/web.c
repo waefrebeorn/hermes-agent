@@ -29,7 +29,8 @@ static const char *SCHEMA_GET = "{"
       "\"user_agent\":{\"type\":\"string\",\"description\":\"Custom User-Agent header value. Default: libhttp/X.Y\"},"
       "\"follow_redirects\":{\"type\":\"boolean\",\"description\":\"Follow HTTP redirects (3xx). Default: true\",\"default\":true},"
       "\"max_redirects\":{\"type\":\"integer\",\"description\":\"Max redirects to follow (0=unlimited, default: 5)\",\"default\":5},"
-      "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"}"
+      "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"},"
+      "\"include_body\":{\"type\":\"boolean\",\"description\":\"Include response body in output. Set false to return only status code and URL (faster, less token usage).\",\"default\":true}"
     "},"
     "\"required\":[\"url\"]"
 "}"; /* end SCHEMA_GET */
@@ -73,6 +74,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
     char *cookies_copy = cookies ? strdup(cookies) : NULL;
+    bool include_body_val = json_object_get_bool(args, "include_body", true);
 
     /* Redirect following params */
     bool follow_redirects = json_object_get_bool(args, "follow_redirects", true);
@@ -185,8 +187,10 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     json_node_t *result = json_new_object();
     json_object_set(result, "url", json_new_string(url));
     json_object_set(result, "status_code", json_new_number((double)resp->status));
-    json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
-    json_object_set(result, "body_length", json_new_number((double)resp->body_len));
+    if (include_body_val) {
+        json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
+        json_object_set(result, "body_length", json_new_number((double)resp->body_len));
+    }
 
     char *json_out = json_serialize(result);
     json_free(result);

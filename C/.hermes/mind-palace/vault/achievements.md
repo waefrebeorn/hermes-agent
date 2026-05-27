@@ -374,3 +374,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | XS-04 | Exclude retweets — added `exclude_retweets` (boolean, default false) param. When true, sets exclude_retweets=true in xAI tool definition. | 1A (x_search_tool) | src/tools/x_search.c — exclude_retweets schema entry, handler wiring |
+
+## Phase 28: include_body param — web tool (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| WT-02 | Body-less request mode — added `include_body` (boolean, default true) param. When false, returns only URL and status code without response body. Reduces token usage for connectivity checks. | 1A (web_tools) | src/tools/web.c — include_body schema entry, handler conditional body output |
