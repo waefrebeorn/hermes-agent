@@ -15,7 +15,8 @@ static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
       "\"file_path\":{\"type\":\"string\",\"description\":\"Absolute path to audio file (mp3, wav, ogg, m4a, etc.)\"},"
-      "\"model\":{\"type\":\"string\",\"description\":\"Provider model name, e.g. 'whisper-large-v3-turbo' (groq), 'whisper-1' (openai), 'grok-stt' (xai). Omit for auto-detect.\"}"
+      "\"model\":{\"type\":\"string\",\"description\":\"Provider model name, e.g. 'whisper-large-v3-turbo' (groq), 'whisper-1' (openai), 'grok-stt' (xai). Omit for auto-detect.\"},"
+      "\"language\":{\"type\":\"string\",\"description\":\"Language code (e.g., 'en', 'fr', 'de', 'zh'). Improves accuracy for known language.\"}"
     "},"
     "\"required\":[\"file_path\"]"
 "}";
@@ -38,6 +39,7 @@ char *transcribe_handler(const char *args_json, const char *task_id) {
     }
 
     const char *model = json_object_get_string(args, "model", NULL);
+    const char *language = json_object_get_string(args, "language", NULL);
 
     /* Validate file first */
     char *validation = transcribe_validate_file(file_path);

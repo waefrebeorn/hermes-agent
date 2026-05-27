@@ -212,3 +212,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T43 | x_search: added max_results param (1-50, default 10). C x_search was missing result count control. Added to schema + tool_def builder. | 1A | x_search.c: SCHEMA + tool_def with max_results |
 | - | 78 tools unchanged. Suite 231/0/24. | |
+
+## Phase 28: transcribe language param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T44 | transcribe: added language param for language hint. C transcribe was missing spoken language hint. Added to schema + handler extraction. | 1A | transcribe.c: SCHEMA + handler extraction |
+| - | 78 tools unchanged. Suite 231/0/24. | |
