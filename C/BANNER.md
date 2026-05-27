@@ -19,7 +19,7 @@
 ## Phase Order (battleship-v16 ~346 items)
 
 Phase 0 — Display Parity (16): 14/16 done
-Phase 1 — CLI Args: ✅ ALL DONE (80 commands wired)
+Phase 1 — CLI Args: ✅ ALL DONE (98 commands wired)
 Phase 2 — Provider Parity (~20 real, HEAVILY STALE)
 Phase 3 — Tool Features (21)
 Phase 4 — Missing Tools (46)
@@ -31,10 +31,10 @@ Phase 9 — Security (15)
 Phase 10 — Tests (50)
 Phase 11 — Config/Infra (10)
 
-## Build Metrics (v39)
-- Suite: 242/1/14 (224 test files, zero failures)
+## Build Metrics (v40)
+- Suite: 243/0/14 (224 test files, zero failures)
 - Tools: 83 unique (registry_register)
-- CLI: 80 commands (COMMANDS[] table)
+- CLI: 98 commands (COMMANDS[] table)
 - Providers: 10 (.c modules + metadata)
 - Gateways: 19 (platforms)
 - Libs: 59 (lib/*/)

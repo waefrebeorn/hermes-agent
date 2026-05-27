@@ -1,9 +1,43 @@
-# GOAL MANTRA — Slermes C Translation
+# Slermes C — Goal Mantra (v40)
 
-> **This file has moved.** The canonical goal mantra is at `mind-palace/goal-mantra.md`.
->
-> The old May 25 HONEST mantra (292 gaps, 5 P0 done, P1-P3 waves, 15 warnings) has been
-> superseded. Current loop: read state.md → battleship-v16 → prestige → pick first unclosed
-> gap → implement → build → test → update ALL docs → vault → commit → repeat.
->
-> 🔗 **[mind-palace/goal-mantra.md](mind-palace/goal-mantra.md)**
+── STATE: battleship documents in C/.hermes/mind-palace/.
+   Suite: 243/0/14. Tools: 83. CLI: 98 commands.
+   Gateways: 19. Providers: 10. Libs: 59.
+   src/ .c: 146. Test files: 224. Binary: 30M.
+   ~346 item-level parity gaps (battleship-v16).
+   Build: make -j$(nproc). Test: bash test_runner.sh.
+
+── LOOP: read state.md → battleship → prestige → plan → overnight →
+   pick first unclosed gap → implement → build → test → update ALL docs →
+   search_files for stale numbers across all markdowns →
+   vault resolved gap with file:line evidence → commit → repeat.
+   No questions. No choices. No "what next."
+
+── PHASE ORDER: follow battleship-v16 Phase Order section.
+   Phase 0 — Display (16): 14/16 done.
+   Phase 1 — CLI Args: ✅ ALL DONE.
+   Phase 2 — Provider Parity (~20 real, HEAVILY STALE).
+   Phase 3 — Tool Features (21 remaining: mcp_tool, browser, tts, etc.).
+   Phase 4 — Missing Tools (46).
+   Phase 5-11: Gateway (51) → Agent (74) → Plugins (13) → Libs (19) → Security (15) → Tests (50) → Infra (10).
+
+── DOC DISCIPLINE: after every implementation pass, update ALL walkway files
+   (state, goal-mantra, prestige, overnight, plan) AND README AND banner
+   AND battleship AND testing.md AND entry.md AND index.md.
+   Barnacle hunt stale numbers with search_files after every patch batch.
+
+── VAULT: resolved gaps go to vault/achievements.md with file:line evidence.
+   Stale claims go to vault with explanation.
+
+   Battleship has only active gaps — no ✅, no stale items.
+
+── MEMORY: save user preferences and durable env facts. Do NOT save task
+   progress, PR numbers, commit SHAs, or session outcomes. Session_search
+   for cross-session recall. Procedural patterns as skills.
+
+── NO TIME: no dates, no pacing, no effort framing. Every gap is code.
+   Work until done, pick next. Exhaust only: "awaiting direction."
+
+── CAVEMAN: this paste only. Walkway files in full prose.
+
+KEEP WORKING
