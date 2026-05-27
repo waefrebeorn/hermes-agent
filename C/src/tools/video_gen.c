@@ -119,6 +119,17 @@ char *video_generate_handler(const char *args_json, const char *task_id) {
         if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
     }
 
+    /* Serialize reference_image_urls array */
+    json_t *ref_imgs = json_obj_get(args, "reference_image_urls");
+    if (ref_imgs && json_len(ref_imgs) > 0) {
+        char *ref_serialized = json_serialize(ref_imgs);
+        if (ref_serialized) {
+            n = snprintf(body + pos, rem, ",\"reference_image_urls\":%s", ref_serialized);
+            if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
+            free(ref_serialized);
+        }
+    }
+
     if (strcmp(resolution, "720p") != 0) {
         n = snprintf(body + pos, rem, ",\"resolution\":\"%s\"", resolution);
         if (n > 0 && (size_t)n < rem) { pos += n; rem -= n; }
@@ -242,7 +253,8 @@ void registry_init_video_gen(void) {
         "  \"negative_prompt\":{\"type\":\"string\",\"description\":\"What to avoid in the video\"},"
         "  \"audio\":{\"type\":\"boolean\",\"description\":\"Generate with audio track\",\"default\":false},"
         "  \"seed\":{\"type\":\"integer\",\"description\":\"Random seed for reproducibility\"},"
-        "  \"model\":{\"type\":\"string\",\"description\":\"Model override (e.g., fal-ai/veo3, fal-ai/video-consistency)\"}"
+        "  \"model\":{\"type\":\"string\",\"description\":\"Model override (e.g., fal-ai/veo3, fal-ai/video-consistency)\"},"
+        "  \"reference_image_urls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Optional reference image URLs for style/consistency\"}"
         "},"
         "\"required\":[\"prompt\"]"
         "}",

@@ -149,3 +149,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T34 | cronjob: added timezone param for per-job timezone. C cronjob was missing timezone support. Now stores/retrieves per-job timezone via cron_sqlite_update_job. Added to add/config/update actions. | 1A | cronjob.c: SCHEMA + handlers (add/config/update) |
 | - | 78 tools unchanged. Suite 231/0/24. timezone sub-gap closed. | |
+
+## Phase 19: video_gen reference_image_urls (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T35 | video_generate: added reference_image_urls param (JSON array of URL strings). C video_gen was missing reference image support that Python provides. Added to schema + body builder using json_serialize for clean array embedding. | 1A | video_gen.c: SCHEMA + body building with json_serialize(ref_imgs) |
+| - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 8→7. | |
