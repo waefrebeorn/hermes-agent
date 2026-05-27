@@ -330,3 +330,11 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | SM-01 | reply_to_message_id param — added `reply_to_message_id` (string, optional, platform-specific format) for replying to specific messages. Wired into telegram sendMessage as `--reply_to` flag and generic platform routing. | 1A (send_message_tool) | src/tools/send_message.c — schema param at line 21, handler extraction at line 38, telegram text send at line 174, generic platform send at line 217 |
+
+## Phase 21: Color analysis + EXIF extraction — vision tool (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| VI-01 | Color analysis — added `analysis="colors"` param. Extracts 8 dominant colors via Python PIL (Counter + getdata), returns hex codes. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py colors |
+| VI-02 | EXIF extraction — added `analysis="exif"` param. Reads EXIF tags via Python PIL (ExifTags), returns key:value pairs. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py exif |
+| VI-03 | Vision analysis helper script — separate Python script for PIL-based image analysis (colors + EXIF). | 1A (vision_tools) | src/tools/vision_analysis.py — analyze_colors(), analyze_exif() functions |

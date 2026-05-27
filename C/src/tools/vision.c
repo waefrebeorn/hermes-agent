@@ -107,6 +107,7 @@ char *vision_handler(const char *args_json, const char *task_id) {
     const char *image_url = json_object_get_string(args, "image_url", NULL);
     const char *question = json_object_get_string(args, "question", NULL);
     const char *detail = json_object_get_string(args, "detail", NULL);
+    const char *analysis = json_object_get_string(args, "analysis", NULL);
 
     json_node_t *result = json_new_object();
 
@@ -130,6 +131,7 @@ char *vision_handler(const char *args_json, const char *task_id) {
         } else {
             json_object_set(result, "image_url", json_new_string(image_url));
             if (detail) json_object_set(result, "detail", json_new_string(detail));
+            if (analysis) json_object_set(result, "analysis", json_new_string(analysis));
 
             /* Try to get image metadata via file command */
             if (is_local) {
@@ -154,6 +156,28 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 if (dims) {
                     json_object_set(result, "dimensions", json_new_string(dims));
                     free(dims);
+                }
+
+                /* Color analysis via Python helper */
+                if (analysis && strcmp(analysis, "colors") == 0) {
+                    char *colors = run_cmd_full(
+                        "python3 src/tools/vision_analysis.py colors '%s' 2>/dev/null",
+                        image_url);
+                    if (colors && strlen(colors) > 0) {
+                        json_object_set(result, "color_analysis", json_new_string(colors));
+                    }
+                    free(colors);
+                }
+
+                /* EXIF extraction via Python helper */
+                if (analysis && strcmp(analysis, "exif") == 0) {
+                    char *exif_data = run_cmd_full(
+                        "python3 src/tools/vision_analysis.py exif '%s' 2>/dev/null",
+                        image_url);
+                    if (exif_data && strlen(exif_data) > 0) {
+                        json_object_set(result, "exif", json_new_string(exif_data));
+                    }
+                    free(exif_data);
                 }
             }
 
