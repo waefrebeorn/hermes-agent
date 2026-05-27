@@ -14,7 +14,7 @@ P0: Full 1:1 drop-in replacement for Python Hermes.
 7. Plugins (13) — port remaining plugins
 8. Libraries (19) — missing library features
 9. Security (15) — hardening
-10. Test Coverage (51) — tests for untested modules
+10. Test Coverage (50) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
 ## Next: Phase 3 — Tool Features (47 remaining)

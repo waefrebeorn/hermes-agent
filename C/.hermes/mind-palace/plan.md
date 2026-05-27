@@ -2,7 +2,7 @@
 
 ## Verified State
 Build clean. 77 unique tools, 98 CLI commands, 9 provider types + metadata, 19 gateways, 59 libs.
-Suite: 229/0/25, 219 test files, 160 src .c files. Binary: 30M.
+Suite: 230/0/25, 220 test files, 160 src .c files. Binary: 30M.
 ~43% parity at function level (~1,412 C fns vs ~3,251 Python fns).
 
 ## DA v16 Key Findings
@@ -27,7 +27,7 @@ Recent: cronjob pause/resume/run + binary_extensions wired (-2 gaps).
 7. Plugins (13) — port remaining plugins
 8. Libraries (19) — missing library features
 9. Security (15) — hardening
-10. Test Coverage (51) — tests for untested modules
+10. Test Coverage (50) — tests for untested modules
 11. Config/Infra (10) — config expansion, refactoring
 
 ## Next: Phase 3 — Tool Features (47 remaining)

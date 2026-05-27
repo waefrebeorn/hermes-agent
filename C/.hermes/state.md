@@ -4,6 +4,6 @@
 >
 > The old May 25 v0.14.0-wubu state (4 tools, 292 gaps, only OpenAI, 15 warnings) has been
 > superseded. Current state: 77 tools, 98 CLI commands, 9 providers, 19 gateways, 59 libs,
-> 229/0/25 suite, 30M binary, 0 warnings, ~43% parity at function level.
+> 230/0/25 suite, 30M binary, 0 warnings, ~43% parity at function level.
 >
 > 🔗 **[mind-palace/state.md](mind-palace/state.md)**

@@ -25,6 +25,6 @@ Tool features (49) → Missing tools (46) → Gateway (51) → Agent modules (74
 
 ## Key Metrics
 - 77 unique tools, 98 CLI commands, 9 providers + metadata, 19 gateways, 59 libs
-- Suite: 229/0/25, 219 test files, 160 src .c files
+- Suite: 230/0/25, 220 test files, 160 src .c files
 - Binary: 30M
 - ~1,912 function gaps = ~43% parity

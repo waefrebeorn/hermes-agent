@@ -1,7 +1,7 @@
 # Slermes C — State Dashboard (v28 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **77 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 219 test_*.c files. Binary: 30M. Suite: 229/0/25.
+Build clean. **77 unique tools** (registry_register). 98 CLI commands (table entries). 19 gateways. 9 provider types + metadata utility. 59 libs. 160 src/ .c files (non-deps). 220 test_*.c files. Binary: 30M. Suite: 230/0/25.
 
 ## 1:1 Parity Status (Triple DA v16)
 Python: ~3,251 core functions (battleship-v16 baseline)
@@ -41,5 +41,5 @@ Zero gateway polling stubs — all 13 platforms with poll_messages have real imp
 7. Plugins (13 gaps) — port remaining plugins
 8. Libraries (19 gaps) — add missing library features
 9. Security (15 gaps) — security hardening
-10. Test Coverage (51 gaps) — tests for untested modules
+10. Test Coverage (50 gaps) — tests for untested modules
 11. Config/Infra (10 gaps) — config expansion, refactoring
