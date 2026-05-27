@@ -36,6 +36,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     const char *media_path = json_object_get_string(args, "media_path", NULL);
     const char *platform_override = json_object_get_string(args, "platform", NULL);
     const char *thread_id = json_object_get_string(args, "thread_id", NULL);
+    const char *reply_to = json_object_get_string(args, "reply_to_message_id", NULL);
 
     json_node_t *result = json_new_object();
 
@@ -170,9 +171,15 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                              chat_id ? chat_id : "", actual_media, escaped_msg);
                 }
             } else {
-                snprintf(cmd, sizeof(cmd),
-                         "hermes gateway telegram sendMessage --chat_id '%s' --text '%s' 2>/dev/null",
-                         chat_id ? chat_id : "", escaped_msg);
+                if (reply_to) {
+                    snprintf(cmd, sizeof(cmd),
+                             "hermes gateway telegram sendMessage --chat_id '%s' --text '%s' --reply_to '%s' 2>/dev/null",
+                             chat_id ? chat_id : "", escaped_msg, reply_to);
+                } else {
+                    snprintf(cmd, sizeof(cmd),
+                             "hermes gateway telegram sendMessage --chat_id '%s' --text '%s' 2>/dev/null",
+                             chat_id ? chat_id : "", escaped_msg);
+                }
             }
 
             int rc = system(cmd);
@@ -207,6 +214,11 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                 snprintf(cmd, sizeof(cmd),
                          "hermes gateway %s sendMessage --chat_id '%s' --text '%s' 2>/dev/null",
                          platform, chat_id, escaped_msg);
+                if (reply_to) {
+                    int clen = strlen(cmd);
+                    snprintf(cmd + clen, sizeof(cmd) - clen,
+                             " --reply_to '%s'", reply_to);
+                }
             } else if (target[0] == '#') {
                 snprintf(cmd, sizeof(cmd),
                          "hermes gateway %s sendMessage --channel '%s' --text '%s' 2>/dev/null",

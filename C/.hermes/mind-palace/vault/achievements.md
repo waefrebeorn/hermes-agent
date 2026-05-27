@@ -324,3 +324,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 |----|-------------|--------|----------|
 | IG-01 | Seed parameter — added `seed` (int, optional, 0=random) for reproducible image generation. When >0, passed as `seed` field to FAL API | 1A (image_generation_tool) | src/tools/image_gen.c — seed param extraction at line 34, body construction at line 66 |
 | IG-02 | Num images parameter — added `num_images` (int, optional, 1-4, default 1) for generating multiple images per prompt. Capped at 4. | 1A (image_generation_tool) | src/tools/image_gen.c — num_images param extraction at line 35, cap at 4, body construction at line 70 |
+
+## Phase 20: reply_to_message_id — send_message tool (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| SM-01 | reply_to_message_id param — added `reply_to_message_id` (string, optional, platform-specific format) for replying to specific messages. Wired into telegram sendMessage as `--reply_to` flag and generic platform routing. | 1A (send_message_tool) | src/tools/send_message.c — schema param at line 21, handler extraction at line 38, telegram text send at line 174, generic platform send at line 217 |
