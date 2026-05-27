@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include "skill_provenance.h"
+#include "difflib.h"
 #include "skill_usage.h"
 
 /* ================================================================
@@ -283,6 +284,27 @@ static char *action_create(json_node_t *args, const char *skills_dir) {
     }
 
     /* Write SKILL.md */
+    /* Backup before editing */
+    {
+        FILE *fsrc = fopen(sk_path, "rb");
+        if (fsrc) {
+            fseek(fsrc, 0, SEEK_END);
+            long fsz = ftell(fsrc);
+            rewind(fsrc);
+            if (fsz > 0 && fsz < 10485760) {
+                char *bak = (char *)malloc((size_t)fsz + 1);
+                if (bak) {
+                    size_t n = fread(bak, 1, (size_t)fsz, fsrc);
+                    bak[n] = '\0';
+                    fclose(fsrc);
+                    char bak_path[MAX_PATH];
+                    snprintf(bak_path, sizeof(bak_path), "%s.bak", sk_path);
+                    write_skill_file(bak_path, bak);
+                    free(bak);
+                } else { fclose(fsrc); }
+            } else { fclose(fsrc); }
+        }
+    }
     if (!write_skill_file(sk_path, content)) {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string("Failed to write SKILL.md"));
@@ -348,6 +370,27 @@ static char *action_edit(json_node_t *args, const char *skills_dir) {
         char *s = json_serialize(r); json_free(r); return s;
     }
 
+    /* Backup before editing */
+    {
+        FILE *fsrc = fopen(sk_path, "rb");
+        if (fsrc) {
+            fseek(fsrc, 0, SEEK_END);
+            long fsz = ftell(fsrc);
+            rewind(fsrc);
+            if (fsz > 0 && fsz < 10485760) {
+                char *bak = (char *)malloc((size_t)fsz + 1);
+                if (bak) {
+                    size_t n = fread(bak, 1, (size_t)fsz, fsrc);
+                    bak[n] = '\0';
+                    fclose(fsrc);
+                    char bak_path[MAX_PATH];
+                    snprintf(bak_path, sizeof(bak_path), "%s.bak", sk_path);
+                    write_skill_file(bak_path, bak);
+                    free(bak);
+                } else { fclose(fsrc); }
+            } else { fclose(fsrc); }
+        }
+    }
     if (!write_skill_file(sk_path, content)) {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string("Failed to write SKILL.md"));
@@ -792,10 +835,48 @@ char *skill_manage_handler(const char *args_json, const char *task_id) {
         result = action_remove_file(args, skills_dir);
     else if (strcmp(action, "deps") == 0)
         result = action_deps(args, skills_dir);
-    else {
+    else if (strcmp(action, "diff") == 0) {
+        const char *name = json_object_get_string(args, "name", NULL);
+        if (!name || !*name) {
+            json_node_t *r = json_new_object();
+            json_object_set(r, "error", json_new_string("Missing 'name'"));
+            char *s = json_serialize(r); json_free(r); return s;
+        }
+        char sk_path[MAX_PATH];
+        skill_sk_path(skills_dir, name, sk_path, sizeof(sk_path));
+        char bak_path[MAX_PATH];
+        snprintf(bak_path, sizeof(bak_path), "%s.bak", sk_path);
+
+        char *current = read_skill_file(sk_path);
+        char *backup = read_skill_file(bak_path);
+
+        json_node_t *r = json_new_object();
+        json_object_set(r, "name", json_new_string(name));
+
+        if (!backup) {
+            json_object_set(r, "diff", json_new_string("No backup available (first edit since backup system)"));
+        } else if (!current) {
+            json_object_set(r, "diff", json_new_string("Current SKILL.md not found"));
+        } else if (strcmp(current, backup) == 0) {
+            json_object_set(r, "diff", json_new_string("No changes since last backup (identical)"));
+        } else {
+            char *diff_str = difflib_unified_diff(backup, current, 3);
+            if (diff_str) {
+                json_object_set(r, "diff", json_new_string(diff_str));
+                free(diff_str);
+            } else {
+                json_object_set(r, "diff", json_new_string("Diff generation failed"));
+            }
+        }
+
+        free(current);
+        free(backup);
+        result = json_serialize(r);
+        json_free(r);
+    } else {
         json_node_t *r = json_new_object();
         json_object_set(r, "error", json_new_string(
-            "Unknown action. Valid: create, edit, patch, delete, write_file, remove_file"));
+            "Unknown action. Valid: create, edit, patch, delete, write_file, remove_file, deps, diff"));
         result = json_serialize(r);
         json_free(r);
     }
