@@ -14,6 +14,7 @@
      | ID | Description | Sector | Evidence |
      |----|-------------|--------|----------|
      | P04 | video_analyze — new video analysis tool using ffprobe. Extracts video metadata (codec, resolution, duration, bitrate, framerate), audio stream info, and scene detection via ffprobe lavfi. Supports local files and remote URLs. | 1B | video_analyze.c: registry_init_video_analyze(), video_analyze_handler() with ffprobe JSON parsing; tool_init.c: registry_init_video_analyze(); Makefile: added video_analyze.o |
+| T01 | video_analyze tests — 3 functional tests: ffprobe availability, JSON output parsing, schema handling. Suite: 258/0/0 (+1). | 10 | tests/test_video_analyze.c: test_has_video_extension(), test_ffprobe_parse(), test_video_analyze_empty_args() |
 
      ## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
      7|
