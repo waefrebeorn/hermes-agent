@@ -33,7 +33,8 @@ static const char *SCHEMA = "{"
       "\"geo_lat\":{\"type\":\"number\",\"description\":\"Latitude for geographic search filter (e.g., 37.7749). Requires geo_long and geo_radius_km.\"},"
       "\"geo_long\":{\"type\":\"number\",\"description\":\"Longitude for geographic search filter (e.g., -122.4194). Requires geo_lat and geo_radius_km.\"},"
       "\"geo_radius_km\":{\"type\":\"number\",\"description\":\"Search radius in kilometers from geo coordinates. Requires geo_lat and geo_long.\"},"
-      "\"sort_order\":{\"type\":\"string\",\"description\":\"Sort order: 'relevance' or 'recency' (default: relevance)\",\"default\":\"relevance\"}"
+      "\"sort_order\":{\"type\":\"string\",\"description\":\"Sort order: 'relevance' or 'recency' (default: relevance)\",\"default\":\"relevance\"},"
+      "\"exclude_retweets\":{\"type\":\"boolean\",\"description\":\"Exclude retweets from search results\",\"default\":false}"
     "},"
     "\"required\":[\"query\"]"
 "}";
@@ -215,6 +216,11 @@ char *x_search_handler(const char *args_json, const char *task_id) {
     const char *sort_order = json_get_str(args, "sort_order", NULL);
     if (sort_order && *sort_order)
         json_set(tool_def, "sort_order", json_string(sort_order));
+
+    /* Exclude retweets */
+    bool exclude_retweets = json_get_bool(args, "exclude_retweets", false);
+    if (exclude_retweets)
+        json_set(tool_def, "exclude_retweets", json_bool(true));
     }
 
     /* Build request payload */

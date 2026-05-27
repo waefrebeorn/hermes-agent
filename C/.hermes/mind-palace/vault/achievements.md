@@ -368,3 +368,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | XS-03 | Sort order search param — added `sort_order` (string, "relevance" or "recency", default "relevance") param for controlling X search result ordering. | 1A (x_search_tool) | src/tools/x_search.c — sort_order schema entry, handler wiring in tool_def builder |
+
+## Phase 27: exclude_retweets param — x_search (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| XS-04 | Exclude retweets — added `exclude_retweets` (boolean, default false) param. When true, sets exclude_retweets=true in xAI tool definition. | 1A (x_search_tool) | src/tools/x_search.c — exclude_retweets schema entry, handler wiring |
