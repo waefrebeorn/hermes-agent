@@ -2826,6 +2826,16 @@ if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
 else skip "file_watch (compilation failed)"
 fi
 
+# file_batch tests (6 filesystem action tests)
+if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
+    "$CDIR/tests/test_file_batch.c" \
+    -o /tmp/hermes_test_file_batch -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_file_batch > /dev/null 2>&1; then ok "file_batch (6 tests)"
+    else fail "file_batch (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_file_batch
+else fail "file_batch (compilation failed)"
+fi
+
 # ==============================================
 # 7. Completions test
 # ==============================================

@@ -1,7 +1,7 @@
-# Slermes C — State Dashboard (v65 — 2026-05-27)
+# Slermes C — State Dashboard (v66 — 2026-05-27)
 
 ## Build Metrics
-Build clean. **84 unique tools** (registry_register, +1 video_analyze). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 226 test_*.c files. Binary: 30M. Suite: 258/0/0.
+Build clean. **84 unique tools** (registry_register, +1 video_analyze). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 59 libs. 146 src/ .c files (non-deps). 227 test_*.c files. Binary: 30M. Suite: 259/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
 ~297 item-level gaps (battleship-v16 rows, 26 stale 1B claims removed).
@@ -10,6 +10,7 @@ Build clean. **84 unique tools** (registry_register, +1 video_analyze). 98 CLI c
 - vision: added OCR text extraction via tesseract (analysis="ocr"). Calls Python helper to run tesseract binary, returns extracted text and character count. Closes 1 vision-tool depth gap (OCR).
 - video_analyze: new video analysis tool using ffprobe. Returns video metadata (codec, resolution, duration, bitrate, framerate), audio stream info, and scene detection via ffprobe lavfi. Supports local files and remote URLs. Closes 1 Phase 4 missing-tool gap (video_analyze).
 - video_analyze tests: added 3 functional tests for ffprobe availability, JSON output parsing, and schema handling. Suite: 258/0/0.
+- file_batch tests: added 6 filesystem action tests for stat, hash, touch, chmod, file type detection, and permission modes. Suite: 259/0/0.
 - image_gen: added output_format param for controlling image output format (png, jpeg, webp). Closes 1 tool-depth gap (output_format).
 - web: added SSRF protection via url_is_safe() check before HTTP requests. Blocks internal/private addresses. Closes 1 web-tool depth gap (request SSRF protection).
 - image_gen: added save_local param to control whether generated image is saved to local file. Set false to return URL only (faster, no file I/O). Closes 1 tool-depth gap (save_local).
