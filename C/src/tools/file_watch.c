@@ -86,7 +86,7 @@ static const char *mask_to_event_names(uint32_t mask, char *buf, size_t bufsz) {
     return buf;
 }
 
-static char *file_watch_handler(const char *args_json, const char *task_id) {
+char *file_watch_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
 

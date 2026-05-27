@@ -2807,6 +2807,19 @@ if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
 else skip "file_merge (compilation failed)"
 fi
 
+# file_watch test (3 error-path tests)
+if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
+    "$CDIR/tests/test_file_watch.c" \
+    "$CDIR/tests/test_stubs.c" \
+    "$CDIR/src/tools/file_watch.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_file_watch -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_file_watch > /dev/null 2>&1; then ok "file_watch (3 tests)"
+    else fail "file_watch (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_file_watch
+else skip "file_watch (compilation failed)"
+fi
+
 # ==============================================
 # 7. Completions test
 # ==============================================
