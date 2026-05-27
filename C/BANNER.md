@@ -31,7 +31,7 @@ Phase 9 — Security (15)
 Phase 10 — Tests (50)
 Phase 11 — Config/Infra (10)
 
-## Build Metrics (v37)
+## Build Metrics (v38)
 - Suite: 231/0/26 (224 test files, zero failures)
 - Tools: 83 unique (registry_register)
 - CLI: 80 commands (COMMANDS[] table)

@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,6 +99,63 @@ char *x_search_handler(const char *args_json, const char *task_id) {
         return strdup("{\"error\":\"Missing query\"}");
     }
 
+    /* Validate date params if provided */
+    const char *from_date = json_get_str(args, "from_date", NULL);
+    const char *to_date = json_get_str(args, "to_date", NULL);
+    if (from_date) {
+        /* Check YYYY-MM-DD format */
+        if (strlen(from_date) != 10 || from_date[4] != '-' || from_date[7] != '-') {
+            json_free(args);
+            char *e; size_t sz = 256;
+            e = malloc(sz);
+            snprintf(e, sz, "{\"error\":\"Invalid from_date '%s' - must be YYYY-MM-DD\"}", from_date);
+            return e;
+        }
+        for (int di = 0; di < 10; di++) {
+            if (di == 4 || di == 7) continue;
+            if (!isdigit((unsigned char)from_date[di])) {
+                json_free(args);
+                char *e = malloc(256);
+                snprintf(e, 256, "{\"error\":\"Invalid from_date '%s' - must be YYYY-MM-DD\"}", from_date);
+                return e;
+            }
+        }
+        /* Check from_date is not in the future */
+        time_t now = time(NULL);
+        struct tm *utc = gmtime(&now);
+        char today[16];
+        strftime(today, sizeof(today), "%Y-%m-%d", utc);
+        if (strcmp(from_date, today) > 0) {
+            json_free(args);
+            char *e = malloc(256);
+            snprintf(e, 256, "{\"error\":\"from_date (%s) is in the future (today is %s)\"}", from_date, today);
+            return e;
+        }
+    }
+    if (to_date) {
+        /* Check YYYY-MM-DD format */
+        if (strlen(to_date) != 10 || to_date[4] != '-' || to_date[7] != '-') {
+            json_free(args);
+            char *e = malloc(256);
+            snprintf(e, 256, "{\"error\":\"Invalid to_date '%s' - must be YYYY-MM-DD\"}", to_date);
+            return e;
+        }
+        for (int di = 0; di < 10; di++) {
+            if (di == 4 || di == 7) continue;
+            if (!isdigit((unsigned char)to_date[di])) {
+                json_free(args);
+                char *e = malloc(256);
+                snprintf(e, 256, "{\"error\":\"Invalid to_date '%s' - must be YYYY-MM-DD\"}", to_date);
+                return e;
+            }
+        }
+    }
+    /* Check from_date is not after to_date */
+    if (from_date && to_date && strcmp(from_date, to_date) > 0) {
+        json_free(args);
+        return strdup("{\"error\":\"from_date must not be after to_date\"}");
+    }
+
     /* Build tool definition */
     json_node_t *tool_def = json_new_object();
     json_set(tool_def, "type", json_string("x_search"));
@@ -112,9 +170,7 @@ char *x_search_handler(const char *args_json, const char *task_id) {
         json_set(tool_def, "excluded_x_handles",
                  json_string(excluded));
     }
-    const char *from_date = json_get_str(args, "from_date", NULL);
     if (from_date) json_set(tool_def, "from_date", json_string(from_date));
-    const char *to_date = json_get_str(args, "to_date", NULL);
     if (to_date) json_set(tool_def, "to_date", json_string(to_date));
 
     if (json_get_bool(args, "enable_image_understanding", false))
