@@ -161,7 +161,13 @@ char *x_search_handler(const char *args_json, const char *task_id) {
 
     /* Build tool definition */
     json_node_t *tool_def = json_new_object();
-    json_set(tool_def, "type", json_string("x_search"));
+    const char *search_type = json_get_str(args, "search_type", "posts");
+    if (strcmp(search_type, "users") == 0) {
+        json_set(tool_def, "type", json_string("x_user_search"));
+        /* User search doesn't use date/handle filters */
+        json_set(tool_def, "query", json_string(query));
+    } else {
+        json_set(tool_def, "type", json_string("x_search"));
 
     const char *allowed = json_get_str(args, "allowed_x_handles", NULL);
     if (allowed) {
@@ -202,6 +208,7 @@ char *x_search_handler(const char *args_json, const char *task_id) {
         json_set(geo_obj, "long", json_number(geo_long));
         json_set(geo_obj, "radius_km", json_number(geo_radius));
         json_set(tool_def, "geo", geo_obj);
+    }
     }
 
     /* Build request payload */

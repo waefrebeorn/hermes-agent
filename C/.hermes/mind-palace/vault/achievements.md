@@ -311,3 +311,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | XS-01 | Geo location filter for X search — added geo_lat, geo_long, geo_radius_km params. Builds geo JSON object with lat/long/radius_km and passes to xAI API tool definition. Default radius 25km. | 1A (x_search_tool) | src/tools/x_search.c — SCHEMA + handler geo block after lang |
+
+## Phase 18: User search mode — x_search (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| XS-02 | User search mode — added `search_type` param ("posts" or "users"). When "users", sets tool type to x_user_search and sets query directly. Handles, dates, media, geo filters skipped for user search since API doesn't support them. | 1A (x_search_tool) | src/tools/x_search.c — search_type parsing, conditional tool type in tool_def builder, else block closure |
