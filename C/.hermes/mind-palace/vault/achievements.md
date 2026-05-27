@@ -9,6 +9,7 @@ Last updated: 2026-05-26
 |----|-------------|--------|----------|
 | T21 | Approval gateway prompt — gateway callback pattern, Telegram short-poll for async response, cross-platform condvar | 1A | approval.c + server.c — approval_set_gateway_send/wait, gw_approval_set_context, gw_approval_wait_response |
 | T23 | Patch V4A multi-file mode — patch-based editing with file-level patches | 1A | patch.c — V4A patch mode, registry |
+| T24 | Todo tool depth — merge/write modes, in_progress/cancelled status, summary counts with breakdown, normalized items | 1A | todo.c — merge/write/actions, build_summary(), normalize_item(), in_progress+cancelled status enum |
 | T18 | File syntax check — auto-detect type from extension, type override param, registered as file_syntax tool | 1A | file.c:826-927 (handle_syntax), 5 tests |
 | T19 | HomeAssistant full parity — domain+area filtering, entity_id+data+validation+blocked domains, ha_get_history | 1A | homeassistant.c: ha_call_service, ha_get_history |
 | T22 | Skill deps — depends_on resolution from frontmatter | 1A | skill_mgmt.c: deps action |

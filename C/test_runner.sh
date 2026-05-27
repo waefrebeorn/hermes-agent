@@ -2250,8 +2250,9 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_todo.c" \
     "$CDIR/src/tools/todo.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_todo -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    mkdir -p /tmp/hermes_test_todo_home && \
     HERMES_HOME=/tmp/hermes_test_todo_home /tmp/hermes_test_todo > /dev/null 2>&1
-    if [ $? -eq 0 ]; then ok "todo_tool (14 tests)"
+    if [ $? -eq 0 ]; then ok "todo_tool (8 tests)"
     else fail "todo_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_todo
     rm -rf /tmp/hermes_test_todo_home
