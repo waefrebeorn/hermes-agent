@@ -320,3 +320,28 @@ cron_job_entry_t *cron_sqlite_get(cron_sqlite_store_t *store, int index) {
     if (!store || index < 0 || index >= store->count) return NULL;
     return &store->jobs[index];
 }
+
+/* Return all jobs as a JSON array string (caller must free) */
+char *cron_sqlite_list_to_json(cron_sqlite_store_t *store) {
+    if (!store) return strdup("[]");
+    json_t *arr = json_array();
+    for (int i = 0; i < store->count; i++) {
+        json_t *j = json_object();
+        json_set(j, "name", json_string(store->jobs[i].name));
+        json_set(j, "schedule", json_string(store->jobs[i].schedule));
+        json_set(j, "command", json_string(store->jobs[i].command));
+        json_set(j, "active", json_bool(store->jobs[i].active));
+        json_set(j, "retry_count", json_number(store->jobs[i].retry_count));
+        json_set(j, "max_retries", json_number(store->jobs[i].max_retries));
+        json_set(j, "backoff_sec", json_number(store->jobs[i].backoff_sec));
+        json_set(j, "chain_from", json_string(store->jobs[i].chain_from));
+        json_set(j, "notify_on_complete", json_bool(store->jobs[i].notify_on_complete));
+        json_set(j, "notify_on_failure", json_bool(store->jobs[i].notify_on_failure));
+        json_set(j, "last_run", json_number((double)store->jobs[i].last_run));
+        json_set(j, "created_at", json_number((double)store->jobs[i].created_at));
+        json_append(arr, j);
+    }
+    char *json_str = json_serialize(arr);
+    json_free(arr);
+    return json_str ? json_str : strdup("[]");
+}

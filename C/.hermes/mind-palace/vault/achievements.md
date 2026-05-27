@@ -98,3 +98,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 - **Fix:** added `update` action handler to cronjob.c that modifies schedule, command, notify_on_complete, notify_on_failure, retry, backoff, and context_from via cron_sqlite_update_job API
 - **Evidence:** `src/tools/cronjob.c` — `update` action handler (~85 lines)
 - **Impact:** -1 gap (1,913→1,912), Phase 3 Tool Features 48→47
+
+### cronjob list action with real jobs & name filter (2026-05-27)
+- **Gap:** cron_list_jobs() returned `[]` stub in jobs.c. Also missing optional name filter in list action.
+- **Fix:** Added `cron_sqlite_list_to_json()` to cron_sqlite.c that serializes the job store to JSON. Rewired cronjob.c list action to use SQLite store instead of stub. Added optional `name` param for substring filtering.
+- **Evidence:** `src/cron/cron_sqlite.c` — `cron_sqlite_list_to_json()` function; `src/tools/cronjob.c` — list action with name filter
+- **Test fix:** Added `g_cron_store` + `cron_sqlite_list_to_json` stubs to test_cron_tool.c (25 cron tool tests pass)
+- **Impact:** Cron jobs now actually show up in /cron list. Named filter enables targeted lookup. 1 gap reduction in cronjob row (2→1).

@@ -34,7 +34,7 @@ Each tool listed with Python function count vs C function count. Every missing P
 | 14 | web_tools | 25 | 13 | 12 | Cookie jar, session persistence, proxy auth, form fill, JS execution, screenshot, auth handling, request/response intercept, rate limiting |
 | 15 | x_search_tool | 14 | 4 | 10 | Advanced filters (lang, geo, date), media search, user search, list/search/delete, analytics, trends, tweet threads, conversation context |
 | 16 | video_generation_tool | 12 | 3 | 9 | Multi-provider, aspect ratio, duration, style, motion scale, loop, seed, negative prompt |
-| 17 | cronjob_tools | 17 | 12+ | 2 | approval mode, named job listing, job kill, job history, schedule validation, timezone handling, dependency chaining. pause/resume/run/update added. |, named job listing, job kill, job history, schedule validation, timezone handling, dependency chaining. pause/resume/run added. |
+| 17 | cronjob_tools | 17 | 12+ | 1 | approval mode, job kill, job history, timezone handling. pause/resume/run/update/list-named added. |
 | 18 | file_tools | 30 | 28 | 2 | Watch (inotify), binary ops, file compare, merge. file_diff + perms + hex + syntax check added. |
 | 20 | todo_tool | 10 | 10+ | 0 | Parity achieved: write/merge modes, in_progress/cancelled status, summary counts with breakdown, normalized items |
 | 22 | skill_manager_tool | 22 | 19 | 3 | Skill versioning, skill rollback, skill diff, skill freeze. deps action added (check + resolve depends_on from frontmatter) |

@@ -40,6 +40,14 @@ char *cron_list_jobs(void) {
     return strdup("[]");
 }
 
+/* Stub for SQLite-backed cron store used by list action */
+struct cron_sqlite_store_t { int _; };
+struct cron_sqlite_store_t *g_cron_store = NULL;
+char *cron_sqlite_list_to_json(struct cron_sqlite_store_t *store) {
+    (void)store;
+    return strdup("[]");
+}
+
 bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec) {
     (void)job_name; (void)max_retries; (void)backoff_sec;
     return true;

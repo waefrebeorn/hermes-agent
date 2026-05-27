@@ -33,7 +33,8 @@ static const char *SCHEMA = "{"
 /* Forward declarations from scheduler.c */
 bool cron_add_job(const char *name, const char *schedule_expr, const char *command);
 void cron_remove_job(const char *name);
-char *cron_list_jobs(void);
+/* Use SQLite store for real job listing instead of stub */
+char *cron_sqlite_list_to_json(cron_sqlite_store_t *store);
 void cron_run_job(const char *name, const char *command);
 
 /* Forward declarations from cron_extras.c */
@@ -95,17 +96,42 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
     json_node_t *result = json_new_object();
 
     if (strcmp(action, "list") == 0) {
-        char *list_json = cron_list_jobs();
+        /* Optional name filter */
+        const char *filter_name = json_object_get_string(args, "name", NULL);
+        char *list_json = cron_sqlite_list_to_json(g_cron_store);
         if (list_json) {
-            char *pe = NULL;
-            json_node_t *list = json_parse(list_json, &pe);
-            if (list) {
-                json_object_set(result, "jobs", list);
+            if (filter_name && filter_name[0]) {
+                /* Filter jobs by name */
+                char *pe = NULL;
+                json_node_t *all = json_parse(list_json, &pe);
+                free(list_json);
+                if (all) {
+                    json_node_t *filtered = json_new_array();
+                    size_t n = json_len(all);
+                    for (size_t i = 0; i < n; i++) {
+                        json_node_t *j = json_get(all, i);
+                        const char *jname = json_object_get_string(j, "name", "");
+                        if (strstr(jname, filter_name) != NULL) {
+                            json_array_append(filtered, j);
+                        }
+                    }
+                    json_object_set(result, "jobs", filtered);
+                    json_free(all);
+                } else {
+                    json_object_set(result, "jobs", json_new_array());
+                    free(pe);
+                }
             } else {
-                json_object_set(result, "jobs", json_new_array());
-                free(pe);
+                char *pe = NULL;
+                json_node_t *list = json_parse(list_json, &pe);
+                if (list) {
+                    json_object_set(result, "jobs", list);
+                } else {
+                    json_object_set(result, "jobs", json_new_array());
+                    free(pe);
+                }
+                free(list_json);
             }
-            free(list_json);
         } else {
             json_object_set(result, "jobs", json_new_array());
         }

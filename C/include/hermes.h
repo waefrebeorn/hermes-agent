@@ -1307,6 +1307,7 @@ bool cron_sqlite_save_job(cron_sqlite_store_t *store, const char *name,
                            const char *chain_from, const char *template_name,
                            const char *script_type);
 bool cron_sqlite_load_jobs(cron_sqlite_store_t *store);
+char *cron_sqlite_list_to_json(cron_sqlite_store_t *store);
 bool cron_sqlite_delete_job(cron_sqlite_store_t *store, const char *name);
 bool cron_sqlite_update_job(cron_sqlite_store_t *store, const char *name,
                              const char *field, const char *value);
