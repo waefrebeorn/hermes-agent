@@ -1,4 +1,4 @@
-# Slermes C — Entry (v38)
+# Slermes C — Entry (v39)
 Suite 231/0/26. 83 tools, 80 CLI, 19 gateways, 10 providers, 59 libs, ~346 gaps.
 ```
 Suite:   231/0/26  (224 test files, zero failures)

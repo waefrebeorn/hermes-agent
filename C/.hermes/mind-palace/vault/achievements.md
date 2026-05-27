@@ -234,4 +234,10 @@
    234||| - | web_get: added cookies param (Cookie header support). Phase 3: 22→21. | src/tools/web.c | web_get schema + handler + Cookie header injection |
    235||
 || - | file_merge: added test (4 error-path tests). Suite: 229->230. Made handler non-static for testability. | tests/test_file_merge.c test_runner.sh | 4 tests, test_stubs.c infrastructure |
+
+## Phase 30: OSV malware check wiring (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| U01 | osv_check: wired lib/libosv into mcp_tool connect_stdio_server. osv.c was fully implemented (282 LOC, 3 public functions) but never called. Now checks npx/uvx packages against OSV API for MAL-* advisories before connecting. Also added arg_count param to connect_stdio_server signature. | 1A (unwired stub) | src/tools/mcp_tool.c — #include "osv.h", osv_check_package_for_malware() in connect_stdio_server path, skip_server goto for cleanup |
    236|

@@ -2456,11 +2456,12 @@ else skip "skill_mgmt_tool (compilation failed)"
 fi &
 
 # MCP tool test (M44 — needs mcp_tool.c + libmcp + registry + json)
-if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libmcp" \
+if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libosv" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_mcp.c" \
     "$CDIR/src/tools/mcp_tool.c" "$CDIR/lib/libmcp/mcp.c" \
     "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_mcp -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    "$CDIR/lib/libosv/osv.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_mcp -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_mcp > /dev/null 2>&1; then ok "mcp_tool (24 tests)"
     else fail "mcp_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_mcp

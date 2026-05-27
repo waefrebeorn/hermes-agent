@@ -12,6 +12,7 @@
 #include "hermes_json.h"
 #include "hermes_yaml.h"
 #include "mcp.h"
+#include "osv.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -445,7 +446,7 @@ static bool connect_http_server(const char *name, const char *url, int timeout,
 /* Connect an MCP server from config */
 
 static bool connect_stdio_server(const char *name, const char *command,
-                                  char **args, int timeout,
+                                  char **args, int arg_count, int timeout,
                                   const mcp_root_t *roots, int root_count) {
     if (g_server_count >= MAX_MCP_SERVERS) return false;
 
@@ -992,10 +993,27 @@ void mcp_init_all(void) {
                         dynamic_names[si], root_count);
             }
 
-            connect_stdio_server(dynamic_names[si], cmd, args, timeout,
+            /* P71: OSV malware check — block known malicious MCP packages */
+            if (cmd) {
+                char *osv_err = osv_check_package_for_malware(cmd, (const char **)args, arg_count);
+                if (osv_err) {
+                    fprintf(stderr, "MCP: BLOCKED '%s': %s\n", dynamic_names[si], osv_err);
+                    free(osv_err);
+                    goto skip_server;
+                }
+            }
+
+            connect_stdio_server(dynamic_names[si], cmd, args, arg_count, timeout,
                                  root_count > 0 ? roots : NULL, root_count);
 
         /* Free dynamic server names */
+        free(dynamic_names[si]);
+        continue;
+
+    skip_server:
+        /* Cleanup when server is skipped (OSV block, auth error, etc.) */
+        for (int ai = 0; ai < arg_count; ai++) free(args[ai]);
+        free(args);
         free(dynamic_names[si]);
     }
 

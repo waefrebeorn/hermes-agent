@@ -1,3 +1,3 @@
-# Slermes C — Testing (v38 — 2026-05-27)
+# Slermes C — Testing (v39 — 2026-05-27)
 Suite: **231 passed, 0 failed, 26 skipped**.
 224 test files. Recent: file_merge (4 tests), file_watch (3 tests).
