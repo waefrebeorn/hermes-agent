@@ -19,6 +19,36 @@
 /* Forward: sandbox from file.c */
 bool sandbox_check_path(const char *path);
 
+
+/* Check if we have the required permissions for a file operation.
+   Returns NULL if OK, or error string if permission denied. */
+static const char *check_file_access(const char *path, bool need_write) {
+    if (!path) return NULL;
+    int amode = need_write ? R_OK | W_OK : R_OK;
+    if (access(path, amode) != 0) {
+        if (errno == EACCES) return "Permission denied";
+        if (errno == ENOENT) return NULL;  /* non-existent path -> handled by caller */
+        return NULL;
+    }
+    return NULL;  /* OK */
+}
+
+/* Check parent directory write permission for a given path.
+   Returns NULL if OK, or error string if no write access. */
+static const char *check_parent_writable(const char *path) {
+    if (!path) return NULL;
+    char parent[4096];
+    snprintf(parent, sizeof(parent), "%s", path);
+    char *slash = strrchr(parent, '/');
+    if (!slash) return NULL;  /* no parent dir to check */
+    *slash = '\0';
+    if (*parent == '\0') { snprintf(parent, sizeof(parent), "/"); }
+    struct stat st;
+    if (stat(parent, &st) != 0) return NULL;  /* parent might not exist yet */
+    if (access(parent, W_OK) != 0) return "Parent directory not writable";
+    return NULL;
+}
+
 /* Schema */
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
@@ -389,6 +419,7 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
     json_t *files_node = json_obj_get(args, "files");
     const char *dest = json_get_str(args, "dest", NULL);
     const char *mode_str = json_get_str(args, "mode", NULL);
+    bool dry_run = json_get_bool(args, "dry_run", false);
 
     /* Validate action early */
     if (strcmp(action, "copy") != 0 && strcmp(action, "move") != 0 && strcmp(action, "rename") != 0 && strcmp(action, "convert") != 0 &&
@@ -437,16 +468,30 @@ char *file_batch_handler(const char *args_json, const char *task_id) {
                         json_set(entry, "error", json_string("Dest path not allowed"));
                         free(new_path);
                         fail_count++;
-                    } else if (!move_file(fpath, new_path)) {
-                        json_set(entry, "status", json_string("failed"));
-                        json_set(entry, "error", json_string(strerror(errno)));
-                        free(new_path);
-                        fail_count++;
                     } else {
-                        json_set(entry, "status", json_string("renamed"));
-                        json_set(entry, "dest", json_string(new_path));
-                        free(new_path);
-                        success_count++;
+                        const char *perm_err = check_file_access(fpath, true);
+                        if (!perm_err) perm_err = check_parent_writable(new_path);
+                        if (perm_err) {
+                            json_set(entry, "status", json_string("failed"));
+                            json_set(entry, "error", json_string(perm_err));
+                            free(new_path);
+                            fail_count++;
+                        } else if (dry_run) {
+                            json_set(entry, "status", json_string("would_rename"));
+                            json_set(entry, "dest", json_string(new_path));
+                            free(new_path);
+                            success_count++;
+                        } else if (!move_file(fpath, new_path)) {
+                            json_set(entry, "status", json_string("failed"));
+                            json_set(entry, "error", json_string(strerror(errno)));
+                            free(new_path);
+                            fail_count++;
+                        } else {
+                            json_set(entry, "status", json_string("renamed"));
+                            json_set(entry, "dest", json_string(new_path));
+                            free(new_path);
+                            success_count++;
+                        }
                     }
                 }
                 json_append(results_arr, entry);
@@ -491,13 +536,27 @@ if (!files_node || files_node->type != JSON_ARRAY) {
         json_set(entry, "source", json_string(src));
 
         if (strcmp(action, "delete") == 0) {
-            if (!sandbox_check_path(src) || !delete_file(src)) {
+            if (!sandbox_check_path(src)) {
                 json_set(entry, "status", json_string("failed"));
-                json_set(entry, "error", json_string(strerror(errno)));
+                json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
             } else {
-                json_set(entry, "status", json_string("deleted"));
-                success_count++;
+                const char *perm_err = check_file_access(src, true);
+                if (perm_err) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(perm_err));
+                    fail_count++;
+                } else if (dry_run) {
+                    json_set(entry, "status", json_string("would_delete"));
+                    success_count++;
+                } else if (!delete_file(src)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("deleted"));
+                    success_count++;
+                }
             }
 
         } else if (strcmp(action, "copy") == 0) {
@@ -516,14 +575,26 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                     json_set(entry, "status", json_string("failed"));
                     json_set(entry, "error", json_string("Dest path not allowed"));
                     fail_count++;
-                } else if (!copy_file(src, dst)) {
-                    json_set(entry, "status", json_string("failed"));
-                    json_set(entry, "error", json_string(strerror(errno)));
-                    fail_count++;
                 } else {
-                    json_set(entry, "status", json_string("copied"));
-                    json_set(entry, "dest", json_string(dst));
-                    success_count++;
+                    const char *perm_err = check_file_access(src, false);
+                    if (!perm_err) perm_err = check_parent_writable(dst);
+                    if (perm_err) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(perm_err));
+                        fail_count++;
+                    } else if (dry_run) {
+                        json_set(entry, "status", json_string("would_copy"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    } else if (!copy_file(src, dst)) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("copied"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    }
                 }
             }
 
@@ -543,14 +614,26 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                     json_set(entry, "status", json_string("failed"));
                     json_set(entry, "error", json_string("Dest path not allowed"));
                     fail_count++;
-                } else if (!move_file(src, dst)) {
-                    json_set(entry, "status", json_string("failed"));
-                    json_set(entry, "error", json_string(strerror(errno)));
-                    fail_count++;
                 } else {
-                    json_set(entry, "status", json_string("moved"));
-                    json_set(entry, "dest", json_string(dst));
-                    success_count++;
+                    const char *perm_err = check_file_access(src, true);
+                    if (!perm_err) perm_err = check_parent_writable(dst);
+                    if (perm_err) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(perm_err));
+                        fail_count++;
+                    } else if (dry_run) {
+                        json_set(entry, "status", json_string("would_move"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    } else if (!move_file(src, dst)) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("moved"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    }
                 }
             }
 
@@ -570,14 +653,26 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                     json_set(entry, "status", json_string("failed"));
                     json_set(entry, "error", json_string("Dest path not allowed"));
                     fail_count++;
-                } else if (!move_file(src, dst)) {
-                    json_set(entry, "status", json_string("failed"));
-                    json_set(entry, "error", json_string(strerror(errno)));
-                    fail_count++;
                 } else {
-                    json_set(entry, "status", json_string("renamed"));
-                    json_set(entry, "dest", json_string(dst));
-                    success_count++;
+                    const char *perm_err = check_file_access(src, true);
+                    if (!perm_err) perm_err = check_parent_writable(dst);
+                    if (perm_err) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(perm_err));
+                        fail_count++;
+                    } else if (dry_run) {
+                        json_set(entry, "status", json_string("would_rename"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    } else if (!move_file(src, dst)) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("renamed"));
+                        json_set(entry, "dest", json_string(dst));
+                        success_count++;
+                    }
                 }
             }
 
@@ -594,13 +689,23 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 json_set(entry, "status", json_string("failed"));
                 json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
-            } else if (!convert_file(src, case_conv, newline_style, encoding)) {
-                json_set(entry, "status", json_string("failed"));
-                json_set(entry, "error", json_string(strerror(errno)));
-                fail_count++;
             } else {
-                json_set(entry, "status", json_string("converted"));
-                success_count++;
+                const char *perm_err = check_file_access(src, true);
+                if (perm_err) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(perm_err));
+                    fail_count++;
+                } else if (dry_run) {
+                    json_set(entry, "status", json_string("would_convert"));
+                    success_count++;
+                } else if (!convert_file(src, case_conv, newline_style, encoding)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("converted"));
+                    success_count++;
+                }
             }
 
         } else if (strcmp(action, "chmod") == 0) {
@@ -614,14 +719,25 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 json_set(entry, "status", json_string("failed"));
                 json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
-            } else if (!chmod_file(src, mode)) {
-                json_set(entry, "status", json_string("failed"));
-                json_set(entry, "error", json_string(strerror(errno)));
-                fail_count++;
             } else {
-                json_set(entry, "status", json_string("chmod"));
-                json_set(entry, "mode", json_string(mode_str));
-                success_count++;
+                const char *perm_err = check_file_access(src, true);
+                if (perm_err) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(perm_err));
+                    fail_count++;
+                } else if (dry_run) {
+                    json_set(entry, "status", json_string("would_chmod"));
+                    json_set(entry, "mode", json_string(mode_str));
+                    success_count++;
+                } else if (!chmod_file(src, mode)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("chmod"));
+                    json_set(entry, "mode", json_string(mode_str));
+                    success_count++;
+                }
             }
 
         } else if (strcmp(action, "touch") == 0) {
@@ -629,13 +745,24 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 json_set(entry, "status", json_string("failed"));
                 json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
-            } else if (!touch_file(src)) {
-                json_set(entry, "status", json_string("failed"));
-                json_set(entry, "error", json_string(strerror(errno)));
-                fail_count++;
             } else {
-                json_set(entry, "status", json_string("touched"));
-                success_count++;
+                const char *perm_err = check_parent_writable(src);
+                if (!perm_err) perm_err = check_file_access(src, true);
+                if (perm_err) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(perm_err));
+                    fail_count++;
+                } else if (dry_run) {
+                    json_set(entry, "status", json_string("would_touch"));
+                    success_count++;
+                } else if (!touch_file(src)) {
+                    json_set(entry, "status", json_string("failed"));
+                    json_set(entry, "error", json_string(strerror(errno)));
+                    fail_count++;
+                } else {
+                    json_set(entry, "status", json_string("touched"));
+                    success_count++;
+                }
             }
 
         } else if (strcmp(action, "stat") == 0) {
@@ -644,15 +771,22 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
             } else {
-                json_t *stat_j = stat_file_json(src);
-                if (!stat_j) {
+                const char *perm_err = check_file_access(src, false);
+                if (perm_err) {
                     json_set(entry, "status", json_string("failed"));
-                    json_set(entry, "error", json_string(strerror(errno)));
+                    json_set(entry, "error", json_string(perm_err));
                     fail_count++;
                 } else {
-                    json_set(entry, "status", json_string("ok"));
-                    json_set(entry, "file_info", stat_j);
-                    success_count++;
+                    json_t *stat_j = stat_file_json(src);
+                    if (!stat_j) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("ok"));
+                        json_set(entry, "file_info", stat_j);
+                        success_count++;
+                    }
                 }
             }
 
@@ -662,15 +796,22 @@ if (!files_node || files_node->type != JSON_ARRAY) {
                 json_set(entry, "error", json_string("Source path not allowed"));
                 fail_count++;
             } else {
-                json_t *hash_j = hash_file_json(src);
-                if (!hash_j) {
+                const char *perm_err = check_file_access(src, false);
+                if (perm_err) {
                     json_set(entry, "status", json_string("failed"));
-                    json_set(entry, "error", json_string(strerror(errno)));
+                    json_set(entry, "error", json_string(perm_err));
                     fail_count++;
                 } else {
-                    json_set(entry, "status", json_string("ok"));
-                    json_set(entry, "file_hash", hash_j);
-                    success_count++;
+                    json_t *hash_j = hash_file_json(src);
+                    if (!hash_j) {
+                        json_set(entry, "status", json_string("failed"));
+                        json_set(entry, "error", json_string(strerror(errno)));
+                        fail_count++;
+                    } else {
+                        json_set(entry, "status", json_string("ok"));
+                        json_set(entry, "file_hash", hash_j);
+                        success_count++;
+                    }
                 }
             }
 

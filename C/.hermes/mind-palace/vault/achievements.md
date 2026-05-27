@@ -298,3 +298,10 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | ID | Description | Sector | Evidence |
 |----|-------------|--------|----------|
 | F15-06 | Batch convert — case conversion (upper/lower/title), line ending conversion (lf/crlf/cr), ASCII encoding strip. Reads file, transforms in-place, writes only if changed. 100MB cap. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — convert_file() handler, convert branch in loop |
+
+## Phase 16: Permission validation + dry-run — file_batch (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| F15-07 | Permission validation via `access()` — read check (R_OK) for stat/hash, write check (W_OK) for copy/move/delete/chmod/touch/convert/rename. Also checks parent dir writability for dest paths. | 1A (file_operations) | src/tools/file_batch.c — check_file_access(), check_parent_writable(), added per-action permission checks |
+| F15-08 | Dry-run mode — `dry_run` bool param. When true, reports what would happen (would_copy, would_move, would_delete, would_chmod, would_touch, would_convert, would_rename) without modifying any files. Includes dest path in response for applicable actions. | 1A (file_operations) | src/tools/file_batch.c — dry_run param in schema, `if (dry_run)` branches in every action in both loop and early-return rename block |
