@@ -1,26 +1,3 @@
-# Slermes C — Testing (v35 — 2026-05-27)
-
-## Suite
-```bash
-cd /home/wubu/hermes-agent-dev/C/
-bash test_runner.sh              # Full suite
-bash test_runner.sh --verbose    # Per-test output
-```
-
-**230 passed, 0 failed, 26 skipped** (zero failures).
-
-## Coverage by Area
-| Area | Files | Key Tests |
-|------|-------|-----------|
-| **Libraries** | ~59 | json, yaml, http, crypto, cron, csv, datetime, path, hash, uuid, base64, html, textwrap, glob, signal, enum, difflib, regex, ansi, json5, websocket, protobuf, dotenv, proc, template, skin, tui, display, ratelimit, rate_guard, filestate, tool_dispatch, etc. |
-| **Providers** | 10 files | provider_error, anthropic/azure/bedrock/google/openrouter/xai/deepseek/custom depth, metadata, finish_reason, json_mode |
-| **Agent** | ~11 | context, title, fallback, budget, checkpoint, redact, sanitize, vault, secrets, tokenizer, subdir_hints, logger |
-| **CLI** | ~5 | commands, paths, display, TUI |
-| **Cron** | 4 | cron_lib, cron_tool, cron_sqlite, cron_extras |
-| **Tools** | ~31 | file, web, terminal, exec_code, session, process, todo, memory, kanban, cronjob, skills, skill_mgmt, tts, vision, clarify, delegate, x_search, patch, tool_config, api_helpers, approval, url_safety, sandbox_escape, tirith, allowlist, result_storage, session_crud, shell_hooks, curator, usage_pricing, **file_merge** |
-| **Gateway** | ~5 | escape_mode, slack_blocks, discord_interactions, whatsapp_msg |
-| **Memory** | 1 | memory operations (basic SQLite) |
-
-## Tool Depth Notes
-- file_merge: 4 error-path tests added (null args, bad JSON, missing params)
-- web.c: 602 LOC — cookies param added to web_get
+# Slermes C — Testing (v36 — 2026-05-27)
+Suite: **231 passed, 0 failed, 26 skipped**.
+224 test files. Recent: file_merge (4 tests), file_watch (3 tests).
