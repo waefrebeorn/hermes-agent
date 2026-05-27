@@ -82,6 +82,23 @@ run_lib_test "budget_config" "tests/test_budget_config.c" "lib/libbudgetconfig" 
 run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredentialfiles" "$CDIR/lib/libcredentialfiles/credential_files.c"
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
+
+echo ""; echo "=== Microsoft Graph Tests ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" -I"$CDIR/lib/libmsgraph" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_ms_graph.c" "$CDIR/lib/libmsgraph/ms_graph.c" \
+    "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_msgraph -lssl -lcrypto -lz -lm 2>/dev/null && [[ -x /tmp/hermes_test_msgraph ]]; then
+    if /tmp/hermes_test_msgraph > /dev/null 2>&1; then
+        ok "ms_graph"
+    else
+        fail "ms_graph (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_msgraph
+else
+    fail "ms_graph (compilation failed)"
+fi
+
 run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
 
 echo ""; echo "=== Clarify Tool Tests === "
