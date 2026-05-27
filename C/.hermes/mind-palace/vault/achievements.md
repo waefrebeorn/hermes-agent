@@ -135,3 +135,10 @@ See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands,
 |----|-------------|--------|----------|
 | T32 | web_get: added method/headers/body params. C web_get only supported GET with default Accept header. Now supports GET/POST/PUT/DELETE methods, custom headers string, and request body for POST/PUT. Schema updated with 3 new optional params. | 1A | web.c: updated SCHEMA_GET + handler with method_str_to_enum(), headers string passthrough, body_len passthrough to http_request() |
 | - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 12→9. | |
+
+## Phase 17: video_gen model param (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| T33 | video_generate: added model param (model override string). C video_gen was missing the model override param that Python supports. Added to schema + body builder. | 1A | video_gen.c: SCHEMA + body building with model |
+| - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 9→8. | |
