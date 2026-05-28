@@ -1,6 +1,6 @@
 # Battle Map v32 — Real Parity Assessment + Upstream Drift
 
-**v121 | Fork synced: 0 behind upstream, 2 ahead | C/.hermes/ tracked**
+**v122 | Fork synced: 0 behind upstream, 2 ahead | C/.hermes/ tracked**
 **Honest assessment: 29 gaps across 5 sectors.**
 
 S4 (Upstream Drift) reworded — no longer "7583 commits behind" in git terms (fork is even), but the C code still lacks features from 7583 upstream changes that landed since the fork point.
