@@ -139,21 +139,41 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
     /* Download the image to a local file (if save_local is true) */
     char filename[256] = "";
     int dl_ok = 0;
+    char dl_error[256] = "";
     if (save_local) {
         snprintf(filename, sizeof(filename), "/tmp/slermes_img_%ld.png",
             (long)time(NULL));
 
-        http_t *dh = http_new(30);
+        http_t *dh = http_new(60);
         http_resp_t *img_resp = http_get(dh, result_image_url, NULL);
-        if (img_resp && img_resp->status == 200 && img_resp->body && img_resp->body_len > 0) {
-            FILE *f = fopen(filename, "wb");
-            if (f) {
-                fwrite(img_resp->body, 1, img_resp->body_len, f);
-                fclose(f);
-                dl_ok = 1;
+        if (img_resp) {
+            if (img_resp->status == 200) {
+                if (img_resp->body && img_resp->body_len > 0) {
+                    /* D09: Max download size check — reject >50MB images */
+                    if (img_resp->body_len <= 50 * 1024 * 1024) {
+                        FILE *f = fopen(filename, "wb");
+                        if (f) {
+                            fwrite(img_resp->body, 1, img_resp->body_len, f);
+                            fclose(f);
+                            dl_ok = 1;
+                        } else {
+                            snprintf(dl_error, sizeof(dl_error), "Cannot write %s", filename);
+                        }
+                    } else {
+                        snprintf(dl_error, sizeof(dl_error),
+                                 "Image too large (%.1f MB > 50 MB limit)",
+                                 img_resp->body_len / (1024.0 * 1024.0));
+                    }
+                } else {
+                    snprintf(dl_error, sizeof(dl_error), "Empty response body");
+                }
+            } else {
+                snprintf(dl_error, sizeof(dl_error), "HTTP %d", img_resp->status);
             }
+            http_resp_free(img_resp);
+        } else {
+            snprintf(dl_error, sizeof(dl_error), "Connection timeout or failed");
         }
-        if (img_resp) http_resp_free(img_resp);
         if (dh) http_free(dh);
     }
 
@@ -164,7 +184,8 @@ char *image_generate_handler(const char *args_json, const char *task_id) {
             "{\"success\":true,\"image\":\"%s\",\"local_path\":\"%s\"}", result_image_url, filename);
     } else {
         snprintf(out, sizeof(out),
-            "{\"success\":true,\"image\":\"%s\",\"warning\":\"Could not download image\"}", result_image_url);
+            "{\"success\":true,\"image\":\"%s\",\"warning\":\"%s\"}", result_image_url,
+            dl_error[0] ? dl_error : "Could not download image");
     }
 
     json_free(result);

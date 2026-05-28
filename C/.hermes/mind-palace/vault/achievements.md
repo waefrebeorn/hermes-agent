@@ -264,3 +264,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D02 | Azure Cognitive Services TTS provider: SSML-based POST to {region}.tts.speech.microsoft.com with Ocp-Apim-Subscription-Key auth. Supports AZURE_TTS_KEY / AZURE_SPEECH_KEY env vars and azure region config. New `azure` provider option in text_to_speech schema | `src/tools/tts.c` -- tts_azure() function following existing API pattern; SSML body construction; dispatch branch at strcmp("azure"); schema updated to list azure |
+
+## Phase 16: Image Gen Download Validation (D09 partial)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D09 | Download size validation for image_gen: 50MB max, HTTP status check, empty body detection, connection timeout handling. Warning now includes specific error message instead of generic 'Could not download' | `src/tools/image_gen.c` — body_len > 50MB check; granular error branching (HTTP status/empty body/connection/write fail) |

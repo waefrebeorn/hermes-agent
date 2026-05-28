@@ -1,3 +1,3 @@
-# Overnight (v100)
-D08 partial: magic-byte image format detection for extensionless files.
-21 gaps, 5 partials. Next: any remaining P2 tool depth gap.
+# Overnight (v101)
+D09 partial: download size validation + error messages for image_gen tool.
+21 gaps, 6 partials.
