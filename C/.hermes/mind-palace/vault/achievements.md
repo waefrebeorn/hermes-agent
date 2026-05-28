@@ -395,3 +395,14 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | P01 | Ported upstream patch tool \\t/\\r unescape fix (@78be45860) to C: `_maybe_unescape_new_string` — conditionally unescapes \\t→tab and \\r→CR in new_string when matched file region contains real control bytes. Region-based heuristic (not strategy-gated). `\\n` excluded intentionally. | `src/tools/patch.c` — new unescape block before replacement loop; `tests/test_patch.c` — 4 new test scenarios (12 assertions): tab exact, \\n preservation, literal preservation, passthrough. Suite 282/0/0, patch tests 37/0/0. |
+
+## Phase 36: Dead Code & Warning Cleanup (v124)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W02 | Removed unused `coerce_capability_bool` (and its only consumers `str_in_list`/`TRUE_TOKENS`/`FALSE_TOKENS`) from image_routing.c — 26 lines dead code eliminated | `src/agent/image_routing.c` — 26 lines removed |
+| W03 | `(void)provider` in `supports_vision_override` to suppress unused-param warning | `src/agent/image_routing.c:171` |
+| W04 | `__attribute__((unused))` on `shell_escape` in session_search.c (intentional scaffolding, not a stub) | `src/tools/session_search.c:79` |
+| W05 | Removed unused `early_len` variable in session_search scoring function | `src/tools/session_search.c:129` |
+| W06 | Added `!name` null guard before `!name[0]` check in secrets.c — fixes -Wmaybe-uninitialized and potential use-after-scope on block-local `secret_name` | `src/secrets.c:200` |
+| | Build clean, suite 283/0/0, commit 48e5622a8 pushed | `make -j$(nproc)` + `bash test_runner.sh` |
