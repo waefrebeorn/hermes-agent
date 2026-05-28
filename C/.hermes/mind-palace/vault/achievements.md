@@ -270,3 +270,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D09 | Download size validation for image_gen: 50MB max, HTTP status check, empty body detection, connection timeout handling. Warning now includes specific error message instead of generic 'Could not download' | `src/tools/image_gen.c` — body_len > 50MB check; granular error branching (HTTP status/empty body/connection/write fail) |
+
+## Phase 17: Docker Compose Backend (D04 partial)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D04 | Docker Compose execution backend: `run_command_docker_compose()` uses `docker compose exec -T` to run commands in a compose service. Configurable via `terminal.compose_service` config key (default: 'default') | `src/tools/terminal.c` -- run_command_docker_compose() function; dispatch branch at backend=docker-compose|compose; schema updated |

@@ -33,7 +33,7 @@ static const char *SCHEMA = "{"
       "\"pty\":{\"type\":\"boolean\",\"description\":\"Use pseudo-terminal for interactive commands\",\"default\":false},"
       "\"env\":{\"type\":\"string\",\"description\":\"Environment variables in KEY=VALUE KEY2=VALUE2 format\"},"
       "\"workdir\":{\"type\":\"string\",\"description\":\"Working directory for the command\"},"
-      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, ssh, modal\"},"
+      "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, docker-compose, ssh, modal\"},"
       "\"docker_image\":{\"type\":\"string\",\"description\":\"Docker image override for backend=docker\"}"
     "},"
     "\"required\":[\"command\"]"
@@ -500,6 +500,60 @@ static char *run_command_modal(const char *command, int timeout_sec) {
     return result;
 }
 
+/* D04: Docker Compose execution backend — run command in docker compose service */
+static char *run_command_docker_compose(const char *command, int timeout_sec) {
+    if (!command) return strdup("{\"error\": \"No command provided\"}");
+    const char *service = tool_config_get("terminal", "compose_service");
+    if (!service) service = "default";
+
+    /* Use docker compose exec to run in an existing service container */
+    char compose_cmd[32768];
+    int n = snprintf(compose_cmd, sizeof(compose_cmd),
+                     "timeout %d docker compose exec -T %s sh -c '%s' 2>&1 || true",
+                     timeout_sec > 0 ? timeout_sec : DEFAULT_TIMEOUT,
+                     service, command);
+    if (n < 0 || (size_t)n >= sizeof(compose_cmd))
+        return strdup("{\"error\": \"Command too long\"}");
+
+    /* Execute via popen */
+    FILE *fp = popen(compose_cmd, "r");
+    if (!fp) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), "{\"error\": \"docker compose popen failed: %s\"}", strerror(errno));
+        return strdup(buf);
+    }
+
+    size_t cap = 4096, len = 0;
+    char *output = (char *)malloc(cap);
+    if (!output) { pclose(fp); return strdup("{\"error\": \"OOM\"}"); }
+    output[0] = '\0';
+
+    char line[4096];
+    while (fgets(line, sizeof(line), fp)) {
+        size_t line_len = strlen(line);
+        if (len + line_len + 1 > cap) {
+            cap *= 2;
+            char *new_out = (char *)realloc(output, cap);
+            if (!new_out) { free(output); pclose(fp); return strdup("{\"error\": \"OOM\"}"); }
+            output = new_out;
+        }
+        memcpy(output + len, line, line_len + 1);
+        len += line_len;
+    }
+
+    int exit_code = pclose(fp);
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "exit_code", json_new_number(exit_code));
+    json_object_set(result, "output", json_new_string(output));
+    json_object_set(result, "backend", json_new_string("docker-compose"));
+    json_object_set(result, "compose_service", json_new_string(service));
+    char *json_out = json_serialize(result);
+    json_free(result);
+    free(output);
+    return json_out;
+}
+
 /* ================================================================
  *  Main terminal handler
  * ================================================================ */
@@ -605,6 +659,11 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* F11: Route to Docker execution backend if configured */
     if (backend && strcasecmp(backend, "docker") == 0) {
         return run_command_docker(command, timeout, docker_image);
+    }
+
+    /* D04: Route to Docker Compose backend if configured */
+    if (backend && (strcasecmp(backend, "docker-compose") == 0 || strcasecmp(backend, "compose") == 0)) {
+        return run_command_docker_compose(command, timeout);
     }
 
     /* M35: Route to Modal execution backend if configured */
