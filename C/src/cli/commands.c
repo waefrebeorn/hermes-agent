@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <sys/utsname.h>
 
 #include "skill_bundles.h"
@@ -2702,16 +2703,21 @@ static void cmd_queue(const char *args, agent_state_t *state) {
 }
 
 /* /restart: Gracefully restart via exec */
-#ifndef ARG_MAX
-#define ARG_MAX 4096
-#endif
 static void cmd_restart(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
+    (void)args;
+    /* Save session state before restart */
+    if (state->db) {
+        printf("Saving session...\n");
+        fflush(stdout);
+        agent_save_session(state);
+        agent_close_db(state);
+    }
+
     printf("Restarting...\n");
     fflush(stdout);
+
     /* Re-exec with saved arguments (if available) or default */
-    extern char **environ;
-    char *argv[ARG_MAX];
+    char *argv[256];
     int argc = 0;
     char exe[4096];
     ssize_t exe_len = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
@@ -2730,17 +2736,19 @@ static void cmd_restart(const char *args, agent_state_t *state) {
                 char *p = cl_buf;
                 /* Skip argv[0] */
                 p += strlen(p) + 1;
-                while (*p && argc < ARG_MAX - 1) {
+                while (*p && argc < 255) {
                     argv[argc++] = p;
                     p += strlen(p) + 1;
                 }
             }
         }
         argv[argc] = NULL;
-        execvp(argv[0], argv);
+        execv(exe, argv);
+        /* If exec fails */
+        fprintf(stderr, "Restart failed: %s. Use /exit and re-launch.\n", strerror(errno));
+    } else {
+        fprintf(stderr, "Cannot find executable path. Use /exit and re-launch.\n");
     }
-    /* If exec fails, fallback */
-    printf("Restart failed. Use /exit and re-launch.\n");
 }
 
 /* /subgoal: Manage extra goal criteria */
@@ -4253,6 +4261,7 @@ static void cmd_secrets(const char *args, agent_state_t *state) {
  *  /logs — View agent logs
  * ================================================================ */
 static void cmd_logs(const char *args, agent_state_t *state) {
+    (void)state;
     const char *logname = "agent";  /* default */
     int n_lines = 20;
     bool follow = false;

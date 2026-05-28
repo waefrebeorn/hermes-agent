@@ -1,4 +1,4 @@
-# Slermes C — Mind Palace Index (v84)
+# Slermes C — Mind Palace Index (v85)
 
 ## Core Documents
 - **state.md** — Current build metrics, phase status, recent changes

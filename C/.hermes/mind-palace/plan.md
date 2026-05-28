@@ -1,10 +1,9 @@
-# Implementation Plan — Slermes C (v84)
+# Implementation Plan — Slermes C (v85)
 
-## Phase 1: P1 Gaps (4 items)
-1. **S03** — Fix /restart to actually drain+restart (20-30 LOC)
-2. **D01** — MCP SSE transport + streaming responses (400-800 LOC, largest gap)
-3. **D03** — Browser CDP autofill, PDF gen, HAR capture (500-1000 LOC)
-4. **L02** — MCP library SSE transport (200-400 LOC)
+## Phase 1: P1 Gaps (3 items)
+1. **D01** — MCP SSE transport + streaming responses (400-800 LOC, largest gap)
+2. **D03** — Browser CDP autofill, PDF gen, HAR capture (500-1000 LOC)
+3. **L02** — MCP library SSE transport (200-400 LOC)
 
 ## Phase 2: P2 Gaps (20 items)
 - S01 (background_review wiring), S04 (hot-reload), S05 (context noops), S06 (telegram draft)
