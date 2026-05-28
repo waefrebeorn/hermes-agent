@@ -1,8 +1,7 @@
 ── STATE: battleship in C/.hermes/mind-palace/.
-   Suite 282/0/0. 99 tools, 98 CLI, 19 GW, 10 providers, 66 libs.
-   v100. 21 gaps (5 partial). D08 partial: magic byte detection.
+   Suite 282/0/0. 99 tools, 100 with browser_generate_pdf, 98 CLI, 19 GW, 10 providers, 66 libs.
+   v105. 21 gaps (9 partial). State.md ground truth.
    Build: make -j$(nproc). Test: bash test_runner.sh.
-   All metrics verified: state.md is ground truth.
    vault/achievements.md records every resolved gap.
 
 ── LOOP: read state.md → battleship → prestige → plan → overnight →
@@ -25,6 +24,10 @@
    Stale claims → vault with explanation. Battleship carries only active
    gaps -- no ✅, no stale items. Vault is the historical record; battleship
    is the TODO list.
+
+── NEXT: D01 partial (SSE streaming for MCP transport_read_response).
+   transport_read_response returns NULL for SSE — needs SSE event parsing
+   loop to read streaming tool call responses.
 
 ── MEMORY: save user preferences and durable env facts. Do NOT save task
    progress, PR numbers, commit SHAs, or session outcomes. session_search
