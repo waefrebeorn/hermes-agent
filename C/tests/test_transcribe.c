@@ -81,6 +81,15 @@ int main(void) {
     TEST("wrong extension");
     check("bad ext", "{\"file_path\":\"/tmp/test.txt\"}", false, "error");
 
+    TEST("invalid JSON");
+    check("bad json", "{invalid}", false, "error");
+
+    TEST("empty file path");
+    check("empty path", "{\"file_path\":\"\"}", false, "error");
+
+    TEST("unsupported audio extension");
+    check("unsupported", "{\"file_path\":\"/tmp/test.aiff\"}", false, "error");
+
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0 ? 1 : 0;
 }
