@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
 ||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||| Gaps:   12 verified gaps (battleship v22, 1 partial) — see battleship-v22
+|||||||||| Gaps:   5 verified gaps (battleship v22) — see battleship-v22
 ||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
 |||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |||||||CLI:    98 cmd_ functions — 86 unique tools registered
