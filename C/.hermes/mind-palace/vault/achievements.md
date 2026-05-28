@@ -417,6 +417,14 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | W10 | (void) unused params: computer_use.c (element×2, amount), mcp_tool.c (args_json, server_name, arg_count), kanban.c (tid) | 3 files |
 | | Suite 283/0/0, commit 80a4dc334 | |
 
+## Phase 39: Sequence-point UB & Missing Headers (v126)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W11 | Fixed 8 sequence-point UB sites in browser.c: extracted `g_tab.element_count` before snprintf argument evaluation (C undefined behavior — read+write same var in one expression) | `src/tools/browser.c` — 8 `int _eidx = g_tab.element_count++;` patterns |
+| W13 | Added missing headers: `#include <unistd.h>` in telegram.c (usleep), `#include <sys/stat.h>` in cronjob.c (mkdir), `#include <ctype.h>` in server.c (tolower), forward declaration for discord_send_typing_to | 4 files patched |
+| | Suite 283/0/0, commit 3940341af | |
+
 ## Phase 38: Stale S4 Claims Retired (v33 battleship)
 
 | ID | Old Claim | Reality | Evidence |

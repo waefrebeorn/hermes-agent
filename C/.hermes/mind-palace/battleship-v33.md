@@ -1,7 +1,7 @@
 # Battle Map v33 — Real Parity Assessment
 
 **v125 | Fork synced: 0 behind upstream, 0 ahead | Suite 283/0/0 | 85 tools | 80 CLI**
-**Honest assessment: 21 gaps across 5 sectors.** (S4 stale claims retired to vault Phase 38)
+**Honest assessment: 19 gaps across 5 sectors.** (W11, W13 resolved in v126)
 
 v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06 items verified against both C and Python source — features either already exist in C or don't exist in either codebase). S4 reduced from 7 to 1 item (U07: test gap). S1 expanded to include the remaining real warnings/bugs.
 
@@ -20,10 +20,8 @@ v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06
 | 2 | P03 | Linkage/dependency integrity | Dependency wiring may cut corners vs Python | P1 |
 | 3 | P04 | TUI display bugs | Display/input bugs in terminal UI | P1 |
 | 4 | P05 | General usage bugs | Behavioral bugs in normal operation | P1 |
-| 5 | W11 | browser.c sequence-point UB | `g_tab.element_count` read and written in same expression (8 sites) — undefined behavior per C standard | P1 |
-| 6 | W12 | src/tools/terminal.c strtok_r warnings | 10+ incompatible pointer type + restrict alias warnings — real type-safety bugs | P1 |
-| 7 | W13 | src/gateway/platforms/*.c missing header bugs | Implicit function decls in telegram.c (usleep), discord.c (discord_send_typing_to), cronjob.c (mkdir), server.c (tolower) | P1 |
-| 8 | W14 | type mismatch bugs | telegram.c line 646 (returning http_response_t* as json_node_t*), kanban.c line 75 (return with value in void fn), xai_http.c line 37/59 (char = char*) | P1 |
+| 5 | W12 | src/tools/terminal.c strtok_r warnings | 10+ incompatible pointer type + restrict alias warnings — real type-safety bugs | P1 |
+| 6 | W14 | type mismatch bugs | telegram.c line 646 (returning http_response_t* as json_node_t*), kanban.c line 75 (return with value in void fn), xai_http.c line 37/59 (char = char*) | P1 |
 
 ## S2: Cross-Comparison (P1)
 
@@ -58,11 +56,11 @@ v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06
 | Sector | Count | Priority |
 |--------|-------|----------|
 | S0: Form-vs-Function | 2 | P0 |
-| S1: Pipeline & Integration | 8 | P1 |
+| S1: Pipeline & Integration | 6 | P1 |
 | S2: Cross-Comparison | 4 | P1 |
 | S3: Product Features | 6 | P2 |
 | S4: Upstream Drift | 1 | P1 |
-| **TOTAL** | **21** | **P0:2, P1:13, P2:6** |
+| **TOTAL** | **19** | **P0:2, P1:11, P2:6** |
 
 ## Resolved Since v32
 
