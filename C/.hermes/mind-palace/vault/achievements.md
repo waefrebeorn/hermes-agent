@@ -471,6 +471,17 @@
 - First standalone-testable module using -Wl,--unresolved-symbols=ignore-all
 - Evidence: commit 50596fec0, file src/deps/cli_display.c
 
+## Phase 48: ACP Events Test Suite (v138)
+
+- Added 41-test suite for ACP events.c covering all 6 public functions
+- Tests: tool call ID register/pop round-trip, FIFO ordering, session isolation,
+  NULL safety for all functions
+- Notification builders: tool start (with/without args), tool complete, tool failed
+- Plan update builder: 3-entry mapping, cancelled→completed mapping, NULL/empty/
+  no-todos edge cases return NULL
+- Event callback integration with stubs for acp_write_message
+- Evidence: commit 9375694d6, file src/acp/events.c
+
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
    431|- Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points
