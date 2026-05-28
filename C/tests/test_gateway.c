@@ -255,6 +255,17 @@ static void test_pool_keepalive(void) {
     g_gw.pool_keepalive_expiry = 0.0;
 }
 
+/* ================================================================
+ *  6. Platform reaction dispatch (5C-252)
+ * ================================================================ */
+static void test_platform_reaction(void) {
+    printf("\n--- Platform Reaction Dispatch ---\n");
+
+    /* Unknown platform — should gracefully return false */
+    TEST("unknown platform returns false",
+         !gw_platform_send_reaction("nonexistent", "chat_1", "msg_1", "👍"));
+}
+
 int main(void) {
     printf("=== Gateway Subsystem Test Suite (G165) ===\n");
 
@@ -263,6 +274,7 @@ int main(void) {
     test_client_pool();
     test_webhook_request();
     test_pool_keepalive();
+    test_platform_reaction();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

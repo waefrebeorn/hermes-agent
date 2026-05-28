@@ -1135,6 +1135,15 @@ void gw_platform_send_typing(const char *platform_name, const char *chat_id) {
         p->send_typing(chat_id);
 }
 
+/* 5C-252: Send emoji reaction (optional — NULL if platform doesn't support) */
+bool gw_platform_send_reaction(const char *platform_name, const char *chat_id,
+                                const char *message_id, const char *emoji) {
+    gw_platform_t *p = gw_platform_find(platform_name);
+    if (p && p->send_reaction)
+        return p->send_reaction(chat_id, message_id, emoji);
+    return false;
+}
+
 void gw_platform_shutdown_all(void) {
     for (int i = 0; i < g_gw.platform_def_count; i++) {
         if (g_gw.platform_defs[i].shutdown)

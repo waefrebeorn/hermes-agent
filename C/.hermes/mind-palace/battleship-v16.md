@@ -325,7 +325,7 @@ Every command with `(void)args` in commands.c needs to actually process user inp
 | 249 | Gateway message queues | persistent message queue, redelivery, dedup | Not ported |
 | 250 | Gateway attachment handling | file upload/download, type detection, size limits | Partial |
 | 251 | Gateway thread management | thread/topic support, reply chains, metadata | Partial |
-| 252 | Gateway reactions | reaction handling, emoji support | Not ported |
+| 252 | Gateway reactions | reaction handling, emoji support | Partial: vtable slot + dispatch in server.c (5C-252). Signal + BlueBubbles have platform impls. |
 | 253 | Gateway typing indicators | typing status, read receipts | Not ported |
 | 254 | Gateway error handling | per-platform error classification, retry, user messages | Partial |
 | 255 | Gateway rate display | per-message spend tracking, platform quota | Not ported |

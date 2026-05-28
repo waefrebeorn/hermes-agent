@@ -122,6 +122,9 @@ typedef struct {
     /* Shutdown and free resources */
     void (*shutdown)(void);
 
+    /* Send an emoji reaction to a specific message (optional — can be NULL). */
+    bool (*send_reaction)(const char *chat_id, const char *message_id, const char *emoji);
+
     /* Platform-specific state data (opaque) */
     void *data;
 } gw_platform_t;
@@ -1057,6 +1060,10 @@ bool gw_platform_send(const char *platform_name, const char *chat_id, const char
 
 /* Send typing indicator on a registered platform (no-op if not supported). */
 void gw_platform_send_typing(const char *platform_name, const char *chat_id);
+
+/* Send emoji reaction on a registered platform (returns false if not supported). */
+bool gw_platform_send_reaction(const char *platform_name, const char *chat_id,
+                                const char *message_id, const char *emoji);
 
 /* Shutdown all registered platforms — calls each platform's shutdown callback. */
 void gw_platform_shutdown_all(void);
