@@ -1205,6 +1205,141 @@ bool mcp_server_ping(mcp_server_t *srv) {
     return true;
 }
 
+/* ── Pagination helper: send list request with optional cursor ── */
+/* Sends method (e.g. "tools/list") with cursor if non-NULL/non-empty.
+ * Returns parsed JSON response (caller must json_free). */
+static json_t *_mcp_send_list_page(mcp_server_t *srv, const char *method,
+                                    const char *cursor, int timeout_ms) {
+    json_t *params = NULL;
+    if (cursor && cursor[0]) {
+        params = json_object();
+        json_set(params, "cursor", json_string(cursor));
+    }
+    json_t *resp = send_request(srv, method, params, timeout_ms);
+    if (params) json_free(params);
+    return resp;
+}
+
+/* ── Pagination loop collector ── */
+/* Accumulates items from paginated list responses.
+ * item_key:    JSON key for the array (e.g. "tools", "resources", "prompts")
+ * parse_item:  callback to parse one item from JSON into a struct.
+ *              Must return true on success.
+ * item_size:   sizeof each struct element.
+ * initial_cap: initial array capacity (0 = use default 64).
+ * cb_ctx:      userdata for parse_item callback.
+ * srv:         for error messages and timeout.
+ * cursor_method: RPC method name (e.g. "tools/list").
+ * items_out:   set to malloc'd array of item_size * count.
+ * Returns count on success, -1 on error. */
+typedef bool (*_mcp_parse_item_fn)(void *item, json_t *json, void *ctx);
+
+static int _mcp_list_paginated(mcp_server_t *srv, const char *cursor_method,
+                                const char *item_key, size_t item_size,
+                                _mcp_parse_item_fn parse_item, void *cb_ctx,
+                                void **items_out) {
+    char cursor[256] = "";
+    int   total = 0;
+    int   capacity = 0;
+    char *items = NULL;
+
+    while (1) {
+        json_t *resp = _mcp_send_list_page(srv, cursor_method,
+                                            cursor[0] ? cursor : NULL,
+                                            srv->tool_timeout * 1000);
+        if (!resp) {
+            free(items);
+            if (total == 0) *items_out = NULL;
+            return total > 0 ? total : -1;
+        }
+
+        json_t *result = json_obj_get(resp, "result");
+        if (!result) {
+            json_free(resp);
+            free(items);
+            *items_out = NULL;
+            return -1;
+        }
+
+        json_t *arr = json_obj_get(result, item_key);
+        if (!arr) {
+            json_free(resp);
+            /* No array means empty result — not an error */
+            if (total == 0) { *items_out = NULL; return 0; }
+            break;
+        }
+
+        size_t page_count = json_len(arr);
+
+        /* Grow buffer */
+        if (page_count > 0) {
+            if (total + (int)page_count > capacity) {
+                int new_cap = capacity ? capacity * 2 : 64;
+                while (new_cap < total + (int)page_count) new_cap *= 2;
+                char *new_items = (char *)realloc(items, (size_t)new_cap * item_size);
+                if (!new_items) {
+                    json_free(resp);
+                    free(items);
+                    *items_out = NULL;
+                    return -1;
+                }
+                items = new_items;
+                capacity = new_cap;
+            }
+
+            /* Parse each item */
+            for (size_t i = 0; i < page_count; i++) {
+                json_t *item_json = json_get(arr, i);
+                if (!item_json) continue;
+                void *item = items + (size_t)(total + i) * item_size;
+                memset(item, 0, item_size);
+                if (!parse_item(item, item_json, cb_ctx)) {
+                    /* Skip unparseable items rather than fail */
+                    continue;
+                }
+            }
+            total += (int)page_count;
+        }
+
+        /* Check for next cursor */
+        const char *next_cursor = json_get_str(result, "nextCursor", NULL);
+        if (!next_cursor || !next_cursor[0]) {
+            json_free(resp);
+            break;
+        }
+        snprintf(cursor, sizeof(cursor), "%s", next_cursor);
+        json_free(resp);
+    }
+
+    *items_out = items;
+    return total;
+}
+
+/* Parse callback for mcp_tool_t */
+static bool _mcp_parse_tool_item(void *item, json_t *t, void *ctx) {
+    (void)ctx;
+    mcp_tool_t *tool = (mcp_tool_t *)item;
+
+    const char *name = json_get_str(t, "name", "");
+    if (name) snprintf(tool->name, sizeof(tool->name), "%s", name);
+
+    const char *desc = json_get_str(t, "description", "");
+    if (desc) snprintf(tool->description, sizeof(tool->description), "%s", desc);
+
+    json_t *schema = json_obj_get(t, "inputSchema");
+    if (schema) {
+        char *schema_str = json_serialize(schema);
+        if (schema_str) {
+            snprintf(tool->input_schema, sizeof(tool->input_schema),
+                     "%s", schema_str);
+            free(schema_str);
+        }
+        json_t *props = json_obj_get(schema, "properties");
+        if (props) tool->param_count = (int)json_len(props);
+    }
+    return true;
+}
+
 int mcp_server_list_tools(mcp_server_t *srv, mcp_tool_t **tools_out) {
     if (!srv || !srv->initialized || !tools_out) return -1;
 
@@ -1214,64 +1349,13 @@ int mcp_server_list_tools(mcp_server_t *srv, mcp_tool_t **tools_out) {
         return -1;
     }
 
-    json_t *resp = send_request(srv, "tools/list", NULL,
-                                 srv->tool_timeout * 1000);
-    if (!resp) return -1;
-
-    json_t *result = json_obj_get(resp, "result");
-    if (!result) {
-        json_free(resp);
-        return -1;
-    }
-
-    json_t *tools_arr = json_obj_get(result, "tools");
-    if (!tools_arr) {
-        json_free(resp);
-        return 0; /* No tools, not an error */
-    }
-
-    size_t count = json_len(tools_arr);
-    if (count == 0) {
-        json_free(resp);
-        *tools_out = NULL;
-        return 0;
-    }
-
-    mcp_tool_t *tools = (mcp_tool_t *)calloc(count, sizeof(mcp_tool_t));
-    if (!tools) { json_free(resp); return -1; }
-
-    for (size_t i = 0; i < count; i++) {
-        json_t *t = json_get(tools_arr, i);
-        if (!t) continue;
-
-        const char *name = json_get_str(t, "name", "");
-        if (name) snprintf(tools[i].name, sizeof(tools[i].name), "%s", name);
-
-        const char *desc = json_get_str(t, "description", "");
-        if (desc) snprintf(tools[i].description, sizeof(tools[i].description), "%s", desc);
-
-        /* Store input schema as JSON string */
-        json_t *schema = json_obj_get(t, "inputSchema");
-        if (schema) {
-            char *schema_str = json_serialize(schema);
-            if (schema_str) {
-                snprintf(tools[i].input_schema, sizeof(tools[i].input_schema),
-                         "%s", schema_str);
-                free(schema_str);
-            }
-
-            /* Parse required params */
-            json_t *props = json_obj_get(schema, "properties");
-            if (props) {
-                /* Just count — detailed param parsing is done on demand */
-                tools[i].param_count = (int)json_len(props);
-            }
-        }
-    }
-
-    json_free(resp);
-    *tools_out = tools;
-    return (int)count;
+    void *items = NULL;
+    int count = _mcp_list_paginated(srv, "tools/list", "tools",
+                                     sizeof(mcp_tool_t),
+                                     _mcp_parse_tool_item, NULL,
+                                     &items);
+    *tools_out = (mcp_tool_t *)items;
+    return count;
 }
 
 char *mcp_server_call_tool(mcp_server_t *srv, const char *tool_name,
@@ -1528,6 +1612,25 @@ void mcp_tool_list_free(mcp_tool_t *tools, int count) {
  *  P67: Resource protocol methods
  * ================================================================ */
 
+/* Parse callback for mcp_resource_t */
+static bool _mcp_parse_resource_item(void *item, json_t *r, void *ctx) {
+    (void)ctx;
+    mcp_resource_t *res = (mcp_resource_t *)item;
+
+    const char *uri = json_get_str(r, "uri", "");
+    if (uri) snprintf(res->uri, sizeof(res->uri), "%s", uri);
+
+    const char *name = json_get_str(r, "name", "");
+    if (name) snprintf(res->name, sizeof(res->name), "%s", name);
+
+    const char *desc = json_get_str(r, "description", "");
+    if (desc) snprintf(res->description, sizeof(res->description), "%s", desc);
+
+    const char *mime = json_get_str(r, "mimeType", "");
+    if (mime) snprintf(res->mime_type, sizeof(res->mime_type), "%s", mime);
+    return true;
+}
+
 int mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out) {
     if (!srv || !srv->initialized || !resources_out) return -1;
 
@@ -1537,52 +1640,13 @@ int mcp_server_list_resources(mcp_server_t *srv, mcp_resource_t **resources_out)
         return -1;
     }
 
-    json_t *resp = send_request(srv, "resources/list", NULL,
-                                 srv->tool_timeout * 1000);
-    if (!resp) return -1;
-
-    json_t *result = json_obj_get(resp, "result");
-    if (!result) {
-        json_free(resp);
-        return -1;
-    }
-
-    json_t *resources_arr = json_obj_get(result, "resources");
-    if (!resources_arr) {
-        json_free(resp);
-        return 0;
-    }
-
-    size_t count = json_len(resources_arr);
-    if (count == 0) {
-        json_free(resp);
-        *resources_out = NULL;
-        return 0;
-    }
-
-    mcp_resource_t *resources = (mcp_resource_t *)calloc(count, sizeof(mcp_resource_t));
-    if (!resources) { json_free(resp); return -1; }
-
-    for (size_t i = 0; i < count; i++) {
-        json_t *r = json_get(resources_arr, i);
-        if (!r) continue;
-
-        const char *uri = json_get_str(r, "uri", "");
-        if (uri) snprintf(resources[i].uri, sizeof(resources[i].uri), "%s", uri);
-
-        const char *name = json_get_str(r, "name", "");
-        if (name) snprintf(resources[i].name, sizeof(resources[i].name), "%s", name);
-
-        const char *desc = json_get_str(r, "description", "");
-        if (desc) snprintf(resources[i].description, sizeof(resources[i].description), "%s", desc);
-
-        const char *mime = json_get_str(r, "mimeType", "");
-        if (mime) snprintf(resources[i].mime_type, sizeof(resources[i].mime_type), "%s", mime);
-    }
-
-    json_free(resp);
-    *resources_out = resources;
-    return (int)count;
+    void *items = NULL;
+    int count = _mcp_list_paginated(srv, "resources/list", "resources",
+                                     sizeof(mcp_resource_t),
+                                     _mcp_parse_resource_item, NULL,
+                                     &items);
+    *resources_out = (mcp_resource_t *)items;
+    return count;
 }
 
 mcp_resource_content_t *mcp_server_read_resource(mcp_server_t *srv,
@@ -1951,6 +2015,29 @@ int mcp_server_process_incoming(mcp_server_t *srv) {
  *  P69: Prompt protocol methods
  * ================================================================ */
 
+/* Parse callback for mcp_prompt_t */
+static bool _mcp_parse_prompt_item(void *item, json_t *p, void *ctx) {
+    (void)ctx;
+    mcp_prompt_t *prompt = (mcp_prompt_t *)item;
+
+    const char *name = json_get_str(p, "name", "");
+    if (name) snprintf(prompt->name, sizeof(prompt->name), "%s", name);
+
+    const char *desc = json_get_str(p, "description", "");
+    if (desc) snprintf(prompt->description, sizeof(prompt->description), "%s", desc);
+
+    json_t *args_schema = json_obj_get(p, "arguments");
+    if (args_schema) {
+        char *schema_str = json_serialize(args_schema);
+        if (schema_str) {
+            snprintf(prompt->arguments_schema,
+                     sizeof(prompt->arguments_schema), "%s", schema_str);
+            free(schema_str);
+        }
+    }
+    return true;
+}
+
 int mcp_server_list_prompts(mcp_server_t *srv, mcp_prompt_t **prompts_out) {
     if (!srv || !srv->initialized || !prompts_out) return -1;
 
@@ -1960,56 +2047,13 @@ int mcp_server_list_prompts(mcp_server_t *srv, mcp_prompt_t **prompts_out) {
         return -1;
     }
 
-    json_t *resp = send_request(srv, "prompts/list", NULL,
-                                 srv->tool_timeout * 1000);
-    if (!resp) return -1;
-
-    json_t *result = json_obj_get(resp, "result");
-    if (!result) {
-        json_free(resp);
-        return -1;
-    }
-
-    json_t *prompts_arr = json_obj_get(result, "prompts");
-    if (!prompts_arr) {
-        json_free(resp);
-        return 0;
-    }
-
-    size_t count = json_len(prompts_arr);
-    if (count == 0) {
-        json_free(resp);
-        *prompts_out = NULL;
-        return 0;
-    }
-
-    mcp_prompt_t *prompts = (mcp_prompt_t *)calloc(count, sizeof(mcp_prompt_t));
-    if (!prompts) { json_free(resp); return -1; }
-
-    for (size_t i = 0; i < count; i++) {
-        json_t *p = json_get(prompts_arr, i);
-        if (!p) continue;
-
-        const char *name = json_get_str(p, "name", "");
-        if (name) snprintf(prompts[i].name, sizeof(prompts[i].name), "%s", name);
-
-        const char *desc = json_get_str(p, "description", "");
-        if (desc) snprintf(prompts[i].description, sizeof(prompts[i].description), "%s", desc);
-
-        json_t *args_schema = json_obj_get(p, "arguments");
-        if (args_schema) {
-            char *schema_str = json_serialize(args_schema);
-            if (schema_str) {
-                snprintf(prompts[i].arguments_schema,
-                         sizeof(prompts[i].arguments_schema), "%s", schema_str);
-                free(schema_str);
-            }
-        }
-    }
-
-    json_free(resp);
-    *prompts_out = prompts;
-    return (int)count;
+    void *items = NULL;
+    int count = _mcp_list_paginated(srv, "prompts/list", "prompts",
+                                     sizeof(mcp_prompt_t),
+                                     _mcp_parse_prompt_item, NULL,
+                                     &items);
+    *prompts_out = (mcp_prompt_t *)items;
+    return count;
 }
 
 char *mcp_server_get_prompt(mcp_server_t *srv, const char *prompt_name,

@@ -10,10 +10,10 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  23 remaining gaps  │  0 stubs  │  All entry points verified ║
+   ║  22 remaining gaps  │  0 stubs  │  All entry points verified ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v94)
+## Build Metrics (v95)
 
 Suite: 282/0/0 — all pass, 0 skip. 99 tools, 98 CLI commands.
 167 src/ .c files, 239 tests, 66 libs, 19 gateways, 10 providers.
