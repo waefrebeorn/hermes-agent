@@ -1,7 +1,7 @@
 # Battle Map v33 — Real Parity Assessment
 
 **v125 | Fork synced: 0 behind upstream, 0 ahead | Suite 283/0/0 | 85 tools | 80 CLI**
-**Honest assessment: 18 gaps across 5 sectors.** (W14 resolved in v127 — type mismatch bugs)
+**Honest assessment: 18 gaps across 5 sectors.** (W12, W14 resolved. 17 gaps remaining.)
 
 v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06 items verified against both C and Python source — features either already exist in C or don't exist in either codebase). S4 reduced from 7 to 1 item (U07: test gap). S1 expanded to include the remaining real warnings/bugs.
 
@@ -20,7 +20,7 @@ v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06
 | 2 | P03 | Linkage/dependency integrity | Dependency wiring may cut corners vs Python | P1 |
 | 3 | P04 | TUI display bugs | Display/input bugs in terminal UI | P1 |
 | 4 | P05 | General usage bugs | Behavioral bugs in normal operation | P1 |
-| 5 | W12 | src/tools/terminal.c strtok_r warnings | 10+ incompatible pointer type + restrict alias warnings — real type-safety bugs | P1 |
+
 
 ## S2: Cross-Comparison (P1)
 
@@ -55,11 +55,11 @@ v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06
 | Sector | Count | Priority |
 |--------|-------|----------|
 | S0: Form-vs-Function | 2 | P0 |
-| S1: Pipeline & Integration | 5 | P1 |
+| S1: Pipeline & Integration | 4 | P1 |
 | S2: Cross-Comparison | 4 | P1 |
 | S3: Product Features | 6 | P2 |
 | S4: Upstream Drift | 1 | P1 |
-| **TOTAL** | **18** | **P0:2, P1:10, P2:6** |
+| **TOTAL** | **17** | **P0:2, P1:9, P2:6** |
 
 ## Resolved Since v32
 

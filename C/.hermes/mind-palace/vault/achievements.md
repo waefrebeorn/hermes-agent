@@ -434,6 +434,13 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | W14c | Fixed `telegram_get_updates` returning `http_response_t*` as `json_node_t*` — now parses HTTP response body to JSON | `src/gateway/platforms/telegram.c:647` — `json_parse(resp->body, NULL)` |
 | | Suite 283/0/0, commit 79a1f3825 | |
 
+## Phase 41: W12 strtok_r Incompatible Pointer Fix (v128)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W12 | Fixed 3 strtok_r calls passing `char (*)[N]` as save_ptr — added proper `char *saveN` variables to suppress -Wincompatible-pointer-types and -Wrestrict warnings | `src/tools/terminal.c:331,363,381` — `&save1`/`&save2`/`&save3` |
+| | Suite 283/0/0, commit b955d29a5 | |
+
 ## Phase 38: Stale S4 Claims Retired (v33 battleship)
 
 | ID | Old Claim | Reality | Evidence |
