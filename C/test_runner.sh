@@ -1140,7 +1140,7 @@ run_lib_test "toml" "tests/test_toml.c" "lib/libtoml" "$CDIR/lib/libtoml/toml.c"
 echo ""; echo "=== CLI Paths Tests (P21) ==="
 run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "$CDIR/src/cli/paths.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
 echo ""; echo "=== Session Search Tests (P142) ==="
-run_lib_test "session_search" "tests/test_session_search.c" "include" "$CDIR/src/tools/session_search.c $CDIR/lib/libjson/json.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
+run_lib_test "session_search" "tests/test_session_search.c" "include" "$CDIR/src/tools/session_search.c $CDIR/lib/libjson/json.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv" "session_search (17 tests)"
 echo ""; echo "=== Session CRUD Tests (P143) ==="
 run_lib_test "session_crud" "tests/test_session_crud.c" "include" "$CDIR/src/tools/session_crud.c $CDIR/lib/libdb/db.c $CDIR/lib/libjson/json.c -I$CDIR/lib/libjson -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all -D_FORTIFY_SOURCE=0"
 echo ""; echo "=== Tirith Security Tests (O13) ==="
@@ -2973,7 +2973,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
     "$CDIR/lib/libtranscribe/transcribe.c" "$CDIR/lib/libhttp/http.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_transcribe -lssl -lcrypto -ldl -lm -lz 2>/dev/null && [[ -x /tmp/hermes_test_transcribe ]]; then
-    if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcribe"
+    if /tmp/hermes_test_transcribe > /dev/null 2>&1; then ok "transcribe (13 tests)"
     else fail "transcribe (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_transcribe
 else skip "transcribe (compilation failed)"
@@ -3058,7 +3058,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" $INCDIRS \
     "$CDIR/lib/libfal_common/fal_common.c" \
     "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_video_gen -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_video_gen ]]; then
-    if /tmp/hermes_test_video_gen > /dev/null 2>&1; then ok "video_gen (5 tests)"
+    if /tmp/hermes_test_video_gen > /dev/null 2>&1; then ok "video_gen (14 tests)"
     else fail "video_gen (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_video_gen
 else skip "video_gen (compilation failed)"

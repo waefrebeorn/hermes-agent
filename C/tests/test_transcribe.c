@@ -90,6 +90,47 @@ int main(void) {
     TEST("unsupported audio extension");
     check("unsupported", "{\"file_path\":\"/tmp/test.aiff\"}", false, "error");
 
+    /* ══════════════════════════════════════════════════
+     *  X04: Edge case tests — transcribe
+     * ══════════════════════════════════════════════════ */
+
+    TEST("empty provider string");
+    check("empty provider", "{\"file_path\":\"/tmp/test.wav\",\"model\":\"\"}", false, "error");
+
+    TEST("invalid provider");
+    check("invalid provider", "{\"file_path\":\"/tmp/test.wav\",\"model\":\"nonexistent\"}", false, "error");
+
+    TEST("unknown extra params");
+    check("extra params", "{\"file_path\":\"/tmp/test.wav\",\"unknown\":\"value\"}", false, "error");
+
+    TEST("very long file path");
+    {
+        char long_path[4096];
+        memset(long_path, 'A', 4000);
+        memcpy(long_path, "/tmp/", 5);
+        long_path[5] = 'A';
+        long_path[4005] = '\0';
+        char args[8192];
+        snprintf(args, sizeof(args), "{\"file_path\":\"%s.wav\"}", long_path);
+        char *result = transcribe_handler(args, NULL);
+        TEST("long path test");
+        if (!result) { FAIL("null result"); }
+        else {
+            char *jerr = NULL;
+            json_t *j = json_parse(result, &jerr);
+            if (!j) { FAIL("JSON parse"); free(jerr); }
+            else {
+                bool success = json_get_bool(j, "success", true);
+                if (success) { FAIL("expected failure for nonexistent long path"); } else { PASS(); }
+                json_free(j);
+            }
+            free(result);
+        }
+    }
+
+    TEST("json injection in model param");
+    check("json injection", "{\"file_path\":\"/tmp/test.wav\",\"model\":\"groq\\\"}');--\"}", false, "error");
+
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0 ? 1 : 0;
 }

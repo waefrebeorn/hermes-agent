@@ -1,2 +1,3 @@
-# Plan (v110)
-Remaining: M03-M07 (Yuanbao SDK), X03-X05 (tests). X01+X02 done.
+# Plan (v112)
+All non-Yuanbao gaps resolved. Remaining: M03-M07 (Yuanbao SDK).
+Pick next: implement gateway RPC or await direction.

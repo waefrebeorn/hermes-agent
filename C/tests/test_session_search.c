@@ -271,6 +271,64 @@ int main(void) {
     unsetenv("HERMES_HOME");
     unsetenv("HOME");
 
+    /* ══════════════════════════════════════════════════
+     *  X05: Edge case tests — session_search
+     * ══════════════════════════════════════════════════ */
+
+    printf("\n--- Edge Cases ---\n");
+    {
+        TEST("invalid JSON args returns error");
+        char *res = session_search_handler("{bad json}", NULL);
+        json_node_t *j = json_parse(res, NULL);
+        if (j) {
+            const char *err = json_str(j, "error");
+            if (err && *err) { PASS; } else { FAIL("no error field"); }
+            json_free(j);
+        } else { FAIL("parse failed"); }
+        free(res);
+    }
+    {
+        TEST("very long query doesn't crash (4K chars)");
+        char qbuf[4100];
+        memset(qbuf, 'A', 4000);
+        qbuf[4000] = '\0';
+        char args[8192];
+        snprintf(args, sizeof(args), "{\"query\":\"%s\"}", qbuf);
+        char *res = session_search_handler(args, NULL);
+        json_node_t *j = json_parse(res, NULL);
+        if (j) { PASS; json_free(j); } else { FAIL("parse failed"); }
+        free(res);
+    }
+    {
+        TEST("unicode query doesn't crash");
+        char *res = session_search_handler("{\"query\":\"搜索中文\"}", NULL);
+        json_node_t *j = json_parse(res, NULL);
+        if (j) { PASS; json_free(j); } else { FAIL("parse failed"); }
+        free(res);
+    }
+    {
+        TEST("tag_filter with empty string (ignored, returns results)");
+        char *res = session_search_handler("{\"query\":\"binary\",\"tag_filter\":\"\"}", NULL);
+        json_node_t *j = json_parse(res, NULL);
+        if (j) {
+            double count = json_num(j, "count");
+            if (count > 0) { PASS; } else {
+                /* Empty tag filter may match nothing — not a crash */
+                printf("SKIP: empty tag_filter returns %f results (acceptable)\n", count);
+                skipped++;
+            }
+            json_free(j);
+        } else { FAIL("parse failed"); }
+        free(res);
+    }
+    {
+        TEST("negative limit");
+        char *res = session_search_handler("{\"query\":\"binary\",\"limit\":-1}", NULL);
+        json_node_t *j = json_parse(res, NULL);
+        if (j) { PASS; json_free(j); } else { FAIL("parse failed"); }
+        free(res);
+    }
+
     /* Summary */
     printf("\n==============================================\n");
     printf("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped);

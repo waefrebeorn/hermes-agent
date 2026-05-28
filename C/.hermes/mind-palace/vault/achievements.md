@@ -318,3 +318,21 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | X02 | Image generation edge case tests expanded from 7 to 18: invalid/empty provider, negative aspect ratio, 4K-char prompt, JSON injection, unicode/emoji, all-params-set, n=0, n=999, unknown extra params | `tests/test_image_gen.c` — 11 new tests (18 total) |
+
+## Phase 25: Video Gen Edge Case Tests (X03)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X03 | Video generation edge case tests expanded from 5 to 14: empty prompt, empty/invalid provider, 4K-char prompt, JSON injection, unicode/emoji, all-params-set, unknown params, negative duration | `tests/test_video_gen.c` — 9 new tests (14 total) |
+
+## Phase 26: Transcribe Edge Case Tests (X04)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X04 | Transcribe edge case tests expanded from 8 to 13: empty provider, invalid provider, unknown params, 4K-char file path, JSON injection in model param | `tests/test_transcribe.c` — 5 new tests (13 total) |
+
+## Phase 27: Session Search Edge Case Tests (X05)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X05 | Session search edge case tests expanded from 13 to 17: invalid JSON args, 4K-char query, unicode query, empty tag_filter (graceful), negative limit | `tests/test_session_search.c` — 5 new tests (17 total) |
