@@ -90,11 +90,24 @@ size_t hermes_token_count(const char *text, token_family_t family) {
         return 0;
 
     size_t len = strlen(text);
-    float cpt = hermes_token_chars_per_token(family);
 
-    /* Ceiling division */
-    size_t tokens = (size_t)((float)len / cpt + 0.999999f);
-    if (tokens == 0) tokens = 1; /* non-empty string is at least 1 token */
+    /* Ceiling division using scaled integer arithmetic to avoid float precision issues.
+     * e.g. 1000/4.0 with ceil: 250 not 251, which (float)(1000/4.0 + 0.999) gets wrong. */
+    static const int cpt_x10_table[] = {
+        40, /* UNKNOWN */
+        40, /* GPT4 */
+        40, /* GPT35 */
+        35, /* CLAUDE */
+        38, /* DEEPSEEK */
+        37, /* GEMINI */
+        42, /* LLAMA */
+        40, /* MISTRAL */
+        40, /* COMMAND */
+    };
+    int cpt10 = (family >= 0 && family < (int)(sizeof(cpt_x10_table)/sizeof(cpt_x10_table[0])))
+                ? cpt_x10_table[family] : 40;
+    size_t tokens = (len * 10 + (size_t)cpt10 - 1) / (size_t)cpt10;
+    if (tokens == 0) tokens = 1;
     return tokens;
 }
 
