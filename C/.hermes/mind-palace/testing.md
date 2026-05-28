@@ -1,4 +1,4 @@
-# Testing — Slermes C (v92)
+# Testing — Slermes C (v93)
 
 | Metric | Value |
 |--------|-------|
@@ -6,4 +6,3 @@
 | Suite result | 282/0/0 (0 failed, 0 skipped) |
 | Libraries | 66 modules |
 | Run time | <60s |
-| Test style | Standalone .c compiled + executed by test_runner.sh |

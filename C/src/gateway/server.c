@@ -1144,6 +1144,16 @@ bool gw_platform_send_reaction(const char *platform_name, const char *chat_id,
     return false;
 }
 
+/* P103: Vtable wrappers — these bridge the gw_platform_t signature
+   (no http_client_t parameter) to the platform-specific functions
+   (which need http). The http client is captured from g_gw.http. */
+
+static bool telegram_vtable_send_reaction(const char *chat_id,
+                                           const char *message_id,
+                                           const char *emoji) {
+    return telegram_set_message_reaction(g_gw.http, chat_id, message_id, emoji);
+}
+
 /* Generic shutdown for polling-based platforms.
    Threads have already exited via g_gw.running flag + pthread_join by the
    time this is called.  Per-platform cleanup (HTTP pool, sessions) is
@@ -2073,6 +2083,13 @@ int hermes_gateway_main(int argc, char **argv) {
                             plat.init = all_platforms[i].setup;
                             plat.shutdown = poll_platform_shutdown;
                             gw_platform_register(&plat);
+                            /* Wire platform-specific vtable callbacks */
+                            {
+                                gw_platform_t *p = gw_platform_find(
+                                    g_gw.platforms[g_gw.platform_count]);
+                                if (p && strcmp(p->name, "telegram") == 0)
+                                    p->send_reaction = telegram_vtable_send_reaction;
+                            }
                         }
                         g_gw.platform_count++;
                     } else {

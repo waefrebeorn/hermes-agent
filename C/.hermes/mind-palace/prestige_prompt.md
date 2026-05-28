@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v92 — 2026-06-02)
+# Slermes C — Prestige Prompt (v93 — 2026-06-02)
 
 ## Priority Queue
 
@@ -22,21 +22,17 @@
 15. D10 — Web auth flows
 16. D13 — Discord tool depth (12 actions vs 34 Python functions)
 
-**P2 — Gateway:**
-17. G02 — send_reaction vtable wiring (Signal has impl, different signature)
-
 **P3:**
-18. D11 — Video gen edge cases
-19. D12 — File minor edge cases
-20. I02 — GitHub Actions CI for C-only
-21. X01 — Vision test edge cases
-22. X02 — Image gen provider dispatch tests
-23. X03 — Video gen edge case tests
-24. X04 — Transcribe provider-specific tests
-25. X05 — Session search query parsing edge cases
+17. D11 — Video gen edge cases
+18. D12 — File minor edge cases
+19. I02 — GitHub Actions CI for C-only
+20. X01 — Vision test edge cases
+21. X02 — Image gen provider dispatch tests
+22. X03 — Video gen edge case tests
+23. X04 — Transcribe provider-specific tests
+24. X05 — Session search query parsing edge cases
 
 ## Current State
 - Suite: 282/0/0, 99 tools, 98 CLI, 19 gateways, 10 providers, 66 libs
-- Battleship: v20 (25 gaps, Triple DA refresh 2026-06-02)
-- 0 P0/P1 gaps remaining. All entry points verified.
-- 8 stale claims retired to vault Phase 9
+- Battleship: v21 (24 gaps)
+- 0 P0/P1 gaps. G02 resolved: Telegram send_reaction wired to vtable

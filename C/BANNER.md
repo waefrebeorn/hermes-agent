@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v92)
+# BANNER — WuBu Slermes C Translation (v93)
 
 ```
   __        __           _   ____  _  
@@ -10,10 +10,10 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  25 remaining gaps  │  0 stubs  │  All entry points verified ║
+   ║  24 remaining gaps  │  0 stubs  │  All entry points verified ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v92)
+## Build Metrics (v93)
 
 Suite: 282/0/0 — all pass, 0 skip. 99 tools, 98 CLI commands.
 167 src/ .c files, 239 tests, 66 libs, 19 gateways, 10 providers.
@@ -28,7 +28,7 @@ Binary: 31M. Build: 0 warnings. Stubs: 0 (codebase clean).
 | Phase 2 — Provider Parity | ✅ ALL DONE |
 | Phase 3 — Tool Features | ✅ ALL DONE (99 tools) |
 | Phase 4 — Missing Tools (5) | Yuanbao SDK-dependent tools |
-| Phase 5 — Gateway (19) | ✅ All platforms, reactions partial |
+|| Phase 5 — Gateway (19) | ✅ All platforms, reactions wired (Telegram) |
 | Phase 6 — Agent | ✅ Full loop + all providers |
 | Phase 7 — Libraries (66) | ✅ All modules |
 | Phase 8 — Tests (239) | ✅ 282/0/0, edge case expansion P3 |
