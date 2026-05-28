@@ -2625,7 +2625,7 @@ else skip "kanban_tool (compilation failed)"
 fi &
 
 # Send_message tool test (M37)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_send_message.c" \
     "$CDIR/src/tools/send_message.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_sendmsg -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then

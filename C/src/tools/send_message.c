@@ -207,6 +207,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
             bool sent = false;
             const char *tg_msg = actual_message ? actual_message : "";
 
+#ifndef TEST_BUILD
             /* Get bot token from config or env */
             hermes_config_t cfg;
             memset(&cfg, 0, sizeof(cfg));
@@ -217,7 +218,25 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                 telegram_set_token(bot_token);
                 http_client_t *http = http_client_new(30);
                 if (http) {
-                    if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
+                    if (actual_media && actual_media[0]) {
+                        /* MEDIA: prefix — send file via appropriate API */
+                        const char *ext = strrchr(actual_media, '.');
+                        if (ext) {
+                            if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                                strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
+                                sent = telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            else if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0)
+                                sent = telegram_send_voice(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
+                                sent = telegram_send_video(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            else if (strcasecmp(ext, ".gif") == 0)
+                                sent = telegram_send_animation(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            else
+                                sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                        } else {
+                            sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                        }
+                    } else if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
                         /* Build reply_markup with inline keyboard */
                         json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
                         if (reply_markup) {
@@ -236,6 +255,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                     http_client_free(http);
                 }
             }
+#endif
 
             if (sent) {
                 json_object_set(result, "status", json_new_string("sent"));
@@ -243,7 +263,11 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                 if (chat_id) json_object_set(result, "chat_id", json_new_string(chat_id));
             } else {
                 json_object_set(result, "status", json_new_string("error"));
+#ifndef TEST_BUILD
                 const char *reason = !bot_token ? "TELEGRAM_BOT_TOKEN not set" : "Telegram send failed";
+#else
+                const char *reason = "Telegram send skipped (test build)";
+#endif
                 json_object_set(result, "error", json_new_string(reason));
             }
 
