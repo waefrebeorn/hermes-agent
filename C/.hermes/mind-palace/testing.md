@@ -1,8 +1,2 @@
-# Testing — Slermes C (v93)
-
-| Metric | Value |
-|--------|-------|
-| Test files | 239 (.c files) |
-| Suite result | 282/0/0 (0 failed, 0 skipped) |
-| Libraries | 66 modules |
-| Run time | <60s |
+# Testing (v94)
+239 files | 282/0/0 | 66 libs
