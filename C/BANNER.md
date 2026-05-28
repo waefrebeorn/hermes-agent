@@ -3,7 +3,7 @@
 ```text
 ╔══════════════════════════════════════════════════════════════╗
 ║  WuBu Slermes C v123                                       ║
-║  282/0/0 test suite  │  85 tools  │  80 CLI commands        ║
+║  283/0/0 test suite  │  85 tools  │  80 CLI commands        ║
 ║  23 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork synced to upstream  │  0 behind, 0 ahead              ║
 ║  Patch tool tab/CR unescape ported from upstream            ║
@@ -14,7 +14,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 282/0/0 |
+| Test suite | 283/0/0 |
 | Tools | 85 |
 | CLI commands | 80 |
 | Gateway platforms | 19 |

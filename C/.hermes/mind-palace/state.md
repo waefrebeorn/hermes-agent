@@ -1,6 +1,6 @@
 # Slermes C (v123)
 
-Suite: 282/0/0 | Tools: 85 | CLI: 80 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Suite: 283/0/0 | Tools: 85 | CLI: 80 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174
 Battleship v32 (23 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
 
@@ -12,7 +12,7 @@ Battleship v32 (23 parity gaps across 5 sectors). Fork synced to upstream (0 beh
 
 ## Progress This Session
 - U04 partial: patch tool \\t/\\r unescape ported from upstream @78be45860
-  Suite 282/0/0, all patch tests pass. Binary builds clean.
+  Suite 283/0/0, all patch tests pass. Binary builds clean.
 
 ## Critical Gaps
 - **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
