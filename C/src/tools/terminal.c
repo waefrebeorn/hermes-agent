@@ -328,7 +328,8 @@ static char *run_command_docker(const char *command, int timeout_sec,
     if (forward_env && forward_env[0]) {
         char copy[1024];
         snprintf(copy, sizeof(copy), "%s", forward_env);
-        char *token = strtok_r(copy, ",", &copy);
+        char *save1 = NULL;
+        char *token = strtok_r(copy, ",", &save1);
         while (token) {
             while (*token == ' ') token++;
             char *end = token + strlen(token) - 1;
@@ -337,7 +338,7 @@ static char *run_command_docker(const char *command, int timeout_sec,
                 n = snprintf(docker_cmd + pos, remaining, " -e \"%s\"", token);
                 if (n > 0 && (size_t)n < remaining) { pos += n; remaining -= n; }
             }
-            token = strtok_r(NULL, ",", &copy);
+            token = strtok_r(NULL, ",", &save1);
         }
     }
 
@@ -360,7 +361,8 @@ static char *run_command_docker(const char *command, int timeout_sec,
     if (volumes && volumes[0]) {
         char vcopy[1024];
         snprintf(vcopy, sizeof(vcopy), "%s", volumes);
-        char *token = strtok_r(vcopy, ",", &vcopy);
+        char *save2 = NULL;
+        char *token = strtok_r(vcopy, ",", &save2);
         while (token) {
             while (*token == ' ') token++;
             char *end = token + strlen(token) - 1;
@@ -369,7 +371,7 @@ static char *run_command_docker(const char *command, int timeout_sec,
                 n = snprintf(docker_cmd + pos, remaining, " -v \"%s\"", token);
                 if (n > 0 && (size_t)n < remaining) { pos += n; remaining -= n; }
             }
-            token = strtok_r(NULL, ",", &vcopy);
+            token = strtok_r(NULL, ",", &save2);
         }
     }
 
@@ -378,14 +380,15 @@ static char *run_command_docker(const char *command, int timeout_sec,
     if (extra_args && extra_args[0]) {
         char acopy[1024];
         snprintf(acopy, sizeof(acopy), "%s", extra_args);
-        char *token = strtok_r(acopy, ",", &acopy);
+        char *save3 = NULL;
+        char *token = strtok_r(acopy, ",", &save3);
         while (token) {
             while (*token == ' ') token++;
             if (*token) {
                 n = snprintf(docker_cmd + pos, remaining, " %s", token);
                 if (n > 0 && (size_t)n < remaining) { pos += n; remaining -= n; }
             }
-            token = strtok_r(NULL, ",", &acopy);
+            token = strtok_r(NULL, ",", &save3);
         }
     }
 
