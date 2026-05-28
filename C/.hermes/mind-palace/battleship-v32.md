@@ -32,14 +32,16 @@ S4 (Upstream Drift) reworded — no longer "7583 commits behind" in git terms (f
 
 ## S3: Product Features (P2)
 
+Key: 🔲 implemented-but-unwired, 🟡 feature implemented with simpler backend
+
 | # | ID | Feature | Details | Priority |
 |---|----|---------|---------|----------|
-| 1 | Q01 | Multi-turn conversation | Full back-and-forth with memory | P2 |
-| 2 | Q02 | Session persistence | Full SQLite session save/restore | P2 |
-| 3 | Q03 | Plugin system | Dynamic .so loading matching Python plugin model | P2 |
-| 4 | Q04 | Skin engine parity | All Python skins available | P2 |
-| 5 | Q05 | Gateway platform parity | All 19+ platforms fully tested | P2 |
-| 6 | Q06 | Provider mode parity | All providers: stream, thinking, caching, oauth | P2 |
+| 1 | Q01 | Multi-turn conversation | 🟡 `agent_chat()` loop in CLI, message history maintained across turns | P2 |
+| 2 | Q02 | Session persistence | 🟡 File-based JSON sessions (db.c), save/load/meta all wired | P2 |
+| 3 | Q03 | Plugin system | 🟡 10 .so plugins loaded via dlopen, partial Python plugin model parity | P2 |
+| 4 | Q04 | Skin engine parity | 🟡 libskin + display_set_skin + skin colors in status bar | P2 |
+| 5 | Q05 | Gateway platform parity | 🟡 19 platforms, gateway_subsystem (49 tests), gateway_escape (30 tests) | P2 |
+| 6 | Q06 | Provider mode parity | 🟡 stream_diag_t, cache tracking, thinking/vision flags in header | P2 |
 
 ## S4: Upstream Drift (P1)
 
