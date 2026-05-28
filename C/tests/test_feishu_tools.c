@@ -15,6 +15,10 @@
 /* Declare the handlers (non-static in feishu_tools.c) */
 extern char *handle_feishu_doc_read(const char *args_json, const char *task_id);
 extern char *handle_feishu_drive_list(const char *args_json, const char *task_id);
+extern char *handle_feishu_drive_list_comments(const char *args_json, const char *task_id);
+extern char *handle_feishu_drive_list_comment_replies(const char *args_json, const char *task_id);
+extern char *handle_feishu_drive_reply_comment(const char *args_json, const char *task_id);
+extern char *handle_feishu_drive_add_comment(const char *args_json, const char *task_id);
 
 static int pass = 0, fail = 0;
 
@@ -113,6 +117,134 @@ static void test_doc_read_no_auth_env(void) {
     free(result);
 }
 
+/* ── Feishu comment tool tests ──────────────────────────── */
+
+static void test_list_comments_null_args(void) {
+    char *result = handle_feishu_drive_list_comments(NULL, NULL);
+    TEST("list_comments null: result", result != NULL);
+    TEST("list_comments null: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("list_comments null: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_list_comments_no_token(void) {
+    unsetenv("FEISHU_APP_ID");
+    unsetenv("FEISHU_APP_SECRET");
+    const char *args = "{\"file_token\":\"doc_123\"}";
+    char *result = handle_feishu_drive_list_comments(args, NULL);
+    TEST("list_comments no auth: result", result != NULL);
+    TEST("list_comments no auth: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("list_comments no auth: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_list_comments_bad_json(void) {
+    const char *args = "{{{broken}}";
+    char *result = handle_feishu_drive_list_comments(args, NULL);
+    TEST("list_comments bad JSON: result", result != NULL);
+    TEST("list_comments bad JSON: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_list_replies_null_args(void) {
+    char *result = handle_feishu_drive_list_comment_replies(NULL, NULL);
+    TEST("list_replies null: result", result != NULL);
+    TEST("list_replies null: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("list_replies null: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_list_replies_missing_file_token(void) {
+    const char *args = "{\"comment_id\":\"c1\"}";
+    char *result = handle_feishu_drive_list_comment_replies(args, NULL);
+    TEST("list_replies no file: result", result != NULL);
+    TEST("list_replies no file: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_list_replies_missing_comment_id(void) {
+    const char *args = "{\"file_token\":\"doc_1\"}";
+    char *result = handle_feishu_drive_list_comment_replies(args, NULL);
+    TEST("list_replies no comment_id: result", result != NULL);
+    TEST("list_replies no comment_id: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_list_replies_no_auth(void) {
+    unsetenv("FEISHU_APP_ID");
+    unsetenv("FEISHU_APP_SECRET");
+    const char *args = "{\"file_token\":\"doc_1\",\"comment_id\":\"c1\"}";
+    char *result = handle_feishu_drive_list_comment_replies(args, NULL);
+    TEST("list_replies no auth: result", result != NULL);
+    TEST("list_replies no auth: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("list_replies no auth: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_reply_comment_no_auth(void) {
+    unsetenv("FEISHU_APP_ID");
+    unsetenv("FEISHU_APP_SECRET");
+    const char *args = "{\"file_token\":\"doc_1\",\"comment_id\":\"c1\",\"content\":\"hi\"}";
+    char *result = handle_feishu_drive_reply_comment(args, NULL);
+    TEST("reply no auth: result", result != NULL);
+    TEST("reply no auth: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("reply no auth: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_reply_comment_bad_json(void) {
+    char *result = handle_feishu_drive_reply_comment("{{{", NULL);
+    TEST("reply bad JSON: result", result != NULL);
+    TEST("reply bad JSON: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_reply_comment_missing_content(void) {
+    const char *args = "{\"file_token\":\"doc_1\",\"comment_id\":\"c1\"}";
+    char *result = handle_feishu_drive_reply_comment(args, NULL);
+    TEST("reply no content: result", result != NULL);
+    TEST("reply no content: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_add_comment_no_auth(void) {
+    unsetenv("FEISHU_APP_ID");
+    unsetenv("FEISHU_APP_SECRET");
+    const char *args = "{\"file_token\":\"doc_1\",\"content\":\"hi\"}";
+    char *result = handle_feishu_drive_add_comment(args, NULL);
+    TEST("add no auth: result", result != NULL);
+    TEST("add no auth: error", result && strstr(result, "error") != NULL);
+    json_t *j = result ? json_parse(result, NULL) : NULL;
+    TEST("add no auth: JSON", j != NULL);
+    if (j) json_free(j);
+    free(result);
+}
+
+static void test_add_comment_bad_json(void) {
+    char *result = handle_feishu_drive_add_comment("{{{", NULL);
+    TEST("add bad JSON: result", result != NULL);
+    TEST("add bad JSON: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
+static void test_add_comment_missing_content(void) {
+    const char *args = "{\"file_token\":\"doc_1\"}";
+    char *result = handle_feishu_drive_add_comment(args, NULL);
+    TEST("add no content: result", result != NULL);
+    TEST("add no content: error", result && strstr(result, "error") != NULL);
+    free(result);
+}
+
 int main(void) {
     test_doc_read_null_args();
     test_doc_read_empty_doc_id();
@@ -120,6 +252,20 @@ int main(void) {
     test_drive_list_null_args();
     test_drive_list_no_auth_env();
     test_doc_read_no_auth_env();
+
+    test_list_comments_null_args();
+    test_list_comments_no_token();
+    test_list_comments_bad_json();
+    test_list_replies_null_args();
+    test_list_replies_missing_file_token();
+    test_list_replies_missing_comment_id();
+    test_list_replies_no_auth();
+    test_reply_comment_no_auth();
+    test_reply_comment_bad_json();
+    test_reply_comment_missing_content();
+    test_add_comment_no_auth();
+    test_add_comment_bad_json();
+    test_add_comment_missing_content();
 
     fprintf(stderr, "feishu_tools: %d/%d pass\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

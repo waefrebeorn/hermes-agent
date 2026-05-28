@@ -2481,7 +2481,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_feishu_tools.c" \
     "$CDIR/src/tools/feishu_tools.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.o" \
     -o /tmp/hermes_test_feishu -lm -lssl -lcrypto -ldl -lpthread -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_feishu > /dev/null 2>&1; then ok "feishu_tools (20 tests)"
+    if /tmp/hermes_test_feishu > /dev/null 2>&1; then ok "feishu_tools (52 tests)"
     else fail "feishu_tools (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_feishu
 else skip "feishu_tools (compilation failed)"
