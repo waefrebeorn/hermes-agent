@@ -276,3 +276,21 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D04 | Docker Compose execution backend: `run_command_docker_compose()` uses `docker compose exec -T` to run commands in a compose service. Configurable via `terminal.compose_service` config key (default: 'default') | `src/tools/terminal.c` -- run_command_docker_compose() function; dispatch branch at backend=docker-compose|compose; schema updated |
+
+## Phase 18: Deepgram Transcription Provider (D05)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D05 | Deepgram transcription provider: POST to api.deepgram.com/v1/listen with DEEPGRAM_API_KEY, supports model, language, punctuate params. Wired into libtranscribe dispatch | `src/tools/transcribe.c` — transcribe_deepgram() function; dispatch branch at strcmp("deepgram"); schema updated |
+
+## Phase 19: Hidden File Detection (D12)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D12 | Hidden file detection for read_file tool: `is_hidden` field returned in file metadata. Dotfiles flagged on Linux, FILE_ATTRIBUTE_HIDDEN on Windows (via statfs). Wired into file_metadata() helper | `src/tools/file.c` — is_hidden check in file_metadata(); schema updated with is_hidden field |
+
+## Phase 20: CDP PDF Generation (D03)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D03 | CDP PDF generation via Page.printToPDF: new browser_generate_pdf tool sends CDP Page.printToPDF params (landscape, format, margin, scale, printBackground). Returns base64-encoded PDF. Uses existing CDP send infrastructure | `src/tools/browser.c` — browser_generate_pdf handler; CDP Page.printToPDF params construction; schema with 8 params; registry_register("browser_generate_pdf") |

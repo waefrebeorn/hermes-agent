@@ -1,6 +1,6 @@
 ── STATE: battleship in C/.hermes/mind-palace/.
-   Suite 282/0/0. 99 tools, 100 with browser_generate_pdf, 98 CLI, 19 GW, 10 providers, 66 libs.
-   v105. 21 gaps (9 partial). State.md ground truth.
+   Suite 282/0/0. 86 tools, 98 CLI, 19 GW, 10 providers, 65 libs.
+   v106. 12 gaps (1 partial: D01). State.md ground truth.
    Build: make -j$(nproc). Test: bash test_runner.sh.
    vault/achievements.md records every resolved gap.
 
@@ -22,19 +22,16 @@
 
 ── VAULT: resolved gaps → vault/achievements.md with file:line evidence.
    Stale claims → vault with explanation. Battleship carries only active
-   gaps -- no ✅, no stale items. Vault is the historical record; battleship
-   is the TODO list.
+   gaps -- no stale items.
 
 ── NEXT: D01 partial (SSE streaming for MCP transport_read_response).
    transport_read_response returns NULL for SSE — needs SSE event parsing
    loop to read streaming tool call responses.
 
 ── MEMORY: save user preferences and durable env facts. Do NOT save task
-   progress, PR numbers, commit SHAs, or session outcomes. session_search
-   for cross-session recall. Procedural patterns as skills. Vault entries
-   capture evidence; memory captures reusable knowledge.
+   progress, PR numbers, commit SHAs, or session outcomes.
 
-── NO TIME: no dates, no pacing, no effort framing. Every gap is code.
+── NO TIME: no dates, no pacing, no effort framing.
    Work until done, pick next. Exhaust only: "awaiting direction."
 
 ── CAVEMAN: this paste only. Walkway files in full prose.

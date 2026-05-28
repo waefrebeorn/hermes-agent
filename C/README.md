@@ -4,17 +4,17 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||| Suite:  282/0/0 (239 test files, completes in <60s)
-|||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-|||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||| Gaps:   21 verified gaps (Triple DA v22, 2 partial) — see battleship-v22
-|||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
-||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-||||||CLI:    98 cmd_ functions — 99 unique tools registered
-||||||Tools:  99 registered (103+ at runtime with MCP dynamic)
-|||||Libraries: 66 C modules — zero external deps beyond libc+libssl
-|||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-|||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
+||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||| Gaps:   12 verified gaps (battleship v22, 1 partial) — see battleship-v22
+||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
+|||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|||||||CLI:    98 cmd_ functions — 86 unique tools registered
+|||||||Tools:  86 registered (90+ at runtime with MCP dynamic)
+||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
+||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -129,7 +129,7 @@ echo "/providers" | ./hermes # List provider configurations
 make hermes           # Full binary (phase5) — 0 errors, 31M
 make plugins          # 10 .so shared objects
 make tui              # ncurses TUI → hermes-tui (experimental)
-make libs             # 66 library compilation units
+make libs             # 65 library compilation units
 make install-plugins  # Build + copy .so → ~/.hermes/plugins/
 make docs             # Doxygen HTML docs (if doxygen available)
 ```
@@ -138,9 +138,9 @@ make docs             # Doxygen HTML docs (if doxygen available)
 
 | Phase | What | Output |
 |-------|------|--------|
-| P1 | 66 library units (.o) | lib/*.o |
+| P1 | 65 library units (.o) | lib/*.o |
 | P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 99 tool handlers | src/tools/*.o |
+| P3 | 86 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -162,7 +162,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (99 Registered)
+## All Tools (86 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -509,10 +509,10 @@ waefrebeorn/slermes/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   99 tool handler implementations
+│   │   ├── tools/                ←   86 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-│   ├── lib/                      ←   66 library units (compiled directly, no .a)
+│   ├── lib/                      ←   65 library units (compiled directly, no .a)
 │   │   ├── libjson/              ←   JSON parser/builder
 │   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
 │   │   ├── libmcp/               ←   MCP transport layer (stdio, SSE, Streamable HTTP)
@@ -611,7 +611,7 @@ This project tracks [NousResearch/hermes-agent](https://github.com/NousResearch/
 
 ---
 
-## Battleship Roadmap (22 Gaps)
+## Battleship Roadmap (12 Gaps)
 
 See `.hermes/mind-palace/battleship-v22.md` for the complete gap map.
 
