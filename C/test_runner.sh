@@ -1071,6 +1071,20 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "cron_scripts (compilation failed)"
 fi
+# scheduler test (schedule parsing, interval check, should_run)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libcron" -I"$CDIR/src/cron" \
+    "$CDIR/tests/test_scheduler.c" \
+    "$CDIR/src/cron/scheduler.c" \
+    "$CDIR/lib/libcron/cron.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_scheduler -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_scheduler > /dev/null 2>&1; then ok "scheduler (18 tests)"
+    else fail "scheduler (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_scheduler
+else
+    skip "scheduler (compilation failed)"
+fi
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \

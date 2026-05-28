@@ -16,6 +16,22 @@
 #include "cron.h"  /* lib/libcron/cron.h */
 
 /* ================================================================
+ *  Internal schedule types
+ * ================================================================ */
+
+/* Simple crontab parser: supports slash-N syntax like every 5 min */
+typedef enum { MINUTE, HOUR, DAY, MONTH, WEEKDAY } crontab_field_t;
+
+typedef struct {
+    int minute;   /* -1 = every */
+    int hour;
+    int day;
+    int month;
+    int weekday;
+    int interval_minutes; /* slash-N format aka every N minutes */
+} cron_schedule_t;
+
+/* ================================================================
  *  Job entry structure (matches cron_sqlite.c)
  * ================================================================ */
 
@@ -49,6 +65,11 @@ extern cron_sqlite_store_t *g_cron_store;
 /* ================================================================
  *  Internal functions
  * ================================================================ */
+
+/* Schedule parsing (exposed for testing) */
+bool parse_cron_field(const char *str, int *value, int *interval);
+bool parse_schedule(const char *expr, cron_schedule_t *sched);
+bool should_run(cron_schedule_t *sched, time_t now, time_t last_run);
 
 /* Run a single job inline */
 void cron_run_job(const char *name, const char *command);

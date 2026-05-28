@@ -14,17 +14,6 @@
 #include <unistd.h>
 
 /* Simple crontab parser: supports slash-N syntax like every 5 min */
-typedef enum { MINUTE, HOUR, DAY, MONTH, WEEKDAY } crontab_field_t;
-
-typedef struct {
-    int minute;   /* -1 = every */
-    int hour;
-    int day;
-    int month;
-    int weekday;
-    int interval_minutes; /* slash-N format aka every N minutes */
-} cron_schedule_t;
-
 typedef struct cron_job_t {
     char             name[128];
     char             command[1024];
@@ -40,7 +29,7 @@ static cron_job_t *g_jobs = NULL;
  *  Schedule parsing
  * ================================================================ */
 
-static bool parse_cron_field(const char *str, int *value, int *interval) {
+bool parse_cron_field(const char *str, int *value, int *interval) {
     *interval = 0;
     if (!str || !*str) return false;
 
@@ -58,7 +47,7 @@ static bool parse_cron_field(const char *str, int *value, int *interval) {
     return true;
 }
 
-static bool parse_schedule(const char *expr, cron_schedule_t *sched) {
+bool parse_schedule(const char *expr, cron_schedule_t *sched) {
     memset(sched, 0, sizeof(*sched));
     if (!expr) return false;
 
@@ -84,7 +73,7 @@ static bool parse_schedule(const char *expr, cron_schedule_t *sched) {
     return true;
 }
 
-static bool should_run(cron_schedule_t *sched, time_t now, time_t last_run) {
+bool should_run(cron_schedule_t *sched, time_t now, time_t last_run) {
     struct tm *tm = localtime(&now);
     if (!tm) return false;
 
