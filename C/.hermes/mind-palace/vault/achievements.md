@@ -444,7 +444,7 @@
   out->buf[out->len] = '\0' left trailing garbage byte
 - Evidence: commit f754de84b, file src/agent/markdown_render.c
 
-## Phase 45: Tokenizer Test Suite (v136)
+## Phase 45: Tokenizer Test Suite (v137)
 
 - Added 79-test suite for hermes_tokenizer.c covering all 7 public functions
 - Tests: token_family_from_model, chars_per_token, token_count,
@@ -461,6 +461,15 @@
   outcome mapping (all 5 options, substring prevention, comma boundaries, NULL safety)
 - JSON content validation via libjson API (json_len, json_get, json_get_str)
 - Evidence: commit f01c5fd06, file src/acp/permissions.c
+
+## Phase 47: CLI Display Test Suite (v136)
+
+- Added 29-test suite for deps/cli_display.c covering all 17 implemented functions
+- Tests: init, style functions, panel boxes, horizontal rules, printf, clear, cursor
+  (including negative coordinates), progress bar (including zero-total edge case),
+  spinner lifecycle (start, tick, stop with message)
+- First standalone-testable module using -Wl,--unresolved-symbols=ignore-all
+- Evidence: commit 50596fec0, file src/deps/cli_display.c
 
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
