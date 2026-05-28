@@ -1,11 +1,11 @@
-# Implementation Plan — Slermes C (v87)
+# Implementation Plan — Slermes C (v88)
 
 ## Phase 1: P1 Gaps (2 items)
 1. **D01** — MCP SSE transport + streaming responses (400-800 LOC, largest gap)
 2. **D03** — Browser CDP autofill, PDF gen, HAR capture (500-1000 LOC)
 
-## Phase 2: P2 Gaps (20 items)
-- S01 (background_review wiring), S04 (hot-reload), S05 (context noops), S06 (telegram draft)
+## Phase 2: P2 Gaps (19 items)
+- S01 (background_review wiring), S05 (context noops), S06 (telegram draft)
 - P01-P04 (4 Yuanbao tools)
 - D02 (TTS), D04 (terminal), D05 (transcribe), D06 (send_message), D07 (delegate)
 - G02 (send_reaction real impls)

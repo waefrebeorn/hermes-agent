@@ -2593,7 +2593,15 @@ bool commands_get_fast(void) { return g_fast_mode != 0; }
 static void cmd_reload(const char *args, agent_state_t *state) {
     if (args && args[0]) {
         if (strcmp(args, "plugins") == 0) {
-            printf("Plugins reloaded (hot-reload not yet supported).\n");
+            /* Plugin-only reload (hot-reload) */
+            hermes_config_t cfg;
+            hermes_config_load(&cfg, NULL);
+            hermes_config_load_env(&cfg);
+            plugin_registry_t *old_reg = (plugin_registry_t *)state->plugin_reg;
+            hermes_plugin_shutdown(old_reg);
+            plugin_registry_t *new_reg = hermes_plugin_init(&cfg);
+            if (new_reg) state->plugin_reg = new_reg;
+            printf("Plugins reloaded.\n");
             return;
         }
         if (strcmp(args, "env") == 0) {
