@@ -1,12 +1,13 @@
-# Slermes C — State Dashboard (v79 — 2026-05-27)
+# Slermes C — State Dashboard (v80 — 2026-05-27)
 
 ## Build Metrics
-Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 280/0/0.
+Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 281/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
-~283 item-level gaps (battleship-v16 rows, 21 closed this session).
+~282 item-level gaps (battleship-v16 rows, 22 closed this session).
 
 ## Recent (this session)
+- 5A-214: WeCom encryption/decryption (wecom_crypto) — Ported Python WXBizMsgCrypt: AES-256-CBC encrypt/decrypt, SHA1 signature, URL verification, PKCS7 padding, XML response builder. OpenSSL-based. 28 new tests. Suite: 281/0/0 (+1).
 - libjson: Surrogate pair parsing — `\uD83C\uDF89` now correctly decodes to U+1F389 (4-byte UTF-8). Lone surrogates replaced with U+FFFD. 3 new tests in test_json.c.
 - P180: `repair_tool_call_arguments` — Ported Python message_sanitization.py JSON repair logic. Handles trailing commas, unclosed braces, excess closers, control chars, "None" literal. 9 new tests in test_sanitize.c (11→20).
 - Layer 9: test_fal_common.c — 9 tests for FAL common utility lib (API key resolution, JSON escaping, error builders). Suite: 280/0/0 (+1).

@@ -154,6 +154,21 @@ else
     fail "redact (compilation failed)"
 fi
 
+echo ""; echo "=== WeCom Crypto Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libbase64" \
+    "$CDIR/tests/test_wecom_crypto.c" "$CDIR/src/tools/wecom_crypto.c" \
+    "$CDIR/lib/libbase64/base64.c" \
+    -o /tmp/hermes_test_wecom_crypto -lssl -lcrypto -lm 2>/dev/null && [[ -x /tmp/hermes_test_wecom_crypto ]]; then
+    if /tmp/hermes_test_wecom_crypto > /dev/null 2>&1; then
+        ok "wecom_crypto (28 tests)"
+    else
+        fail "wecom_crypto (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_wecom_crypto
+else
+    fail "wecom_crypto (compilation failed)"
+fi
+
 echo ""; echo "=== Markdown Render Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" \

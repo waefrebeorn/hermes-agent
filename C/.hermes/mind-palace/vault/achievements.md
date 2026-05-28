@@ -455,4 +455,10 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 |
 || ID | Description | Sector | Evidence |
 ||----|-------------|--------|----------|
-|| G09 | libjson surrogate pair parsing — `\uD83C\uDF89` (U+1F389 🎉) now correctly decoded to 4-byte UTF-8. Lone surrogates replaced with U+FFFD. Previously only BMP was supported. | 7 (library — libjson) | lib/libjson/json.c: `case 'u':` handler — surrogate pair detection + 4-byte UTF-8 encoding; tests/test_json.c: test_surrogate_pair(), test_lone_high_surrogate(), test_lone_low_surrogate() |
+||| G09 | libjson surrogate pair parsing — `\\uD83C\\uDF89` (U+1F389 🎉) now correctly decoded to 4-byte UTF-8. Lone surrogates replaced with U+FFFD. Previously only BMP was supported. | 7 (library — libjson) | lib/libjson/json.c: `case 'u':` handler — surrogate pair detection + 4-byte UTF-8 encoding; tests/test_json.c: test_surrogate_pair(), test_lone_high_surrogate(), test_lone_low_surrogate() |
+
+## Phase 33: WeCom Crypto — 5A-214 (2026-05-27)
+
+|| ID | Description | Sector | Evidence |
+||----|-------------|--------|----------|
+|| G10 | wecom_crypto — Ported Python WXBizMsgCrypt (142 LOC) to C. AES-256-CBC encrypt/decrypt with PKCS7 padding (block_size=32), SHA1 signature (sorted token+timestamp+nonce+encrypt), URL verification (verify_url), XML response builder. OpenSSL-based. 28 tests. Suite: 281/0/0 (+1). 1 gap closed. | 5A (missing platform modules — wecom_crypto) | include/hermes_wecom_crypto.h: struct wecom_crypto_t + 6 public functions; src/tools/wecom_crypto.c: wecom_crypto_init(), wecom_crypto_verify_url(), wecom_crypto_decrypt(), wecom_crypto_encrypt(), wecom_crypto_sha1_signature(); tests/test_wecom_crypto.c: 28 tests; test_runner.sh: wired; Makefile: wecom_crypto.o added |
