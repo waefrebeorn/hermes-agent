@@ -1,5 +1,6 @@
-# Slermes C — Overnight Map (v80 — ~282 Items)
-- **State:** v80 — Suite 281/0/0, 0 warnings, 90 tools, 98 CLI, 19 gateways, 10 providers, 65 libs, 172 src .c, 236 test files
+# Slermes C — Overnight Map (v81 — ~282 Items)
+- **State:** v81 — Suite 282/0/0, 0 warnings, 90 tools, 98 CLI, 19 gateways, 10 providers, 65 libs, 172 src .c, 236 test files
+- Recent: cron_locking tests (23 tests, P171). Suite 282/0/0.
 - Recent: wecom_crypto ported (WXBizMsgCrypt AES-256-CBC, SHA1, PKCS7, XML). 28 new tests. 5A-214 closed.
 - Recent: repair_tool_call_arguments ported (JSON repair, 9 new tests in test_sanitize.c)
 - Recent: feishu_drive_reply_comment + feishu_drive_add_comment (POST-based) ported. 2 gaps closed.

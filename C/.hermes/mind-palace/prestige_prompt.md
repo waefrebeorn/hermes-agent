@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v80 — ~282 Items)
+# Slermes C — Prestige Prompt (v81 — ~282 Items)
 ## Phase 0 — Display (16) — 14/16 done
 ## Phase 1 — CLI Args — ALL DONE
 ## Phase 2 — Provider Parity (~20 real, HEAVILY STALE — verify before impl)

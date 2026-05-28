@@ -462,3 +462,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 || ID | Description | Sector | Evidence |
 ||----|-------------|--------|----------|
 || G10 | wecom_crypto — Ported Python WXBizMsgCrypt (142 LOC) to C. AES-256-CBC encrypt/decrypt with PKCS7 padding (block_size=32), SHA1 signature (sorted token+timestamp+nonce+encrypt), URL verification (verify_url), XML response builder. OpenSSL-based. 28 tests. Suite: 281/0/0 (+1). 1 gap closed. | 5A (missing platform modules — wecom_crypto) | include/hermes_wecom_crypto.h: struct wecom_crypto_t + 6 public functions; src/tools/wecom_crypto.c: wecom_crypto_init(), wecom_crypto_verify_url(), wecom_crypto_decrypt(), wecom_crypto_encrypt(), wecom_crypto_sha1_signature(); tests/test_wecom_crypto.c: 28 tests; test_runner.sh: wired; Makefile: wecom_crypto.o added |
+
+## Phase 34: Cron Locking Tests — P171 (2026-05-27)
+
+|| ID | Description | Sector | Evidence |
+||----|-------------|--------|----------|
+|| G11 | cron_locking (P171) — 23 test suite for job locking module. Covers acquire/release cycle, double acquire fail, stale lock removal, is_locked with nonexistent, NULL safety, shutdown flag, set_dir isolation, release_all_locks. Also fixed missing `<dirent.h>` include and added missing function declarations to hermes.h. | 9 (test coverage) | tests/test_cron_locking.c: 8 test functions, 23 assertions; test_runner.sh: wired; include/hermes.h: cron_lock_set_dir, cron_shutdown_requested, cron_release_all_locks declared; src/cron/cron_locking.c: #include &lt;dirent.h&gt; added |
