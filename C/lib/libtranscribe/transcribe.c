@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "hermes_http.h"
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -226,6 +227,8 @@ static const char *detect_provider(void) {
         }
         if (strcmp(explicit, "xai") == 0)
             return has_env("XAI_API_KEY") ? TRANSCRIBE_PROVIDER_XAI : NULL;
+        if (strcmp(explicit, "deepgram") == 0)
+            return has_env("DEEPGRAM_API_KEY") ? TRANSCRIBE_PROVIDER_DEEPGRAM : NULL;
         return explicit;  /* Unknown — let it fail downstream */
     }
 
@@ -236,6 +239,8 @@ static const char *detect_provider(void) {
         return TRANSCRIBE_PROVIDER_OPENAI;
     if (has_env("XAI_API_KEY"))
         return TRANSCRIBE_PROVIDER_XAI;
+    if (has_env("DEEPGRAM_API_KEY"))
+        return TRANSCRIBE_PROVIDER_DEEPGRAM;
 
     return NULL;
 }

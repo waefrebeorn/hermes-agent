@@ -35,12 +35,14 @@ extern "C" {
 
 #define TRANSCRIBE_PROVIDER_GROQ    "groq"
 #define TRANSCRIBE_PROVIDER_OPENAI  "openai"
-#define TRANSCRIBE_PROVIDER_XAI     "xai"
+#define TRANSCRIBE_PROVIDER_XAI    "xai"
+#define TRANSCRIBE_PROVIDER_DEEPGRAM "deepgram"
 #define TRANSCRIBE_PROVIDER_NONE    "none"
 
 #define TRANSCRIBE_DEFAULT_MODEL_GROQ   "whisper-large-v3-turbo"
 #define TRANSCRIBE_DEFAULT_MODEL_OPENAI "whisper-1"
 #define TRANSCRIBE_DEFAULT_MODEL_XAI    "grok-stt"
+#define TRANSCRIBE_DEFAULT_MODEL_DEEPGRAM "nova-2"
 
 #define TRANSCRIBE_DEFAULT_PROVIDER "local"  /* auto-detect */
 

@@ -1,3 +1,3 @@
-# Overnight (v102)
-D04 partial: docker-compose execution backend for terminal tool.
-21 gaps, 7 partials.
+# Overnight (v103)
+D05 partial: Deepgram transcription provider (nova-2 model).
+21 gaps, 8 partials.
