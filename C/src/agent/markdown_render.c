@@ -428,6 +428,7 @@ char *hermes_markdown_strip(const char *md) {
                     sbuf_grow(out, txtlen + 1);
                     memcpy(out->buf + out->len, p, txtlen);
                     out->len += txtlen;
+                    out->buf[out->len] = '\0';
                     p = end + 1;
                     continue;
                 }
