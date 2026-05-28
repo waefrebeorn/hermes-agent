@@ -66,12 +66,12 @@ static void task_path(const char *tid, char *buf, size_t sz) {
     snprintf(buf, sz, "%s/%s.json", kanban_dir(), tid);
 }
 
-static bool kanban_mode(void) {
+__attribute__((unused)) static bool kanban_mode(void) {
     if (getenv("HERMES_KANBAN_TASK")) return true;
     return false;
 }
 
-static bool kanban_orchestrator(void) {
+__attribute__((unused)) static void kanban_orchestrator(void) {
     if (getenv("HERMES_KANBAN_TASK")) return false;
     return true;
 }
@@ -216,6 +216,7 @@ static json_t *get_child_ids(const char *tid) {
 /* Add event to task, keep last MAX_EVENTS */
 static bool add_event(const char *tid, const char *kind,
                       const char *payload, json_t *task) {
+    (void)tid;
     json_t *events = json_obj_get(task, "events");
     if (!events) {
         events = json_array();

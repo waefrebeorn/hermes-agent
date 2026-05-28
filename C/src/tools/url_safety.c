@@ -52,7 +52,7 @@ static int g_blocked_category_count = 0;
 static bool g_blocklist_enabled = true;
 
 /* Extract registered domain from hostname (e.g., "www.google.com" -> "google.com") */
-static const char *extract_registered_domain(const char *hostname) {
+__attribute__((unused)) static char *extract_registered_domain(const char *hostname) {
     if (!hostname) return NULL;
     /* Find the last two domain components */
     const char *last_dot = strrchr(hostname, '.');
@@ -298,7 +298,7 @@ void url_blocklist_load_config(const security_config_t *cfg) {
  */
 
 /* strcasestr-like — use custom name to avoid conflict with glibc's strcasestr */
-static const char *strcasestr_safe(const char *haystack, const char *needle) {
+__attribute__((unused)) static char *strcasestr_safe(const char *haystack, const char *needle) {
     if (!haystack || !needle) return NULL;
     size_t nlen = strlen(needle);
     if (nlen == 0) return haystack;

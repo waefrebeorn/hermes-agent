@@ -69,6 +69,7 @@ static int g_dynamic_count = 0;
 /* Generic handler that dispatches to the right MCP server by looking up
  * the registered tool name in g_dynamic_tools table */
 static char *mcp_dynamic_handler(const char *args_json, const char *task_id) {
+    (void)args_json;
     (void)task_id;
 
     /* We don't get the tool name directly in the handler.
@@ -214,6 +215,7 @@ static bool mcp_sampling_handler(const char *server_name,
                                   const mcp_sampling_params_t *params,
                                   mcp_sampling_content_t *result,
                                   void *userdata) {
+    (void)server_name;
     if (!params) return false;
     mcp_sampling_cfg_t *cfg = (mcp_sampling_cfg_t *)userdata;
     if (!cfg || !cfg->enabled) return false;
@@ -448,6 +450,7 @@ static bool connect_http_server(const char *name, const char *url, int timeout,
 static bool connect_stdio_server(const char *name, const char *command,
                                   char **args, int arg_count, int timeout,
                                   const mcp_root_t *roots, int root_count) {
+    (void)arg_count;
     if (g_server_count >= MAX_MCP_SERVERS) return false;
 
     mcp_server_t *srv = mcp_server_new(name);

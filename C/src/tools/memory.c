@@ -1393,7 +1393,7 @@ static void plugin_close(memory_storage_t *st) {
         st->plugin_iface->memory_clear();
 }
 
-static bool plugin_store(memory_storage_t *st, memory_entry_t *entry) {
+__attribute__((unused)) static bool plugin_store(memory_storage_t *st, memory_entry_t *entry) {
     if (!st || !st->plugin_iface || !st->plugin_iface->memory_store || !entry)
         return false;
     char *result = st->plugin_iface->memory_store(
@@ -1404,12 +1404,12 @@ static bool plugin_store(memory_storage_t *st, memory_entry_t *entry) {
     return ok;
 }
 
-static bool plugin_get(memory_storage_t *st, const char *key, memory_entry_t *entry) {
+__attribute__((unused)) static bool plugin_get(memory_storage_t *st, const char *key, memory_entry_t *entry) {
     (void)st; (void)key; (void)entry;
     return false; /* plugin search is query-based, not key-based */
 }
 
-static bool plugin_delete(memory_storage_t *st, const char *key) {
+__attribute__((unused)) static bool plugin_delete(memory_storage_t *st, const char *key) {
     if (!st || !st->plugin_iface || !st->plugin_iface->memory_store || !key)
         return false;
     /* Delete by setting empty content with matching key metadata */
@@ -1422,24 +1422,24 @@ static bool plugin_delete(memory_storage_t *st, const char *key) {
     return ok;
 }
 
-static void plugin_clear(memory_storage_t *st) {
+__attribute__((unused)) static void plugin_clear(memory_storage_t *st) {
     if (st && st->plugin_iface && st->plugin_iface->memory_clear)
         st->plugin_iface->memory_clear();
 }
 
-static size_t plugin_count(memory_storage_t *st) {
+__attribute__((unused)) static size_t plugin_count(memory_storage_t *st) {
     (void)st;
     return 0; /* plugin doesn't expose count in standard interface */
 }
 
-static char **plugin_list_keys(memory_storage_t *st, size_t *count) {
+__attribute__((unused)) static char **plugin_list_keys(memory_storage_t *st, size_t *count) {
     (void)st;
     if (count) *count = 0;
     return NULL;
 }
 
 /* Plugin search via plugin's memory_search */
-static memory_entry_t *plugin_search(memory_storage_t *st, const char *query, int limit) {
+__attribute__((unused)) static memory_entry_t *plugin_search(memory_storage_t *st, const char *query, int limit) {
     if (!st || !st->plugin_iface || !st->plugin_iface->memory_search)
         return NULL;
     char *result_json = st->plugin_iface->memory_search(query, limit);

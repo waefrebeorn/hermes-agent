@@ -53,7 +53,7 @@ static const char *get_token(void) {
 }
 
 /* Build "Bot <token>" auth header */
-static char *build_bot_header(void) {
+__attribute__((unused)) static char *build_bot_header(void) {
     const char *token = get_token();
     if (!token) return NULL;
     size_t len = strlen(token) + 32;

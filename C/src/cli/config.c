@@ -21,7 +21,7 @@
  *  Internal helpers
  * ================================================================ */
 
-static char *xstrdup(const char *s) {
+__attribute__((unused)) static char *xstrdup(const char *s) {
     if (!s) return NULL;
     size_t n = strlen(s);
     char *d = (char *)malloc(n + 1);
@@ -1258,7 +1258,6 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     }
 
     /* P12: Session section */
-    const char *sdb = yaml_get_string(doc, "sessions.retention_days");
     /* sessions.retention_days already handled as int above via different path */
     int srd = yaml_get_int(doc, "sessions.retention_days", 0);
     if (srd > 0) cfg->session.retention_days = srd;
@@ -2936,7 +2935,7 @@ bool hermes_config_import(hermes_config_t *cfg, const char *path) {
 /* Helpers: check if a string field is "set" (non-default) */
 static bool is_set_str(const char *s) { return s && s[0] != '\0'; }
 static bool is_set_int(int v) { return v != 0; }
-static bool is_set_bool(bool v) { return v; }  /* bools always overwrite if true */
+__attribute__((unused)) static bool is_set_bool(bool v) { return v; }  /* bools always overwrite if true */
 
 void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src) {
     /* Provider */

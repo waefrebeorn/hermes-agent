@@ -270,6 +270,7 @@ static cu_action_t *x11_make_action(const char *action_name, bool ok,
 static cu_action_t *x11_click(int element, int x, int y,
                                const char *button, int click_count,
                                const char *modifiers) {
+    (void)element;
     (void)modifiers;
     if (!_has_cmd("xdotool")) {
         return x11_make_action("click", false,
@@ -323,6 +324,7 @@ static cu_action_t *x11_key(const char *keys) {
 static cu_action_t *x11_scroll(const char *dir, int amount,
                                 int element, int x, int y,
                                 const char *modifiers) {
+    (void)amount;
     (void)element; (void)modifiers;
     if (!_has_cmd("xdotool")) {
         return x11_make_action("scroll", false, "xdotool not available");
@@ -584,6 +586,7 @@ static cu_action_t *wayland_make_action(const char *action_name, bool ok,
 static cu_action_t *wayland_click(int element, int x, int y,
                                    const char *button, int click_count,
                                    const char *modifiers) {
+    (void)element;
     (void)modifiers;
     if (!_has_cmd("ydotool")) {
         return wayland_make_action("click", false,
