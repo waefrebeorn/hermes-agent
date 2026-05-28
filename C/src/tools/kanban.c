@@ -71,7 +71,7 @@ __attribute__((unused)) static bool kanban_mode(void) {
     return false;
 }
 
-__attribute__((unused)) static void kanban_orchestrator(void) {
+__attribute__((unused)) static bool kanban_orchestrator(void) {
     if (getenv("HERMES_KANBAN_TASK")) return false;
     return true;
 }

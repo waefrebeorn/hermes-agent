@@ -34,7 +34,7 @@ static char *xai_http_handler(const char *args_json, const char *task_id) {
         bool has_creds = xai_has_credentials();
         json_object_set(result, "has_credentials", json_new_bool(has_creds));
         if (has_creds) {
-            char key_buf[256]; key_buf[0] = "\0";
+            char key_buf[256]; key_buf[0] = '\0';
             bool has_key = xai_get_api_key(key_buf);
             char url_buf[256];
             xai_get_base_url(url_buf);
@@ -56,7 +56,7 @@ static char *xai_http_handler(const char *args_json, const char *task_id) {
         }
         json_object_set(result, "user_agent", json_new_string(xai_user_agent()));
     } else if (strcmp(action, "get_api_key") == 0) {
-        char key_buf2[256]; key_buf2[0] = "\0";
+        char key_buf2[256]; key_buf2[0] = '\0';
         bool has_key2 = xai_get_api_key(key_buf2);
         if (has_key2 && key_buf2[0]) {
             json_object_set(result, "api_key_available", json_new_bool(true));

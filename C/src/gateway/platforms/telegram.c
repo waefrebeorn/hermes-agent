@@ -644,7 +644,12 @@ json_node_t *telegram_get_updates(http_client_t *http, int offset, int timeout)
     json_array_append(allowed, json_new_string("my_chat_member"));
     json_object_set(body, "allowed_updates", allowed);
 
-    return tg_post(http, "getUpdates", body);
+    http_response_t *resp = tg_post(http, "getUpdates", body);
+    if (!resp || !resp->body) return NULL;
+
+    json_node_t *root = json_parse(resp->body, NULL);
+    http_resp_free(resp);
+    return root;
 }
 
 /* ================================================================
