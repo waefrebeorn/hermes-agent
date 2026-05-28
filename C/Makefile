@@ -451,7 +451,7 @@ release:
 # ASan build target — compile with AddressSanitizer for memory error detection
 asan:
 	$(MAKE) CFLAGS="-O1 -g -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -I include $(LIB_INCS)" \
-		LDFLAGS="-fsanitize=address -lssl -lcrypto -ldl -lpthread $(LIBS)" \
+		LDFLAGS="-fsanitize=address -lssl -lcrypto -ldl -lpthread -lz $(LIBS)" \
 		clean all
 
 # Valgrind leak check target — build with debug symbols, run under valgrind
