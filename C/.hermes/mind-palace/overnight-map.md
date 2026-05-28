@@ -1,4 +1,4 @@
-# Overnight (v98)
-D07 partial: spawn pause (set_spawn_paused/is_spawn_paused) for delegate tasks.
-21 gaps, 3 partials (D01 SSE, D06 inline buttons, D07 spawn pause).
+# Overnight (v99)
+D02 partial: Azure TTS provider (Cognitive Services) for text_to_speech tool.
+21 gaps, 4 partials (D01 SSE, D02 Azure, D06 inline buttons, D07 spawn pause).
 Next: any remaining P2 tool depth gap.

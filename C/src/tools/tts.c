@@ -19,7 +19,7 @@ static const char *SCHEMA = "{"
     "\"properties\":{"
       "\"text\":{\"type\":\"string\",\"description\":\"Text to convert to speech\"},"
       "\"output_path\":{\"type\":\"string\",\"description\":\"Optional output file path\"},"
-      "\"provider\":{\"type\":\"string\",\"description\":\"TTS backend: espeak (default), edge, elevenlabs, openai, xai\"},"
+      "\"provider\":{\"type\":\"string\",\"description\":\"TTS backend: espeak (default), edge, elevenlabs, openai, xai, azure\"},"
       "\"voice\":{\"type\":\"string\",\"description\":\"Voice/model (provider-specific: e.g., 'alloy' for openai, '21m00Tcm4TlvDq8ikWAM' for elevenlabs)\"},"
       "\"speed\":{\"type\":\"number\",\"description\":\"Speech speed multiplier (0.5-2.0, default: 1.0). Edge/espeak providers.\"},"
       "\"max_chunk_duration_s\":{\"type\":\"integer\",\"description\":\"L10: Max seconds per audio chunk (default 60). Longer text is split.\"}"
@@ -214,6 +214,64 @@ static bool tts_xai(const char *text, const char *voice, const char *output_path
     return ok;
 }
 
+/* D02: Azure TTS: POST https://{region}.tts.speech.microsoft.com/cognitiveservices/v1 */
+static bool tts_azure(const char *text, const char *voice, const char *output_path) {
+    const char *api_key = tool_config_get("azure", "tts_key");
+    if (!api_key) api_key = getenv("AZURE_TTS_KEY");
+    if (!api_key) api_key = getenv("AZURE_SPEECH_KEY");
+    if (!api_key) return false;
+
+    const char *region = tool_config_get("azure", "tts_region");
+    if (!region) region = getenv("AZURE_TTS_REGION");
+    if (!region) region = getenv("AZURE_REGION");
+    if (!region) return false;
+
+    const char *voice_id = voice ? voice : "en-US-JennyNeural";
+    const char *output_format = "audio-16khz-32kbitrate-mono-mp3";
+
+    /* Azure TTS uses SSML */
+    char ssml[16384];
+    snprintf(ssml, sizeof(ssml),
+        "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' "
+        "xml:lang='en-US'>"
+        "<voice name='%s'>%s</voice></speak>",
+        voice_id, text);
+
+    char url[512];
+    snprintf(url, sizeof(url),
+             "https://%s.tts.speech.microsoft.com/cognitiveservices/v1",
+             region);
+
+    char auth_header[512];
+    snprintf(auth_header, sizeof(auth_header),
+             "Ocp-Apim-Subscription-Key: %s, Content-Type: application/ssml+xml, "
+             "X-Microsoft-OutputFormat: %s",
+             api_key, output_format);
+
+    http_client_t *client = http_client_new(60);
+    http_response_t *resp = http_request(client, HTTP_POST, url,
+                                          auth_header, ssml, strlen(ssml));
+
+    if (!resp || resp->status != 200) {
+        http_response_free(resp);
+        http_client_free(client);
+        return false;
+    }
+
+    bool ok = false;
+    if (resp->body && resp->body_len > 0) {
+        FILE *f = fopen(output_path, "wb");
+        if (f) {
+            fwrite(resp->body, 1, resp->body_len, f);
+            fclose(f);
+            ok = true;
+        }
+    }
+    http_response_free(resp);
+    http_client_free(client);
+    return ok;
+}
+
 /* L10: Split text into chunks at sentence boundaries.
  * Returns array of strings (caller must free each + the array).
  * chunk_chars: approximate max characters per chunk (~15 chars/sec speech). */
@@ -346,6 +404,8 @@ char *tts_handler(const char *args_json, const char *task_id) {
                 ok = tts_openai(chunks[i], voice, chunk_path);
             } else if (strcmp(provider, "xai") == 0) {
                 ok = tts_xai(chunks[i], voice, chunk_path);
+            } else if (strcmp(provider, "azure") == 0) {
+                ok = tts_azure(chunks[i], voice, chunk_path);
             } else if (strcmp(provider, "edge") == 0) {
                 char escaped[16384];
                 tts_escape_text(chunks[i], escaped, sizeof(escaped));
@@ -411,7 +471,7 @@ void registry_init_tts(void) {
     registry_register("text_to_speech",
         "Convert text to speech audio. Supports multiple backends: "
         "espeak-ng (default offline TTS), edge-tts (Python), "
-        "elevenlabs, openai (tts-1), xai (grok-audio-1). "
+        "elevenlabs, openai (tts-1), xai (grok-audio-1), azure (Cognitive Services). "
         "Use 'provider' param to select backend. "
         "Returns path to generated audio file.",
         SCHEMA, tts_handler);
