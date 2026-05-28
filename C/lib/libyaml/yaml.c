@@ -455,6 +455,121 @@ char **yaml_map_keys(const yaml_doc_t *doc, const char *path, size_t *count) {
     return keys;
 }
 
+/* ─── YAML-to-JSON serialization ────────────────────── */
+
+/* JSON-escape a string: returns malloc'd string with escaped quotes/backslash/control chars */
+static char *json_escape_str(const char *s) {
+    if (!s) return strdup("");
+    size_t cap = strlen(s) * 2 + 3;
+    char *out = (char *)malloc(cap);
+    if (!out) return NULL;
+    size_t pos = 0;
+    out[pos++] = '"';
+    for (const char *p = s; *p; p++) {
+        unsigned char c = (unsigned char)*p;
+        if (pos + 6 >= cap) {
+            cap = cap * 2 + 16;
+            char *tmp = (char *)realloc(out, cap);
+            if (!tmp) { free(out); return NULL; }
+            out = tmp;
+        }
+        switch (c) {
+            case '"':  out[pos++] = '\\'; out[pos++] = '"'; break;
+            case '\\': out[pos++] = '\\'; out[pos++] = '\\'; break;
+            case '\n': out[pos++] = '\\'; out[pos++] = 'n'; break;
+            case '\t': out[pos++] = '\\'; out[pos++] = 't'; break;
+            case '\r': out[pos++] = '\\'; out[pos++] = 'r'; break;
+            default:
+                if (c < 0x20) {
+                    snprintf(&out[pos], cap - pos, "\\u%04x", c);
+                    pos += strlen(&out[pos]);
+                } else {
+                    out[pos++] = c;
+                }
+                break;
+        }
+    }
+    out[pos++] = '"';
+    out[pos] = '\0';
+    return out;
+}
+
+/* Recursively serialize a YAML entry to a JSON string (malloc'd). */
+static char *yaml_entry_to_json(const yaml_entry_t *e) {
+    if (!e) return strdup("null");
+
+    switch (e->type) {
+    case YVAL_STRING:
+        return json_escape_str(e->str_val);
+
+    case YVAL_LIST: {
+        size_t cap = 256;
+        char *out = (char *)malloc(cap);
+        if (!out) return NULL;
+        size_t pos = 0;
+        out[pos++] = '[';
+        for (size_t i = 0; i < e->item_count; i++) {
+            if (i > 0) out[pos++] = ',';
+            char *item_str = yaml_entry_to_json(e->items[i]);
+            if (item_str) {
+                size_t slen = strlen(item_str);
+                if (pos + slen + 4 >= cap) {
+                    cap = cap + slen + 32;
+                    char *tmp = (char *)realloc(out, cap);
+                    if (!tmp) { free(out); free(item_str); return NULL; }
+                    out = tmp;
+                }
+                memcpy(out + pos, item_str, slen);
+                pos += slen;
+                free(item_str);
+            }
+        }
+        out[pos++] = ']';
+        out[pos] = '\0';
+        return out;
+    }
+
+    case YVAL_MAP: {
+        size_t cap = 256;
+        char *out = (char *)malloc(cap);
+        if (!out) return NULL;
+        size_t pos = 0;
+        out[pos++] = '{';
+        for (size_t i = 0; i < e->child_count; i++) {
+            if (i > 0) out[pos++] = ',';
+            char *key_str = json_escape_str(e->children[i]->key);
+            char *val_str = yaml_entry_to_json(e->children[i]);
+            size_t klen = key_str ? strlen(key_str) : 0;
+            size_t vlen = val_str ? strlen(val_str) : 0;
+            if (pos + klen + vlen + 4 >= cap) {
+                cap = cap + klen + vlen + 32;
+                char *tmp = (char *)realloc(out, cap);
+                if (!tmp) { free(out); free(key_str); free(val_str); return NULL; }
+                out = tmp;
+            }
+            if (key_str) { memcpy(out + pos, key_str, klen); pos += klen; }
+            out[pos++] = ':';
+            if (val_str) { memcpy(out + pos, val_str, vlen); pos += vlen; }
+            free(key_str);
+            free(val_str);
+        }
+        out[pos++] = '}';
+        out[pos] = '\0';
+        return out;
+    }
+    }
+    return strdup("null");
+}
+
+char *yaml_to_json_string(const yaml_doc_t *doc, const char *path) {
+    if (!doc || !path) return NULL;
+    yaml_entry_t *e = navigate(doc, path);
+    if (!e) return NULL;
+    return yaml_entry_to_json(e);
+}
+
+/* ─── Free memory ──────────────────────────────────── */
+
 void yaml_free(yaml_doc_t *doc) {
     if (!doc) return;
     if (doc->root) free_entry(doc->root);

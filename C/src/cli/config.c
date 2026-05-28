@@ -1283,6 +1283,16 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     const char *mcs = yaml_get_string(doc, "mcp.credential_store");
     if (mcs) snprintf(cfg->mcp.credential_store, sizeof(cfg->mcp.credential_store), "%s", mcs);
 
+    /* B07: Populate hooks_json from YAML hooks: block for shell hooks wiring */
+    {
+        char *hooks_json_str = yaml_to_json_string(doc, "hooks");
+        if (hooks_json_str) {
+            strncpy(cfg->hooks_json, hooks_json_str, sizeof(cfg->hooks_json) - 1);
+            cfg->hooks_json[sizeof(cfg->hooks_json) - 1] = '\0';
+            free(hooks_json_str);
+        }
+    }
+
     /* Agent section */
     cfg->verbose = yaml_get_int(doc, "agent.verbose", 0);
     if (cfg->verbose < 0) cfg->verbose = 0;

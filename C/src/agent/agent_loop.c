@@ -224,6 +224,16 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
             0.0, /* cost: no limit from config yet */
             state->max_iterations > 0 ? state->max_iterations : 0);
     }
+
+    /* B07: Wire shell hooks from config hooks_json */
+    if (cfg->hooks_json[0]) {
+        json_t *hooks_root = json_parse(cfg->hooks_json, NULL);
+        if (hooks_root) {
+            shell_hooks_parse_json(hooks_root);
+            shell_hooks_register_all();
+            json_free(hooks_root);
+        }
+    }
 }
 
 void agent_free(agent_state_t *state) {

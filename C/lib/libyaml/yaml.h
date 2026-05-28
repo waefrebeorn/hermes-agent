@@ -61,6 +61,11 @@ void yaml_iterate(const yaml_doc_t *doc,
  * Returns NULL if path doesn't exist or isn't a map. */
 char **yaml_map_keys(const yaml_doc_t *doc, const char *path, size_t *count);
 
+/* Serialize a YAML sub-tree at the given dotted path to a JSON string.
+ * Returns malloc'd JSON string on success, NULL if path not found.
+ * Caller must free the returned string. */
+char *yaml_to_json_string(const yaml_doc_t *doc, const char *path);
+
 /* Free document */
 void yaml_free(yaml_doc_t *doc);
 
