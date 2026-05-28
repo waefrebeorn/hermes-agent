@@ -416,3 +416,20 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | W09 | Suppressed 7 unused functions (xstrdup, is_set_bool, build_bot_header, kanban_mode, kanban_orchestrator, extract_registered_domain, strcasestr_safe) | 7 files |
 | W10 | (void) unused params: computer_use.c (element×2, amount), mcp_tool.c (args_json, server_name, arg_count), kanban.c (tid) | 3 files |
 | | Suite 283/0/0, commit 80a4dc334 | |
+
+## Phase 38: Stale S4 Claims Retired (v33 battleship)
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| U01 | XAI retry 429 | Neither Python plugins/model-providers/xai nor C provider_xai.c have 429 retry | `grep -rn '429\|retry.*after' src/agent/provider_xai.c plugins/model-providers/` — 0 matches |
+| U01 | OAuth fixes | C already has PKCE helpers in crypto.c | `src/deps/crypto.c:150` — PKCE helpers |
+| U01 | MiniMax compat | C already has MiniMax in provider_metadata.c | `src/agent/provider_metadata.c:35` — "MiniMax" |
+| U02 | Agent loop/fallback | C has fallback_routing.c with cool-off + credential_pool | `src/agent/fallback_routing.c` — fallback_chain_create |
+| U03 | Discord thread backfill | Neither Python gateway/platforms/ nor C discord.c have backfill | `grep -rn 'backfill' src/gateway/platforms/` — 0 matches |
+| U03 | Windows gateway drain | C server.c has SIGTERM/SIGINT handlers | `src/gateway/server.c:2119` |
+| U03 | Platform hardening | C server.c has gw_reconnect_delay | `src/gateway/server.c:536` |
+| U04 | TIRITH tar safety | Neither Python tirith_security.py nor C tirith.c have tar safety | grep across both = 0 matches |
+| U04 | web_crawl removal | C never had web_crawl | 0 results for web_crawl anywhere in C/ |
+| U05 | mTLS client certs | Neither Python MCP nor C libmcp have mTLS | 0 results for tls/ssl/certificate in lib/libmcp/ or tools/mcp_tool.py |
+| U06 | PKCE, CIDR, SSRF | C already has all three | crypto.c (PKCE), shell_hooks.c (CIDR allowlist), url_safety (SSRF) |
+| | Battleship v32 S4 reduced from 7 items → 1 item (U07 test gap). New battleship v33 with 21 real gaps. | | |
