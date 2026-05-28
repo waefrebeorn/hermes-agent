@@ -1,4 +1,4 @@
-# Slermes C — Entry Point (v89)
+# Slermes C — Entry Point (v91)
 
 ## Quick Stats
 - Suite: 282/0/0 (239 test files)
@@ -8,6 +8,5 @@
 - Providers: 10 types
 - Libraries: 65 modules
 - Binary: 30M ELF
-- Src: 173 .c + 73 .h
-- Gaps: 35 verified (battleship-v17)
-- Build: 0 warnings
+- Src: 173 .c files, 137 .h files
+- Battleship: v19 (33 gaps, Triple DA heavy audit)

@@ -1,18 +1,18 @@
-# Overnight Map — Slermes C (v89)
+# Overnight Map — Slermes C (v91)
 
 ## Session State (2026-06-02)
-- Last action: v17 stale-claim sweep — 8 claims retired to vault, v18 generated with 23 verified gaps
-- Battleship: v18 (23 gaps, stale-claim verified)
+- Last action: Full Triple DA v19 audit — live binary integration test, 18-pattern stub hunt, AST-level Python-vs-C module comparison, function-level depth audit
+- Battleship: v19 (33 gaps across 7 sectors)
+- Binary: fresh `slermes` build (May 28, old stale `hermes` removed)
 - Suite: 282/0/0
-- No P1 gaps remain. D01/D03 were partially stale.
+- Critical: 3 P0 gaps found (--bogus, pipe mode, --session without arg)
 - Working tree: clean, on main
 
 ## Key Files
-- `.hermes/mind-palace/battleship-v18.md` — verified gap list
-- `.hermes/mind-palace/vault/achievements.md` — all accomplishments + stale claim retirements
-- `.hermes/mind-palace/vault/battleship-v17-superseded.md` — v17 with stale claims marked
-- `tests/test_web.c` — test 5 disabled (WSL getaddrinfo crash)
+- `.hermes/mind-palace/battleship-v19.md` — fresh gap list
+- `.hermes/vault/achievements.md` — all accomplishments
+- `src/main.c` — needs P0 fix (unknown flag dispatch)
+- `src/cli/cli.c` — needs P0 fix (multi-line pipe)
 
 ## Context
-Battleship v18 has only verified real gaps. 8 stale claims from v17 retired to vault.
-All P1 gaps eliminated. 16 P2 gaps + 7 P3 gaps remain.
+Battleship v19 is the most thorough audit to date. Live binary testing found 3 P0 entry-point bugs. Codebase confirmed clean of stub euphemisms (0 hits on "for brevity"/"for later"/"for extension"/"scaffolding"/"placeholder"). Stale old `hermes` binary (showing "107 gaps") removed and replaced with fresh `slermes` build.

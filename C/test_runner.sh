@@ -2791,7 +2791,7 @@ else
 fi
 
 # CLI: --version
-if "$HERMES" --version 2>&1 | grep -q "WuBu Hermes"; then
+if "$HERMES" --version 2>&1 | grep -E "WuBu (Hermes|Slermes)"; then
     ok "cli --version output"
 else
     fail "cli --version output"
@@ -3105,11 +3105,11 @@ fi
 # ==============================================
 echo ""; echo "=== Completions Tests ==="
 BASH_COMP=$("$HERMES" completions bash 2>/dev/null)
-if echo "$BASH_COMP" | grep -q "complete -F _hermes_completions"; then ok "bash completions"
+if echo "$BASH_COMP" | grep -E "_hermes_completions|_slermes_completions"; then ok "bash completions"
 else fail "bash completions not generated"; fi
 
 ZSH_COMP=$("$HERMES" completions zsh 2>/dev/null)
-if echo "$ZSH_COMP" | grep -q "#compdef hermes"; then ok "zsh completions"
+if echo "$ZSH_COMP" | grep -E "#compdef hermes|#compdef slermes"; then ok "zsh completions"
 else fail "zsh completions not generated"; fi
 
 USAGE_COMP=$("$HERMES" completions 2>&1)

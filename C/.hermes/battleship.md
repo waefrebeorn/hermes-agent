@@ -1,6 +1,5 @@
 # BATTLESHIP — Active Gap Audit
 
-> **This file has moved.** The canonical battleship is at `mind-palace/battleship-v18.md`.
+> **This file has moved.** The canonical battleship is at `mind-palace/battleship-v19.md`.
 >
-> The old v0.14.0-wubu era content has been superseded. See the mind-palace version for current
-> gap list. v18: 23 verified gaps (stale-claim sweep 2026-06-02).
+> v19: 33 gaps (Triple DA audit 2026-06-02). Live binary test, stub hunt, AST comparison, depth audit.

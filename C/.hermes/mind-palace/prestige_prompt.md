@@ -1,29 +1,34 @@
-# Slermes C — Prestige Prompt (v89 — 2026-06-02)
+# Slermes C — Prestige Prompt (v91 — 2026-06-02)
 
-## Current Priority Queue (Top gaps to close)
+## Priority Queue
 
-**P2 (Important):**
-1. P01-P04 — 4 Yuanbao tools (SDK-dependent, need gateway protocol)
-2. D01 — MCP depth: SSE streaming + pagination (150-250 LOC)
-3. D02 — TTS multi-provider (Elevenlabs, Azure, edge-tts)
-4. D03 — Browser depth: CDP autofill, PDF gen, HAR capture
-5. D04 — Terminal depth: SSH, Docker Compose, Singularity
-6. D05 — Transcribe depth: multi-provider, diarization
-7. D06 — Send message depth: buttons, reactions, embed cards
-8. D07 — Delegate depth: parallel spawning, lifecycle
-9. G02 — send_reaction vtable wiring across platforms
-10. G03 — email IMAP reconnection handling
-11. L01 — JSON schema validation for libjson
-12. L02 — MCP SSE persistent streaming
-13. R01 — test_web DNS crash guard
+**P0 (CRITICAL — fix before anything else):**
+1. F01 — `--bogus` sends to LLM (10-20 LOC)
+2. F02 — Multi-line pipe stdin broken (30-50 LOC)
+3. F03 — `--session` without arg runs session_crud (10-20 LOC)
 
-**P3 (Nice-to-have):**
-14. I01 — Dockerfile for C binary
-15. I02 — GitHub Actions CI for C-only
-16. X01-X05 — Test expansions (vision, image_gen, video_gen, transcribe, session_search)
+**P1 (Important):**
+4. F04 — Tools count display shows 83 vs 99 (10-20 LOC)
+
+**P2:**
+5. M01-M07 — 7 missing tools (discord, yuanbao)
+6. D01 — MCP depth: SSE streaming + pagination
+7. D02 — TTS multi-provider
+8. D03 — Browser depth
+9. D04 — Terminal depth
+10. D05 — Transcribe depth
+11. D06 — Send message depth
+12. D07 — Delegate depth
+13. D13 — Discord tool (34 Python fns, no C)
+14. D08-D12 — Vision, image_gen, web, video_gen, file depth
+15. L02 — MCP SSE persistent streaming
+16. G02 — send_reaction vtable wiring
+
+**P3:**
+17. I01 — Dockerfile for C binary
+18. I02 — GitHub Actions CI for C-only
+19. X01-X05 — Test expansions
 
 ## Current State
 - Suite: 282/0/0, 99 tools, 98 CLI, 19 gateways, 10 providers, 65 libs
-- Battleship: v18 (23 verified gaps, fresh stale-claim sweep 2026-06-02)
-- No P1 gaps remain
-- All entry points working (--help, --version, --json, pipe mode, tools subcommand)
+- Battleship: v19 (33 gaps, Triple DA audit 2026-06-02)
