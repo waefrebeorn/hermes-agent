@@ -690,3 +690,173 @@ void json_free(json_t *node) {
     }
     free(node);
 }
+
+/* ================================================================
+ *  JSON Schema Validation
+ * ================================================================ */
+
+/* Set error message, returning false */
+static bool schema_fail(char **error_out, const char *fmt, const char *arg) {
+    if (error_out) {
+        size_t sz = strlen(fmt) + (arg ? strlen(arg) : 0) + 1;
+        *error_out = (char *)malloc(sz);
+        if (*error_out) snprintf(*error_out, sz, fmt, arg ? arg : "");
+    }
+    return false;
+}
+
+/* Recursive schema validation */
+static bool json_validate_schema_inner(const json_t *schema, const json_t *value,
+                                        const char *path, char **error_out) {
+    if (!schema || schema->type != JSON_OBJECT) return true; /* no schema = valid */
+    if (!value) return true; /* null value = valid (optional field) */
+
+    /* Get expected type */
+    json_t *type_node = json_obj_get(schema, "type");
+    const char *type_str = (type_node && type_node->type == JSON_STRING) ? type_node->str_val : NULL;
+
+    /* Type validation */
+    if (type_str) {
+        bool type_ok = false;
+        if (strcmp(type_str, "string") == 0)  type_ok = (value->type == JSON_STRING);
+        else if (strcmp(type_str, "number") == 0) type_ok = (value->type == JSON_NUMBER);
+        else if (strcmp(type_str, "integer") == 0) {
+            type_ok = (value->type == JSON_NUMBER && value->num_val == (double)(int)value->num_val);
+        }
+        else if (strcmp(type_str, "boolean") == 0) type_ok = (value->type == JSON_BOOL);
+        else if (strcmp(type_str, "array") == 0)   type_ok = (value->type == JSON_ARRAY);
+        else if (strcmp(type_str, "object") == 0)  type_ok = (value->type == JSON_OBJECT);
+        else if (strcmp(type_str, "null") == 0)    type_ok = (value->type == JSON_NULL);
+        if (!type_ok) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: expected type '%s'", path ? path : "root", type_str);
+            return schema_fail(error_out, "%s", buf);
+        }
+    }
+
+    /* Enum validation */
+    json_t *enum_node = json_obj_get(schema, "enum");
+    if (enum_node && enum_node->type == JSON_ARRAY && enum_node->c.count > 0) {
+        bool found = false;
+        for (size_t i = 0; i < enum_node->c.count; i++) {
+            /* Compare serialized forms */
+            char *v_str = json_serialize(value);
+            char *e_str = json_serialize(enum_node->c.items[i]);
+            if (v_str && e_str && strcmp(v_str, e_str) == 0) found = true;
+            free(v_str);
+            free(e_str);
+            if (found) break;
+        }
+        if (!found) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: value not in enum", path ? path : "root");
+            return schema_fail(error_out, "%s", buf);
+        }
+    }
+
+    /* String constraints */
+    if (value->type == JSON_STRING) {
+        size_t len = strlen(value->str_val);
+        json_t *min_v = json_obj_get(schema, "minLength");
+        if (min_v && min_v->type == JSON_NUMBER && len < (size_t)min_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: string too short (min %d)",
+                     path ? path : "root", (int)min_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+        json_t *max_v = json_obj_get(schema, "maxLength");
+        if (max_v && max_v->type == JSON_NUMBER && len > (size_t)max_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: string too long (max %d)",
+                     path ? path : "root", (int)max_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+    }
+
+    /* Number constraints */
+    if (value->type == JSON_NUMBER) {
+        json_t *min_v = json_obj_get(schema, "minimum");
+        if (min_v && min_v->type == JSON_NUMBER && value->num_val < min_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: below minimum (%.0f)",
+                     path ? path : "root", min_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+        json_t *max_v = json_obj_get(schema, "maximum");
+        if (max_v && max_v->type == JSON_NUMBER && value->num_val > max_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: above maximum (%.0f)",
+                     path ? path : "root", max_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+    }
+
+    /* Array constraints */
+    if (value->type == JSON_ARRAY) {
+        json_t *min_v = json_obj_get(schema, "minItems");
+        if (min_v && min_v->type == JSON_NUMBER && value->c.count < (size_t)min_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: too few items (min %d)",
+                     path ? path : "root", (int)min_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+        json_t *max_v = json_obj_get(schema, "maxItems");
+        if (max_v && max_v->type == JSON_NUMBER && value->c.count > (size_t)max_v->num_val) {
+            char buf[128];
+            snprintf(buf, sizeof(buf), "[schema] at %s: too many items (max %d)",
+                     path ? path : "root", (int)max_v->num_val);
+            return schema_fail(error_out, "%s", buf);
+        }
+
+        /* Items schema for each element */
+        json_t *items_schema = json_obj_get(schema, "items");
+        if (items_schema) {
+            char child_path[256];
+            for (size_t i = 0; i < value->c.count; i++) {
+                snprintf(child_path, sizeof(child_path), "%s/%zu", path ? path : "root", i);
+                if (!json_validate_schema_inner(items_schema, value->c.items[i], child_path, error_out))
+                    return false;
+            }
+        }
+    }
+
+    /* Object properties */
+    if (value->type == JSON_OBJECT) {
+        /* Required properties */
+        json_t *required = json_obj_get(schema, "required");
+        if (required && required->type == JSON_ARRAY) {
+            for (size_t i = 0; i < required->c.count; i++) {
+                if (required->c.items[i]->type != JSON_STRING) continue;
+                if (!json_has(value, required->c.items[i]->str_val)) {
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), "[schema] at %s: missing required property '%s'",
+                             path ? path : "root", required->c.items[i]->str_val);
+                    return schema_fail(error_out, "%s", buf);
+                }
+            }
+        }
+
+        /* Property schemas */
+        json_t *properties = json_obj_get(schema, "properties");
+        if (properties && properties->type == JSON_OBJECT) {
+            char child_path[256];
+            for (size_t i = 0; i < properties->c.count; i++) {
+                const char *key = properties->c.keys[i];
+                json_t *prop_schema = properties->c.items[i];
+                json_t *prop_val = json_obj_get(value, key);
+                if (prop_val) {
+                    snprintf(child_path, sizeof(child_path), "%s/%s", path ? path : "root", key);
+                    if (!json_validate_schema_inner(prop_schema, prop_val, child_path, error_out))
+                        return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+bool json_validate_schema(const json_t *schema, const json_t *value, char **error_out) {
+    if (error_out) *error_out = NULL;
+    return json_validate_schema_inner(schema, value, NULL, error_out);
+}

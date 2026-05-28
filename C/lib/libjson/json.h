@@ -95,6 +95,16 @@ json_t *json_pointer_get(const json_t *root, const char *path);
 /* Check if last OOM occurred. libjson never calls exit(). */
 bool    json_oom_occurred(void);
 
+/* === JSON Schema Validation (draft-07 subset) === */
+/** Validate a JSON value against a JSON Schema (draft-07 subset).
+ *  Supports: type, properties, required, items, enum, minimum/maximum,
+ *  minLength/maxLength, minItems/maxItems, description (ignored).
+ *  schema: JSON Schema object.
+ *  value: JSON value to validate.
+ *  error_out: if non-NULL, set to malloc'd error message on failure (caller free).
+ *  Returns true if valid, false if invalid. */
+bool json_validate_schema(const json_t *schema, const json_t *value, char **error_out);
+
 #ifdef __cplusplus
 }
 #endif

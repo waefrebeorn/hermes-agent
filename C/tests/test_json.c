@@ -103,7 +103,175 @@ static void test_lone_low_surrogate(void) {
     }
 }
 
+/* ================================================================
+ *  Test 7: JSON Schema validation
+ * ================================================================ */
+static void test_json_schema(void) {
+    char *err = NULL;
+
+    /* Test: type string validation */
+    json_t *schema = json_parse("{\"type\":\"string\"}", NULL);
+    json_t *val = json_string("hello");
+    TEST("schema: string matches string type", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_number(42);
+    TEST("schema: number fails string type", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: type number validation */
+    schema = json_parse("{\"type\":\"number\"}", NULL);
+    val = json_number(3.14);
+    TEST("schema: number matches number type", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_string("x");
+    TEST("schema: string fails number type", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: type integer validation */
+    schema = json_parse("{\"type\":\"integer\"}", NULL);
+    val = json_number(42);
+    TEST("schema: integer matches integer type", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_number(3.14);
+    TEST("schema: float fails integer type", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: type boolean validation */
+    schema = json_parse("{\"type\":\"boolean\"}", NULL);
+    val = json_bool(true);
+    TEST("schema: bool matches boolean type", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    json_free(schema);
+
+    /* Test: type array validation */
+    schema = json_parse("{\"type\":\"array\"}", NULL);
+    val = json_array();
+    json_append(val, json_string("a"));
+    json_append(val, json_string("b"));
+    TEST("schema: array matches array type", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    json_free(schema);
+
+    /* Test: required properties */
+    schema = json_parse("{\"type\":\"object\",\"required\":[\"name\",\"age\"],\"properties\":{\"name\":{\"type\":\"string\"},\"age\":{\"type\":\"integer\"}}}", NULL);
+    val = json_parse("{\"name\":\"alice\",\"age\":30}", NULL);
+    TEST("schema: valid object passes", json_validate_schema(schema, val, &err));
+    json_free(val);
+    val = json_parse("{\"name\":\"alice\"}", NULL);
+    TEST("schema: missing required fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    val = json_parse("{\"name\":\"alice\",\"age\":\"thirty\"}", NULL);
+    TEST("schema: wrong property type fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: enum validation */
+    schema = json_parse("{\"type\":\"string\",\"enum\":[\"red\",\"green\",\"blue\"]}", NULL);
+    val = json_string("green");
+    TEST("schema: value in enum passes", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_string("yellow");
+    TEST("schema: value not in enum fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: minLength/maxLength */
+    schema = json_parse("{\"type\":\"string\",\"minLength\":2,\"maxLength\":5}", NULL);
+    val = json_string("ok");
+    TEST("schema: string within length passes", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_string("x");
+    TEST("schema: string too short fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    val = json_string("toolong");
+    TEST("schema: string too long fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: minimum/maximum */
+    schema = json_parse("{\"type\":\"integer\",\"minimum\":0,\"maximum\":100}", NULL);
+    val = json_number(50);
+    TEST("schema: number within range passes", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_number(-1);
+    TEST("schema: number below min fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    val = json_number(101);
+    TEST("schema: number above max fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: array items validation */
+    schema = json_parse("{\"type\":\"array\",\"items\":{\"type\":\"string\"}}", NULL);
+    val = json_parse("[\"a\",\"b\",\"c\"]", NULL);
+    TEST("schema: array of strings passes", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_parse("[\"a\",42,\"c\"]", NULL);
+    TEST("schema: array with non-string fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: minItems/maxItems */
+    schema = json_parse("{\"type\":\"array\",\"minItems\":1,\"maxItems\":3}", NULL);
+    val = json_parse("[\"a\"]", NULL);
+    TEST("schema: array within item count passes", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_parse("[]", NULL);
+    TEST("schema: too few items fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    val = json_parse("[\"a\",\"b\",\"c\",\"d\"]", NULL);
+    TEST("schema: too many items fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: nested object properties */
+    schema = json_parse("{\"type\":\"object\",\"properties\":{\"inner\":{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"integer\"}},\"required\":[\"x\"]}}}", NULL);
+    val = json_parse("{\"inner\":{\"x\":5}}", NULL);
+    TEST("schema: nested objects pass", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    val = json_parse("{\"inner\":{\"x\":\"five\"}}", NULL);
+    TEST("schema: nested type mismatch fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    val = json_parse("{\"inner\":{}}", NULL);
+    TEST("schema: nested missing required fails", !json_validate_schema(schema, val, &err));
+    free(err); err = NULL;
+    json_free(val);
+    json_free(schema);
+
+    /* Test: null/empty schema */
+    schema = json_object();
+    val = json_number(42);
+    TEST("schema: empty schema accepts all", json_validate_schema(schema, val, NULL));
+    json_free(val);
+    json_free(schema);
+
+    /* Test: null value (optional field) */
+    schema = json_parse("{\"type\":\"string\"}", NULL);
+    TEST("schema: null value is valid (optional)", json_validate_schema(schema, NULL, NULL));
+    json_free(schema);
+
+    printf("  JSON Schema: all tests done\n");
+}
+
 int main(void) {
+
     /* Test 1: parse + serialize roundtrip */
     char *err = NULL;
     json_t *doc = json_parse("{\"name\":\"hermes\",\"count\":42,\"ok\":true,\"empty\":null}", &err);
@@ -165,6 +333,9 @@ int main(void) {
     test_surrogate_pair();
     test_lone_high_surrogate();
     test_lone_low_surrogate();
+
+    /* Test 7: JSON Schema validation */
+    test_json_schema();
 
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All JSON tests PASSED");
     return failures ? 1 : 0;
