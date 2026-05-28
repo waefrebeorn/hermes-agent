@@ -1,3 +1,2 @@
-     1|# Overnight (v95)
-     2|G02 + D13 resolved. D01 pagination added. 22 gaps, 1 partial.
-     3|
+# Overnight (v96)
+D10 resolved: cookie jar, Bearer auth, response headers. 21 gaps, 1 partial.

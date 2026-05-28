@@ -1,2 +1,3 @@
-# Goal-Mantra (v95)
-22 gaps (1 partial). D13 + G02 done. D01 pagination added. Loop: state->battleship->prestige->plan->overnight->pick P2->impl->test->doc->commit.
+# Goal-Mantra (v96)
+21 gaps. D10 (web depth: cookie jar + Bearer auth + headers) resolved.
+Loop: state->battleship->prestige->plan->overnight->pick P2->impl->test->doc->commit.

@@ -1,3 +1,2 @@
-     1|# Testing (v95)
-     2|239 files | 282/0/0 | 66 libs
-     3|
+# Testing (v96)
+282 assertions, 239 test files. All pass.

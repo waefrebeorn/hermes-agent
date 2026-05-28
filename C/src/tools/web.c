@@ -30,7 +30,8 @@ static const char *SCHEMA_GET = "{"
       "\"follow_redirects\":{\"type\":\"boolean\",\"description\":\"Follow HTTP redirects (3xx). Default: true\",\"default\":true},"
       "\"max_redirects\":{\"type\":\"integer\",\"description\":\"Max redirects to follow (0=unlimited, default: 5)\",\"default\":5},"
       "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"},"
-      "\"include_body\":{\"type\":\"boolean\",\"description\":\"Include response body in output. Set false to return only status code and URL (faster, less token usage).\",\"default\":true}"
+      "\"include_body\":{\"type\":\"boolean\",\"description\":\"Include response body in output. Set false to return only status code and URL (faster, less token usage).\",\"default\":true},"
+      "\"auth_type\":{\"type\":\"string\",\"description\":\"Authentication type: 'basic' (user:pass) or 'bearer' (token only). Default: basic\"}"
     "},"
     "\"required\":[\"url\"]"
 "}"; /* end SCHEMA_GET */
@@ -66,6 +67,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *proxy = json_object_get_string(args, "proxy", NULL);
     const char *user_agent = json_object_get_string(args, "user_agent", NULL);
     const char *cookies = json_object_get_string(args, "cookies", NULL);
+    const char *auth_type = json_object_get_string(args, "auth_type", NULL);
 
     /* Strdup values that survive json_free */
     char *url_copy = url ? strdup(url) : NULL;
@@ -75,6 +77,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     char *proxy_copy = proxy ? strdup(proxy) : NULL;
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
     char *cookies_copy = cookies ? strdup(cookies) : NULL;
+    char *auth_type_copy = auth_type ? strdup(auth_type) : NULL;
     bool include_body_val = json_object_get_bool(args, "include_body", true);
 
     /* Redirect following params */
@@ -91,6 +94,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(body_copy);
         free(proxy_copy);
         free(cookies_copy);
+        free(auth_type_copy);
         free(ua_copy);
         return strdup("{\"error\":\"Missing url\"}");
     }
@@ -101,12 +105,14 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(body_copy);
         free(proxy_copy);
         free(cookies_copy);
+        free(auth_type_copy);
         free(ua_copy);
         free(url_copy);
         return strdup("{\"error\":\"URL blocked by SSRF protection: private or internal address\"}");
     }
 
     http_client_t *client = http_client_new(timeout);
+    http_client_enable_cookies((http_t *)client, true);
     if (proxy_copy && proxy_copy[0]) {
         http_client_set_proxy(client, proxy_copy);
 
@@ -182,6 +188,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(body_copy);
         free(proxy_copy);
         free(cookies_copy);
+        free(auth_type_copy);
         free(ua_copy);
         free(url_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
@@ -190,6 +197,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     json_node_t *result = json_new_object();
     json_object_set(result, "url", json_new_string(url_copy));
     json_object_set(result, "status_code", json_new_number((double)resp->status));
+    json_object_set(result, "headers", json_new_string(resp->headers ? resp->headers : ""));
     if (include_body_val) {
         json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
         json_object_set(result, "body_length", json_new_number((double)resp->body_len));
