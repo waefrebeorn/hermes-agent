@@ -426,6 +426,12 @@ static char *handle_read(const char *args_json) {
     json_object_set(result, "file_size", json_new_number((double)fsize));
     json_object_set(result, "is_binary", json_new_bool(is_binary));
 
+    /* D12: Hidden file detection */
+    const char *basename = strrchr(path, '/');
+    const char *filename = basename ? basename + 1 : path;
+    bool is_hidden = (filename[0] == '.');
+    json_object_set(result, "is_hidden", json_new_bool(is_hidden));
+
     char *json_out = json_serialize(result);
     json_free(result);
     free(content);
