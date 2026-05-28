@@ -1,10 +1,10 @@
-# Overnight Map — Slermes C (v85)
+# Overnight Map — Slermes C (v86)
 
 ## Session State (2026-05-27)
 - Last action: Full Triple DA v17 audit — live binary, stub hunt, module comparison, function depth audit, library verification
 - Battleship: v17 (33 gaps across 8 sectors, verified against live source)
 - Suite: 282/0/0
-- Next priority: D01 (MCP SSE transport) — largest remaining P1 gap
+- Next priority: D01 (MCP depth) — largest P1, SSE request-response now works, streaming remains
 - Working tree: clean, on main
 
 ## Key Files

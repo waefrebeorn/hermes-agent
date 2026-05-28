@@ -79,7 +79,7 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 | # | ID | Library | Issue | LOC | Priority |
 |---|---------|---------|-------|-----|----------|
 | 1 | L01 | libjson | JSON schema validation (Python has full jsonschema lib) | 100-200 | P2 |
-| 2 | L02 | libmcp | SSE transport, streaming responses | 200-400 | P1 |
+| 2 | L02 | libmcp | SSE streaming (persistent GET + event parsing) | 150-250 | P2 |
 | 3 | L03 | libcron | @every/@daily shorthand (only @daily exists) | 20-40 | P2 |
 
 ## SECTOR 8: Refactoring & Cleanup — 2 gaps
@@ -101,8 +101,8 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 | S4: Gateway Depth | 3 | P2: 3 |
 | S5: CI/Infra | 2 | P3: 2 |
 | S6: Test Coverage | 5 | P3: 5 |
-| S7: Library Depth | 3 | P1: 1, P2: 2 |
+| S7: Library Depth | 3 | P1: 0, P2: 3 |
 | S8: Refactoring | 2 | P2: 1, P3: 1 |
-| **TOTAL** | **33** | P1: 3, P2: 20, P3: 10 |
+| **TOTAL** | **33** | P1: 2, P2: 21, P3: 10 |
 
-**P1 gaps:** D01 (MCP depth), D03 (browser depth), L02 (MCP SSE)
+**P1 gaps:** D01 (MCP depth), D03 (browser depth)

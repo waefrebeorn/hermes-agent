@@ -1,4 +1,4 @@
-# Slermes C — State Dashboard (v85 — 2026-05-27)
+# Slermes C — State Dashboard (v86 — 2026-05-27)
 
 ## Build Metrics
 Build clean — **0 warnings**. **99 registered tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types. 65 libs. 173 src/ .c files (incl subdirs). 73 .h files. 239 test_*.c files. Binary: 30M. Suite: **282/0/0**.
@@ -28,4 +28,5 @@ Build clean — **0 warnings**. **99 registered tools** (registry_register + reg
 - Vault: created vault/achievements.md with all completed phases.
 - Battleship: v17 generated with 33 real gaps across 8 sectors.
 - fix(S03): /restart now saves session + closes DB before exec, better error handling
+- fix(L02): libmcp SSE transport now captures POST response body — request-response works
 - fix(S02): platform shutdown callback instead of NULL in server.c — removed S02 from P1, battleship 35→34
