@@ -185,7 +185,7 @@ static void handle_request(int client_fd) {
     if (parse_http_request_line(buf, method, sizeof(method),
                                  path, sizeof(path), query, sizeof(query)) < 0) {
         char *r = build_http_response(400, "Bad Request", "text/plain", "Bad Request");
-        if (r) { write(client_fd, r, strlen(r)); free(r); }
+        if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         close(client_fd);
         return;
     }
@@ -193,7 +193,7 @@ static void handle_request(int client_fd) {
     /* CORS preflight */
     if (strcmp(method, "OPTIONS") == 0) {
         char *r = build_http_response(204, "No Content", "text/plain", "");
-        if (r) { write(client_fd, r, strlen(r)); free(r); }
+        if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         close(client_fd);
         return;
     }
@@ -206,7 +206,7 @@ static void handle_request(int client_fd) {
             "\"webhook_path\":\"%s\",\"accepted\":%d,\"duplicates\":%d}",
             g_msgraph.webhook_path, g_msgraph.accepted_count, g_msgraph.duplicate_count);
         char *r = build_http_response(200, "OK", "application/json", json);
-        if (r) { write(client_fd, r, strlen(r)); free(r); }
+        if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         close(client_fd);
         return;
     }
@@ -232,11 +232,11 @@ static void handle_request(int client_fd) {
 
         if (vt) {
             char *r = build_http_response(200, "OK", "text/plain", vt);
-            if (r) { write(client_fd, r, strlen(r)); free(r); }
+            if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         } else {
             char *r = build_http_response(400, "Bad Request", "text/plain",
                                            "validationToken required");
-            if (r) { write(client_fd, r, strlen(r)); free(r); }
+            if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         }
         close(client_fd);
         if (vt) free((void *)vt);
@@ -249,7 +249,7 @@ static void handle_request(int client_fd) {
         if (!body) {
             char *r = build_http_response(400, "Bad Request", "application/json",
                                            "{\"error\":\"No body\"}");
-            if (r) { write(client_fd, r, strlen(r)); free(r); }
+            if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
             close(client_fd);
             return;
         }
@@ -259,7 +259,7 @@ static void handle_request(int client_fd) {
         if (!root) {
             char *r = build_http_response(400, "Bad Request", "application/json",
                                            "{\"error\":\"Invalid JSON\"}");
-            if (r) { write(client_fd, r, strlen(r)); free(r); }
+            if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
             close(client_fd);
             return;
         }
@@ -269,7 +269,7 @@ static void handle_request(int client_fd) {
             json_free(root);
             char *r = build_http_response(403, "Forbidden", "application/json",
                                            "{\"error\":\"Invalid clientState\"}");
-            if (r) { write(client_fd, r, strlen(r)); free(r); }
+            if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
             close(client_fd);
             return;
         }
@@ -351,7 +351,7 @@ static void handle_request(int client_fd) {
 
         char *r = build_http_response(resp_status, resp_status == 202 ? "Accepted" : "Bad Request",
                                        "application/json", resp_body);
-        if (r) { write(client_fd, r, strlen(r)); free(r); }
+        if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
         close(client_fd);
         return;
     }
@@ -359,7 +359,7 @@ static void handle_request(int client_fd) {
     /* 404 */
     char *r = build_http_response(404, "Not Found", "application/json",
                                    "{\"error\":\"Not Found\"}");
-    if (r) { write(client_fd, r, strlen(r)); free(r); }
+    if (r) { (void)write(client_fd, r, strlen(r)); free(r); }
     close(client_fd);
 }
 

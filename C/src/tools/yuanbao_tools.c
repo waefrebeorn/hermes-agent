@@ -6,6 +6,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_gateway.h"
 #include "protobuf.h"
 #include <ctype.h>
 #include <stdio.h>

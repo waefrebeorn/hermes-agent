@@ -191,8 +191,7 @@ char *hermes_secrets_resolve(const char *ref) {
         size_t len = strlen(name);
         if (len > 0 && name[len-1] == '}')
             len--;
-        char secret_name[256];
-        secret_name[0] = '\0';
+        char secret_name[256] = "";
         snprintf(secret_name, sizeof(secret_name), "%.*s", (int)len, name);
         name = secret_name;
     }

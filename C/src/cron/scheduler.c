@@ -6,6 +6,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "../cron/scheduler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

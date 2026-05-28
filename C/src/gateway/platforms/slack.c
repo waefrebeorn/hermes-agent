@@ -374,7 +374,7 @@ json_node_t *slack_poll_messages(http_client_t *http) {
         json_set(chat, "id", json_string(channel_id));
         json_set(message, "chat", chat);
 
-        json_set(message, "text", json_get_str(msg, "text", ""));
+        json_set(message, "text", json_string(json_get_str(msg, "text", "")));
         json_set(update, "message", message);
 
         json_append(updates, update);
