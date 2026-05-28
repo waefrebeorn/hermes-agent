@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v76 — ~288 Items)
+# Slermes C — Prestige Prompt (v76 — ~287 Items)
 
 ## Phase 0 — Display (16) — 14/16 done
 ## Phase 1 — CLI Args — ALL DONE

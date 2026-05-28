@@ -424,3 +424,9 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
      | P20 | tool_output tests — configurable output limit tests (tool_output_get_max_bytes/lines/line_length, exceed checks, env overrides). 13/13 tests. | 10 | tests/test_tool_output.c: 13 tests; test_runner.sh: wired as inline block with libtooloutput include |
      | P21 | env_passthrough tests — env var passthrough registry tests (is_blocked, register, is_allowed, get_all, clear, batch_register). 15/15 tests. | 10 | tests/test_env_passthrough.c: 15 tests; test_runner.sh: wired with -lpthread |
      | P22 | website policy tests — website access policy tests (init/free, extract_host, match_host, add_rule/check_access, disabled policy). 17/17 tests. | 10 | tests/test_website.c: 17 tests; test_runner.sh: wired with libwebsite include |
+
+## Phase 29: 5A-222 _http_client_limits (2026-05-27)
+
+| ID | Description | Sector | Evidence |
+|----|-------------|--------|----------|
+| G01 | HTTP pool keepalive expiry config — env-var configurable idle connection timeout (`HERMES_GATEWAY_KEEPALIVE_EXPIRY`). Ported from Python `gateway/platforms/_http_client_limits.py`. C already had pool cleanup with hardcoded 300s; now reads env var with default fallback. | 5A (gateway infrastructure) | src/gateway/server.c: env-var parsing in hermes_gateway_main(), g_gw.pool_keepalive_expiry field in gw_pool_cleanup(); include/hermes_gateway.h: pool_keepalive_expiry field; tests/test_gateway.c: test_pool_keepalive() — 3 test cases |

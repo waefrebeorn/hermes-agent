@@ -10,7 +10,7 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  30MB binary  │  0 warnings                ║
-   ║  ~288 items (Phase 1 ✅, Phase 3 ✅, Phase 4 active)         ║
+   ║  ~287 items (Phase 1 ✅, Phase 3 ✅, Phase 5 active)         ║
    ╚══════════════════════════════════════════════════════════════╝
 
    DA v16:  Phase 2 deepen claims HEAVILY STALE — verify before impl
@@ -29,8 +29,8 @@ Phase 0 — Display (16) | 14/16 done
 Phase 1 — CLI Args | ✅ ALL DONE
 Phase 2 — Provider Parity | STALE — verify claims
 Phase 3 — Tool Features | ✅ ALL DONE
-Phase 4 — Missing Tools (45) | ACTIVE
-Phase 5 — Gateway (51) | PENDING
+Phase 4 — Missing Tools (45) | EXHAUSTED
+Phase 5 — Gateway (51) | ACTIVE
 Phase 6 — Agent (74) | PENDING
 Phase 7 — Plugins (13) | PENDING
 Phase 8 — Libraries (19) | PENDING

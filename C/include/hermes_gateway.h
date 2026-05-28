@@ -158,6 +158,7 @@ typedef struct {
     gw_http_pool_entry_t http_pool[GW_POOL_MAX];
     int                  pool_count;
     pthread_mutex_t      pool_mutex;
+    double               pool_keepalive_expiry;  /* seconds before idle connection freed (default 300) */
 
     /* P102: Per-chat session pool */
     gw_session_entry_t   sessions[GW_SESSIONS_MAX];

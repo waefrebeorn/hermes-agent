@@ -383,9 +383,10 @@ void gw_pool_return_client(http_client_t *client, const char *endpoint) {
 void gw_pool_cleanup(void) {
     pthread_mutex_lock(&g_gw.pool_mutex);
     double now = gw_mono_time();
+    double expiry = g_gw.pool_keepalive_expiry > 0 ? g_gw.pool_keepalive_expiry : 300.0;
     for (int i = 0; i < g_gw.pool_count; i++) {
         if (!g_gw.http_pool[i].in_use &&
-            (now - g_gw.http_pool[i].last_used) > 300.0) {
+            (now - g_gw.http_pool[i].last_used) > expiry) {
             http_client_free(g_gw.http_pool[i].client);
             if (i < g_gw.pool_count - 1) {
                 g_gw.http_pool[i] = g_gw.http_pool[g_gw.pool_count - 1];
@@ -1907,6 +1908,14 @@ int hermes_gateway_main(int argc, char **argv) {
     g_gw.observe_buffer[0] = '\0';
     pthread_mutex_init(&g_gw.observe_mutex, NULL);
     pthread_mutex_init(&g_gw.pool_mutex, NULL);
+    /* 5A-222: Configurable keepalive from env (matching Python _http_client_limits) */
+    {
+        const char *env_keepalive = getenv("HERMES_GATEWAY_KEEPALIVE_EXPIRY");
+        if (env_keepalive) {
+            double val = atof(env_keepalive);
+            if (val > 0) g_gw.pool_keepalive_expiry = val;
+        }
+    }
     /* P102: Initialize session pool */
     pthread_mutex_init(&g_gw.session_mutex, NULL);
     {

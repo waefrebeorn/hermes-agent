@@ -4,7 +4,7 @@
    Suite: 278/0/0. 0 warnings. Tools: 84. CLI: 98 commands.
    Gateways: 19. Providers: 10. Libs: 65.
    src/ .c: 172. Test files: 236. Binary: 30M.
-   ~288 item-level parity gaps (battleship-v16).
+   ~287 item-level parity gaps (battleship-v16).
    Build: make -j$(nproc). Test: bash test_runner.sh.
    state.md is ground truth with verified live numbers.
 

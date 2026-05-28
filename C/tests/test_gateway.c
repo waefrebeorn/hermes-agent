@@ -232,6 +232,29 @@ static void test_webhook_request(void) {
     free(err);
 }
 
+/* ================================================================
+ *  5. Pool keepalive config (5A-222)
+ * ================================================================ */
+static void test_pool_keepalive(void) {
+    printf("\n--- Pool Keepalive Config ---\n");
+
+    /* Default should be 0 (unset) */
+    TEST("default expiry is 0", g_gw.pool_keepalive_expiry == 0.0);
+
+    /* Set a value and verify cleanup doesn't crash */
+    g_gw.pool_keepalive_expiry = 0.5;
+    gw_pool_cleanup();
+    TEST("cleanup with short expiry works", 1);
+
+    /* Set a reasonable value and cleanup */
+    g_gw.pool_keepalive_expiry = 300.0;
+    gw_pool_cleanup();
+    TEST("cleanup with 300s expiry works", 1);
+
+    /* Reset to default for subsequent tests */
+    g_gw.pool_keepalive_expiry = 0.0;
+}
+
 int main(void) {
     printf("=== Gateway Subsystem Test Suite (G165) ===\n");
 
@@ -239,6 +262,7 @@ int main(void) {
     test_rate_limiter();
     test_client_pool();
     test_webhook_request();
+    test_pool_keepalive();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

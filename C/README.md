@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 ||||||| Suite:  278/0/0 (236 test files, completes in <60s)
 ||||||| Binary: 30M    (dynamic ELF, -O2 -g)
 ||||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
-|||||||||| Parity:  ~43%   (~288 item-level gaps — see battleship-v16)
+|||||||||| Parity:  ~43%   (~287 item-level gaps — see battleship-v16)
 |||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
 ||||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
@@ -31,13 +31,13 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c-0-so)
-- [Libraries (59 Units)](#libraries-59-units)
+- [Libraries (65 Units)](#libraries-65-units)
 - [CLI Commands (98 Slash, Real)](#cli-commands-98-slash-real)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||||- [Battleship Roadmap (~288 Gaps)](#battleship-roadmap-171-gaps)
+||||- [Battleship Roadmap (~287 Gaps)](#battleship-roadmap-171-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
