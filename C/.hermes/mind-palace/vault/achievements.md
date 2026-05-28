@@ -394,4 +394,4 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
-| P01 | Ported upstream patch tool \\t/\\r unescape fix (@78be45860) to C: `_maybe_unescape_new_string` — conditionally unescapes \\t→tab and \\r→CR in new_string when matched file region contains real control bytes. Region-based heuristic (not strategy-gated). `\\n` excluded intentionally. | `src/tools/patch.c` — new unescape block before replacement loop; suite 282/0/0, 25 patch tests + 5 V4A tests pass |
+| P01 | Ported upstream patch tool \\t/\\r unescape fix (@78be45860) to C: `_maybe_unescape_new_string` — conditionally unescapes \\t→tab and \\r→CR in new_string when matched file region contains real control bytes. Region-based heuristic (not strategy-gated). `\\n` excluded intentionally. | `src/tools/patch.c` — new unescape block before replacement loop; `tests/test_patch.c` — 4 new test scenarios (12 assertions): tab exact, \\n preservation, literal preservation, passthrough. Suite 282/0/0, patch tests 37/0/0. |
