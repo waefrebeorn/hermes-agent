@@ -1,15 +1,14 @@
-# Goal-Mantra — Slermes C Parity (v91)
+# Goal-Mantra — Slermes C Parity (v92)
 
-── STATE: battleship-v19.md in C/.hermes/mind-palace/.
-   Suite: 282/0/0. Tools: 99. CLI: 98. Gateways: 19. Prov: 10. Libs: 65. Binary: 30M.
-   v91. 33 verified gaps (Triple DA v19: live binary test, stub hunt, AST comparison, depth audit).
-   3 P0 entry-point bugs found: --bogus goes to LLM, pipe mode broken, --session without arg broken.
-   Fresh slermes binary built May 28 (old stale hermes removed).
-   Vault: vault/achievements.md records all accomplishments + stale claim retirements.
+── STATE: battleship-v20.md in C/.hermes/mind-palace/.
+   Suite: 282/0/0. Tools: 99. CLI: 98. Gateways: 19. Prov: 10. Libs: 66. Binary: 31M.
+   v92. 25 verified gaps (Triple DA v20: live binary test, stub hunt, stale claim sweep).
+   0 P0 gaps. 8 stale claims retired to vault Phase 9.
+   5 Yuanbao tools unported, 13 depth gaps, 1 gateway wiring, 1 CI, 5 test edge cases.
+   All entry points verified working.
 
-── LOOP: read state.md → battleship-v19 → prestige → plan → overnight →
-   fix P0 gaps FIRST, then pick highest P1/P2 gap →
-   implement → build → test → update ALL docs →
+── LOOP: read state.md → battleship-v20 → prestige → plan → overnight →
+   pick highest P2 gap → implement → build → test → update ALL docs →
    vault with evidence → commit → repeat.
    No questions. No choices. Exhaust only: awaiting direction.
 

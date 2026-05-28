@@ -1,23 +1,23 @@
-     1|     1|# Slermes C
-     2|     2|
-     3|     3|**Slermes — Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**  
-     4|     4|One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
-     5|     5|
-     6|     6|```text
-     7|     7|||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
-     8|     8|||||||||| Binary: 30M    (dynamic ELF, -O2 -g)
-     9|     9|||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-    10|    10||||||||||||| Gaps:   33 verified gaps (Triple DA v19) — see battleship-v19 (Triple DA audit 2026-06-02)
-    11|    11||||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
-    12|    12||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-    13|    13||||||||CLI:    98 cmd_ functions — 99 unique tools registered
-    14|    14||||||||Tools:  99 registered (103+ at runtime with MCP dynamic)
-    15|    15||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
-    16|    16||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-    17|    17||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
-    18|    18||```
-    19|    19|
-    20|    20|> **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
+# Slermes C
+
+**Slermes — Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**  
+One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
+
+```text
+|||||||| Suite:  282/0/0 (239 test files, completes in <60s)
+|||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+|||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||| Gaps:   25 verified gaps (Triple DA v20) — see battleship-v20 (Triple DA refresh 2026-06-02)
+||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
+||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||||||CLI:    98 cmd_ functions — 99 unique tools registered
+||||||Tools:  99 registered (103+ at runtime with MCP dynamic)
+||||Libraries: 66 C modules — zero external deps beyond libc+libssl
+||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+```
+
+> **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
     21|    21|
     22|    22|---
     23|    23|
@@ -26,17 +26,17 @@
     26|    26|- [Quick Start](#quick-start)
     27|    27|- [Architecture](#architecture)
     28|    28|- [Build System](#build-system)
-    29|    29|- [All Tools (89 Registered)](#all-tools-89-registered)
+    29|    29|- [All Tools (99 Registered)](#all-tools-99-registered)
     30|    30|- [Gateway Platforms (19)](#gateway-platforms-19)
     31|    31|- [LLM Providers (10)](#llm-providers-10)
     32|    32|- [Plugins (10 .c)](#plugins-10-c-0-so)
-    33|    33|- [Libraries (65 Units)](#libraries-65-units)
+    33|    33|- [Libraries (66 Units)](#libraries-66-units)
     34|    34|- [CLI Commands (98 Slash, Real)](#cli-commands-98-slash-real)
     35|    35|- [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
     36|    36|- [Bugfix History](#bugfix-history)
     37|    37|- [Project Structure](#project-structure)
     38|    38|- [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-    39|    39||||||- [Battleship Roadmap (~285 Gaps)](#battleship-roadmap-171-gaps)
+    39|    39||||||- [Battleship Roadmap (25 Gaps)](#battleship-roadmap-25-gaps)
     40|    40|- [Test Suite](#test-suite)
     41|    41|- [CI/CD](#cicd)
     42|    42|- [Development Guide](#development-guide)
@@ -51,7 +51,7 @@
     51|    51|cd C/
     52|    52|make -j$(nproc)            # Build hermes binary
     53|    53|./hermes --help            # Usage
-    54|    54|bash test_runner.sh        # 279/0/0
+    54|    54|bash test_runner.sh        # 282/0/0
     55|    55|./hermes --version         # v0.14.1+
     56|    56|
     57|    57|# Modes
@@ -70,7 +70,7 @@
     70|    70|
     71|    71|### Smoke Test
     72|    72|```bash
-    73|    73|echo '/tools' | ./hermes     # List all 84 registered tools
+    73|    73|echo '/tools' | ./hermes     # List all 99 registered tools
     74|    74|echo "/providers" | ./hermes # List provider configurations
     75|    75|```
     76|    76|
@@ -111,7 +111,7 @@
    111|   111|                    └──────────┬──────────────┘
    112|   112|                               │ System calls
    113|   113|                    ┌──────────▼──────────────┐
-   114|   114|                    │   65 Library Units       │
+   114|   114|                    │   66 Library Units       │
    115|   115|                    │  (json, yaml, http,      │
    116|   116|                    │   crypto, mcp, cron...)  │
    117|   117|                    └─────────────────────────┘
@@ -124,10 +124,10 @@
    124|   124|## Build System
    125|   125|
    126|   126|```bash
-   127|   127|make hermes           # Full binary (phase5) — 0 errors, 30M
+   127|   127|make hermes           # Full binary (phase5) — 0 errors, 31M
    128|   128|make plugins          # 10 .so shared objects
    129|   129|make tui              # ncurses TUI → hermes-tui (experimental)
-   130|   130|make libs             # 65 library compilation units
+   130|   130|make libs             # 66 library compilation units
    131|   131|make install-plugins  # Build + copy .so → ~/.hermes/plugins/
    132|   132|make docs             # Doxygen HTML docs (if doxygen available)
    133|   133|```
@@ -136,9 +136,9 @@
    136|   136|
    137|   137|| Phase | What | Output |
    138|   138||-------|------|--------|
-   139|   139||| P1 | 65 library units (.o) | lib/*.o |
+   139|   139||| P1 | 66 library units (.o) | lib/*.o |
    140|   140|| P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
-   141|   141|| P3 | 84 tool handlers | src/tools/*.o |
+   141|   141|| P3 | 99 tool handlers | src/tools/*.o |
    142|   142|| P4 | 19 gateway platforms | src/gateway/*.o |
    143|   143|| P5 | Cron scheduler + final link | hermes binary |
    144|   144|
@@ -159,7 +159,7 @@
    159|   159|
    160|   160|---
    161|   161|
-   162|   162|## All Tools (84 Registered)
+   ## All Tools (99 Registered)
    163|   163|
    164|   164|Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
    165|   165|
@@ -460,10 +460,10 @@
    460|   460|│   │   ├── gateway/              ←   Server + 19 platform adapters
    461|   461|│   │   │   └── platforms/        ←     Individual platform implementations
    462|   462|│   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-   463|   463|│   │   ├── tools/                ←   84 tool handler implementations
+   463|   463|│   │   ├── tools/                ←   99 tool handler implementations
    464|   464|│   │   ├── acp/                  ←   ACP JSON-RPC server
    465|   465|│   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-   466|   466|│   ├── lib/                      ←   65 library units (compiled directly, no .a)
+   466|   466|│   ├── lib/                      ←   66 library units (compiled directly, no .a)
    467|   467|│   │   ├── libjson/              ←   JSON parser/builder
    468|   468|│   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
    469|   469|│   │   ├── libmcp/               ←   MCP transport layer (stdio, server, SSE)

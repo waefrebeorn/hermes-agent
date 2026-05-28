@@ -1,4 +1,4 @@
-# Slermes C — Entry Point (v91)
+# Slermes C — Entry Point (v92)
 
 ## Quick Stats
 - Suite: 282/0/0 (239 test files)
@@ -6,7 +6,8 @@
 - CLI: 98 commands
 - Gateways: 19 platforms
 - Providers: 10 types
-- Libraries: 65 modules
-- Binary: 30M ELF
-- Src: 173 .c files, 137 .h files
-- Battleship: v19 (33 gaps, Triple DA heavy audit)
+- Libraries: 66 modules
+- Binary: 31M ELF
+- Src: 167 .c files, 193 .h files
+- Battleship: v20 (25 gaps, Triple DA refresh)
+- Stubs: 0 (codebase clean, all euphemisms resolved)

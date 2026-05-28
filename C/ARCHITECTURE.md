@@ -5,13 +5,13 @@
 Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provider abstraction, tool system, gateway, plugin system, and CLI — in portable C with zero Python dependencies.
 
 ```
-|CLI / Gateway → Agent Loop → LLM Client → 10 Providers → HTTP/JSON
+||CLI / Gateway → Agent Loop → LLM Client → 10 Providers → HTTP/JSON
                     ↓
-             Tool Registry (84 tools)
+             Tool Registry (99 tools)
                     ↓
              Plugin Registry (10 .so)
                     ↓
-             65 Library Modules
+             66 Library Modules
 ```
 
 ## Module Overview
@@ -22,12 +22,12 @@ Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provid
 | **LLM Client** | Provider abstraction | `src/agent/llm_client.c` | 1 |
 | **Providers** | LLM API implementations | `src/agent/provider_*.c` | 9 + metadata |
 | **CLI** | Interactive shell | `src/cli/*.c` | 9, ~148 commands |
-| **Tools** | Action handlers | `src/tools/*.c` | 43, 84 registered |
-| **Gateway** | Messaging platforms | `src/gateway/` | ~25 files, 19 platforms |
-| **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
-| **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
-|**Libraries** | Reusable C modules | `lib/lib*` | 59 |
-| **Tests** | Unit tests | `tests/test_*.c` | 236, 278/0/0 |
+|| **Tools** | Action handlers | `src/tools/*.c` | 43, 99 registered |
+|| **Gateway** | Messaging platforms | `src/gateway/` | ~25 files, 19 platforms |
+|| **Cron** | Job scheduling | `src/cron/*.c` | 8 files |
+|| **Plugins** | Runtime .so extensions | `src/plugins/*.so` | 10 |
+||**Libraries** | Reusable C modules | `lib/lib*` | 66 |
+|| **Tests** | Unit tests | `tests/test_*.c` | 239, 282/0/0 |
 | **Config** | YAML/env configuration | `~/.slermes/` | ~322 keys |
 
 ## Core Data Flow
@@ -126,7 +126,7 @@ Provider categories:
 | libansi | ANSI terminal codes | none |
 
 ## Testing
-- **236 test files, 278/0/0 suite** (all passed, 0 failed, 0 skipped)
+- **239 test files, 282/0/0 suite** (all passed, 0 failed, 0 skipped)
 - **Pattern:** Each test is `int main(void)` returning 0 on pass
 - **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
@@ -140,15 +140,15 @@ Provider categories:
 ## Building
 ```bash
 make -j$(nproc)         # Full binary
-bash test_runner.sh      # 278/0/0
+bash test_runner.sh      # 282/0/0
 make tui                 # With ncurses TUI
 make docs                # Doxygen HTML docs
 make plugins             # Build 10 .so plugins
 ```
 
 ## Current State
-- **Suite:** 278/0/0 — 236 test files
-- **Binary:** 30MB ELF, 0 warnings
+- **Suite:** 282/0/0 — 239 test files
+- **Binary:** 31MB ELF, 0 warnings
 - **Commits:** 817+ C-specific
 - **Upstream:** synced via battleship-v16
 - **Parity:** ~43% (see `.hermes/mind-palace/battleship-v16.md`)
