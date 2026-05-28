@@ -54,6 +54,8 @@ typedef struct {
     size_t  event_len;
     char    current_event[64]; /* current SSE event type */
     bool    streaming;         /* SSE stream active */
+    char    recv_buf[65536];   /* POST response buffer */
+    size_t  recv_len;
 } mcp_sse_t;
 
 /* WebSocket transport state */
@@ -274,7 +276,7 @@ static bool transport_send(mcp_server_t *srv, const char *msg) {
             snprintf(srv->last_error, sizeof(srv->last_error), "SSE not connected");
             return false;
         }
-        /* Send via HTTP POST to server URL */
+        /* Send via HTTP POST to server URL, capture response */
         http_resp_t *resp = http_post_json(
             (http_t *)srv->sse.http_post_client,
             srv->sse.post_url,
@@ -287,6 +289,16 @@ static bool transport_send(mcp_server_t *srv, const char *msg) {
         }
 
         bool ok = (resp->status >= 200 && resp->status < 300);
+        if (ok && resp->body) {
+            /* Store response body for later read (HTTP-style) */
+            srv->sse.recv_len = 0;
+            size_t blen = strlen(resp->body);
+            size_t copy_len = blen < sizeof(srv->sse.recv_buf) - 1
+                              ? blen : sizeof(srv->sse.recv_buf) - 1;
+            memcpy(srv->sse.recv_buf, resp->body, copy_len);
+            srv->sse.recv_buf[copy_len] = '\0';
+            srv->sse.recv_len = copy_len;
+        }
         http_resp_free(resp);
         return ok;
     }
@@ -435,10 +447,33 @@ static json_t *transport_read_response(mcp_server_t *srv, const char *request_id
     }
 
     if (srv->transport_type == MCP_TRANSPORT_SSE) {
-        /* For SSE, the POST response IS the response.
-         * This is a simplification — real SSE uses streaming. */
+        /* Response was captured in sse.recv_buf during transport_send */
+        if (srv->sse.recv_len == 0) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "No SSE response data");
+            return NULL;
+        }
+
+        char *jerr = NULL;
+        json_t *result = json_parse(srv->sse.recv_buf, &jerr);
+        if (jerr) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "SSE response parse error: %s", jerr);
+            free(jerr);
+            return NULL;
+        }
+
+        if (result) {
+            const char *rid = json_get_str(result, "id", "");
+            if (rid && strcmp(rid, request_id) == 0) {
+                srv->sse.recv_len = 0;  /* consumed */
+                return result;
+            }
+            /* Not our response — may be a notification or other server message */
+            json_free(result);
+        }
         snprintf(srv->last_error, sizeof(srv->last_error),
-                 "SSE read via send_request with POST");
+                 "No matching response for id %s", request_id);
         return NULL;
     }
 
