@@ -348,3 +348,14 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | U05 | Updated BANNER.md and README.md with honest gap counts | `C/BANNER.md`, `C/README.md` header block |
 | U06 | Fast-forwarded to upstream origin/main (3 new commits) | `git fetch origin main` -> `git merge --ff-only` to b243afb68 |
 | U07 | Verified no regression after upstream sync -- suite 282/0/0, 0 warnings | `make clean && make` + `bash test_runner.sh` |
+
+## Phase 29: Fork Sync & Doc Migration (v117)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| U08 | Fork synced to upstream (0 behind, 2 ahead) | git: main at 67011cc0d + C/ squashed |
+| U09 | Old dev history preserved on c-work branch (277 commits) | GitHub: waefrebeorn/slermes/tree/c-work |
+| U10 | C/.hermes/ mind-palace docs force-tracked in git | .gitignore patched with !C/.hermes/ |
+| U11 | Root README migrated to Slermes branding | README.md entry point |
+| U12 | Battleship v28 — S4 reworded for accuracy | C/.hermes/mind-palace/battleship-v28.md |
+| U13 | All walkway files bumped to v117 | state, plan, prestige, overnight, entry, index, testing |

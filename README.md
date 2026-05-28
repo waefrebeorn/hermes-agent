@@ -67,11 +67,12 @@ This repo started as a straight fork of `NousResearch/hermes-agent` at commit `2
 
 | Metric | Value |
 |--------|-------|
+| Fork state | 0 behind, 2 ahead of upstream |
 | Suite | 282 passed, 0 failed, 0 skipped |
 | Tools | 85 registered |
 | CLI | 80 commands + 37 config sections |
 | Gateway | 19 platforms |
-| Providers | 10 (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot) |
+| Providers | 10 |
 | Libraries | 65 C modules |
 | Binary | 31M dynamic ELF |
 | Warnings | 0 |

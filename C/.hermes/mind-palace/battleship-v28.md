@@ -1,8 +1,9 @@
-# Battle Map v27 — Real Parity Assessment + Upstream Drift
+# Battle Map v28 — Real Parity Assessment + Upstream Drift
 
-> **Superseded.** See `battleship-v28.md` for the current gap map.
->
-> v28: 33 gaps, fork synced, S4 reworded for accuracy. v117.
+**v117 | Fork synced: 0 behind upstream, 2 ahead | C/.hermes/ tracked**
+**Honest assessment: 33 gaps across 5 sectors.**
+
+S4 (Upstream Drift) reworded — no longer "7583 commits behind" in git terms (fork is even), but the C code still lacks features from 7583 upstream changes that landed since the fork point.
 
 ## S0: Form-vs-Function Parity (P0)
 
@@ -44,19 +45,19 @@
 | 5 | Q05 | Gateway platform parity | All 19+ platforms fully tested | P2 |
 | 6 | Q06 | Provider mode parity | All providers: stream, thinking, caching, oauth | P2 |
 
-## S4: Upstream Drift (P1) — NEW
+## S4: Upstream Drift (P1)
 
-7583 upstream commits since fork point 2517917de. Categorized by impact area:
+The fork tracks upstream cleanly (0 behind). But the C code was forked from upstream at 2517917de. Since then, 7583 upstream commits added features C has never ported. Each topic below represents a feature family that exists in Python but has no C equivalent.
 
-| # | ID | Topic | Upstream Changes | C Impact | Priority |
-|---|-----|-------|-----------------|----------|----------|
-| 1 | U01 | Provider/API changes | XAI retry 429 handling, OAuth fixes, auth fallback, entitlement refresh, xAI proxy rate-limit handling, custom endpoint fixes, MiniMax anthropic-compat | C provider modules need API/param sync | P1 |
-| 2 | U02 | Agent loop changes | Retry buffer/fallback status, cross-provider fallback reasoning_content padding, credential pool isolation on fallback, Codex null output recovery | C agent_loop.c, retry_utils.c need sync | P1 |
-| 3 | U03 | Gateway platform updates | Discord thread backfill, Windows gateway drain, Telegram heartbeat edits, platform hardening, webhook changes | C gateway platforms need sync (19 adapters) | P1 |
-| 4 | U04 | Tool schema drift | Patch tool new_string unescape, TIRITH tar safety, terminal tool CI nudge, voice mode container phrasing, tool config changes | C tools need schema/behavior sync | P1 |
-| 5 | U05 | MCP updates | TLS client certificates (mTLS), MCP catalog with interactive picker, SSE improvements | C MCP module needs mTLS support | P1 |
-| 6 | U06 | Security/auth overhaul | Dashboard auth (OAuth PKCE, cookie, login page), API server key enforcement, CIDR allowlisting for msgraph, SSRF URL checks | C security modules need audit | P1 |
-| 7 | U07 | Test suite & CI | ~17k tests, CI matrix split, flaky test hardening, test isolation, Docker CI | C: 239 tests vs ~17k — order-of-magnitude gap | P1 |
+| # | ID | Topic | Upstream Changes (Since Fork) | C Impact | Priority |
+|---|-----|-------|-----------------------------|----------|----------|
+| 1 | U01 | Provider/API evolution | XAI retry 429, OAuth fixes, auth fallback, entitlement refresh, custom endpoints, MiniMax compat | C provider modules need API/param sync | P1 |
+| 2 | U02 | Agent loop evolution | Retry buffer/fallback, cross-provider fallback, credential pool isolation, Codex null output | C agent_loop.c, retry_utils.c need sync | P1 |
+| 3 | U03 | Gateway platform evolution | Discord thread backfill, Windows gateway drain, Telegram heartbeat, platform hardening | C gateway platforms need sync (19 adapters) | P1 |
+| 4 | U04 | Tool schema evolution | Patch tool unescape, TIRITH tar safety, voice mode container fixes, web_crawl removal | C tools need schema/behavior sync | P1 |
+| 5 | U05 | MCP evolution | TLS client certificates (mTLS), MCP catalog with picker, SSE improvements | C MCP module needs mTLS support | P1 |
+| 6 | U06 | Security/auth evolution | Dashboard OAuth PKCE, API key enforcement, CIDR allowlisting, SSRF checks | C security modules need audit | P1 |
+| 7 | U07 | Test suite gap | ~17k Python tests grown since fork | C: 239 tests — order-of-magnitude gap | P1 |
 
 ## Resolved (v24 and prior)
 
@@ -66,6 +67,7 @@ See vault/achievements.md for full history. Major resolved phases:
 - M03-M07: Yuanbao tools (all ported, compiled, verified)
 - CI/Infra: GitHub Actions workflow gaps (all existed, were stale claims)
 - Stale claim cleanup: ~35 stale battleship entries removed
+- Phase 28: Fork synced to upstream, c-work branch preserved
 
 ## Summary
 
@@ -75,5 +77,5 @@ See vault/achievements.md for full history. Major resolved phases:
 | S1: Pipeline & Integration | 5 | P1 |
 | S2: Cross-Comparison | 4 | P1 |
 | S3: Product Features | 6 | P2 |
-| S4: Upstream Drift (NEW) | 7 | P1 |
+| S4: Upstream Drift | 7 | P1 |
 | **TOTAL** | **33** | **P0:5, P1:16, P2:6** |

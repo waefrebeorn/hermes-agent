@@ -1,10 +1,9 @@
 ── P0 -- perpetual gap-closing loop ──
 
 ── STATE ──
-C at /home/wubu/hermes-agent-dev/C/
-state.md ground truth. battleship-v27.md canonical gap list.
-All 8 walkway files in C/.hermes/mind-palace/.
-README, BANNER, ARCHITECTURE, goal-perpetual also need sync.
+C at C/.hermes/ — all docs tracked in git on main.
+state.md ground truth. battleship canonical gap list.
+README, BANNER, entry, index, testing sync with every pass.
 
 ── LOOP ──
 Read state → battleship → prestige → plan → overnight.
@@ -24,7 +23,7 @@ entire markdown tree after every batch.
 ── VAULT RULES ──
 Resolved gaps → vault/achievements.md with file:line evidence.
 Stale claims discovered during verification → vault with explanation.
-Battleship carries ONLY active gaps -- no checkmarks, no stale items.
+Battleship carries ONLY active gaps — no checkmarks, no stale items.
 Vault is history. Battleship is TODO. Keep them cleanly separated.
 
 ── MEMORY RULES ──
@@ -49,7 +48,7 @@ different project starting fresh.
 
 ── KEEP WORKING ──
 Pick the next unclosed gap. Verify claim against C source before
-implementing -- many claims are stale. Force one edit, build,
+implementing — many claims are stale. Force one edit, build,
 commit. The loop breaks on the first compilation.
 Report result, don't ask permission. Never stop.
-Awaiting direction only when truly exhausted -- not between gaps.
+Awaiting direction only when truly exhausted — not between gaps.

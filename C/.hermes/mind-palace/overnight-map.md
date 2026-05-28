@@ -1,6 +1,5 @@
-# Overnight (v116)
+# Overnight (v117)
 
-33 real parity gaps. P0: form-vs-function (retry, setup, resize, hook, tests).
-S4 (NEW): 7583 upstream commits unported — provider/API shifts, schema drift, agent loop changes, gateway updates, MCP, security overhaul, test gap.
-276 C commits ahead of upstream. Fork point: 2517917de.
-First task: audit upstream 7583 commits → categorize by C impact → port critical fixes.
+33 gaps across 5 sectors. Fork synced (0 behind upstream, 2 ahead).
+S4 upstream drift — 7583 upstream changes unported in C code since fork.
+Old dev history on c-work branch (277 commits). C/.hermes/ docs tracked.
