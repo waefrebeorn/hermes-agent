@@ -406,7 +406,8 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 
      | ID | Description | Sector | Evidence |
      |----|-------------|--------|----------|
-     | P06 | generate_preview — newline-aware truncation for agent results. Ports Python `truncated[:max_chars].rfind("\n")` logic. | 1B | result_storage.c: tool_result_generate_preview() — backward scan from max_chars-1 for newline; hermes.h: extern declaration; tests/test_result_storage.c: 15 tests |
+     | P06 | generate_preview — newline-aware truncation for agent results. Ports Python `truncated[:max_chars].rfind("
+")` logic. | 1B | result_storage.c: tool_result_generate_preview() — backward scan from max_chars-1 for newline; hermes.h: extern declaration; tests/test_result_storage.c: 15 tests |
      | P07 | threat_patterns — Python→POSIX regex auto-translator (`pyre_to_posix`) + common threat pattern detection library. 252 Py LOC ported. | 1B | lib/libthreatpatterns/threat_patterns.h + .c; tests/test_threat_patterns.c: 24/24 tests |
      | P08 | credential_files — credential file handling (parse, validate, store) for API key management. 436 Py LOC ported. | 1B | lib/libcredentialfiles/credential_files.h + .c; tests/test_credential_files.c: 36/36 tests |
      | P09 | skills_ast_audit — text-pattern scanner for Python skill files (AST analysis). 133 Py LOC ported. | 1B | lib/libskillaudit/skill_audit.h + .c; tests/test_skill_audit.c: 16/16 tests |
@@ -433,8 +434,14 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 | G02 | Gateway reaction vtable slot — added `send_reaction` callback to `gw_platform_t` vtable with `gw_platform_send_reaction()` dispatcher. Platforms that support emoji reactions (Signal, BlueBubbles) can wire their impls. | 5C (gateway infrastructure) | include/hermes_gateway.h: send_reaction field in gw_platform_t; src/gateway/server.c: gw_platform_send_reaction() dispatcher; tests/test_gateway.c: test_platform_reaction() — 1 test case |
 | G03 | Signal library tests — 13 new tests for lib/libsignal/hermes_signal.c covering signal_on/signal_default, safe_write, register_common, fork-verified handler dispatch, default_handler exit codes (SIGINT=130, SIGPIPE=141, unknown=103). | 9 (test coverage) | tests/test_signal.c: 13 test cases; test_runner.sh: already wired as run_lib_test |
 | G04 | Regex library tests — 32 comprehensive tests for lib/libregex/hermes_regex.c covering compile, match, search, extract, replace, group references, NULL safety. Replaced old minimal test file. | 9 (test coverage) | tests/test_regex.c: 32 test cases; test_runner.sh: already wired |
-| G05 | Line editor tests — 11 tests for lib/liblineedit/line_edit.c covering create/free, history save/load, NULL/error paths. Suite: 279/0/0 (+1). | 9 (test coverage) | tests/test_line_edit.c: 11 test cases; test_runner.sh: wired as run_lib_test |
-|    | 90 tools (was 84). Suite: 279/0/0 (was 278/0/0). | | |
+| G05 | Line editor tests — 11 tests for lib/liblineedit/line_edit.c covering create/free, history save/load, NULL/error paths. Suite: 280/0/0 (+1). | 9 (test coverage) | tests/test_line_edit.c: 11 test cases; test_runner.sh: wired as run_lib_test |
+|    | 90 tools (was 84). Suite: 280/0/0 (was 278/0/0). | | |
+|
+## Phase 31: JSON Repair — P180 repair_tool_call_arguments (2026-05-27)
+|
+|| ID | Description | Sector | Evidence |
+||----|-------------|--------|----------|
+|| G08 | repair_tool_call_arguments — Ported Python message_sanitization.py JSON repair logic. Handles trailing commas, unclosed braces, excess closers, unescaped control chars inside JSON strings, "None" literal, whitespace-only input. 9 new tests in test_sanitize.c (11→20). | 2A (agent core — message_sanitization) | src/agent/sanitize.c: repair_tool_call_arguments(), escape_control_chars(), strip_trailing_commas(); tests/test_sanitize.c: 9 test_repair_* functions; test_runner.sh: sanitize count 11→20 |
 |
 |## Phase 30: Feishu Comment Tools — Drive (2026-05-27)
 |

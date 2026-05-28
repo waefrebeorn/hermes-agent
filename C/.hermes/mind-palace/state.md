@@ -1,12 +1,13 @@
-# Slermes C — State Dashboard (v77 — 2026-05-27)
+# Slermes C — State Dashboard (v78 — 2026-05-27)
 
 ## Build Metrics
 Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 280/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
-~285 item-level gaps (battleship-v16 rows, 19 closed this session).
+~284 item-level gaps (battleship-v16 rows, 20 closed this session).
 
 ## Recent (this session)
+- P180: `repair_tool_call_arguments` — Ported Python message_sanitization.py JSON repair logic. Handles trailing commas, unclosed braces, excess closers, control chars, "None" literal. 9 new tests in test_sanitize.c (11→20).
 - Layer 9: test_fal_common.c — 9 tests for FAL common utility lib (API key resolution, JSON escaping, error builders). Suite: 280/0/0 (+1).
 - 1B: feishu_drive_reply_comment — POST reply to comment thread (Ported from Python feishu_drive_tool.py). 90 tools total.
 - 1B: feishu_drive_add_comment — POST whole-document comment (Ported from Python feishu_drive_tool.py). 90 tools total.

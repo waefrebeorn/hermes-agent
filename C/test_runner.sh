@@ -175,7 +175,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     "$CDIR/tests/test_sanitize.c" "$CDIR/src/agent/sanitize.c" "$CDIR/src/agent/redact.c" \
     -o /tmp/hermes_test_san -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_san ]]; then
     if /tmp/hermes_test_san > /dev/null 2>&1; then
-        ok "sanitize (11 tests)"
+        ok "sanitize (20 tests)"
     else
         fail "sanitize (test binary returned non-zero)"
     fi

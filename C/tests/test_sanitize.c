@@ -9,6 +9,7 @@
 
 extern char *sanitize_surrogates(const char *text);
 extern char *hermes_sanitize_output(const char *tool_name, const char *raw_output);
+extern char *repair_tool_call_arguments(const char *raw_args);
 
 static int pass = 0, fail = 0;
 #define T(n, e) do { if(e) { pass++; printf("  OK %s\n", n); } else { fail++; printf("  FAIL %s\n", n); } } while(0)
@@ -82,6 +83,62 @@ static void test_sanitize_empty_output(void) {
     free(r);
 }
 
+/* ---- repair_tool_call_arguments ---- */
+static void test_repair_normal(void) {
+    char *r = repair_tool_call_arguments("{\"key\":\"value\"}");
+    T("normal json unchanged", r && strcmp(r, "{\"key\":\"value\"}") == 0);
+    free(r);
+}
+
+static void test_repair_null(void) {
+    char *r = repair_tool_call_arguments(NULL);
+    T("null returns {}", r && strcmp(r, "{}") == 0);
+    free(r);
+}
+
+static void test_repair_empty(void) {
+    char *r = repair_tool_call_arguments("");
+    T("empty returns {}", r && strcmp(r, "{}") == 0);
+    free(r);
+}
+
+static void test_repair_none(void) {
+    char *r = repair_tool_call_arguments("None");
+    T("None returns {}", r && strcmp(r, "{}") == 0);
+    free(r);
+}
+
+static void test_repair_trailing_comma(void) {
+    char *r = repair_tool_call_arguments("{\"a\":1,}");
+    T("trailing comma removed", r && strcmp(r, "{\"a\":1}") == 0);
+    free(r);
+}
+
+static void test_repair_unclosed_brace(void) {
+    char *r = repair_tool_call_arguments("{\"a\":1");
+    T("unclosed brace closed", r && strcmp(r, "{\"a\":1}") == 0);
+    free(r);
+}
+
+static void test_repair_excess_close(void) {
+    char *r = repair_tool_call_arguments("{\"a\":1}}");
+    T("excess close removed", r && strcmp(r, "{\"a\":1}") == 0);
+    free(r);
+}
+
+static void test_repair_control_chars(void) {
+    /* String with literal tab inside JSON string */
+    char *r = repair_tool_call_arguments("{\"a\":\"hello\tworld\"}");
+    T("control chars escaped", r && contains(r, "\\u0009"));
+    free(r);
+}
+
+static void test_repair_whitespace_only(void) {
+    char *r = repair_tool_call_arguments("   ");
+    T("whitespace only returns {}", r && strcmp(r, "{}") == 0);
+    free(r);
+}
+
 int main(void) {
     printf("=== Sanitize Module Tests ===\n");
     printf("\n--- sanitize_surrogates ---\n");
@@ -97,6 +154,16 @@ int main(void) {
     test_sanitize_multiline();
     test_sanitize_with_sensitive_file();
     test_sanitize_empty_output();
+    printf("\n--- repair_tool_call_arguments ---\n");
+    test_repair_normal();
+    test_repair_null();
+    test_repair_empty();
+    test_repair_none();
+    test_repair_trailing_comma();
+    test_repair_unclosed_brace();
+    test_repair_excess_close();
+    test_repair_control_chars();
+    test_repair_whitespace_only();
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0;
 }

@@ -301,3 +301,165 @@ char *hermes_sanitize_output(const char *tool_name, const char *raw_output) {
 
     return result;
 }
+
+/* ================================================================
+ *  P180: JSON Repair (port of Python message_sanitization.py)
+ * ================================================================ */
+
+/* Check if character at position i in str is escaped (odd number of preceding backslashes) */
+static bool repair_is_escaped(const char *str, int i) {
+    int bs = 0;
+    for (int j = i - 1; j >= 0 && str[j] == '\\'; j--) bs++;
+    return (bs % 2) == 1;
+}
+
+/* Escape unescaped control chars (0x00-0x1F) inside JSON string values.
+ * Returns malloc'd string, or NULL on error. */
+static char *escape_control_chars(const char *raw) {
+    if (!raw) return NULL;
+    size_t n = strlen(raw);
+    size_t cap = n * 6 + 1;
+    char *out = malloc(cap);
+    if (!out) return NULL;
+    size_t pos = 0;
+    bool in_str = false;
+
+    for (size_t i = 0; i < n && pos < cap - 8; i++) {
+        char ch = raw[i];
+        if (in_str) {
+            if (ch == '\\' && i + 1 < n) {
+                out[pos++] = ch;
+                out[pos++] = raw[++i];
+                continue;
+            }
+            if (ch == '"' && !repair_is_escaped(raw, (int)i)) {
+                in_str = false;
+                out[pos++] = ch;
+            } else if ((unsigned char)ch < 0x20) {
+                pos += snprintf(out + pos, cap - pos, "\\u%04x", (unsigned char)ch);
+            } else {
+                out[pos++] = ch;
+            }
+        } else {
+            if (ch == '"') in_str = true;
+            out[pos++] = ch;
+        }
+    }
+    out[pos] = '\0';
+    return out;
+}
+
+/* Strips trailing commas before } or ]. Returns malloc'd copy. */
+static char *strip_trailing_commas(const char *s, size_t len) {
+    char *out = malloc(len + 1);
+    if (!out) return NULL;
+    size_t w = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (s[i] == ',') {
+            size_t j = i + 1;
+            while (j < len && (s[j] == ' ' || s[j] == '\t' || s[j] == '\n' || s[j] == '\r'))
+                j++;
+            if (j < len && (s[j] == '}' || s[j] == ']'))
+                continue; /* skip trailing comma */
+        }
+        out[w++] = s[i];
+    }
+    out[w] = '\0';
+    return out;
+}
+
+/* Attempt to repair malformed tool_call argument JSON.
+ * Port of Python agent/message_sanitization.py:_repair_tool_call_arguments().
+ * Returns malloc'd string — caller must free. Never returns NULL. */
+char *repair_tool_call_arguments(const char *raw_args) {
+    if (!raw_args) return strdup("{}");
+
+    /* Strip leading/trailing whitespace */
+    while (*raw_args == ' ' || *raw_args == '\t' || *raw_args == '\n' || *raw_args == '\r')
+        raw_args++;
+    const char *rend = raw_args + strlen(raw_args);
+    while (rend > raw_args && (rend[-1] == ' ' || rend[-1] == '\t' || rend[-1] == '\n' || rend[-1] == '\r'))
+        rend--;
+
+    size_t len = (size_t)(rend - raw_args);
+    if (len == 0) return strdup("{}");
+
+    /* Handle "None" literal */
+    if (len == 4 && memcmp(raw_args, "None", 4) == 0)
+        return strdup("{}");
+
+    /* Copy to mutable buffer + room for expansion */
+    size_t cap = len * 2 + 32;
+    char *buf = malloc(cap);
+    if (!buf) return strdup("{}");
+    memcpy(buf, raw_args, len);
+    buf[len] = '\0';
+
+    /* 1. Escape control chars inside JSON strings */
+    char *escaped = escape_control_chars(buf);
+    if (escaped) {
+        free(buf);
+        buf = escaped;
+        len = strlen(buf);
+        cap = len * 2 + 32;
+    }
+
+    /* 2. Strip trailing commas */
+    char *no_trailing = strip_trailing_commas(buf, len);
+    if (no_trailing) {
+        free(buf);
+        buf = no_trailing;
+        len = strlen(buf);
+    }
+
+    /* 3. Close unclosed braces/brackets */
+    bool in_str = false;
+    int open_curly = 0, open_bracket = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (buf[i] == '"' && !repair_is_escaped(buf, (int)i)) in_str = !in_str;
+        if (in_str) continue;
+        if (buf[i] == '{') open_curly++;
+        else if (buf[i] == '}') open_curly--;
+        else if (buf[i] == '[') open_bracket++;
+        else if (buf[i] == ']') open_bracket--;
+    }
+    if (open_curly > 0 || open_bracket > 0) {
+        size_t extra = (size_t)(open_curly + open_bracket);
+        char *exp = realloc(buf, len + extra + 1);
+        if (!exp) { free(buf); return strdup("{}"); }
+        buf = exp;
+        for (int i = 0; i < open_curly; i++) buf[len++] = '}';
+        for (int i = 0; i < open_bracket; i++) buf[len++] = ']';
+        buf[len] = '\0';
+    }
+
+    /* 4. Remove excess closing braces/brackets (bounded 50 iterations) */
+    for (int iter = 0; iter < 50; iter++) {
+        in_str = false;
+        int cur = 0, brk = 0;
+        for (size_t i = 0; i < len; i++) {
+            if (buf[i] == '"' && !repair_is_escaped(buf, (int)i)) in_str = !in_str;
+            if (in_str) continue;
+            if (buf[i] == '{') cur++;
+            else if (buf[i] == '}') cur--;
+            else if (buf[i] == '[') brk++;
+            else if (buf[i] == ']') brk--;
+        }
+        if (cur >= 0 && brk >= 0) break;
+        /* Remove last excess closer */
+        for (int i = (int)len - 1; i >= 0; i--) {
+            if (buf[i] == '}' && cur < 0) {
+                memmove(buf + i, buf + i + 1, len - (size_t)i);
+                len--; cur++;
+                break;
+            }
+            if (buf[i] == ']' && brk < 0) {
+                memmove(buf + i, buf + i + 1, len - (size_t)i);
+                len--; brk++;
+                break;
+            }
+        }
+    }
+    buf[len] = '\0';
+    return buf;
+}
