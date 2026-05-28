@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
 |||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 |||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||| Gaps:  32 real parity gaps (4 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift)
+||||||||||| Gaps:  31 real parity gaps (3 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift)
 |||||||||Stubs:  0 stubs remain. All entry points verified.
 ||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 ||||||||CLI:    80 cmd_ functions + 37 config sections — 85 unique tools registered
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 32 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v27.md` for the active gap map.
+**However:** 31 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v27.md` for the active gap map.
 
 ---
 
@@ -549,7 +549,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 5 | `entry.md` | Build/run commands + architecture |
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
-| 8 | `battleship-v27.md` | 32 parity gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift |
+| 8 | `battleship-v27.md` | 31 parity gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift |
 | 9 | `vault/achievements.md` | All resolved gaps with evidence |
 
 ---
@@ -626,7 +626,7 @@ See `.hermes/mind-palace/battleship-v27.md` for the complete gap map.
 | P1 | S2: Cross-Compare | 4 | AST comparison, test recreation, behavior, schemas |
 | P1 | S4: Upstream Drift (NEW) | 7 | 7583 upstream commits — provider/API, schemas, loops, gateways, MCP, security, tests |
 | P2 | S3: Product Features | 6 | Multi-turn, persistence, plugins, skins, gateways, providers |
-| **Total** | **5 sectors** | **33** | **P0:4, P1:16, P2:6** |
+| **Total** | **5 sectors** | **33** | **P0:3, P1:16, P2:6** |
 
 **Summary:**
 | Sector | Count | Priority |

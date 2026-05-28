@@ -3867,3 +3867,131 @@ bool hermes_config_init(const char *config_dir) {
     printf("Next: edit %s/.env, then run ./slermes\n", dir);
     return true;
 }
+
+/* F02: Interactive setup wizard — prompts for provider, model, API key.
+ * Creates config.yaml + .env similar to Python's `hermes setup`.
+ * Safety: warns before overwriting existing config. */
+static const char *SETUP_PROVIDERS[] = {
+    "openai", "anthropic", "google", "deepseek", "xai",
+    "openrouter", "azure", "bedrock", "custom", NULL
+};
+static const char *SETUP_MODELS[] = {
+    "gpt-4o", "claude-sonnet-4", "gemini-2.5-pro", "deepseek-chat",
+    "grok-3", "gpt-4o", "claude-sonnet-4", "claude-sonnet-4", "custom", NULL
+};
+
+bool hermes_config_setup_interactive(const char *config_dir) {
+    char dir[4096];
+    if (config_dir && config_dir[0]) {
+        snprintf(dir, sizeof(dir), "%s", config_dir);
+    } else {
+        const char *home = getenv("SLERMES_HOME");
+        if (!home) home = getenv("HERMES_HOME");
+        if (!home) home = getenv("HOME");
+        if (!home) { fprintf(stderr, "Error: cannot determine home.\n"); return false; }
+        if (getenv("SLERMES_HOME") || getenv("HERMES_HOME"))
+            snprintf(dir, sizeof(dir), "%s", home);
+        else
+            snprintf(dir, sizeof(dir), "%s/.slermes", home);
+    }
+
+    printf("\n=== Slermes Setup ===\n\n");
+
+    /* Step 1: Provider selection */
+    printf("Select an AI provider:\n");
+    int nprov = 0;
+    for (int i = 0; SETUP_PROVIDERS[i]; i++) {
+        printf("  %d) %s\n", i + 1, SETUP_PROVIDERS[i]);
+        nprov++;
+    }
+    printf("  Choice [1-%d]: ", nprov);
+    fflush(stdout);
+
+    char buf[256];
+    int provider_idx = -1;
+    if (fgets(buf, sizeof(buf), stdin)) {
+        int val = atoi(buf);
+        if (val >= 1 && val <= nprov) provider_idx = val - 1;
+    }
+    if (provider_idx < 0) {
+        printf("Invalid choice, defaulting to openai.\n");
+        provider_idx = 0;
+    }
+    const char *provider = SETUP_PROVIDERS[provider_idx];
+    const char *default_model = SETUP_MODELS[provider_idx];
+
+    /* Step 2: Model */
+    printf("\nModel [%s]: ", default_model);
+    fflush(stdout);
+    char model[128] = {0};
+    if (fgets(model, sizeof(model), stdin)) {
+        char *nl = strchr(model, '\n');
+        if (nl) *nl = '\0';
+    }
+    if (model[0] == '\0') strncpy(model, default_model, sizeof(model) - 1);
+
+    /* Step 3: API key */
+    printf("\nAPI key (leave blank to set later in .env): ");
+    fflush(stdout);
+    char apikey[512] = {0};
+    if (fgets(apikey, sizeof(apikey), stdin)) {
+        char *nl = strchr(apikey, '\n');
+        if (nl) *nl = '\0';
+    }
+
+    /* Step 4: Check for existing config before overwriting */
+    struct stat st;
+    if (stat(dir, &st) != 0) mkdir(dir, 0700);
+
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/config.yaml", dir);
+    if (stat(path, &st) == 0) {
+        printf("\nConfig already exists at %s\n", path);
+        printf("Run 'slermes doctor' to check current settings.\n");
+        printf("Delete %s to re-run setup.\n", path);
+        return true;
+    }
+
+    hermes_config_t cfg;
+    hermes_config_defaults(&cfg);
+    strncpy(cfg.provider, provider, sizeof(cfg.provider) - 1);
+    strncpy(cfg.model, model, sizeof(cfg.model) - 1);
+
+    snprintf(path, sizeof(path), "%s/config.yaml", dir);
+    hermes_config_export(&cfg, path);
+    printf("  Created: %s\n", path);
+
+    /* Step 5: Write .env with API key if provided */
+    snprintf(path, sizeof(path), "%s/.env", dir);
+    FILE *f = fopen(path, "w");
+    if (f) {
+        fprintf(f, "# Slermes API Keys\n");
+        if (apikey[0]) {
+            /* Determine env var name from provider */
+            const char *key_var = "OPENAI_API_KEY";
+            if (strcmp(provider, "anthropic") == 0) key_var = "ANTHROPIC_API_KEY";
+            else if (strcmp(provider, "google") == 0) key_var = "GOOGLE_API_KEY";
+            else if (strcmp(provider, "deepseek") == 0) key_var = "DEEPSEEK_API_KEY";
+            else if (strcmp(provider, "xai") == 0) key_var = "XAI_API_KEY";
+            else if (strcmp(provider, "openrouter") == 0) key_var = "OPENROUTER_API_KEY";
+            else if (strcmp(provider, "azure") == 0) key_var = "AZURE_API_KEY";
+            else if (strcmp(provider, "bedrock") == 0) key_var = "AWS_ACCESS_KEY_ID";
+            fprintf(f, "%s=%s\n", key_var, apikey);
+        } else {
+            fprintf(f, "#OPENAI_API_KEY=sk-...\n");
+            fprintf(f, "#ANTHROPIC_API_KEY=sk-ant-...\n");
+            fprintf(f, "#GOOGLE_API_KEY=AIza...\n");
+            fprintf(f, "#DEEPSEEK_API_KEY=sk-...\n");
+            fprintf(f, "#XAI_API_KEY=xai-...\n");
+        }
+        fclose(f);
+        printf("  Created: %s\n", path);
+    }
+
+    printf("\n=== Setup complete! ===\n");
+    printf("  Provider: %s\n", provider);
+    printf("  Model:    %s\n", model);
+    printf("  Config:   %s\n", dir);
+    printf("\nRun ./slermes to start.\n");
+    return true;
+}

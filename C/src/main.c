@@ -57,6 +57,12 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    if (argc > 1 && strcmp(argv[1], "setup") == 0) {
+        extern bool hermes_config_setup_interactive(const char *);
+        hermes_config_setup_interactive(NULL);
+        return 0;
+    }
+
     if (argc > 1 && strcmp(argv[1], "doctor") == 0) {
         printf("=== Slermes Doctor ===\n\n");
         printf("-- Binary --\n  Version: %s\n\n", HERMES_VERSION);
