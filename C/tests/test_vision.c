@@ -219,6 +219,151 @@ int main(void) {
     json_free(r);
     unlink("/tmp/hermes_test_noext");
 
+    /* ══════════════════════════════════════════════════
+     *  X01: Edge case tests — format magic bytes
+     * ══════════════════════════════════════════════════ */
+
+    /* 16. JPEG magic bytes — no extension */
+    {
+        /* FF D8 FF E0 ... minimal JPEG header (~37 bytes) */
+        unsigned char jpg[] = {
+            0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46,
+            0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
+            0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43,
+            0x00, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x01,
+            0x00, 0x01, 0x01, 0x11, 0x00,
+        };
+        fd = open("/tmp/hermes_test_jpg_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, jpg, sizeof(jpg));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_jpg_raw\"}", NULL));
+        TEST("vision JPEG magic bytes (no ext) detected_format=jpeg",
+             r && strcmp(result_get_str(r, "detected_format", ""), "jpeg") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_jpg_raw");
+    }
+
+    /* 17. GIF magic bytes (GIF89a) — no extension */
+    {
+        unsigned char gif[] = { 'G','I','F','8','9','a', 0x00,0x00,0x00,0x00 };
+        fd = open("/tmp/hermes_test_gif_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, gif, sizeof(gif));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_gif_raw\"}", NULL));
+        TEST("vision GIF magic bytes (no ext) detected_format=gif",
+             r && strcmp(result_get_str(r, "detected_format", ""), "gif") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_gif_raw");
+    }
+
+    /* 18. BMP magic bytes — no extension */
+    {
+        unsigned char bmp[] = { 'B','M', 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+        fd = open("/tmp/hermes_test_bmp_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, bmp, sizeof(bmp));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_bmp_raw\"}", NULL));
+        TEST("vision BMP magic bytes (no ext) detected_format=bmp",
+             r && strcmp(result_get_str(r, "detected_format", ""), "bmp") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_bmp_raw");
+    }
+
+    /* 19. TIFF (little-endian) magic bytes — no extension */
+    {
+        unsigned char tiff[] = { 0x49,0x49,0x2A,0x00, 0x00,0x00,0x00,0x00 };
+        fd = open("/tmp/hermes_test_tiff_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, tiff, sizeof(tiff));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_tiff_raw\"}", NULL));
+        TEST("vision TIFF LE magic bytes (no ext) detected_format=tiff",
+             r && strcmp(result_get_str(r, "detected_format", ""), "tiff") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_tiff_raw");
+    }
+
+    /* 20. WebP magic bytes — no extension */
+    {
+        unsigned char webp[] = {
+            'R','I','F','F', 0x00,0x00,0x00,0x00, 'W','E','B','P',
+        };
+        fd = open("/tmp/hermes_test_webp_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, webp, sizeof(webp));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_webp_raw\"}", NULL));
+        TEST("vision WebP magic bytes (no ext) detected_format=webp",
+             r && strcmp(result_get_str(r, "detected_format", ""), "webp") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_webp_raw");
+    }
+
+    /* 21. ICO magic bytes — no extension */
+    {
+        unsigned char ico[] = { 0x00,0x00,0x01,0x00, 0x01,0x00,0x00,0x00 };
+        fd = open("/tmp/hermes_test_ico_raw", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, ico, sizeof(ico));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_ico_raw\"}", NULL));
+        TEST("vision ICO magic bytes (no ext) detected_format=ico",
+             r && strcmp(result_get_str(r, "detected_format", ""), "ico") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_ico_raw");
+    }
+
+    /* 22. Empty file (0 bytes) with .png extension — passes through to provider */
+    {
+        fd = open("/tmp/hermes_test_empty.png", O_CREAT|O_WRONLY, 0644);
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_empty.png\"}", NULL));
+        TEST("vision empty .png passes through (image_url set)",
+             r && result_get_str(r, "image_url", NULL) != NULL);
+        json_free(r);
+        unlink("/tmp/hermes_test_empty.png");
+    }
+
+    /* 23. Magic-only file (just PNG header) with .png extension — passes to provider */
+    {
+        unsigned char hdr_only[] = { 0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A };
+        fd = open("/tmp/hermes_test_hdr_only.png", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, hdr_only, sizeof(hdr_only));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_hdr_only.png\"}", NULL));
+        TEST("vision header-only PNG (ext) passes through — image_url set",
+             r && result_get_str(r, "image_url", NULL) != NULL);
+        TEST("vision header-only PNG (ext) returns file_size > 0",
+             r && json_object_get_number(r, "file_size", 0) > 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_hdr_only.png");
+    }
+
+    /* 23b. Magic-only PNG without extension — uses magic path, sets detected_format */
+    {
+        unsigned char hdr_only[] = { 0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A };
+        fd = open("/tmp/hermes_test_magic_only", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, hdr_only, sizeof(hdr_only));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_magic_only\"}", NULL));
+        TEST("vision header-only PNG (no ext) detected_format=png",
+             r && strcmp(result_get_str(r, "detected_format", ""), "png") == 0);
+        TEST("vision header-only PNG (no ext) passes through — image_url set",
+             r && result_get_str(r, "image_url", NULL) != NULL);
+        json_free(r);
+        unlink("/tmp/hermes_test_magic_only");
+    }
+
+    /* 24. .bin file with valid JPEG magic bytes (proves magic check overrides extension) */
+    {
+        unsigned char jpg[] = { 0xFF,0xD8,0xFF,0xE0, 0x00,0x10,0x4A,0x46 };
+        fd = open("/tmp/hermes_test_magic_jpg.bin", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, jpg, sizeof(jpg));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_magic_jpg.bin\"}", NULL));
+        TEST("vision .bin with JPEG magic bytes detected_format=jpeg",
+             r && strcmp(result_get_str(r, "detected_format", ""), "jpeg") == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_magic_jpg.bin");
+    }
+
     /* Cleanup */
     unlink("/tmp/hermes_test_vision.bin");
     unlink("/tmp/hermes_test_vision.png");

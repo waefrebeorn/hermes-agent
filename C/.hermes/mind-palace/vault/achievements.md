@@ -306,3 +306,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Old Claim | Reality | Evidence |
 |----|-----------|---------|----------|
 | I02 | CI pipeline missing | C build (c-build.yml, 338L), tests.yml, c-release.yml, docker workflows all exist — triggers on C/ path changes, builds + runs 282 tests | `.github/workflows/c-build.yml`, `tests.yml`, `c-release.yml` — verified live on disk May 28 |
+
+## Phase 23: Vision Edge Case Tests (X01)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X01 | Vision edge case tests expanded from 15 to 31: magic-byte detection for JPEG, GIF, BMP, TIFF, WebP, ICO (no extension); empty file passthrough; header-only PNG (both with and without extension); .bin with JPEG magic proves magic override. Bugfix: magic-byte path now sets image_url so providers can process magic-detected files | `tests/test_vision.c` — 16 new edge case tests (31 total); `src/tools/vision.c` — magic-byte branch sets image_url + detail/analysis |

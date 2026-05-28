@@ -174,6 +174,10 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 json_object_set(result, "error", json_new_string(buf));
             } else {
                 json_object_set(result, "detected_format", json_new_string(magic_format));
+                /* Also set image_url so the provider can process it */
+                json_object_set(result, "image_url", json_new_string(image_url));
+                if (detail) json_object_set(result, "detail", json_new_string(detail));
+                if (analysis) json_object_set(result, "analysis", json_new_string(analysis));
                 /* Continue processing — valid image detected via magic bytes */
             }
         } else if (is_local && st.st_size > VISION_MAX_FILE_BYTES) {

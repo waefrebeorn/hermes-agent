@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v107)
+# BANNER — WuBu Slermes C Translation (v109)
 
 ```
   __        __           _   ____  _  
@@ -13,7 +13,7 @@
    ║  11 remaining gaps  │  0 stubs  │  All entry points verified ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v107)
+## Build Metrics (v109)
 
 Suite: 282/0/0 — all pass, 0 skip. 86 tools, 98 CLI commands.
 173 src/ .c files, 239 tests, 65 libs, 19 gateways, 10 providers.

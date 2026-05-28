@@ -1,2 +1,2 @@
-# Index (v108)
-Battleship v22 — 10 gaps. D-phase done. CI done.
+# Index (v109)
+Battleship v22 — 9 gaps. D-phase, CI, X01 done.
