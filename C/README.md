@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||| Suite:  291/0/0 (246 test files, completes in <60s)
+|||||||||| Suite:  292/0/0 (246 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||| Gaps:  17 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 drift)
@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 291/0/0
+bash test_runner.sh        # 292/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -547,7 +547,7 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-| Library tests | 291/0/0 | All pass, ~60s |
+| Library tests | 292/0/0 | All pass, ~60s |
 | Test files | 241 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |

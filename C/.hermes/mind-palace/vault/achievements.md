@@ -502,6 +502,13 @@
 - Evidence: commit b4ceb7fde, files src/cron/scheduler.c, src/cron/scheduler.h
 
 ## Phase 51: Auth Store Persistence Test Suite (v141)
+## Phase 52: ACP Resource Content-to-Text Tests (v142)
+
+- Added 6-test suite for acp_content_to_text: string (verbatim, empty),
+  NULL, number, bool, null JSON values
+- Tests verify direct string path without static function dependencies
+- Evidence: commit 24f5a3fb2, file src/acp/resource.c
+
 
 - Fixed token_exchange.c: dead code activated — struct field mismatch
   (root->collection → root->c, resp->status_code → resp->status),

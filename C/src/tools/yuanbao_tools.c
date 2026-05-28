@@ -137,7 +137,7 @@ static double char_hit_ratio(const char *needle, const char *haystack) {
 }
 
 /* Compute a simple relevance score for a sticker against a query (0.0 - 100.0) */
-static double score_sticker(const yb_sticker_t *s, const char *query) {
+double score_sticker(const yb_sticker_t *s, const char *query) {
     double best = 0.0;
 
     /* Exact name match */
@@ -179,7 +179,7 @@ typedef struct {
     const yb_sticker_t *sticker;
 } scored_sticker_t;
 
-static int cmp_scored(const void *a, const void *b) {
+int cmp_scored(const void *a, const void *b) {
     const scored_sticker_t *sa = (const scored_sticker_t *)a;
     const scored_sticker_t *sb = (const scored_sticker_t *)b;
     if (sb->score > sa->score) return 1;
