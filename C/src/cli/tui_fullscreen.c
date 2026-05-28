@@ -2726,12 +2726,21 @@ void tui_fullscreen_warn(const char *fmt, ...) {
  *  COMMAND DISPATCH — handle slash commands and agent chat
  * ================================================================== */
 
-/* Process input line as slash command or agent message */
-static void tui_process_input(const char *line) {
-    if (!line || !*line) return;
+/* Stream callback adapter — tui_fullscreen_stream_token signature
+* doesn't match llm_token_cb_t (no userdata, void return).
+* This wrapper bridges the gap so agent_loop can stream tokens
+* into the TUI display during agent_chat(). */
+static int tui_stream_cb(const char *token, void *userdata) {
+   (void)userdata;
+   tui_fullscreen_stream_token(token);
+   return 0;
+}
 
-    /* Add to history */
-    tui_input_history_add(line);
+static void tui_process_input(const char *line) {
+   if (!line || !*line) return;
+
+   /* Add to history */
+   tui_input_history_add(line);
     tui.input.history_pos = -1;
 
     /* Echo to history */
@@ -2922,18 +2931,23 @@ static void tui_process_input(const char *line) {
 
     /* Send to agent via chat */
     if (tui.agent) {
-        /* Set streaming callback */
-        tui.agent->stream_cb = NULL; /* We use our own stream handling */
+        /* Wire agent_chat with streaming — this replaces the previous stub
+         * that showed "[Agent processing...]" and did nothing. The retry
+         * logic lives in agent_loop.c's retry loop, which works for any
+         * caller including this TUI path. */
+        tui.agent->stream_cb = tui_stream_cb;
+        tui.agent->stream_data = NULL;
 
-        /* Call agent_chat (would be async in real version) */
-        /* For now, simulate with streaming */
-        tui_history_add(MSG_ROLE_INFO, "[Agent processing...]", false);
+        char *resp = agent_chat(tui.agent, line);
+        tui_fullscreen_stream_done();
+
+        if (resp) {
+            tui_history_add(MSG_ROLE_ASSISTANT, resp, false);
+            free(resp);
+        } else {
+            tui_history_add(MSG_ROLE_ERROR, "Agent returned no response", true);
+        }
         tui_redraw_history();
-
-        /* In real implementation, this would be:
-         * char *resp = agent_chat(tui.agent, line);
-         * if (resp) { ... free(resp); }
-         */
     }
 }
 

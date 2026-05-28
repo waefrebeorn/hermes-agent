@@ -358,4 +358,10 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | U10 | C/.hermes/ mind-palace docs force-tracked in git | .gitignore patched with !C/.hermes/ |
 | U11 | Root README migrated to Slermes branding | README.md entry point |
 | U12 | Battleship v28 — S4 reworded for accuracy | C/.hermes/mind-palace/battleship-v28.md |
-| U13 | All walkway files bumped to v117 | state, plan, prestige, overnight, entry, index, testing |
+| U13 | All walkway files bumped to v117 | state, plan, prestige, overnight, entry, index, testing
+
+## Phase 30: TUI Agent Chat Wiring (F01)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| F01 | TUI fullscreen mode now calls `agent_chat()` with streaming callback — replaced `"[Agent processing...]"` stub that did nothing. Retry (handled by agent_loop.c's retry loop) now functional in TUI context. Stream tokens display in real-time via `tui_fullscreen_stream_token()` adapter | `src/cli/tui_fullscreen.c` — `tui_stream_cb()` adapter + `tui_process_input()` agent_chat wiring; suite 282/0/0 |

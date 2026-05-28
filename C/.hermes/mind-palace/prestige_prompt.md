@@ -1,8 +1,7 @@
-# Prestige (v117)
+# Prestige (v118)
 
-## P0 — Form-vs-Function (5 gaps)
-F01: Retry broken in TUI
-F02: Setup not 1:1
+## P0 — Form-vs-Function (4 gaps)
+     5|F02: Setup not 1:1
 F03: Terminal resize race
 F04: C can't hook Python
 F05: Test cheating — 239 vs ~17k
@@ -15,4 +14,4 @@ U01-U07: Provider/API, agent loop, gateway, tool schema, MCP, security, test sui
 ## P2 — Product Features (6 gaps)
 Q01-Q06: Multi-turn, session persistence, plugins, skins, gateways, providers
 
-**Total: 33 gaps — P0:5, P1:16, P2:6**
+**Total: 32 gaps — P0:4, P1:16, P2:6**
