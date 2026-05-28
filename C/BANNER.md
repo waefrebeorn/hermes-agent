@@ -1,20 +1,20 @@
-# BANNER — WuBu Slermes C Translation (v133)
+# BANNER — WuBu Slermes C Translation (v134)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v133                                       ║
-║  283/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v134                                       ║
+║  284/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  17 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork synced to upstream  │  0 behind, 0 ahead              ║
 ║  Patch tool tab/CR unescape ported from upstream            ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v133)
+## Build Metrics (v134)
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 283/0/0 |
+| Test suite | 284/0/0 |
 | Tools | 85 |
 | CLI commands | 98 |
 | Gateway platforms | 19 |

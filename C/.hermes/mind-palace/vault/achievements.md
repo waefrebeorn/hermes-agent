@@ -435,7 +435,7 @@
 - Fixed pre-existing send_message test crash (TEST_BUILD guard)
 - Evidence: commits 79fe05286, cd5ecfc9c, 34d6ef494
 
-## Phase 43: Shell Hooks Lifecycle Wiring (v133)
+## Phase 44: Markdown Render Test Suite (v134)
 
 - libyaml: added yaml_to_json_string() — serialize YAML sub-tree to JSON
 - config.c: populate cfg->hooks_json from YAML hooks: block
