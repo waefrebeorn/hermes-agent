@@ -144,6 +144,10 @@ static char *anthropic_build_request_body(const provider_t *p,
         else json_free(stop_arr);
     }
 
+    /* P06: Anthropic service_tier (e.g. "default") */
+    if (p->config.service_tier[0])
+        json_set(root, "service_tier", json_string(p->config.service_tier));
+
     /* response_format + metadata */
     if (p->config.response_format[0]) {
         json_t *rf = json_parse(p->config.response_format, NULL);

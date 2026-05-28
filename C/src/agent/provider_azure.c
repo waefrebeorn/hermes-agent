@@ -86,6 +86,9 @@ static char *azure_build_request_body(const provider_t *p,
     if (p->config.service_tier[0])
         json_object_set(root, "service_tier", json_new_string(p->config.service_tier));
 
+    if (p->config.reasoning_effort[0])
+        json_object_set(root, "reasoning_effort", json_new_string(p->config.reasoning_effort));
+
     if (p->config.presence_penalty != 0.0f)
         json_object_set(root, "presence_penalty", json_new_number(p->config.presence_penalty));
     if (p->config.frequency_penalty != 0.0f)
