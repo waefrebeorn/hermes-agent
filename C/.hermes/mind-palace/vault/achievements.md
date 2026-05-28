@@ -444,7 +444,7 @@
   out->buf[out->len] = '\0' left trailing garbage byte
 - Evidence: commit f754de84b, file src/agent/markdown_render.c
 
-## Phase 45: Tokenizer Test Suite (v135)
+## Phase 45: Tokenizer Test Suite (v136)
 
 - Added 79-test suite for hermes_tokenizer.c covering all 7 public functions
 - Tests: token_family_from_model, chars_per_token, token_count,
@@ -453,6 +453,14 @@
   (float)(1000/4.0 + 0.999) rounded to 251 instead of 250.
   Replaced with integer scaled arithmetic for exact results.
 - Evidence: commit 3c0fda468, file src/hermes_tokenizer.c
+
+## Phase 46: ACP Permissions Test Suite (v135)
+
+- Added 42-test suite for ACP permissions.c covering all 3 public functions
+- Tests: option building with/without permanent, tool call building (NULL/desc/long),
+  outcome mapping (all 5 options, substring prevention, comma boundaries, NULL safety)
+- JSON content validation via libjson API (json_len, json_get, json_get_str)
+- Evidence: commit f01c5fd06, file src/acp/permissions.c
 
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
