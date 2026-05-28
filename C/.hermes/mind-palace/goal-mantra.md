@@ -1,6 +1,6 @@
 ── STATE: battleship in C/.hermes/mind-palace/.
    Suite 282/0/0. 99 tools, 98 CLI, 19 GW, 10 providers, 66 libs.
-   v97. 21 gaps (2 partial). D06 partial: inline buttons added.
+   v98. 21 gaps (3 partial). D07 partial: spawn pause.
    Build: make -j$(nproc). Test: bash test_runner.sh.
    All metrics verified: state.md is ground truth.
    vault/achievements.md records every resolved gap.

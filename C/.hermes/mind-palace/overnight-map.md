@@ -1,3 +1,4 @@
-# Overnight (v97)
-D06 partial resolved: inline buttons for send_message tool. Direct libhttp Telegram send replaces broken system() call.
-21 gaps, 2 partials (D01 SSE, D06 inline buttons). Next: any remaining P2 depth gap.
+# Overnight (v98)
+D07 partial: spawn pause (set_spawn_paused/is_spawn_paused) for delegate tasks.
+21 gaps, 3 partials (D01 SSE, D06 inline buttons, D07 spawn pause).
+Next: any remaining P2 tool depth gap.

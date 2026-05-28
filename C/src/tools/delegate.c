@@ -52,6 +52,24 @@ static const char *sensitive_env_fragments[] = {
     NULL  /* sentinel */
 };
 
+/* ── Spawn pause — D07: Global gate for delegate spawning ── */
+static pthread_mutex_t g_spawn_pause_lock = PTHREAD_MUTEX_INITIALIZER;
+static bool g_spawn_paused = false;
+
+bool set_spawn_paused(bool paused) {
+    pthread_mutex_lock(&g_spawn_pause_lock);
+    g_spawn_paused = paused;
+    pthread_mutex_unlock(&g_spawn_pause_lock);
+    return paused;
+}
+
+bool is_spawn_paused(void) {
+    pthread_mutex_lock(&g_spawn_pause_lock);
+    bool val = g_spawn_paused;
+    pthread_mutex_unlock(&g_spawn_pause_lock);
+    return val;
+}
+
 /* ================================================================
  *  Schema — matches Python version's parameter list
  * ================================================================ */
@@ -669,6 +687,20 @@ static int spawn_children(delegate_ctx_t *ctx) {
         if (batch_size <= 0) batch_size = 4; /* default */
         if (i + batch_size > ctx->child_count)
             batch_size = ctx->child_count - i;
+
+        /* D07: Check spawn pause before each batch */
+        if (is_spawn_paused()) {
+            for (int j = 0; j < batch_size && (i + j) < ctx->child_count; j++) {
+                int idx = i + j;
+                ctx->children[idx].errored = true;
+                snprintf(ctx->children[idx].error_msg,
+                    sizeof(ctx->children[idx].error_msg),
+                    "Spawning paused");
+                ctx->children[idx].completed = true;
+            }
+            i += batch_size;
+            continue;
+        }
 
         /* Launch batch */
         for (int j = 0; j < batch_size && (i + j) < ctx->child_count; j++) {

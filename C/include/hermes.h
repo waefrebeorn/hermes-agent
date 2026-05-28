@@ -1499,6 +1499,10 @@ bool xai_is_model_retired(const char *model_name,
 /* P49: Tool result preview generation — truncate at last newline within max_chars */
 char *tool_result_generate_preview(const char *content, int max_chars, bool *has_more);
 
+/* D07: Delegate spawn pause — global gate for TUI/gateway */
+bool set_spawn_paused(bool paused);
+bool is_spawn_paused(void);
+
 /** @} */ /* end of hermes group */
 
 #endif /* HERMES_H */
