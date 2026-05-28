@@ -482,6 +482,15 @@
 - Event callback integration with stubs for acp_write_message
 - Evidence: commit 9375694d6, file src/acp/events.c
 
+## Phase 49: Cron Script Execution Test Suite (v139)
+
+- Added 10-test suite for cron_scripts.c covering all 2 public functions
+- Tests: script execution with popen (echo, args, exit code, stderr redirect),
+  NULL/error paths (missing file, no interpreter), shebang auto-detection,
+  interpreter setter stub
+- Tests exercise real script execution via temp files with mkstemp
+- Evidence: commit 497127fba, file src/cron/cron_scripts.c
+
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
    431|- Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points

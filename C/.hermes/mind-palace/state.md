@@ -1,6 +1,6 @@
-     1|     1|# Slermes C (v138)
+     1|     1|# Slermes C (v139)
      2|     2|
-     3|     3|Suite: 288/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+     3|     3|Suite: 289/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
      4|     4|Binary: 31M | Warnings: 0 | Test files: 242 | C src: 174
      5|     5|Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
      6|     6|
@@ -43,7 +43,9 @@
   Suite 288/0/0 (+1 test file: 243). Commit 50596fec0 pushed.
   Tests: option building (with/without permanent), tool call building (NULL/desc/long/sequential IDs),
   outcome mapping (all 5 mappings, substring prevention, boundary checks).
-  Suite 288/0/0 (+1 test file: 243). Commit f01c5fd06 pushed.
+  Suite 289/0/0 (+1 test file: 243). Commit f01c5fd06 pushed.
+  Suite 289/0/0 verified (+2 test files: 245). Phase 49: cron_scripts tests (10 assertions).
+  Commit 497127fba pushed.
     25|    25|
     26|    26|## Critical Gaps
     27|    27|- **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
