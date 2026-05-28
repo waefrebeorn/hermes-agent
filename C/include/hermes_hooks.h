@@ -23,6 +23,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "hermes_json.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -115,5 +117,31 @@ hook_result_t hook_parse_result(const char *stdout_json);
 #ifdef __cplusplus
 }
 #endif
+
+/* ── Shell hooks integration ────────────────────────────────── */
+
+/**
+ * Parse shell hooks config from a JSON object (the "hooks:" config block).
+ * Each key is an event name, value is an array of hook specs.
+ * Returns number of parsed specs.
+ */
+int shell_hooks_parse_json(const json_t *hooks_json);
+
+/**
+ * Register all parsed shell hooks on the hook registry.
+ * Must be called after shell_hooks_parse_json() and before any hook_invoke().
+ * Returns number of registered hooks.
+ */
+int shell_hooks_register_all(void);
+
+/**
+ * Shut down shell hooks and clean up registrations.
+ */
+void shell_hooks_shutdown(void);
+
+/**
+ * Return count of configured shell hooks.
+ */
+int shell_hooks_count(void);
 
 #endif /* HERMES_HOOKS_H */
