@@ -2514,7 +2514,7 @@ else skip "feishu_tools (compilation failed)"
 fi &
 
 # Browser tool test (P81-P90 — needs browser.c + json + websocket libs)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_browser.c" \
     "$CDIR/src/tools/browser.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_browser -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then

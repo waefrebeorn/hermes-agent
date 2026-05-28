@@ -1,8 +1,8 @@
 # Battle Map v22
 
-**21 gaps (8 partial). D05 partial: Deepgram.**
+**21 gaps (9 partial). D03 partial: CDP PDF gen.**
 
 S0: M03-M07 (5 Yuanbao tools, P2)
-S1: D01-D12 (partial: D01 SSE, D02 Azure, D04 compose, D05 Deepgram, D06 buttons, D07 pause, D08 magic, D09 download)
+S1: D01-D12 (partial: D01 SSE, D02 Azure, D03 PDF, D04 compose, D05 Deepgram, D06 buttons, D07 pause, D08 magic, D09 download)
 S2: I02 (CI, P3)
 S3: X01-X05 (5 test gaps, P3)

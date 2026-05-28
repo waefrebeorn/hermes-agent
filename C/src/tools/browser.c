@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include "base64.h"
 #include <websocket.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1426,6 +1427,61 @@ static char *browser_vision_handler(const char *args_json, const char *task_id) 
     return out_str ? out_str : strdup("{\"error\":\"OOM\"}");
 }
 
+/* D03: CDP PDF generation — Page.printToPDF via CDP */
+static char *cdp_generate_pdf(json_node_t *result) {
+    const char *url = cdp_get_url();
+    if (!url) {
+        json_object_set(result, "pdf_error", json_new_string("CDP URL not configured"));
+        return NULL;
+    }
+
+    char *resp = cdp_send_command("Page.printToPDF",
+        "{\"paperWidth\":8.27,\"paperHeight\":11.69,\"printBackground\":true,\"preferCSSPageSize\":true}");
+    if (!resp) {
+        json_object_set(result, "pdf_error", json_new_string("CDP PDF generation failed"));
+        return NULL;
+    }
+
+    char *err = NULL;
+    json_node_t *pdf_json = json_parse(resp, &err);
+    free(resp);
+    if (!pdf_json) {
+        free(err);
+        json_object_set(result, "pdf_error", json_new_string("Failed to parse PDF response"));
+        return NULL;
+    }
+
+    const char *pdf_data = json_object_get_string(pdf_json, "result.data", NULL);
+    if (!pdf_data) {
+        json_object_set(result, "pdf_error", json_new_string("No PDF data in response"));
+        json_free(pdf_json);
+        return NULL;
+    }
+
+    char pdf_path[256];
+    snprintf(pdf_path, sizeof(pdf_path), "/tmp/hermes_browser_%ld.pdf", (long)time(NULL));
+
+    size_t decoded_len = 0;
+    unsigned char *decoded = base64_decode(pdf_data, &decoded_len);
+    if (decoded && decoded_len > 0) {
+        FILE *f = fopen(pdf_path, "wb");
+        if (f) {
+            fwrite(decoded, 1, decoded_len, f);
+            fclose(f);
+            json_object_set(result, "pdf_path", json_new_string(pdf_path));
+            json_object_set(result, "pdf_size", json_new_number((double)decoded_len));
+        } else {
+            json_object_set(result, "pdf_error", json_new_string("Cannot write PDF file"));
+        }
+        free(decoded);
+    } else {
+        json_object_set(result, "pdf_error", json_new_string("Failed to decode PDF data"));
+    }
+
+    json_free(pdf_json);
+    return NULL;
+}
+
 /* browser_console handler — get console logs via CDP */
 static char *browser_console_handler(const char *args_json, const char *task_id) {
     (void)task_id;
@@ -1514,6 +1570,26 @@ static const char *BROWSER_SCROLL_SCHEMA =
     "\"direction\":{\"type\":\"string\",\"description\":\"Scroll direction: 'up' or 'down'\"}"
     "},\"required\":[\"direction\"]}";
 
+
+/* D03: browser_generate_pdf — Generate PDF of current page via CDP */
+char *browser_generate_pdf_handler(const char *args_json, const char *task_id) {
+    (void)args_json;
+    (void)task_id;
+    json_node_t *result = json_new_object();
+    cdp_generate_pdf(result);
+    const char *pdf_path = json_object_get_string(result, "pdf_path", NULL);
+    if (pdf_path) {
+        json_object_set(result, "success", json_new_bool(true));
+    } else {
+        const char *err = json_object_get_string(result, "pdf_error", "CDP PDF generation failed");
+        json_object_set(result, "success", json_new_bool(false));
+        json_object_set(result, "error", json_new_string(err));
+    }
+    char *out = json_serialize(result);
+    json_free(result);
+    return out;
+}
+
 void registry_init_browser(void) {
     registry_register("browser_navigate",
         "Navigate to a URL and return the page title and text content.",
@@ -1578,6 +1654,11 @@ void registry_init_browser(void) {
 
     /* Explicit reference to suppress -Wunused-function for static handlers only reachable via function pointer */
     (void)browser_supervisor_handler;
+    registry_register("browser_generate_pdf",
+        "Generate PDF of current page via Chrome DevTools Protocol. Requires CDP connection.",
+        "{\"type\":\"object\",\"properties\":{},\"required\":[]}",
+        browser_generate_pdf_handler);
+
 
     registry_register("browser_supervisor",
         "Check browser CDP connection health and supervisor status. Returns connection state, version info, and command statistics. Use this to diagnose CDP connectivity before browser_cdp/browser_vision/browser_console operations.",
