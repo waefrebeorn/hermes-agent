@@ -2,7 +2,7 @@
  * test_patch.c — Patch tool unit tests (M42).
  *
  * Tests find-and-replace on temp files: basic replace,
- * replace_all, error paths.
+ * replace_all, error paths, and \\t/\\r unescape from upstream @78be45860.
  *
  * Build:
  *   gcc -O2 -g -Wall -Werror -I include -I lib/libjson -I lib/libplugin \
@@ -62,6 +62,29 @@ static char *read_file(const char *path) {
     fclose(f);
     buf[n] = '\0';
     return buf;
+}
+
+/* Helper: build JSON-escaped patch args without needing literal string escaping */
+static char args_buf[4096];
+static void build_json_args(const char *path, const char *old_str, const char *new_str) {
+    memset(args_buf, 0, sizeof(args_buf));
+    size_t bp = 0;
+    bp += snprintf(args_buf + bp, sizeof(args_buf) - bp - 1, "{\"path\":\"");
+    for (const char *s = path; *s && bp < sizeof(args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') args_buf[bp++] = '\\';
+        args_buf[bp++] = *s;
+    }
+    bp += snprintf(args_buf + bp, sizeof(args_buf) - bp - 1, "\",\"old_string\":\"");
+    for (const char *s = old_str; *s && bp < sizeof(args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') args_buf[bp++] = '\\';
+        args_buf[bp++] = *s;
+    }
+    bp += snprintf(args_buf + bp, sizeof(args_buf) - bp - 1, "\",\"new_string\":\"");
+    for (const char *s = new_str; *s && bp < sizeof(args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') args_buf[bp++] = '\\';
+        args_buf[bp++] = *s;
+    }
+    bp += snprintf(args_buf + bp, sizeof(args_buf) - bp - 1, "\"}");
 }
 
 int main(void) {
@@ -206,6 +229,89 @@ int main(void) {
     TEST("patch JSON parse error",
          r && strstr(result_get_str(r, "error", ""), "JSON parse") != NULL);
     json_free(r);
+
+    /* ================================================================
+     * Unescape regression tests — ported from upstream @78be45860
+     * Tests the region-based \\t/\\r unescape in new_string.
+     * ================================================================ */
+
+    /* 15. Tab unescape under exact: file has real tab, old_string has real
+     * tab (exact match), new_string has literal \\t. Must unescape. */
+    {
+        const char *tab_file = "/tmp/hermes_test_unescape_tab.txt";
+        const char *tab_content = "before\n\tafter\n";
+        write_file(tab_file, tab_content);
+        /* old: real tab (0x09), new: two-char \\t followed by "done" */
+        build_json_args(tab_file, "\tafter", "\\tdone");
+        r = parse_result(patch_handler(args_buf, NULL));
+        TEST("unescape tab under exact: success",
+             r && json_object_get_bool(r, "success", false));
+        TEST("unescape tab under exact: strategy=exact",
+             r && strcmp(result_get_str(r, "strategy", ""), "exact") == 0);
+        json_free(r);
+        char *c = read_file(tab_file);
+        TEST("unescape tab under exact: real tab in output",
+             c && strstr(c, "\tdone") != NULL);
+        TEST("unescape tab under exact: no literal \\\\t",
+             c && strstr(c, "\\t") == NULL);
+        free(c);
+        unlink(tab_file);
+    }
+
+    /* 16. \\n NOT unescaped — newline is left as literal two-char sequence */
+    {
+        const char *nl_file = "/tmp/hermes_test_unescape_nl.txt";
+        write_file(nl_file, "line1\nline2\n");
+        build_json_args(nl_file, "line1\nline2", "alpha\\nbeta");
+        r = parse_result(patch_handler(args_buf, NULL));
+        TEST("unescape newline preserved: success",
+             r && json_object_get_bool(r, "success", false));
+        json_free(r);
+        char *c = read_file(nl_file);
+        TEST("unescape newline preserved: literal \\\\n in output",
+             c && strstr(c, "\\n") != NULL);
+        TEST("unescape newline preserved: no real newline from \\\\n",
+             c && strstr(c, "alpha\nbeta") == NULL);
+        free(c);
+        unlink(nl_file);
+    }
+
+    /* 17. Literal \\t in Python string literal — NOT unescaped.
+     * File has literal two-char \\t (backslash + t) from source code,
+     * not a real tab. The matched region has no real tab, so \\t in
+     * new_string passes through verbatim. */
+    {
+        const char *lit_file = "/tmp/hermes_test_unescape_lit.txt";
+        write_file(lit_file, "sep = \"\\t\"\n");
+        build_json_args(lit_file, "sep = \"\\t\"", "sep = \"\\tab\"");
+        r = parse_result(patch_handler(args_buf, NULL));
+        TEST("unescape literal preserved: success",
+             r && json_object_get_bool(r, "success", false));
+        json_free(r);
+        char *c = read_file(lit_file);
+        TEST("unescape literal preserved: literal \\\\t in output",
+             c && strstr(c, "\\t") != NULL);
+        TEST("unescape literal preserved: no real tab injected",
+             c && strchr(c, '\t') == NULL);
+        free(c);
+        unlink(lit_file);
+    }
+
+    /* 18. No escape sequences — pure passthrough */
+    {
+        const char *noesc_file = "/tmp/hermes_test_unescape_noesc.txt";
+        write_file(noesc_file, "def foo():\n    return 1\n");
+        build_json_args(noesc_file, "    return 1", "    return 2");
+        r = parse_result(patch_handler(args_buf, NULL));
+        TEST("unescape no sequences: success",
+             r && json_object_get_bool(r, "success", false));
+        json_free(r);
+        char *c = read_file(noesc_file);
+        TEST("unescape no sequences: content correct",
+             c && strstr(c, "return 2") != NULL);
+        free(c);
+        unlink(noesc_file);
+    }
 
     /* Cleanup */
     unlink(testfile);
