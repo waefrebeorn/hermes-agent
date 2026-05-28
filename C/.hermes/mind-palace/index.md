@@ -1,2 +1,2 @@
-# Index (v107)
-Battleship v22 — 11 gaps. All D-phase resolved.
+# Index (v108)
+Battleship v22 — 10 gaps. D-phase done. CI done.
