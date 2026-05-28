@@ -400,9 +400,19 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
-| W02 | Removed unused `coerce_capability_bool` (and its only consumers `str_in_list`/`TRUE_TOKENS`/`FALSE_TOKENS`) from image_routing.c — 26 lines dead code eliminated | `src/agent/image_routing.c` — 26 lines removed |
+| W02 | Removed unused `coerce_capability_bool` — 26 lines dead code | `src/agent/image_routing.c` |
 | W03 | `(void)provider` in `supports_vision_override` to suppress unused-param warning | `src/agent/image_routing.c:171` |
-| W04 | `__attribute__((unused))` on `shell_escape` in session_search.c (intentional scaffolding, not a stub) | `src/tools/session_search.c:79` |
-| W05 | Removed unused `early_len` variable in session_search scoring function | `src/tools/session_search.c:129` |
+| W04 | `__attribute__((unused))` on `shell_escape` in session_search.c | `src/tools/session_search.c:79` |
+| W05 | Removed unused `early_len` variable | `src/tools/session_search.c:129` |
 | W06 | Added `!name` null guard before `!name[0]` check in secrets.c — fixes -Wmaybe-uninitialized and potential use-after-scope on block-local `secret_name` | `src/secrets.c:200` |
-| | Build clean, suite 283/0/0, commit 48e5622a8 pushed | `make -j$(nproc)` + `bash test_runner.sh` |
+| | Suite 283/0/0, commit 48e5622a8 | |
+
+## Phase 37: Warning Suppression Sweep (v125)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W07 | Marked 7 unused plugin_* functions in memory.c with __attribute__((unused)) | `src/tools/memory.c` |
+| W08 | Removed unused `sdb` variable in config.c YAML parsing | `src/cli/config.c` |
+| W09 | Suppressed 7 unused functions (xstrdup, is_set_bool, build_bot_header, kanban_mode, kanban_orchestrator, extract_registered_domain, strcasestr_safe) | 7 files |
+| W10 | (void) unused params: computer_use.c (element×2, amount), mcp_tool.c (args_json, server_name, arg_count), kanban.c (tid) | 3 files |
+| | Suite 283/0/0, commit 80a4dc334 | |

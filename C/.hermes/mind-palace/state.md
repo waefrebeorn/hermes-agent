@@ -1,4 +1,4 @@
-# Slermes C (v124)
+# Slermes C (v125)
 
 Suite: 283/0/0 | Tools: 85 | CLI: 80 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174
@@ -11,10 +11,10 @@ Battleship v32 (23 parity gaps across 5 sectors). Fork synced to upstream (0 beh
 - **Old dev branch**: `c-work` preserved on GitHub (277 original commits)
 
 ## Progress This Session
-- Phase 36: Dead code & warning cleanup. Removed unused `coerce_capability_bool`,
-  `str_in_list`, `TRUE_TOKENS`, `FALSE_TOKENS` from image_routing.c. Fixed
-  -Wmaybe-uninitialized in secrets.c. Suppressed unused-param/unused-function
-  warnings with (void) and __attribute__((unused)). Suite 283/0/0.
+- Phase 36: Dead code & warning cleanup in image_routing.c, secrets.c, session_search.c
+- Phase 37: Suppressed unused-function/param/variable warnings across 7 files
+  (memory.c, config.c, discord.c, kanban.c, computer_use.c, mcp_tool.c, url_safety.c)
+  Suite 283/0/0, commit 80a4dc334 pushed.
 
 ## Critical Gaps
 - **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
