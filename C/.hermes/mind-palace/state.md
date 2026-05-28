@@ -7,6 +7,7 @@ Build clean — **0 warnings**. **90 unique tools** (registry_register + registr
 ~282 item-level gaps (battleship-v16 rows, 22 closed this session).
 
 ## Recent (this session)
+- test(transcribe): add 3 edge case tests — invalid JSON, empty path, unsupported ext. Suite: 282/0/0.
 - fix(web_get): strdup url before json_free to fix use-after-free in web_get_handler. Suite: 282/0/0.
 - test(tool_output): expand tests 13→21 — edge cases, invalid env, size_t bounds. Suite: 282/0/0.
 - test(file_watch): expand tests 3→13 — error paths, event params, positive watch.
