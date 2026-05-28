@@ -4,17 +4,17 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
-|||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-|||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||| Gaps:  29 real parity gaps (2 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift)
-|||||||||Stubs:  0 stubs remain. All entry points verified.
-||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-||||||||CLI:    80 cmd_ functions + 37 config sections — 85 unique tools registered
-||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
-|||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
-|||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-|||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+|||||||||| Suite:  283/0/0 (239 test files, completes in <60s)
+||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||||| Gaps:  23 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 7 S4 drift)
+||||||||||Stubs:  0 stubs remain. All entry points verified.
+|||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|||||||||CLI:    80 cmd_ functions + 37 config sections — 85 unique tools registered
+|||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
+||||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
+||||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+||||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -28,13 +28,13 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Build System](#build-system)
-- [All Tools (99 Registered)](#all-tools-99-registered)
+- [All Tools (85 Registered)](#all-tools-85-registered)
 - [Gateway Platforms (19)](#gateway-platforms-19)
 - [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c)
-- [Libraries (66 Units)](#libraries-66-units)
-- [CLI Commands (98 Slash, Real)](#cli-commands-98-slash-real)
-- [Battleship Roadmap (33 Gaps)](#battleship-roadmap-33-gaps)
+- [Libraries (65 Units)](#libraries-65-units)
+- [CLI Commands (80 Slash, Real)](#cli-commands-80-slash-real)
+- [Battleship Roadmap (23 Gaps)](#battleship-roadmap-23-gaps)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 282/0/0
+bash test_runner.sh        # 283/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -74,7 +74,7 @@ docker run --rm hermes-c --help
 ### Smoke Test
 
 ```bash
-echo '/tools' | ./hermes     # List all 99 registered tools
+echo '/tools' | ./hermes     # List all 85 registered tools
 echo "/providers" | ./hermes # List provider configurations
 ```
 
@@ -96,13 +96,13 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ LLM call
                     ┌──────────▼──────────────┐
-                    │   LLM Client + 11         │
+                    │   LLM Client + 10        │
                     │   Provider Adapters      │
                     │  (OpenAI-compat + native)│
                     └──────────┬──────────────┘
                                │ Tool call
                     ┌──────────▼──────────────┐
-                    │   99 Tool Registry       │
+                    │   85 Tool Registry       │
                     │  (file, web, terminal,   │
                     │   skills, MCP, kanban,   │
                     │   browser, delegate...)  │
@@ -115,7 +115,7 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ System calls
                     ┌──────────▼──────────────┐
-                    │   66 Library Units       │
+                    │   65 Library Units       │
                     │  (json, yaml, http,      │
                     │   crypto, mcp, cron...)  │
                     └─────────────────────────┘
@@ -142,7 +142,7 @@ make docs             # Doxygen HTML docs (if doxygen available)
 |-------|------|--------|
 | P1 | 65 library units (.o) | lib/*.o |
 | P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 96 tool handlers | src/tools/*.o |
+| P3 | Tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -164,7 +164,7 @@ make CFLAGS="-O1 -g -fsanitize=undefined" LDFLAGS="-fsanitize=undefined" hermes
 
 ---
 
-## All Tools (86 Registered)
+## All Tools (85 Registered)
 
 Every tool is registered at startup via `registry_register(name, description, schema, handler)`. Tools are discovered by the agent loop and called with JSON arguments.
 
@@ -383,7 +383,7 @@ Plugins are `.so` files loaded at runtime via `dlopen`. Each exposes `plugin_ini
 
 ---
 
-## Libraries (66 Units)
+## Libraries (65 Units)
 
 Libraries are compiled directly into the binary. Each is a self-contained module under `lib/`.
 
@@ -416,7 +416,7 @@ Libraries are compiled directly into the binary. Each is a self-contained module
 | `libcron` | Cron expression parser | ✅ |
 | `libproc` | Process management | ✅ |
 | `libtui` | ncurses TUI helpers | ✅ |
-| `libdb` | SQLite wrapper | ✅ |
+| `libdb` | File-based session store (JSON) | ✅ |
 | `libplugin` | Plugin loading | ✅ |
 | `libskin` | Skin/theming engine | ✅ |
 | `libtemplate` | Simple template engine | ✅ |
@@ -457,7 +457,7 @@ Libraries are compiled directly into the binary. Each is a self-contained module
 
 ---
 
-## CLI Commands (98)
+## CLI Commands (80)
 
 All real, tab complete + history. The CLI uses a central command registry (`cli/commands.c`) with alias resolution and subcommand dispatch.
 
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 29 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v27.md` for the active gap map.
+**However:** 23 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v32.md` for the active gap map.
 
 ---
 
@@ -502,137 +502,161 @@ All bugs discovered through DA audits and runtime testing.
 ## Project Structure
 
 ```
-waefrebeorn/slermes/         ← Repo root
-├── C/                            ← All source code (canonical README lives here)
-│   ├── src/                      ← 172 .c files
-│   │   ├── agent/                ←   Provider adapters, LLM client, fallback routing,
-│   │   │                           budget tracker, checkpoint/resume, audit, redact/sanitize
-│   │   ├── cli/                  ←   CLI orchestrator, command registry, config,
-│   │   │                           display engine, TUI (ncurses)
-│   │   ├── cron/                 ←   Scheduler, SQLite job store, locking, retry
-│   │   ├── gateway/              ←   Server + 19 platform adapters
-│   │   │   └── platforms/        ←     Individual platform implementations
-│   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   96 tool handler implementations
-│   │   ├── acp/                  ←   ACP JSON-RPC server
-│   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
-│   ├── lib/                      ←   65 library units (compiled directly, no .a)
-│   │   ├── libjson/              ←   JSON parser/builder
-│   │   ├── libhttp/              ←   HTTP/HTTPS client (libcurl wrapper)
-│   │   ├── libmcp/               ←   MCP transport layer (stdio, SSE, Streamable HTTP)
-│   │   ├── libdb/                ←   SQLite wrapping (sessions, cron state, store)
-│   │   ├── libcrypto/            ←   AES, SHA256, HMAC, base64
-│   │   └── ...                   ←   61 more
-│   ├── include/                  ←   71+ headers
-│   ├── tests/                    ←   239 test files (via test_runner.sh)
-│   ├── Dockerfile                ←   Multi-stage Docker build
-│   ├── Makefile                  ←   5-phase build pipeline
-│   └── .hermes/                  ←   Agentic process documentation (see below)
-├── .github/workflows/            ←   CI (c-build.yml, nix-lockfile-fix.yml)
-└── README.md → C/README.md       ←   Symlink (edit C/README.md)
+C/
+├── include/          # 70 header files
+│   ├── hermes.h      # Master header (1084 lines)
+│   └── hermes_*.h    # Subsystem headers
+├── src/
+│   ├── tools/        # Tool implementations
+│   ├── agent/        # Agent core, providers
+│   ├── cli/          # CLI, commands, config, paths, display
+│   ├── gateway/      # Gateway adapters
+│   └── deps/         # Core dependencies
+├── lib/              # 65 self-contained library modules
+├── tests/            # 239 test files
+├── examples/         # Plugin examples
+├── plugins/          # Plugin source
+├── .hermes/
+│   └── mind-palace/  # Agent state, plans, vault, battleship
+├── Makefile
+├── Dockerfile
+└── test_runner.sh    # Bash test harness
 ```
 
 ---
 
 ## The Agentic Process (.hermes)
 
-The `.hermes/mind-palace/` directory documents the entire development process — every DA audit, every decision, every gap discovered. This is the **agentic record**: how an AI agent systematically translates 75K LOC of Python to C through iterative discovery, testing, and verification.
+Development is managed through the `.hermes/mind-palace/` prestige system — a self-reinforcing loop that ensures ground-truth documentation stays synced with code state.
 
-### Reading Order (for a new AI agent assuming this project)
+**Core files:**
+- `state.md` — Live dashboard: suite stats, fork state, critical gaps
+- `battleship-v32.md` — Canonical gap list (23 items across 5 sectors)
+- `prestige_prompt.md` — Priority-ordered gap summary
+- `plan.md` — Sector-by-sector breakdown
+- `vault/achievements.md` — Phase-by-phase resolved-gap history
+- `goal-mantra.md` — Session-start ritual instructions
 
-| Step | File | What It Contains |
-|------|------|-----------------|
-| 1 | `prestige_prompt.md` | Priority queue + current state snapshot |
-| 2 | `goal-mantra.md` | Perpetual goal + the loop (one-page session kickoff) |
-| 3 | `state.md` | Binary truth table — every sector's done/total |
-| 4 | `plan.md` | Phase completion + next steps sorted by priority |
-| 5 | `entry.md` | Build/run commands + architecture |
-| 6 | `overnight-map.md` | Session navigation + fallback task |
-| 7 | `testing.md` | Test suite coverage + known gaps |
-| 8 | `battleship-v27.md` | 29 parity gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift |
-| 9 | `vault/achievements.md` | All resolved gaps with evidence |
+**The loop:** For each session: read walkway → pick next gap → verify against C source → implement → build → suite → doc sweep → commit.
+
+The full development protocol is documented in the caveman skill (`~/.hermes/skills/caveman/SKILL.md`).
 
 ---
 
 ## Test Suite
 
-282 assertions across 239 test files. All pass, zero failures, zero skips.
+| Suite | Count | Notes |
+|-------|-------|-------|
+| Library tests | 283/0/0 | All pass, ~60s |
+| Test files | 239 | C files in tests/ |
+| Gateway subsystem | 49 | JSON-RPC routing, auth |
+| Gateway escape | 30 | Shell injection, pipe-to-interpreter |
+| Provider depth | 54+ | OpenAI, Anthropic, Google, DeepSeek, Azure, Bedrock |
+| Config | 103 | YAML parse, get/set, profiles |
+| JSON | 83 | Parse, serialize, escape |
+| TIRITH guardrails | 79 | Security scanning |
+| File tool | 58+ | Read, write, patch, delete; file_watch, file_merge, file_batch |
+| Browser | 32 | Navigation, CDP, vision |
+| Skills | 53+ | List, view, manage, sync, search, bundle |
+| Kanban | 38 | Task management |
+| Feishu | 52 | Doc read, drive, comment |
+| HomeAssistant | 26 | Entity query, service call |
+| Approved edits | 44 | Edit approval flow |
+| Budget tracker | 58 | Token/money budget |
+| Rate limit | 24 | Rate limiting |
+| Memory tool | 16 | File-based + plugin backends |
+| TTS | 21 | Text-to-speech |
+| MCP | 24+11 | MCP tool + stream tests |
+| Patch tool | 37 | Find/replace, V4A, unescape |
+| Process | 17 | Background process management |
+
+### Running Tests
 
 ```bash
-bash test_runner.sh        # Run full suite
-bash test_runner.sh --asan # Run with AddressSanitizer
+# Full suite
+bash test_runner.sh
+
+# Quick smoke (no parallel compilation)
+bash test_runner.sh --verbose
+
+# Individual
+tests/test_json.c
+tests/test_config.c
 ```
 
-### Test Categories
+### Adding Tests
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| Core tools | ~120 | file, web, terminal, skills, memory |
-| Agent | ~60 | provider, context, budget, fallback |
-| Gateway | ~30 | platform init/send/poll/shutdown |
-| Cron | ~20 | job scheduling, persistence |
-| MCP | ~15 | server lifecycle, tool discovery |
-| Media | ~20 | vision, tts, image_gen, video, transcribe |
-| Integration | ~17 | x_search, homeassistant, discord |
+Each test file is a standalone `.c` with `main()`. Add to `test_runner.sh` as a `run_lib_test` entry.
 
 ---
 
 ## CI/CD
 
-GitHub Actions runs on every push:
-- **c-build.yml:** Build + 282/0/0 test suite + ASan + UBSan + coverage
-- **nix-lockfile-fix.yml:** Nix flake lockfile auto-fix
-- **release.yml:** Tagged releases build + upload binary artifact
+- **`c-build.yml`** — PR/merge: build + test_runner (clean compile, all 283 pass)
+- **`c-release.yml`** — Tag push: `make clean && make && docker build && push to ghcr`
+- **`c-asan.yml`** — Nightly: AddressSanitizer + UBSan on full test suite
+- **`c-cppcheck.yml`** — Static analysis (cppcheck)
+- **`c-coverage.yml`** — gcov coverage reports for library modules
+- **`c-perf.yml`** — Performance regression detection (benchmark diffs)
 
 ---
 
 ## Development Guide
 
-See `AGENTS.md` at the repo root for the full development guide covering:
-- File dependency chain (registry → tools → agent loop)
-- AIAgent class reference
-- CLI architecture (command registry)
-- Tool registration pattern
-- Gateway platform lifecycle hooks
-- Memory and plugin system
+### Setup
+
+```bash
+git clone git@github.com:waefrebeorn/slermes.git
+cd slermes/C
+make -j$(nproc)
+./hermes --version
+```
+
+### Workflow
+
+1. Read `.hermes/mind-palace/` for current state and priority
+2. Pick the next gap from battleship-v32.md
+3. Build + test before PR
+4. Update all docs — state, prestige, plan, overnight, goal-mantra, battleship, README, BANNER, vault
+5. Commit with descriptive message
 
 ---
 
 ## Config Reference
 
-Config lives in `~/.hermes/config.yaml` (YAML). Key sections:
-- **providers:** API keys + base URLs per provider
-- **gateway:** Platforms to enable + their tokens
-- **mcp_servers:** MCP server definitions (stdio/SSE/HTTP)
-- **skills:** Active skills configuration
-- **plugins:** Plugin enable/disable
+Config is loaded from `~/.slermes/config.yaml` (or `$SLERMES_HOME/config.yaml`).
+
+```yaml
+model:
+  default: gpt-4o
+  temperature: 0.7
+
+agent:
+  verbose: true
+  max_turns: 50
+```
+
+Full schema in `include/hermes_config.h`. Use `/config` in interactive mode to view/edit.
 
 ---
 
 ## Upstream
 
-This project tracks [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). Upstream sync is done periodically via `git fetch upstream`.
+The C translation tracks [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). The fork is at [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes).
 
----
+- **Fork:** 0 commits behind upstream, 0 ahead (C/ + docs)
+- **C code:** Tracked in `C/` subdirectory of the slermes fork
+- **History:** Original 277 commits on `c-work` branch → squashed onto upstream main as single commit (`d00d2f1d`)
 
-## Battleship Roadmap (33 Gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 Drift)
+### Upstream Drift (7583 commits)
 
-See `.hermes/mind-palace/battleship-v27.md` for the complete gap map.
+The C code was forked from upstream commit `2517917de`. Since then, 7583 upstream changes have been made. Key drift areas:
+- Provider/API evolution (XAI retry, OAuth, fallback)
+- Agent loop changes (retry buffer, credential pool)
+- Gateway platform updates (Discord thread, Telegram heartbeat)
+- Tool schema drift (patch unescape, TIRITH tar safety)
+- MCP updates (mTLS, catalog picker)
+- Security/auth overhaul (OAuth PKCE, API key enforcement)
+- ~17k new tests
 
-| Priority | Sector | Gaps | Focus |
-|----------|--------|------|-------|
-| P0 | S0: Form-vs-Function | 5 | Retry, setup, resize, Python hook, test cheating |
-| P1 | S1: Pipeline | 5 | TUI bugs, plumbing, linkage, display, usage |
-| P1 | S2: Cross-Compare | 4 | AST comparison, test recreation, behavior, schemas |
-| P1 | S4: Upstream Drift (NEW) | 7 | 7583 upstream commits — provider/API, schemas, loops, gateways, MCP, security, tests |
-| P2 | S3: Product Features | 6 | Multi-turn, persistence, plugins, skins, gateways, providers |
-| **Total** | **5 sectors** | **33** | **P0:2, P1:16, P2:6** |
-
-**Summary:**
-| Sector | Count | Priority |
-|--------|-------|----------|
-| S0: Missing Python Tool Ports | 5 (Yuanbao SDK-dependent) | P2 |
-| S1: Tool Depth Gaps | 11 depth + 1 partial | P2-P3 |
-| S2: CI/Infrastructure | 1 | P3 |
-| S3: Test Edge Cases | 5 | P3 |
-| **TOTAL** | **22** (1 partial) | |
+See `.hermes/mind-palace/battleship-v32.md` for the full gap map.

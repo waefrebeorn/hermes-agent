@@ -1,7 +1,7 @@
 # Battle Map v32 — Real Parity Assessment + Upstream Drift
 
 **v123 | Fork synced: 0 behind upstream, 0 ahead | C/.hermes/ tracked**
-**Honest assessment: 28 gaps across 5 sectors.** (U04 partially closed: patch tool \\t/\\r unescape ported from upstream 78be45860)
+**Honest assessment: 23 gaps across 5 sectors.** (U04 partial: patch tool \\t/\\r unescape ported from upstream 78be45860)
 
 S4 (Upstream Drift) reworded — no longer "7583 commits behind" in git terms (fork is even), but the C code still lacks features from 7583 upstream changes that landed since the fork point.
 
@@ -79,4 +79,4 @@ See vault/achievements.md for full history. Major resolved phases:
 | **TOTAL** | **23** | **P0:2, P1:15, P2:6** |
 
 ## Resolved Since v32
-- U04 partial: patch tool \\t/\\r unescape ported from upstream @78be45860 (suite 282/0/0, 25 patch tests pass)
+- U04 partial: patch tool \\t/\\r unescape ported from upstream @78be45860 (suite 283/0/0, 37 patch tests pass)

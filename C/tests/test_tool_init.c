@@ -30,6 +30,11 @@ static int passed = 0, failed = 0;
     else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
+/* Stub sandbox init — sandbox_init is in file.c (too heavy to link),
+ * sandbox_escape_init is in sandbox_escape.c. */
+void sandbox_init(void) {}
+void sandbox_escape_init(void) {}
+
 /* Extern declarations needed */
 extern void tools_init_all(void);
 extern size_t register_count(void);
