@@ -18,6 +18,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
+>
+> **History:** The C translation was developed over 277 commits on the [`c-work`](https://github.com/waefrebeorn/slermes/tree/c-work) branch, then squashed onto updated upstream main at commit `d00d2f1d`. See the `c-work` branch for full granular history.
 
 ---
 
