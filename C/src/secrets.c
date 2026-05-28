@@ -197,7 +197,7 @@ char *hermes_secrets_resolve(const char *ref) {
         name = secret_name;
     }
 
-    if (!name[0]) return NULL;
+    if (!name || !name[0]) return NULL;
 
     /* Find bws on PATH */
     char bws_path[1024] = "bws";

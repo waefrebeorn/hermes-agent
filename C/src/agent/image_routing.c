@@ -20,18 +20,6 @@
 
 /* ── Static helpers ────────────────────────────────────────────── */
 
-/* Strict YAML/JSON boolean coercion tokens */
-static const char *TRUE_TOKENS[]  = {"true", "yes", "on", "1", NULL};
-static const char *FALSE_TOKENS[] = {"false", "no", "off", "0", NULL};
-
-static bool str_in_list(const char *s, const char **list) {
-    if (!s || !*s) return false;
-    for (const char **p = list; *p; p++) {
-        if (strcmp(s, *p) == 0) return true;
-    }
-    return false;
-}
-
 static bool is_valid_image_mode(const char *mode) {
     if (!mode || !*mode) return false;
     static const char *valid[] = {"auto", "native", "text", NULL};
@@ -41,19 +29,6 @@ static bool is_valid_image_mode(const char *mode) {
     return false;
 }
 
-/* -1=unset, 0=false, 1=true */
-static int coerce_capability_bool(const char *val) {
-    if (!val || !*val) return -1;
-    /* Lowercase and strip */
-    char buf[32];
-    size_t i;
-    for (i = 0; i < sizeof(buf) - 1 && val[i]; i++)
-        buf[i] = (char)tolower((unsigned char)val[i]);
-    buf[i] = '\0';
-    if (str_in_list(buf, TRUE_TOKENS))  return 1;
-    if (str_in_list(buf, FALSE_TOKENS)) return 0;
-    return -1;
-}
 
 /* ── MIME type detection ──────────────────────────────────────── */
 
@@ -181,6 +156,7 @@ static int supports_vision_override(const hermes_config_t *cfg,
                                     const char *provider,
                                     const char *model)
 {
+    (void)provider;
     if (!cfg) return -1;
 
     /* 1. Top-level model.supports_vision shortcut */

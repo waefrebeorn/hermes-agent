@@ -76,6 +76,7 @@ static char *read_file_str(const char *path) {
 }
 
 /* Escape single quotes for shell */
+__attribute__((unused))
 static void shell_escape(const char *in, char *out, size_t out_sz) {
     size_t pos = 0;
     for (const char *p = in; *p && pos < out_sz - 4; p++) {
@@ -126,7 +127,6 @@ static double compute_score(const char *content, const char *query, size_t file_
         title_bonus = 2.0;
     else {
         const char *early = content;
-        size_t early_len = strlen(content) < 500 ? strlen(content) : 500;
         int early_matches = count_occurrences(early, query);
         title_bonus = (double)early_matches * 0.5;
     }
