@@ -1,12 +1,12 @@
-# Plan (v126)
+# Plan (v127)
 
-19 gaps across 5 sectors. Fork synced to upstream (0 behind, 0 ahead).
+18 gaps across 5 sectors. Fork synced to upstream (0 behind, 0 ahead).
 
 ## S0: Form-vs-Function (P0) — 2 gaps
 no Python hook, test cheating
 
-## S1: Pipeline (P1) — 6 gaps
-plumbing, TUI bugs, linkage, display, general bugs, warning/bug fixes (strtok_r, type mismatches)
+## S1: Pipeline (P1) — 5 gaps
+plumbing, TUI bugs, linkage, display, general bugs, warning fixes (strtok_r)
 
 ## S2: Cross-Compare (P1) — 4 gaps
 AST comparison, test recreation, behavioral parity, schema parity

@@ -425,6 +425,15 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | W13 | Added missing headers: `#include <unistd.h>` in telegram.c (usleep), `#include <sys/stat.h>` in cronjob.c (mkdir), `#include <ctype.h>` in server.c (tolower), forward declaration for discord_send_typing_to | 4 files patched |
 | | Suite 283/0/0, commit 3940341af | |
 
+## Phase 40: W14 Type Mismatch Fixes (v127)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W14a | Fixed `char = "\0"` (char*→char) in xai_http.c — was assigning string literal to char var | `src/tools/xai_http.c:37,59` — `'\0'` not `"\0"` |
+| W14b | Fixed `kanban_orchestrator` returning bool from void function — changed return type to bool | `src/tools/kanban.c:74` — `static bool` |
+| W14c | Fixed `telegram_get_updates` returning `http_response_t*` as `json_node_t*` — now parses HTTP response body to JSON | `src/gateway/platforms/telegram.c:647` — `json_parse(resp->body, NULL)` |
+| | Suite 283/0/0, commit 79a1f3825 | |
+
 ## Phase 38: Stale S4 Claims Retired (v33 battleship)
 
 | ID | Old Claim | Reality | Evidence |
