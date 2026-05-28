@@ -242,7 +242,7 @@ oauth_token_t *oauth_exchange_code(
     }
 
     /* Handle non-200 response */
-    if (resp->status_code != 200) {
+    if (resp->status != 200) {
         char err_body[512] = {0};
         if (resp->body && resp->body_len > 0) {
             size_t copy = resp->body_len < 511 ? resp->body_len : 511;
@@ -250,7 +250,7 @@ oauth_token_t *oauth_exchange_code(
             err_body[copy] = '\0';
         }
         _set_error("Token exchange failed: HTTP %d — %s",
-                   resp->status_code, err_body);
+                   resp->status, err_body);
         http_response_free(resp);
         http_client_free(client);
         return NULL;
@@ -339,7 +339,7 @@ auth_entry_t *auth_store_load(const char *hermes_home, int *out_count) {
     }
 
     /* Count entries */
-    int count = (int)root->collection.count;
+    int count = (int)root->c.count;
     if (count == 0) {
         json_free(root);
         if (out_count) *out_count = 0;
@@ -353,8 +353,8 @@ auth_entry_t *auth_store_load(const char *hermes_home, int *out_count) {
     }
 
     for (int i = 0; i < count; i++) {
-        const char *provider = root->collection.keys[i];
-        json_node_t *node = root->collection.items[i];
+        const char *provider = root->c.keys[i];
+        json_node_t *node = root->c.items[i];
         if (!provider || !node || node->type != JSON_OBJECT) continue;
 
         strncpy(entries[i].provider, provider, 63);

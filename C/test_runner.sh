@@ -534,6 +534,19 @@ if gcc -O2 -Wall -Wextra \
     rm -f /tmp/hermes_test_mcp_oauth
 else skip "mcp_oauth (compilation failed)"
 fi &
+echo ""; echo "=== Auth Store Tests (P176) ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_auth_store.c" \
+    "$CDIR/src/provider/token_exchange.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_auth_store -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_auth_store > /dev/null 2>&1; then ok "auth_store (20 tests)"
+    else fail "auth_store (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_auth_store
+else
+    skip "auth_store (compilation failed)"
+fi
 
 echo ""; echo "=== FAL Common Library Tests (D80) ==="
 if gcc -O2 -Wall -Wextra \

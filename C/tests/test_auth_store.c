@@ -390,7 +390,7 @@ static void test_remove_non_existent(void) {
     char *tmp = make_temp_dir();
     assert(tmp != NULL);
 
-    TEST("remove non-existent returns true (nothing to remove)");
+    TEST("remove non-existent returns false (nothing to remove)");
     auth_entry_t e;
     memset(&e, 0, sizeof(e));
     strncpy(e.provider, "only-one", sizeof(e.provider) - 1);
@@ -401,8 +401,16 @@ static void test_remove_non_existent(void) {
     free(e.token.token_type);
 
     bool ok = auth_store_remove(tmp, "no-such-provider");
-    assert(ok);
+    assert(ok == false);  /* Function returns found flag */
     PASS();
+
+    /* Verify existing entry is still intact */
+    int count = -1;
+    auth_entry_t *loaded = auth_store_load(tmp, &count);
+    assert(loaded != NULL);
+    assert(count == 1);
+    assert(strcmp(loaded[0].provider, "only-one") == 0);
+    auth_store_free(loaded, count);
 
     remove_temp_dir(tmp);
     free(tmp);
@@ -417,7 +425,7 @@ static void test_free_null(void) {
     auth_store_free(NULL, 0);
     PASS();
 
-    /* Verify it also handles count > 0 with NULL */
+    TEST("free NULL with count > 0 does not crash");
     auth_store_free(NULL, 5);
     PASS();
 }
