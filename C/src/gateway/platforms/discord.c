@@ -339,8 +339,12 @@ bool discord_edit_interaction_response(http_client_t *http,
  *  Send typing indicator
  * ================================================================ */
 
+void discord_send_typing_to(http_client_t *http, const char *channel);
+
+/* P105: Send typing indicator */
 void discord_send_typing(http_client_t *http) {
-    discord_send_typing_to(http, channel_id);
+    if (http && channel_id && channel_id[0])
+        discord_send_typing_to(http, channel_id);
 }
 
 /* P105: Send typing to specific channel */

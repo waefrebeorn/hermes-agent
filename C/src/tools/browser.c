@@ -186,12 +186,15 @@ static int index_elements(const char *html) {
             char *e = text + strlen(text) - 1;
             while (e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) e--;
             *(e+1) = '\0';
-            if (strlen(s) > 0)
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", g_tab.element_count + 1, s);
-            else if (href_val[0])
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", g_tab.element_count + 1, href_val);
+            if (strlen(s) > 0) {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", _eidx + 1, s);
+            } else if (href_val[0]) {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Link: %s", _eidx + 1, href_val);
+            }
             p = text_end + 4;
             continue;
         }
@@ -214,12 +217,15 @@ static int index_elements(const char *html) {
             char *e = text + strlen(text) - 1;
             while (e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) e--;
             *(e+1) = '\0';
-            if (strlen(s) > 0)
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Button: %s", g_tab.element_count + 1, s);
-            else
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Button", g_tab.element_count + 1);
+            if (strlen(s) > 0) {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Button: %s", _eidx + 1, s);
+            } else {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Button", _eidx + 1);
+            }
             p = text_end + 8;
             continue;
         }
@@ -255,12 +261,15 @@ static int index_elements(const char *html) {
                     pval[pl] = '\0';
                 }
             }
-            if (pval[0])
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]: %s", g_tab.element_count + 1, type_val, pval);
-            else
-                snprintf(g_tab.elements[g_tab.element_count++],
-                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]", g_tab.element_count + 1, type_val);
+            if (pval[0]) {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]: %s", _eidx + 1, type_val, pval);
+            } else {
+                int _eidx = g_tab.element_count++;
+                snprintf(g_tab.elements[_eidx],
+                    sizeof(g_tab.elements[0]), "[@e%d] Input[%s]", _eidx + 1, type_val);
+            }
             p = gt + 1;
             continue;
         }
@@ -270,8 +279,9 @@ static int index_elements(const char *html) {
             p = tag_start + 9;
             const char *gt = strchr(tag_start, '>');
             if (!gt) continue;
-            snprintf(g_tab.elements[g_tab.element_count++],
-                sizeof(g_tab.elements[0]), "[@e%d] Textarea", g_tab.element_count + 1);
+            int _eidx = g_tab.element_count++;
+            snprintf(g_tab.elements[_eidx],
+                sizeof(g_tab.elements[0]), "[@e%d] Textarea", _eidx + 1);
             p = gt + 1;
             continue;
         }
@@ -279,8 +289,9 @@ static int index_elements(const char *html) {
         /* Check for <select */
         if ((tag_start = strstr(p, "<select")) != NULL) {
             p = tag_start + 7;
-            snprintf(g_tab.elements[g_tab.element_count++],
-                sizeof(g_tab.elements[0]), "[@e%d] Select dropdown", g_tab.element_count + 1);
+            int _eidx = g_tab.element_count++;
+            snprintf(g_tab.elements[_eidx],
+                sizeof(g_tab.elements[0]), "[@e%d] Select dropdown", _eidx + 1);
             /* Skip to end of select */
             const char *close = strstr(p, "</select>");
             if (close) p = close + 9;

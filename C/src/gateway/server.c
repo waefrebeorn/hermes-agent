@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <strings.h>
 #include <time.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 /* ================================================================
