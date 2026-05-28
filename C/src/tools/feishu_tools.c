@@ -186,6 +186,48 @@ char *handle_feishu_drive_list(const char *args_json, const char *task_id) {
     return out;
 }
 
+/* feishu_drive_list_comments(file_token, file_type, is_whole, page_size)
+ * List comments on a Feishu document. Ported from Python feishu_drive_tool.py. */
+char *handle_feishu_drive_list_comments(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_t *req = json_parse(args_json, NULL);
+    if (!req) return strdup("{\"error\":\"invalid JSON\"}");
+
+    const char *file_token = json_get_str(req, "file_token", "");
+    if (!file_token[0]) { json_free(req); return strdup("{\"error\":\"missing file_token\"}"); }
+    const char *file_type = json_get_str(req, "file_type", "docx");
+    if (!file_type[0]) file_type = "docx";
+    int page_size = (int)json_get_num(req, "page_size", 100);
+    json_free(req);
+
+    http_client_t *http = http_client_new(30);
+    if (!http) return strdup("{\"error\":\"failed to create HTTP client\"}");
+
+    const char *token = feishu_get_token(http);
+    if (!token) { http_client_free(http); return strdup("{\"error\":\"auth failed\"}"); }
+
+    char url[1024];
+    snprintf(url, sizeof(url),
+             "%s/drive/v1/files/%s/comments?file_type=%s&user_id_type=open_id&page_size=%d",
+             FEISHU_API_BASE, file_token, file_type, page_size > 0 && page_size <= 100 ? page_size : 100);
+
+    char auth_hdr[1024];
+    snprintf(auth_hdr, sizeof(auth_hdr),
+             "Authorization: Bearer %s", token);
+
+    http_response_t *resp = http_request(http, HTTP_GET, url, auth_hdr, NULL, 0);
+    if (!resp) { http_client_free(http); return strdup("{\"error\":\"HTTP request failed\"}"); }
+
+    int status = resp->status;
+    const char *body = resp->body ? resp->body : "";
+    char *out = malloc(strlen(body) + 128);
+    if (!out) { http_response_free(resp); http_client_free(http); return strdup("{\"error\":\"OOM\"}"); }
+    sprintf(out, "{\"status\":%d,\"data\":%s}", status, body);
+    http_response_free(resp);
+    http_client_free(http);
+    return out;
+}
+
 static const char *FEISHU_DOC_SCHEMA =
     "{\"type\":\"object\",\"properties\":{"
     "\"doc_id\":{\"type\":\"string\",\"description\":\"Feishu document ID to read\"}"
@@ -207,4 +249,18 @@ void registry_init_feishu_tools(void) {
     registry_register_ex("feishu_drive_list",
         "List files in a Feishu Drive folder. Usage: {\"folder_token\":\"...\"}",
         FEISHU_DRIVE_SCHEMA, "file", handle_feishu_drive_list);
+
+    /* ── Feishu Drive comment tools (ports from Python feishu_drive_tool.py) ── */
+
+    static const char *FEISHU_COMMENTS_SCHEMA =
+        "{\"type\":\"object\",\"properties\":{"
+        "\"file_token\":{\"type\":\"string\",\"description\":\"Document file token (required)\"},"
+        "\"file_type\":{\"type\":\"string\",\"description\":\"File type (default docx)\"},"
+        "\"is_whole\":{\"type\":\"boolean\",\"description\":\"Only return whole-document comments\"},"
+        "\"page_size\":{\"type\":\"integer\",\"description\":\"Results per page (max 100)\"}"
+        "},\"required\":[\"file_token\"]}";
+
+    registry_register_ex("feishu_drive_list_comments",
+        "List comments on a Feishu document.",
+        FEISHU_COMMENTS_SCHEMA, "file", handle_feishu_drive_list_comments);
 }
