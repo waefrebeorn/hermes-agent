@@ -1,4 +1,4 @@
-# Slermes C — Prestige Prompt (v86)
+# Slermes C — Prestige Prompt (v87)
 
 ## Current Priority Queue (Top gaps to close)
 
@@ -16,20 +16,20 @@
 9. D04 — Terminal depth
 10. D05 — Transcribe depth
 11. D06 — Send message depth
-11. D07 — Delegate depth
-12. G02 — send_reaction implementations
-13. L03 — @every/@daily cron shorthand
+12. D07 — Delegate depth
+13. G02 — send_reaction implementations
+14. L03 — @every/@daily cron shorthand
 
 **P3 (Nice-to-have):**
-14. S07 — ACP resource placeholder
-15. S08 — HomeAssistant deprecation note
+15. S07 — ACP resource placeholder
 16. S09 — Memory in-memory noop
 17. I01 — Dockerfile for C binary
-19. I02 — GitHub Actions CI for C-only
-20. X01-X05 — Test expansions
-21. L01 — JSON schema validation
+18. I02 — GitHub Actions CI for C-only
+19. X01-X05 — Test expansions
+20. L01 — JSON schema validation
+21. L02 — MCP SSE streaming (persistent GET + event parsing)
 
 ## Current State
 - Suite: 282/0/0, 99 tools, 98 CLI, 19 gateways, 10 providers, 65 libs
-- Battleship: v17 (33 gaps across 8 sectors, fresh audit 2026-05-27)
+- Battleship: v17 (32 gaps across 8 sectors, fresh audit 2026-05-27)
 - All entry points working (--help, --version, --json, pipe mode, tools subcommand)

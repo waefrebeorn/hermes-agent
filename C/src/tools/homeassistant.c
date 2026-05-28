@@ -521,7 +521,7 @@ void registry_init_homeassistant(void) {
           "\"service\":{\"type\":\"string\",\"description\":\"Service name (e.g., turn_on, turn_off, toggle)\"},"
           "\"entity_id\":{\"type\":\"string\",\"description\":\"Target entity ID (e.g., light.living_room). Optional if data contains entity_id.\"},"
           "\"data\":{\"type\":\"object\",\"description\":\"Additional service data as JSON object. Keys are merged into the request payload (e.g., brightness, color_name, temperature).\"},"
-          "\"service_data\":{\"type\":\"string\",\"description\":\"Deprecated: use 'data' instead. JSON string of service data.\"}"
+          "\"service_data\":{\"type\":\"string\",\"description\":\"Legacy alias for 'data' parameter — prefer using 'data' instead for new integrations. JSON string of service data.\"}"
         "},\"required\":[\"domain\",\"service\"]}",
         ha_call_service_handler);
 

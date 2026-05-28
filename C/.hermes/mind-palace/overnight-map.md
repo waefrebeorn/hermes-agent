@@ -1,4 +1,4 @@
-# Overnight Map — Slermes C (v86)
+# Overnight Map — Slermes C (v87)
 
 ## Session State (2026-05-27)
 - Last action: Full Triple DA v17 audit — live binary, stub hunt, module comparison, function depth audit, library verification

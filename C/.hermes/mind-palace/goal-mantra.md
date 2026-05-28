@@ -1,8 +1,8 @@
-# Goal-Mantra — Slermes C Parity (v86)
+# Goal-Mantra — Slermes C Parity (v87)
 
 ── STATE: battleship-v17.md in C/.hermes/mind-palace/.
    Suite: 282/0/0. Tools: 99. CLI: 98. Gateways: 19. Prov: 10. Libs: 65. Binary: 30M.
-   v86. 34 verified gaps across 8 sectors (down from ~282 stale claims).
+   v87. 34 verified gaps across 8 sectors (down from ~282 stale claims).
    All entry points verified: --help, --version, --json, pipe mode, tools subcommand.
    Vault: vault/achievements.md records all accomplishments.
 

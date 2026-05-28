@@ -1,4 +1,4 @@
-# Implementation Plan — Slermes C (v86)
+# Implementation Plan — Slermes C (v87)
 
 ## Phase 1: P1 Gaps (2 items)
 1. **D01** — MCP SSE transport + streaming responses (400-800 LOC, largest gap)
@@ -12,7 +12,7 @@
 - L03 (@every/@daily cron)
 - L02 (MCP SSE streaming — persistent GET + event parsing)
 
-## Phase 3: P3 Gaps (10 items)
+## Phase 3: P3 Gaps (9 items)
 - S07-S09 (minor stubs), I01-I02 (infra), X01-X05 (test expansions), L01 (JSON schema)
 
 ## Priority Rule

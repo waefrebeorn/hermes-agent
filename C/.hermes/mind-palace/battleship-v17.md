@@ -14,7 +14,7 @@
 
 ---
 
-## SECTOR 1: Confirmed Stubs (verified, source-confirmed) — 7 gaps
+## SECTOR 1: Confirmed Stubs (verified, source-confirmed) — 6 gaps
 
 | # | ID | File:Line | Issue | LOC | Priority |
 |---|----|-----------|-------|-----|----------|
@@ -23,7 +23,6 @@
 | 5 | S05 | context_engine.c:91,100 | `on_session_start/end` are noop default handlers | 15-25 | P2 |
 | 6 | S06 | telegram.c:949 | `/* E07: Send editable draft with placeholder text (no keyboard) */` — missing editable draft feature | 40-60 | P2 |
 | 7 | S07 | acp/resource.c:263 | Non-file URI / unreadable path returns placeholder | 15-25 | P3 |
-| 8 | S08 | homeassistant.c:524 | `'data' parameter doc says "Deprecated: use 'data' instead"` — confusing self-referential deprecation | 5-10 | P3 |
 | 9 | S09 | memory.c:544,549 | In-memory mode no-ops for save/load (intentional but no file persist) | 20-30 | P3 |
 
 ## SECTOR 2: Missing Python-Registered Tools — 4 gaps
@@ -35,7 +34,7 @@
 | 3 | P03 | `yb_search_sticker` | yuanbao_tools.py | 40-80 | P2 |
 | 4 | P04 | `yb_send_sticker` | yuanbao_tools.py | 40-80 | P2 |
 
-## SECTOR 3: Tool Depth Gaps (C has tool, Python has richer features) — 7 gaps
+## SECTOR 3: Tool Depth Gaps (C has tool, Python has richer features) — 6 gaps
 
 Biggest function-count gaps per the depth audit (C fns vs Python fns):
 
@@ -95,7 +94,7 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 
 | Sector | Count | Priority Split |
 |--------|-------|----------------|
-| S1: Confirmed Stubs | 7 | P1: 0, P2: 5, P3: 2 |
+| S1: Confirmed Stubs | 6 | P1: 0, P2: 5, P3: 1 |
 | S2: Missing Tools | 4 | P2: 4 |
 | S3: Tool Depth | 7 | P1: 2, P2: 5 |
 | S4: Gateway Depth | 3 | P2: 3 |
@@ -103,6 +102,6 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 | S6: Test Coverage | 5 | P3: 5 |
 | S7: Library Depth | 3 | P1: 0, P2: 3 |
 | S8: Refactoring | 2 | P2: 1, P3: 1 |
-| **TOTAL** | **33** | P1: 2, P2: 21, P3: 10 |
+| **TOTAL** | **32** | P1: 2, P2: 21, P3: 9 |
 
 **P1 gaps:** D01 (MCP depth), D03 (browser depth)
