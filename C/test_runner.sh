@@ -1058,6 +1058,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
 else
     skip "cron_locking (compilation failed)"
 fi
+# cron_scripts test (P177 -- script execution with popen)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cron_scripts.c" \
+    "$CDIR/src/cron/cron_scripts.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cron_scripts -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron_scripts > /dev/null 2>&1; then ok "cron_scripts (10 tests)"
+    else fail "cron_scripts (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cron_scripts
+else
+    skip "cron_scripts (compilation failed)"
+fi
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \
