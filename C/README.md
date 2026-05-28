@@ -7,11 +7,11 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
 ||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||| Gaps:   5 verified gaps (battleship v22) — see battleship-v22
+|||||||||| Gaps:   3 verified gaps (battleship v23) — see battleship-v23
 ||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
 |||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||||CLI:    98 cmd_ functions — 86 unique tools registered
-|||||||Tools:  86 registered (90+ at runtime with MCP dynamic)
+|||||||CLI:    98 cmd_ functions — 93 unique tools registered
+|||||||Tools:  93 registered (97+ at runtime with MCP dynamic)
 ||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
 ||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
 ||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
@@ -140,7 +140,7 @@ make docs             # Doxygen HTML docs (if doxygen available)
 |-------|------|--------|
 | P1 | 65 library units (.o) | lib/*.o |
 | P2 | Agent core + CLI + 10 providers | src/agent/*.o, src/cli/*.o |
-| P3 | 86 tool handlers | src/tools/*.o |
+| P3 | 93 tool handlers | src/tools/*.o |
 | P4 | 19 gateway platforms | src/gateway/*.o |
 | P5 | Cron scheduler + final link | hermes binary |
 
@@ -509,7 +509,7 @@ waefrebeorn/slermes/         ← Repo root
 │   │   ├── gateway/              ←   Server + 19 platform adapters
 │   │   │   └── platforms/        ←     Individual platform implementations
 │   │   ├── plugins/              ←   10 .so plugin implementations (.c + Makefile)
-│   │   ├── tools/                ←   86 tool handler implementations
+│   │   ├── tools/                ←   93 tool handler implementations
 │   │   ├── acp/                  ←   ACP JSON-RPC server
 │   │   └── main.c                ←   Entry point (CLI option parsing + dispatch)
 │   ├── lib/                      ←   65 library units (compiled directly, no .a)
@@ -545,7 +545,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 5 | `entry.md` | Build/run commands + architecture |
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
-| 8 | `battleship-v22.md` | Current gap map (22 verified gaps) |
+| 8 | `battleship-v23.md` | Current gap map (3 verified gaps) |
 | 9 | `vault/achievements.md` | All resolved gaps with evidence |
 
 ---
@@ -613,7 +613,7 @@ This project tracks [NousResearch/hermes-agent](https://github.com/NousResearch/
 
 ## Battleship Roadmap (12 Gaps)
 
-See `.hermes/mind-palace/battleship-v22.md` for the complete gap map.
+See `.hermes/mind-palace/battleship-v23.md` for the complete gap map.
 
 **Summary:**
 | Sector | Count | Priority |

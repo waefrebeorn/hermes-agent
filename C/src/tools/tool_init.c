@@ -52,6 +52,7 @@ void registry_init_feishu_tools(void);
 void registry_init_file_merge(void);
 void registry_init_mixture_of_agents(void);
 void registry_init_video_analyze(void);
+void registry_init_yuanbao_tools(void);
 
 /* Register all tools */
 void tools_init_all(void) {
@@ -112,6 +113,9 @@ void tools_init_all(void) {
 
     /* P04: Video analysis tool */
     registry_init_video_analyze();
+
+    /* M05-M07: Yuanbao platform tools */
+    registry_init_yuanbao_tools();
 
     /* P150: Assign toolsets for enabled/disabled filtering */
     registry_set_toolset("browser_navigate", "browser");

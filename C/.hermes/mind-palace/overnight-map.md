@@ -1,3 +1,3 @@
-# Overnight (v112)
-5 gaps remain. Only M03-M07 (Yuanbao SDK-dependent tools).
-All D-phase tool depth, CI, and test edge cases resolved.
+# Overnight (v113)
+3 gaps remain. M03/M04/M06 (Yuanbao SDK-dependent tools).
+M05 search_sticker + M07 send_sticker resolved.

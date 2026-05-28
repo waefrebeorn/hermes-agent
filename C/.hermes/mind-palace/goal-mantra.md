@@ -1,9 +1,9 @@
 ── P0 -- gap-closing loop ──
 
 ── STATE ──
-Suite 282/0/0. 86 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
-v112. 5 gaps. State in C/.hermes/mind-palace/.
-state.md ground truth. battleship-v22.md canonical gap list.
+Suite 282/0/0. 93 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
+v113. 3 gaps. State in C/.hermes/mind-palace/.
+state.md ground truth. battleship-v23.md canonical gap list.
 
 ── LOOP ──
 Read state → battleship → prestige → plan → overnight.

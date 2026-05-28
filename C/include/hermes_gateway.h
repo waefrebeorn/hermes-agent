@@ -1002,6 +1002,9 @@ bool yuanbao_init(const char *app_id, const char *app_secret,
                   const char *api_domain);
 void yuanbao_start(void);
 void yuanbao_stop(void);
+int  yuanbao_send_sticker(const char *to_uid, const char *sticker_id,
+                           const char *sticker_name, const char *package_id,
+                           int width, int height);
 
 /* ================================================================
  *  P101: Gateway queue API

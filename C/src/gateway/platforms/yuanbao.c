@@ -249,6 +249,93 @@ static int encode_send_c2c(uint8_t *buf, size_t buf_len,
                             body, (size_t)body_pos);
 }
 
+/* Encode SendC2CMessageReq for sticker (TIMFaceElem) */
+static int encode_send_sticker(uint8_t *buf, size_t buf_len,
+                                const char *to_uid,
+                                const char *sticker_id,
+                                const char *sticker_name,
+                                const char *package_id,
+                                int width, int height,
+                                int64_t client_msg_id) {
+    uint8_t body[4096];
+    int body_pos = 0;
+    int n;
+
+    /* field 1: receiver_id (string) */
+    n = pb_encode_delimited_field(body, sizeof(body), 1,
+                                   (const uint8_t *)to_uid, strlen(to_uid));
+    if (n <= 0) return -1; body_pos += n;
+
+    /* field 3: sdk_app_id (uint32) */
+    n = pb_encode_varint_field(body, sizeof(body), 3, YB_INSTANCE_ID);
+    if (n <= 0) return -1; body_pos += n;
+
+    /* field 5: client_msg_id (int64) */
+    n = pb_encode_varint_field(body, sizeof(body), 5, (uint64_t)client_msg_id);
+    if (n <= 0) return -1; body_pos += n;
+
+    /* field 6: msg_body (repeated MsgBodyElement) — one TIMFaceElem */
+    uint8_t elem[2048];
+    int elem_pos = 0;
+    /* msg_type = "TIMFaceElem" (field 1) */
+    n = pb_encode_delimited_field(elem, sizeof(elem), 1,
+                                   (const uint8_t *)"TIMFaceElem", 15);
+    if (n <= 0) return -1; elem_pos += n;
+
+    /* msg_content: index=0 (field 1, varint) + data=sticker JSON (field 2, string) */
+    uint8_t content[2048];
+    int content_pos = 0;
+    /* field 1: index = 0 */
+    n = pb_encode_varint_field(content, sizeof(content), 1, 0);
+    if (n <= 0) return -1; content_pos += n;
+
+    /* field 2: data = sticker metadata JSON */
+    char data_json[1024];
+    snprintf(data_json, sizeof(data_json),
+             "{\"sticker_id\":\"%s\",\"package_id\":\"%s\","
+             "\"width\":%d,\"height\":%d,\"formats\":\"png\","
+             "\"name\":\"%s\"}",
+             sticker_id, package_id,
+             width, height,
+             sticker_name);
+    n = pb_encode_delimited_field(content, sizeof(content), 2,
+                                   (const uint8_t *)data_json, strlen(data_json));
+    if (n <= 0) return -1; content_pos += n;
+
+    /* Wrap content as nested message field 2 of elem */
+    uint8_t elem_content[2048];
+    int ec_pos = pb_encode_delimited_field(elem_content, sizeof(elem_content), 2,
+                                            content, (size_t)content_pos);
+    if (ec_pos <= 0) return -1;
+
+    /* Add to elem */
+    if ((size_t)elem_pos + (size_t)ec_pos > sizeof(elem)) return -1;
+    memcpy(elem + elem_pos, elem_content, (size_t)ec_pos);
+    elem_pos += ec_pos;
+
+    /* Add elem as field 6 (repeated) */
+    n = pb_encode_delimited_field(body + body_pos, sizeof(body) - (size_t)body_pos,
+                                   6, elem, (size_t)elem_pos);
+    if (n <= 0) return -1; body_pos += n;
+
+    /* field 7: msg_type (uint32) = 0 for C2C */
+    n = pb_encode_varint_field(body, sizeof(body), 7, 0);
+    if (n <= 0) return -1; body_pos += n;
+
+    /* field 8: instance_id (uint32) */
+    n = pb_encode_varint_field(body, sizeof(body), 8, YB_INSTANCE_ID);
+    if (n <= 0) return -1; body_pos += n;
+
+    /* Wrap as biz msg */
+    char msg_id_str[64];
+    snprintf(msg_id_str, sizeof(msg_id_str), "sticker-%ld", (long)client_msg_id);
+
+    return encode_conn_msg(buf, buf_len,
+                            CT_REQUEST, "send_c2c_message",
+                            g_yb.seq_no++, msg_id_str, BIZ_PKG,
+                            body, (size_t)body_pos);
+}
+
 /* Decode a ConnMsg — extract head fields and optional data */
 /* Returns: 0 = decoded, -1 = error */
 static int decode_conn_msg(const uint8_t *data, size_t data_len,
@@ -535,6 +622,31 @@ void yuanbao_start(void) {
 
 void yuanbao_stop(void) {
     g_yb.running = false;
+}
+
+/* Send a sticker via the active WebSocket connection. Returns 0 on success, -1 on error. */
+int yuanbao_send_sticker(const char *to_uid, const char *sticker_id,
+                          const char *sticker_name, const char *package_id,
+                          int width, int height) {
+    if (!g_yb.ws || !g_yb.running) return -1;
+
+    int64_t now_ms;
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    now_ms = (int64_t)ts.tv_sec * 1000 + (int64_t)(ts.tv_nsec / 1000000);
+
+    uint8_t buf[8192];
+    int len = encode_send_sticker(buf, sizeof(buf), to_uid,
+                                   sticker_id, sticker_name,
+                                   package_id, width, height,
+                                   now_ms);
+    if (len <= 0) return -1;
+
+    pthread_mutex_lock(&g_yb_lock);
+    int rc = ws_send(g_yb.ws, WS_OP_BIN, buf, (size_t)len);
+    pthread_mutex_unlock(&g_yb_lock);
+
+    return (rc == 0) ? 0 : -1;
 }
 
 /* Server.c setup/thread wrappers */

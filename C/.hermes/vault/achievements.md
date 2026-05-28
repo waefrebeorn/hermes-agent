@@ -119,4 +119,23 @@ The following v17 claims verified against source code and found stale/intentiona
 ### #21 — Approval Gateway Prompt (1 item resolved)
 | Item | Detail | Evidence |
 |------|--------|----------|
-| Gateway approval prompt | Send dangerous command approval prompt through messaging platform instead of stdin. Telegram short-poll for y/n/a response with timeout. Cross-platform condvar signaling. | approval.c:approval_prompt_user, server.c:gw_approval_wait_response/telegram_poll_for_response/gw_approval_check_response |
+| Approval gateway prompt | Send dangerous command approval prompt through messaging platform instead of stdin. Telegram short-poll for y/n/a response with timeout. Cross-platform condvar signaling. | approval.c:approval_prompt_user, server.c:gw_approval_wait_response/telegram_poll_for_response/gw_approval_check_response |
+
+## Phase Theta — Yuanbao Sticker Tools (Jun 2)
+
+### M05 — yb_search_sticker (resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| Sticker database | 59-entry static C array ported from yuanbao_sticker.py | src/tools/yuanbao_tools.c |
+| Search function | Substring + character hit ratio scoring with dynamic threshold | src/tools/yuanbao_tools.c |
+| Tool registered | `yb_search_sticker` in `hermes-yuanbao` toolset, 93 total tools | grep registry_register_ex |
+| Suite | Still 282/0/0 | make && test_runner.sh |
+
+### M07 — yb_send_sticker (resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| TIMFaceElem proto | `encode_send_sticker()` — index=0 + data=sticker JSON | src/gateway/platforms/yuanbao.c |
+| Gateway public API | `yuanbao_send_sticker()` with mutex-protected ws_send | yuanbao.c, hermes_gateway.h |
+| Tool handler | Lookup by name/ID, resolve chat_id from args or session env | src/tools/yuanbao_tools.c |
+| Tool registered | `yb_send_sticker` in `hermes-yuanbao` toolset | grep registry_register_ex |
+| Test | Verified through `./hermes tools` output | Build clean |
