@@ -312,3 +312,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | X01 | Vision edge case tests expanded from 15 to 31: magic-byte detection for JPEG, GIF, BMP, TIFF, WebP, ICO (no extension); empty file passthrough; header-only PNG (both with and without extension); .bin with JPEG magic proves magic override. Bugfix: magic-byte path now sets image_url so providers can process magic-detected files | `tests/test_vision.c` — 16 new edge case tests (31 total); `src/tools/vision.c` — magic-byte branch sets image_url + detail/analysis |
+
+## Phase 24: Image Gen Edge Case Tests (X02)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X02 | Image generation edge case tests expanded from 7 to 18: invalid/empty provider, negative aspect ratio, 4K-char prompt, JSON injection, unicode/emoji, all-params-set, n=0, n=999, unknown extra params | `tests/test_image_gen.c` — 11 new tests (18 total) |

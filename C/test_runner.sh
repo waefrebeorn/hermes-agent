@@ -3039,7 +3039,7 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" $INCDIRS \
     "$CDIR/lib/libfal_common/fal_common.c" \
     "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_image_gen -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_image_gen ]]; then
-    if /tmp/hermes_test_image_gen > /dev/null 2>&1; then ok "image_gen (8 tests)"
+    if /tmp/hermes_test_image_gen > /dev/null 2>&1; then ok "image_gen (18 tests)"
     else fail "image_gen (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_image_gen
 else skip "image_gen (compilation failed)"
