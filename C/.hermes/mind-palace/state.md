@@ -1,6 +1,6 @@
-     1|     1|# Slermes C (v139)
+     1|     1|# Slermes C (v140)
      2|     2|
-     3|     3|Suite: 289/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+     3|     3|Suite: 290/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
      4|     4|Binary: 31M | Warnings: 0 | Test files: 242 | C src: 174
      5|     5|Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
      6|     6|

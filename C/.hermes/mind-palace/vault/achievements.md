@@ -484,6 +484,17 @@
 
 ## Phase 49: Cron Script Execution Test Suite (v139)
 
+## Phase 50: Scheduler Parser Test Suite (v140)
+
+- Added 18-test suite for cron/scheduler.c covering all 3 parsing/scheduling functions
+- Tests: parse_cron_field (wildcard, slash-N, numeric, NULL/empty),
+  parse_schedule (5-field, */N interval, partial fields), should_run
+  (interval timing, exact field match, wrong minute, all-wildcard)
+- Refactored: removed static from 3 functions, moved cron_schedule_t struct
+  and function declarations to scheduler.h for testability
+- Evidence: commit b4ceb7fde, files src/cron/scheduler.c, src/cron/scheduler.h
+
+
 - Added 10-test suite for cron_scripts.c covering all 2 public functions
 - Tests: script execution with popen (echo, args, exit code, stderr redirect),
   NULL/error paths (missing file, no interpreter), shebang auto-detection,

@@ -1,5 +1,5 @@
-     1|# Testing (v139)
+     1|# Testing (v140)
      2|
-     3|289/0/0, 245 test files. All pass. Gap: 240 C tests vs ~17k Python tests.
+     3|290/0/0, 246 test files. All pass. Gap: 240 C tests vs ~17k Python tests.
      4|Fixes in v129-v130: ASan build (-lz), feishu test (http.o→http.c), stale CLI count. v130: service_tier/reasoning_effort wired to Anthropic/OpenRouter/Azure/Custom.
      5|
