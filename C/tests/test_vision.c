@@ -199,23 +199,23 @@ int main(void) {
     json_free(r);
     unlink("/tmp/hermes_test_vision.heic");
 
-    /* 14. SVF extension (invalid — file exists but bad extension) */
+    /* 14. SVF extension (invalid name — but file has valid PNG magic bytes) */
     fd = open("/tmp/hermes_test_vision.svf", O_CREAT|O_WRONLY, 0644);
     write_all(fd, png, sizeof(png));
     close(fd);
     r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_vision.svf\"}", NULL));
-    TEST("vision invalid .svf extension returns error (not in list)",
-         r && strstr(result_get_str(r, "error", ""), "Not a recognized image format") != NULL);
+    TEST("vision .svf with valid PNG magic bytes is accepted (detected_format=png)",
+         r && strcmp(result_get_str(r, "detected_format", ""), "png") == 0);
     json_free(r);
     unlink("/tmp/hermes_test_vision.svf");
 
-    /* 15. No extension — file exists but without image extension */
+    /* 15. No extension — but file has valid PNG magic bytes */
     fd = open("/tmp/hermes_test_noext", O_CREAT|O_WRONLY, 0644);
     write_all(fd, png, sizeof(png));
     close(fd);
     r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_noext\"}", NULL));
-    TEST("vision no extension returns error",
-         r && strstr(result_get_str(r, "error", ""), "Not a recognized image format") != NULL);
+    TEST("vision no extension with valid PNG magic bytes is accepted (detected_format=png)",
+         r && strcmp(result_get_str(r, "detected_format", ""), "png") == 0);
     json_free(r);
     unlink("/tmp/hermes_test_noext");
 

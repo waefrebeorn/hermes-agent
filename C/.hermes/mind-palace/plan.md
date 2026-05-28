@@ -1,2 +1,2 @@
-# Plan (v99)
-Phase 5 (Gateway + Depth). D02 partial (Azure TTS). Next: P2 tool depth gaps.
+# Plan (v100)
+Phase 5 (Gateway + Depth). D08 partial (magic bytes). Next: P2 tool depth gaps.

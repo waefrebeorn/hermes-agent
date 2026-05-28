@@ -97,6 +97,48 @@ static bool has_image_extension(const char *path) {
     return false;
 }
 
+/* D08: Magic-byte image format detection — works on extensionless files.
+ * Reads first 12 bytes of file and checks known image signatures.
+ * Returns NULL if unrecognized, else a format name string (static). */
+static const char *detect_image_magic(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    unsigned char hdr[16] = {0};
+    size_t n = fread(hdr, 1, 12, f);
+    fclose(f);
+    if (n < 4) return NULL;
+
+    /* PNG:  89 50 4E 47 */
+    if (n >= 4 && hdr[0]==0x89 && hdr[1]=='P' && hdr[2]=='N' && hdr[3]=='G')
+        return "png";
+    /* JPEG: FF D8 FF */
+    if (n >= 3 && hdr[0]==0xFF && hdr[1]==0xD8 && hdr[2]==0xFF)
+        return "jpeg";
+    /* GIF:  47 49 46 38 (GIF8) */
+    if (n >= 4 && hdr[0]=='G' && hdr[1]=='I' && hdr[2]=='F' && hdr[3]=='8')
+        return "gif";
+    /* BMP:  42 4D (BM) */
+    if (n >= 2 && hdr[0]=='B' && hdr[1]=='M')
+        return "bmp";
+    /* TIFF: 49 49 2A 00 (little-endian) or 4D 4D 00 2A (big-endian) */
+    if (n >= 4 && ((hdr[0]==0x49 && hdr[1]==0x49 && hdr[2]==0x2A && hdr[3]==0x00) ||
+                   (hdr[0]==0x4D && hdr[1]==0x4D && hdr[2]==0x00 && hdr[3]==0x2A)))
+        return "tiff";
+    /* WebP: 52 49 46 46 ... 57 45 42 50 */
+    if (n >= 12 && hdr[0]=='R' && hdr[1]=='I' && hdr[2]=='F' && hdr[3]=='F' &&
+        hdr[8]=='W' && hdr[9]=='E' && hdr[10]=='B' && hdr[11]=='P')
+        return "webp";
+    /* ICO:  00 00 01 00 */
+    if (n >= 4 && hdr[0]==0x00 && hdr[1]==0x00 && hdr[2]==0x01 && hdr[3]==0x00)
+        return "ico";
+    /* AVIF/HEIC: ftyp box — ftypavif / ftypheic / ftypheim */
+    if (n >= 12 && hdr[4]=='f' && hdr[5]=='t' && hdr[6]=='y' && hdr[7]=='p') {
+        if (memcmp(hdr+8, "avif", 4) == 0) return "avif";
+        if (memcmp(hdr+8, "heic", 4) == 0 || memcmp(hdr+8, "heim", 4) == 0) return "heic";
+    }
+    return NULL;
+}
+
 char *vision_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -124,9 +166,16 @@ char *vision_handler(const char *args_json, const char *task_id) {
         if (is_local && stat(image_url, &st) != 0) {
             json_object_set(result, "error", json_new_string("File not found"));
         } else if (is_local && !has_image_extension(image_url)) {
-            char buf[256];
-            snprintf(buf, sizeof(buf), "Not a recognized image format (extensions: jpg/png/gif/webp/bmp/svg/ico/heic/avif)");
-            json_object_set(result, "error", json_new_string(buf));
+            /* D08: Check magic bytes for extensionless files */
+            const char *magic_format = detect_image_magic(image_url);
+            if (!magic_format) {
+                char buf[256];
+                snprintf(buf, sizeof(buf), "Not a recognized image format (extensions: jpg/png/gif/webp/bmp/svg/ico/heic/avif)");
+                json_object_set(result, "error", json_new_string(buf));
+            } else {
+                json_object_set(result, "detected_format", json_new_string(magic_format));
+                /* Continue processing — valid image detected via magic bytes */
+            }
         } else if (is_local && st.st_size > VISION_MAX_FILE_BYTES) {
             json_object_set(result, "error", json_new_string("File too large (>50 MB)"));
         } else {

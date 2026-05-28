@@ -255,6 +255,12 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | D07 | Spawn pause for delegate_task: `set_spawn_paused()`/`is_spawn_paused()` global gate checked before each parallel batch. Exposed via hermes.h for TUI/gateway RPC integration | `src/tools/delegate.c` — `g_spawn_paused` flag + mutex; `is_spawn_paused()` check in `spawn_children()` before each batch; header decls in `include/hermes.h` |
 ## Phase 14: Azure TTS Provider (D02 partial)
 
+
+## Phase 15: Magic-Byte Image Detection (D08 partial)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D08 | Magic-byte image format detection: `detect_image_magic()` reads first 12 bytes and identifies PNG, JPEG, GIF, BMP, TIFF, WebP, ICO, AVIF, HEIC by header signature. Extensionless files with valid image bytes are now accepted instead of rejected | `src/tools/vision.c` — `detect_image_magic()` function; wired into `vision_handler` at the extension check fallback; returns `detected_format` field in result JSON |
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D02 | Azure Cognitive Services TTS provider: SSML-based POST to {region}.tts.speech.microsoft.com with Ocp-Apim-Subscription-Key auth. Supports AZURE_TTS_KEY / AZURE_SPEECH_KEY env vars and azure region config. New `azure` provider option in text_to_speech schema | `src/tools/tts.c` -- tts_azure() function following existing API pattern; SSML body construction; dispatch branch at strcmp("azure"); schema updated to list azure |
