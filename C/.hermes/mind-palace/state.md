@@ -1,34 +1,37 @@
-# Slermes C (v131)
-
-Suite: 283/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174
-Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
-
-## Fork State
-- **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent cleanly
-- **Git state**: 0 commits behind upstream, 0 ahead
-- **C code**: Tracked in C/ subdirectory, builds independent of Python
-- **Old dev branch**: `c-work` preserved on GitHub (277 original commits)
-
-## Progress This Session
-- Phase 36: Dead code & warning cleanup in image_routing.c, secrets.c, session_search.c
-- Phase 37: Suppressed unused-function/param/variable warnings across 7 files
-  (memory.c, config.c, discord.c, kanban.c, computer_use.c, mcp_tool.c, url_safety.c)
-  Suite 283/0/0, commits 80a4dc334, b1bfb81b4, 3940341af pushed. Battleship v33 (21→19 gaps). W11 browser UB, W12 strtok_r, W13 missing headers, W14 type mismatches — all resolved.
-- Phase 38: ASan build fix (-lz), feishu test segfault fix (http.o→http.c), stale CLI count fix.
-  Suite 283/0/0 verified, commits e0d7ccbb0, 86db5fecc pushed.
-- Phase 39: Provider mode parity — wired service_tier to Anthropic, reasoning_effort to OpenRouter/Azure/Custom
-  Suite 283/0/0, commit 180c0cc97 pushed.
-- Phase 40-41: Provider depth + lifecycle hook wiring
-  Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points (pre/post LLM, pre/post tool).
-  Suite 283/0/0, commit dde46b7c0 pushed.
-
-## Critical Gaps
-- **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
-- **P1**: Pipeline, cross-comparison (9 gaps)
-- **P1**: Upstream drift (1 gap) — test gap U07
-- **P2**: Product features (6 gaps)
-
-## Honest Assessment
-Real parity gaps exist across form, function, test, pipeline, and upstream drift. Fork synced to upstream.
-C/.hermes/ docs tracked in git — 70+ mind-palace files version-controlled.
+     1|     1|# Slermes C (v132)
+     2|     2|
+     3|     3|Suite: 283/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+     4|     4|Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174
+     5|     5|Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
+     6|     6|
+     7|     7|## Fork State
+     8|     8|- **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent cleanly
+     9|     9|- **Git state**: 0 commits behind upstream, 0 ahead
+    10|    10|- **C code**: Tracked in C/ subdirectory, builds independent of Python
+    11|    11|- **Old dev branch**: `c-work` preserved on GitHub (277 original commits)
+    12|    12|
+    13|    13|## Progress This Session
+    14|    14|- Phase 36: Dead code & warning cleanup in image_routing.c, secrets.c, session_search.c
+    15|    15|- Phase 37: Suppressed unused-function/param/variable warnings across 7 files
+    16|    16|  (memory.c, config.c, discord.c, kanban.c, computer_use.c, mcp_tool.c, url_safety.c)
+    17|    17|  Suite 283/0/0, commits 80a4dc334, b1bfb81b4, 3940341af pushed. Battleship v33 (21→19 gaps). W11 browser UB, W12 strtok_r, W13 missing headers, W14 type mismatches — all resolved.
+    18|    18|- Phase 38: ASan build fix (-lz), feishu test segfault fix (http.o→http.c), stale CLI count fix.
+    19|    19|  Suite 283/0/0 verified, commits e0d7ccbb0, 86db5fecc pushed.
+    20|    20|- Phase 39: Provider mode parity — wired service_tier to Anthropic, reasoning_effort to OpenRouter/Azure/Custom
+    21|    21|  Suite 283/0/0, commit 180c0cc97 pushed.
+    22|    22|- Phase 40-41: Provider depth + lifecycle hook wiring
+    23|    23|  Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points (pre/post LLM, pre/post tool).
+    24|    24|  Suite 283/0/0, commit dde46b7c0 pushed.
+- Phase 42: Gateway MEDIA: support + session meta fields (reasoning_tokens, cost)
+  Commits: 79fe05286, cd5ecfc9c, 34d6ef494. Suite 283/0/0.
+    25|    25|
+    26|    26|## Critical Gaps
+    27|    27|- **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
+    28|    28|- **P1**: Pipeline, cross-comparison (9 gaps)
+    29|    29|- **P1**: Upstream drift (1 gap) — test gap U07
+    30|    30|- **P2**: Product features (6 gaps)
+    31|    31|
+    32|    32|## Honest Assessment
+    33|    33|Real parity gaps exist across form, function, test, pipeline, and upstream drift. Fork synced to upstream.
+    34|    34|C/.hermes/ docs tracked in git — 70+ mind-palace files version-controlled.
+    35|    35|
