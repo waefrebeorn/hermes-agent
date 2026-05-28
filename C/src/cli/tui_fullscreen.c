@@ -801,12 +801,12 @@ static void tui_resize_panes(void) {
  *  SIGWINCH handler — terminal resize
  * ================================================================== */
 
+/* SIGWINCH handler — set flag for main loop to process */
+static volatile sig_atomic_t g_resize_requested = 0;
+
 static void handle_winch(int sig) {
     (void)sig;
-    endwin();
-    refresh();
-    clear();
-    tui_resize_panes();
+    g_resize_requested = 1;
 }
 
 /* ==================================================================
@@ -3324,6 +3324,17 @@ int tui_fullscreen_run(agent_state_t *state) {
         /* Poll gateway for incoming messages (P199) */
         if (tui.gateway.state == RPC_CONNECTED)
             tui_gateway_poll();
+
+        /* Handle deferred terminal resize (F03) — async-signal-safe:
+         * signal handler only sets a flag, actual ncurses calls
+         * happen here in the main loop context. */
+        if (g_resize_requested) {
+            g_resize_requested = 0;
+            endwin();
+            refresh();
+            clear();
+            tui_resize_panes();
+        }
 
         /* Get input from the input pane */
         int ch = wgetch(tui.panes[PANE_INPUT].win);

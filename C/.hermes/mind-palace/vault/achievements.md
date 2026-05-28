@@ -371,3 +371,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | F02 | Added `slermes setup` — interactive wizard with provider menu, model prompt, API key capture. Creates config.yaml + .env. Skips existing config with warning. Wired via main.c dispatch to config.c `hermes_config_setup_interactive()` | `src/cli/config.c` — `hermes_config_setup_interactive()` (131 LOC); `src/main.c` — `setup` command dispatcher; suite 282/0/0 |
+
+## Phase 32: Async-Signal-Safe SIGWINCH (F03)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| F03 | SIGWINCH handler now sets `volatile sig_atomic_t` flag instead of calling ncurses from signal context. Actual resize (endwin/refresh/clear/tui_resize_panes) deferred to main loop — checked after gateway poll and before input. | `src/cli/tui_fullscreen.c` — `g_resize_requested` flag + handler rewrite + main loop check; suite 282/0/0 |
