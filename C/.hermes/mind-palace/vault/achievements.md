@@ -202,3 +202,9 @@ Claims from past battleship versions verified as already implemented.
 | D09 | CUA backend missing | Implemented at computer_use.c | ~400 LOC |
 | D12 | CDP backend stub | Real implementation | browser.c |
 | L14-L29 | Various library depth claims | Already implemented | Verified via grep |
+
+## Phase 8: Gateway Shutdown Callback
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| S02 | server.c:2066 — replaced `plat.shutdown = NULL` with `poll_platform_shutdown()` real callback | `src/gateway/server.c:1149` — `gw_platform_shutdown_all()` now calls logging callback per platform |

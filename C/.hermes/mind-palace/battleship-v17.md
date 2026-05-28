@@ -14,12 +14,11 @@
 
 ---
 
-## SECTOR 1: Confirmed Stubs (verified, source-confirmed) — 9 gaps
+## SECTOR 1: Confirmed Stubs (verified, source-confirmed) — 8 gaps
 
 | # | ID | File:Line | Issue | LOC | Priority |
 |---|----|-----------|-------|-----|----------|
 | 1 | S01 | llm_client.c:1522 | `perform_background_review` — NOT YET WIRED, no caller in C agent_loop | 30-50 | P2 |
-| 2 | S02 | server.c:2066 | `plat.shutdown = NULL; /* no-op for now */` — one platform has NULL shutdown despite S07 resolution | 5-10 | P1 |
 | 3 | S03 | commands.c:2743 | `/restart` says "Use /exit and re-launch" instead of actual restart | 20-30 | P1 |
 | 4 | S04 | commands.c:2595 | Plugin hot-reload: "hot-reload not yet supported" | 30-50 | P2 |
 | 5 | S05 | context_engine.c:91,100 | `on_session_start/end` are noop default handlers | 15-25 | P2 |
@@ -97,7 +96,7 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 
 | Sector | Count | Priority Split |
 |--------|-------|----------------|
-| S1: Confirmed Stubs | 9 | P1: 2, P2: 5, P3: 2 |
+| S1: Confirmed Stubs | 8 | P1: 1, P2: 5, P3: 2 |
 | S2: Missing Tools | 4 | P2: 4 |
 | S3: Tool Depth | 7 | P1: 2, P2: 5 |
 | S4: Gateway Depth | 3 | P2: 3 |
@@ -105,6 +104,6 @@ Biggest function-count gaps per the depth audit (C fns vs Python fns):
 | S6: Test Coverage | 5 | P3: 5 |
 | S7: Library Depth | 3 | P1: 1, P2: 2 |
 | S8: Refactoring | 2 | P2: 1, P3: 1 |
-| **TOTAL** | **35** | P1: 5, P2: 20, P3: 10 |
+| **TOTAL** | **34** | P1: 4, P2: 20, P3: 10 |
 
-**P1 gaps:** S02 (shutdown NULL), S03 (/restart stub), D01 (MCP depth), D03 (browser depth), L02 (MCP SSE)
+**P1 gaps:** S03 (/restart stub), D01 (MCP depth), D03 (browser depth), L02 (MCP SSE)

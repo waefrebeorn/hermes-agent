@@ -1,10 +1,10 @@
-# Overnight Map — Slermes C (v83)
+# Overnight Map — Slermes C (v84)
 
 ## Session State (2026-05-27)
 - Last action: Full Triple DA v17 audit — live binary, stub hunt, module comparison, function depth audit, library verification
-- Battleship: v17 (35 gaps across 8 sectors, verified against live source)
+- Battleship: v17 (34 gaps across 8 sectors, verified against live source)
 - Suite: 282/0/0
-- Next priority: S02 (platform shutdown=NULL) — quickest P1 fix
+- Next priority: S03 (platform shutdown=NULL) — quickest P1 fix
 - Working tree: clean, on main
 
 ## Key Files
@@ -15,4 +15,4 @@
 
 ## Context
 The battleship is no longer stale. Every gap in v17 was verified against actual source code.
-35 real gaps remain. All previous stale claims (~247 items) retired to vault.
+34 real gaps remain. All previous stale claims (~247 items) retired to vault.

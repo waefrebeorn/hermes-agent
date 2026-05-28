@@ -1144,6 +1144,14 @@ bool gw_platform_send_reaction(const char *platform_name, const char *chat_id,
     return false;
 }
 
+/* Generic shutdown for polling-based platforms.
+   Threads have already exited via g_gw.running flag + pthread_join by the
+   time this is called.  Per-platform cleanup (HTTP pool, sessions) is
+   handled by the global cleanup path — this just logs the event. */
+static void poll_platform_shutdown(void) {
+    printf("[gateway] Polling platform shutdown\n");
+}
+
 void gw_platform_shutdown_all(void) {
     for (int i = 0; i < g_gw.platform_def_count; i++) {
         if (g_gw.platform_defs[i].shutdown)
@@ -2063,7 +2071,7 @@ int hermes_gateway_main(int argc, char **argv) {
                             plat.name = g_gw.platforms[g_gw.platform_count];
                             /* All polling-based platforms: init=setup, send=poll-based functions */
                             plat.init = all_platforms[i].setup;
-                            plat.shutdown = NULL; /* no-op for now — S07 resolved with gw_platform_shutdown_all() */
+                            plat.shutdown = poll_platform_shutdown;
                             gw_platform_register(&plat);
                         }
                         g_gw.platform_count++;
