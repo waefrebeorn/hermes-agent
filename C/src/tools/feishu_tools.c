@@ -274,6 +274,126 @@ char *handle_feishu_drive_list_comment_replies(const char *args_json, const char
     return out;
 }
 
+/* feishu_drive_reply_comment(file_token, comment_id, content, file_type)
+ * Reply to a comment thread on a Feishu document. POST-based. */
+char *handle_feishu_drive_reply_comment(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_t *req = json_parse(args_json, NULL);
+    if (!req) return strdup("{\"error\":\"invalid JSON\"}");
+
+    const char *file_token = json_get_str(req, "file_token", "");
+    const char *comment_id = json_get_str(req, "comment_id", "");
+    const char *content = json_get_str(req, "content", "");
+    if (!file_token[0] || !comment_id[0] || !content[0]) {
+        json_free(req);
+        return strdup("{\"error\":\"missing file_token, comment_id, or content\"}");
+    }
+    const char *file_type = json_get_str(req, "file_type", "docx");
+    if (!file_type[0]) file_type = "docx";
+    json_free(req);
+
+    http_client_t *http = http_client_new(30);
+    if (!http) return strdup("{\"error\":\"failed to create HTTP client\"}");
+
+    const char *token = feishu_get_token(http);
+    if (!token) { http_client_free(http); return strdup("{\"error\":\"auth failed\"}"); }
+
+    char url[1024];
+    snprintf(url, sizeof(url),
+             "%s/drive/v1/files/%s/comments/%s/replies?file_type=%s",
+             FEISHU_API_BASE, file_token, comment_id, file_type);
+
+    /* Build JSON body: {"content":{"elements":[{"type":"text_run","text_run":{"text":"..."}}]}} */
+    json_t *body_j = json_object();
+    json_t *content_j = json_object();
+    json_t *elements = json_array();
+    json_t *text_run = json_object();
+    json_t *text_run_inner = json_object();
+    json_set(text_run_inner, "text", json_string(content));
+    json_set(text_run, "text_run", text_run_inner);
+    json_set(text_run, "type", json_string("text_run"));
+    json_array_append(elements, text_run);
+    json_set(content_j, "elements", elements);
+    json_set(body_j, "content", content_j);
+    char *json_body = json_serialize(body_j);
+    json_free(body_j);
+    if (!json_body) { http_client_free(http); return strdup("{\"error\":\"OOM\"}"); }
+
+    char auth_hdr[1024];
+    snprintf(auth_hdr, sizeof(auth_hdr), "Authorization: Bearer %s", token);
+
+    http_response_t *resp = http_post_json_auth(http, url, json_body, auth_hdr);
+    free(json_body);
+    if (!resp) { http_client_free(http); return strdup("{\"error\":\"HTTP request failed\"}"); }
+
+    int status = resp->status;
+    const char *body = resp->body ? resp->body : "";
+    char *out = malloc(strlen(body) + 128);
+    if (!out) { http_response_free(resp); http_client_free(http); return strdup("{\"error\":\"OOM\"}"); }
+    sprintf(out, "{\"status\":%d,\"success\":true,\"data\":%s}", status, body);
+    http_response_free(resp);
+    http_client_free(http);
+    return out;
+}
+
+/* feishu_drive_add_comment(file_token, content, file_type)
+ * Add a whole-document comment. POST-based. */
+char *handle_feishu_drive_add_comment(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_t *req = json_parse(args_json, NULL);
+    if (!req) return strdup("{\"error\":\"invalid JSON\"}");
+
+    const char *file_token = json_get_str(req, "file_token", "");
+    const char *content = json_get_str(req, "content", "");
+    if (!file_token[0] || !content[0]) {
+        json_free(req);
+        return strdup("{\"error\":\"missing file_token or content\"}");
+    }
+    const char *file_type = json_get_str(req, "file_type", "docx");
+    if (!file_type[0]) file_type = "docx";
+    json_free(req);
+
+    http_client_t *http = http_client_new(30);
+    if (!http) return strdup("{\"error\":\"failed to create HTTP client\"}");
+
+    const char *token = feishu_get_token(http);
+    if (!token) { http_client_free(http); return strdup("{\"error\":\"auth failed\"}"); }
+
+    char url[1024];
+    snprintf(url, sizeof(url),
+             "%s/drive/v1/files/%s/new_comments",
+             FEISHU_API_BASE, file_token);
+
+    /* Build JSON body: {"file_type":"docx","reply_elements":[{"type":"text","text":"..."}]} */
+    json_t *body_j = json_object();
+    json_set(body_j, "file_type", json_string(file_type));
+    json_t *reply_elems = json_array();
+    json_t *elem = json_object();
+    json_set(elem, "type", json_string("text"));
+    json_set(elem, "text", json_string(content));
+    json_array_append(reply_elems, elem);
+    json_set(body_j, "reply_elements", reply_elems);
+    char *json_body = json_serialize(body_j);
+    json_free(body_j);
+    if (!json_body) { http_client_free(http); return strdup("{\"error\":\"OOM\"}"); }
+
+    char auth_hdr[1024];
+    snprintf(auth_hdr, sizeof(auth_hdr), "Authorization: Bearer %s", token);
+
+    http_response_t *resp = http_post_json_auth(http, url, json_body, auth_hdr);
+    free(json_body);
+    if (!resp) { http_client_free(http); return strdup("{\"error\":\"HTTP request failed\"}"); }
+
+    int status = resp->status;
+    const char *body = resp->body ? resp->body : "";
+    char *out = malloc(strlen(body) + 128);
+    if (!out) { http_response_free(resp); http_client_free(http); return strdup("{\"error\":\"OOM\"}"); }
+    sprintf(out, "{\"status\":%d,\"success\":true,\"data\":%s}", status, body);
+    http_response_free(resp);
+    http_client_free(http);
+    return out;
+}
+
 static const char *FEISHU_DOC_SCHEMA =
     "{\"type\":\"object\",\"properties\":{"
     "\"doc_id\":{\"type\":\"string\",\"description\":\"Feishu document ID to read\"}"
@@ -322,4 +442,29 @@ void registry_init_feishu_tools(void) {
     registry_register_ex("feishu_drive_list_comment_replies",
         "List replies in a comment thread on a Feishu document.",
         FEISHU_REPLIES_SCHEMA, "file", handle_feishu_drive_list_comment_replies);
+
+    /* ── feishu_drive_reply_comment — reply to a comment thread ── */
+    static const char *FEISHU_REPLY_SCHEMA =
+        "{\"type\":\"object\",\"properties\":{"
+        "\"file_token\":{\"type\":\"string\",\"description\":\"Document file token (required)\"},"
+        "\"comment_id\":{\"type\":\"string\",\"description\":\"Comment ID to reply to (required)\"},"
+        "\"content\":{\"type\":\"string\",\"description\":\"Reply text content (plain text, required)\"},"
+        "\"file_type\":{\"type\":\"string\",\"description\":\"File type (default docx)\"}"
+        "},\"required\":[\"file_token\",\"comment_id\",\"content\"]}";
+
+    registry_register_ex("feishu_drive_reply_comment",
+        "Reply to a comment thread on a Feishu document.",
+        FEISHU_REPLY_SCHEMA, "file", handle_feishu_drive_reply_comment);
+
+    /* ── feishu_drive_add_comment — add a whole-document comment ── */
+    static const char *FEISHU_ADD_SCHEMA =
+        "{\"type\":\"object\",\"properties\":{"
+        "\"file_token\":{\"type\":\"string\",\"description\":\"Document file token (required)\"},"
+        "\"content\":{\"type\":\"string\",\"description\":\"Comment text content (required)\"},"
+        "\"file_type\":{\"type\":\"string\",\"description\":\"File type (default docx)\"}"
+        "},\"required\":[\"file_token\",\"content\"]}";
+
+    registry_register_ex("feishu_drive_add_comment",
+        "Add a whole-document comment to a Feishu document.",
+        FEISHU_ADD_SCHEMA, "file", handle_feishu_drive_add_comment);
 }

@@ -4,15 +4,15 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||||| Suite:  278/0/0 (236 test files, completes in <60s)
-||||||| Binary: 30M    (dynamic ELF, -O2 -g)
-||||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
-|||||||||| Parity:  ~43%   (~287 item-level gaps — see battleship-v16)
-|||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
-||||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-|||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||CLI:    98 cmd_ functions — 84 unique tools registered
-|||||Tools:  84 registered (87 at runtime with MCP dynamic)
+|||||||| Suite:  279/0/0 (236 test files, completes in <60s)
+|||||||| Binary: 30M    (dynamic ELF, -O2 -g)
+|||||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
+||||||||||| Parity:  ~43%   (~285 item-level gaps — see battleship-v16)
+||||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
+|||||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||||||CLI:    98 cmd_ functions — 90 unique tools registered
+||||||Tools:  90 registered (93 at runtime with MCP dynamic)
 ||||Libraries: 65 C modules — zero external deps beyond libc+libssl
 ||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
 ||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
@@ -37,7 +37,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
 - [The Agentic Process (.hermes)](#the-agentic-process-hermes)
-||||- [Battleship Roadmap (~287 Gaps)](#battleship-roadmap-171-gaps)
+|||||- [Battleship Roadmap (~285 Gaps)](#battleship-roadmap-171-gaps)
 - [Test Suite](#test-suite)
 - [CI/CD](#cicd)
 - [Development Guide](#development-guide)
@@ -52,7 +52,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 278/0/0
+bash test_runner.sh        # 279/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -425,7 +425,7 @@ The CLI uses a central command registry (`cli/commands.c`) with alias resolution
 - **S08** — video_gen.c fal_provider.generate = NULL (uses handler directly)
 - **S09** — commands.c cmd_background "background mode not available" message
 
-All are P2-P3. The 84 tools + 98 CLI commands are real implementations.
+All are P2-P3. The 90 tools + 98 CLI commands are real implementations.
 
 ---
 
