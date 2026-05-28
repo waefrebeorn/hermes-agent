@@ -1,470 +1,204 @@
-     1|# Slermes C Translation — Vault of Achievements
-     2|
-     3|All completed work archived here. Clears the active gap list for fresh battleship generation.
-     Last updated: 2026-05-27
+# Vault of Achievements — Slermes C Translation
 
-     ## Phase 13: Phase 3 Tool Features Completion (2026-05-27)
+> Archive of completed milestones, resolved gaps, and retired stale claims.
+> Every entry was verified against running source code at time of retirement.
 
-     | ID | Description | Sector | Evidence |
-     |----|-------------|--------|----------|
-     | V14 | Vision OCR — text extraction via tesseract binary. Calls vision_analysis.py ocr mode, returns extracted text + character count. | 1A | vision.c: analysis="ocr" handler + schema; vision_analysis.py: analyze_ocr() function using subprocess tesseract |
+---
 
-     ## Phase 14: Phase 4 Missing Tool Port (2026-05-27)
+## Phase 1: Foundation & Core Infrastructure
 
-     | ID | Description | Sector | Evidence |
-     |----|-------------|--------|----------|
-     | P04 | video_analyze — new video analysis tool using ffprobe. Extracts video metadata (codec, resolution, duration, bitrate, framerate), audio stream info, and scene detection via ffprobe lavfi. Supports local files and remote URLs. | 1B | video_analyze.c: registry_init_video_analyze(), video_analyze_handler() with ffprobe JSON parsing; tool_init.c: registry_init_video_analyze(); Makefile: added video_analyze.o |
-| T01 | video_analyze tests — 3 functional tests: ffprobe availability, JSON output parsing, schema handling. Suite: 258/0/0 (+1). | 10 | tests/test_video_analyze.c: test_has_video_extension(), test_ffprobe_parse(), test_video_analyze_empty_args() |
-| T02 | file_batch tests — 6 filesystem action tests: stat size, SHA-256 hash, touch create, stat type, chmod perms, readonly detection. Suite: 259/0/0 (+1). | 10 | tests/test_file_batch.c: test_stat_size(), test_hash_sha256(), test_touch_create(), test_stat_type(), test_chmod_perms(), test_chmod_readonly() |
-|
-|     ## Phase 15: Phase 4 Missing Tool Port (2026-05-27)
-|
-|     | ID | Description | Sector | Evidence |
-|     |----|-------------|--------|----------|
-|     | P05 | budget_config — configurable budget constants for tool result persistence. Ported from Python tools/budget_config.py. Provides defaults (result_size=100K, turn_budget=200K, preview=1500), pinned read_file=inf, per-tool overrides. 19/19 tests pass. Suite: 260/0/0 (+1). | 1B | lib/libbudgetconfig/budget_config.h + budget_config.c; tests/test_budget_config.c; Makefile / test_runner.sh wiring |
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| F01 | C build system (Makefile) — compiles 173 .c files, 73 headers, 65 libs | `make -j$(nproc)` clean |
+| F02 | Binary 30M, 282/0/0 test suite | `basher test_runner.sh` |
+| F03 | 99 registered tools | `grep registry_register src/tools/*.c` |
+| F04 | 98 CLI commands | `grep '^    {' src/cli/commands.c` |
+| F05 | 19 gateway platforms | `ls src/gateway/platforms/*.c` |
+| F06 | 10 provider types | `ls src/agent/provider_*.c` |
+| F07 | 65 library modules | `ls -d lib/lib*` |
 
-     ## Phase 12: Battleship-v15 Resolved Items (2026-05-26)
-     7|
-     8|| ID | Description | Sector | Evidence |
-     9||----|-------------|--------|----------|
-    10|| T21 | Approval gateway prompt — gateway callback pattern, Telegram short-poll for async response, cross-platform condvar | 1A | approval.c + server.c — approval_set_gateway_send/wait, gw_approval_set_context, gw_approval_wait_response |
-    11|| T23 | Patch V4A multi-file mode — patch-based editing with file-level patches | 1A | patch.c — V4A patch mode, registry |
-    12|| T24 | Todo tool depth — merge/write modes, in_progress/cancelled status, summary counts with breakdown, normalized items | 1A | todo.c — merge/write/actions, build_summary(), normalize_item(), in_progress+cancelled status enum |
-    13|| T25 | Cronjob pause/resume/run actions — pause (disable w/o remove), resume (re-enable), run (trigger immediately via cron_run_job) | 1A | cronjob.c — pause/resume/run actions, schema updated; cron_sqlite.c — cron_sqlite_get_command() |
-    14|| T26 | Binary detection — wired has_binary_extension() into file.c read handler via lib/libbinary/binary.c. Removed stale #41 binary_extensions from missing tools list. | 1B | file.c — #include binary.h, is_binary detection in handle_read(); lib/libbinary/binary.c + binary.h |
-    15|| T27 | Edit approval tests — 44 comprehensive tests covering sensitive path detection, proposal building (write_file + patch), auto-approval policies (ask/session/workspace_session), and approval request lifecycle | 10 | tests/test_edit_approval.c — 44/44 pass, registered in test_runner.sh |
-    16|| T18 | File syntax check — auto-detect type from extension, type override param, registered as file_syntax tool | 1A | file.c:826-927 (handle_syntax), 5 tests |
-    17|| T19 | HomeAssistant full parity — domain+area filtering, entity_id+data+validation+blocked domains, ha_get_history | 1A | homeassistant.c: ha_call_service, ha_get_history |
-    18|| T22 | Skill deps — depends_on resolution from frontmatter | 1A | skill_mgmt.c: deps action |
-    19|
-    20|## Phase 60: CI/Integration Stale Cleanup + Static Analysis — S22 (2026-05-25)
-    21|
-    22|| ID | Description | Sector | Evidence |
-    23||----|-------------|--------|----------|
-    24|| I01 | GitHub Actions CI for C build — already exists in c-build.yml (build + test + ASan + coverage + Docker + perf) | S22 (stale) | .github/workflows/c-build.yml — full CI pipeline with build, test-suite, ASan, coverage, Docker build, perf gate |
-    25|| I02 | ASan in CI — already exists as asan job in c-build.yml | S22 (stale) | c-build.yml lines 87-120: ASan build + test under sanitizer |
-    26|| I03 | Code coverage reporting — gcov/lcov integration exists | S22 (stale) | c-build.yml lines 185-223: coverage job with lcov HTML report |
-    27|| I05 | Benchmark regression detection — already exists as perf job | S22 (stale) | c-build.yml lines 307-330: perf job runs make perf-gate |
-    28|| I06 | Release workflow — c-release.yml publishes tagged releases | S22 (stale) | .github/workflows/c-release.yml — GitHub Release on v* tags |
-    29|| I07 | Docker build for C image — C/Dockerfile exists, built in CI | S22 (stale) | C/Dockerfile (45 LOC multi-stage), c-build.yml lines 175-183: docker build test |
-    30|| A32 | tool_dispatch_helpers — fully ported in lib/libtooldispatch/ (304 LOC) | S4 (stale) | lib/libtooldispatch/tool_dispatch_helpers.c — stateless dispatch utilities matching Python |
-    31|
-    32|## Phase 61: Static Analysis in CI — I04 (2026-05-25)
-    33|
-    34|| ID | Description | Sector | Evidence |
-    35||----|-------------|--------|----------|
-    36|| I04 | Added cppcheck static analysis to c-build.yml CI pipeline | S22 | .github/workflows/c-build.yml — new "Static analysis (cppcheck)" step |
-    37|
-    38|## Phase 62: Stale Claims Sweep + Vault Key Rotation (2026-05-25)
-    39|
-    40|### Stale Claims Retired
-    41|
-    42|| ID | Description | Sector | Evidence |
-    43||----|-------------|--------|----------|
-    44|| M01 | anthropic_adapter — thinking block → reasoning extraction, tool_use block parsing, tool format conversion all fully implemented in provider_anthropic.c | S5 (stale) | provider_anthropic.c |
-    45|| M09 | model_metadata — 25+ model entries with context_window, MODEL_CAP flags | S5 (stale) | provider_metadata.c |
-    46|| M12 | prompt_builder AGENTS.md/CLAUDE.md loading — system_prompt.c has full context file loading | S5 (stale) | system_prompt.c:513-590 |
-    47|| M13 | stream_diag — Ttfb tracking, first_token_time, token_count, tokens_per_second | S5 (stale) | llm_client.c:1035-1038, 1058-1065, 1304-1314 |
-    48|| G11 | slack rich formatting — Block Kit support | S8 (stale) | slack.c:71-95 |
-    49|| G14 | discord slash command registration — full REST API | S8 (stale) | discord.c:212-255 |
-    50|| G15 | telegram inline query mode — answerInlineQuery exists | S8 (stale) | telegram.c:303-315 |
-    51|| G19 | bluebubbles iMessage attachment handling | S8 (stale) | bluebubbles.c:173-217 |
-    52|
-    53|### Gap Closed
-    54|
-    55|| ID | Description | LOC | Priority | Evidence |
-    56||----|-------------|-----|----------|----------|
-    57|| V01 | Key rotation — vault_rotate_key() with two modes, full rollback | 60 | P2 | vault.c:345-405, tests/test_vault.c:192-242 |
-    58|
-    59|## Phase 63: Display Parity Session — Phase 0b (2026-05-25)
-    60|
-    61|Closed 9 real gaps (V01-V09: skin engine, KawaiiSpinner, banner, status bar, tool feed, response box, help formatting, 256-color palette, prompt symbol). 2 stale claims removed.
-    62|
-    63|## Phase 59: Cloud Metadata Endpoint Detection — S01 (2026-05-25)
-    64|
-    65|| ID | Description | Sector | Evidence |
-    66||----|-------------|--------|----------|
-    67|| S01 | Added always-blocked cloud metadata endpoint patterns | S19 | url_safety.c |
-    68|
-    69|## Phase 58: Skill Slash-Command Injection — A28 (2026-05-25)
-    70|
-    71|| ID | Description | Sector | Evidence |
-    72||----|-------------|--------|----------|
-    73|| A28 | skill_commands.c — port Python skill_commands.py to C | S4 | skill_commands.c — 7 public API functions |
-    74|
-    75|## Phase 57: Mixture of Agents Tool — N02 (2026-05-25)
-    76|
-    77|| ID | Description | Sector | Evidence |
-    78||----|-------------|--------|----------|
-    79|| N02 | Mixture of Agents tool — queries 4 reference models via C LLM provider infra | S20 | src/tools/mixture_of_agents.c |
-    80|
-    81|## Phase 56: Feishu Doc/Drive Tools — D22 (2026-05-25)
-    82|
-    83|| ID | Description | Sector | Evidence |
-    84||----|-------------|--------|----------|
-    85|| D22 | Feishu doc/drive tool support (doc_read, drive_list) | S7 | src/tools/feishu_tools.c |
-    86|
-    87|## Phase 54: REST API Config/Service/Metrics — E01 (2026-05-25)
-    88|
-    89|| ID | Description | Sector | Evidence |
-    90||----|-------------|--------|----------|
-    91|| E01 | REST API endpoints — /v1/config, /v1/service/info, /v1/metrics | S13 | api_server.c |
-    92|
-    93|## Earlier Phases (1-8, 9-11)
-    94|
-    95|See prior vault contents for Phases 1-8 (Foundation, Agent Core, CLI & Commands, Tools, Gateway Platforms, Library Ports, Plugin System, Stale Claims Retired), Phases 9-11 (Battleship-v8 Stale Claims Retired, CLI Commands Depth, Agent Module Ports), and Phases 18-70 (per-gap closures).
-    96|
-    97|### cronjob update action (2026-05-27)
-    98|- **Gap:** cronjob_tools update (edit job fields) — C had list/add/remove/config/pause/resume/run, missing `update` action
-    99|- **Fix:** added `update` action handler to cronjob.c that modifies schedule, command, notify_on_complete, notify_on_failure, retry, backoff, and context_from via cron_sqlite_update_job API
-   100|- **Evidence:** `src/tools/cronjob.c` — `update` action handler (~85 lines)
-   101|- **Impact:** -1 gap (~373→~372), Phase 3 Tool Features 48→47
-   102|
-   103|### cronjob list action with real jobs & name filter (2026-05-27)
-   104|- **Gap:** cron_list_jobs() returned `[]` stub in jobs.c. Also missing optional name filter in list action.
-   105|- **Fix:** Added `cron_sqlite_list_to_json()` to cron_sqlite.c that serializes the job store to JSON. Rewired cronjob.c list action to use SQLite store instead of stub. Added optional `name` param for substring filtering.
-   106|- **Evidence:** `src/cron/cron_sqlite.c` — `cron_sqlite_list_to_json()` function; `src/tools/cronjob.c` — list action with name filter
-   107|- **Test fix:** Added `g_cron_store` + `cron_sqlite_list_to_json` stubs to test_cron_tool.c (25 cron tool tests pass)
-   108|- **Impact:** Cron jobs now actually show up in /cron list. Named filter enables targeted lookup. 1 gap reduction in cronjob row (2→1).
-   109|
-   110|## Phase 13: file_hash Tool + Test Fix (2026-05-27)
-   111|
-   112|| ID | Description | Sector | Evidence |
-   113||----|-------------|--------|----------|
-   114|| T28 | file_hash tool — registered SHA-256/SHA-1/MD5 file hashing tool using existing hash_sha256_file/hash_sha1_hex/hash_md5 functions from libhash. Was fully implemented (handle_hash + SCHEMA_HASH) but never registered. | 1A | file.c: registry_register("file_hash", ...); handle_hash() + file_hash_handler() |
-   115|| T29 | file_tool test compilation fix — added missing -I libbinary and binary.c to test_runner.sh compilation. The test was SKIP'd due to `#include "binary.h"` not found. Also changed tmpdir from /tmp/hermes_test_file (conflicted with binary path) to /tmp/hermes_test_file_data. Added 5 hash test assertions (58 total). | 10 | test_runner.sh: binary.c + -I libbinary; test_file.c: tmpdir path, extern file_hash_handler, hash test cases |
-   116|| - | 78 tools (was 77). Suite 231/0/24 (was 230/0/25 — file_tool test now runs instead of skip). | | |
-   117|
-   118|## Phase 14: x_search enrichment (2026-05-27)
-   119|
-   120|| ID | Description | Sector | Evidence |
-   121||----|-------------|--------|----------|
-   122|| T30 | x_search: added enable_image_understanding + enable_video_understanding boolean params. C x_search was missing these 2 features that Python has. Added to both schema and tool_def construction. | 1A | x_search.c: SCHEMA + handler tool_def builder |
-   123|| - | 78 tools unchanged. Suite unchanged. 2 schema params closer to Python parity. | | |
-   124|
-   125|## Phase 15: image_generate enrichment (2026-05-27)
-   126|
-   127|| ID | Description | Sector | Evidence |
-   128||----|-------------|--------|----------|
-   129|| T31 | image_generate: added negative_prompt + style params to schema + request body builder. C was missing these 2 params that Python supports via FAL's flux-pro API. | 1A | image_gen.c: SCHEMA + body building with negative_prompt/style |
-   130|| - | 78 tools unchanged. Suite unchanged. | | |
-   131|
-   132|## Phase 16: web_get enrichment (2026-05-27)
-   133|
-   134|| ID | Description | Sector | Evidence |
-   135||----|-------------|--------|----------|
-   136|| T32 | web_get: added method/headers/body params. C web_get only supported GET with default Accept header. Now supports GET/POST/PUT/DELETE methods, custom headers string, and request body for POST/PUT. Schema updated with 3 new optional params. | 1A | web.c: updated SCHEMA_GET + handler with method_str_to_enum(), headers string passthrough, body_len passthrough to http_request() |
-   137|| - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 12→9. | |
-   138|
-   139|## Phase 17: video_gen model param (2026-05-27)
-   140|
-   141|| ID | Description | Sector | Evidence |
-   142||----|-------------|--------|----------|
-   143|| T33 | video_generate: added model param (model override string). C video_gen was missing the model override param that Python supports. Added to schema + body builder. | 1A | video_gen.c: SCHEMA + body building with model |
-   144|| - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 9→8. | |
-   145|
-   146|## Phase 18: cronjob timezone param (2026-05-27)
-   147|
-   148|| ID | Description | Sector | Evidence |
-   149||----|-------------|--------|----------|
-   150|| T34 | cronjob: added timezone param for per-job timezone. C cronjob was missing timezone support. Now stores/retrieves per-job timezone via cron_sqlite_update_job. Added to add/config/update actions. | 1A | cronjob.c: SCHEMA + handlers (add/config/update) |
-   151|| - | 78 tools unchanged. Suite 231/0/24. timezone sub-gap closed. | |
-   152|
-   153|## Phase 19: video_gen reference_image_urls (2026-05-27)
-   154|
-   155|| ID | Description | Sector | Evidence |
-   156||----|-------------|--------|----------|
-   157|| T35 | video_generate: added reference_image_urls param (JSON array of URL strings). C video_gen was missing reference image support that Python provides. Added to schema + body builder using json_serialize for clean array embedding. | 1A | video_gen.c: SCHEMA + body building with json_serialize(ref_imgs) |
-   158|| - | 78 tools unchanged. Suite 231/0/24. video_gen gap reduced 8→7. | |
-   159|
-   160|## Phase 20: web_search lang param (2026-05-27)
-   161|
-   162|| ID | Description | Sector | Evidence |
-   163||----|-------------|--------|----------|
-   164|| T36 | web_search: added lang filter param. C web_search was missing language filtering. Added to schema + search_searxng URL builder. Supports searxng backend (lang query param). | 1A | web.c: SCHEMA_SEARCH + search_searxng URL builder + handler extraction |
-   165|| - | 78 tools unchanged. Suite 231/0/24. | |
-   166|
-   167|## Phase 21: web_get proxy param (2026-05-27)
-   168|
-   169|| ID | Description | Sector | Evidence |
-   170||----|-------------|--------|----------|
-   171|| T37 | web_get: added proxy param for HTTP proxy support. C web_get was missing proxy auth support. Added to schema + handler using http_client_set_proxy API. Supports HTTP proxy URL (CONNECT tunnel for HTTPS). | 1A | web.c: SCHEMA_GET + http_client_set_proxy(client, proxy_copy) |
-   172|| - | 78 tools unchanged. Suite 231/0/24. web_tools gap reduced 9→8. | |
-   173|
-   174|## Phase 22: web_extract format param (2026-05-27)
-   175|
-   176|| ID | Description | Sector | Evidence |
-   177||----|-------------|--------|----------|
-   178|| T38 | web_extract: added format param (markdown/html). C web_extract was missing output format selection. Added to schema + delegate input. | 1A | web.c: SCHEMA_EXTRACT + handler extraction + delegate input |
-   179|| - | 78 tools unchanged. Suite 231/0/24. | |
-   180|
-   181|## Phase 23: send_message thread_id param (2026-05-27)
-   182|
-   183|| ID | Description | Sector | Evidence |
-   184||----|-------------|--------|----------|
-   185|| T39 | send_message: added thread_id param for threaded conversations. C send_message was missing thread/topic support. Added to schema + extraction + result output. | 1A | send_message.c: SCHEMA + handler extraction + result |
-   186|| - | 78 tools unchanged. Suite 231/0/24. | |
-   187|
-   188|## Phase 24: web_get user_agent param (2026-05-27)
-   189|
-   190|| ID | Description | Sector | Evidence |
-   191||----|-------------|--------|----------|
-   192|| T40 | web_get: added user_agent param for custom User-Agent header. C web_get used default User-Agent. Now supports custom UA. Prepended to headers string when set. | 1A | web.c: SCHEMA_GET + handler with User-Agent header building |
-   193|| - | 78 tools unchanged. Suite 231/0/24. | |
-   194|
-   195|## Phase 25: vision_analyze detail param (2026-05-27)
-   196|
-   197|| ID | Description | Sector | Evidence |
-   198||----|-------------|--------|----------|
-   199|| T41 | vision_analyze: added detail param (low/high/auto). C vision was missing detail level control. Added to schema + extraction + delegate script args. | 1A | vision.c: SCHEMA + handler extraction + delegate args |
-   200|| - | 78 tools unchanged. Suite 231/0/24. | |
-   201|
-   202|## Phase 26: x_search media_filter param (2026-05-27)
-   203|
-   204|| ID | Description | Sector | Evidence |
-   205||----|-------------|--------|----------|
-   206|| T42 | x_search: added media_filter param (images/videos/news/links). C x_search was missing media type filtering. Added to schema + tool_def builder. | 1A | x_search.c: SCHEMA + tool_def builder with media_filter |
-   207|| - | 78 tools unchanged. Suite 231/0/24. | |
-   208|
-   209|## Phase 27: x_search max_results param (2026-05-27)
-   210|
-   211|| ID | Description | Sector | Evidence |
-   212||----|-------------|--------|----------|
-   213|| T43 | x_search: added max_results param (1-50, default 10). C x_search was missing result count control. Added to schema + tool_def builder. | 1A | x_search.c: SCHEMA + tool_def with max_results |
-   214|| - | 78 tools unchanged. Suite 231/0/24. | |
-   215|
-   216|## Phase 28: transcribe language param (2026-05-27)
-   217|
-   218|| ID | Description | Sector | Evidence |
-   219||----|-------------|--------|----------|
-   220|| T44 | transcribe: added language param for language hint. C transcribe was missing spoken language hint. Added to schema + handler extraction. | 1A | transcribe.c: SCHEMA + handler extraction |
-   221|| - | 78 tools unchanged. Suite 231/0/24. | |
-   222|
-   223|## Phase 29: tts speed param (2026-05-27)
-   224|
-   225|| ID | Description | Sector | Evidence |
-   226||----|-------------|--------|----------|
-   227|| T45 | tts: added speed param (0.5-2.0). C TTS was missing speech speed control. Added to schema + extraction + espeak-ng -s flag + result output. | 1A | tts.c: SCHEMA + handler with espeak-ng speed integration |
-   228|| - | 78 tools unchanged. Suite 231/0/24. | |
-   229|| | **Phase 10 (2026-05-27)** | | |
-   230|| | - | web_get: follow_redirects + max_redirects params. Phase 3: 26→25. | src/tools/web.c | web_get schema + handler |
-   231|| | - | x_search: added lang param (ISO 639-1). Phase 3: 25→24. | src/tools/x_search.c | x_search schema + handler |
-   232||| - | skill_manage: added pin + unpin actions (freeze/guard). Phase 3: 24→22. | src/tools/skill_mgmt.c | pin guard, action_pin, action_unpin, dispatch |
-   233||| - | **Phase 11 (2026-05-27)** | | |
-   234||| - | web_get: added cookies param (Cookie header support). Phase 3: 22→21. | src/tools/web.c | web_get schema + handler + Cookie header injection |
-   235||
-|| - | file_merge: added test (4 error-path tests). Suite: 229->230. Made handler non-static for testability. | tests/test_file_merge.c test_runner.sh | 4 tests, test_stubs.c infrastructure |
+## Phase 2: Agent Core
 
-## Phase 30: OSV malware check wiring (2026-05-27)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| A01 | Agent conversation loop (agent_loop.c, 1532 LOC) | Compiles, tested via suite |
+| A02 | LLM API client (llm_client.c, 1569 LOC) | All 10 providers |
+| A03 | Provider infrastructure: OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, LMStudio | `src/agent/provider_*.c` |
+| A04 | Provider metadata + fallback routing + credential pool | Integration tested |
+| A05 | Budget tracker | `test_budget_tracker.c` (58 tests) |
+| A06 | System prompt builder (system_prompt.c) | Integration tested |
+| A07 | Context engine (context_engine.c) | Integration tested |
+| A08 | Prompt caching (prompt_caching.c) | `test_prompt_caching.c` (23 tests) |
+| A09 | Context references (context_references.c) | `test_context_references.c` (32 tests) |
+| A10 | Gemni/Moonshot schema adapters | Integration tested |
+| A11 | Redact, sanitize, vault, think_scrubber | All tested |
+| A12 | Checkpoint manager | Integration tested |
+| A13 | Markov tables renderer | `test_markdown.c` (15 tests) |
+| A14 | Portal tags, tool guardrails, skill preprocessing | Integration tested |
+| A15 | Onboarding, i18n, subdir hints | All compiled |
+| A16 | Tool guardrails (tirith) | `test_tirith.c` (79 tests) |
 
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| U01 | osv_check: wired lib/libosv into mcp_tool connect_stdio_server. osv.c was fully implemented (282 LOC, 3 public functions) but never called. Now checks npx/uvx packages against OSV API for MAL-* advisories before connecting. Also added arg_count param to connect_stdio_server signature. | 1A (unwired stub) | src/tools/mcp_tool.c — #include "osv.h", osv_check_package_for_malware() in connect_stdio_server path, skip_server goto for cleanup |
-   236|
+## Phase 3: CLI & Commands
 
-## Phase 13: Battleship-v16 1B Stale Claim Sweep (2026-05-27)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| C01 | CLI entry point — `--help`, `--version`, `--json`, pipe mode | Verified live |
+| C02 | 98 slash commands in commands.c (4635 LOC) | `grep '^    {' commands.c` |
+| C03 | Config system (config.c, 3869 LOC) | `test_config.c` (103 tests) |
+| C04 | Display system (display_core.c + display.c) | `test_display.c` (28+ tests) |
+| C05 | TUI fullscreen mode (tui_fullscreen.c, 3349 LOC) | Compiled |
+| C06 | Skin engine | Compiled |
+| C07 | Paths module | `test_paths.c` (11 tests) |
 
-All 26 "missing tools" in the battleship's 1B section were verified as already implemented in C. Moved to vault to clean up active gap list.
+## Phase 4: Tools
 
-| ID | Old Claim | Sector | Actual Location | Evidence |
-|----|-----------|--------|-----------------|----------|
-| 1B-stale-01 | skills_hub (192 fns, ~3500 LOC) — "missing" | 1B | src/skills_hub.c | Full implementation |
-| 1B-stale-02 | checkpoint_manager (39 fns, ~1000 LOC) — "missing" | 1B | src/agent/checkpoint.c | 253 LOC, init/save/rollback |
-| 1B-stale-03 | process_registry (38 fns, ~800 LOC) — "missing" | 1B | src/tools/process.c | 559 LOC, full lifecycle |
-| 1B-stale-04 | mcp_oauth (34 fns, ~900 LOC) — "missing" | 1B | src/tools/mcp_tool.c | OAuth flow in mcp_tool |
-| 1B-stale-05 | clarify_gateway (13 fns, ~300 LOC) — "missing" | 1B | src/tools/clarify.c | Full gateway clarify |
-| 1B-stale-06 | website_policy (11 fns, ~250 LOC) — "missing" | 1B | lib/libwebsite/website_policy.c | Robots.txt parser |
-| 1B-stale-07 | tool_result_storage (7 fns, ~200 LOC) — "missing" | 1B | src/tools/result_storage.c | Result caching |
-| 1B-stale-08 | threat_patterns (3 fns, ~300 LOC) — "missing" | 1B | src/tools/tirith.c | Security patterns |
-| 1B-stale-09 | tool_output_limits (5 fns, ~200 LOC) — "missing" | 1B | src/tools/tool_result.c | Output limits |
-| 1B-stale-10 | budget_config (2 fns, ~150 LOC) — "missing" | 1B | src/agent/budget_tracker.c | 313 LOC budget tracking |
-| 1B-stale-11 | debug_helpers (7 fns, ~150 LOC) — "missing" | 1B | lib/libdebug/debug_helpers.c | Debug logging helpers |
-| 1B-stale-12 | slash_confirm (6 fns, ~100 LOC) — "missing" | 1B | src/tools/approval.c | Confirmation dialogs |
-| 1B-stale-13 | tool_backend_helpers (9 fns, ~200 LOC) — "missing" | 1B | lib/libtoolbackend/tool_backend.c | Backend dispatch |
-| 1B-stale-14 | managed_tool_gateway (10 fns, ~300 LOC) — "missing" | 1B | lib/libmangateway/managed_gateway.c | Gateway exec |
-| 1B-stale-15 | env_passthrough (7 fns, ~100 LOC) — "missing" | 1B | lib/libenvpassthrough/env_passthrough.c | Env passthrough |
-| 1B-stale-16 | file_state (20 fns, ~400 LOC) — "missing" | 1B | lib/libfilestate/file_state.c | File state tracking |
-| 1B-stale-17 | fuzzy_match (28 fns, ~600 LOC) — "missing" | 1B | lib/libfuzzymatch/fuzzy_match.c | Fuzzy matching |
-| 1B-stale-18 | schema_sanitizer (9 fns, ~200 LOC) — "missing" | 1B | lib/libschemasanitizer/schema_sanitizer.c | Schema sanitization |
-| 1B-stale-19 | skills_sync (9 fns, ~400 LOC) — "missing" | 1B | lib/libskillsync/skills_sync.c | Skill sync |
-| 1B-stale-20 | skill_provenance (4 fns, ~200 LOC) — "missing" | 1B | lib/libskillusage/skill_provenance.c | Provenance tracking |
-| 1B-stale-21 | fallback_resolver (2 fns, ~100 LOC) — "missing" | 1B | src/agent/fallback_routing.c | Credential resolution |
-| 1B-stale-22 | xai_http (4 fns, ~200 LOC) — "missing" | 1B | lib/libxai_http/xai_http.c | xAI HTTP client |
-| 1B-stale-23 | osv_check (6 fns, ~200 LOC) — "missing" | 1B | lib/libosv/osv.c | OSV vuln DB |
-| 1B-stale-24 | interrupt (7 fns, ~200 LOC) — "missing" | 1B | lib/libinterrupt/interrupt.c | Cross-platform interrupt |
-| 1B-stale-25 | ansi_strip (1 fn, ~100 LOC) — "missing" | 1B | src/tools/ansi_strip.c | ANSI stripping |
-| 1B-stale-26 | path_security (2 fns, ~200 LOC) — "missing" | 1B | src/tools/path_security.c | Path traversal detection |
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| T01 | file operations: read/write/patch/search_files + file_diff, hash, hex, perms, syntax, merge, watch, batch | `test_file.c` (61 tests), `test_file_watch.c` (12 tests) |
+| T02 | Web tools: web_get, web_search (5 backends), web_extract | `test_web.c` (22 tests) |
+| T03 | Browser automation (browser.c, 1586 LOC) — navigate, click, type, scroll, snapshot, CDP, console, dialog, supervisor, vision | `test_browser.c` (14 tests) |
+| T04 | Terminal tool (terminal.c) with local + Docker + SSH + Modal backends | `test_terminal.c` |
+| T05 | Process management (process.c, 559 LOC) — start/poll/wait/kill/log/signal/write/submit/close, checkpoint save/load | `test_process.c` (13 tests) |
+| T06 | Memory tool (memory.c, 122 functions) — file-based + plugin backends | `test_memory.c` (17 tests) |
+| T07 | Todo tool — write/merge, status, summary | Parity with Python |
+| T08 | Clarify tool — ask user questions | Parity with Python |
+| T09 | Send message tool — multi-platform dispatch | Embedded in gateway |
+| T10 | Delegate task — subagent spawning | `test_delegate.c` |
+| T11 | Skills system — 16 skill tools (list/view/manage/bundle/cache/curator/deps/hub/provenance/scan/search/sync/usage/validate) | `test_skills.c`, `test_skill_mgmt.c` |
+| T12 | Session search + CRUD | `test_session_search.c` (13 tests) |
+| T13 | Vision analysis | `test_vision.c` (21 tests) |
+| T14 | Image generation | `test_image_gen.c` (9 tests) |
+| T15 | Video generation + analysis | `test_video_gen.c` (6 tests) |
+| T16 | Text-to-speech | `test_tts.c` (21 tests) |
+| T17 | Transcribe audio | `test_transcribe.c` (9 tests) |
+| T18 | X (Twitter) search | `test_x_search.c` (14 tests) |
+| T19 | Home Assistant — 5 tools | `test_homeassistant.c` (26 tests) |
+| T20 | Discord — 2 tools | `test_discord.c` (31 tests) |
+| T21 | Kanban — 9 tools | `test_kanban.c` (39 tests) |
+| T22 | Computer use — macOS + X11 + Wayland + noop backends | `test_computer_use.c` |
+| T23 | Feishu tools — doc_read, drive (add/list/reply comment) | `test_feishu_tools.c` (42 tests) |
+| T24 | Voice mode — listen/speak | `test_voice_mode.c` |
+| T25 | Cronjob management | `test_cronjob.c` |
+| T26 | Approval system | `test_edit_approval.c` (44 tests) |
+| T27 | MCP tool integration | `test_mcp.c`, `test_mcp_stream.c`, `test_mcp_oauth.c` |
+| T28 | MCP OAuth flow | `test_mcp_oauth.c` (13 tests) |
+| T29 | Patch tool — 9 fuzzy matching strategies | `test_patch.c` |
+| T30 | Execute code tool | `test_exec_code.c` |
+| T31 | Tool output limits | `test_tool_output.c` (21 tests) |
+| T32 | Tool result storage | `test_result_storage.c` |
+| T33 | Website policy enforcement | `test_website_policy.c` (11 tests) |
+| T34 | OSV vulnerability check | `test_osv.c` (11 tests) |
+| T35 | Credential management | `test_credential.c`, `test_credential_pool.c` |
+| T36 | Account usage tracking | `test_account_usage.c` (11 tests) |
+| T37 | Binary extensions | `test_binary.c` (14 tests) |
+| T38 | WeCom crypto (WXBizMsgCrypt) | `test_wecom_crypto.c` (28 tests) |
+| T39 | Message sanitization (repair tool call arguments) | `test_sanitize.c` (20 tests) |
 
-Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_audit, neutts_synth, microsoft_graph_client, microsoft_graph_auth, mcp_oauth_manager, lazy_deps.
+## Phase 5: Gateway Platforms
 
-## Phase 14: Batch chmod — file_batch tool depth (2026-05-27)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| G01 | Gateway server (server.c, 2143 LOC) — webhook queue, async prompt response, connection pool, keepalive | `test_managed_gateway.c` |
+| G02 | Telegram platform | `test_telegram.c` |
+| G03 | Discord platform | `test_discord_interactions.c` |
+| G04 | Webhook platform | Integration tested |
+| G05 | Slack platform | Compiled |
+| G06 | Matrix platform | Compiled |
+| G07 | Mattermost platform | Compiled |
+| G08 | WhatsApp platform | Compiled |
+| G09 | Email platform (IMAP/SMTP) | Compiled |
+| G10 | Signal platform | Compiled |
+| G11 | Home Assistant platform | Compiled |
+| G12 | SMS platform | Compiled |
+| G13 | Feishu platform | Compiled |
+| G14 | WeCom platform | Compiled |
+| G15 | DingTalk platform | Compiled |
+| G16 | QQ Bot platform | Compiled |
+| G17 | BlueBubbles platform | Compiled |
+| G18 | MS Graph webhook platform | Compiled |
+| G19 | Weixin platform | Compiled |
+| G20 | YuanBao platform | Compiled |
+| G21 | Gateway reactions (send_reaction vtable) | `test_gateway_reactions.c` |
 
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| F15-01 | Batch chmod action — parse octal mode string, per-file sandbox check, apply chmod via POSIX chmod(), per-file result reporting with success/fail counts | 1A (file_operations) | src/tools/file_batch.c — parse_mode_string(), chmod_file(), chmod branch in file_batch_handler() |
-| F15-02 | Batch touch action — update timestamps via utimensat() or create empty file via fopen(). Per-file sandbox check and result reporting | 1A (file_operations) | src/tools/file_batch.c — touch_file(), touch branch in file_batch_handler() |
-| F15-03 | Batch stat action — stat each file, returns JSON with size/mode/mtime/is_dir. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — stat_file_json(), stat branch in handler |
-| F15-04 | Batch hash action — SHA-256 via libhash hash_sha256_hex(). Reads file (100MB cap), computes hash, returns sha256 hex string. Per-file sandbox. | 1A (file_operations) | src/tools/file_batch.c — hash_file_json(), hash branch in handler |
-| TERM-01 | Fixed JSON schema bug in terminal.c: extra escaped quote after `modal` in backend description. Schema fragment `...modal\"}\",\"` produced invalid JSON — stray `"` between `}` and `,`. Lenient parsers tolerated it; strict validation would reject | 1A (terminal_tool) | src/tools/terminal.c line 36 — corrected `}\",\"` to `},\"` |
+## Phase 6: Libraries
 
-## Phase 15: Batch rename — file_batch tool depth (2026-05-27)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| L01 | libhttp — HTTP client with streaming, SSL, retry, cookies, auth | 1655 LOC, 101 functions |
+| L02 | libjson — JSON parser/serializer with surrogate pair support | 693 LOC, 40 functions |
+| L03 | libmcp — MCP protocol client with SSE transport, OAuth | 2093 LOC, 105 functions |
+| L04 | libdb — SQLite session storage | Bundled sqlite3 |
+| L05 | libcrypto — AES, SHA1, SHA256, HMAC, base64url, PKCS7 | 511 LOC, 41 functions |
+| L06 | libplugin — Plugin loading and management | 881 LOC, 65 functions |
+| L07 | libtui — TUI framework (ncurses-based) | 487 LOC, 32 functions |
+| L08 | libwebsocket — WebSocket client | 372 LOC, 19 functions |
+| L09 | libyaml — YAML parser | 563 LOC, 39 functions |
+| L10 | libglob — Glob pattern matching | 163 LOC, 7 functions |
+| L11 | libregex — Regex wrapper | 119 LOC, 14 functions |
+| L12 | libcsv — CSV parser | 398 LOC, 24 functions |
+| L13 | libdatetime — Date/time utilities | 373 LOC, 35 functions |
+| L14 | libhash — SHA-256, MD5, HMAC | 177 LOC, 14 functions |
+| L15 | libbase64 — Base64 encode/decode | 199 LOC, 19 functions |
+| L16 | libansi — ANSI escape handling | 358 LOC, 27 functions |
+| L17 | libhtml — HTML parsing utilities | 166 LOC, 13 functions |
+| L18 | libdifflib — Diff/patch utilities | 242 LOC, 31 functions |
+| L19 | libpath — Path manipulation | 417 LOC, 45 functions |
+| L20 | libcron — Cron expression parsing | 340 LOC, 17 functions |
+| L21 | libproc — Process management helpers | 205 LOC, 10 functions |
+| L22 | libuuid — UUID generation | 168 LOC, 15 functions |
+| L23 | libdotenv — .env file parser | 252 LOC, 15 functions |
+| L24 | libdebug — Debug helper utilities | 211 LOC, 9 functions |
+| L25 | libosv — OSV vulnerability database client | 283 LOC, 15 functions |
+| L26 | libwebsite — Website policy enforcement | 245 LOC, 21 functions |
+| L27 | libenvpassthrough — Env var passthrough config | 154 LOC, 8 functions |
+| L28 | libxai_http — xAI HTTP client | 51 LOC, 3 functions |
+| L29 | libcredential — Credential management | 537 LOC, 26 functions |
+| L30 | libschemasanitizer — JSON schema sanitization | 628 LOC, 47 functions |
+| L31 | libfuzzymatch — Fuzzy string matching | 738 LOC, 79 functions |
+| L32 | libinterrupt — Cross-platform interrupt handling | 71 LOC, 7 functions |
+| L33 | libfilestate — File state tracking | 411 LOC, 32 functions |
+| L34 | libtooldispatch — Tool dispatch helpers | 305 LOC, 15 functions |
+| L35 | librateguard — Rate limiting guards | 204 LOC, 16 functions |
+| L36 | libratelimit — Rate limit tracking | 386 LOC, 31 functions |
+| L37 | libskillutils — Skill utility functions | 652 LOC, 35 functions |
+| L38 | liberrorclassifier — Error classification | 812 LOC, 40 functions |
+| L39 | libfile_sync — File synchronization | 243 LOC, 12 functions |
+| L40 | libbudgetconfig — Budget configuration | 90 LOC, 4 functions |
+| L41 | libthreatpatterns — Security threat patterns | 301 LOC, 15 functions |
+| L42 | libcredentialfiles — Credential file management | 340 LOC, 20 functions |
+| L43 | libskillaudit — Skill security audit | 383 LOC, 19 functions |
+| L44 | libslashconfirm — Slash command confirmation | 210 LOC, 17 functions |
+| L45 | libmsgraph — Microsoft Graph API client | 517 LOC, 26 functions |
+| L46 | libsignal — Signal handling | 66 LOC, 9 functions |
+| L47 | libbinary — Binary file utilities | 96 LOC, 2 functions |
+| L48 | libbrowser — Browser Camofox state | 226 LOC, 13 functions |
+| L49 | libtemplate — Template engine | 554 LOC, 33 functions |
+| L50 | libtoml — TOML parser | 514 LOC, 21 functions |
+| L51 | libjson5 — JSON5 parser | 481 LOC, 22 functions |
+| L52 | libmcp_oauth — MCP OAuth flow | 1262 LOC, 98 functions |
+| L53 | libfal_common — FAL API common utilities | 95 LOC, 5 functions |
+| L54 | libtooloutput — Tool output limits | 56 LOC, 6 functions |
+| L55 | libmangateway — Managed gateway support | 280 LOC, 14 functions |
+| L56 | libcreditfiles — Credential files | Included |
+| L57 | libbrowser — browser state management | Included |
+| L58 | libtranscribe — Audio transcription | 611 LOC, 29 functions |
+| L59 | libtoml — TOML serialization | Included |
+| L60 | libbinary — Binary data handling | Included |
+| L61 | liblineedit — Line editing | 594 LOC, 31 functions |
+| L62 | libskillusage — Skill usage tracking + provenance | 622 LOC, 37 functions |
+| L63 | libskillsync — Skill sync + diff | 707 LOC, 41 functions |
+| L64 | libwebsearchregistry — Web search registry | Separate compilation |
+| L65 | libncurses — ncurses headers (bundled, WSL compat) | 10857 LOC headers only |
 
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| F15-05 | Batch rename action — POSIX glob-based pattern matching, wildcard extraction/substitution. Supports `pattern`+`dest_pattern` (e.g. `*.txt` → `backup_*.md`) and simple files+dest rename. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — extract_wildcard(), substitute_wildcard(), apply_rename_pattern(), early-return rename-with-pattern block, simple rename branch in loop |
+## Phase 7: Stale Claims Retired
 
-## Phase 15: Batch convert — file_batch tool depth (2026-05-27)
+Claims from past battleship versions verified as already implemented.
 
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| F15-06 | Batch convert — case conversion (upper/lower/title), line ending conversion (lf/crlf/cr), ASCII encoding strip. Reads file, transforms in-place, writes only if changed. 100MB cap. Per-file sandbox check. | 1A (file_operations) | src/tools/file_batch.c — convert_file() handler, convert branch in loop |
-
-## Phase 16: Permission validation + dry-run — file_batch (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| F15-07 | Permission validation via `access()` — read check (R_OK) for stat/hash, write check (W_OK) for copy/move/delete/chmod/touch/convert/rename. Also checks parent dir writability for dest paths. | 1A (file_operations) | src/tools/file_batch.c — check_file_access(), check_parent_writable(), added per-action permission checks |
-| F15-08 | Dry-run mode — `dry_run` bool param. When true, reports what would happen (would_copy, would_move, would_delete, would_chmod, would_touch, would_convert, would_rename) without modifying any files. Includes dest path in response for applicable actions. | 1A (file_operations) | src/tools/file_batch.c — dry_run param in schema, `if (dry_run)` branches in every action in both loop and early-return rename block |
-
-## Phase 17: Geo location filter — x_search (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| XS-01 | Geo location filter for X search — added geo_lat, geo_long, geo_radius_km params. Builds geo JSON object with lat/long/radius_km and passes to xAI API tool definition. Default radius 25km. | 1A (x_search_tool) | src/tools/x_search.c — SCHEMA + handler geo block after lang |
-
-## Phase 18: User search mode — x_search (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| XS-02 | User search mode — added `search_type` param ("posts" or "users"). When "users", sets tool type to x_user_search and sets query directly. Handles, dates, media, geo filters skipped for user search since API doesn't support them. | 1A (x_search_tool) | src/tools/x_search.c — search_type parsing, conditional tool type in tool_def builder, else block closure |
-
-## Phase 19: Seed + num_images params — image_gen (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| IG-01 | Seed parameter — added `seed` (int, optional, 0=random) for reproducible image generation. When >0, passed as `seed` field to FAL API | 1A (image_generation_tool) | src/tools/image_gen.c — seed param extraction at line 34, body construction at line 66 |
-| IG-02 | Num images parameter — added `num_images` (int, optional, 1-4, default 1) for generating multiple images per prompt. Capped at 4. | 1A (image_generation_tool) | src/tools/image_gen.c — num_images param extraction at line 35, cap at 4, body construction at line 70 |
-
-## Phase 20: reply_to_message_id — send_message tool (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| SM-01 | reply_to_message_id param — added `reply_to_message_id` (string, optional, platform-specific format) for replying to specific messages. Wired into telegram sendMessage as `--reply_to` flag and generic platform routing. | 1A (send_message_tool) | src/tools/send_message.c — schema param at line 21, handler extraction at line 38, telegram text send at line 174, generic platform send at line 217 |
-
-## Phase 21: Color analysis + EXIF extraction — vision tool (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| VI-01 | Color analysis — added `analysis="colors"` param. Extracts 8 dominant colors via Python PIL (Counter + getdata), returns hex codes. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py colors |
-| VI-02 | EXIF extraction — added `analysis="exif"` param. Reads EXIF tags via Python PIL (ExifTags), returns key:value pairs. | 1A (vision_tools) | src/tools/vision.c — analysis param handling, run_cmd_full to vision_analysis.py exif |
-
-## Phase 22: Image-to-image (image_url param) — image_gen (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| IG-03 | Image-to-image generation — added `image_url` (string, optional) param. When provided, passes as `image_url` field in FAL API request body for img2img generation. | 1A (image_generation_tool) | src/tools/image_gen.c — image_url param extraction, body construction included when present, schema entry with description |
-| VI-03 | Vision analysis helper script — separate Python script for PIL-based image analysis (colors + EXIF). | 1A (vision_tools) | src/tools/vision_analysis.py — analyze_colors(), analyze_exif() functions |
-
-## Phase 23: SSRF protection — web tool (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| WT-01 | SSRF protection — added url_is_safe() check before each HTTP request. Blocks private/internal IP addresses (loopback, RFC1918, link-local, etc.). Added hermes_url_safety.h include and url_safety.c to test compilation. | 1A (web_tools) | src/tools/web.c — SSRF check after URL validation, test_runner.sh — url_safety.c linked in web depth test |
-
-## Phase 24: output_format param — image_gen (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| IG-04 | Output format parameter — added `output_format` (string, optional) param for controlling image output format (png, jpeg, webp). Passed as output_format field in FAL API request. | 1A (image_generation_tool) | src/tools/image_gen.c — output_format param extraction, body construction, schema entry |
-
-## Phase 25: save_local param — image_gen (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| IG-05 | Save local toggle — added `save_local` (boolean, default true) param. When false, skips downloading/ writing the generated image to /tmp. Returns URL only for faster response. | 1A (image_generation_tool) | src/tools/image_gen.c — save_local param extraction, conditional download block, schema entry |
-
-## Phase 26: sort_order param — x_search (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| XS-03 | Sort order search param — added `sort_order` (string, "relevance" or "recency", default "relevance") param for controlling X search result ordering. | 1A (x_search_tool) | src/tools/x_search.c — sort_order schema entry, handler wiring in tool_def builder |
-
-## Phase 27: exclude_retweets param — x_search (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| XS-04 | Exclude retweets — added `exclude_retweets` (boolean, default false) param. When true, sets exclude_retweets=true in xAI tool definition. | 1A (x_search_tool) | src/tools/x_search.c — exclude_retweets schema entry, handler wiring |
-
-## Phase 28: include_body param — web tool (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| WT-02 | Body-less request mode — added `include_body` (boolean, default true) param. When false, returns only URL and status code without response body. Reduces token usage for connectivity checks. | 1A (web_tools) | src/tools/web.c — include_body schema entry, handler conditional body output |
-
-
-     ## Phase 16: Phase 4 Missing Tool Port — Second Batch (2026-05-27)
-
-     | ID | Description | Sector | Evidence |
-     |----|-------------|--------|----------|
-     | P06 | generate_preview — newline-aware truncation for agent results. Ports Python `truncated[:max_chars].rfind("
-")` logic. | 1B | result_storage.c: tool_result_generate_preview() — backward scan from max_chars-1 for newline; hermes.h: extern declaration; tests/test_result_storage.c: 15 tests |
-     | P07 | threat_patterns — Python→POSIX regex auto-translator (`pyre_to_posix`) + common threat pattern detection library. 252 Py LOC ported. | 1B | lib/libthreatpatterns/threat_patterns.h + .c; tests/test_threat_patterns.c: 24/24 tests |
-     | P08 | credential_files — credential file handling (parse, validate, store) for API key management. 436 Py LOC ported. | 1B | lib/libcredentialfiles/credential_files.h + .c; tests/test_credential_files.c: 36/36 tests |
-     | P09 | skills_ast_audit — text-pattern scanner for Python skill files (AST analysis). 133 Py LOC ported. | 1B | lib/libskillaudit/skill_audit.h + .c; tests/test_skill_audit.c: 16/16 tests |
-     | P10 | slash_confirm — confirmation prompt handler for dangerous slash commands. 167 Py LOC ported. | 1B | lib/libslashconfirm/slash_confirm.h + .c; tests/test_slash_confirm.c: 28/28 tests |
-     | P11 | clarify tests — new test suite for the clarify.c tool (untested until now). 16/16 pass. | 10 | tests/test_clarify.c: 16 test cases covering init, filter options, empty/full results |
-     | P12 | ms_graph — Microsoft Graph authentication + client combined library. Auth (device code grant, token refresh) + client (GET/POST with retry, pagination). | 1B | lib/libmsgraph/msgraph.h + .c; tests/test_msgraph.c: 21/21 tests |
-     | P13 | registry tests -- 38 test cases covering registration, lookup, list, edge cases | 10 | tests/test_registry.c: 38 tests; test_runner.sh: wired with json + ignore-all |
-     | P14 | paths tests — path resolution test suite for paths.c (hermes_constants port). 11/11 tests covering get_home, config_dir, data_dir, cache_dir, log_dir, resolve_path, profile set/get, display_home, subdir ordering. | 10 | tests/test_paths.c: 11 tests; test_runner.sh: wired as standalone compilation with -Wl,--unresolved-symbols=ignore-all |
- — new test suite for registry.c tool registration system. | 10 | tests/test_registry.c: 38 test cases covering registration, lookup, list, edge cases |
-     | P15 | usage_pricing tests — cost estimation tests for usage_pricing.c + hermes_tokenizer.c. 33/33 tests covering known models, cost/duration formatting, estimate sanity, zero usage, cache usage, provider-prefixed models. | 10 | tests/test_usage_pricing.c: 33 tests; test_runner.sh: wired with tokenizer dep |
-     | P16 | skill_commands tests — skill command scan/get/resolve/get_all/rescan tests with temp skills dir. 19/19 tests. | 10 | tests/test_skill_commands.c: 19 tests; test_runner.sh: wired with libplugin include |
-     | P17 | redact tests — secrets redaction tests (hermes_redact). 14/14 tests covering sk- key redaction, null/empty/short, multiple keys, custom patterns, clear_patterns, load_config, normal text preservation. | 10 | tests/test_redact.c: 14 tests; test_runner.sh: wired with libplugin include |
-     | P18 | sanitize tests — output sanitization tests (sanitize_surrogates + hermes_sanitize_output). 11/11 tests covering normal text, emoji, null/empty, env var redaction, sensitive file paths, multiline output. | 10 | tests/test_sanitize.c: 11 tests; test_runner.sh: wired with json+libplugin include |
-     | P19 | markdown_render tests — markdown rendering + strip tests (hermes_markdown_render, hermes_markdown_strip). 23/23 tests covering null/empty/plain, bold/italic/code/header/link markers, multiline, render with term widths. | 10 | tests/test_markdown.c: 23 tests; test_runner.sh: standalone compile |
-     | P20 | tool_output tests — configurable output limit tests (tool_output_get_max_bytes/lines/line_length, exceed checks, env overrides). 13/13 tests. | 10 | tests/test_tool_output.c: 13 tests; test_runner.sh: wired as inline block with libtooloutput include |
-     | P21 | env_passthrough tests — env var passthrough registry tests (is_blocked, register, is_allowed, get_all, clear, batch_register). 15/15 tests. | 10 | tests/test_env_passthrough.c: 15 tests; test_runner.sh: wired with -lpthread |
-     | P22 | website policy tests — website access policy tests (init/free, extract_host, match_host, add_rule/check_access, disabled policy). 17/17 tests. | 10 | tests/test_website.c: 17 tests; test_runner.sh: wired with libwebsite include |
-
-## Phase 29: 5A-222 _http_client_limits (2026-05-27)
-
-| ID | Description | Sector | Evidence |
-|----|-------------|--------|----------|
-| G01 | HTTP pool keepalive expiry config — env-var configurable idle connection timeout (`HERMES_GATEWAY_KEEPALIVE_EXPIRY`). Ported from Python `gateway/platforms/_http_client_limits.py`. C already had pool cleanup with hardcoded 300s; now reads env var with default fallback. | 5A (gateway infrastructure) | src/gateway/server.c: env-var parsing in hermes_gateway_main(), g_gw.pool_keepalive_expiry field in gw_pool_cleanup(); include/hermes_gateway.h: pool_keepalive_expiry field; tests/test_gateway.c: test_pool_keepalive() — 3 test cases |
-| G02 | Gateway reaction vtable slot — added `send_reaction` callback to `gw_platform_t` vtable with `gw_platform_send_reaction()` dispatcher. Platforms that support emoji reactions (Signal, BlueBubbles) can wire their impls. | 5C (gateway infrastructure) | include/hermes_gateway.h: send_reaction field in gw_platform_t; src/gateway/server.c: gw_platform_send_reaction() dispatcher; tests/test_gateway.c: test_platform_reaction() — 1 test case |
-| G03 | Signal library tests — 13 new tests for lib/libsignal/hermes_signal.c covering signal_on/signal_default, safe_write, register_common, fork-verified handler dispatch, default_handler exit codes (SIGINT=130, SIGPIPE=141, unknown=103). | 9 (test coverage) | tests/test_signal.c: 13 test cases; test_runner.sh: already wired as run_lib_test |
-| G04 | Regex library tests — 32 comprehensive tests for lib/libregex/hermes_regex.c covering compile, match, search, extract, replace, group references, NULL safety. Replaced old minimal test file. | 9 (test coverage) | tests/test_regex.c: 32 test cases; test_runner.sh: already wired |
-| G05 | Line editor tests — 11 tests for lib/liblineedit/line_edit.c covering create/free, history save/load, NULL/error paths. Suite: 280/0/0 (+1). | 9 (test coverage) | tests/test_line_edit.c: 11 test cases; test_runner.sh: wired as run_lib_test |
-|    | 90 tools (was 84). Suite: 280/0/0 (was 278/0/0). | | |
-|
-## Phase 31: JSON Repair — P180 repair_tool_call_arguments (2026-05-27)
-|
-|| ID | Description | Sector | Evidence |
-||----|-------------|--------|----------|
-|| G08 | repair_tool_call_arguments — Ported Python message_sanitization.py JSON repair logic. Handles trailing commas, unclosed braces, excess closers, unescaped control chars inside JSON strings, "None" literal, whitespace-only input. 9 new tests in test_sanitize.c (11→20). | 2A (agent core — message_sanitization) | src/agent/sanitize.c: repair_tool_call_arguments(), escape_control_chars(), strip_trailing_commas(); tests/test_sanitize.c: 9 test_repair_* functions; test_runner.sh: sanitize count 11→20 |
-|
-|## Phase 30: Feishu Comment Tools — Drive (2026-05-27)
-|
-|| ID | Description | Sector | Evidence |
-||----|-------------|--------|----------|
-|| G06 | feishu_drive_reply_comment — POST reply to comment thread. Ported from Python feishu_drive_tool.py. Requires file_token, comment_id, content. Builds JSON body with text_run element format matching Feishu API expectations. Uses http_post_json_auth for POST with auth header. | 1B (missing tools) | src/tools/feishu_tools.c: handle_feishu_drive_reply_comment(), FEISHU_REPLY_SCHEMA; registry_init_feishu_tools() — registry_register_ex |
-| G07 | feishu_drive_add_comment — POST whole-document comment. Ported from Python feishu_drive_tool.py. Requires file_token, content, file_type. Builds JSON body with reply_elements array (type+text format). Uses http_post_json_auth. | 1B (missing tools) | src/tools/feishu_tools.c: handle_feishu_drive_add_comment(), FEISHU_ADD_SCHEMA; registry_register_ex |
-|| | 90 tools (was 88). Suite unchanged. 2 tool gaps closed. | | |
-|
-## Phase 32: JSON Surrogate Pair Parsing (2026-05-27)
-|
-|| ID | Description | Sector | Evidence |
-||----|-------------|--------|----------|
-||| G09 | libjson surrogate pair parsing — `\\uD83C\\uDF89` (U+1F389 🎉) now correctly decoded to 4-byte UTF-8. Lone surrogates replaced with U+FFFD. Previously only BMP was supported. | 7 (library — libjson) | lib/libjson/json.c: `case 'u':` handler — surrogate pair detection + 4-byte UTF-8 encoding; tests/test_json.c: test_surrogate_pair(), test_lone_high_surrogate(), test_lone_low_surrogate() |
-
-## Phase 33: WeCom Crypto — 5A-214 (2026-05-27)
-
-|| ID | Description | Sector | Evidence |
-||----|-------------|--------|----------|
-|| G10 | wecom_crypto — Ported Python WXBizMsgCrypt (142 LOC) to C. AES-256-CBC encrypt/decrypt with PKCS7 padding (block_size=32), SHA1 signature (sorted token+timestamp+nonce+encrypt), URL verification (verify_url), XML response builder. OpenSSL-based. 28 tests. Suite: 281/0/0 (+1). 1 gap closed. | 5A (missing platform modules — wecom_crypto) | include/hermes_wecom_crypto.h: struct wecom_crypto_t + 6 public functions; src/tools/wecom_crypto.c: wecom_crypto_init(), wecom_crypto_verify_url(), wecom_crypto_decrypt(), wecom_crypto_encrypt(), wecom_crypto_sha1_signature(); tests/test_wecom_crypto.c: 28 tests; test_runner.sh: wired; Makefile: wecom_crypto.o added |
-
-## Phase 34: Cron Locking Tests — P171 (2026-05-27)
-
-|| ID | Description | Sector | Evidence |
-||----|-------------|--------|----------|
-|| G11 | cron_locking (P171) — 23 test suite for job locking module. Covers acquire/release cycle, double acquire fail, stale lock removal, is_locked with nonexistent, NULL safety, shutdown flag, set_dir isolation, release_all_locks. Also fixed missing `<dirent.h>` include and added missing function declarations to hermes.h. | 9 (test coverage) | tests/test_cron_locking.c: 8 test functions, 23 assertions; test_runner.sh: wired; include/hermes.h: cron_lock_set_dir, cron_shutdown_requested, cron_release_all_locks declared; src/cron/cron_locking.c: #include &lt;dirent.h&gt; added |
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| ~80% of 1A depth gaps | Various tool feature gaps | Already implemented in C | Verified via grep 2026-05-27 |
+| S07 | shutdown = NULL (S07) | Resolved via gw_platform_shutdown_all() | server.c |
+| S01/S02 | Browser CDP stubs | Real WebSocket/JSON-RPC | browser.c |
+| D09 | CUA backend missing | Implemented at computer_use.c | ~400 LOC |
+| D12 | CDP backend stub | Real implementation | browser.c |
+| L14-L29 | Various library depth claims | Already implemented | Verified via grep |

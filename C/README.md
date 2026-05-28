@@ -4,19 +4,18 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-|||||||| Suite:  279/0/0 (236 test files, completes in <60s)
-|||||||| Binary: 30M    (dynamic ELF, -O2 -g)
-|||||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
-||||||||||| Parity:  ~43%   (~285 item-level gaps — see battleship-v16)
-||||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
-|||||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
-||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-||||||CLI:    98 cmd_ functions — 90 unique tools registered
-||||||Tools:  90 registered (93 at runtime with MCP dynamic)
-||||Libraries: 65 C modules — zero external deps beyond libc+libssl
-||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
-```
+||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
+||||||||| Binary: 30M    (dynamic ELF, -O2 -g)
+||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||||| Gaps:   35 verified gaps — see battleship-v17 (fresh audit 2026-05-27)
+|||||||||Stubs:  9 confirmed stubs remain. All entry points verified working.
+|||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|||||||CLI:    98 cmd_ functions — 99 unique tools registered
+|||||||Tools:  99 registered (103+ at runtime with MCP dynamic)
+|||||Libraries: 65 C modules — zero external deps beyond libc+libssl
+|||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+|||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+|```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
 

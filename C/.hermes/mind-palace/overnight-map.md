@@ -1,10 +1,18 @@
-# Slermes C — Overnight Map (v81 — ~282 Items)
-- **State:** v81 — Suite 282/0/0, 0 warnings, 90 tools, 98 CLI, 19 gateways, 10 providers, 65 libs, 172 src .c, 236 test files
-- Recent: cron_locking tests (23 tests, P171). Suite 282/0/0.
-- Recent: wecom_crypto ported (WXBizMsgCrypt AES-256-CBC, SHA1, PKCS7, XML). 28 new tests. 5A-214 closed.
-- Recent: repair_tool_call_arguments ported (JSON repair, 9 new tests in test_sanitize.c)
-- Recent: feishu_drive_reply_comment + feishu_drive_add_comment (POST-based) ported. 2 gaps closed.
-- **Phase 3:** ALL DONE.
-- **Phase 4:** small-to-medium items exhausted; tool_result_storage compilation skip fixed this session. Phase 5 Gateway or Phase 2B Agent Core next.
-- Many battleship claims still STALE — verify before implementing.
-- **Doc discipline:** update all after every pass.
+# Overnight Map — Slermes C (v83)
+
+## Session State (2026-05-27)
+- Last action: Full Triple DA v17 audit — live binary, stub hunt, module comparison, function depth audit, library verification
+- Battleship: v17 (35 gaps across 8 sectors, verified against live source)
+- Suite: 282/0/0
+- Next priority: S02 (platform shutdown=NULL) — quickest P1 fix
+- Working tree: clean, on main
+
+## Key Files
+- `.hermes/mind-palace/battleship-v17.md` — fresh gap list
+- `.hermes/mind-palace/vault/achievements.md` — all accomplishments
+- `src/tools/web.c` — has dangling pointer fix (url_copy before json_free)
+- `tests/test_web.c` — test 5 disabled (WSL getaddrinfo crash)
+
+## Context
+The battleship is no longer stale. Every gap in v17 was verified against actual source code.
+35 real gaps remain. All previous stale claims (~247 items) retired to vault.

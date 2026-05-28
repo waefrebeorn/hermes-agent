@@ -1,36 +1,29 @@
-# Slermes C — State Dashboard (v82 — 2026-05-27)
+# Slermes C — State Dashboard (v83 — 2026-05-27)
 
 ## Build Metrics
-Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 282/0/0.
+Build clean — **0 warnings**. **99 registered tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types. 65 libs. 173 src/ .c files (incl subdirs). 73 .h files. 239 test_*.c files. Binary: 30M. Suite: **282/0/0**.
 
-## 1:1 Parity Status (Triple DA v16)
-~282 item-level gaps (battleship-v16 rows, 22 closed this session).
+## Triple DA v17 Battleship (Fresh — 2026-05-27)
+~35 verified gaps across 8 sectors. Fresh audit: live binary test (5 entry points pass), stub hunt (18 grep patterns, 9 real stubs confirmed), module comparison (7 missing tools), function-level depth audit (7 depth gaps), library verification (3 gaps).
+
+## Phase Status
+- Phase 0 (Display): 14/16 done
+- Phase 1 (CLI): ALL DONE
+- Phase 2 (Provider): ALL DONE  
+- Phase 3 (Tool Features): 99 tools registered
+- Phase 4 (Missing Tools): 4 Yuanbao tools remain
+- Phase 5 (Gateway): 19 platforms, reactions vtable
+- Phase 6 (Agent): Full agent loop + LLM + all providers
+- Phase 7 (Libraries): 65 lib modules
+- Phase 8 (Tests): 239 test files, 282/0/0
+- Phase 9 (Stub Resolution): 9 confirmed stubs remain
 
 ## Recent (this session)
-- test(transcribe): add 3 edge case tests — invalid JSON, empty path, unsupported ext. Suite: 282/0/0.
-- fix(web_get): strdup url before json_free to fix use-after-free in web_get_handler. Suite: 282/0/0.
-- test(tool_output): expand tests 13→21 — edge cases, invalid env, size_t bounds. Suite: 282/0/0.
-- test(file_watch): expand tests 3→13 — error paths, event params, positive watch.
-- feat(x_search): configurable model via XAI_MODEL env var, fix /v1/v1/ URL bug.
-- Test suite: cron_locking (P171) — 23 tests for job locking (acquire/release, double acquire, stale lock, NULL safety, set_dir isolation, release all, shutdown flag). Suite: 282/0/0 (+1).
-- 5A-214: WeCom encryption/decryption (wecom_crypto) — Ported Python WXBizMsgCrypt: AES-256-CBC encrypt/decrypt, SHA1 signature, URL verification, PKCS7 padding, XML response builder. OpenSSL-based. 28 new tests. Suite: 281/0/0 (+1).
-- libjson: Surrogate pair parsing — `\uD83C\uDF89` now correctly decodes to U+1F389 (4-byte UTF-8). Lone surrogates replaced with U+FFFD. 3 new tests in test_json.c.
-- P180: `repair_tool_call_arguments` — Ported Python message_sanitization.py JSON repair logic. Handles trailing commas, unclosed braces, excess closers, control chars, "None" literal. 9 new tests in test_sanitize.c (11→20).
-- Layer 9: test_fal_common.c — 9 tests for FAL common utility lib (API key resolution, JSON escaping, error builders). Suite: 280/0/0 (+1).
-- 1B: feishu_drive_reply_comment — POST reply to comment thread (Ported from Python feishu_drive_tool.py). 90 tools total.
-- 1B: feishu_drive_add_comment — POST whole-document comment (Ported from Python feishu_drive_tool.py). 90 tools total.
-- Layer 9: test_line_edit.c — 11 line editor tests (create/free, history save/load, error paths). Suite: 279/0/0 (+1).
-- Layer 9: test_regex.c — 32 comprehensive regex tests (replaced old minimal file). Suite: 278/0/0.
-- Layer 9: test_signal.c — 13 new signal handling tests for lib/libsignal. Suite: 278/0/0 (0 skips).
-- 5C-252 Gateway reactions: added `send_reaction` vtable slot + dispatcher. 53 gateway tests (+1).
-- 5A-222 _http_client_limits: env-var configurable keepalive expiry for gateway HTTP pool. Ported from Python's `platform_httpx_limits()`. Suite: 278/0/0 (+3 gateway tests).
-- Fixed tool_result_storage skip: missing lib/libplugin include path in test_runner.sh. Suite: 278/0/0 (+1 from 277, no skips).
-- Removed 15+ build warnings across 7 source files: UTF-8 overflow, unused vars, unused params, strncpy truncation, comment-in-comment. Build: 0 warnings in touched files.
-
-## Phase Order
-0. Display Parity (16) — 14/16 done
-1. CLI Args — ALL DONE
-2. Provider Parity (~20 real, HEAVILY STALE — verify before impl)
-3. Tool Features — ALL DONE
-4. Missing Tools (45) — small-to-medium items exhausted; 14 closed this session
-5-11: Gateway (51) → Agent (74) → Plugins (13) → Libs (19) → Security (15) → Tests (50) → Infra (10)
+- Full Triple DA audit v17: live binary testing, 18-pattern stub hunt, module comparison, function-level depth audit, library verification. Found 35 verified gaps (down from ~282 stale claims).
+- test(transcribe): add 3 edge case tests — invalid JSON, empty path, unsupported ext.
+- fix(web_get): strdup url before json_free to fix use-after-free.
+- test(tool_output): expand tests 13→21.
+- test(file_watch): expand tests 3→13.
+- feat(x_search): configurable model via XAI_MODEL env var, fix URL bug.
+- Vault: created vault/achievements.md with all completed phases.
+- Battleship: v17 generated with 35 real gaps across 8 sectors.

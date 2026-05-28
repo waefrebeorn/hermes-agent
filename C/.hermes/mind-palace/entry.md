@@ -1,5 +1,13 @@
-# Entry (v79)
-- **State:** v79 — Suite 280/0/0
-- **Gaps:** ~283 (battleship-v16, 21 closed)
-- **Tools:** 90 | **CLI:** 98 | **Gateways:** 19 | **Providers:** 10
-- **Libs:** 65 | **src/ .c:** 172 | **Tests:** 236 | **Binary:** 30M
+# Slermes C — Entry Point (v83)
+
+## Quick Stats
+- Suite: 282/0/0 (239 test files)
+- Tools: 99 registered
+- CLI: 98 commands
+- Gateways: 19 platforms
+- Providers: 10 types
+- Libraries: 65 modules
+- Binary: 30M ELF
+- Src: 173 .c + 73 .h
+- Gaps: 35 verified (battleship-v17)
+- Build: 0 warnings
