@@ -835,8 +835,117 @@ static char *apply_patch(const char *path, const char *old_str,
         return strdup("{\"error\":\"old_string found multiple times (use replace_all=true)\"}");
     }
 
+    /* Conditional unescape of \\t/\\r in new_string — mirrors Python's
+     * _maybe_unescape_new_string().  LLMs frequently send the two-character
+     * sequences \\t and \\r inside JSON tool-call arguments where the file
+     * has real tab / carriage-return bytes.  Only convert when the matched
+     * file region actually contains the corresponding control byte, so that
+     * legitimate writes of the literal two-character string (e.g. patching
+     * Python source ``sep = "\\t"``) pass through untouched.
+     *
+     * \\n is intentionally excluded: newlines serialize correctly through
+     * JSON and rewriting them would mangle escape sequences in string
+     * literals far more often than help.
+     *
+     * This block determines the first matched region, then applies the
+     * conditional unescape to new_str.  For replace_all the same effective
+     * string is used for every occurrence.
+     */
+    const char *effective_new_str = new_str ? new_str : "";
+    char *unescaped_new_str = NULL;
+    if (effective_new_str[0] &&
+        (strstr(effective_new_str, "\\t") || strstr(effective_new_str, "\\r")))
+    {
+        /* Find the first matched region in content */
+        size_t first_mstart = 0, first_mlen = 0;
+        if (count == 1 && strategy_used[0] != 'e') {
+            /* Fuzzy — match_offset/match_length already set */
+            first_mstart = match_offset;
+            first_mlen = match_length;
+        } else {
+            /* Exact — find first occurrence */
+            const char *first = strstr(content, old_str);
+            if (first) {
+                first_mstart = (size_t)(first - content);
+                first_mlen = old_len;
+            }
+        }
+
+        if (first_mlen > 0) {
+            /* Extract matched region and check for control bytes */
+            const char *region_start = content + first_mstart;
+            size_t region_len = first_mlen;
+            bool has_tab = false, has_cr = false;
+            for (size_t i = 0; i < region_len; i++) {
+                if (region_start[i] == '\t') has_tab = true;
+                if (region_start[i] == '\r') has_cr = true;
+            }
+
+            unescaped_new_str = strdup(effective_new_str);
+            if (unescaped_new_str) {
+                if (has_tab) {
+                    /* Replace literal two-char \\t with real tab byte */
+                    char *tmp = unescaped_new_str;
+                    size_t tmp_len = strlen(tmp) + 256;
+                    char *buf = calloc(tmp_len + 1, 1);
+                    if (buf) {
+                        const char *sr = tmp;
+                        size_t wp = 0;
+                        while (*sr) {
+                            if (sr[0] == '\\' && sr[1] == 't') {
+                                buf[wp++] = '\t';
+                                sr += 2;
+                            } else {
+                                buf[wp++] = *sr++;
+                            }
+                            if (wp + 4 >= tmp_len) {
+                                tmp_len += 256;
+                                char *nb = realloc(buf, tmp_len + 1);
+                                if (!nb) break;
+                                buf = nb;
+                            }
+                        }
+                        buf[wp] = '\0';
+                        free(unescaped_new_str);
+                        unescaped_new_str = buf;
+                    }
+                }
+                if (has_cr && unescaped_new_str) {
+                    /* Replace literal \\r with real CR byte */
+                    char *tmp = unescaped_new_str;
+                    size_t tmp_len = strlen(tmp) + 256;
+                    char *buf = calloc(tmp_len + 1, 1);
+                    if (buf) {
+                        const char *sr = tmp;
+                        size_t wp = 0;
+                        while (*sr) {
+                            if (sr[0] == '\\' && sr[1] == 'r') {
+                                buf[wp++] = '\r';
+                                sr += 2;
+                            } else {
+                                buf[wp++] = *sr++;
+                            }
+                            if (wp + 4 >= tmp_len) {
+                                tmp_len += 256;
+                                char *nb = realloc(buf, tmp_len + 1);
+                                if (!nb) break;
+                                buf = nb;
+                            }
+                        }
+                        buf[wp] = '\0';
+                        free(unescaped_new_str);
+                        unescaped_new_str = buf;
+                    }
+                }
+                if (unescaped_new_str) {
+                    effective_new_str = unescaped_new_str;
+                }
+            }
+        }
+    }
+
     /* Calculate new content size */
-    size_t new_len = strlen(new_str ? new_str : "");
+    size_t new_len = strlen(effective_new_str);
     size_t result_size = bytes_read + (size_t)count * (new_len - old_len) + 1;
     char *result = (char *)malloc(result_size);
     if (!result) { free(content); return strdup("{\"error\":\"OOM\"}"); }
@@ -863,7 +972,7 @@ static char *apply_patch(const char *path, const char *old_str,
 
         /* Copy new string */
         if (new_len > 0) {
-            memcpy(result + pos, new_str, new_len);
+            memcpy(result + pos, effective_new_str, new_len);
             pos += new_len;
         }
 
@@ -887,6 +996,7 @@ static char *apply_patch(const char *path, const char *old_str,
     f = fopen(path, "w");
     if (!f) {
         free(content);
+        free(unescaped_new_str);
         free(result);
         return strdup("{\"error\":\"Cannot open file for writing\"}");
     }
@@ -906,12 +1016,13 @@ static char *apply_patch(const char *path, const char *old_str,
     size_t show_new = new_len > 200 ? 200 : new_len;
     snprintf(diff_buf, sizeof(diff_buf),
              "--- a/%s\n+++ b/%s\n@@ -1 +1 @@\n-%.*s\n+%.*s",
-             path, path, (int)show_old, old_str, (int)show_new, new_str);
+             path, path, (int)show_old, old_str, (int)show_new, effective_new_str);
     json_object_set(r, "diff", json_new_string(diff_buf));
 
     char *json_out = json_serialize(r);
     json_free(r);
     free(content);
+    free(unescaped_new_str);
     free(result);
     return json_out;
 }
