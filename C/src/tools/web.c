@@ -68,6 +68,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *cookies = json_object_get_string(args, "cookies", NULL);
 
     /* Strdup values that survive json_free */
+    char *url_copy = url ? strdup(url) : NULL;
     char *headers_copy = headers_str ? strdup(headers_str) : NULL;
     char *body_copy = body ? strdup(body) : NULL;
     char *auth_copy = auth ? strdup(auth) : NULL;
@@ -85,7 +86,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
 
     json_free(args);
 
-    if (!url) {
+    if (!url_copy) {
         free(headers_copy);
         free(body_copy);
         free(proxy_copy);
@@ -95,12 +96,13 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     }
 
     /* SSRF protection: block internal/private URLs */
-    if (!url_is_safe(url)) {
+    if (!url_is_safe(url_copy)) {
         free(headers_copy);
         free(body_copy);
         free(proxy_copy);
         free(cookies_copy);
         free(ua_copy);
+        free(url_copy);
         return strdup("{\"error\":\"URL blocked by SSRF protection: private or internal address\"}");
     }
 
@@ -181,11 +183,12 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(proxy_copy);
         free(cookies_copy);
         free(ua_copy);
+        free(url_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
     }
 
     json_node_t *result = json_new_object();
-    json_object_set(result, "url", json_new_string(url));
+    json_object_set(result, "url", json_new_string(url_copy));
     json_object_set(result, "status_code", json_new_number((double)resp->status));
     if (include_body_val) {
         json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
@@ -202,6 +205,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     free(proxy_copy);
     free(cookies_copy);
     free(ua_copy);
+    free(url_copy);
     return json_out;
 }
 
