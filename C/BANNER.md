@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v114)
+# BANNER — WuBu Slermes C Translation (v116)
 
 ```
   __        __           _   ____  _  
@@ -9,14 +9,15 @@
 
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
-   ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  0 remaining gaps  │  0 stubs  │  ALL GAPS RESOLVED      ║
+   ║  v116  │  31MB binary  │  0 warnings                        ║
+   ║  85 tools  │  80 CLI  │  33 real parity gaps                ║
+   ║  Stub-hunt ✅  │  Upstream sync needed: 7583 commits        ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v114)
+## Build Metrics (v116)
 
-Suite: 282/0/0 — all pass, 0 skip. 96 tools, 98 CLI commands.
-173 src/ .c files, 239 tests, 65 libs, 19 gateways, 10 providers.
+Suite: 282/0/0 — all pass, 0 skip. 85 tools, 80 CLI commands, 37 config sections.
+174 src/ .c files, 239 tests, 65 libs, 19 gateways, 10 providers.
 Binary: 31M. Build: 0 warnings. Stubs: 0 (codebase clean).
 
 ## Gap Distribution
@@ -26,7 +27,7 @@ Binary: 31M. Build: 0 warnings. Stubs: 0 (codebase clean).
 | Phase 0 — Form-Not-Function | ✅ ALL DONE |
 | Phase 1 — CLI Args | ✅ ALL DONE |
 | Phase 2 — Provider Parity | ✅ ALL DONE |
-| Phase 3 — Tool Features | ✅ ALL DONE (96 tools) |
+|| Phase 3 — Tool Features | ✅ ALL DONE (85 tools) |
 | Phase 4 — Missing Tools | ✅ ALL RESOLVED (0 remaining) |
 | Phase 5 — Gateway (19) | ✅ All platforms, reactions wired (Telegram) |
 | Phase 6 — Agent | ✅ Full loop + all providers |

@@ -20,14 +20,12 @@ PROJECT A: WuBu Hermes — C Translation
 /home/wubu/.hermes/hermes-agent/                      -- production (for reference only)
 
 Remotes: origin=NousResearch/hermes-agent  wubu=waefrebeorn/slermes
-Branch:  wubu/main (14 unique commits consolidated)
-No PRs to upstream until full translation done.
+Branch:  main (276 C commits, 7583 upstream commits behind)
+No PRs to upstream until full parity + upstream sync done.
 
-Phase 1: Foundation deps (JSON/YAML/HTTP/crypto/DB/ncurses → C)
-Phase 2: Agent core (loop/LLM client/CLI → C)
-Phase 3: Tools (terminal/file/web/skills → C)
-Phase 4: Gateway (server + platform adapters → C)
-Phase 5: Advanced (cron/skills/edge → C)
+Phase 1-5: Complete (stub-hunt done). Current phase: REAL PARITY + UPSTREAM SYNC
+33 gaps across 5 sectors (S0-S4). S4 = Upstream Drift (NEW, 7 gaps, 7583 commits behind).
+See battleship-v27.md for the active gap map.
 
 Every pull: python3 C/digest.py → pick next undone item → implement → build → commit
 

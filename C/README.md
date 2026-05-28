@@ -5,16 +5,16 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
 ||||||||| Suite:  282/0/0 (239 test files, completes in <60s)
-||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||| Gaps:   0 verified gaps — ALL RESOLVED
-||||||||Stubs:  0 confirmed stubs remain. All entry points verified working.
-|||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||||CLI:    98 cmd_ functions — 96 unique tools registered
-|||||||Tools:  96 registered (100+ at runtime with MCP dynamic)
-||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
-||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+|||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+|||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+||||||||||| Gaps:  33 real parity gaps (5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift)
+|||||||||Stubs:  0 stubs remain. All entry points verified.
+||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||||||||CLI:    80 cmd_ functions + 37 config sections — 85 unique tools registered
+||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
+|||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
+|||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+|||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
 ```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
@@ -32,7 +32,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 - [Plugins (10 .c)](#plugins-10-c)
 - [Libraries (66 Units)](#libraries-66-units)
 - [CLI Commands (98 Slash, Real)](#cli-commands-98-slash-real)
-- [Battleship Roadmap (22 Gaps)](#battleship-roadmap-22-gaps)
+- [Battleship Roadmap (33 Gaps)](#battleship-roadmap-33-gaps)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
@@ -473,7 +473,9 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 ## Verified Stubs (All Resolved)
 
-All stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, `stub`, `for brevity`, `for later`, `for extension`, `scaffolding`, `NOT_IMPLEMENTED`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
+All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
+
+**However:** 33 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v27.md` for the active gap map.
 
 ---
 
@@ -545,7 +547,7 @@ The `.hermes/mind-palace/` directory documents the entire development process �
 | 5 | `entry.md` | Build/run commands + architecture |
 | 6 | `overnight-map.md` | Session navigation + fallback task |
 | 7 | `testing.md` | Test suite coverage + known gaps |
-| 8 | `battleship-v24.md` | All gaps resolved (0 remaining) |
+| 8 | `battleship-v27.md` | 33 parity gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 drift |
 | 9 | `vault/achievements.md` | All resolved gaps with evidence |
 
 ---
@@ -611,9 +613,18 @@ This project tracks [NousResearch/hermes-agent](https://github.com/NousResearch/
 
 ---
 
-## Battleship Roadmap (All Resolved)
+## Battleship Roadmap (33 Gaps: 5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 Drift)
 
-See `.hermes/mind-palace/battleship-v24.md` for the complete gap map.
+See `.hermes/mind-palace/battleship-v27.md` for the complete gap map.
+
+| Priority | Sector | Gaps | Focus |
+|----------|--------|------|-------|
+| P0 | S0: Form-vs-Function | 5 | Retry, setup, resize, Python hook, test cheating |
+| P1 | S1: Pipeline | 5 | TUI bugs, plumbing, linkage, display, usage |
+| P1 | S2: Cross-Compare | 4 | AST comparison, test recreation, behavior, schemas |
+| P1 | S4: Upstream Drift (NEW) | 7 | 7583 upstream commits — provider/API, schemas, loops, gateways, MCP, security, tests |
+| P2 | S3: Product Features | 6 | Multi-turn, persistence, plugins, skins, gateways, providers |
+| **Total** | **5 sectors** | **33** | **P0:5, P1:16, P2:6** |
 
 **Summary:**
 | Sector | Count | Priority |

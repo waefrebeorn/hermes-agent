@@ -7,7 +7,7 @@ Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provid
 ```
 ||CLI / Gateway → Agent Loop → LLM Client → 10 Providers → HTTP/JSON
                     ↓
-             Tool Registry (99 tools)
+             Tool Registry (85 tools)
                     ↓
              Plugin Registry (10 .so)
                     ↓
