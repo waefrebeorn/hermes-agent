@@ -1,4 +1,5 @@
-# Prestige (v114)
-ALL GAPS RESOLVED. Full parity with Python Yuanbao tools.
-D01-D12, I02, X01-X05, M03-M07 — all closed.
-96 tools, 282/0/0 suite, 0 stubs.
+# Prestige (v115)
+P0: F01-F05 — form-vs-function (retry, setup, resize, hook, tests)
+P1: P01-P05, A01-A04 — plumbing, TUI, linkage, cross-compare
+P2: Q01-Q06 — product features (multi-turn, plugins, parity)
+Stub-hunt phase complete. Real parity phase begins.

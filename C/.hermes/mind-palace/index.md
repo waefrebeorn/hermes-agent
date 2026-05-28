@@ -1,2 +1,2 @@
-# Index (v114)
-ALL GAPS RESOLVED. 0 gaps. 96 tools. 282/0/0 suite.
+# Index (v115)
+Battleship v25 — 20 real parity gaps. "0 gaps" was stub-hunt only.

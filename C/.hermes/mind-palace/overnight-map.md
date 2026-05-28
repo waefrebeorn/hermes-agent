@@ -1,3 +1,4 @@
-# Overnight (v114)
-0 gaps remain. ALL RESOLVED. Full parity with Python Yuanbao tools.
-M03 query_group_info, M04 get_group_member_list, M06 send_dm implemented.
+# Overnight (v115)
+20 real parity gaps. P0: form-vs-function (retry broken, setup not 1:1, resize races,
+no Python hooking, test cheating). Full cross-comparison + test recreation needed.
+Stash C folder, pull upstream, run Triple DA audit.
