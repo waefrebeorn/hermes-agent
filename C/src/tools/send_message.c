@@ -1,10 +1,12 @@
 /*
  * send_message.c — Send message tool for Hermes C.
- * Sends messages to platforms. Currently supports: local (stdout/file), telegram.
+ * Sends messages to platforms. Supports: local (stdout/file), telegram with inline buttons.
  */
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_http.h"
+#include "hermes_gateway.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,12 +18,94 @@ static const char *SCHEMA = "{"
     "\"properties\":{"
       "\"target\":{\"type\":\"string\",\"description\":\"'local' (save), 'stdout' (print), or 'platform:target' (e.g., telegram:-100123456)\"},"
       "\"message\":{\"type\":\"string\",\"description\":\"Message text to send\"},"
-      "\"media_path\":{\"type\":\"string\",\"description\":\"F43: Optional file path to attach as media (image, audio, video, document)\"},"
-      "\"platform\":{\"type\":\"string\",\"description\":\"F42: Platform name override (e.g., 'telegram', 'discord') — overrides target parsing\"},"
-      "\"thread_id\":{\"type\":\"string\",\"description\":\"Thread/topic ID for platforms that support threaded conversations (e.g., Telegram topic ID)\"}"
+      "\"media_path\":{\"type\":\"string\",\"description\":\"Optional file path to attach as media (image, audio, video, document)\"},"
+      "\"platform\":{\"type\":\"string\",\"description\":\"Platform name override (e.g., 'telegram', 'discord') — overrides target parsing\"},"
+      "\"thread_id\":{\"type\":\"string\",\"description\":\"Thread/topic ID for platforms that support threaded conversations (e.g., Telegram topic ID)\"},"
+      "\"reply_to_message_id\":{\"type\":\"string\",\"description\":\"Message ID to reply to\"},"
+      "\"inline_buttons\":{\"type\":\"array\",\"description\":\"D06: Array of inline button objects [{text, url?, callback_data?, row?}] for inline keyboards\"}"
     "},"
     "\"required\":[\"message\"]"
 "}";
+
+/*
+ * D06: Build inline_keyboard reply_markup JSON from inline_buttons array.
+ * Input: JSON array of {text, url?, callback_data?, row?} objects.
+ * Output: JSON node with {inline_keyboard: [[{text, url/callback_data}], ...]}
+ */
+static json_node_t *build_inline_keyboard(json_node_t *buttons) {
+    if (!buttons || buttons->type != JSON_ARRAY) return NULL;
+    size_t count = json_len(buttons);
+    if (count == 0) return NULL;
+
+    /* First pass: determine max row number to size the row array */
+    int max_row = 0;
+    for (size_t i = 0; i < count; i++) {
+        json_node_t *btn = json_array_get(buttons, i);
+        if (btn) {
+            int row = (int)json_object_get_number(btn, "row", 0);
+            if (row > max_row) max_row = row;
+        }
+    }
+
+    /* Allocate row arrays (max_row+1 rows, each starting empty) */
+    size_t row_count = (size_t)(max_row + 1);
+    json_node_t **rows = calloc(row_count, sizeof(json_node_t *));
+    size_t *row_sizes = calloc(row_count, sizeof(size_t));
+    if (!rows || !row_sizes) {
+        free(rows);
+        free(row_sizes);
+        return NULL;
+    }
+
+    /* Second pass: group buttons into rows */
+    for (size_t i = 0; i < count; i++) {
+        json_node_t *btn = json_array_get(buttons, i);
+        if (!btn) continue;
+
+        const char *text = json_object_get_string(btn, "text", NULL);
+        if (!text) continue;
+
+        int row_idx = (int)json_object_get_number(btn, "row", 0);
+        if (row_idx < 0) row_idx = 0;
+        if (row_idx > max_row) row_idx = max_row;
+
+        json_node_t *button = json_new_object();
+        json_object_set(button, "text", json_new_string(text));
+
+        const char *url = json_object_get_string(btn, "url", NULL);
+        const char *callback_data = json_object_get_string(btn, "callback_data", NULL);
+        if (url) {
+            json_object_set(button, "url", json_new_string(url));
+        } else if (callback_data) {
+            json_object_set(button, "callback_data", json_new_string(callback_data));
+        }
+
+        /* Append to row array */
+        if (!rows[(size_t)row_idx]) {
+            rows[(size_t)row_idx] = json_new_array();
+        }
+        json_array_append(rows[(size_t)row_idx], button);
+        row_sizes[(size_t)row_idx]++;
+    }
+
+    /* Build final keyboard: inline_keyboard: [[row1], [row2], ...] */
+    json_node_t *keyboard = json_new_array();
+    for (size_t r = 0; r < row_count; r++) {
+        if (rows[r] && row_sizes[r] > 0) {
+            json_array_append(keyboard, rows[r]);
+        } else if (rows[r]) {
+            json_free(rows[r]);
+        }
+    }
+
+    json_node_t *reply_markup = json_new_object();
+    json_object_set(reply_markup, "inline_keyboard", keyboard);
+    /* keyboard is now owned by reply_markup, don't free separately */
+
+    free(rows);
+    free(row_sizes);
+    return reply_markup;
+}
 
 char *send_message_handler(const char *args_json, const char *task_id) {
     (void)task_id;
@@ -37,6 +121,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     const char *platform_override = json_object_get_string(args, "platform", NULL);
     const char *thread_id = json_object_get_string(args, "thread_id", NULL);
     const char *reply_to = json_object_get_string(args, "reply_to_message_id", NULL);
+    json_node_t *inline_buttons_node = json_object_get(args, "inline_buttons");
 
     json_node_t *result = json_new_object();
 
@@ -118,78 +203,48 @@ char *send_message_handler(const char *args_json, const char *task_id) {
             }
 
         } else if (platform && strcmp(platform, "telegram") == 0) {
-            /* Route to Telegram platform */
-            char cmd[16384];
+            /* D06: Direct Telegram send via libhttp (replaces broken system() call) */
+            bool sent = false;
             const char *tg_msg = actual_message ? actual_message : "";
-            char escaped_msg[8192];
-            int ei = 0;
-            for (int i = 0; tg_msg[i] && ei < (int)sizeof(escaped_msg) - 4; i++) {
-                if (tg_msg[i] == '\'') {
-                    if (ei + 4 < (int)sizeof(escaped_msg)) {
-                        escaped_msg[ei++] = '\'';
-                        escaped_msg[ei++] = '\\';
-                        escaped_msg[ei++] = '\'';
-                        escaped_msg[ei++] = '\'';
-                    }
-                } else {
-                    escaped_msg[ei++] = tg_msg[i];
-                }
-            }
-            escaped_msg[ei] = '\0';
 
-            if (actual_media) {
-                char escaped_path[2048];
-                snprintf(escaped_path, sizeof(escaped_path), "%s", actual_media);
-                /* Choose send method based on extension */
-                const char *ext = strrchr(actual_media, '.');
-                if (ext) {
-                    ext++;
-                    if (strcmp(ext, "ogg") == 0 || strcmp(ext, "oga") == 0 || strcmp(ext, "wav") == 0 || strcmp(ext, "mp3") == 0) {
-                        snprintf(cmd, sizeof(cmd),
-                                 "hermes gateway telegram sendVoice --chat_id '%s' --voice '%s' 2>/dev/null",
-                                 chat_id ? chat_id : "", actual_media);
-                    } else if (strcmp(ext, "mp4") == 0 || strcmp(ext, "mov") == 0 || strcmp(ext, "avi") == 0) {
-                        snprintf(cmd, sizeof(cmd),
-                                 "hermes gateway telegram sendVideo --chat_id '%s' --video '%s' 2>/dev/null",
-                                 chat_id ? chat_id : "", actual_media);
-                    } else if (strcmp(ext, "gif") == 0 || strcmp(ext, "webp") == 0) {
-                        snprintf(cmd, sizeof(cmd),
-                                 "hermes gateway telegram sendAnimation --chat_id '%s' --animation '%s' 2>/dev/null",
-                                 chat_id ? chat_id : "", actual_media);
-                    } else if (strcmp(ext, "jpg") == 0 || strcmp(ext, "jpeg") == 0 || strcmp(ext, "png") == 0 || strcmp(ext, "webp") == 0) {
-                        snprintf(cmd, sizeof(cmd),
-                                 "hermes gateway telegram sendPhoto --chat_id '%s' --photo '%s' --caption '%s' 2>/dev/null",
-                                 chat_id ? chat_id : "", actual_media, escaped_msg);
+            /* Get bot token from config or env */
+            hermes_config_t cfg;
+            memset(&cfg, 0, sizeof(cfg));
+            hermes_config_load(&cfg, NULL);
+            const char *bot_token = cfg.telegram.bot_token[0] ? cfg.telegram.bot_token : getenv("TELEGRAM_BOT_TOKEN");
+
+            if (bot_token && bot_token[0]) {
+                telegram_set_token(bot_token);
+                http_client_t *http = http_client_new(30);
+                if (http) {
+                    if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
+                        /* Build reply_markup with inline keyboard */
+                        json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
+                        if (reply_markup) {
+                            sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
+                                                                       tg_msg, "Markdown", reply_markup);
+                            json_free(reply_markup);
+                        } else {
+                            /* Fallback: send without keyboard */
+                            sent = telegram_send_message(http, chat_id ? chat_id : "",
+                                                         tg_msg, "Markdown");
+                        }
                     } else {
-                        snprintf(cmd, sizeof(cmd),
-                                 "hermes gateway telegram sendDocument --chat_id '%s' --document '%s' --caption '%s' 2>/dev/null",
-                                 chat_id ? chat_id : "", actual_media, escaped_msg);
+                        sent = telegram_send_message(http, chat_id ? chat_id : "",
+                                                     tg_msg, "Markdown");
                     }
-                } else {
-                    snprintf(cmd, sizeof(cmd),
-                             "hermes gateway telegram sendDocument --chat_id '%s' --document '%s' --caption '%s' 2>/dev/null",
-                             chat_id ? chat_id : "", actual_media, escaped_msg);
-                }
-            } else {
-                if (reply_to) {
-                    snprintf(cmd, sizeof(cmd),
-                             "hermes gateway telegram sendMessage --chat_id '%s' --text '%s' --reply_to '%s' 2>/dev/null",
-                             chat_id ? chat_id : "", escaped_msg, reply_to);
-                } else {
-                    snprintf(cmd, sizeof(cmd),
-                             "hermes gateway telegram sendMessage --chat_id '%s' --text '%s' 2>/dev/null",
-                             chat_id ? chat_id : "", escaped_msg);
+                    http_client_free(http);
                 }
             }
 
-            int rc = system(cmd);
-            if (rc == 0) {
+            if (sent) {
                 json_object_set(result, "status", json_new_string("sent"));
                 json_object_set(result, "platform", json_new_string("telegram"));
                 if (chat_id) json_object_set(result, "chat_id", json_new_string(chat_id));
             } else {
                 json_object_set(result, "status", json_new_string("error"));
-                json_object_set(result, "error", json_new_string("Telegram send failed"));
+                const char *reason = !bot_token ? "TELEGRAM_BOT_TOKEN not set" : "Telegram send failed";
+                json_object_set(result, "error", json_new_string(reason));
             }
 
         } else if (platform) {
@@ -264,6 +319,7 @@ void registry_init_send_message(void) {
         "'discord:#channel'). "
         "Use 'media_path' to attach files (images, audio, video, documents). "
         "The MEDIA: prefix in message text is also supported for backward compat. "
-        "Optional 'thread_id' for threaded conversations (e.g., Telegram topic IDs).",
+        "Optional 'thread_id' for threaded conversations (e.g., Telegram topic IDs). "
+        "D06: 'inline_buttons' array for inline keyboards [{text, url?, callback_data?, row?}].",
         SCHEMA, send_message_handler);
 }

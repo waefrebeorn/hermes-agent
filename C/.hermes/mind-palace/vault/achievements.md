@@ -241,3 +241,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D13 | Discord tool expanded from 12 to 19 actions: new handlers for search_members, list_pins, pin_message, unpin_message, create_thread, add_role, remove_role — plus schema enum, dispatch branches, and parameter extraction | `src/tools/discord.c` — 7 handler functions; dispatch at strcmp branches; role_id/query params |
+
+## Phase 12: Send Message Inline Buttons (D06 partial)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D06 | Inline buttons for send_message tool: new `inline_buttons` schema param, `build_inline_keyboard()` helper builds multi-row reply_markup JSON. Direct libhttp Telegram send replaces broken system() shell-out | `src/tools/send_message.c` — SCHEMA has inline_buttons[{text,url?,callback_data?,row?}]; libhttp path at telegram branch; suite 282/0/0 |
