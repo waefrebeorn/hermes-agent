@@ -1,4 +1,4 @@
-# Slermes C — State Dashboard (v81 — 2026-05-27)
+# Slermes C — State Dashboard (v82 — 2026-05-27)
 
 ## Build Metrics
 Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 282/0/0.
@@ -7,6 +7,10 @@ Build clean — **0 warnings**. **90 unique tools** (registry_register + registr
 ~282 item-level gaps (battleship-v16 rows, 22 closed this session).
 
 ## Recent (this session)
+- fix(web_get): strdup url before json_free to fix use-after-free in web_get_handler. Suite: 282/0/0.
+- test(tool_output): expand tests 13→21 — edge cases, invalid env, size_t bounds. Suite: 282/0/0.
+- test(file_watch): expand tests 3→13 — error paths, event params, positive watch.
+- feat(x_search): configurable model via XAI_MODEL env var, fix /v1/v1/ URL bug.
 - Test suite: cron_locking (P171) — 23 tests for job locking (acquire/release, double acquire, stale lock, NULL safety, set_dir isolation, release all, shutdown flag). Suite: 282/0/0 (+1).
 - 5A-214: WeCom encryption/decryption (wecom_crypto) — Ported Python WXBizMsgCrypt: AES-256-CBC encrypt/decrypt, SHA1 signature, URL verification, PKCS7 padding, XML response builder. OpenSSL-based. 28 new tests. Suite: 281/0/0 (+1).
 - libjson: Surrogate pair parsing — `\uD83C\uDF89` now correctly decodes to U+1F389 (4-byte UTF-8). Lone surrogates replaced with U+FFFD. 3 new tests in test_json.c.
