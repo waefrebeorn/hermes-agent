@@ -1,4 +1,4 @@
-     1|     1|# Slermes C (v132)
+     1|     1|# Slermes C (v133)
      2|     2|
      3|     3|Suite: 283/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
      4|     4|Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174
@@ -23,6 +23,7 @@
     23|    23|  Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points (pre/post LLM, pre/post tool).
     24|    24|  Suite 283/0/0, commit dde46b7c0 pushed.
 - Phase 42: Gateway MEDIA: support + session meta fields (reasoning_tokens, cost)
+- Phase 43: Shell hooks lifecycle wired from YAML config through agent init
   Commits: 79fe05286, cd5ecfc9c, 34d6ef494. Suite 283/0/0.
     25|    25|
     26|    26|## Critical Gaps

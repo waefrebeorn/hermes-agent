@@ -1,6 +1,6 @@
 # BATTLE MAP — Active Gap Audit
 
-> Canonical battleship at `mind-palace/battleship-v28.md`.
+> Canonical battleship at `mind-palace/battleship-v33.md`.
 >
-> v28: 33 gaps (5 S0 + 5 S1 + 4 S2 + 6 S3 + 7 S4 upstream drift).
-> Fork synced. 7583 upstream changes unported in C code. v117.
+> v33: 17 gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 upstream drift).
+> Fork synced. v133.

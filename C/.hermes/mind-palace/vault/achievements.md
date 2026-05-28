@@ -434,6 +434,15 @@
 - session_meta_t: added reasoning_tokens, estimated_cost fields (schema v3)
 - Fixed pre-existing send_message test crash (TEST_BUILD guard)
 - Evidence: commits 79fe05286, cd5ecfc9c, 34d6ef494
+
+## Phase 43: Shell Hooks Lifecycle Wiring (v133)
+
+- libyaml: added yaml_to_json_string() — serialize YAML sub-tree to JSON
+- config.c: populate cfg->hooks_json from YAML hooks: block
+- agent_loop.c: call shell_hooks_parse_json() + shell_hooks_register_all() in agent_configure_from_config()
+- Full lifecycle now wired: YAML hooks: block → JSON → parse → register → hook_invoke in agent_loop
+- Evidence: commit c6cbd1e4c
+
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
    431|- Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points

@@ -7,10 +7,10 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||| Suite:  283/0/0 (239 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||||| Gaps:  23 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 7 S4 drift)
+|||||||||||| Gaps:  17 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 drift)
 ||||||||||Stubs:  0 stubs remain. All entry points verified.
 |||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||||||CLI:    80 cmd_ functions + 37 config sections — 85 unique tools registered
+|||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 |||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
 ||||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
 ||||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 23 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift (7583 commits behind NousResearch/hermes-agent). See `.hermes/mind-palace/battleship-v32.md` for the active gap map.
+**However:** 17 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift. See `.hermes/mind-palace/battleship-v33.md` for the active gap map.
 
 ---
 
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v32.md` — Canonical gap list (23 items across 5 sectors)
+- `battleship-v33.md` — Canonical gap list (17 items across 5 sectors)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
@@ -615,7 +615,7 @@ make -j$(nproc)
 ### Workflow
 
 1. Read `.hermes/mind-palace/` for current state and priority
-2. Pick the next gap from battleship-v32.md
+2. Pick the next gap from battleship-v33.md
 3. Build + test before PR
 4. Update all docs — state, prestige, plan, overnight, goal-mantra, battleship, README, BANNER, vault
 5. Commit with descriptive message
@@ -648,9 +648,9 @@ The C translation tracks [NousResearch/hermes-agent](https://github.com/NousRese
 - **C code:** Tracked in `C/` subdirectory of the slermes fork
 - **History:** Original 277 commits on `c-work` branch → squashed onto upstream main as single commit (`d00d2f1d`)
 
-### Upstream Drift (7583 commits)
+### Upstream Drift (synced)
 
-The C code was forked from upstream commit `2517917de`. Since then, 7583 upstream changes have been made. Key drift areas:
+The C code was forked from upstream commit `2517917de` and later synced to 0 behind, 0 ahead. Key drift areas:
 - Provider/API evolution (XAI retry, OAuth, fallback)
 - Agent loop changes (retry buffer, credential pool)
 - Gateway platform updates (Discord thread, Telegram heartbeat)
@@ -659,4 +659,4 @@ The C code was forked from upstream commit `2517917de`. Since then, 7583 upstrea
 - Security/auth overhaul (OAuth PKCE, API key enforcement)
 - ~17k new tests
 
-See `.hermes/mind-palace/battleship-v32.md` for the full gap map.
+See `.hermes/mind-palace/battleship-v33.md` for the full gap map.
