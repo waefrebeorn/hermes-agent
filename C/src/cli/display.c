@@ -12,6 +12,9 @@
 void cli_display_response(const char *role, const char *content,
                            const char *reasoning)
 {
+    (void)role;
+    (void)content;
+
     if (!content && !reasoning) return;
 
     if (reasoning && reasoning[0]) {

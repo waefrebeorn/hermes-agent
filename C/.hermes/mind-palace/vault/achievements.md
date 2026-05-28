@@ -383,3 +383,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Old Claim | Reality | Evidence |
 |----|-----------|---------|----------|
 | P01 | Retry broken in TUI | Agent retry is handled entirely by agent_loop.c's retry loop (jittered exponential backoff, fallback routing). TUI calls agent_chat() which goes through the same retry path as CLI. No TUI-specific retry code needed. | `src/agent/agent_loop.c` — retry loop at agent_run_conversation; `src/cli/tui_fullscreen.c` — agent_chat wiring (F01); F01 verified retry functional |
+
+## Phase 34: Compiler Warning Cleanup
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| W01 | Eliminated all non-truncation compiler warnings (was ~20): unused params, uninitialized variable, unused functions, ignored asprintf/chdir returns, always-true comparison, GNU ?: extension. Build now produces only -Wformat-truncation and -Wstringop-truncation warnings (benign, buffer size analysis) | `src/secrets.c` — init guard; `src/agent/file_safety.c` — (void)asprintf (×5); `src/cli/cli.c` — session_id[0] check; `src/agent/image_routing.c` — (void)provider + unused fn attr; `src/agent/context_references.c` — (void)chdir; `src/agent/shell_hooks.c` — 4 unused fn attrs; `src/cli/display.c` — (void)role; suite 282/0/0 |

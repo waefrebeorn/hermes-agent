@@ -1,4 +1,4 @@
-# Slermes C (v121)
+# Slermes C (v122)
 
 Suite: 282/0/0 | Tools: 85 | CLI: 80 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 239 | C src: 174

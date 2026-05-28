@@ -568,7 +568,7 @@ static void run_git_command(const char *cwd, char *const *args,
         dup2(pipefd[1], STDOUT_FILENO);
         dup2(pipefd[1], STDERR_FILENO);
         close(pipefd[1]);
-        if (cwd) (void)chdir(cwd);
+        if (cwd) (void)(void)chdir(cwd);
         /* Build argv */
         int argc;
         for (argc = 0; args[argc]; argc++);

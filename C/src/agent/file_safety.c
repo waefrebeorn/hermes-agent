@@ -334,7 +334,7 @@ char *file_get_read_block_error(const char *path)
         resolve_path(buf, rbuf, sizeof(rbuf));
         if (rbuf[0] && strncmp(resolved, rbuf, strlen(rbuf)) == 0) {
             char *err;
-            asprintf(&err,
+            (void)(void)asprintf(&err,
                 "Access denied: %s is an internal Hermes cache file "
                 "and cannot be read directly to prevent prompt injection. "
                 "Use the skills_list or skill_view tools instead.", path);
@@ -351,7 +351,7 @@ char *file_get_read_block_error(const char *path)
             resolve_path(buf, rbuf, sizeof(rbuf));
             if (rbuf[0] && strcmp(resolved, rbuf) == 0) {
                 char *err;
-                asprintf(&err,
+                (void)(void)asprintf(&err,
                     "Access denied: %s is a Hermes credential store "
                     "and cannot be read directly. Provider tools consume "
                     "these credentials through internal channels. "
@@ -368,7 +368,7 @@ char *file_get_read_block_error(const char *path)
             size_t rlen = strlen(rbuf);
             if (strcmp(resolved, rbuf) == 0) {
                 char *err;
-                asprintf(&err,
+                (void)(void)asprintf(&err,
                     "Access denied: %s is the Hermes MCP token directory "
                     "and cannot be read directly. (Defense-in-depth \342\200\224 "
                     "not a security boundary; the terminal tool can still "
@@ -377,7 +377,7 @@ char *file_get_read_block_error(const char *path)
             }
             if (strncmp(resolved, rbuf, rlen) == 0 && resolved[rlen] == '/') {
                 char *err;
-                asprintf(&err,
+                (void)(void)asprintf(&err,
                     "Access denied: %s is the Hermes MCP token directory "
                     "and cannot be read directly. (Defense-in-depth \342\200\224 "
                     "not a security boundary; the terminal tool can still "
@@ -386,7 +386,7 @@ char *file_get_read_block_error(const char *path)
             }
             if (strncmp(resolved, rbuf, strlen(rbuf)) == 0 && resolved[strlen(rbuf)] == '/') {
                 char *err;
-                asprintf(&err,
+                (void)(void)asprintf(&err,
                     "Access denied: %s is a Hermes MCP token file "
                     "and cannot be read directly. (Defense-in-depth \342\200\224 "
                     "not a security boundary; the terminal tool can still "

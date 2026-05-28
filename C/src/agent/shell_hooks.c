@@ -132,7 +132,7 @@ static void allowlist_path(char *buf, size_t sz) {
 /**
  * Check if (event, command) pair is in the allowlist.
  */
-static bool allowlist_check(const char *event, const char *command) {
+static bool __attribute__((unused)) allowlist_check(const char *event, const char *command) {
     char path[1024];
     allowlist_path(path, sizeof(path));
 
@@ -201,7 +201,7 @@ static void allowlist_record(const char *event, const char *command) {
 /**
  * Build stdin JSON payload for a shell hook invocation.
  */
-static char *build_payload(const char *event, const char *tool_name,
+static char *__attribute__((unused)) build_payload(const char *event, const char *tool_name,
                             const char *tool_input, const char *session_id) {
     json_t *payload = json_object();
     json_set(payload, "hook_event_name", json_string(event ? event : ""));
@@ -295,7 +295,7 @@ static char *shell_hook_callback(const char *event, const char *payload,
 
 /* ── Check if a tool name matches a spec's matcher ──────────────── */
 
-static bool spec_matches_tool(const shell_hook_spec_t *spec, const char *tool_name) {
+static bool __attribute__((unused)) spec_matches_tool(const shell_hook_spec_t *spec, const char *tool_name) {
     if (!spec->matcher[0]) return true;  /* no matcher = matches all */
     if (!tool_name) return false;
 

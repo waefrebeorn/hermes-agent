@@ -801,7 +801,7 @@ int hermes_cli_main(int argc, char **argv) {
             snprintf(buf, sizeof(buf),
                      "{\"response\":\"No input provided. Use pipe or args.\","
                      "\"session_id\":\"%s\",\"status\":\"idle\"}",
-                     g_cli.agent.session_id ? g_cli.agent.session_id : "");
+                     g_cli.agent.session_id[0] ? g_cli.agent.session_id : "");
             printf("%s\n", buf);
         }
 
@@ -830,7 +830,7 @@ start_interactive:
         if (g_le) {
             char hist_path[1024];
             snprintf(hist_path, sizeof(hist_path), "%s/.slermes_history",
-                     g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : getenv("HOME") ?: ".");
+                     g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : getenv("HOME") ? getenv("HOME") : ".");
             line_edit_load_history(g_le, hist_path);
         }
     }

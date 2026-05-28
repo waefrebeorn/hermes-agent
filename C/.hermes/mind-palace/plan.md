@@ -1,4 +1,4 @@
-# Plan (v121)
+# Plan (v122)
 
 29 gaps across 5 sectors. Fork synced to upstream (0 behind, 2 ahead).
 
