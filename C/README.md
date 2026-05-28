@@ -100,7 +100,7 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ Tool call
                     ┌──────────▼──────────────┐
-                    │   84 Tool Registry       │
+                    │   99 Tool Registry       │
                     │  (file, web, terminal,   │
                     │   skills, MCP, kanban,   │
                     │   browser, delegate...)  │
