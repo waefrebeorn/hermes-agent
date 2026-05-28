@@ -1,4 +1,4 @@
-# Slermes C — Plan (v78 — ~284 Items)
+# Slermes C — Plan (v79 — ~283 Items)
 Suite: 280/0/0, 236 test files. 90 tools, 98 CLI commands.
 Build clean — 0 warnings. 30M binary. 172 src .c files.
 Recent: repair_tool_call_arguments — ported JSON repair from Python message_sanitization.py (9 new tests).

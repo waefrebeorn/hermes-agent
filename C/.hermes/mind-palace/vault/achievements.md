@@ -449,4 +449,10 @@ Truly missing tools from 1B section: skills_guard, credential_files, skills_ast_
 ||----|-------------|--------|----------|
 || G06 | feishu_drive_reply_comment — POST reply to comment thread. Ported from Python feishu_drive_tool.py. Requires file_token, comment_id, content. Builds JSON body with text_run element format matching Feishu API expectations. Uses http_post_json_auth for POST with auth header. | 1B (missing tools) | src/tools/feishu_tools.c: handle_feishu_drive_reply_comment(), FEISHU_REPLY_SCHEMA; registry_init_feishu_tools() — registry_register_ex |
 | G07 | feishu_drive_add_comment — POST whole-document comment. Ported from Python feishu_drive_tool.py. Requires file_token, content, file_type. Builds JSON body with reply_elements array (type+text format). Uses http_post_json_auth. | 1B (missing tools) | src/tools/feishu_tools.c: handle_feishu_drive_add_comment(), FEISHU_ADD_SCHEMA; registry_register_ex |
-| | 90 tools (was 88). Suite unchanged. 2 tool gaps closed. | | |
+|| | 90 tools (was 88). Suite unchanged. 2 tool gaps closed. | | |
+|
+## Phase 32: JSON Surrogate Pair Parsing (2026-05-27)
+|
+|| ID | Description | Sector | Evidence |
+||----|-------------|--------|----------|
+|| G09 | libjson surrogate pair parsing — `\uD83C\uDF89` (U+1F389 🎉) now correctly decoded to 4-byte UTF-8. Lone surrogates replaced with U+FFFD. Previously only BMP was supported. | 7 (library — libjson) | lib/libjson/json.c: `case 'u':` handler — surrogate pair detection + 4-byte UTF-8 encoding; tests/test_json.c: test_surrogate_pair(), test_lone_high_surrogate(), test_lone_low_surrogate() |
