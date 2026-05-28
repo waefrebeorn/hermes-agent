@@ -1,34 +1,29 @@
-# Slermes C — Prestige Prompt (v88)
+# Slermes C — Prestige Prompt (v89 — 2026-06-02)
 
 ## Current Priority Queue (Top gaps to close)
 
-**P1 (Must fix — blocking):**
-1. D01 — MCP depth: SSE transport + streaming (major feature)
-2. D03 — Browser depth: CDP autofill, PDF, network interceptions
-
 **P2 (Important):**
-3. S01 — llm_client.c background_review unwired
-4. S05 — context_engine noop handlers
-5. S06 — Telegram editable draft
-6. P01-P04 — 4 Yuanbao tools
-7. D02 — TTS multi-provider
-8. D04 — Terminal depth
-9. D05 — Transcribe depth
-10. D06 — Send message depth
-11. D07 — Delegate depth
-12. G02 — send_reaction implementations
-13. L03 — @every/@daily cron shorthand
+1. P01-P04 — 4 Yuanbao tools (SDK-dependent, need gateway protocol)
+2. D01 — MCP depth: SSE streaming + pagination (150-250 LOC)
+3. D02 — TTS multi-provider (Elevenlabs, Azure, edge-tts)
+4. D03 — Browser depth: CDP autofill, PDF gen, HAR capture
+5. D04 — Terminal depth: SSH, Docker Compose, Singularity
+6. D05 — Transcribe depth: multi-provider, diarization
+7. D06 — Send message depth: buttons, reactions, embed cards
+8. D07 — Delegate depth: parallel spawning, lifecycle
+9. G02 — send_reaction vtable wiring across platforms
+10. G03 — email IMAP reconnection handling
+11. L01 — JSON schema validation for libjson
+12. L02 — MCP SSE persistent streaming
+13. R01 — test_web DNS crash guard
 
 **P3 (Nice-to-have):**
-13. S07 — ACP resource placeholder
-14. S09 — Memory in-memory noop
-15. I01 — Dockerfile for C binary
-16. I02 — GitHub Actions CI for C-only
-17. X01-X05 — Test expansions
-19. L01 — JSON schema validation
-20. L02 — MCP SSE streaming (persistent GET + event parsing)
+14. I01 — Dockerfile for C binary
+15. I02 — GitHub Actions CI for C-only
+16. X01-X05 — Test expansions (vision, image_gen, video_gen, transcribe, session_search)
 
 ## Current State
 - Suite: 282/0/0, 99 tools, 98 CLI, 19 gateways, 10 providers, 65 libs
-- Battleship: v17 (32 gaps across 8 sectors, fresh audit 2026-05-27)
+- Battleship: v18 (23 verified gaps, fresh stale-claim sweep 2026-06-02)
+- No P1 gaps remain
 - All entry points working (--help, --version, --json, pipe mode, tools subcommand)

@@ -99,6 +99,21 @@ All Sector 1 (Confirmed Stubs), Sector 2 (Placeholder), Sector 3 (Dead Code) ite
 | OpenAI | Missing strict mode/service_tier | ✅ Already implemented |
 || OpenRouter | Missing HTTP-Referer/X-Title | ✅ Already implemented |
 
+## Battleship-v17 Stale Claims Retired (Jun 2)
+
+The following v17 claims verified against source code and found stale/intentional:
+
+| ID | Old Claim | Reality | Evidence |
+|----|-----------|---------|----------|
+| S01 | background_review not wired | Wired in agent_loop.c:1380–1394 AND cli/commands.c:2954,2982 | grep caller |
+| S05 | context_engine noop handlers | INTENTIONAL — plugin overrides these defaults | grep on_session_start/end |
+| S06 / G01 | Telegram editable draft missing | telegram_send_draft() at telegram.c:949–954 fully implemented | read_file |
+| S07 | ACP resource placeholder | "[Resource link only...]" is correct behavior for non-file URIs | read_file |
+| S09 | Memory in-memory no-ops | INTENTIONAL — in-memory mode doesn't persist by design | read_file |
+| L03 | @every/@daily cron missing | Both @every N[s,m,h] AND @daily implemented at cron.c:135–165 | read_file |
+| R02 | FORTIFY truncation warning | Build has 0 warnings | make -j$(nproc) 2>&1 |
+| D01 | "19 C fns vs 109 Py" | C has 80+ fns (49 libmcp + 31 libmcp_oauth + mcp_tool.c). Some depth gap remains but -90 is stale | grep fn count |
+
 ## Phase Zeta — Phase 3 Tool Features (May 26)
 
 ### #21 — Approval Gateway Prompt (1 item resolved)
