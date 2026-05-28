@@ -484,6 +484,13 @@
 
 ## Phase 49: Cron Script Execution Test Suite (v139)
 
+- Added 10-test suite for cron_scripts.c covering all 2 public functions
+- Tests: script execution with popen (echo, args, exit code, stderr redirect),
+  NULL/error paths (missing file, no interpreter), shebang auto-detection,
+  interpreter setter stub
+- Tests exercise real script execution via temp files with mkstemp
+- Evidence: commit 497127fba, file src/cron/cron_scripts.c
+
 ## Phase 50: Scheduler Parser Test Suite (v140)
 
 - Added 18-test suite for cron/scheduler.c covering all 3 parsing/scheduling functions
@@ -494,13 +501,16 @@
   and function declarations to scheduler.h for testability
 - Evidence: commit b4ceb7fde, files src/cron/scheduler.c, src/cron/scheduler.h
 
+## Phase 51: Auth Store Persistence Test Suite (v141)
 
-- Added 10-test suite for cron_scripts.c covering all 2 public functions
-- Tests: script execution with popen (echo, args, exit code, stderr redirect),
-  NULL/error paths (missing file, no interpreter), shebang auto-detection,
-  interpreter setter stub
-- Tests exercise real script execution via temp files with mkstemp
-- Evidence: commit 497127fba, file src/cron/cron_scripts.c
+- Fixed token_exchange.c: dead code activated — struct field mismatch
+  (root->collection → root->c, resp->status_code → resp->status),
+  added to Makefile build
+- Added 20-test suite for auth_store_load/save/remove/free with temp file I/O
+- Tests: load (missing file, invalid JSON, empty, single, multiple, minimal,
+  NULL out_count), save (new, update existing, multiple, NULL args),
+  remove (existing entry, non-existent, last entry), free (NULL, loaded)
+- Evidence: commit ffb6aa21a, files src/provider/token_exchange.c
 
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
