@@ -1,12 +1,13 @@
 # Slermes C — State Dashboard (v77 — 2026-05-27)
 
 ## Build Metrics
-Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 279/0/0.
+Build clean — **0 warnings**. **90 unique tools** (registry_register + registry_register_ex). 98 CLI commands (COMMANDS[] table). 19 gateways. 10 provider types + metadata utility. 65 libs. 172 src/ .c files (incl subdirs). 236 test_*.c files. Binary: 30M. Suite: 280/0/0.
 
 ## 1:1 Parity Status (Triple DA v16)
-~285 item-level gaps (battleship-v16 rows, 18 closed this session).
+~285 item-level gaps (battleship-v16 rows, 19 closed this session).
 
 ## Recent (this session)
+- Layer 9: test_fal_common.c — 9 tests for FAL common utility lib (API key resolution, JSON escaping, error builders). Suite: 280/0/0 (+1).
 - 1B: feishu_drive_reply_comment — POST reply to comment thread (Ported from Python feishu_drive_tool.py). 90 tools total.
 - 1B: feishu_drive_add_comment — POST whole-document comment (Ported from Python feishu_drive_tool.py). 90 tools total.
 - Layer 9: test_line_edit.c — 11 line editor tests (create/free, history save/load, error paths). Suite: 279/0/0 (+1).

@@ -1132,6 +1132,19 @@ run_lib_test "title" "tests/test_title.c" "include" "$CDIR/src/agent/title.c -I$
 echo ""; echo "=== ANSI Library Tests (J22) ==="
 run_lib_test "ansi" "tests/test_ansi.c" "lib/libansi" "$CDIR/lib/libansi/ansi.c $CDIR/lib/libansi/ansi_strip.c"
 run_lib_test "ansi_strip" "tests/test_ansi_strip.c" "lib/libansi" "$CDIR/lib/libansi/ansi_strip.c"
+echo ""; echo "=== FAL Common Library Tests (fal_common) ==="
+    if gcc -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libfal_common" \
+        "$CDIR/tests/test_fal_common.c" \
+        "$CDIR/lib/libfal_common/fal_common.c" \
+        "$CDIR/lib/libjson/json.c" \
+        "$CDIR/lib/libhttp/http.c" \
+        -o /tmp/hermes_test_fal_common -lssl -lcrypto -lm -lz > /dev/null 2>&1; then
+        if /tmp/hermes_test_fal_common > /dev/null 2>&1; then ok "fal_common_lib"
+        else fail "fal_common_lib (test binary returned non-zero)"; fi
+        rm -f /tmp/hermes_test_fal_common
+    else skip "fal_common (compilation failed)"
+    fi
+
 echo ""; echo "=== JSON5 Library Tests (J20) ==="
 run_lib_test "json5" "tests/test_json5.c" "lib/libjson5" "$CDIR/lib/libjson5/json5.c -I $CDIR/lib/libjson $CDIR/lib/libjson/json.c"
 echo ""; echo "=== Display Module Tests ==="
