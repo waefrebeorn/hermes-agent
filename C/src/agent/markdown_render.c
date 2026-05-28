@@ -68,7 +68,7 @@ static sbuf_t *sbuf_new(void) {
     return s;
 }
 
-static void sbuf_free(sbuf_t *s) {
+static void __attribute__((unused)) sbuf_free(sbuf_t *s) {
     if (s) { free(s->buf); free(s); }
 }
 

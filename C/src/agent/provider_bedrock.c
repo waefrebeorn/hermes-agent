@@ -87,7 +87,8 @@ static void get_iso8601_time(char *buf, size_t buf_size) {
 
 /* Get date stamp from ISO time: YYYYMMDD */
 static void get_date_stamp(const char *iso_time, char *buf, size_t buf_size) {
-    strncpy(buf, iso_time, 8);
+    (void)buf_size;
+    memcpy(buf, iso_time, 8);
     buf[8] = '\0';
 }
 

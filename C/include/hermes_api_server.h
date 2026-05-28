@@ -19,7 +19,7 @@
  *   GET  /v1/sessions/{id}       — get session details
  *   DELETE /v1/sessions/{id}     — delete session
  *   POST /webhook/:platform      — webhook endpoint
- *   OPTIONS /*                   — CORS preflight
+ *   OPTIONS /<asterisk>                   — CORS preflight
  *
  * Usage:
  *   ./hermes api-server [port]

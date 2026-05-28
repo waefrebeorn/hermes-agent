@@ -411,7 +411,7 @@ static char **render_vertical(char ***rows, size_t nrows, size_t ncols,
             char *sep = malloc(sep_width + 1);
             if (!sep) { /* leak */ break; }
             memset(sep, 0xC1, sep_width); /* UTF-8 '─' = 0xE2 0x94 0x80 */
-            sep[0] = 0xE2; sep[1] = 0x94; sep[2] = 0x80;
+            sep[0] = (unsigned char)0xE2; sep[1] = (unsigned char)0x94; sep[2] = (unsigned char)0x80;
             for (int i = 3; i < sep_width; i++)
                 sep[i] = sep[2]; /* fill with end byte */
             sep[sep_width] = '\0';
@@ -424,11 +424,11 @@ static char **render_vertical(char ***rows, size_t nrows, size_t ncols,
 
             int label_w = hermes_disp_width(label);
             int first_budget = (available_width - label_w - 2) < 10 ? 10 : (available_width - label_w - 2);
-            int cont_budget = (available_width - 2) < 10 ? 10 : (available_width - 2);
+            (void)first_budget;
 
             if (!*value) {
                 char *line;
-                asprintf(&line, "%s:", label);
+                if (asprintf(&line, "%s:", label) < 0) { free(line); line = NULL; }
                 out[count++] = line;
                 continue;
             }
@@ -438,13 +438,13 @@ static char **render_vertical(char ***rows, size_t nrows, size_t ncols,
             if (!wrapped) continue;
 
             char *line;
-            asprintf(&line, "%s: %s", label, wrapped[0]);
+            if (asprintf(&line, "%s: %s", label, wrapped[0]) < 0) { free(line); line = NULL; }
             out[count++] = line;
 
             for (size_t wi = 1; wi < nw; wi++) {
                 if (wrapped[wi] && *wrapped[wi]) {
                     char *cline;
-                    asprintf(&cline, "  %s", wrapped[wi]);
+                    if (asprintf(&cline, "  %s", wrapped[wi]) < 0) { free(cline); cline = NULL; }
                     out[count++] = cline;
                 }
             }
@@ -510,7 +510,6 @@ static char **render_block(char ***rows, size_t nrows, size_t ncols,
 
     /* Header row */
     {
-        size_t hdr_cap = 256;
         char hdr[4096];
         size_t pos = 0;
         pos += snprintf(hdr + pos, sizeof(hdr) - pos, "| ");

@@ -170,7 +170,6 @@ static size_t redact_jwts(char *text) {
             size_t max_check = remaining < 300 ? remaining : 300;
 
             /* JWT starts with base64url, ends with base64url or = */
-            bool all_b64url = true;
             size_t seg_len = 0;
             int dots = 0;
             for (size_t i = 0; i < max_check; i++) {

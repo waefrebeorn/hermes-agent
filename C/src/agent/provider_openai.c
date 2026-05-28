@@ -16,7 +16,7 @@
  *  URL building
  * ================================================================ */
 
-static char *openai_build_url(const provider_t *p, const char *base_url) {
+static char *openai_build_url(const provider_t *p __attribute__((unused)), const char *base_url) {
     if (!base_url || !*base_url)
         base_url = "https://api.openai.com/v1";
 
@@ -51,7 +51,7 @@ static char *openai_build_url(const provider_t *p, const char *base_url) {
  *  Headers
  * ================================================================ */
 
-static char *openai_build_headers(const provider_t *p, const char *api_key) {
+static char *openai_build_headers(const provider_t *p __attribute__((unused)), const char *api_key) {
     char *headers = (char *)malloc(1024);
     if (!headers) return NULL;
 

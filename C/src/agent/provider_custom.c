@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char *custom_build_url(const provider_t *p, const char *base_url) {
+static char *custom_build_url(const provider_t *p __attribute__((unused)), const char *base_url) {
     if (!base_url || !*base_url)
         base_url = "http://localhost:8080/v1";
     if (strstr(base_url, "/chat/completions"))
