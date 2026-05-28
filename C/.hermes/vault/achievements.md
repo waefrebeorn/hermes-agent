@@ -139,3 +139,29 @@ The following v17 claims verified against source code and found stale/intentiona
 | Tool handler | Lookup by name/ID, resolve chat_id from args or session env | src/tools/yuanbao_tools.c |
 | Tool registered | `yb_send_sticker` in `hermes-yuanbao` toolset | grep registry_register_ex |
 | Test | Verified through `./hermes tools` output | Build clean |
+
+## Phase Iota — Final Yuanbao Tools (Jun 2)
+
+### M03 — yb_query_group_info (resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| Protobuf request | `encode_query_group_info()` — QueryGroupInfoReq field 1=group_code | src/gateway/platforms/yuanbao.c |
+| Sync response | `yuanbao_send_and_wait()` — condvar response matching by seq_no | yuanbao.c |
+| Response parsing | `decode_query_group_info_rsp` — nested GroupInfo: name, owner, size | yuanbao_tools.c |
+| Tool registered | `yb_query_group_info` in hermes-yuanbao toolset | ./hermes tools |
+
+### M04 — yb_get_group_member_list (resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| Protobuf request | `encode_get_group_member_list()` — fields 1=group_code, 2=offset, 3=limit | src/gateway/platforms/yuanbao.c |
+| Resp parsing | Full MemberInfo decode: user_id, nickname, role, join_time, name_card | yuanbao_tools.c |
+| Pagination | offset/limit + next_offset/is_complete in response | yuanbao_tools.c |
+| Tool registered | `yb_get_group_member_list` in hermes-yuanbao toolset | ./hermes tools |
+
+### M06 — yb_send_dm (resolved)
+| Item | Detail | Evidence |
+|------|--------|----------|
+| C2C send | Reuses `encode_send_c2c()` for direct user text messaging | src/gateway/platforms/yuanbao.c |
+| Name resolution | Resolves user_id from group member list via yb_get_group_member_list | yuanbao_tools.c |
+| Tool registered | `yb_send_dm` in hermes-yuanbao toolset | ./hermes tools |
+| Final state | **ALL GAPS RESOLVED. 0 remain. 96 tools, 282/0/0 suite.** | |

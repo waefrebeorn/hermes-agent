@@ -1005,6 +1005,9 @@ void yuanbao_stop(void);
 int  yuanbao_send_sticker(const char *to_uid, const char *sticker_id,
                            const char *sticker_name, const char *package_id,
                            int width, int height);
+char *yuanbao_query_group_info(const char *group_code, int timeout_sec);
+char *yuanbao_get_group_member_list(const char *group_code, uint32_t offset, uint32_t limit, int timeout_sec);
+char *yuanbao_send_dm(const char *to_uid, const char *text);
 
 /* ================================================================
  *  P101: Gateway queue API

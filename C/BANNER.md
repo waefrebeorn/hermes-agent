@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v113)
+# BANNER — WuBu Slermes C Translation (v114)
 
 ```
   __        __           _   ____  _  
@@ -10,12 +10,12 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  3 remaining gaps  │  0 stubs  │  All entry points verified ║
+   ║  0 remaining gaps  │  0 stubs  │  ALL GAPS RESOLVED      ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v113)
+## Build Metrics (v114)
 
-Suite: 282/0/0 — all pass, 0 skip. 93 tools, 98 CLI commands.
+Suite: 282/0/0 — all pass, 0 skip. 96 tools, 98 CLI commands.
 173 src/ .c files, 239 tests, 65 libs, 19 gateways, 10 providers.
 Binary: 31M. Build: 0 warnings. Stubs: 0 (codebase clean).
 
@@ -26,8 +26,8 @@ Binary: 31M. Build: 0 warnings. Stubs: 0 (codebase clean).
 | Phase 0 — Form-Not-Function | ✅ ALL DONE |
 | Phase 1 — CLI Args | ✅ ALL DONE |
 | Phase 2 — Provider Parity | ✅ ALL DONE |
-| Phase 3 — Tool Features | ✅ ALL DONE (93 tools) |
-| Phase 4 — Missing Tools (3) | Yuanbao SDK-dependent tools remain |
+| Phase 3 — Tool Features | ✅ ALL DONE (96 tools) |
+| Phase 4 — Missing Tools | ✅ ALL RESOLVED (0 remaining) |
 | Phase 5 — Gateway (19) | ✅ All platforms, reactions wired (Telegram) |
 | Phase 6 — Agent | ✅ Full loop + all providers |
 | Phase 7 — Libraries (65) | ✅ All modules |

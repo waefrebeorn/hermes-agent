@@ -1,3 +1,3 @@
-# Overnight (v113)
-3 gaps remain. M03/M04/M06 (Yuanbao SDK-dependent tools).
-M05 search_sticker + M07 send_sticker resolved.
+# Overnight (v114)
+0 gaps remain. ALL RESOLVED. Full parity with Python Yuanbao tools.
+M03 query_group_info, M04 get_group_member_list, M06 send_dm implemented.

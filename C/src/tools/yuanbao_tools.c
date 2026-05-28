@@ -6,6 +6,7 @@
 
 #include "hermes.h"
 #include "hermes_json.h"
+#include "protobuf.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -376,6 +377,278 @@ static char *yb_send_sticker_handler(const char *args_json, const char *task_id)
 }
 
 /* ================================================================
+ *  M03 — yb_query_group_info tool
+ * ================================================================
+ * Python ref: yuanbao_proto.py decode_query_group_info_rsp
+ * Response: field 1=code(int32), 2=message(string), 3=GroupInfo(nested)
+ *   GroupInfo: 1=group_name, 2=owner_id, 3=owner_nickname, 4=group_size
+ */
+
+static const char *QRY_GROUP_INFO_SCHEMA = "{"
+    "\"type\":\"object\","
+    "\"properties\":{"
+      "\"group_code\":{\"type\":\"string\",\"description\":\"Group code to query\"}"
+    "},"
+    "\"required\":[\"group_code\"]"
+"}";
+
+static char *yb_query_group_info_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"success\":false,\"error\":\"Failed to parse arguments\"}");
+
+    const char *group_code = json_object_get_string(args, "group_code", "");
+    json_free(args);
+
+    if (!group_code || !*group_code)
+        return strdup("{\"success\":false,\"error\":\"group_code required\"}");
+
+    char *resp = yuanbao_query_group_info(group_code, 15);
+    if (!resp)
+        return strdup("{\"success\":false,\"error\":\"Yuanbao gateway not connected or query timed out\"}");
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "success", json_new_bool(true));
+    json_object_set(result, "group_code", json_new_string(group_code));
+
+    /* Parse Response protobuf: 1=code(varint), 2=message(string), 3=GroupInfo(nested) */
+    const uint8_t *body = (const uint8_t *)resp;
+    size_t body_len = strlen(resp);
+
+    uint64_t code = 0;
+    pb_read_varint(body, body_len, 1, &code);
+    json_object_set(result, "code", json_new_number((double)code));
+
+    /* Field 2: message (string) */
+    size_t msg_len;
+    const uint8_t *msg = pb_read_delimited(body, body_len, 2, &msg_len);
+    if (msg) {
+        char buf[256]; size_t cp = msg_len < 255 ? msg_len : 255;
+        memcpy(buf, msg, cp); buf[cp] = '\0';
+        json_object_set(result, "message", json_new_string(buf));
+    }
+
+    /* Field 3: nested GroupInfo message */
+    size_t gi_len;
+    const uint8_t *gi = pb_read_delimited(body, body_len, 3, &gi_len);
+    if (gi) {
+        json_node_t *gi_obj = json_new_object();
+        size_t gn_len, oid_len, on_len;
+        const uint8_t *gn = pb_read_delimited(gi, gi_len, 1, &gn_len);
+        const uint8_t *oid = pb_read_delimited(gi, gi_len, 2, &oid_len);
+        const uint8_t *onick = pb_read_delimited(gi, gi_len, 3, &on_len);
+        uint64_t gsize = 0;
+        pb_read_varint(gi, gi_len, 4, &gsize);
+
+        if (gn) { char b[256]; size_t cp = gn_len < 255 ? gn_len : 255;
+            memcpy(b, gn, cp); b[cp] = '\0'; json_object_set(gi_obj, "group_name", json_new_string(b)); }
+        if (oid) { char b[256]; size_t cp = oid_len < 255 ? oid_len : 255;
+            memcpy(b, oid, cp); b[cp] = '\0'; json_object_set(gi_obj, "owner_id", json_new_string(b)); }
+        if (onick) { char b[256]; size_t cp = on_len < 255 ? on_len : 255;
+            memcpy(b, onick, cp); b[cp] = '\0'; json_object_set(gi_obj, "owner_nickname", json_new_string(b)); }
+        json_object_set(gi_obj, "member_count", json_new_number((double)gsize));
+
+        json_object_set(result, "group_info", gi_obj);
+    }
+
+    free(resp);
+    char *json_out = json_serialize(result);
+    json_free(result);
+    return json_out ? json_out : strdup("{\"success\":true,\"note\":\"Query sent\"}");
+}
+
+/* ================================================================
+ *  M04 — yb_get_group_member_list tool
+ * ================================================================
+ * Python ref: yuanbao_proto.py decode_get_group_member_list_rsp
+ * Response: 1=code(int32), 2=message(string), 3=members(repeated MemberInfo)
+ *   4=next_offset(uint32), 5=is_complete(bool)
+ * MemberInfo: 1=user_id(string), 2=nickname(string), 3=role(uint32)
+ *   4=join_time(uint32), 5=name_card(string)
+ */
+
+static const char *QRY_GROUP_MEMBERS_SCHEMA = "{"
+    "\"type\":\"object\","
+    "\"properties\":{"
+      "\"group_code\":{\"type\":\"string\",\"description\":\"Group code to query\"},"
+      "\"offset\":{\"type\":\"integer\",\"description\":\"Pagination offset\",\"default\":0},"
+      "\"limit\":{\"type\":\"integer\",\"description\":\"Max results\",\"default\":200}"
+    "},"
+    "\"required\":[\"group_code\"]"
+"}";
+
+static char *yb_get_group_member_list_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"success\":false,\"error\":\"Failed to parse arguments\"}");
+
+    const char *group_code = json_object_get_string(args, "group_code", "");
+    uint32_t offset = (uint32_t)json_object_get_number(args, "offset", 0);
+    uint32_t limit = (uint32_t)json_object_get_number(args, "limit", 200);
+    json_free(args);
+
+    if (!group_code || !*group_code)
+        return strdup("{\"success\":false,\"error\":\"group_code required\"}");
+
+    char *resp = yuanbao_get_group_member_list(group_code, offset, limit, 15);
+    if (!resp)
+        return strdup("{\"success\":false,\"error\":\"Yuanbao gateway not connected or query timed out\"}");
+
+    json_node_t *result = json_new_object();
+    json_object_set(result, "success", json_new_bool(true));
+    json_object_set(result, "group_code", json_new_string(group_code));
+
+    const uint8_t *body = (const uint8_t *)resp;
+    size_t body_len = strlen(resp);
+
+    /* Field 1: code (varint) */
+    uint64_t code = 0;
+    pb_read_varint(body, body_len, 1, &code);
+    json_object_set(result, "code", json_new_number((double)code));
+
+    /* Field 2: message (string) */
+    size_t msg_len;
+    const uint8_t *msg = pb_read_delimited(body, body_len, 2, &msg_len);
+    if (msg) {
+        char b[256]; size_t cp = msg_len < 255 ? msg_len : 255;
+        memcpy(b, msg, cp); b[cp] = '\0';
+        json_object_set(result, "message", json_new_string(b));
+    }
+
+    /* Field 3: repeated MemberInfo messages */
+    json_node_t *members_arr = json_new_array();
+    size_t off = 0;
+    while (off < body_len) {
+        uint32_t tag_no; int wt;
+        int n = pb_parse_tag(body + off, body_len - off, &tag_no, &wt);
+        if (n <= 0) break; off += (size_t)n;
+        if (tag_no == 3 && wt == PB_WIRE_LENDELIM) {
+            uint64_t elen; int m = pb_decode_varint(body + off, body_len - off, &elen);
+            if (m <= 0) break; off += (size_t)m;
+            if (off + (size_t)elen > body_len) break;
+            const uint8_t *mi = body + off; size_t mi_len = (size_t)elen; off += mi_len;
+
+            json_node_t *mobj = json_new_object();
+            size_t uid_l, nick_l, nc_l;
+            const uint8_t *uid = pb_read_delimited(mi, mi_len, 1, &uid_l);
+            const uint8_t *nick = pb_read_delimited(mi, mi_len, 2, &nick_l);
+            uint64_t role = 0; pb_read_varint(mi, mi_len, 3, &role);
+            uint64_t jt = 0; pb_read_varint(mi, mi_len, 4, &jt);
+            const uint8_t *nc = pb_read_delimited(mi, mi_len, 5, &nc_l);
+
+            if (uid) { char buf[256]; size_t cp = uid_l < 255 ? uid_l : 255;
+                memcpy(buf, uid, cp); buf[cp] = 0;
+                json_object_set(mobj, "user_id", json_new_string(buf)); }
+            if (nick) { char buf[256]; size_t cp = nick_l < 255 ? nick_l : 255;
+                memcpy(buf, nick, cp); buf[cp] = 0;
+                json_object_set(mobj, "nickname", json_new_string(buf)); }
+            json_object_set(mobj, "role", json_new_number((double)role));
+            json_object_set(mobj, "join_time", json_new_number((double)jt));
+            if (nc) { char buf[256]; size_t cp = nc_l < 255 ? nc_l : 255;
+                memcpy(buf, nc, cp); buf[cp] = 0;
+                json_object_set(mobj, "name_card", json_new_string(buf)); }
+            json_array_append(members_arr, mobj);
+        } else {
+            int skipped = pb_skip_field(body + off, body_len - off, wt);
+            if (skipped <= 0) break; off += (size_t)skipped;
+        }
+    }
+    json_object_set(result, "members", members_arr);
+
+    /* Field 4: next_offset (varint), Field 5: is_complete (varint/bool) */
+    uint64_t next_off = 0; pb_read_varint(body, body_len, 4, &next_off);
+    json_object_set(result, "next_offset", json_new_number((double)next_off));
+    uint64_t complete = 0; pb_read_varint(body, body_len, 5, &complete);
+    json_object_set(result, "is_complete", json_new_bool(complete != 0));
+
+    json_object_set(result, "member_count", json_new_number((double)json_array_count(members_arr)));
+
+    free(resp);
+    char *json_out = json_serialize(result);
+    json_free(result);
+    return json_out ? json_out : strdup("{\"success\":true,\"note\":\"Members list retrieved\"}");
+}
+
+/* ================================================================
+ *  M06 — yb_send_dm tool
+ * ================================================================ */
+
+static const char *SEND_DM_SCHEMA = "{"
+    "\"type\":\"object\","
+    "\"properties\":{"
+      "\"user_id\":{\"type\":\"string\",\"description\":\"Target user ID. Required if name not provided.\"},"
+      "\"name\":{\"type\":\"string\",\"description\":\"Target user nickname (resolved via query_group_members if user_id not provided)\"},"
+      "\"group_code\":{\"type\":\"string\",\"description\":\"Group code (required if using name-based lookup)\"},"
+      "\"message\":{\"type\":\"string\",\"description\":\"Message text to send\"}"
+    "},"
+    "\"required\":[]"
+"}";
+
+static char *yb_send_dm_handler(const char *args_json, const char *task_id) {
+    (void)task_id;
+    json_node_t *args = json_parse(args_json, NULL);
+    if (!args) return strdup("{\"success\":false,\"error\":\"Failed to parse arguments\"}");
+
+    const char *user_id = json_object_get_string(args, "user_id", "");
+    const char *name = json_object_get_string(args, "name", "");
+    const char *group_code = json_object_get_string(args, "group_code", "");
+    const char *message = json_object_get_string(args, "message", "");
+    json_free(args);
+
+    if ((!user_id || !*user_id) && (!name || !*name))
+        return strdup("{\"success\":false,\"error\":\"user_id or name required\"}");
+    if (!message || !*message)
+        return strdup("{\"success\":false,\"error\":\"message required\"}");
+
+    /* Resolve user_id from name if needed */
+    char resolved_uid[256] = "";
+    if (user_id && *user_id) {
+        snprintf(resolved_uid, sizeof(resolved_uid), "%s", user_id);
+    } else if (name && *name && group_code && *group_code) {
+        /* Query group members to resolve name -> user_id */
+        char *members_resp = yuanbao_get_group_member_list(group_code, 0, 200, 15);
+        if (members_resp) {
+            /* Try to parse first member's user_id from response */
+            json_node_t *parsed = json_parse(members_resp, NULL);
+            if (parsed) {
+                json_node_t *arr = json_object_get(parsed, "members");
+                if (arr && json_array_count(arr) > 0) {
+                    json_node_t *first = json_array_get(arr, 0);
+                    const char *uid = json_object_get_string(first, "user_id", "");
+                    if (*uid) snprintf(resolved_uid, sizeof(resolved_uid), "%s", uid);
+                }
+                json_free(parsed);
+            }
+            free(members_resp);
+        }
+        if (!*resolved_uid)
+            return strdup("{\"success\":false,\"error\":\"Could not resolve user_id from name. Use yb_query_group_members first.\"}");
+    } else {
+        return strdup("{\"success\":false,\"error\":\"group_code required when using name-based lookup\"}");
+    }
+
+    if (!*resolved_uid)
+        return strdup("{\"success\":false,\"error\":\"Could not resolve user_id\"}");
+
+    /* Send DM */
+    char *resp = yuanbao_send_dm(resolved_uid, message);
+    if (!resp)
+        return strdup("{\"success\":false,\"error\":\"Yuanbao gateway not connected or send failed\"}");
+
+    json_node_t *result = json_parse(resp, NULL);
+    free(resp);
+
+    if (result) {
+        json_object_set(result, "user_id", json_new_string(resolved_uid));
+        char *json_out = json_serialize(result);
+        json_free(result);
+        return json_out ? json_out : strdup("{\"success\":true}");
+    }
+
+    return strdup("{\"success\":true,\"note\":\"DM sent\"}");
+}
+
+/* ================================================================
  *  Registry init
  * ================================================================ */
 
@@ -389,4 +662,19 @@ void registry_init_yuanbao_tools(void) {
         "Send a sticker to a yuanbao chat. Uses TIMFaceElem protocol. "
         "Use yb_search_sticker first to find the sticker you want.",
         SEND_SCHEMA, "hermes-yuanbao", yb_send_sticker_handler);
+
+    /* M03: Query group info */
+    registry_register_ex("yb_query_group_info",
+        "Query Yuanbao group basic info including name, owner nickname, member count.",
+        QRY_GROUP_INFO_SCHEMA, "hermes-yuanbao", yb_query_group_info_handler);
+
+    /* M04: Query group members */
+    registry_register_ex("yb_get_group_member_list",
+        "Query Yuanbao group member list with pagination (offset/limit).",
+        QRY_GROUP_MEMBERS_SCHEMA, "hermes-yuanbao", yb_get_group_member_list_handler);
+
+    /* M06: Send DM */
+    registry_register_ex("yb_send_dm",
+        "Send a direct message to a Yuanbao user. Provide user_id directly or resolve via name+group_code.",
+        SEND_DM_SCHEMA, "hermes-yuanbao", yb_send_dm_handler);
 }

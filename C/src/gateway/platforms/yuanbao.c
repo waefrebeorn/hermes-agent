@@ -72,6 +72,56 @@ typedef struct {
 static yuanbao_state_t g_yb;
 static pthread_mutex_t g_yb_lock = PTHREAD_MUTEX_INITIALIZER;
 
+/* Pending response — synchronous request-response for group queries */
+typedef struct {
+    bool            pending;
+    uint32_t        seq_no;
+    uint8_t         body[8192];
+    size_t          body_len;
+    pthread_mutex_t mutex;
+    pthread_cond_t  cond;
+} yb_pending_resp_t;
+
+static yb_pending_resp_t g_yb_resp = {false, 0, {0}, 0,
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
+
+/* Helper: send request and wait for response body. Returns strdup'd body or NULL. */
+static char *yuanbao_send_and_wait(const uint8_t *buf, size_t len, uint32_t seq_no, int timeout_sec) {
+    pthread_mutex_lock(&g_yb_resp.mutex);
+    g_yb_resp.pending = true;
+    g_yb_resp.seq_no = seq_no;
+    g_yb_resp.body_len = 0;
+    pthread_mutex_unlock(&g_yb_resp.mutex);
+
+    pthread_mutex_lock(&g_yb_lock);
+    int rc = ws_send(g_yb.ws, WS_OP_BIN, buf, len);
+    pthread_mutex_unlock(&g_yb_lock);
+    if (rc != 0) {
+        pthread_mutex_lock(&g_yb_resp.mutex);
+        g_yb_resp.pending = false;
+        pthread_mutex_unlock(&g_yb_resp.mutex);
+        return NULL;
+    }
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += timeout_sec > 0 ? timeout_sec : 10;
+
+    pthread_mutex_lock(&g_yb_resp.mutex);
+    while (g_yb_resp.pending) {
+        rc = pthread_cond_timedwait(&g_yb_resp.cond, &g_yb_resp.mutex, &ts);
+        if (rc != 0) break;
+    }
+    char *result = NULL;
+    if (!g_yb_resp.pending && g_yb_resp.body_len > 0) {
+        result = malloc(g_yb_resp.body_len + 1);
+        if (result) { memcpy(result, g_yb_resp.body, g_yb_resp.body_len); result[g_yb_resp.body_len] = '\0'; }
+    }
+    g_yb_resp.pending = false;
+    pthread_mutex_unlock(&g_yb_resp.mutex);
+    return result;
+}
+
 /* ================================================================
  *  Protobuf helpers specific to Yuanbao
  * ================================================================ */
@@ -336,6 +386,49 @@ static int encode_send_sticker(uint8_t *buf, size_t buf_len,
                             body, (size_t)body_pos);
 }
 
+/*
+ * Encode query_group_info request
+ * Proto fields: 1=group_code (string)
+ */
+static int encode_query_group_info(uint8_t *buf, size_t buf_len,
+                                    const char *group_code, uint32_t seq_no) {
+    uint8_t body[1024];
+    int body_pos = 0, n;
+    n = pb_encode_delimited_field(body, sizeof(body), 1,
+                                   (const uint8_t *)group_code, strlen(group_code));
+    if (n <= 0) return -1; body_pos += n;
+    char msg_id[64];
+    snprintf(msg_id, sizeof(msg_id), "qgi-%u", seq_no);
+    return encode_conn_msg(buf, buf_len, CT_REQUEST, "query_group_info",
+                            seq_no, msg_id, BIZ_PKG, body, (size_t)body_pos);
+}
+
+/*
+ * Encode get_group_member_list request
+ * Proto: 1=group_code (string), 2=offset (uint32), 3=limit (uint32)
+ */
+static int encode_get_group_member_list(uint8_t *buf, size_t buf_len,
+                                         const char *group_code,
+                                         uint32_t offset,
+                                         uint32_t limit,
+                                         uint32_t seq_no) {
+    uint8_t body[1024];
+    int body_pos = 0, n;
+    n = pb_encode_delimited_field(body, sizeof(body), 1,
+                                   (const uint8_t *)group_code, strlen(group_code));
+    if (n <= 0) return -1; body_pos += n;
+    if (offset > 0) {
+        n = pb_encode_varint_field(body, sizeof(body), 2, offset);
+        if (n <= 0) return -1; body_pos += n;
+    }
+    n = pb_encode_varint_field(body, sizeof(body), 3, limit);
+    if (n <= 0) return -1; body_pos += n;
+    char msg_id[64];
+    snprintf(msg_id, sizeof(msg_id), "gml-%u", seq_no);
+    return encode_conn_msg(buf, buf_len, CT_REQUEST, "get_group_member_list",
+                            seq_no, msg_id, BIZ_PKG, body, (size_t)body_pos);
+}
+
 /* Decode a ConnMsg — extract head fields and optional data */
 /* Returns: 0 = decoded, -1 = error */
 static int decode_conn_msg(const uint8_t *data, size_t data_len,
@@ -562,10 +655,25 @@ static void yuanbao_event_loop(void) {
                         free(resp);
                     }
                 }
-            } else if (cmd_type == CT_RESPONSE && strcmp(cmd_buf, CMD_AUTH_BIND) == 0) {
-                printf("[gateway:yuanbao] AUTH_BIND response received (seq=%u)\n", seq_no);
-            } else if (cmd_type == CT_RESPONSE && strcmp(cmd_buf, CMD_PING) == 0) {
-                /* Pong received — heartbeat OK */
+            } else if (cmd_type == CT_RESPONSE) {
+                /* Check for pending query response match by seq_no */
+                pthread_mutex_lock(&g_yb_resp.mutex);
+                if (g_yb_resp.pending && g_yb_resp.seq_no == seq_no && body && body_len > 0) {
+                    size_t copy_len = body_len < sizeof(g_yb_resp.body) ? body_len : sizeof(g_yb_resp.body);
+                    memcpy(g_yb_resp.body, body, copy_len);
+                    g_yb_resp.body_len = copy_len;
+                    g_yb_resp.pending = false;
+                    pthread_cond_signal(&g_yb_resp.cond);
+                    pthread_mutex_unlock(&g_yb_resp.mutex);
+                    printf("[gateway:yuanbao] Query response matched seq=%u\n", seq_no);
+                } else if (strcmp(cmd_buf, CMD_PING) == 0) {
+                    pthread_mutex_unlock(&g_yb_resp.mutex);
+                } else if (strcmp(cmd_buf, CMD_AUTH_BIND) == 0) {
+                    printf("[gateway:yuanbao] AUTH_BIND response received (seq=%u)\n", seq_no);
+                    pthread_mutex_unlock(&g_yb_resp.mutex);
+                } else {
+                    pthread_mutex_unlock(&g_yb_resp.mutex);
+                }
             }
         } else {
             ws_frame_free(&frame);
@@ -647,6 +755,45 @@ int yuanbao_send_sticker(const char *to_uid, const char *sticker_id,
     pthread_mutex_unlock(&g_yb_lock);
 
     return (rc == 0) ? 0 : -1;
+}
+
+/* Query group info synchronously. Returns JSON string or NULL. Caller must free(). */
+char *yuanbao_query_group_info(const char *group_code, int timeout_sec) {
+    if (!g_yb.ws || !g_yb.running || !group_code || !*group_code) return NULL;
+    uint32_t seq_no;
+    pthread_mutex_lock(&g_yb_lock); seq_no = g_yb.seq_no++; pthread_mutex_unlock(&g_yb_lock);
+    uint8_t buf[4096];
+    int len = encode_query_group_info(buf, sizeof(buf), group_code, seq_no);
+    if (len <= 0) return NULL;
+    return yuanbao_send_and_wait(buf, (size_t)len, seq_no, timeout_sec);
+}
+
+/* Query group members synchronously. Returns JSON string or NULL. Caller must free(). */
+char *yuanbao_get_group_member_list(const char *group_code, uint32_t offset, uint32_t limit, int timeout_sec) {
+    if (!g_yb.ws || !g_yb.running || !group_code || !*group_code) return NULL;
+    uint32_t seq_no;
+    pthread_mutex_lock(&g_yb_lock); seq_no = g_yb.seq_no++; pthread_mutex_unlock(&g_yb_lock);
+    uint8_t buf[4096];
+    int len = encode_get_group_member_list(buf, sizeof(buf), group_code, offset, limit, seq_no);
+    if (len <= 0) return NULL;
+    return yuanbao_send_and_wait(buf, (size_t)len, seq_no, timeout_sec);
+}
+
+/* Send a DM (C2C text message). Returns JSON string or NULL. Caller must free(). */
+char *yuanbao_send_dm(const char *to_uid, const char *text) {
+    if (!g_yb.ws || !g_yb.running || !to_uid || !*to_uid || !text) return NULL;
+    int64_t now_ms;
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    now_ms = (int64_t)ts.tv_sec * 1000 + (int64_t)(ts.tv_nsec / 1000000);
+    uint8_t buf[8192];
+    int len = encode_send_c2c(buf, sizeof(buf), to_uid, text, now_ms);
+    if (len <= 0) return NULL;
+    pthread_mutex_lock(&g_yb_lock);
+    int rc = ws_send(g_yb.ws, WS_OP_BIN, buf, (size_t)len);
+    pthread_mutex_unlock(&g_yb_lock);
+    if (rc != 0) return NULL;
+    return strdup("{\"success\":true,\"note\":\"DM sent successfully.\"}");
 }
 
 /* Server.c setup/thread wrappers */
