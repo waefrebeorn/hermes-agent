@@ -437,11 +437,22 @@
 
 ## Phase 44: Markdown Render Test Suite (v134)
 
-- libyaml: added yaml_to_json_string() — serialize YAML sub-tree to JSON
-- config.c: populate cfg->hooks_json from YAML hooks: block
-- agent_loop.c: call shell_hooks_parse_json() + shell_hooks_register_all() in agent_configure_from_config()
-- Full lifecycle now wired: YAML hooks: block → JSON → parse → register → hook_invoke in agent_loop
-- Evidence: commit c6cbd1e4c
+- Added 93-test suite for markdown_render.c covering render + strip paths
+- Tests: headers, bold, italic, inline code, fenced code blocks, links, blockquotes,
+  lists, horizontal rules, mixed content, edge cases (NULL, long line, empty)
+- Fixed null-termination bug in strip link handler: memcpy without
+  out->buf[out->len] = '\0' left trailing garbage byte
+- Evidence: commit f754de84b, file src/agent/markdown_render.c
+
+## Phase 45: Tokenizer Test Suite (v135)
+
+- Added 79-test suite for hermes_tokenizer.c covering all 7 public functions
+- Tests: token_family_from_model, chars_per_token, token_count,
+  token_count_for_model, cost_rates, count_messages, context_size
+- Fixed float precision bug in token_count ceiling division:
+  (float)(1000/4.0 + 0.999) rounded to 251 instead of 250.
+  Replaced with integer scaled arithmetic for exact results.
+- Evidence: commit 3c0fda468, file src/hermes_tokenizer.c
 
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|

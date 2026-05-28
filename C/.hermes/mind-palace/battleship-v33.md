@@ -1,6 +1,6 @@
      1|# Battle Map v33 — Real Parity Assessment
      2|
-     3|**v134 | Fork synced: 0 behind upstream, 0 ahead | Suite 284/0/0 | 85 tools | 98 CLI**
+     3|**v135 | Fork synced: 0 behind upstream, 0 ahead | Suite 285/0/0 | 85 tools | 98 CLI**
      4|**Honest assessment: 17 gaps across 5 sectors.**
      5|
      6|v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06 items verified against both C and Python source — features either already exist in C or don't exist in either codebase). S4 reduced from 7 to 1 item (U07: test gap). S1 expanded to include the remaining real warnings/bugs.
@@ -10,7 +10,7 @@
     10|| # | ID | Issue | C State | Python State | Priority |
     11||---|----|-------|---------|-------------|----------|
     12|| 1 | F04 | C can't hook Python | Standalone C, cannot import Python modules | Python is source of truth | P0 |
-    13|| 2 | F05 | Test cheating | 240 C test files vs ~17k Python tests | Full behavioral test suite | P0 |
+    13|| 2 | F05 | Test cheating | 241 C test files vs ~17k Python tests | Full behavioral test suite | P0 |
     14|
     15|## S1: Pipeline & Integration (P1)
     16|
@@ -47,7 +47,7 @@
     47|
     48|| # | ID | Topic | Details | Priority |
     49||---|-----|-------|---------|----------|
-    50|| 1 | U07 | Test suite gap | ~17k Python tests grown since fork; C: 240 tests — order-of-magnitude gap | P1 |
+    50|| 1 | U07 | Test suite gap | ~17k Python tests grown since fork; C: 241 tests — order-of-magnitude gap | P1 |
     51|
     52|## Summary
     53|
