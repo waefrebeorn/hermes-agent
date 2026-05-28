@@ -13,8 +13,14 @@
 #include <string.h>
 #include <time.h>
 
-#define XAI_BASE_URL "https://api.x.ai/v1"
+#define XAI_BASE_URL "https://api.x.ai"
 #define DEFAULT_MODEL "grok-4.20-reasoning"
+
+/* Read model from XAI_MODEL env var, falling back to DEFAULT_MODEL */
+static const char *get_xai_model(void) {
+    const char *model = getenv("XAI_MODEL");
+    return (model && *model) ? model : DEFAULT_MODEL;
+}
 
 /* Schema */
 static const char *SCHEMA = "{"
@@ -225,7 +231,7 @@ char *x_search_handler(const char *args_json, const char *task_id) {
 
     /* Build request payload */
     json_node_t *payload = json_new_object();
-    json_set(payload, "model", json_string(DEFAULT_MODEL));
+    json_set(payload, "model", json_string(get_xai_model()));
 
     json_node_t *input = json_new_array();
     json_node_t *msg = json_new_object();
