@@ -245,7 +245,19 @@ else
     fail "ms_graph (compilation failed)"
 fi
 
-run_lib_test "tool_result_storage" "tests/test_tool_result_storage.c" "include" "$CDIR/src/tools/result_storage.c -Wl,--unresolved-symbols=ignore-all"
+echo ""; echo "=== Tool Result Storage Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_tool_result_storage.c" "$CDIR/src/tools/result_storage.c" \
+    -o /tmp/hermes_test_trs -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_trs ]]; then
+    if /tmp/hermes_test_trs > /dev/null 2>&1; then
+        ok "tool_result_storage"
+    else
+        fail "tool_result_storage (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_trs
+else
+    fail "tool_result_storage (compilation failed)"
+fi
 
 echo ""; echo "=== Clarify Tool Tests === "
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \

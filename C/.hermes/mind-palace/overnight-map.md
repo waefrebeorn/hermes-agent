@@ -1,6 +1,6 @@
-# Slermes C — Overnight Map (v73 — ~288 Items)
-- **State:** v68 — Suite 277/0/0, 84 tools, 98 CLI, 19 gateways, 10 providers, 65 libs, 172 src .c, 241 test files
+# Slermes C — Overnight Map (v75 — ~288 Items)
+- **State:** v75 — Suite 278/0/0, 84 tools, 98 CLI, 19 gateways, 10 providers, 65 libs, 172 src .c, 236 test files
 - **Phase 3:** ALL DONE.
-- **Phase 4:** ~3 truly missing Phase 4 remaining (checkpoint_manager, lazy_deps, neutts_synth). Phase 5 or test coverage next.
+- **Phase 4:** small-to-medium items exhausted; tool_result_storage compilation skip fixed this session. Phase 5 Gateway or Phase 2B Agent Core next.
 - Many battleship claims still STALE — verify before implementing.
 - **Doc discipline:** update all after every pass.

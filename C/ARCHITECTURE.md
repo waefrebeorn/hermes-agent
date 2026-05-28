@@ -11,7 +11,7 @@ Slermes C is a 1:1 C port of the Python Hermes AI Agent. Same agent loop, provid
                     ↓
              Plugin Registry (10 .so)
                     ↓
-             59 Library Modules
+             65 Library Modules
 ```
 
 ## Module Overview
@@ -126,7 +126,7 @@ Provider categories:
 | libansi | ANSI terminal codes | none |
 
 ## Testing
-- **241 test files, 277/0/0 suite** (all passed, 0 failed, 0 skipped)
+- **236 test files, 277/0/0 suite** (all passed, 0 failed, 0 skipped)
 - **Pattern:** Each test is `int main(void)` returning 0 on pass
 - **Areas:** Libraries, providers, agent, CLI, cron, tools, gateway, plugins
 
@@ -147,7 +147,7 @@ make plugins             # Build 10 .so plugins
 ```
 
 ## Current State
-- **Suite:** 277/0/0 — 241 test files
+- **Suite:** 277/0/0 — 236 test files
 - **Binary:** 30MB ELF, 0 warnings
 - **Commits:** 817+ C-specific
 - **Upstream:** synced via battleship-v16

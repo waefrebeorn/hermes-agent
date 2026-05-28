@@ -4,12 +4,12 @@
 One static binary. Zero runtime deps beyond libc + libssl. 30M ELF.
 
 ```text
-||||||| Suite:  277/0/0 (241 test files, completes in <60s)
-|||||| Binary: 30M    (dynamic ELF, -O2 -g)
-|||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
-||||||||| Parity:  ~43%   (~288 item-level gaps — see battleship-v16)
-||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
-|||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
+||||||| Suite:  277/0/0 (236 test files, completes in <60s)
+||||||| Binary: 30M    (dynamic ELF, -O2 -g)
+||||||| Source: 456 .c files (src/ + lib/ + tests/): 108K C LOC
+|||||||||| Parity:  ~43%   (~288 item-level gaps — see battleship-v16)
+|||||||Stubs:  Phase 0a all resolved. Phase 1 CLI Args ✅ — all 98 commands wired.
+||||||Display: 16 gaps — 14/16 done (V07 TUI, V08 Python TUI, V09 voice remain)
 |||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 |||||CLI:    98 cmd_ functions — 84 unique tools registered
 |||||Tools:  84 registered (87 at runtime with MCP dynamic)
@@ -112,7 +112,7 @@ echo "/providers" | ./hermes # List provider configurations
                     └──────────┬──────────────┘
                                │ System calls
                     ┌──────────▼──────────────┐
-                    │   59 Library Units       │
+                    │   65 Library Units       │
                     │  (json, yaml, http,      │
                     │   crypto, mcp, cron...)  │
                     └─────────────────────────┘
@@ -401,7 +401,7 @@ Libraries are compiled directly into the binary (no intermediate `.a` archives).
 
 ---
 
-|CLI: 79 commands (all real, tab complete + history)
+|CLI: 98 commands (all real, tab complete + history)
 
 The CLI uses a central command registry (`cli/commands.c`) with alias resolution and subcommand dispatch.
 
@@ -452,7 +452,7 @@ All bugs discovered through DA audits and runtime testing.
 ```
 waefrebeorn/slermes/         ← Repo root
 ├── C/                            ← All source code (canonical README lives here)
-│   ├── src/                      ← 154 .c files
+│   ├── src/                      ← 172 .c files
 │   │   ├── agent/                ←   Provider adapters, LLM client, fallback routing,
 │   │   │                           budget tracker, checkpoint/resume, audit, redact/sanitize
 │   │   ├── cli/                  ←   CLI orchestrator, command registry, config,
