@@ -1061,11 +1061,62 @@ static void session_cleanup_idle(void) {
 }
 
 /* ================================================================
+ *  P186: MEDIA: prefix handling — route file paths to platform media APIs
+ * ================================================================ */
+
+/* Try to send a file via MEDIA: prefix. Returns true if handled. */
+static bool gw_try_send_media(const char *platform, const char *target, const char *text) {
+    if (!text || strncmp(text, "MEDIA:", 6) != 0) return false;
+
+    const char *path = text + 6;
+    if (!path[0]) return false;
+
+    /* Determine file type from extension */
+    const char *ext = strrchr(path, '.');
+    if (!ext) return false;
+
+    /* Check if file exists */
+    struct stat st;
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode))
+        return false;
+
+    if (strcmp(platform, "telegram") == 0) {
+        /* Image extensions */
+        if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+            strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0) {
+            return telegram_send_photo(g_gw.http, target, path, NULL, NULL);
+        }
+        /* Audio extensions */
+        if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0) {
+            return telegram_send_voice(g_gw.http, target, path, NULL, NULL);
+        }
+        /* Video extensions */
+        if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0 ||
+            strcasecmp(ext, ".avi") == 0 || strcasecmp(ext, ".mkv") == 0) {
+            return telegram_send_video(g_gw.http, target, path, NULL, NULL);
+        }
+        /* GIF/animation */
+        if (strcasecmp(ext, ".gif") == 0) {
+            return telegram_send_animation(g_gw.http, target, path, NULL, NULL);
+        }
+        /* Default: send as document */
+        return telegram_send_document(g_gw.http, target, path, NULL, NULL);
+    }
+
+    /* For platforms without media APIs, fall back to text with path info */
+    return false;
+}
+
+/* ================================================================
  *  Platform-aware message send
  * ================================================================ */
 
 static void gateway_send(const char *platform, const char *target, const char *text) {
     if (!platform || !target || !text) return;
+
+    /* P186: Try MEDIA: prefix for file/media sends */
+    if (gw_try_send_media(platform, target, text))
+        return;
 
     /* P103: Try registered platform interface first */
     if (gw_platform_send(platform, target, text))
