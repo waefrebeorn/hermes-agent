@@ -34,7 +34,7 @@ static char *run_cmd_full(const char *fmt, ...) {
     FILE *fp = popen(cmd, "r");
     if (!fp) return NULL;
 
-    /* Use a growing buffer via tmpfile + read */
+    /* Use mkstemp for a secure temp file */
     char tmp[] = "/tmp/hermes_vision_XXXXXX";
     int fd = mkstemp(tmp);
     if (fd < 0) { pclose(fp); return NULL; }
