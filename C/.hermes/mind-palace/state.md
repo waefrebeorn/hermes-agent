@@ -7,6 +7,7 @@ Build clean — **0 warnings**. **84 unique tools** (registry_register). 98 CLI 
 ~287 item-level gaps (battleship-v16 rows, 16 closed this session).
 
 ## Recent (this session)
+- Layer 9: test_line_edit.c — 11 line editor tests (create/free, history save/load, error paths). Suite: 279/0/0 (+1).
 - Layer 9: test_regex.c — 32 comprehensive regex tests (replaced old minimal file). Suite: 278/0/0.
 - Layer 9: test_signal.c — 13 new signal handling tests for lib/libsignal. Suite: 278/0/0 (0 skips).
 - 5C-252 Gateway reactions: added `send_reaction` vtable slot + dispatcher. 53 gateway tests (+1).
