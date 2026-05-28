@@ -23,7 +23,6 @@
 
 static char g_signal_cli[256] = "signal-cli";
 static char g_signal_number[64] = "";
-static int g_signal_poll_interval = 10;
 static bool g_signal_available = false;
 
 void signal_set_number(const char *number) {
@@ -188,7 +187,7 @@ bool signal_send_attachment(http_client_t *http,
  * Keys is a NULL-terminated array of field names to traverse.
  * Returns the string value at the leaf, or def on failure.
  * ------------------------------------------------------------------ */
-static const char *json_nested_str(const json_t *root, const char * const *keys,
+static const __attribute__((unused)) char *json_nested_str(const json_t *root, const char * const *keys,
                                     const char *def) {
     const json_t *cur = root;
     for (int i = 0; keys[i]; i++) {
@@ -202,7 +201,7 @@ static const char *json_nested_str(const json_t *root, const char * const *keys,
  * Helper: extract a nested JSON object.
  * Returns NULL if any key in the path is missing.
  * ------------------------------------------------------------------ */
-static json_t *json_nested_obj(json_t *root, const char * const *keys) {
+static json_t __attribute__((unused)) *json_nested_obj(json_t *root, const char * const *keys) {
     json_t *cur = root;
     for (int i = 0; keys[i]; i++) {
         cur = json_obj_get(cur, keys[i]);

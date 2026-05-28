@@ -39,8 +39,6 @@ char *transcribe_handler(const char *args_json, const char *task_id) {
     }
 
     const char *model = json_object_get_string(args, "model", NULL);
-    const char *language = json_object_get_string(args, "language", NULL);
-
     /* Validate file first */
     char *validation = transcribe_validate_file(file_path);
     if (validation) {

@@ -364,7 +364,7 @@ static int send_image_msg(const char *to_user_id, const char *image_data,
 }
 
 /* sendImage — msg_type 3 (G20) */
-static int send_image(const char *to_user_id, const char *image_url,
+static int __attribute__((unused)) send_image(const char *to_user_id, const char *image_url,
                        const char *context_token) {
     return send_image_msg(to_user_id, image_url, 0, context_token);
 }

@@ -1010,7 +1010,6 @@ static json_node_t *parse_raw_email(const char *raw, size_t raw_len) {
 
                         /* Check if it's an attachment */
                         bool is_attachment = (strstr(part_disposition, "attachment") != NULL);
-                        bool is_inline = (strstr(part_disposition, "inline") != NULL);
 
                         if (is_attachment) {
                             /* Save attachment to disk */
@@ -1365,8 +1364,6 @@ static void *thread_imap_idle(void *arg) {
                 printf("[email] New mail detected, fetching...\n");
 
                 /* Get UIDNEXT or UID range */
-                uint32_t new_uid = g_email.last_uid + 1;
-
                 /* Actually, let's do a UID SEARCH to find unseen messages */
                 pthread_mutex_lock(&g_email.imap_mutex);
                 char tag[32];
@@ -1411,7 +1408,7 @@ static void *thread_imap_idle(void *arg) {
                                     char *resp = agent_chat(&g_gw.agent, text);
                                     if (resp) {
                                         /* Send reply via email */
-                                        json_node_t *attachments = json_obj_get(update, "attachments");
+                                        (void)json_obj_get(update, "attachments");
                                         const char *subject = json_get_str(update, "subject", "Re: Hermes");
                                         const char *in_reply_to = json_get_str(update, "in_reply_to", "");
 
@@ -1709,7 +1706,6 @@ bool email_send_message_ext(const char *to, const char *subject,
     if (date_pos) {
         char *end = strchr(date_pos, '\r');
         if (end) {
-            size_t date_end = (size_t)(end - email_buf);
             pos = (size_t)(date_pos - email_buf);
             pos += snprintf(email_buf + pos, sizeof(email_buf) - pos,
                 "Date: %s\r\n", date_buf);

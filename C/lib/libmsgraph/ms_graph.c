@@ -86,7 +86,7 @@ void msgraph_token_provider_init(msgraph_token_provider_t *tp,
     memset(&tp->cached, 0, sizeof(tp->cached));
 }
 
-static const char *msgraph_extract_error(const char *body)
+static const __attribute__((unused)) char *msgraph_extract_error(const char *body)
 {
     static char buf[MSGRAPH_MAX_ERROR];
     if (!body || !*body) return "unknown error";

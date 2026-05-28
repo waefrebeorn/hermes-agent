@@ -327,7 +327,7 @@ typedef struct {
     const char *bundled_dir;
 } discover_ctx_t;
 
-static discover_ctx_t g_discover_ctx;
+static discover_ctx_t g_discover_ctx __attribute__((unused));
 
 static void _discover_skills_in_dir(const char *dir_path, discover_ctx_t *ctx)
 {

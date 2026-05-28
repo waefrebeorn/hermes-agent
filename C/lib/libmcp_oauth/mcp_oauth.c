@@ -71,7 +71,7 @@ static const char *get_token_dir(void) {
 }
 
 /* Build full path for a server's token file */
-static void token_path(const char *server_name, const char *suffix,
+static void __attribute__((unused)) token_path(const char *server_name, const char *suffix,
                        char *out, size_t out_size) {
     char safe[128];
     safe_filename(server_name, safe, sizeof(safe));

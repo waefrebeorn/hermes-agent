@@ -284,7 +284,7 @@ static json_node_t *_sanitize_node(json_node_t *node, const char *path)
             size_t arr_len = json_len(val);
             json_node_t *first_non_null = NULL;
             bool has_null = false;
-            bool has_other = false;
+            bool has_other __attribute__((unused)) = false;
             for (size_t i = 0; i < arr_len; i++) {
                 json_node_t *item = json_get(val, i);
                 if (is_str(item) && strcmp(item->str_val, "null") == 0) {

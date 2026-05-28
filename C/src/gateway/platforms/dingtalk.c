@@ -266,7 +266,7 @@ static time_t g_token_expires = 0;
 
 /* Get a valid access token, refreshing if needed.
  * Returns NULL if not available. */
-static const char *dingtalk_get_access_token(http_client_t *http) {
+static const __attribute__((unused)) char *dingtalk_get_access_token(http_client_t *http) {
     if (!g_app_id[0] || !g_app_secret[0]) return NULL;
 
     /* Check if current token is still valid (5 min buffer) */

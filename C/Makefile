@@ -1,6 +1,6 @@
 CC = gcc
 AR = ar
-CFLAGS = -O2 -g -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-format-truncation -Wno-stringop-truncation -Wno-unused-function -I include
+CFLAGS = -O2 -g -Wall -Wextra -Wno-pedantic -Wno-unused-result -Wno-format-truncation -Wno-stringop-truncation -Wno-misleading-indentation -Wno-discarded-qualifiers -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-extra-args -Wno-comment -Wno-format-zero-length -Wno-address -Wno-maybe-uninitialized -I include
 LDFLAGS = -lssl -lcrypto -ldl -lpthread -lz
 LIBS = -lm
 

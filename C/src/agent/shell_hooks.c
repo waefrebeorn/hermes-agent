@@ -159,7 +159,7 @@ static bool __attribute__((unused)) allowlist_check(const char *event, const cha
 /**
  * Record an approval in the allowlist.
  */
-static void allowlist_record(const char *event, const char *command) {
+static void __attribute__((unused)) allowlist_record(const char *event, const char *command) {
     char path[1024];
     allowlist_path(path, sizeof(path));
 
@@ -201,7 +201,7 @@ static void allowlist_record(const char *event, const char *command) {
 /**
  * Build stdin JSON payload for a shell hook invocation.
  */
-static char *__attribute__((unused)) build_payload(const char *event, const char *tool_name,
+static __attribute__((unused)) char *build_payload(const char *event, const char *tool_name,
                             const char *tool_input, const char *session_id) {
     json_t *payload = json_object();
     json_set(payload, "hook_event_name", json_string(event ? event : ""));

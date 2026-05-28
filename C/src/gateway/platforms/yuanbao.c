@@ -554,7 +554,6 @@ static void extract_push_text(const uint8_t *body, size_t body_len,
  * ================================================================ */
 
 static void yuanbao_event_loop(void) {
-    uint8_t recv_buf[MAX_BUF];
     ws_frame_t frame;
 
     printf("[gateway:yuanbao] Connected, sending AUTH_BIND...\n");
@@ -797,7 +796,7 @@ char *yuanbao_send_dm(const char *to_uid, const char *text) {
 }
 
 /* Server.c setup/thread wrappers */
-static bool setup_yuanbao(void) {
+static bool __attribute__((unused)) setup_yuanbao(void) {
     const char *app_id = getenv("YUANBAO_APP_ID");
     const char *app_secret = getenv("YUANBAO_APP_SECRET");
     const char *bot_id = getenv("YUANBAO_BOT_ID");
@@ -811,7 +810,7 @@ static bool setup_yuanbao(void) {
     return yuanbao_init(app_id, app_secret, bot_id, ws_url, api_domain);
 }
 
-static void *thread_yuanbao(void *arg) {
+static void __attribute__((unused)) *thread_yuanbao(void *arg) {
     (void)arg;
     yuanbao_start();
     return NULL;

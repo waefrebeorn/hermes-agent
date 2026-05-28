@@ -701,7 +701,7 @@ void gw_event_emit(const char *event_type, json_node_t *data) {
 }
 
 /* E35: Apply pre-send hooks to a message before sending */
-static char *gw_apply_pre_send_hooks(const char *platform, const char *text) {
+static char __attribute__((unused)) *gw_apply_pre_send_hooks(const char *platform, const char *text) {
     if (!text) return NULL;
 
     json_node_t *data = json_new_object();
@@ -726,7 +726,7 @@ static char *gw_apply_pre_send_hooks(const char *platform, const char *text) {
 }
 
 /* E36: Apply post-receive hooks on incoming message */
-static char *gw_apply_post_receive_hooks(const char *platform, const char *chat_id,
+static char __attribute__((unused)) *gw_apply_post_receive_hooks(const char *platform, const char *chat_id,
                                           const char *text) {
     if (!text) return NULL;
 
@@ -752,7 +752,7 @@ static char *gw_apply_post_receive_hooks(const char *platform, const char *chat_
 }
 
 /* E37: Apply interceptors — can return NULL to drop message */
-static char *gw_apply_interceptors(const char *platform, const char *chat_id,
+static char __attribute__((unused)) *gw_apply_interceptors(const char *platform, const char *chat_id,
                                     const char *text) {
     if (!text) return NULL;
 
@@ -781,7 +781,7 @@ static char *gw_apply_interceptors(const char *platform, const char *chat_id,
 }
 
 /* E39: Cooldown manager — enforce min interval between sends */
-static bool gw_cooldown_allow(int plat_idx) {
+static bool __attribute__((unused)) gw_cooldown_allow(int plat_idx) {
     if (plat_idx < 0 || plat_idx >= GW_MAX_PLATFORMS) return true;
     double remaining = gw_cooldown_remaining(plat_idx);
     if (remaining > 0.0) return false;
@@ -925,7 +925,7 @@ bool gw_refresh_token(int plat_idx) {
 }
 
 /* E47: Send a plain text fallback when rich formatting fails */
-static void gateway_send_fallback(const char *platform, const char *target,
+static void __attribute__((unused)) gateway_send_fallback(const char *platform, const char *target,
                                    const char *text) {
     if (!platform || !target || !text) return;
     /* Strip all formatting and truncate */
@@ -1044,7 +1044,7 @@ static void session_save_all(void) {
 }
 
 /* Clean up idle sessions (last used > 30 min) */
-static void session_cleanup_idle(void) {
+static void __attribute__((unused)) session_cleanup_idle(void) {
     double now = gw_mono_time();
     for (int i = 0; i < g_gw.session_count; i++) {
         if (g_gw.sessions[i].in_use &&
@@ -1242,13 +1242,7 @@ static void process_update(const char *platform, const char *chat_id, const char
     /* L08: Prepend any accumulated observe buffer before processing
      * a triggered message (one where the bot IS mentioned). */
     char *observe_ctx = gw_observe_consume(platform, chat_id);
-    const char *actual_text = text;
-    char combined[66560]; /* 65536 observe buf + 1024 message */
     if (observe_ctx) {
-        snprintf(combined, sizeof(combined),
-                 "[Observed context from this chat]\n%s\n[Trigger message]\n%s",
-                 observe_ctx, text);
-        actual_text = combined;
         free(observe_ctx);
     }
 
