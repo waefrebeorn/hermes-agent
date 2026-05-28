@@ -1,6 +1,6 @@
 # Battle Map v33 — Real Parity Assessment
 
-**v125 | Fork synced: 0 behind upstream, 0 ahead | Suite 283/0/0 | 85 tools | 98 CLI**
+**v129 | Fork synced: 0 behind upstream, 0 ahead | Suite 283/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 18 gaps across 5 sectors.** (W12, W14 resolved. 17 gaps remaining.)
 
 v33 removes stale upstream-drift predictions that never materialized (S4 U01-U06 items verified against both C and Python source — features either already exist in C or don't exist in either codebase). S4 reduced from 7 to 1 item (U07: test gap). S1 expanded to include the remaining real warnings/bugs.

@@ -457,3 +457,12 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | U05 | mTLS client certs | Neither Python MCP nor C libmcp have mTLS | 0 results for tls/ssl/certificate in lib/libmcp/ or tools/mcp_tool.py |
 | U06 | PKCE, CIDR, SSRF | C already has all three | crypto.c (PKCE), shell_hooks.c (CIDR allowlist), url_safety (SSRF) |
 | | Battleship v32 S4 reduced from 7 items → 1 item (U07 test gap). New battleship v33 with 21 real gaps. | | |
+
+## Phase 39: Build & Test Infrastructure (v129)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| A01 | Fixed ASan build (added -lz to LDFLAGS, inflateEnd undefined) | Makefile:454 |
+| A02 | Fixed feishu test segfault (http.o->http.c, stale ASan-object crash) | test_runner.sh:2510 |
+| A03 | Corrected stale CLI count 80->98 in state.md, entry.md, battleship-v33.md | 98 real CLI commands verified |
+| | Suite 283/0/0, commits e0d7ccbb0, 86db5fecc pushed | All on waefrebeorn/slermes main |
