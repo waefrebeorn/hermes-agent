@@ -1,0 +1,32 @@
+# Hermes C Docker build context
+# Exclude unnecessary files to keep build context small
+
+.git/
+.gitignore
+.github/
+
+# Source files not needed for C build
+*.py
+*.pyc
+__pycache__/
+.venv/
+venv/
+node_modules/
+
+# Python project root files (not needed for C build)
+pyproject.toml
+setup.py
+setup.cfg
+MANIFEST.in
+
+# Build artifacts
+*.o
+*.a
+*.so
+hermes-tui
+
+# Large irrelevant dirs
+website/
+docs/
+ui-tui/
+tui_gateway/

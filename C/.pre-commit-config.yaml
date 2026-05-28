@@ -1,0 +1,36 @@
+# Hermes C — Pre-commit hooks
+# Auto-install: pre-commit install -c C/.pre-commit-config.yaml
+# Manual run:   pre-commit run --all-files -c C/.pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        files: ^C/
+      - id: end-of-file-fixer
+        files: ^C/
+      - id: check-merge-conflict
+        files: ^C/
+      - id: check-added-large-files
+        args: [--maxkb=500]
+        files: ^C/
+
+  - repo: local
+    hooks:
+      - id: make-compile
+        name: make (compile check)
+        description: Verify C project compiles without errors
+        entry: bash -c 'cd C && make -j$(nproc) 2>&1 | tail -10; test ${PIPESTATUS[0]} -eq 0'
+        language: system
+        files: ^C/.*\.(c|h|yaml|yml)$
+        pass_filenames: false
+        always_run: true
+
+      - id: test-runner-syntax
+        name: test_runner.sh (bash syntax)
+        description: Check test runner shell syntax
+        entry: bash -n C/test_runner.sh
+        language: system
+        files: ^C/test_runner\.sh$
+        pass_filenames: false

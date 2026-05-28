@@ -1,0 +1,45 @@
+#compdef hermes
+# hermes zsh completion — H01
+# Source:  source <(hermes completions zsh)
+# Install: hermes completions zsh > /usr/share/zsh/site-functions/_hermes
+
+_hermes() {
+    local -a opts
+    opts=(
+        '--help[Show help message]'
+        '-h[Show help message]'
+        '--version[Show version information]'
+        '-v[Show version information]'
+        '--session[Attach to a specific session]:session: '
+        'gateway:Start gateway:->gateway'
+        'cron:Run cron scheduler:->cron'
+        '--tui:Start terminal UI'
+        'completions:Generate shell completions:->completions'
+    )
+
+    case $state in
+        gateway)
+            _arguments \
+                '--platform[Platform name]:platform:(telegram discord slack matrix signal whatsapp)' \
+                '--port[Port number]:port:' \
+                '--help'
+            ;;
+        cron)
+            _arguments \
+                'start[Start scheduler]' \
+                'stop[Stop scheduler]' \
+                'list[List jobs]' \
+                '--help'
+            ;;
+        completions)
+            _arguments \
+                'bash[Bash completion]' \
+                'zsh[Zsh completion]'
+            ;;
+        *)
+            _arguments $opts
+            ;;
+    esac
+}
+
+_hermes "$@"

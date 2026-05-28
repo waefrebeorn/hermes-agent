@@ -1,0 +1,5 @@
+# Metadata for spotify-control plugin
+name: "spotify-control"
+version: "0.3.0"
+type: "spotify"
+description: "Spotify playback control — play, pause, skip, search"

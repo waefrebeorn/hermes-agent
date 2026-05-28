@@ -1,0 +1,173 @@
+.TH HERMES 1 "2026-05-24" "WuBu Hermes Agent" "User Commands"
+.SH NAME
+hermes, slermes \- AI agent CLI for conversation, tool execution, and gateway messaging
+.SH SYNOPSIS
+.B hermes
+[\fIoptions\fR] [\fImessage\fR]
+.P
+.B hermes \-\-gateway \-\-platform
+.I platform
+.SH DESCRIPTION
+Hermes is an AI agent that runs local LLM inference or connects to
+remote providers (OpenAI, Anthropic, DeepSeek, xAI, etc.) for conversation,
+tool execution, and gateway messaging across 19 platforms.
+.P
+The first positional argument is treated as a one-shot message for
+non-interactive use. Without arguments, Hermes starts in interactive
+CLI mode with slash commands.
+.P
+.SH OPTIONS
+.TP
+.B \-\-help
+Display help message and exit.
+.TP
+.B \-\-version
+Print version and exit.
+.TP
+.B \-\-tui
+Launch full-screen terminal UI (requires ncurses).
+.TP
+.B \-\-gateway
+Start gateway daemon for multi-platform messaging.
+.TP
+.B \-\-platform \fIplatform\fR
+Platform to operate on (telegram, discord, slack, etc.). Used with \-\-gateway.
+.TP
+.B \-\-model \fImodel\fR
+Override the LLM model.
+.TP
+.B \-\-provider \fIprovider\fR
+Override the LLM provider.
+.TP
+.B \-\-quiet
+Suppress non-essential output.
+.TP
+.B \-\-save-trajectory
+Save conversation trajectory to file.
+.TP
+.B \-y, \-\-yes
+Auto-approve all tool calls.
+.SH SLASH COMMANDS
+Interactive mode slash commands:
+.P
+.in +4n
+.B /help
+\(em Display command help.
+.in -4n
+.P
+.in +4n
+.B /status
+\(em Session status (model, tokens, context, costs).
+.in -4n
+.P
+.in +4n
+.B /goal
+\(em Save/show/clear session goal.
+.in -4n
+.P
+.in +4n
+.B /model
+\(em Show or switch model.
+.in -4n
+.P
+.in +4n
+.B /provider
+\(em Show or switch provider.
+.in -4n
+.P
+.in +4n
+.B /session
+\(em Session management (list, search, export).
+.in -4n
+.P
+.in +4n
+.B /memory
+\(em View or search memory.
+.in -4n
+.P
+.in +4n
+.B /config
+\(em View or change configuration.
+.in -4n
+.P
+.in +4n
+.B /plugins
+\(em List and manage plugins.
+.in -4n
+.P
+.in +4n
+.B /skills
+\(em List, search, install skills.
+.in -4n
+.P
+.in +4n
+.B /browser
+\(em Connect/disconnect CDP browser.
+.in -4n
+.P
+.in +4n
+.B /cron
+\(em Schedule and list cron jobs.
+.in -4n
+.P
+.in +4n
+.B /completions
+\(em Generate shell completion scripts.
+.in -4n
+.SH CONFIGURATION
+Configuration directory: \fB$SLERMES_HOME\fR (default: \fB~/.slermes/\fR)
+.TP
+\fBconfig.yaml\fR
+YAML config: provider, model, tools, gateway, plugins, etc.
+.TP
+\fB.env\fR
+API keys and secrets (KEY=VALUE format).
+.TP
+\fBprofiles/\fR
+Named config profiles (\fIprofile\fR.yaml), switched via \fB/config profile\fR.
+.SH PLUGINS
+Plugins load from \fB~/.hermes/plugins/\fR as .so files. Built-in plugins:
+.IP \(bu 2
+honcho-memory \(em In-memory memory backend (27-test verified)
+.IP \(bu 2
+kanban-board \(em Multi-agent task board (45-test verified)
+.IP \(bu 2
+spotify-control \(em Spotify Web API integration (18-test verified)
+.SH GATEWAY PLATFORMS
+Hermes supports messaging on 19 platforms:
+telegram, discord, slack, matrix, mattermost, whatsapp, signal,
+email, sms, webhook, homeassistant, dingtalk, wecom, weixin,
+feishu, qqbot, bluebubbles, yuanbao, api_server.
+.SH ENVIRONMENT
+.TP
+\fBSLERMES_HOME\fR
+Config directory path (default: ~/.slermes/).
+.TP
+\fBCAMOFOX_WS_URL\fR, \fBCHROME_WS_URL\fR
+CDP WebSocket URL for browser automation.
+.SH EXIT CODES
+.TP
+0
+Success.
+.TP
+1
+General error.
+.TP
+139
+Segmentation fault (CUDA/GPU-related on release builds).
+.SH FILES
+.TP
+\fI~/.slermes/config.yaml\fR
+User configuration.
+.TP
+\fI~/.slermes/.env\fR
+Environment variables (API keys).
+.TP
+\fI~/.slermes/logs/\fR
+Log files: agent.log, errors.log, gateway.log.
+.SH SEE ALSO
+GitHub: https://github.com/waefrebeorn/hermes-agent
+.P
+Documentation: https://hermes-agent.nousresearch.com/docs
+.SH AUTHORS
+WuBu Hermes Project <waefrebeorn>
