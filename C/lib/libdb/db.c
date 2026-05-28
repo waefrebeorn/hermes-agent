@@ -129,6 +129,18 @@ static int json_extract_int(const char *json, const char *key) {
     return (int)json_extract_num(json, key);
 }
 
+/* Extract a double value from JSON by key. Returns 0.0 if not found. */
+static double json_extract_double(const char *json, const char *key) {
+    if (!json || !key) return 0.0;
+    char search[256];
+    snprintf(search, sizeof(search), "\"%s\":", key);
+    const char *p = strstr(json, search);
+    if (!p) return 0.0;
+    p += strlen(search);
+    while (*p == ' ') p++;
+    return atof(p);
+}
+
 /* Simple JSON object serialization of session_meta_t. Caller must free. */
 static char *meta_to_json(const session_meta_t *meta) {
     if (!meta) return NULL;
@@ -178,6 +190,8 @@ static char *meta_to_json(const session_meta_t *meta) {
         "\"cache_read_tokens\":%d,"
         "\"cache_write_tokens\":%d,"
         "\"tool_call_count\":%d,"
+        "\"reasoning_tokens\":%d,"
+        "\"estimated_cost\":%.6f,"
         "\"source\":\"%s\","
         "\"message_count\":%d,"
         "\"created_at\":%ld,"
@@ -197,6 +211,8 @@ static char *meta_to_json(const session_meta_t *meta) {
         meta->cache_read_tokens,
         meta->cache_write_tokens,
         meta->tool_call_count,
+        meta->reasoning_tokens,
+        meta->estimated_cost,
         meta->source,
         meta->message_count,
         (long)meta->created_at, time_created,
@@ -229,6 +245,8 @@ static bool json_to_meta(const char *json_str, session_meta_t *meta) {
     meta->cache_read_tokens = json_extract_int(json_str, "cache_read_tokens");
     meta->cache_write_tokens = json_extract_int(json_str, "cache_write_tokens");
     meta->tool_call_count = json_extract_int(json_str, "tool_call_count");
+    meta->reasoning_tokens = json_extract_int(json_str, "reasoning_tokens");
+    meta->estimated_cost = json_extract_double(json_str, "estimated_cost");
     meta->message_count = json_extract_int(json_str, "message_count");
 
     val = json_extract_str(json_str, "source");

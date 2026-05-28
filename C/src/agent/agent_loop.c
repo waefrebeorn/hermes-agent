@@ -377,6 +377,9 @@ bool agent_save_meta(agent_state_t *state) {
     meta.output_tokens = state->session_output_tokens;
     meta.cache_read_tokens = state->session_cache_read_tokens;
     meta.cache_write_tokens = state->session_cache_write_tokens;
+    /* P141b: Save reasoning tokens and estimated cost */
+    meta.reasoning_tokens = state->session_reasoning_tokens;
+    meta.estimated_cost = state->session_estimated_cost_usd;
     meta.tool_call_count = 0;
     for (size_t i = 0; i < state->message_count; i++) {
         if (state->messages[i])

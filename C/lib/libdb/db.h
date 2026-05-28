@@ -31,7 +31,7 @@ typedef struct db_t db_t;
 /* ================================================================
  *  P141: Session metadata structure
  * ================================================================ */
-#define SESSION_SCHEMA_VERSION 2
+#define SESSION_SCHEMA_VERSION 3
 #define SESSION_TAGS_MAX 32
 #define SESSION_TAG_LEN 64
 
@@ -45,6 +45,8 @@ typedef struct {
     int      cache_read_tokens;   /* total cache read tokens */
     int      cache_write_tokens;  /* total cache write tokens */
     int      tool_call_count;     /* total tool calls */
+    int      reasoning_tokens;    /* G04: reasoning-only tokens */
+    double   estimated_cost;      /* G07: estimated USD cost */
     char     source[32];          /* source platform (cli, telegram, etc.) */
     int      message_count;       /* total messages */
     time_t   created_at;          /* creation timestamp */
