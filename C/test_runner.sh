@@ -1047,6 +1047,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "cron_extras (compilation failed)"
 fi
+# cron_locking test (P171 — standalone, no external deps beyond hermes.h)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cron_locking.c" "$CDIR/src/cron/cron_locking.c" \
+    -o /tmp/hermes_test_cron_locking > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron_locking > /dev/null 2>&1; then ok "cron_locking (23 tests)"
+    else fail "cron_locking (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cron_locking
+else
+    skip "cron_locking (compilation failed)"
+fi
 run_lib_test "proc"     "tests/test_proc.c"         "lib/libproc"            "$CDIR/lib/libproc/proc.c"
 # template test special case (needs two source files)
 if gcc -O2 -Wall -Wextra -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libjson" \

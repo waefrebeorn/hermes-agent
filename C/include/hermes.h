@@ -1315,9 +1315,12 @@ bool cron_sqlite_update_job(cron_sqlite_store_t *store, const char *name,
 /* P170: Cron expression parser (libcron already exists — see lib/libcron/cron.h) */
 
 /* P171: Job locking */
-bool cron_lock_acquire(const char *lock_name);
-void cron_lock_release(const char *lock_name);
-bool cron_lock_is_locked(const char *lock_name);
+void  cron_lock_set_dir(const char *dir);
+bool  cron_lock_acquire(const char *lock_name);
+void  cron_lock_release(const char *lock_name);
+bool  cron_lock_is_locked(const char *lock_name);
+bool  cron_shutdown_requested(void);
+void  cron_release_all_locks(void);
 
 /* P172: Job retry */
 bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec);
