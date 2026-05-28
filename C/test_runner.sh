@@ -74,6 +74,7 @@ run_lib_test "http_multipart" "tests/test_http_multipart.c" "lib/libhttp" "$CDIR
 run_lib_test "http_pool" "tests/test_http_pool.c" "lib/libhttp" "$CDIR/lib/libhttp/http.c -lssl -lcrypto -lz"
 run_lib_test "webhook_endpoint" "tests/test_webhook_endpoint.c" "lib/libjson" "$CDIR/lib/libjson/json.c -Wl,--unresolved-symbols=ignore-all"
 run_lib_test "yaml"     "tests/test_yaml.c"         "lib/libyaml"            "$CDIR/lib/libyaml/yaml.c"
+run_lib_test "regex"    "tests/test_hermes_regex.c" "lib/libregex"           "$CDIR/lib/libregex/hermes_regex.c"
 run_lib_test "crypto"   "tests/test_crypto.c"       "lib/libcrypto"          "$CDIR/lib/libcrypto/crypto.c -lssl -lcrypto"
 run_lib_test "tokenizer" "tests/test_tokenizer.c"    "include"                 "$CDIR/src/hermes_tokenizer.c"
 run_lib_test "binary"    "tests/test_binary.c"      "lib/libbinary"           "$CDIR/lib/libbinary/binary.c"
