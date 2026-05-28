@@ -96,6 +96,27 @@ int http_stream_request(http_t *h, http_method_t method,
                         const char *body, size_t body_len,
                         http_stream_cb callback, void *userdata);
 
+/* === SSE stream (persistent connection) === */
+/* Handle for persistent SSE stream — one connection, multiple events. */
+typedef struct http_sse_t http_sse_t;
+
+/* Open persistent GET to SSE endpoint. Reads response headers.
+ * Returns handle on success, NULL on error (check http_sse_last_error).
+ * Call http_sse_free() to close. */
+http_sse_t *http_sse_start(http_t *h, const char *url, const char *extra_headers);
+
+/* Read one complete SSE event. Returns event type string pointer (no free).
+ * Stores event data in buf (up to cap bytes). timeout_ms: 0=block.
+ * Returns NULL on EOF, error, or timeout. */
+const char *http_sse_read_event(http_sse_t *sse, char *buf, size_t cap, int timeout_ms);
+
+/* Close SSE stream and free handle. */
+void http_sse_free(http_sse_t *sse);
+
+/* Get last error message from SSE stream (thread-safe). Returns pointer to
+ * internal buffer — do not free. Empty string if no error. */
+const char *http_sse_last_error(http_sse_t *sse);
+
 /* === URL utilities === */
 /* URL-encode a string. Caller free()s result. */
 char *http_url_encode(const char *str);

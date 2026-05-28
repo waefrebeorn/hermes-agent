@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v106)
+# BANNER — WuBu Slermes C Translation (v107)
 
 ```
   __        __           _   ____  _  
@@ -10,10 +10,10 @@
    ╔══════════════════════════════════════════════════════════════╗
    ║  ZERO-DEPENDENCY HERMES AGENT — C TRANSLATION               ║
    ║  v0.16.0-wubu  │  31MB binary  │  0 warnings                ║
-   ║  12 remaining gaps  │  0 stubs  │  All entry points verified ║
+   ║  11 remaining gaps  │  0 stubs  │  All entry points verified ║
    ╚══════════════════════════════════════════════════════════════╝
 
-## Build Metrics (v106)
+## Build Metrics (v107)
 
 Suite: 282/0/0 — all pass, 0 skip. 86 tools, 98 CLI commands.
 173 src/ .c files, 239 tests, 65 libs, 19 gateways, 10 providers.

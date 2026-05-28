@@ -1045,6 +1045,185 @@ int http_stream_request(http_t *h, http_method_t method,
     return result;
 }
 
+/* ================================================================
+ *  SSE persistent stream — used by MCP transport transport
+ * ================================================================ */
+
+#define SSE_RECV_BUF_SIZE 65536
+
+struct http_sse_t {
+    int     fd;
+    SSL    *ssl;
+    char   *recv_buf;       /* internal line reading buffer */
+    size_t  recv_len;
+    size_t  recv_cap;
+    char    event_type[64]; /* current SSE event type */
+    char    error[256];
+    bool    headers_read;
+};
+
+http_sse_t *http_sse_start(http_t *h, const char *url, const char *extra_headers) {
+    if (!h || !url) return NULL;
+
+    parsed_url_t purl;
+    memset(&purl, 0, sizeof(purl));
+    if (!parse_url(url, &purl)) return NULL;
+
+    bool use_ssl = strcmp(purl.scheme, "https") == 0;
+    int fd = socket_connect(purl.host, purl.port, h->timeout_sec);
+    if (fd < 0) return NULL;
+
+    SSL *ssl = NULL;
+    if (use_ssl) {
+        if (!h->ssl_init) {
+            SSL_load_error_strings();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+            SSL_library_init();
+#else
+            OPENSSL_init_ssl(0, NULL);
+#endif
+            h->ssl_ctx = SSL_CTX_new(TLS_client_method());
+            if (h->ssl_ctx) SSL_CTX_set_default_verify_paths(h->ssl_ctx);
+            h->ssl_init = true;
+        }
+        ssl = ssl_connect_wrap(h->ssl_ctx, fd, purl.host);
+        if (!ssl) { close(fd); return NULL; }
+    }
+
+    /* Build GET request with Accept: text/event-stream */
+    char hdr[8192];
+    int n = snprintf(hdr, sizeof(hdr),
+        "GET %s HTTP/1.1\r\n"
+        "Host: %s\r\n"
+        "Accept: text/event-stream\r\n"
+        "Cache-Control: no-cache\r\n"
+        "Connection: keep-alive\r\n"
+        "%s%s"
+        "\r\n",
+        purl.path, purl.host,
+        extra_headers ? extra_headers : "",
+        extra_headers ? "\r\n" : ""); /* extra blank line if headers provided */
+
+    if (n < 0 || (size_t)n >= sizeof(hdr)) {
+        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+        close(fd);
+        return NULL;
+    }
+
+    /* Send request */
+    bool ok;
+    if (ssl) ok = SSL_write(ssl, hdr, (int)strlen(hdr)) > 0;
+    else ok = socket_send_all(fd, hdr, strlen(hdr), h->timeout_sec);
+    if (!ok) {
+        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+        close(fd);
+        return NULL;
+    }
+
+    /* Allocate SSE handle */
+    http_sse_t *sse = (http_sse_t *)calloc(1, sizeof(http_sse_t));
+    if (!sse) {
+        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+        close(fd);
+        return NULL;
+    }
+
+    sse->fd = fd;
+    sse->ssl = ssl;
+    sse->recv_cap = 4096;
+    sse->recv_buf = (char *)malloc(sse->recv_cap);
+    if (!sse->recv_buf) {
+        if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+        close(fd);
+        free(sse);
+        return NULL;
+    }
+    sse->recv_len = 0;
+    sse->headers_read = false;
+
+    return sse;
+}
+
+const char *http_sse_read_event(http_sse_t *sse, char *buf, size_t cap, int timeout_ms) {
+    if (!sse || !buf || cap == 0) return NULL;
+
+    /* If headers not read yet, consume them */
+    if (!sse->headers_read) {
+        char line[4096];
+        while (1) {
+            int ss = read_line_buffered(sse->fd, sse->ssl, line, sizeof(line),
+                                         sse->recv_buf, &sse->recv_len,
+                                         sse->recv_cap, timeout_ms);
+            if (ss <= 0) return NULL;
+            if (line[0] == '\r' || line[0] == '\n') break; /* end of headers */
+        }
+        sse->headers_read = true;
+    }
+
+    buf[0] = '\0';
+    sse->event_type[0] = '\0';
+    size_t data_len = 0;
+
+    while (1) {
+        char line[8192];
+        int ss = read_line_buffered(sse->fd, sse->ssl, line, sizeof(line),
+                                     sse->recv_buf, &sse->recv_len,
+                                     sse->recv_cap, timeout_ms);
+        if (ss <= 0) return NULL;
+
+        /* Strip trailing \r */
+        size_t llen = strlen(line);
+        while (llen > 0 && (line[llen-1] == '\r' || line[llen-1] == '\n')) llen--;
+        line[llen] = '\0';
+
+        /* Empty line = event complete */
+        if (llen == 0) {
+            buf[data_len] = '\0';
+            return sse->event_type[0] ? sse->event_type : "message";
+        }
+
+        /* event: <type> */
+        if (strncmp(line, "event:", 6) == 0) {
+            const char *val = line + 6;
+            while (*val == ' ') val++;
+            size_t vlen = strlen(val);
+            size_t copy_len = vlen < sizeof(sse->event_type) - 1
+                              ? vlen : sizeof(sse->event_type) - 1;
+            memcpy(sse->event_type, val, copy_len);
+            sse->event_type[copy_len] = '\0';
+            continue;
+        }
+
+        /* data: <content> */
+        if (strncmp(line, "data:", 5) == 0) {
+            const char *val = line + 5;
+            while (*val == ' ') val++;
+            size_t vlen = strlen(val);
+            if (data_len + vlen < cap - 1) {
+                memcpy(buf + data_len, val, vlen);
+                data_len += vlen;
+            }
+            continue;
+        }
+
+        /* id: <id> — we don't track ids; skip */
+        /* retry: <ms> — skip */
+    }
+}
+
+void http_sse_free(http_sse_t *sse) {
+    if (!sse) return;
+    if (sse->ssl) { SSL_shutdown(sse->ssl); SSL_free(sse->ssl); }
+    if (sse->fd >= 0) close(sse->fd);
+    free(sse->recv_buf);
+    free(sse);
+}
+
+const char *http_sse_last_error(http_sse_t *sse) {
+    if (!sse) return "NULL handle";
+    return sse->error;
+}
+
 char *http_url_encode(const char *str) {
     if (!str) return NULL;
     size_t len = strlen(str);

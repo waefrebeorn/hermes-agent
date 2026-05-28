@@ -1,3 +1,3 @@
-# Slermes C (v106)
+# Slermes C (v107)
 Suite: 282/0/0 | Tools: 86 | CLI: 98 | GW: 19 | Prov: 10 | Libs: 65
-Battleship v22 (12 gaps). D01 partial (SSE streaming). Next: D01.
+Battleship v22 (11 gaps). 0 partials. D01 resolved (SSE streaming).

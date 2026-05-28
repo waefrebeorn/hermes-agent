@@ -294,3 +294,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D03 | CDP PDF generation via Page.printToPDF: new browser_generate_pdf tool sends CDP Page.printToPDF params (landscape, format, margin, scale, printBackground). Returns base64-encoded PDF. Uses existing CDP send infrastructure | `src/tools/browser.c` — browser_generate_pdf handler; CDP Page.printToPDF params construction; schema with 8 params; registry_register("browser_generate_pdf") |
+
+## Phase 21: SSE Streaming for MCP Transport (D01)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D01 | SSE streaming for MCP transport_read_response: added `http_sse_start()`/`http_sse_read_event()`/`http_sse_free()` to libhttp for persistent SSE stream connections. `transport_read_response` for SSE now reads events from the persistent stream when POST response buffer doesn't contain the matching response. Incoming server-to-client requests are queued. Full SSE event parsing (event:, data: fields, timeout, EOF handling) | `lib/libhttp/http.c` — http_sse_start/http_sse_read_event/http_sse_free; `lib/libhttp/http.h` — SSE stream API; `lib/libmcp/mcp.c` — sse_stream field, connect wiring, transport_read_response SSE branch, disconnect cleanup |

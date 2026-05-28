@@ -49,6 +49,7 @@ typedef struct {
     char    headers[2048];
     void   *http_client;       /* http_t * for SSE stream */
     void   *http_post_client;  /* http_t * for POST requests */
+    void   *sse_stream;        /* http_sse_t * for persistent SSE event reading */
     int     sse_fd;            /* not used with stream callback */
     char    event_buf[65536];  /* SSE event accumulator */
     size_t  event_len;
@@ -447,31 +448,76 @@ static json_t *transport_read_response(mcp_server_t *srv, const char *request_id
     }
 
     if (srv->transport_type == MCP_TRANSPORT_SSE) {
-        /* Response was captured in sse.recv_buf during transport_send */
-        if (srv->sse.recv_len == 0) {
-            snprintf(srv->last_error, sizeof(srv->last_error),
-                     "No SSE response data");
-            return NULL;
-        }
-
-        char *jerr = NULL;
-        json_t *result = json_parse(srv->sse.recv_buf, &jerr);
-        if (jerr) {
-            snprintf(srv->last_error, sizeof(srv->last_error),
-                     "SSE response parse error: %s", jerr);
-            free(jerr);
-            return NULL;
-        }
-
-        if (result) {
-            const char *rid = json_get_str(result, "id", "");
-            if (rid && strcmp(rid, request_id) == 0) {
-                srv->sse.recv_len = 0;  /* consumed */
-                return result;
+        /* First: check POST response buffer (recv_buf) — fast path */
+        if (srv->sse.recv_len > 0) {
+            char *jerr = NULL;
+            json_t *result = json_parse(srv->sse.recv_buf, &jerr);
+            if (jerr) { free(jerr); jerr = NULL; }
+            if (result) {
+                const char *rid = json_get_str(result, "id", "");
+                if (rid && strcmp(rid, request_id) == 0) {
+                    srv->sse.recv_len = 0;  /* consumed */
+                    return result;
+                }
+                json_free(result);
             }
-            /* Not our response — may be a notification or other server message */
-            json_free(result);
+            /* Not our response — clear recv_buf and try SSE stream */
+            srv->sse.recv_len = 0;
         }
+
+        /* Second: read SSE events from persistent stream */
+        if (srv->sse.sse_stream) {
+            int max_reads = 50;
+            while (max_reads-- > 0) {
+                char event_data[131072];  /* 128KB should hold any SSE data line */
+                const char *event_type = http_sse_read_event(
+                    (http_sse_t *)srv->sse.sse_stream,
+                    event_data, sizeof(event_data),
+                    timeout_ms > 0 ? timeout_ms : 10000);
+
+                if (!event_type) {
+                    /* EOF, error, or timeout */
+                    break;
+                }
+
+                /* Try to parse event data as JSON-RPC */
+                if (event_data[0]) {
+                    char *jerr = NULL;
+                    json_t *ev_result = json_parse(event_data, &jerr);
+                    if (jerr) { free(jerr); jerr = NULL; }
+
+                    if (ev_result) {
+                        const char *rid = json_get_str(ev_result, "id", "");
+                        if (rid && strcmp(rid, request_id) == 0) {
+                            return ev_result;  /* found our response */
+                        }
+
+                        /* Queue incoming server-to-client requests */
+                        const char *method = json_get_str(ev_result, "method", "");
+                        if (rid && rid[0] && method[0] &&
+                            srv->incoming_count < MCP_MAX_INCOMING) {
+                            int idx = srv->incoming_count;
+                            snprintf(srv->incoming_ids[idx],
+                                     sizeof(srv->incoming_ids[0]), "%s", rid);
+                            snprintf(srv->incoming_methods[idx],
+                                     sizeof(srv->incoming_methods[0]), "%s", method);
+                            json_t *params = json_obj_get(ev_result, "params");
+                            if (params) {
+                                char *pstr = json_serialize(params);
+                                snprintf(srv->incoming_params[idx],
+                                         sizeof(srv->incoming_params[0]),
+                                         "%s", pstr);
+                                free(pstr);
+                            }
+                            srv->incoming_count++;
+                        }
+
+                        json_free(ev_result);
+                    }
+                }
+            }
+        }
+
         snprintf(srv->last_error, sizeof(srv->last_error),
                  "No matching response for id %s", request_id);
         return NULL;
@@ -940,6 +986,16 @@ bool mcp_server_connect(mcp_server_t *srv) {
         snprintf(srv->sse.post_url, sizeof(srv->sse.post_url), "%s", srv->sse.url);
         srv->sse.streaming = true;
 
+        /* Start persistent SSE stream for reading events */
+        srv->sse.sse_stream = http_sse_start(
+            (http_t *)srv->sse.http_client,
+            srv->sse.url,
+            srv->sse.headers[0] ? srv->sse.headers : NULL);
+        if (!srv->sse.sse_stream) {
+            snprintf(srv->last_error, sizeof(srv->last_error),
+                     "SSE stream start failed");
+        }
+
         srv->initialized = true;
         srv->status = MCP_STATUS_CONNECTED;
         srv->reconnect_delay_ms = 1000;
@@ -1151,6 +1207,10 @@ void mcp_server_disconnect(mcp_server_t *srv) {
     }
 
     if (srv->transport_type == MCP_TRANSPORT_SSE) {
+        if (srv->sse.sse_stream) {
+            http_sse_free((http_sse_t *)srv->sse.sse_stream);
+            srv->sse.sse_stream = NULL;
+        }
         if (srv->sse.http_client) {
             http_free((http_t *)srv->sse.http_client);
             srv->sse.http_client = NULL;
