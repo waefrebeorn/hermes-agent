@@ -53,6 +53,56 @@ static void test_json_pointer(void) {
     json_free(obj);
 }
 
+/* --- Unicode surrogate pair parsing tests --- */
+static void test_surrogate_pair(void) {
+    /* U+1F389 PARTY POPPER 🎉 = \uD83C\uDF89 */
+    json_t *obj = json_parse("{\"emoji\":\"\\uD83C\\uDF89\"}", NULL);
+    TEST("surrogate pair parse", obj != NULL);
+    if (obj) {
+        json_t *v = json_obj_get(obj, "emoji");
+        TEST("surrogate pair value exists", v != NULL);
+        /* Expected UTF-8: F0 9F 8E 89 */
+        TEST("surrogate pair correct UTF-8", v && v->type == JSON_STRING
+             && v->str_val[0] == (char)0xF0
+             && v->str_val[1] == (char)0x9F
+             && v->str_val[2] == (char)0x8E
+             && v->str_val[3] == (char)0x89
+             && v->str_val[4] == '\0');
+        json_free(obj);
+    }
+}
+
+static void test_lone_high_surrogate(void) {
+    /* Lone high surrogate should become U+FFFD */
+    json_t *obj = json_parse("{\"x\":\"\\uD800\"}", NULL);
+    TEST("lone high surrogate parse", obj != NULL);
+    if (obj) {
+        json_t *v = json_obj_get(obj, "x");
+        /* U+FFFD encodes as EF BF BD */
+        TEST("lone high surrogate becomes U+FFFD", v && v->type == JSON_STRING
+             && v->str_val[0] == (char)0xEF
+             && v->str_val[1] == (char)0xBF
+             && v->str_val[2] == (char)0xBD
+             && v->str_val[3] == '\0');
+        json_free(obj);
+    }
+}
+
+static void test_lone_low_surrogate(void) {
+    /* Lone low surrogate should become U+FFFD */
+    json_t *obj = json_parse("{\"x\":\"\\uDC00\"}", NULL);
+    TEST("lone low surrogate parse", obj != NULL);
+    if (obj) {
+        json_t *v = json_obj_get(obj, "x");
+        TEST("lone low surrogate becomes U+FFFD", v && v->type == JSON_STRING
+             && v->str_val[0] == (char)0xEF
+             && v->str_val[1] == (char)0xBF
+             && v->str_val[2] == (char)0xBD
+             && v->str_val[3] == '\0');
+        json_free(obj);
+    }
+}
+
 int main(void) {
     /* Test 1: parse + serialize roundtrip */
     char *err = NULL;
@@ -110,6 +160,11 @@ int main(void) {
 
     /* Test 5: JSON Pointer */
     test_json_pointer();
+
+    /* Test 6: Unicode surrogate pairs */
+    test_surrogate_pair();
+    test_lone_high_surrogate();
+    test_lone_low_surrogate();
 
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All JSON tests PASSED");
     return failures ? 1 : 0;

@@ -116,12 +116,38 @@ static json_t *parse_string(parse_ctx *ctx) {
                     char tmp[5] = {ctx->pos[1], ctx->pos[2], ctx->pos[3], ctx->pos[4], 0};
                     long cp = strtol(tmp, NULL, 16);
                     ctx->pos += 4;
+                    /* Handle surrogate pairs (U+D800-U+DBFF high + U+DC00-U+DFFF low) */
+                    if (cp >= 0xD800 && cp <= 0xDBFF) {
+                        /* ctx->pos points to 4th hex digit. Low surrogate \uXXXX starts at ctx->pos+1
+                         * The while loop does ctx->pos++ after the switch, so we advance by 6
+                         * to land on the closing quote after the loop increment. */
+                        if (ctx->pos + 7 <= ctx->end && ctx->pos[1] == '\\' && ctx->pos[2] == 'u') {
+                            char lo_tmp[5] = {ctx->pos[3], ctx->pos[4], ctx->pos[5], ctx->pos[6], 0};
+                            long lo = strtol(lo_tmp, NULL, 16);
+                            if (lo >= 0xDC00 && lo <= 0xDFFF) {
+                                cp = 0x10000 + (cp - 0xD800) * 0x400 + (lo - 0xDC00);
+                                ctx->pos += 6; /* loop does ++, total +7 past current digit + \uXXXX */
+                                goto encode_cp;
+                            }
+                        }
+                        /* Invalid/low surrogate pair — replace with U+FFFD */
+                        cp = 0xFFFD;
+                    } else if (cp >= 0xDC00 && cp <= 0xDFFF) {
+                        /* Lone low surrogate — replace with U+FFFD */
+                        cp = 0xFFFD;
+                    }
+                  encode_cp:
                     if (cp < 128) buf[len++] = (char)cp;
                     else if (cp < 0x800) {
                         buf[len++] = (char)(0xC0 | (cp >> 6));
                         buf[len++] = (char)(0x80 | (cp & 0x3F));
-                    } else {
+                    } else if (cp < 0x10000) {
                         buf[len++] = (char)(0xE0 | (cp >> 12));
+                        buf[len++] = (char)(0x80 | ((cp >> 6) & 0x3F));
+                        buf[len++] = (char)(0x80 | (cp & 0x3F));
+                    } else {
+                        buf[len++] = (char)(0xF0 | (cp >> 18));
+                        buf[len++] = (char)(0x80 | ((cp >> 12) & 0x3F));
                         buf[len++] = (char)(0x80 | ((cp >> 6) & 0x3F));
                         buf[len++] = (char)(0x80 | (cp & 0x3F));
                     }
