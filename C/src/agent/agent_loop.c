@@ -19,6 +19,7 @@
 #include "hermes_subdir_hints.h"
 #include "hermes_onboarding.h"
 #include "hermes_logger.h"
+#include "hermes_hooks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -970,6 +971,19 @@ char *agent_run_conversation(agent_state_t *state,
         int retries = state->llm.max_retries > 0 ? state->llm.max_retries : 0;
         bool dont_retry = false; /* skip retries for certain errors */
 
+        /* P186: Invoke pre_llm_call hook */
+        {
+            char payload[2048];
+            snprintf(payload, sizeof(payload),
+                "{\"event\":\"pre_llm_call\",\"model\":\"%s\",\"provider\":\"%s\","
+                "\"iteration\":%d,\"messages\":%zu,\"tools\":%d}",
+                state->llm.model, state->llm.provider,
+                iteration, state->message_count,
+                tools_json ? (int)json_len(tools_json) : 0);
+            char *hook_resp = hook_invoke("pre_llm_call", payload);
+            free(hook_resp);
+        }
+
         /* Retry loop */
         for (int attempt = 0; attempt <= retries && !dont_retry; attempt++) {
             /* Backoff between retries: 1s, 2s, 4s... cap at 16s */
@@ -1124,6 +1138,22 @@ retry_done:
             state->llm.system_cached = true;
         }
 
+        /* P186: Invoke post_llm_call hook */
+        {
+            char payload[2048];
+            snprintf(payload, sizeof(payload),
+                "{\"event\":\"post_llm_call\",\"model\":\"%s\",\"provider\":\"%s\","
+                "\"iteration\":%d,\"input_tokens\":%d,\"output_tokens\":%d,"
+                "\"tool_calls\":%d,\"finish_reason\":\"%s\"}",
+                state->llm.model, state->llm.provider,
+                iteration, llm_resp ? llm_resp->input_tokens : 0,
+                llm_resp ? llm_resp->output_tokens : 0,
+                llm_resp ? llm_resp->tool_calls_count : 0,
+                llm_resp ? llm_resp->finish_reason : "error");
+            char *hook_resp = hook_invoke("post_llm_call", payload);
+            free(hook_resp);
+        }
+
         iteration++;
 
         /* P86: Report turn to budget tracker */
@@ -1220,6 +1250,17 @@ retry_done:
         }
 
         /* Phase 1: Security approval + guardrail check (sequential) */
+
+        /* P186: Invoke pre_tool_call hook */
+        {
+            char payload[2048];
+            snprintf(payload, sizeof(payload),
+                "{\"event\":\"pre_tool_call\",\"count\":%d,\"iteration\":%d}",
+                n_calls, iteration);
+            char *hook_resp = hook_invoke("pre_tool_call", payload);
+            free(hook_resp);
+        }
+
         for (int i = 0; i < n_calls; i++) {
             works[i].index = i;
             works[i].tool_name = strdup(llm_resp->tool_calls[i].name);
@@ -1303,6 +1344,16 @@ retry_done:
         free(threads);
         free(args);
 #endif
+
+        /* P186: Invoke post_tool_call hook */
+        {
+            char payload[2048];
+            snprintf(payload, sizeof(payload),
+                "{\"event\":\"post_tool_call\",\"count\":%d,\"iteration\":%d}",
+                n_calls, iteration);
+            char *hook_resp = hook_invoke("post_tool_call", payload);
+            free(hook_resp);
+        }
 
         /* Phase 3: Create tool result messages (in original order) */
         for (int i = 0; i < n_calls; i++) {
