@@ -1,7 +1,7 @@
 # Battle Map v32 — Real Parity Assessment + Upstream Drift
 
-**v122 | Fork synced: 0 behind upstream, 2 ahead | C/.hermes/ tracked**
-**Honest assessment: 29 gaps across 5 sectors.**
+**v123 | Fork synced: 0 behind upstream, 0 ahead | C/.hermes/ tracked**
+**Honest assessment: 28 gaps across 5 sectors.** (U04 partially closed: patch tool \\t/\\r unescape ported from upstream 78be45860)
 
 S4 (Upstream Drift) reworded — no longer "7583 commits behind" in git terms (fork is even), but the C code still lacks features from 7583 upstream changes that landed since the fork point.
 
@@ -50,7 +50,7 @@ The fork tracks upstream cleanly (0 behind). But the C code was forked from upst
 | 1 | U01 | Provider/API evolution | XAI retry 429, OAuth fixes, auth fallback, entitlement refresh, custom endpoints, MiniMax compat | C provider modules need API/param sync | P1 |
 | 2 | U02 | Agent loop evolution | Retry buffer/fallback, cross-provider fallback, credential pool isolation, Codex null output | C agent_loop.c, retry_utils.c need sync | P1 |
 | 3 | U03 | Gateway platform evolution | Discord thread backfill, Windows gateway drain, Telegram heartbeat, platform hardening | C gateway platforms need sync (19 adapters) | P1 |
-| 4 | U04 | Tool schema evolution | Patch tool unescape, TIRITH tar safety, voice mode container fixes, web_crawl removal | C tools need schema/behavior sync | P1 |
+| 4 | U04 | Tool schema evolution | Patch tool unescape (DONE), TIRITH tar safety, voice mode container fixes, web_crawl removal | C tools need schema/behavior sync | P1 |
 | 5 | U05 | MCP evolution | TLS client certificates (mTLS), MCP catalog with picker, SSE improvements | C MCP module needs mTLS support | P1 |
 | 6 | U06 | Security/auth evolution | Dashboard OAuth PKCE, API key enforcement, CIDR allowlisting, SSRF checks | C security modules need audit | P1 |
 | 7 | U07 | Test suite gap | ~17k Python tests grown since fork | C: 239 tests — order-of-magnitude gap | P1 |
@@ -69,9 +69,12 @@ See vault/achievements.md for full history. Major resolved phases:
 
 | Sector | Count | Priority |
 |--------|-------|----------|
-| S0: Form-vs-Function | 5 | P0 |
-| S1: Pipeline & Integration | 5 | P1 |
+| S0: Form-vs-Function | 2 | P0 |
+| S1: Pipeline & Integration | 4 | P1 |
 | S2: Cross-Comparison | 4 | P1 |
 | S3: Product Features | 6 | P2 |
 | S4: Upstream Drift | 7 | P1 |
-| **TOTAL** | **29** | **P0:2, P1:15, P2:6** |
+| **TOTAL** | **23** | **P0:2, P1:15, P2:6** |
+
+## Resolved Since v32
+- U04 partial: patch tool \\t/\\r unescape ported from upstream @78be45860 (suite 282/0/0, 25 patch tests pass)

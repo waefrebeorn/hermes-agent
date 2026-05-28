@@ -389,3 +389,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | W01 | Eliminated all non-truncation compiler warnings (was ~20): unused params, uninitialized variable, unused functions, ignored asprintf/chdir returns, always-true comparison, GNU ?: extension. Build now produces only -Wformat-truncation and -Wstringop-truncation warnings (benign, buffer size analysis) | `src/secrets.c` — init guard; `src/agent/file_safety.c` — (void)asprintf (×5); `src/cli/cli.c` — session_id[0] check; `src/agent/image_routing.c` — (void)provider + unused fn attr; `src/agent/context_references.c` — (void)chdir; `src/agent/shell_hooks.c` — 4 unused fn attrs; `src/cli/display.c` — (void)role; suite 282/0/0 |
+
+## Phase 35: Patch Tool Tab/CR Unescape
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P01 | Ported upstream patch tool \\t/\\r unescape fix (@78be45860) to C: `_maybe_unescape_new_string` — conditionally unescapes \\t→tab and \\r→CR in new_string when matched file region contains real control bytes. Region-based heuristic (not strategy-gated). `\\n` excluded intentionally. | `src/tools/patch.c` — new unescape block before replacement loop; suite 282/0/0, 25 patch tests + 5 V4A tests pass |
