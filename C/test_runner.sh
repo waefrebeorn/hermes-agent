@@ -116,7 +116,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtooloutput" \
     "$CDIR/tests/test_tool_output.c" "$CDIR/lib/libtooloutput/tool_output.c" \
     -o /tmp/hermes_test_tool_output -lm 2>/dev/null && [[ -x /tmp/hermes_test_tool_output ]]; then
     if /tmp/hermes_test_tool_output > /dev/null 2>&1; then
-        ok "tool_output (13 tests)"
+        ok "tool_output (21 tests)"
     else
         fail "tool_output (test binary returned non-zero)"
     fi
