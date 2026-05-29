@@ -1,5 +1,5 @@
-(v213) (v213)
-
+(v214) (v214)
+# Plan — Slermes C Translation
 140 gaps across 9 sectors (battleship v34). Fork diverged
 
 ## Phase 0: Display & Visual (S0, P0) — 2 gaps

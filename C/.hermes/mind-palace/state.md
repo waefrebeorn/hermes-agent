@@ -1,4 +1,4 @@
-# Slermes C (v213)
+# Slermes C (v214)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -83,7 +83,8 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 136: G02 base.py depth — UTF-16 helpers ported (gw_utf16_len + gw_prefix_within_utf16_limit). Telegram's 4096 character limit is in UTF-16 code units, not code-points — emoji/surrogate pairs now handled. Test gateaay_escape expanded 9→38 tests. Suite 301/0/0.
 - Phase 137: B07 terminal depth — _looks_like_env_assignment() ported from Python. Env var prefix (PATH=/usr/bin cmd) skips foreground guidance. Test terminal expanded 47→58 tests. Suite 301/0/0.
 - Phase 138: B07 terminal depth — _safe_command_preview() ported from Python (log-safe truncated command preview). Wired into popen error path for better diagnostics. Stale claim corrected: B02 detail param confirmed already wired in vision.c (schema + handler forwarding). Suite 301/0/0.
-- Phase 139: B03 web depth — clean_base64_images() ported from Python web_tools. Strips inline data:image/ URIs (base64 images) from extracted web text, replacing with placeholder [BASE64_IMAGE_REMOVED]. Wired into web_extract_native() output. Suite 301/0/0.
+|- Phase 139: B03 web depth — clean_base64_images() ported from Python web_tools. Strips inline data:image/ URIs (base64 images) from extracted web text, replacing with placeholder [BASE64_IMAGE_REMOVED]. Wired into web_extract_native() output. Suite 301/0/0.
+|- Phase 140: B03 web depth — clean_base64_images() exposed + 13-test suite. NULL, empty, plain passthrough, single/multiple images, JPEG/GIF, inline HTML contexts all verified. test_runner.sh count updated 22→35. Suite 301/0/0.
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -98,5 +99,5 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- **P2** (60): CLI ecosystem (17), Tool depth (4), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
-## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 139: clean_base64_images in web tool. Suite 301/0/0 (258 test files).
+|## Honest Assessment
+Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 140: clean_base64_images test suite expanded 22→35. Suite 301/0/0 (258 test files).

@@ -2794,7 +2794,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhtml/html.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libansi/ansi_strip.c" "$CDIR/src/agent/vault.c" \
     -o /tmp/hermes_test_web -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_web > /dev/null 2>&1; then ok "web_tool (22 tests)"
+    if /tmp/hermes_test_web > /dev/null 2>&1; then ok "web_tool (35 tests)"
     else fail "web_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_web
 else skip "web_tool (compilation failed)"

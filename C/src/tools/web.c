@@ -740,7 +740,7 @@ static char *web_extract_delegate(const char *url, const char *extract_prompt, i
 
 /* Clean base64 encoded images from extracted text.
  * Mirrors Python web_tools.clean_base64_images(). */
-static char *_clean_base64_images(const char *text) {
+char *_clean_base64_images(const char *text) {
     if (!text) return NULL;
     size_t len = strlen(text);
     char *result = (char *)malloc(len + 1);

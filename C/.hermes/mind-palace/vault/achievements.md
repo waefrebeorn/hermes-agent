@@ -1388,3 +1388,11 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 |----|-------------|----------|
 | P139-01 | Ported clean_base64_images() from Python web_tools. Strips inline data:image/ URIs (base64-encoded images) from extracted web text, replacing them with placeholder. Wired into web_extract_native() output pipeline. | `C/src/tools/web.c` — _clean_base64_images() near line 740, called in web_extract_native() line ~843 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 140: B03 Web Depth — clean_base64_images Test Suite
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P140-01 | Exposed _clean_base64_images() from static to public linkage so tests can call it directly. | `C/src/tools/web.c` — removed `static` from `_clean_base64_images()` |
+| P140-02 | Added 13 test assertions covering clean_base64_images: NULL input, empty string, plain text passthrough, single image removal, before/after text preservation, raw base64 absence, multiple images, only-image edge case, JPEG data URL, inline HTML with quotes. | `C/tests/test_web.c` — tests 23-35, 22→35 total |
+| P140-03 | Updated test_runner.sh web_tool test count from 22 to 35. All tests PASS. | `C/test_runner.sh` — web_tool (35 tests) |
+Suite: 301/0/0 (258 test files). Gaps: 140.

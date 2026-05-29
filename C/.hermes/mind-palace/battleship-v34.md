@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v213 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 139: clean_base64_images in web tool. Suite 301/0/0.**
+**v214 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 140: clean_base64_images test suite (35 tests). Suite 301/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -90,7 +90,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
-| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config | P2 |
+|| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Missing: DoH-based fallback IP discovery (TelegramFallbackTransport hostname-preserving transport), _query_doh_provider, discover_fallback_ips, _rewrite_request_for_ip, _normalize_fallback_ips, parse_fallback_ip_env. | P2 | PARTIAL — proxy covered, DoH/fallback transport missing |
 | 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting | P2 |
 | 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments | P2 |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
@@ -170,7 +170,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
 | 01 | B01 | browser | ~1712 | ~3800 | 60% | browser_navigate URL safety: secret exfiltration + SSRF protection via url_has_secret()/url_is_safe() (Phase 98). browser_snapshot(full=true) returns complete page content. PDF generation via CDP already implemented. autofill requires real browser engine (won't port) | P2 | PARTIAL |
 | 02 | B02 | vision | ~517 | ~1436 | 36% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Native base64 data URL conversion — image_to_base64_data_url() for direct provider consumption via data: URIs (Phase 118). Magic byte detection for extensionless files. detail param passthrough (low/high/auto) already wired C:299,326,362,509. Color analysis, EXIF extraction, OCR via Python helpers. Face detection and barcode require OpenCV (won't port) | P2 | PARTIAL |
-| 03 | B03 | web | ~1046 | ~1326 | 78% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). URL secret exfiltration check blocks URLs containing API key patterns (Phase 93). Multi-URL support accepts urls array for extracting multiple pages in one call (Phase 94). Base64 image stripping: data:image/ URIs removed from extracted text to reduce clutter (Phase 139). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
+|| 03 | B03 | web | ~1046 | ~1326 | 78% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). URL secret exfiltration check blocks URLs containing API key patterns (Phase 93). Multi-URL support accepts urls array for extracting multiple pages in one call (Phase 94). Base64 image stripping: data:image/ URIs removed from extracted text to reduce clutter (Phase 139). 13-test suite for clean_base64_images: NULL, empty, plain passthrough, single/multiple images, JPEG/GIF, inline HTML quotes (Phase 140). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |

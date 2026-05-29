@@ -25,6 +25,7 @@
 char *web_get_handler(const char *args_json, const char *task_id);
 char *web_search_handler(const char *args_json, const char *task_id);
 char *web_extract_handler(const char *args_json, const char *task_id);
+char *_clean_base64_images(const char *text);
 
 static int passed = 0, failed = 0;
 
@@ -242,6 +243,83 @@ int main(void) {
     {
         char *res = web_extract_handler("{\"url\":\"http://test\",\"timeout\":60}", NULL);
         TEST("web_extract: timeout param accepted", res != NULL);
+        free(res);
+    }
+
+    /* --- clean_base64_images tests --- */
+
+    /* Test 23: NULL input returns NULL */
+    {
+        char *res = _clean_base64_images(NULL);
+        TEST("clean_base64: NULL input returns NULL", res == NULL);
+    }
+
+    /* Test 24: Empty string returns empty */
+    {
+        char *res = _clean_base64_images("");
+        TEST("clean_base64: empty string", res != NULL && strlen(res) == 0);
+        free(res);
+    }
+
+    /* Test 25: Plain text without images passes through unchanged */
+    {
+        char *res = _clean_base64_images("Hello, world!");
+        TEST("clean_base64: plain text unchanged", res != NULL && strcmp(res, "Hello, world!") == 0);
+        free(res);
+    }
+
+    /* Test 26: data:image/ with base64 is replaced */
+    {
+        char *res = _clean_base64_images("before data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE= after");
+        TEST("clean_base64: image removed",
+             res != NULL && strstr(res, "[BASE64_IMAGE_REMOVED]") != NULL);
+        TEST("clean_base64: before text preserved",
+             res != NULL && strstr(res, "before") != NULL);
+        TEST("clean_base64: after text preserved",
+             res != NULL && strstr(res, "after") != NULL);
+        TEST("clean_base64: raw base64 not present",
+             res != NULL && strstr(res, "iVBORw0KGgo") == NULL);
+        free(res);
+    }
+
+    /* Test 27: Multiple images all removed */
+    {
+        char *res = _clean_base64_images(
+            "img1: data:image/jpeg;base64,/9j/4AAQ== and img2: data:image/png;base64,iVBORw0=");
+        int count = 0;
+        if (res) {
+            const char *p = res;
+            while ((p = strstr(p, "[BASE64_IMAGE_REMOVED]")) != NULL) { count++; p++; }
+        }
+        TEST("clean_base64: multiple images removed", count == 2);
+        free(res);
+    }
+
+    /* Test 28: Text with only an image is fully replaced */
+    {
+        char *res = _clean_base64_images("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///");
+        TEST("clean_base64: only image yields only placeholder",
+             res != NULL && strcmp(res, "[BASE64_IMAGE_REMOVED]") == 0);
+        free(res);
+    }
+
+    /* Test 29: JPEG data URL */
+    {
+        char *res = _clean_base64_images("data:image/jpeg;base64,/9j/4AAQSkZJRg==");
+        TEST("clean_base64: JPEG data URL removed",
+             res != NULL && strcmp(res, "[BASE64_IMAGE_REMOVED]") == 0);
+        free(res);
+    }
+
+    /* Test 30: Image with trailing quote (inline HTML) */
+    {
+        char *res = _clean_base64_images("<img src=\"data:image/png;base64,iVBOR\" />");
+        TEST("clean_base64: quoted HTML image",
+             res != NULL && strstr(res, "[BASE64_IMAGE_REMOVED]") != NULL);
+        TEST("clean_base64: HTML context preserved",
+             res != NULL && strstr(res, "<img src=\"") != NULL);
+        TEST("clean_base64: HTML closing preserved",
+             res != NULL && strstr(res, "\" />") != NULL);
         free(res);
     }
 
