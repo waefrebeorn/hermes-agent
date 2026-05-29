@@ -411,6 +411,93 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             continue;
         }
 
+        if (c == KEY_CTRL_R) {
+            /* Reverse history search (Ctrl-R) */
+            char search_query[1024] = "";
+            int query_len = 0;
+            char saved_search[LINE_EDIT_MAX_LINE];
+            strncpy(saved_search, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+            saved_search[LINE_EDIT_MAX_LINE - 1] = '\0';
+            hist_entry_t *search_entry = le->history->tail;
+            bool first_search = true;
+
+            while (1) {
+                /* Search: find first match from tail (most recent to oldest) */
+                if (first_search || query_len == 0) {
+                    search_entry = le->history->tail;
+                    first_search = false;
+                } else {
+                    if (search_entry) search_entry = search_entry->prev;
+                }
+                const char *match = NULL;
+                if (query_len > 0) {
+                    while (search_entry) {
+                        if (strstr(search_entry->text, search_query)) {
+                            match = search_entry->text;
+                            break;
+                        }
+                        search_entry = search_entry->prev;
+                    }
+                }
+
+                printf("\r\033[K");
+                if (query_len > 0 && match) {
+                    printf("(reverse-i-search)`%s': %s", search_query, match);
+                } else if (query_len > 0) {
+                    printf("(reverse-i-search)`%s': (failing)", search_query);
+                } else {
+                    printf("(reverse-i-search)`': ");
+                }
+                fflush(stdout);
+
+                char sc;
+                ssize_t sn = read(STDIN_FILENO, &sc, 1);
+                if (sn <= 0) break;
+
+                if (sc == KEY_ENTER) {
+                    if (match) {
+                        line_buf_set(le->buf, match);
+                        term_redraw_line(le->buf);
+                    } else {
+                        line_buf_set(le->buf, saved_search);
+                        term_redraw_line(le->buf);
+                    }
+                    break;
+                }
+
+                if (sc == KEY_CTRL_R) {
+                    if (search_entry && query_len > 0)
+                        search_entry = search_entry->prev;
+                    continue;
+                }
+
+                if (sc == 0x1b || sc == 7) {
+                    line_buf_set(le->buf, saved_search);
+                    term_redraw_line(le->buf);
+                    break;
+                }
+
+                if (sc == KEY_BACKSPACE) {
+                    if (query_len > 0) {
+                        query_len--;
+                        search_query[query_len] = '\0';
+                    }
+                    first_search = true;
+                    continue;
+                }
+
+                if (sc >= 32 && sc <= 126) {
+                    if (query_len < (int)sizeof(search_query) - 2) {
+                        search_query[query_len++] = sc;
+                        search_query[query_len] = '\0';
+                    }
+                    first_search = true;
+                    continue;
+                }
+            }
+            continue;
+        }
+
         if (c == KEY_BACKSPACE) {
             line_buf_delete(le->buf);
             term_redraw_line(le->buf);
