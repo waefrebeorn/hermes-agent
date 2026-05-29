@@ -1215,3 +1215,14 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P116-04 | credential_expired field checked in retry loop -- triggers fallback on expired credential | `src/agent/agent_loop.c` -- credential_expired check |
 
 Suite: 299/0/0 (255 test files). Gaps: 145.
+
+## Phase 117: Env Passthrough Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P117-01 | NULL/empty name edge-case tests for is_blocked, is_allowed, register | `tests/test_env_passthrough.c` — 6 NULL/empty assertions |
+| P117-02 | Blocked var registration rejection test | `tests/test_env_passthrough.c` — register OPENAI_API_KEY returns false |
+| P117-03 | Duplicate registration returns true test | `tests/test_env_passthrough.c` — register MY_CUSTOM_VAR twice |
+| P117-04 | free_list NULL safety test (no crash) | `tests/test_env_passthrough.c` — free_list(NULL, 0) |
+| P117-05 | Clear-then-re-register works test | `tests/test_env_passthrough.c` — clear + register + is_allowed |
+
+Suite: 299/0/0 (255 test files). Gaps: 145.

@@ -1,4 +1,4 @@
-# Slermes C (v191)
+# Slermes C (v192)
 
 Suite: 299/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 255 | C src: 175
@@ -66,8 +66,9 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 112: gateway helpers test suite — 29 assertions covering msg_dedup, strip_markdown, redact_phone, thread_tracker. Bug fix: redact_phone() buffer overflow (malloc too small). Test files 254→255. Suite 299/0/0 (v187)
 |- Phase 113: GHSA-rhgp-j443-p4rf env_passthrough warning — warn when config.yaml attempts to register a blocked provider credential. Suite 299/0/0 (v188)
 |- Phase 114: Content-policy immediate fallback — content_filter finish_reason skips retry of filtered model and triggers fallback config immediately. Upstream gap closed. Suite 299/0/0 (v189)
-||- Phase 115: URL safety test expansion — added secret exfiltration detection tests (url_has_secret: sk-, ghp_, AIza, gho_, ghu_, ghs_, ghr_) + TEST_NULL macro. Tests 44→67. Suite 299/0/0 (v190)
+|- Phase 115: URL safety test expansion — added secret exfiltration detection tests (url_has_secret: sk-, ghp_, AIza, gho_, ghu_, ghs_, ghr_) + TEST_NULL macro. Tests 44→67. Suite 299/0/0 (v190)
 ||- Phase 116: Credential pool wiring — cred_pool field in llm_config_t, pool creation in agent_configure_from_config, HTTP status reporting to pool, credential_expired check in retry loop triggers fallback. Suite 299/0/0 (v191)
+|- Phase 117: Env passthrough test expansion — 10 new edge-case assertions: NULL/empty handling, blocked-var rejection, duplicate registration, free_list NULL safety, clear-then-re-register. Tests 27→37. Suite 299/0/0 (v192)
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
