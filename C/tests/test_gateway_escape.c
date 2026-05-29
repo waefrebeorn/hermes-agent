@@ -215,6 +215,111 @@ int main(void) {
         free(r);
     }
 
+    /* ================================================================
+     * 4. gw_utf16_len
+     * ================================================================ */
+    printf("\n--- gw_utf16_len ---\n");
+
+    {
+        size_t r = gw_utf16_len(NULL);
+        TEST("NULL input returns 0", r == 0);
+    }
+    {
+        size_t r = gw_utf16_len("");
+        TEST("empty string", r == 0);
+    }
+    {
+        size_t r = gw_utf16_len("hello");
+        TEST("ASCII only 1:1", r == 5);
+    }
+    {
+        size_t r = gw_utf16_len("héllo");  /* é = U+00E9, 2 UTF-8 bytes, 1 UTF-16 unit */
+        TEST("accented 2-byte char", r == 5);
+    }
+    {
+        size_t r = gw_utf16_len("\xe4\xb8\xad\xe6\x96\x87");  /* 中文 — each is 3 UTF-8 bytes, 1 UTF-16 unit */
+        TEST("CJK 3-byte chars", r == 2);
+    }
+    {
+        /* 😀 (U+1F600) = 4 UTF-8 bytes, 2 UTF-16 units (surrogate pair) */
+        size_t r = gw_utf16_len("\xf0\x9f\x98\x80");
+        TEST("emoji 4-byte = 2 units", r == 2);
+    }
+    {
+        /* hello😀world — emoji = 2 units */
+        size_t r = gw_utf16_len("hello\xf0\x9f\x98\x80world");
+        TEST("emoji in context counts 2", r == 12);  /* 5 + 2 + 5 */
+    }
+    {
+        /* Two emoji: 😀😎 (U+1F600, U+1F60E) */
+        size_t r = gw_utf16_len("\xf0\x9f\x98\x80\xf0\x9f\x98\x8e");
+        TEST("two emoji = 4 units", r == 4);
+    }
+    {
+        size_t r = gw_utf16_len("a\xc3\xa9\xe4\xb8\xad\xf0\x9f\x98\x80" "b");
+        /* a(1) + é(1) + 中(1) + 😀(2) + b(1) = 6 */
+        TEST("mixed ASCII+2byte+3byte+4byte", r == 6);
+    }
+
+    /* ================================================================
+     * 5. gw_prefix_within_utf16_limit
+     * ================================================================ */
+    printf("\n--- gw_prefix_within_utf16_limit ---\n");
+
+    {
+        char *r = gw_prefix_within_utf16_limit(NULL, 100);
+        TEST("NULL input returns NULL", r == NULL);
+    }
+    {
+        char *r = gw_prefix_within_utf16_limit("hello", 0);
+        TEST("limit 0 returns NULL", r == NULL);
+    }
+    {
+        char *r = gw_prefix_within_utf16_limit("hello", 100);
+        TEST("within limit returns full string", r && strcmp(r, "hello") == 0);
+        free(r);
+    }
+    {
+        char *r = gw_prefix_within_utf16_limit("hello", 5);
+        TEST("exact limit returns full string", r && strcmp(r, "hello") == 0);
+        free(r);
+    }
+    {
+        char *r = gw_prefix_within_utf16_limit("hello world", 5);
+        TEST("truncate ASCII at 5", r && strcmp(r, "hello") == 0);
+        free(r);
+    }
+    {
+        /* é = 1 UTF-16 unit, limit 4 should include it */
+        char *r = gw_prefix_within_utf16_limit("h\xc3\xa9llo", 4);
+        TEST("truncate at accented boundary", r && strcmp(r, "h\xc3\xa9ll") == 0);
+        free(r);
+    }
+    {
+        /* 😀 = 2 UTF-16 units, limit 6 with "hi😀" (hi=2 + 😀=2 = 4) should allow "wo" as well */
+        char *r = gw_prefix_within_utf16_limit("hi\xf0\x9f\x98\x80world", 6);
+        TEST("emoji within 6-unit limit", r && strcmp(r, "hi\xf0\x9f\x98\x80wo") == 0);
+        free(r);
+    }
+    {
+        /* 😀 = 2 UTF-16 units, limit 4, "hi😀" = 4 */
+        char *r = gw_prefix_within_utf16_limit("hi\xf0\x9f\x98\x80world", 4);
+        TEST("emoji at exact limit", r && strcmp(r, "hi\xf0\x9f\x98\x80") == 0);
+        free(r);
+    }
+    {
+        /* 😀 = 2 UTF-16 units, limit 3, "hi" = 2 < 3, next 😀 would be 4 > 3 */
+        char *r = gw_prefix_within_utf16_limit("hi\xf0\x9f\x98\x80world", 3);
+        TEST("emoji pushes over limit, stops before", r && strcmp(r, "hi") == 0);
+        free(r);
+    }
+    {
+        /* 中文 each = 1 UTF-16 unit, limit 1 = "中" */
+        char *r = gw_prefix_within_utf16_limit("\xe4\xb8\xad\xe6\x96\x87", 1);
+        TEST("truncate CJK at 1", r && strcmp(r, "\xe4\xb8\xad") == 0);
+        free(r);
+    }
+
     /* Summary */
     printf("\n=== M07 Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;

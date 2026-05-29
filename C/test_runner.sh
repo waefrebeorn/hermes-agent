@@ -2350,7 +2350,7 @@ if gcc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-
     "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libcron/cron.c" \
     -o /tmp/hermes_test_gwesc -lm -lssl -lcrypto -lpthread \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_gwesc > /dev/null 2>&1; then ok "gateway_escape (M07: 30 tests)"
+    if /tmp/hermes_test_gwesc > /dev/null 2>&1; then ok "gateway_escape (M07: 38 tests)"
     else
         echo "  Gateway escape test output:"
         /tmp/hermes_test_gwesc 2>&1 | sed 's/^/    /'

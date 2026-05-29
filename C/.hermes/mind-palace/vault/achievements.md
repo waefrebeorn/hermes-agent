@@ -1353,3 +1353,12 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 |----|-------------|----------|
 | P135-01 | Ported _looks_like_help_or_version_command() from Python terminal_tool. Detects --help/-h/--version/-v early in _check_foreground_guidance() and returns NULL (no guidance needed), preventing false-positive background guidance on informational commands. | `C/src/tools/terminal.c` — help/version check block at top of _check_foreground_guidance() |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 136: G02 base.py Depth — UTF-16 Helpers for Telegram
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P136-01 | Ported utf16_len() from Python base.py — counts UTF-16 code units in a UTF-8 string. Characters outside the BMP (emoji, CJK ext B, musical symbols) correctly count as 2 units instead of 1. | `C/src/gateway/server.c` — gw_utf16_len() |
+| P136-02 | Ported _prefix_within_utf16_limit() from Python base.py — returns the longest UTF-8 prefix whose UTF-16 length ≤ limit. Linear scan respects character boundaries (never splits multi-byte chars). | `C/src/gateway/server.c` — gw_prefix_within_utf16_limit() |
+| P136-03 | Updated battleship G02 entry: base.py correctly noted as 4286 LOC (not ~600). Rate limiting (gw_rate_limiter_t), retry (gw_retry_with_backoff), platform vtable (gw_platform_t), and UTF-16 helpers all marked PORTED. | `C/.hermes/mind-palace/battleship-v34.md` — G02 now PARTIAL |
+| P136-04 | Gateway escape test expansion: 9→38 total assertions covering gw_utf16_len (9 tests) and gw_prefix_within_utf16_limit (10 tests) | `C/tests/test_gateway_escape.c` — sections 4 and 5 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

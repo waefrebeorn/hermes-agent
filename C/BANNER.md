@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v205)
+# BANNER — WuBu Slermes C Translation (v210)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v205                                       ║
+║  WuBu Slermes C v210                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  144 gaps  │  31MB binary  │  0 warnings                     ║
+║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 126: disable_notification (silent send)          ║
+║  Phase 136: UTF-16 helpers for Telegram (gw_utf16_len)   ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

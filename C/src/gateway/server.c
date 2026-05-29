@@ -886,9 +886,82 @@ char *gw_truncate_message(const char *text, size_t max_len) {
     return out;
 }
 
-/* ================================================================
- *  E44-E47: Gateway error handling
- * ================================================================ */
+/* E80: Count UTF-16 code units in a UTF-8 string.
+ * Characters outside the BMP (U+10000..U+10FFFF) consume 2 code units.
+ * Returns 0 on NULL. */
+size_t gw_utf16_len(const char *s) {
+    if (!s) return 0;
+    size_t units = 0;
+    while (*s) {
+        unsigned char c = (unsigned char)*s;
+        size_t seq_len;
+        size_t add_units;
+
+        if (c < 0x80) {
+            seq_len = 1; add_units = 1;           /* ASCII: 1 code unit */
+        } else if (c < 0xC0) {
+            seq_len = 1; add_units = 0;           /* stray continuation byte */
+        } else if (c < 0xE0) {
+            seq_len = 2; add_units = 1;           /* 2-byte: U+0080..U+07FF */
+        } else if (c < 0xF0) {
+            seq_len = 3; add_units = 1;           /* 3-byte: U+0800..U+FFFF */
+        } else if (c < 0xF8) {
+            seq_len = 4; add_units = 2;           /* 4-byte: U+10000..U+10FFFF → surrogate pair */
+        } else {
+            seq_len = 1; add_units = 1;           /* invalid lead byte */
+        }
+
+        /* Bounds check to avoid reading past end of string */
+        if (seq_len > 1) {
+            size_t remaining = strlen(s);
+            if (remaining < seq_len) {
+                seq_len = remaining;
+                add_units = 1;
+            }
+        }
+
+        units += add_units;
+        s += seq_len;
+    }
+    return units;
+}
+
+/* E81: Return the longest prefix of s whose UTF-16 length ≤ limit.
+ * Linear scan — respects UTF-8 character boundaries.
+ * Returns strdup'd string; caller must free(). Returns NULL on NULL or limit==0. */
+char *gw_prefix_within_utf16_limit(const char *s, size_t limit) {
+    if (!s || limit == 0) return NULL;
+
+    size_t units = 0;
+    const char *p = s;
+
+    while (*p) {
+        unsigned char c = (unsigned char)*p;
+        size_t seq_len;
+        size_t add_units;
+
+        if (c < 0x80) {
+            seq_len = 1; add_units = 1;
+        } else if (c < 0xC0) {
+            seq_len = 1; add_units = 1;  /* stray continuation byte */
+        } else if (c < 0xE0) {
+            seq_len = 2; add_units = 1;
+        } else if (c < 0xF0) {
+            seq_len = 3; add_units = 1;
+        } else if (c < 0xF8) {
+            seq_len = 4; add_units = 2;  /* surrogate pair */
+        } else {
+            seq_len = 1; add_units = 1;
+        }
+
+        if (units + add_units > limit) {
+            return strndup(s, (size_t)(p - s));
+        }
+        units += add_units;
+        p += seq_len;
+    }
+    return strdup(s);
+}
 
 /* E44: Retry an API call with exponential backoff on 429/5xx.
  * Returns true if at least one attempt succeeded. */

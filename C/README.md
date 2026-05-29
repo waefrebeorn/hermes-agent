@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||| Suite:  301/0/0 (258 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||||||| Gaps:  144 real parity gaps (1000+ test case gaps) across 9 sectors
+||||||||||||||| Gaps:  140 real parity gaps (1000+ test case gaps) across 9 sectors
 |||||||||||Stubs:  0 stubs remain. All entry points verified.
 ||||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 140 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 135: B07 terminal help/version detection ported. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 140 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 136: UTF-16 helpers for Telegram (gw_utf16_len + gw_prefix_within_utf16_limit). See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 

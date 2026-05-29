@@ -270,6 +270,13 @@ char *gw_markdown_to_html(const char *text);
 char *gw_markdown_v2_escape(const char *text);
 char *gw_truncate_message(const char *text, size_t max_len);
 
+/* E80-E81: UTF-16 length helpers (Telegram API compatibility).
+ * Telegram's 4096 message-length limit is measured in UTF-16 code units,
+ * not Unicode code-points. Characters outside the BMP (emoji, CJK ext B,
+ * musical symbols) use 2 code units per character. */
+size_t gw_utf16_len(const char *s);
+char *gw_prefix_within_utf16_limit(const char *s, size_t limit);
+
 /* E44-E47: Gateway error handling */
 bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx, int max_retries, int base_delay_ms);
 bool gw_refresh_token(int plat_idx);
