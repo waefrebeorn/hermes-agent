@@ -984,7 +984,7 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
-## Phase 102: token_exchange test suite (v177)
+## Phase 102: token_exchange test suite (v178)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -994,6 +994,25 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P102-04 | Registered in test_runner.sh | `test_runner.sh` — token_exchange section |
 
 Suite: 296/0/0. Test files: 252. Gaps: 145.
+
+## Phase 103: SMS gateway test suite (v178)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P103-01 | sms_verify_webhook always returns "OK" | `tests/test_sms.c` — tests 1-2 |
+| P103-02 | sms_parse_webhook handles NULL/empty/malformed input | `tests/test_sms.c` — tests 3-4, 15 |
+| P103-03 | sms_parse_webhook parses inbound Twilio body | `tests/test_sms.c` — test 5 |
+| P103-04 | sms_parse_webhook parses status callback + error | `tests/test_sms.c` — tests 6-7 |
+| P103-05 | sms_parse_webhook parses multi-media MMS | `tests/test_sms.c` — test 8 |
+| P103-06 | sms_parse_webhook decodes URL-encoded special chars | `tests/test_sms.c` — test 9 |
+| P103-07 | sms_handle_webhook + queue + poll cycle works | `tests/test_sms.c` — test 10 |
+| P103-08 | sms_queue_message accepts NULL params gracefully | `tests/test_sms.c` — test 11 |
+| P103-09 | sms_get_media_url returns NULL for OOB index + NULL update | `tests/test_sms.c` — tests 5, 12 |
+| P103-10 | sms_get_num_media returns 0 when media_urls absent | `tests/test_sms.c` — test 13 |
+| P103-11 | sms_handle_webhook(NULL) no crash | `tests/test_sms.c` — test 14 |
+| P103-B01 | Bug fix: sms_get_media_url() used json_get_str(NULL key) which always returns NULL | `src/gateway/platforms/sms.c:452` — Fixed to access item->str_val directly |
+
+Suite: 297/0/0. Test files: 253. Gaps: 145.
 
 ## Phase 101: voice_mode test suite (v176)
 

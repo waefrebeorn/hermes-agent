@@ -447,8 +447,8 @@ const char *sms_get_media_url(json_node_t *update, size_t index) {
     json_node_t *urls = json_obj_get(update, "media_urls");
     if (!urls || index >= (size_t)json_len(urls)) return NULL;
     json_node_t *item = json_get(urls, index);
-    if (!item) return NULL;
-    return json_get_str(item, NULL, NULL);
+    if (!item || item->type != JSON_STRING) return NULL;
+    return item->str_val;
 }
 
 size_t sms_get_num_media(json_node_t *update) {
