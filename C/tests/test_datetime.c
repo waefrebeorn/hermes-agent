@@ -404,6 +404,40 @@ int main(void) {
         TEST("format_tz NULL fmt returns NULL", datetime_format_tz(epoch, "UTC", NULL) == NULL);
     }
 
+    /* ─── datetime_format_duration() ────────────────────────── */
+    printf("\n--- datetime_format_duration() ---\n");
+    {
+        char *d;
+
+        d = datetime_format_duration(0);
+        TEST_STR("duration 0s", d, "0s");
+        free(d);
+
+        d = datetime_format_duration(5);
+        TEST_STR("duration 5s", d, "5s");
+        free(d);
+
+        d = datetime_format_duration(89);
+        TEST_STR("duration 89s", d, "89s");
+        free(d);
+
+        d = datetime_format_duration(90);
+        TEST_STR("duration 90s rounds to 2 min", d, "2 min");
+        free(d);
+
+        d = datetime_format_duration(120);
+        TEST_STR("duration 120s", d, "2 min");
+        free(d);
+
+        d = datetime_format_duration(3600);
+        TEST_STR("duration 3600s", d, "60 min");
+        free(d);
+
+        d = datetime_format_duration(-5);
+        TEST_STR("duration negative clamps to 0", d, "0s");
+        free(d);
+    }
+
     /* ─── Null/edge safety ─────────────────────────────────── */
     printf("\n--- Null/edge safety ---\n");
     {

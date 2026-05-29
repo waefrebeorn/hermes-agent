@@ -1419,6 +1419,13 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
 
+## Phase 147: G08 signal_rate_limit Depth — Duration Formatting
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P147-01 | Ported `_format_wait()` from Python gateway/platforms/signal_rate_limit.py — `datetime_format_duration()` converts seconds to human-friendly label: <90s → "Xs", >=90s → "Y min" with proper rounding. Handles negative values (clamps to 0). | `C/lib/libdatetime/datetime.c` — `datetime_format_duration()` at ~375-400 |
+| P147-02 | Added 7 test assertions: 0s, 5s, 89s, 90s (→2 min), 120s, 3600s (→60 min), negative clamp. Datetime tests 76→83. | `C/tests/test_datetime.c` — tests in datetime_format_duration section |
+Suite: 301/0/0 (258 test files). Gaps: 140.
+
 ## Phase 146: G02 base.py Depth — Network Accessibility
 | ID | Achievement | Evidence |
 |----|-------------|----------|

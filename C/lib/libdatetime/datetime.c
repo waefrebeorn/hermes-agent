@@ -370,3 +370,27 @@ char *datetime_buffer(time_t ts, char *buf, size_t cap) {
         return NULL;
     return buf;
 }
+
+/* ================================================================
+ *  Duration Formatting
+ * ================================================================ */
+
+/* Format duration in seconds as human-friendly label.
+ * Ported from Python gateway/platforms/signal_rate_limit._format_wait().
+ * < 90s → "Xs", >= 90s → "Y min". */
+char *datetime_format_duration(double seconds) {
+    double s = seconds < 0.0 ? 0.0 : seconds;
+    if (s < 90.0) {
+        int secs = (int)(s + 0.5);  /* round to nearest */
+        char *out = (char *)malloc(16);
+        if (!out) return NULL;
+        snprintf(out, 16, "%ds", secs);
+        return out;
+    }
+    int mins = (int)(s / 60.0 + 0.5);
+    if (mins < 1) mins = 1;
+    char *out = (char *)malloc(16);
+    if (!out) return NULL;
+    snprintf(out, 16, "%d min", mins);
+    return out;
+}

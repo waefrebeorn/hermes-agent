@@ -116,6 +116,12 @@ int datetime_tz_offset(const char *tz_name);
  *  Same as datetime_from_time_t but no alloc. Returns buf on success, NULL on error. */
 char *datetime_buffer(time_t ts, char *buf, size_t cap);
 
+/** datetime_format_duration(seconds) — Human-friendly duration label.
+ *  < 90s → "Xs", >= 90s → "Y min" (e.g., "5s", "2 min").
+ *  Mirrors Python signal_rate_limit._format_wait().
+ *  Caller free(). Returns NULL on error. */
+char *datetime_format_duration(double seconds);
+
 #ifdef __cplusplus
 }
 #endif

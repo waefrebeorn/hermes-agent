@@ -1,4 +1,4 @@
-# Slermes C (v219)
+# Slermes C (v220)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -89,6 +89,7 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 143: B07 terminal depth — workdir validation ported from Python's _validate_workdir(). Allowlist-based safe-path check (blocking, not a warning) — rejects workdir paths with shell metacharacters (;, $, backticks, etc.) before command execution. Terminal tests 81→90. Suite 301/0/0 (v217).
 ||- Phase 145: G02 base.py depth — safe_url_for_log() ported from Python gateway/platforms/base.py. url_safe_for_log() in url_safety.c strips userinfo credentials, query, and fragment from URLs for safe logging — returns condensed "scheme://host/.../basename" format. URL safety tests 29→38 (+9). Suite 301/0/0 (v218).
 ||- Phase 146: G02 base.py depth — is_network_accessible() ported from Python gateway/platforms/base.py. url_is_network_accessible() in url_safety.c checks if a hostname/IP resolves beyond loopback (IPv4 127.x.x.x, IPv6 ::1, IPv4-mapped ::ffff:127.x.x.x). DNS failure fails closed. URL safety tests 38→44 (+6). Suite 301/0/0 (v219).
+||- Phase 147: G08 signal_rate_limit depth — datetime_format_duration() ported from Python gateway/platforms/signal_rate_limit.py. Human-friendly duration formatter: <90s → "Xs", >=90s → "Y min". Added to libdatetime. Datetime tests 76→83 (+7). Suite 301/0/0 (v220).
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -104,4 +105,4 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 146: url_is_network_accessible ported from base.py (url_safety tests 44, +15). Suite 301/0/0 (258 test files).
+Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 147: datetime_format_duration ported from signal_rate_limit.py (datetime tests 83, +7). Suite 301/0/0 (258 test files).
