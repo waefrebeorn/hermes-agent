@@ -144,6 +144,8 @@ char *todo_handler(const char *args_json, const char *task_id) {
             if (!priority || !is_valid_priority(priority))
                 priority = "p2";
             json_object_set(item, "priority", json_new_string(priority));
+            const char *deadline = json_object_get_string(args, "deadline", NULL);
+            if (deadline) json_object_set(item, "deadline", json_new_string(deadline));
             char id[32];
             snprintf(id, sizeof(id), "task_%zu", json_len(todos));
             json_object_set(item, "id", json_new_string(id));
@@ -197,6 +199,8 @@ char *todo_handler(const char *args_json, const char *task_id) {
                     const char *priority = json_object_get_string(args, "priority", NULL);
                     if (priority && is_valid_priority(priority))
                         json_set(item, "priority", json_string(priority));
+                    const char *deadline = json_object_get_string(args, "deadline", NULL);
+                    if (deadline) json_set(item, "deadline", json_string(deadline));
                     found = true;
                     break;
                 }

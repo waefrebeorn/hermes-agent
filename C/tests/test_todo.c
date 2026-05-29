@@ -146,6 +146,51 @@ static void test_done_with_id(void) {
     free(r);
 }
 
+static void test_add_with_deadline(void) {
+    char *r = todo_handler("{\"action\":\"write\",\"todos\":[]}", NULL);
+    free(r);
+
+    r = todo_handler("{\"action\":\"add\",\"content\":\"deadline task\",\"deadline\":\"2026-06-15\"}", NULL);
+    assert(r != NULL);
+    assert(strstr(r, "\"deadline\":\"2026-06-15\"") != NULL);
+    free(r);
+
+    /* List and verify deadline persists */
+    r = todo_handler("{\"action\":\"list\"}", NULL);
+    assert(r != NULL);
+    assert(strstr(r, "\"deadline\":\"2026-06-15\"") != NULL);
+    assert(strstr(r, "\"deadline task\"") != NULL);
+    free(r);
+}
+
+static void test_update_deadline(void) {
+    char *r = todo_handler("{\"action\":\"write\",\"todos\":[]}", NULL);
+    free(r);
+
+    char *r2 = todo_handler("{\"action\":\"add\",\"content\":\"update deadline\"}", NULL);
+    assert(r2 != NULL);
+    free(r2);
+
+    /* Find the id */
+    r2 = todo_handler("{\"action\":\"list\"}", NULL);
+    assert(r2 != NULL);
+    const char *id_start = strstr(r2, "\"id\":\"");
+    assert(id_start != NULL);
+    id_start += 6;
+    const char *id_end = strchr(id_start, '"');
+    assert(id_end != NULL);
+
+    char update_args[256];
+    snprintf(update_args, sizeof(update_args),
+             "{\"action\":\"update\",\"id\":\"%.*s\",\"deadline\":\"2026-07-01\"}",
+             (int)(id_end - id_start), id_start);
+    char *r3 = todo_handler(update_args, NULL);
+    assert(r3 != NULL);
+    assert(strstr(r3, "\"deadline\":\"2026-07-01\"") != NULL);
+    free(r3);
+    free(r2);
+}
+
 int main(void) {
     ensure_home();
 
@@ -162,6 +207,8 @@ int main(void) {
     TEST(test_in_progress_status());
     TEST(test_cancelled_status());
     TEST(test_done_with_id());
+    TEST(test_add_with_deadline());
+    TEST(test_update_deadline());
 
     printf("All todo tests passed.\n");
     return 0;
