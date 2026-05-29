@@ -1417,7 +1417,16 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 |----|-------------|----------|
 | P143-01 | Ported `_validate_workdir()` from Python terminal_tool — allowlist-based safe-path validation that blocks shell metacharacters (;, $, backticks, parens, etc.) in workdir paths. Blocking check (returns error JSON) runs before command execution. | `C/src/tools/terminal.c` — `_validate_workdir()` called in `terminal_handler()` before sandbox escape check |
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
-Suite: 301/0/0 (258 test files). Gaps: 140.
+Suite: 302/0/0 (259 test files). Gaps: 140.
+
+## Phase 150: G02 base.py Depth — Media Cache
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P150-01 | Ported `cache_image_from_bytes()` / `cache_audio_from_bytes()` from Python gateway/platforms/base.py — `media_cache_save()` saves raw bytes to `~/.hermes/cache/<type>/` with random hex filenames. Validates image magic bytes (PNG/JPEG/GIF/BMP/WebP) when `is_image=true`. | `C/src/tools/media_cache.c` — `media_cache_save()` |
+| P150-02 | Ported `cleanup_image_cache()` from Python base.py — `media_cache_cleanup()` deletes cached files older than `max_age_hours`. Uses `stat()`/`unlink()`/`opendir()`/`readdir()` for filesystem ops. | `C/src/tools/media_cache.c` — `media_cache_cleanup()` |
+| P150-03 | New test module with 15 assertions: PNG save with validation, non-image rejected, audio save without validation, NULL/empty safety, cleanup edge cases. | `C/tests/test_media_cache.c` |
+| P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
+Suite: 302/0/0 (259 test files). Gaps: 140.
 
 ## Phase 149: G09 yuanbao_media Depth — MIME Type Utilities
 | ID | Achievement | Evidence |

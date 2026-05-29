@@ -1,7 +1,7 @@
-# Slermes C (v222)
+# Slermes C (v223)
 
-Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
+Suite: 302/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 259 | C src: 175
 Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -92,6 +92,7 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 147: G08 signal_rate_limit depth — datetime_format_duration() ported from Python gateway/platforms/signal_rate_limit.py. Human-friendly duration formatter: <90s → "Xs", >=90s → "Y min". Added to libdatetime. Datetime tests 76→83 (+7). Suite 301/0/0 (v221).
 ||- Phase 148: G09 yuanbao_media depth — url_extract_basename() ported from Python gateway/platforms/yuanbao_media.py. Extracts filename from URL path (strips query/fragment, returns last path component). URL safety tests 44→51 (+7). Suite 301/0/0 (v221).
 ||- Phase 149: G09 yuanbao_media depth — guess_mime_type() + is_image() ported from Python gateway/platforms/yuanbao_media.py. url_guess_mime_type() maps 27 file extensions to MIME types. url_is_image_extension() checks 9 known image extensions. URL safety tests 51→68 (+17). Suite 301/0/0 (v222).
+||- Phase 150: G02 base.py depth — media_cache_save() + media_cache_cleanup() ported from Python gateway/platforms/base.py. New media_cache.c module saves/cleans cached media files under ~/.hermes/cache/. 15-test suite. Suite 302/0/0 (v223).
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -107,4 +108,4 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 149: guess_mime_type + is_image_extension ported from yuanbao_media.py (url_safety tests 68, +17). Suite 301/0/0 (258 test files).
+Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 150: media_cache_save + media_cache_cleanup ported from base.py. New media_cache module (15 tests). Suite 302/0/0 (259 test files).

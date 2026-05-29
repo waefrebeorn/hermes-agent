@@ -1103,6 +1103,7 @@ void hermes_config_merge(hermes_config_t *dst, const hermes_config_t *src);
 #include "hermes_plugin.h"
 #include "hermes_memory.h"
 #include "hermes_tirith.h"
+#include "hermes_media_cache.h"
 
 /* ================================================================
  *  Entry Points
