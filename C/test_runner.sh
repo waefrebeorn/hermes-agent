@@ -1258,7 +1258,9 @@ run_lib_test "whatsapp_msg" "tests/test_whatsapp_msg.c" "lib/libjson" "$CDIR/lib
 
 # Vision tool test (M33 — self-contained, no deps)
 echo ""; echo "=== Vision Tool Tests (M33) ==="
-run_lib_test "vision_tool" "tests/test_vision_tool.c" "." ""
+# Note: vision_tool is compiled inline below as part of the vision.c test.
+# The run_lib_test version was removed because it's already covered by the
+# standalone gcc compilation that also tests vision.c with libbase64.
 
 # TTS tool test (M34 — needs tts.c + tool_config + libhttp + plugin)
 echo ""; echo "=== TTS Tool Tests (M34) ==="
@@ -2579,7 +2581,7 @@ else skip "browser_tool (compilation failed)"
 fi &
 
 # Vision tool test (M33 — needs vision.c + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_vision.c" \
     "$CDIR/src/tools/vision.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libbase64/base64.c" \
@@ -2588,6 +2590,16 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "vision_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_vision
 else skip "vision_tool (compilation failed)"
+fi &
+
+# Standalone test_vision_tool.c (11 self-contained tests, no deps)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR" \
+    "$CDIR/tests/test_vision_tool.c" \
+    -o /tmp/hermes_test_vision_tool -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_vision_tool > /dev/null 2>&1; then ok "vision_tool_standalone (11 tests)"
+    else fail "vision_tool_standalone (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_vision_tool
+else skip "vision_tool_standalone (compilation failed)"
 fi &
 
 # Todo tool test (M43 — needs todo.c + json lib)
