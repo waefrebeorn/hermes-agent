@@ -1050,6 +1050,19 @@ Suite: 296/0/0. Test files: 252. Gaps: 145.
 
 Suite: 296/0/0. Test files: 252. Gaps: 145.
 
+## Phase 107: account_usage test suite (v182)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P107-01 | account_usage_free(NULL) no crash | `tests/test_account_usage.c` — test 1 |
+| P107-02 | account_usage_fetch(NULL/''/bad_provider) returns NULL | `tests/test_account_usage.c` — tests 2-4 |
+| P107-03 | fetch(openrouter, no key) and fetch(anthropic, no key) return NULL | `tests/test_account_usage.c` — tests 5-6 |
+| P107-04 | account_usage_render(NULL) returns empty array (first entry NULL) | `tests/test_account_usage.c` — test 7 |
+| P107-05 | render(minimal snapshot) produces title + provider lines | `tests/test_account_usage.c` — test 8 |
+| P107-06 | render(window snapshot) produces label + quota + reset lines | `tests/test_account_usage.c` — test 9 |
+
+Suite: 297/0/0. Test files: 253. Gaps: 145.
+
 ## Phase 101: voice_mode test suite (v176)
 
 | ID | Achievement | Evidence |

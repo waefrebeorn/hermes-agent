@@ -1,7 +1,7 @@
-(v181) (v181)
+(v182) (v182)
 
-296/0/0, 252 test files. All pass. Gap: 252 C tests vs ~17k Python tests.
-Phase 104: env_passthrough blocklist 23→67 entries (252 test files).
+297/0/0, 253 test files. All pass. Gap: 253 C tests vs ~17k Python tests.
+Phase 107: account_usage test suite (14 tests).
 Phase 90: B08 thread_id support — Telegram topic messaging. 145 gaps.
 Phase 91: B07 force/status — terminal safety depth. 145 gaps.
 Phase 92: B08 [[as_document]] — force-document delivery. 145 gaps.
