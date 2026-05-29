@@ -38,7 +38,7 @@ Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 beh
   Fixed agent_free message array leak (512-byte ASan).
   Added test_hook_registry.c (96 assertions) + test_tool_result.c (30 assertions).
   Rewrote/expanded test_title.c, test_lmstudio_reasoning.c, test_trajectory.c.
-  Suite 293/0/0. Commits: 1e17559ab, c82d43917, 42e4c92fe, 9bb4eb9f5 pushed.
+  Suite 293/0/0. Commits: 1e17559ab..3eb84a94f (11 commits pushed).
 
 ## Critical Gaps
 - **P0**: Form-vs-function (2 gaps) — Python hook, test cheating
