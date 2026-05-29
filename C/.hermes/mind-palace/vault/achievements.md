@@ -963,6 +963,16 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 96: B07 exit code interpretation for terminal (v171)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P96-01 | exit_code_interpret() maps non-zero exit codes to human-readable messages per command (grep/rg/diff/find/test/curl/git) | `src/tools/terminal.c` — exit_code_interpret function |
+| P96-02 | _inject_interpretation() adds exit_code_interpretation field to result JSON | `src/tools/terminal.c` — _inject_interpretation function |
+| P96-03 | All 7 backend paths (pty, ssh, docker, compose, modal, local) get interpretation injected | `src/tools/terminal.c` — terminal_handler return paths |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

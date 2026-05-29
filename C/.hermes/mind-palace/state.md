@@ -1,4 +1,4 @@
-# Slermes C (v170)
+# Slermes C (v171)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -46,7 +46,8 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 92: B08 [[as_document]] directive — strip from message text, force document delivery for all media types (preserves original bytes for info-graph JPGs, etc.). Applies to single-file and media_group sends. B08 55%→57%.
 |- Phase 93: B03 URL secret exfiltration check — `url_has_secret()` blocks URLs containing API key patterns (sk-, ghp_, AIza, etc.) before fetch. Applied to web_get_handler and web_extract_handler. Matches Python's web_extract_tool URL exfiltration prevention.
 |- Phase 94: B03 multi-URL support — web_extract_handler accepts `urls` array for extracting multiple pages in one call. Backward compatible with single `url`. SCHEMA_EXTRACT updated. B03 58%→78% (1046 LOC).
-|- Phase 95: B02 URL safety checks for remote images — SSRF protection (url_is_safe), secret exfiltration check (url_has_secret), Content-Type validation via HEAD request. data: URIs excluded from checks. url_has_secret moved to url_safety.c. B02 23%→29% (417 LOC).
+|- Phase 95: B02 remote URL safety checks for vision — SSRF protection (url_is_safe), secret exfiltration check (url_has_secret), Content-Type validation via HEAD request. data: URIs excluded from checks. url_has_secret moved to url_safety.c. B02 23%→29% (417 LOC).
+|- Phase 96: B07 exit code interpretation — exit_code_interpret() maps non-zero exit codes to human-readable messages per command semantics (grep/diff/find/git/curl). _inject_interpretation() adds exit_code_interpretation field to all backend results. B07 59%→62% (942 LOC).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -55,4 +56,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 95: B02 remote URL safety checks (vision 23%→29%).
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 96: B07 exit code interpretation (terminal 59%→62%).

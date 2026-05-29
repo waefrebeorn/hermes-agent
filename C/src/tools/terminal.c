@@ -655,6 +655,98 @@ static char *_inject_warnings(const char *result_json,
     return out;
 }
 
+/* Interpret exit code into human-readable message per command semantics.
+ * Mirrors Python terminal_tool._interpret_exit_code(). */
+static const char *exit_code_interpret(const char *command, int exit_code) {
+    if (!command || exit_code == 0) return NULL;
+
+    /* Extract last command segment (after &&, ||, |, ;) */
+    const char *last = command;
+    const char *p = command;
+    while (*p) {
+        if ((p[0] == '&' && p[1] == '&') || (p[0] == '|' && p[1] == '|') ||
+             p[0] == '|' || p[0] == ';') {
+            p++;
+            while (*p == ' ') p++;
+            if (*p) last = p;
+        } else {
+            p++;
+        }
+    }
+
+    /* Extract base command name (skip env VAR=val prefix) */
+    const char *cmd_start = last;
+    while (*cmd_start == ' ') cmd_start++;
+    const char *base_cmd = cmd_start;
+    while (*base_cmd && *base_cmd != ' ') base_cmd++;
+    size_t cmd_len = (size_t)(base_cmd - cmd_start);
+
+    /* Skip env assignments: VAR=val ... */
+    const char *tok = cmd_start;
+    while (tok < base_cmd) {
+        const char *eq = memchr(tok, '=', (size_t)(base_cmd - tok));
+        if (!eq || eq > base_cmd) break;
+        /* Check if this looks like VAR=val — no slash, non-empty name */
+        const char *name_end = eq;
+        if (name_end > tok && *(name_end - 1) != ' ') {
+            tok = base_cmd; /* All consumed — no real command found */
+        } else {
+            break;
+        }
+    }
+    if (tok < base_cmd) cmd_start = tok;
+
+    /* Skip path prefix: /usr/bin/grep -> grep */
+    const char *slash = (const char *)memchr(cmd_start, '/', cmd_len);
+    if (slash) {
+        cmd_start = slash + 1;
+        cmd_len -= (size_t)((slash + 1) - cmd_start);
+    }
+
+    /* Command-specific exit code semantics */
+    struct { const char *name; size_t len; int exit_code; const char *msg; } sem[] = {
+        { "grep",       4, 1, "No matches found (not an error)" },
+        { "egrep",      5, 1, "No matches found (not an error)" },
+        { "fgrep",      5, 1, "No matches found (not an error)" },
+        { "rg",         2, 1, "No matches found (not an error)" },
+        { "diff",       4, 1, "Files differ (expected, not an error)" },
+        { "colordiff", 10, 1, "Files differ (expected, not an error)" },
+        { "find",       4, 1, "Some directories were inaccessible (partial results valid)" },
+        { "test",       4, 1, "Condition evaluated to false (expected, not an error)" },
+        { "curl",       4, 6, "Could not resolve host" },
+        { "curl",       4, 7, "Failed to connect to host" },
+        { "curl",       4, 22, "HTTP response code indicated error (e.g. 404, 500)" },
+        { "curl",       4, 28, "Operation timed out" },
+        { "git",        3, 1, "Non-zero exit (often normal — e.g. 'git diff' returns 1 when files differ)" },
+        { NULL,         0, 0, NULL }
+    };
+
+    for (int i = 0; sem[i].name; i++) {
+        if (cmd_len == sem[i].len && memcmp(cmd_start, sem[i].name, cmd_len) == 0
+            && exit_code == sem[i].exit_code) {
+            return sem[i].msg;
+        }
+    }
+
+    return NULL;
+}
+
+/* Inject exit_code_interpretation field into result JSON */
+static char *_inject_interpretation(const char *result_json, const char *command) {
+    if (!result_json) return NULL;
+    json_t *rj = json_parse(result_json, NULL);
+    if (!rj) return strdup(result_json);
+
+    int exit_code = (int)json_get_num(rj, "exit_code", 0);
+    const char *interpretation = exit_code_interpret(command, exit_code);
+    if (interpretation) {
+        json_set(rj, "exit_code_interpretation", json_string(interpretation));
+    }
+    char *out = json_serialize(rj);
+    json_free(rj);
+    return out;
+}
+
 /* ================================================================
  *  Main terminal handler
  * ================================================================ */
@@ -783,37 +875,49 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     if (use_pty) {
 #ifdef __linux__
         char *res1 = run_command_pty(full_command, timeout);
-        return _inject_warnings(res1, wd_warn, disk_warn);
+        char *w1 = _inject_warnings(res1, wd_warn, disk_warn);
+        free(res1);
+        return _inject_interpretation(w1, command);
 #else
         char *res1b = run_command(full_command, timeout);
-        return _inject_warnings(res1b, wd_warn, disk_warn);
+        char *w1b = _inject_warnings(res1b, wd_warn, disk_warn);
+        free(res1b);
+        return _inject_interpretation(w1b, command);
 #endif
     }
 
     /* D84: Route to SSH execution backend if configured */
     if (backend && strcasecmp(backend, "ssh") == 0) {
         char *res2 = run_command_ssh(command, timeout);
-        return _inject_warnings(res2, wd_warn, disk_warn);
+        char *w2 = _inject_warnings(res2, wd_warn, disk_warn);
+        free(res2);
+        return _inject_interpretation(w2, command);
     }
 
     /* F11: Route to Docker execution backend if configured */
     if (backend && strcasecmp(backend, "docker") == 0) {
         char *res3 = run_command_docker(command, timeout, docker_image);
-        return _inject_warnings(res3, wd_warn, disk_warn);
+        char *w3 = _inject_warnings(res3, wd_warn, disk_warn);
+        free(res3);
+        return _inject_interpretation(w3, command);
     }
 
     /* D04: Route to Docker Compose backend if configured */
     if (backend && (strcasecmp(backend, "docker-compose") == 0 || strcasecmp(backend, "compose") == 0)) {
-        return run_command_docker_compose(command, timeout);
+        char *res4 = run_command_docker_compose(command, timeout);
+        return _inject_interpretation(res4, command);
     }
 
     /* M35: Route to Modal execution backend if configured */
     if (backend && strcasecmp(backend, "modal") == 0) {
-        return run_command_modal(command, timeout);
+        char *res5 = run_command_modal(command, timeout);
+        return _inject_interpretation(res5, command);
     }
 
     char *res_default = run_command(full_command, timeout);
-    return _inject_warnings(res_default, wd_warn, disk_warn);
+    char *w_default = _inject_warnings(res_default, wd_warn, disk_warn);
+    free(res_default);
+    return _inject_interpretation(w_default, command);
 }
 
 /* Auto-register */
