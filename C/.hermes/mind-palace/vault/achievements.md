@@ -630,3 +630,26 @@ Vaulting battleship v33 (17 gaps, 5 sectors). Verdict: too narrow — only cover
    495|468|| | Suite 283/0/0, commits e0d7ccbb0, 86db5fecc pushed | All on waefrebeorn/slermes main |
    496|469|
    497|
+
+## Phase 57: S0 Stale Claims Retired — Display System Reality Check (v145)
+
+Battleship v34 S0 claimed 18 P0 gaps. Audit found 12 stale — already implemented.
+1 gap implemented this session (D15: light/dark detection). 5 real gaps remain.
+
+| ID | Battleship Claim | Reality | Evidence |
+|----|-----------------|---------|----------|
+| D01 | "8 hardcoded ANSI colors in display_core.c" | Full JSON skin engine with hex colors, 24-bit, branding, symbols, spinner config | lib/libskin/skin.c (657 LOC), lib/libskin/skin.h |
+| D02 | "|/-\ basic 4-frame" | 9 Unicode spinner types + kawaii faces (10 waiting + 15 thinking) | src/cli/display_core.c:300-400 |
+| D03 | "printf banner" | ASCII art logo with skin-driven 24-bit gradient per-line | src/cli/cli.c:192-260 |
+| D04 | "None" | display_statusbar with skin colors, context %, model, session, turn count | src/cli/display_core.c:904-974 |
+| D05 | "Raw printf from tool handlers" | display_tool_activity with ┊ prefix, per-tool emoji + skin overrides, preview | src/cli/display_core.c:650-694 |
+| D06 | "cli_display_response plain ANSI" | display_panel with Unicode box-drawing, word-wrap, colored borders | src/cli/display_core.c:980-1036 |
+| D07 | "printf raw" | cmd_help with categories, 24-bit color headers, aligned columns | src/cli/commands.c:319-379 |
+| D08 | "8 basic ANSI colors" | display_set_fg_rgb with 24-bit truecolor ANSI 38;2 | src/cli/display_core.c:79-85 |
+| D11 | "None" | 10 kawaii + 15 thinking faces | src/cli/display_core.c:381-400 |
+| D12 | "No emoji mapping" | Per-tool emoji map + skin tool_emojis overrides | src/cli/display_core.c:654-694 |
+| D17 | "None" | display_progress_init/update/done with progress bars | src/cli/display_core.c:215-249 |
+| D18 | "None" | display_inline_diff with colored unified diff | src/cli/display_core.c:700-746 |
+
+Retired: 12 stale claims. 1 implemented: D15 light/dark auto-detection. 5 real gaps remain: D09 prompt input, D10 CLI markdown, D13 bounding box re-layout, D14 input scaling/wrapping, D16 type-ahead.
+Suite: 294/0/0 (unchanged).

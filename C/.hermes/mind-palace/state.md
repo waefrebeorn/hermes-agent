@@ -2,7 +2,7 @@
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
-Battleship v34 (242+ gaps across 10 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (229+ gaps across 10 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -13,13 +13,13 @@ Battleship v34 (242+ gaps across 10 sectors, 1000+ test case gaps). Fork diverge
 ## Progress This Session
 - Phase 55: Upstream rebase + full doc sweep (v144→v145)
 - Phase 56: Vaulted battleship v33 (17 gaps, too narrow). Created battleship v34 with real 7-axis parity audit
-- Battleship v34: 205+ gaps across 9 sectors, 1000+ individual test case gaps
+- Battleship v34: 229+ gaps across 9 sectors, 1000+ individual test case gaps
 
 ## Critical Gaps
-- **P0** (16): Display & Visual (12) + Form-vs-Function/Architecture (4)
+- **P0** (10): Display & Visual (5) + Form-vs-Function/Architecture (4) + display.py remnant (1)
 - **P1** (53): Agent modules (18), TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (3), Architecture (1), CLI (1), Plugins (1)
 - **P2** (76): Agent modules (16), CLI ecosystem (17), Tool depth (10), Gateway helpers (10), TUI (10), Tests (3), etc.
 - **P3** (60): Agent modules (11), Plugins (15), CLI ecosystem (12), Tool depth (10), TUI (4), Tests (8)
 
 ## Honest Assessment
-Real parity gap is 200+ structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Display/visual layer (Phase 0) is the most critical — bare printf vs Rich/Kawaii/Skin.
+Real parity gap is 200+ structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Display/visual layer (Phase 0) is the most critical — 5 real gaps remain after Phase 57 stale-claim sweep.

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 205+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**Honest assessment: 229+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -10,30 +10,17 @@ Every sector count verified against live source code. DA v1: first-pass deep aud
 
 ## S0: Display & Visual — Phase 0 (P0)
 
-No visual parity = user sees broken product. C has bare printf; Python has Rich/Kawaii/Skin.
+C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) already provides skin engine, spinners, banner, status bar, tool feed, panel/box, tables, progress bars, diff render, help categories, 24-bit color, kawaii faces, tool emoji mapping. 12 of 18 original v34 claims were stale.
 
-| # | ID | Feature | Python | C | Priority |
-|---|----|---------|--------|---|----------|
-| 01 | D01 | Skin engine: YAML themes, 30+ hex colors (skin_engine.py, 926 LOC) | Full YAML skin system | 8 hardcoded ANSI colors in display_core.c | P0 |
-| 02 | D02 | Spinner: KawaiiSpinner, 9 types, 15 faces, 15 verbs | dots/bounce/star/brain/cloud/flower/fire/skull/moon | `\|/-\\` basic 4-frame | P0 |
-| 03 | D03 | Banner: ASCII art, gold borders, colored headers, model/provider info | Rich Panel with `#FFD700` | printf("WuBu Slermes v%s\\n") | P0 |
-| 04 | D04 | Status bar: ctx%, model name, session info, color-coded warnings | Rich live-updating bar | None | P0 |
-| 05 | D05 | Tool feed: `┊` prefix + per-tool emoji for every tool call | Rich prefix + emoji registry | Raw printf from tool handlers | P0 |
-| 06 | D06 | Response box: colored panel with label + border | Rich `╔═╗` panel, gold border | cli_display_response() plain ANSI | P0 |
-| 07 | D07 | Help tables: category headers, color, pagination | Rich Table | printf("  /command — desc\\n") raw | P0 |
-| 08 | D08 | Color depth: 24-bit truecolor via ANSI 38;2 escape | hex `#FFD700` → ANSI 38;2;255;215;0 | 8 basic ANSI colors (30-37) | P0 |
-| 09 | D09 | Prompt input: tab completion, history search, multi-line | prompt_toolkit | fgets() via cli_input_line() | P0 |
-| 10 | D10 | Markdown render: full markdown for LLM responses | Rich markdown | markdown_tables.c parses tables only | P0 |
-| 11 | D11 | Faces/emoticons: animated face cycling during LLM wait | 15 faces in KawaiiSpinner | None | P0 |
-| 12 | D12 | Tool feed emoji: per-tool emoji prefix in activity display | emoji registry maps tool→emoji | No emoji mapping | P0 |
-| 13 | D13 | Bounding box / terminal resize: window resize re-render | SIGWINCH handler + full re-layout | handle_winch exists but only SIGWINCH signal — no re-layout | P0 |
-| 14 | D14 | Scaling / wrapping: text reflow on terminal width change | prompt_toolkit auto-wrap + Rich auto-width | Fixed-width fgets, no reflow | P0 |
-| 15 | D15 | Color scheme: light/dark mode detection | Auto-detect terminal theme | None | P0 |
-| 16 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets blocks during LLM, type-ahead lost | P0 |
-| 17 | D17 | Progress display: tool call progress bar / countdown | Rich progress bar during long ops | None | P0 |
-| 18 | D18 | Diff display: colored unified diff for file changes | Rich Syntax + unified_diff | None | P0 |
+| # | ID | Feature | Python | C | Status | Priority |
+|---|----|---------|--------|---|--------|----------|
+| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | line_edit with tab completion + history, termios | REAL GAP | P0 |
+| 02 | D10 | Markdown render: full markdown for LLM responses | Rich markdown | Only in tui_fullscreen (ncurses); CLI has no markdown render | REAL GAP | P0 |
+| 03 | D13 | Bounding box / terminal resize: window resize re-render | SIGWINCH handler + full re-layout | handle_winch exists but no re-layout | REAL GAP | P0 |
+| 04 | D14 | Scaling / wrapping: text reflow on terminal width change | prompt_toolkit auto-wrap + Rich auto-width | Panel has word-wrap; input is fixed-width | REAL GAP | P0 |
+| 05 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
 
-**S0: 18 gaps (all P0)**
+**S0: 5 gaps (all P0)** — down from 18 as of v145 Phase 57. 13 retired: 12 stale claims + 1 implemented (D15 light/dark detection).
 
 ---
 
@@ -315,7 +302,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
-| S0: Display & Visual | 18 | 18 | 0 | 0 | 0 | Phase 0 — skin → bounding box → typing |
+| S0: Display & Visual | 5 | 5 | 0 | 0 | 0 | Phase 0 — 12 stale claims retired in v145 |
 | S1: Conversation Loop Plumbing | 28 | 0 | 23 | 5 | 0 | Heart of "how Hermes actually works" |
 | S2: Agent Modules | 45 | 1* | 19 | 14 | 11 | 45 Python modules with no C equivalent |
 | S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
@@ -326,7 +313,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-| **TOTAL** | **242** | **23** | **79** | **79** | **61** | **1,000+ test case gaps** |
+|| **TOTAL** | **229** | **10** | **79** | **79** | **61** | **1,000+ test case gaps** |
 
 *S2 includes display.py (A13) marked P0 — moves to Phase 0
 
@@ -334,7 +321,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Phase | Focus | Sectors | Gap Count |
 |-------|-------|---------|-----------|
-| Phase 0 | Display & Visual | S0 (18) + A13 | 19 |
+|| Phase 0 | Display & Visual | S0 (5) + A13 | 6 |
 | Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (28), S8 (6), S4 P1 (14) | ~48 |
 | Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
 | Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~33 |

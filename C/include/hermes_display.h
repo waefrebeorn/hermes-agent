@@ -224,6 +224,10 @@ bool display_has_color(void);
 /* Get terminal width */
 int display_width(void);
 
+/* Detect terminal color scheme. Returns true if dark theme (default), false if light.
+ * Checks COLORFGBG, DARK_BG env vars. Defaults to dark. */
+bool display_is_dark_theme(void);
+
 #ifdef __cplusplus
 }
 #endif

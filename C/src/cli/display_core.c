@@ -1209,3 +1209,51 @@ int display_width(void) {
         return (int)ws.ws_col;
     return 80;
 }
+
+/* ================================================================
+ *  Theme detection — colors.light / dark scheme auto-select
+ * ================================================================ */
+
+bool display_is_dark_theme(void) {
+    /* 1. Check COLORFGBG (rxvt, konsole, etc): "fg;bg" where bg is 0-15 */
+    const char *cfgbg = getenv("COLORFGBG");
+    if (cfgbg) {
+        const char *semi = strrchr(cfgbg, ';');
+        if (semi) {
+            int bg = atoi(semi + 1);
+            /* 0-6=dark, 7-15=light. 0=black, 7=white, 8-15=bright */
+            if (bg >= 7) return false; /* light background */
+            return true;               /* dark background */
+        }
+    }
+
+    /* 2. Check DARK_BG / LIGHT_BG explicit hints */
+    const char *dark_bg = getenv("DARK_BG");
+    if (dark_bg) {
+        if (strcmp(dark_bg, "1") == 0 || strcasecmp(dark_bg, "true") == 0)
+            return true;
+        return false;
+    }
+    const char *light_bg = getenv("LIGHT_BG");
+    if (light_bg) {
+        if (strcmp(light_bg, "1") == 0 || strcasecmp(light_bg, "true") == 0)
+            return false;
+    }
+
+    /* 3. VCANVAS_BACKGROUND (Visual Studio / Codespaces) */
+    const char *vcbg = getenv("VCANVAS_BACKGROUND");
+    if (vcbg && strcasecmp(vcbg, "light") == 0)
+        return false;
+
+    /* 4. KONSOLE_PROFILE_NAME — Konsole */
+    /* Dark profiles usually contain "dark", light profiles "light" */
+    const char *kpn = getenv("KONSOLE_PROFILE_NAME");
+    if (kpn) {
+        if (strstr(kpn, "light") || strstr(kpn, "Light") || strstr(kpn, "White"))
+            return false;
+        return true; /* konsole with dark profile = dark */
+    }
+
+    /* 5. Default: dark (safe for most devs) */
+    return true;
+}

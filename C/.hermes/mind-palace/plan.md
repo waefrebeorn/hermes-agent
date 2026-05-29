@@ -1,9 +1,9 @@
 # Plan (v145)
 
-242+ gaps across 10 sectors (battleship v34). Fork diverged
+229+ gaps across 10 sectors (battleship v34). Fork diverged
 
-## Phase 0: Display & Visual (S0, P0) — 18 gaps
-Skin engine, spinner, banner, status bar, tool feed, response box, help tables, 24-bit color, prompt input, markdown render, faces, emoji, bounding box, scaling, color scheme, recurrent typing, progress display, diff display
+## Phase 0: Display & Visual (S0, P0) — 5 gaps
+Prompt input depth, CLI markdown render, bounding box re-layout, input scaling/wrapping, type-ahead
 
 ## Phase 1: Conversation Loop Plumbing + Agent Modules + Adapters + TUI Core (S1, S2, S8, S4, P1) — ~79 gaps
 23 conversation loop plumbing gaps, agent modules, provider adapter layer, TUI gateway server + core components

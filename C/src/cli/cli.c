@@ -101,7 +101,8 @@ static display_color_t cli_skin_color(const char *key, display_color_t fallback)
     return cli_skin_to_color(name, fallback);
 }
 
-/* Initialize skin from config. Falls back to skin_default() on error. */
+/* Initialize skin from config. Falls back to skin_default() on error.
+ * Auto-selects light/dark preset based on terminal theme when no skin configured. */
 static void cli_skin_init(void) {
     const char *path = g_cli.config.skin_path;
     if (path && path[0]) {
@@ -111,8 +112,16 @@ static void cli_skin_init(void) {
                     path, skin_error());
         }
     }
-    if (!g_skin)
-        g_skin = skin_default();
+    if (!g_skin) {
+        /* Auto-detect light/dark theme when no explicit skin configured */
+        if (!display_is_dark_theme()) {
+            g_skin = skin_load_preset("daylight");
+            if (!g_skin)
+                g_skin = skin_default();
+        } else {
+            g_skin = skin_default();
+        }
+    }
 }
 
 /* ================================================================
