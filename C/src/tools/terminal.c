@@ -9,6 +9,7 @@
 #include "hermes_tool_config.h"
 #include "hermes_sandbox.h"
 #include "tool_output.h"
+#include "env_passthrough.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -679,6 +680,19 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
 /* Auto-register */
 void registry_init_terminal(void) {
+    /* Wire env_passthrough config — register comma-separated vars from terminal.env_passthrough */
+    const char *passthrough = tool_config_get("terminal", "env_passthrough");
+    if (passthrough && passthrough[0]) {
+        char copy[1024];
+        snprintf(copy, sizeof(copy), "%s", passthrough);
+        char *save = NULL;
+        char *tok = strtok_r(copy, ",\t ", &save);
+        while (tok) {
+            while (*tok == ' ' || *tok == '\t') tok++;
+            if (*tok) env_passthrough_register(tok);
+            tok = strtok_r(NULL, ",\t ", &save);
+        }
+    }
     registry_register("terminal",
         "Execute a shell command. Returns stdout, stderr, and exit code. "
         "Use for running code, compiling, testing, and system operations.",
