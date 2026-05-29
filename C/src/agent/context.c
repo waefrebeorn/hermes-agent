@@ -108,9 +108,8 @@ message_t *message_clone(const message_t *src) {
  * ================================================================ */
 
 void context_init(agent_state_t *state) {
-    state->messages = NULL;
+    /* messages/capacity set by agent_init, not here */
     state->message_count = 0;
-    state->message_capacity = 0;
 }
 
 bool context_push(agent_state_t *state, message_t *msg) {
