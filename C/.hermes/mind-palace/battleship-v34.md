@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v146 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 155 structural gaps, 1000+ test case gaps across 9 sectors. Phase 60: B09 dry_run implemented. S6 stale sweep: 5 claims retired.**
+**v147 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 155 structural gaps, 1000+ test case gaps across 9 sectors. Phase 62: session_search scroll+browse. surrogate sanitization. stale-claim pitfall corrected.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -173,10 +173,10 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec | P2 | PARTIAL |
 | 08 | B08 | send_message | ~500 | ~900 | 55% | inline buttons, reply_to_message_id, media groups | P2 | PARTIAL |
 | 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution still missing | P2 | PARTIAL |
-| 10 | B10 | session_search | ~386 | ~650 | 59% | tag_filter, role_filter, session_id_filter, offset pagination, snippet — FTS5 syntax remains | P2 | PARTIAL |
+| 10 | B10 | session_search | ~460 | ~650 | 71% | tag_filter, role_filter, session_id_filter, offset pagination, scroll + browse modes. FTS5 syntax remains | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 15 gaps (8 P2, 7 P3) — Phase 60: B09 dry_run implemented. 5 stale features retired from B05/B06/B08/B10.**
+**S6: 15 gaps (8 P2, 7 P3) — Phase 62: session_search scroll+browse added (71% parity). surrogate sanitization wired. stale-claim pitfall corrected.**
 
 ---
 
@@ -269,12 +269,12 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 60: B09 dry_run implemented. B05/B06/B08/B10 stale claims retired |
+| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 62: session_search scroll+browse (71%). surrogate sanitization wired |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **155** | **6** | **37** | **66** | **47** | **Phase 60: B09 dry_run implemented. S6: 5 stale tool- depth claims retired.** |
+|| **TOTAL** | **155** | **6** | **37** | **66** | **47** | **Phase 62: session_search scroll+browse. stale-claim pitfall corrected.** |
 
 ### Phase Map
 

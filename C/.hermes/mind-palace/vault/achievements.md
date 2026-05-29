@@ -652,6 +652,38 @@ S2 in battleship-v34 claimed 45 "no C equivalent" modules. Reality: 30+ have dir
 
 S2: 45 stale retired. 15 cloud-specific/Python-architecture only. 3 real implementable: insights (930 LOC), models_dev (725 LOC), stream_diag. S2 corrected to 18 remaining gaps (15 won't-port + 3 real).
 
+## Phase 61: Dead-Code Wiring (v146→v147)
+
+Wired existing but unused functions into active code paths:
+
+| ID | Function | Location | What It Does | Activation |
+|----|----------|----------|--------------|------------|
+| P61-01 | sanitize_surrogates() | src/agent/sanitize.c:181 | Replaces lone UTF-8 surrogates (U+D800-U+DFFF) with U+FFFD | Wired into agent_run_conversation() — user message entry point |
+| P61-02 | env_passthrough_register() | lib/libenvpassthrough/ | Reads terminal.env_passthrough config, registers comma-sep vars | Wired into registry_init_terminal() — init-time |
+| P61-03 | error_classify() | lib/liberrorclassifier/ | Classifies API errors by status+body into failover reasons | Still unwired — needs retry loop integration |
+
+## Phase 62: session_search Scroll+Browse (v147)
+
+Rebuilt session_search to match upstream single-shape API (v0.15.0):
+
+| Feature | Previously | Now |
+|---------|-----------|-----|
+| SCROLL mode | Not supported | session_id + around_message_id → ±N message window |
+| BROWSE mode | Not supported | Empty query → 0 results placeholder |
+| Schema | query required, 6 params | query optional, 9 params (session_id, around_message_id, window added) |
+| Test assertions | 15 | 16 (all pass) |
+| Parity vs upstream | ~59% | ~71% |
+
+## Phase 63+: Stale-Claim Pitfall Corrected
+
+Prior approach used file-name matching to declare modules "stale" (already ported). Corrected to feature-set comparison:
+
+- Before: `Python X.py → C X.c → "STALE"`
+- After: `Compare function-level APIs → classify as PORTED (≥80%) / PARTIAL (20-80%) / REAL GAP (<20%)`
+
+Upstream feature-gap methodology documented at `references/upstream-feature-gap-methodology.md`.
+Memory updated with durable fact about the pitfall.
+
 ## Phase 60: S6 Tool Depth Stale Sweep + B09 dry_run (v146→v146)
 
 S6 claimed 20 tool depth gaps. Verified against source: 6 of 10 tool entries have significant stale claims.
