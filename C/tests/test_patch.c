@@ -87,6 +87,29 @@ static void build_json_args(const char *path, const char *old_str, const char *n
     bp += snprintf(args_buf + bp, sizeof(args_buf) - bp - 1, "\"}");
 }
 
+/* Helper: build JSON args with dry_run flag */
+static char dry_args_buf[4096];
+static void build_json_dry(const char *path, const char *old_str, const char *new_str) {
+    memset(dry_args_buf, 0, sizeof(dry_args_buf));
+    size_t bp = 0;
+    bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1, "{\"path\":\"");
+    for (const char *s = path; *s && bp < sizeof(dry_args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') dry_args_buf[bp++] = '\\';
+        dry_args_buf[bp++] = *s;
+    }
+    bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1, "\",\"old_string\":\"");
+    for (const char *s = old_str; *s && bp < sizeof(dry_args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') dry_args_buf[bp++] = '\\';
+        dry_args_buf[bp++] = *s;
+    }
+    bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1, "\",\"new_string\":\"");
+    for (const char *s = new_str; *s && bp < sizeof(dry_args_buf) - 50; s++) {
+        if (*s == '"' || *s == '\\') dry_args_buf[bp++] = '\\';
+        dry_args_buf[bp++] = *s;
+    }
+    bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1, "\",\"dry_run\":true}");
+}
+
 int main(void) {
     printf("=== Patch Tool Tests ===\n");
 
@@ -311,6 +334,64 @@ int main(void) {
              c && strstr(c, "return 2") != NULL);
         free(c);
         unlink(noesc_file);
+    }
+
+    /* 19. Dry run — patch succeeds but file is NOT modified */
+    {
+        const char *dry_file = "/tmp/hermes_test_dry_run.txt";
+        write_file(dry_file, "original content");
+        build_json_dry(dry_file, "original", "REPLACED");
+        r = parse_result(patch_handler(dry_args_buf, NULL));
+        TEST("dry_run: success returned",
+             r && json_object_get_bool(r, "success", false));
+        TEST("dry_run: dry_run flag in response",
+             r && json_object_get_bool(r, "dry_run", false));
+        TEST("dry_run: replacements count > 0",
+             r && json_object_get_number(r, "replacements", 0) > 0);
+        json_free(r);
+        /* File should still contain original content */
+        char *c = read_file(dry_file);
+        TEST("dry_run: file not modified",
+             c && strstr(c, "original") != NULL);
+        TEST("dry_run: no REPLACED content in file",
+             c && strstr(c, "REPLACED") == NULL);
+        free(c);
+        unlink(dry_file);
+    }
+
+    /* 20. Dry run with replace_all — multiple replacements, no file changes */
+    {
+        const char *dry_all_file = "/tmp/hermes_test_dry_all.txt";
+        write_file(dry_all_file, "aaa bbb aaa ccc aaa");
+        memset(dry_args_buf, 0, sizeof(dry_args_buf));
+        size_t bp = 0;
+        bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1,
+            "{\"path\":\"");
+
+#ifdef __linux__
+        /* Append path with JSON escaping */
+        for (const char *s = dry_all_file; *s && bp < sizeof(dry_args_buf) - 50; s++) {
+            if (*s == '"' || *s == '\\') dry_args_buf[bp++] = '\\';
+            dry_args_buf[bp++] = *s;
+        }
+        bp += snprintf(dry_args_buf + bp, sizeof(dry_args_buf) - bp - 1,
+            "\",\"old_string\":\"aaa\",\"new_string\":\"ZZZ\","
+            "\"replace_all\":true,\"dry_run\":true}");
+#endif
+        r = parse_result(patch_handler(dry_args_buf, NULL));
+        TEST("dry_run replace_all: success",
+             r && json_object_get_bool(r, "success", false));
+        TEST("dry_run replace_all: dry_run flag",
+             r && json_object_get_bool(r, "dry_run", false));
+        TEST("dry_run replace_all: 3 replacements",
+             r && (int)json_object_get_number(r, "replacements", 0) == 3);
+        json_free(r);
+        /* File is unchanged */
+        char *c = read_file(dry_all_file);
+        TEST("dry_run replace_all: original preserved",
+             c && strstr(c, "aaa") != NULL);
+        free(c);
+        unlink(dry_all_file);
     }
 
     /* Cleanup */
