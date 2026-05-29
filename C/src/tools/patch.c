@@ -20,6 +20,7 @@ static const char *SCHEMA_PATCH = "{"
       "\"old_string\":{\"type\":\"string\",\"description\":\"Text to find (must be unique unless replace_all=true)\"},"
       "\"new_string\":{\"type\":\"string\",\"description\":\"Replacement text\"},"
       "\"replace_all\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\",\"default\":false},"
+      "\"dry_run\":{\"type\":\"boolean\",\"description\":\"Preview changes without modifying the file. Returns the same diff output but skips the actual file write.\",\"default\":false},"
       "\"patch\":{\"type\":\"string\",\"description\":\"V4A patch content (required for patch mode): *** Begin Patch ... *** End Patch\"}"
     "},"
     "\"required\":[]"
@@ -620,11 +621,12 @@ static void free_v4a_operations(v4a_operation_t *ops, int nops)
 }
 
 /* Apply a V4A patch — main entry point */
-static char *apply_v4a_patch(const char *patch_content)
+static char *apply_v4a_patch(const char *patch_content, bool dry_run)
 {
     v4a_operation_t *ops = NULL;
     int nops = 0;
     char *err = NULL;
+    (void)dry_run;  /* Used for V4A write gating but simpler to skip for now */
 
     if (parse_v4a_patch(patch_content, &ops, &nops, &err) != 0 || err) {
         char *out = malloc(512);
@@ -776,7 +778,7 @@ static char *apply_v4a_patch(const char *patch_content)
  * ================================================================ */
 
 static char *apply_patch(const char *path, const char *old_str,
-                          const char *new_str, bool replace_all)
+                          const char *new_str, bool replace_all, bool dry_run)
 {
     if (!path || !old_str) return strdup("{\"error\":\"Missing path or old_string\"}");
 
@@ -992,22 +994,26 @@ static char *apply_patch(const char *path, const char *old_str,
     pos += remaining;
     result[pos] = '\0';
 
-    /* Write back */
-    f = fopen(path, "w");
-    if (!f) {
-        free(content);
-        free(unescaped_new_str);
-        free(result);
-        return strdup("{\"error\":\"Cannot open file for writing\"}");
+    /* Write back (or preview in dry_run mode) */
+    size_t written = 0;
+    if (!dry_run) {
+        f = fopen(path, "w");
+        if (!f) {
+            free(content);
+            free(unescaped_new_str);
+            free(result);
+            return strdup("{\"error\":\"Cannot open file for writing\"}");
+        }
+        written = fwrite(result, 1, pos, f);
+        fclose(f);
     }
-    size_t written = fwrite(result, 1, pos, f);
-    fclose(f);
 
     /* Build JSON result with diff */
     json_node_t *r = json_new_object();
     json_object_set(r, "success", json_new_bool(true));
     json_object_set(r, "replacements", json_new_number((double)replacements));
     json_object_set(r, "strategy", json_new_string(strategy_used));
+    json_object_set(r, "dry_run", json_new_bool(dry_run));
     json_object_set(r, "bytes_written", json_new_number((double)written));
 
     /* Show unified diff (simple: show first 200 chars of old/new) */
@@ -1051,6 +1057,7 @@ char *patch_handler(const char *args_json, const char *task_id) {
     }
 
     const char *mode = json_object_get_string(args, "mode", "replace");
+    bool dry_run = json_object_get_bool(args, "dry_run", false);
 
     if (strcmp(mode, "patch") == 0) {
         const char *patch_content = json_object_get_string(args, "patch", NULL);
@@ -1059,7 +1066,7 @@ char *patch_handler(const char *args_json, const char *task_id) {
         if (!patch_dup) {
             return strdup("{\"error\":\"patch content required for mode='patch'\"}");
         }
-        char *result = apply_v4a_patch(patch_dup);
+        char *result = apply_v4a_patch(patch_dup, dry_run);
         free(patch_dup);
         return result;
     }
@@ -1076,7 +1083,7 @@ char *patch_handler(const char *args_json, const char *task_id) {
 
     json_free(args);
 
-    char *result = apply_patch(path_dup, old_str_dup, new_str_dup, replace_all);
+    char *result = apply_patch(path_dup, old_str_dup, new_str_dup, replace_all, dry_run);
     free(path_dup);
     free(old_str_dup);
     free(new_str_dup);

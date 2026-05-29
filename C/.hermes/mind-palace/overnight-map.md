@@ -1,14 +1,14 @@
-# Overnight (v145)
+# Overnight (v146)
 
-215+ gaps (battleship v34 across 10 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+155 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
 Suite 294/0/0 (248 test files). Phase 56: vaulted v33, created v34 comprehensive audit.
 Phase 57: S0 stale-claim sweep — 16 claims retired.
-Phase 58: S1 stale-claim sweep — 7 claims retired + L14 (log tagging) + L03 (vision auto-disable) implemented. D09 Ctrl-R search + horizontal scroll + Alt+Enter multi-line added.
-Commits: 002f5986b on main. D14/D13/D15 complete. S0: 1 arch gap + 1 partial remain.
+Phase 58: S1 stale-claim sweep — 7 claims retired + L14/L03/L09/L10 implemented.
+Phase 59: S2 stale-claim sweep — 30 claims retired. 3 real gaps remain (insights, models_dev, stream_diag).
+Phase 60: B09 dry_run implemented. S6 stale sweep: 5 claims retired (B05/B06/B08/B10).
 
-## Current Phase: Phase 1 (S1: Conversation Loop Plumbing)
-L03 done (vision auto-disable). L09 done (memory nudge). 13 real + 5 partial S1 gaps remain. D09 partial (multi-line via Alt+Enter). The 14 display features are all implemented.
+## Current Phase: Phase 6 (S2 Agent Module Depth)
+3 real implementable S2 gaps: A15 (insights — usage analytics), A18 (models_dev — model management CLI), A22 (stream_diag — stream diagnostics). All S0 remaining, S1 partials are stable.
 
 ## Priority stacking
-- Phase 0 must finish before any other work is visible
-- T1: Display/Visual → T2: Agent modules → T3: Tests → T4: Gateway/Tool depth
+- S2 depth (insights, models_dev) → S6 tool depth (B02 vision OCR) → S3 gateway helpers

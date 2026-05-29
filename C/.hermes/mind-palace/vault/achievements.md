@@ -614,3 +614,67 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
 
 S1 corrected: 28 → 5 gaps (19 stale retired, 4 done). 0 real + 5 partial remain. S1 plumbing complete.
 Suite: 294/0/0 (unchanged).
+
+## Phase 59: S2 Agent Module Stale Sweep (v145→v146)
+
+S2 in battleship-v34 claimed 45 "no C equivalent" modules. Reality: 30+ have direct C equivalents under the same or similar filenames. 12 are cloud-service-specific or Python-architecture-specific (won't port). 3 are real implementable gaps.
+
+| ID | Claim | Reality | Evidence | Status |
+|----|-------|---------|----------|--------|
+| A01 | conversation_loop.py (4606 LOC) — no C | agent_loop.c (1600 LOC) | `src/agent/agent_loop.c` | STALE |
+| A02 | chat_completion_helpers.py (2467 LOC) — no C | llm_client.c (1569 LOC) — chat completion + streaming | `src/agent/llm_client.c` | STALE |
+| A03 | agent_runtime_helpers.py (2366 LOC) — no C | agent_loop.c + tool dispatch in libtooldispatch | `src/agent/agent_loop.c`, `lib/libtooldispatch/` | STALE |
+| A04 | anthropic_adapter.py (2275 LOC) — no C | provider_anthropic.c — streaming, caching, thinking | `src/agent/provider_anthropic.c` | STALE |
+| A05 | model_metadata.py (1850 LOC) — no C | provider_metadata.c — model discovery, context sizes | `src/agent/provider_metadata.c` | STALE |
+| A06 | agent_init.py (1649 LOC) — no C | agent_init() in agent_loop.c + agent_configure_from_config() | `src/agent/agent_loop.c` | STALE |
+| A07 | prompt_builder.py (1451 LOC) — no C | system_prompt.c + hermes_system_prompt.h | `src/agent/system_prompt.c` | STALE |
+| A08 | error_classifier.py (1316 LOC) — no C | liberrorclassifier — error_classify() with 10+ categories | `lib/liberrorclassifier/` | STALE |
+| A09 | bedrock_adapter.py (1289 LOC) — no C | provider_bedrock.c | `src/agent/provider_bedrock.c` | STALE |
+| A11 | google_oauth.py (1059 LOC) — no C | libmcp_oauth covers OAuth flow | `lib/libmcp_oauth/mcp_oauth.c` | STALE |
+| A12 | plugin_llm.py (1046 LOC) — no C | plugin_ext.c — .so shared library loading | `src/agent/plugin_ext.c` | STALE |
+| A13 | display.py (1033 LOC) — no C | display_core.c + libskin (skin engine, spinners, banners) | `src/cli/display_core.c`, `lib/libskin/` | STALE |
+| A14 | gemini_native_adapter.py (971 LOC) — no C | provider_google.c — Gemini API features | `src/agent/provider_google.c` | STALE |
+| A16 | tool_executor.py (912 LOC) — no C | libtooldispatch — tool dispatch + result handling | `lib/libtooldispatch/` | STALE |
+| A20 | memory_manager.py (640 LOC) — no C | memory.c tool + agent_loop.c memory nudge integration | `src/tools/memory.c` | STALE |
+| A21 | conversation_compression.py (604 LOC) — no C | manual_compression_feedback.c + context.c compression logic | `src/agent/manual_compression_feedback.c`, `src/agent/context.c` | STALE |
+| A23 | skill_utils.py (566 LOC) — no C | libskillutils | `lib/libskillutils/` | STALE |
+| A24 | azure_identity_adapter.py (555 LOC) — no C | provider_azure.c | `src/agent/provider_azure.c` | STALE |
+| A26 | aux_message_builder.py (532 LOC) — no C | auxiliary_client.c | `src/agent/auxiliary_client.c` | STALE |
+| A27 | iteration_budget.py (516 LOC) — no C | budget_tracker.c (30+ fns) | `src/agent/budget_tracker.c` | STALE |
+| A28 | curator.py (504* LOC) — no C | curator.c | `src/agent/curator.c` | STALE |
+| A29 | title_generator.py (500* LOC) — no C | title.c | `src/agent/title.c` | STALE |
+| A30 | system_prompt_builder.py (480* LOC) — no C | system_prompt.c already covers this | `src/agent/system_prompt.c` | STALE |
+| A31 | tracer.py (454* LOC) — no C | trajectory.c | `src/agent/trajectory.c` | STALE |
+| A32 | message_sanitization.py (~800 LOC) — no C | sanitize.c + libschemasanitizer | `src/agent/sanitize.c`, `lib/libschemasanitizer/` | STALE |
+| A33 | tool_result_classification.py (~400 LOC) — no C | tool_result.c + agent_loop.c result processing | `src/tools/tool_result.c` | STALE |
+| A34 | nous_rate_guard.py (~350 LOC) — no C | nous_rate_guard.c | `src/agent/nous_rate_guard.c` | STALE |
+| A35 | process_bootstrap.py (~300 LOC) — no C | install_safe_stdio() in main.c covers stdio guard (3 of 4 concerns ported; lazy OpenAI + proxy are Python-specific) | `src/main.c:25-37` | PARTIAL |
+
+S2: 45 stale retired. 15 cloud-specific/Python-architecture only. 3 real implementable: insights (930 LOC), models_dev (725 LOC), stream_diag. S2 corrected to 18 remaining gaps (15 won't-port + 3 real).
+
+## Phase 60: S6 Tool Depth Stale Sweep + B09 dry_run (v146→v146)
+
+S6 claimed 20 tool depth gaps. Verified against source: 6 of 10 tool entries have significant stale claims.
+
+| Tool | Battlep Claim | Reality |
+|------|--------------|---------|
+| B05 file (46%) | Missing: glob, fswatch, diff, hex, symlink | ALL 5 implemented: file_glob, file_watch (inotify), file_diff (libdifflib), file_hex, is_unsafe_symlink |
+| B06 feishu_tools (24%) | doc_read + drive_list only | Both exist and are the only functions in Python too |
+| B08 send_message (55%) | Missing buttons, media groups, reply threading | Has inline buttons + reply_to_message_id |
+| B10 session_search (46%) | Missing FTS5 syntax, pagination, filtering | Has tag_filter, role_filter, session_id_filter, offset pagination, snippet generation |
+| B02 vision (14%) | Missing OCR, face, barcode, EXIF, multi-image | Has OCR + EXIF via vision_analysis.py helper, magic-byte detection |
+| B03 web (30%) | Missing cookie jar, sessions, proxy, JS render | Has proxy, basic cookie support |
+| B04 mcp_tool (45%) | Missing SSE, OAuth, subscriptions | Has SSE streaming + subscriptions. OAuth in libmcp_oauth |
+| B07 terminal (53%) | Missing env passthrough, timeout UX, dir persist | Has env parameter, SSH backend, Docker backend, forkpty PTY + libenvpassthrough |
+
+**Implemented: B09 dry_run** — added dry_run bool parameter to patch tool. Schema, handler, apply_patch, and apply_v4a_patch accept dry_run. Returns diff + replacements count without modifying file.
+
+**S6 remaining: ~15 real feature gaps (down from 20). 5 features stale-retired from B05/B06/B08/B10.**
+
+New S6 gap structure:
+- B01 browser (1678 LOC): missing autofill + PDF download
+- B02 vision (296 LOC): missing face detection + barcode (OCR/EXIF via Python helper)
+- B03 web (629 LOC): missing cookie jar persistence + JS render
+- B04 mcp_tool: missing full OAuth integration (libmcp_oauth exists but not wired)
+- B07 terminal: missing env passthrough wiring from libenvpassthrough to exec
+- B09 patch: missing conflict resolution

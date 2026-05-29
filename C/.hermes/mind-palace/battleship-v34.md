@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 202+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**v146 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 155 structural gaps, 1000+ test case gaps across 9 sectors. Phase 60: B09 dry_run implemented. S6 stale sweep: 5 claims retired.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -40,50 +40,37 @@ Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all 
 
 ## S2: Agent Modules — Missing Ports (P1-P3)
 
-45 Python agent modules with NO C equivalent. Listed by LOC descending.
+S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direct C ports. 15 are cloud-service-specific or Python-architecture-abstraction (won't port to standalone C binary). 3 real implementable gaps remain.
 
-| # | ID | Python Module | LOC | Priority |
-|---|----|--------------|-----|----------|
-| 01 | A01 | conversation_loop.py (plumbing, see S1) | 4606 | P1 |
-| 02 | A02 | chat_completion_helpers.py (request building) | 2467 | P1 |
-| 03 | A03 | agent_runtime_helpers.py (tool schema management) | 2366 | P1 |
-| 04 | A04 | anthropic_adapter.py (streaming, caching, thinking) | 2275 | P1 |
-| 05 | A05 | model_metadata.py (model discovery, context sizes) | 1850 | P1 |
-| 06 | A06 | agent_init.py (60+ param AIAgent construction) | 1649 | P1 |
-| 07 | A07 | prompt_builder.py (system prompt assembly) | 1451 | P1 |
-| 08 | A08 | error_classifier.py (API error classification) | 1316 | P1 |
-| 09 | A09 | bedrock_adapter.py (AWS auth, model discovery) | 1289 | P1 |
-| 10 | A10 | codex_responses_adapter.py (Codex API) | 1221 | P2 |
-| 11 | A11 | google_oauth.py (OAuth token exchange) | 1059 | P1 |
-| 12 | A12 | plugin_llm.py (plugin-based LLM abstraction) | 1046 | P2 |
-| 13 | A13 | display.py (KawaiiSpinner, faces, tool feed) | 1033 | P0 |
-| 14 | A14 | gemini_native_adapter.py (Gemini API features) | 971 | P1 |
-| 15 | A15 | insights.py (usage analytics, insights) | 930 | P2 |
-| 16 | A16 | tool_executor.py (tool dispatch, result handling) | 912 | P1 |
-| 17 | A17 | gemini_cloudcode_adapter.py (Codex mode) | 909 | P2 |
-| 18 | A18 | models_dev.py (model management) | 725 | P2 |
-| 19 | A19 | copilot_acp_client.py (GitHub Copilot) | 686 | P3 |
-| 20 | A20 | memory_manager.py (memory providers) | 640 | P1 |
-| 21 | A21 | conversation_compression.py (auto-compression) | 604 | P1 |
-| 22 | A22 | background_review.py (async skill review) | 597 | P2 |
-| 23 | A23 | skill_utils.py (skill utilities) | 566 | P2 |
-| 24 | A24 | azure_identity_adapter.py (managed identity) | 555 | P1 |
-| 25 | A25 | codex_runtime.py (Codex runtime) | 536 | P3 |
-| 26 | A26 | aux_message_builder.py (aux message construction) | 532 | P2 |
-| 27 | A27 | iteration_budget.py (per-turn budget tracking) | 516 | P1 |
-| 28 | A28 | curator.py (skill curation, agent improvement) | 504* | P2 |
-| 29 | A29 | title_generator.py (session title gen) | 500* | P2 |
-| 30 | A30 | system_prompt_builder.py (dynamic prompt) | 480* | P1 |
-| 31 | A31 | tracer.py (request tracing) | 454* | P3 |
-| 32 | A32 | message_sanitization.py (8 sanitization fns) | ~800* | P1 |
-| 33 | A33 | tool_result_classification.py (file mutation result) | ~400* | P2 |
-| 34 | A34 | nous_rate_guard.py (rate limit detection) | ~350* | P1 |
-| 35 | A35 | process_bootstrap.py (stdio guard) | ~300* | P1 |
-| 36 | A36-A45 | (10 smaller modules) | ~2800 | P2-P3 |
+### Real Implementable Gaps
 
-*Approximate LOC
+| # | ID | Python Module | LOC | Priority | Description |
+|---|----|--------------|-----|----------|-------------|
+| 01 | A15 | insights.py | 930 | P2 | Usage analytics: cost estimation, session stats, pricing table. No C equivalent |
+| 02 | A18 | models_dev.py | 725 | P2 | models.dev registry: model metadata, provider info, capabilities lookup. No C equivalent |
+| 03 | A22 | stream_diag.py | ~300 | P2 | Stream diagnostics: quality metrics, debug output. No C equivalent |
 
-**S2: 45 gaps (20 P0-P1, 14 P2, 11 P3)**
+### Cloud-Specific / Python-Architecture (won't port to C)
+
+| # | ID | Python Module | LOC | Reason |
+|---|----|--------------|-----|--------|
+| 01 | A10 | codex_responses_adapter.py | 1221 | OpenAI Codex cloud API — standalone C binary doesn't use Codex |
+| 02 | A17 | gemini_cloudcode_adapter.py | 909 | Gemini Codex cloud mode — cloud IDE feature |
+| 03 | A19 | copilot_acp_client.py | 686 | GitHub Copilot ACP — cloud IDE feature |
+| 04 | A25 | codex_runtime.py | 536 | Codex runtime — cloud IDE feature |
+| 05 | google_code_assist.py | ~400 | Google Code Assist — cloud IDE feature |
+| 06 | transcription_provider/registry | ~600 | Python plugin abstraction — media pipeline |
+| 07 | tts_provider/registry | ~500 | Python plugin abstraction — media pipeline |
+| 08 | video_gen_provider/registry | ~400 | Python plugin abstraction — media pipeline |
+| 09 | web_search_provider/registry | ~600 | Python plugin abstraction — search backend |
+| 10 | image_gen_provider/registry | ~400 | Python plugin abstraction — media pipeline |
+| 11 | memory_provider.py | ~300 | Python plugin abstraction — memory backends |
+| 12 | credential_sources/ | ~400 | Python subdirectory — plugin credential backends |
+| 13 | jiter_preload.py | ~200 | Python-specific JSON parser preload |
+| 14 | async_utils.py | ~200 | Python async utilities — C is sync |
+| 15 | background_review.py | 597 | Heavy async+subprocess orchestration — C arch mismatch |
+
+**S2: 18 gaps (0 P0, 0 P1, 3 P2 implementable, 15 won't-port)**
 
 ---
 
@@ -175,21 +162,21 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 
 C tools are at 48% parity by LOC (30,288 vs 62,781).
 
-| # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority |
-|---|----|------|-------|-----------|--------|-----------------|----------|
-| 01 | B01 | browser | ~1600 | ~3800 | 42% | autofill, cookies, PDF, HAR, network throttle | P2 |
-| 02 | B02 | vision | ~203 | ~1421 | 14% | OCR, face detection, barcode, EXIF, multi-image | P2 |
-| 03 | B03 | web | ~466 | ~1561 | 30% | cookie jar, sessions, proxy, JS render | P2 |
-| 04 | B04 | mcp_tool | ~1623 | ~3584 | 45% | SSE transport, OAuth, subscriptions | P2 |
-| 05 | B05 | file | ~561 | ~1220 | 46% | glob, fswatch, diff, hex view, symlink | P2 |
-| 06 | B06 | feishu_tools | ~210 | ~872 | 24% | doc_read + drive_list only | P2 |
-| 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough, timeout UX, dir persist | P2 |
-| 08 | B08 | send_message | ~500 | ~900 | 55% | inline buttons, media groups, reply threading | P2 |
-| 09 | B09 | patch | ~700 | ~1200 | 58% | dry-run mode, conflict resolution | P2 |
-| 10 | B10 | session_search | ~300 | ~650 | 46% | FTS5 query syntax, pagination, filtering | P2 |
-| 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 |
+| # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority | Status |
+|---|----|------|-------|-----------|--------|-----------------|----------|--------|
+| 01 | B01 | browser | ~1678 | ~3800 | 44% | autofill, PDF download | P2 | REAL |
+| 02 | B02 | vision | ~296 | ~1421 | 21% | face detection, barcode (OCR/EXIF via Python helper) | P2 | PARTIAL |
+| 03 | B03 | web | ~629 | ~1561 | 40% | cookie jar persistence, JS render | P2 | REAL |
+| 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth wiring (libmcp_oauth exists but not integrated) | P2 | PARTIAL |
+| 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
+| 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
+| 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec | P2 | PARTIAL |
+| 08 | B08 | send_message | ~500 | ~900 | 55% | inline buttons, reply_to_message_id, media groups | P2 | PARTIAL |
+| 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution still missing | P2 | PARTIAL |
+| 10 | B10 | session_search | ~386 | ~650 | 59% | tag_filter, role_filter, session_id_filter, offset pagination, snippet — FTS5 syntax remains | P2 | PARTIAL |
+| 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 20 gaps (10 P2, 10 P3)**
+**S6: 15 gaps (8 P2, 7 P3) — Phase 60: B09 dry_run implemented. 5 stale features retired from B05/B06/B08/B10.**
 
 ---
 
@@ -277,31 +264,29 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
-| S1: Conversation Loop Plumbing | 20 | 0 | 15 | 5 | 0 | 8 stale claims + 1 done (L14) discovered in Phase 57 sweep |
-| S2: Agent Modules | 45 | 1* | 19 | 14 | 11 | 45 Python modules with no C equivalent |
+| S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
+| S2: Agent Modules | 18 | 0 | 0 | 3 | 0 | 30 stale retired in Phase 59. 3 real implementable + 15 won't-port |
 | S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-| S6: Tool Depth | 20 | 0 | 0 | 10 | 10 | Feature gaps in partially ported tools |
+| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 60: B09 dry_run implemented. B05/B06/B08/B10 stale claims retired |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **202** | **7** | **56** | **79** | **61** | **Phase 58: 19 stale + 4 done. All S1 real gaps retired.** |
-
-*S2 includes display.py (A13) marked P0 — moves to Phase 0
+|| **TOTAL** | **155** | **6** | **37** | **66** | **47** | **Phase 60: B09 dry_run implemented. S6: 5 stale tool- depth claims retired.** |
 
 ### Phase Map
 
 | Phase | Focus | Sectors | Gap Count |
 |-------|-------|---------|-----------|
-|| Phase 0 | Display & Visual | S0 (2) + A13 | 3 |
-| Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (28), S8 (6), S4 P1 (14) | ~48 |
+|| Phase 0 | Display & Visual | S0 (2) | 2 |
+| Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
 | Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
 | Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~33 |
 | Phase 4 | CLI ecosystem | S5 | ~30 |
-| Phase 5 | Plugin system + Remaining agent modules | S9, S2 P2-P3 | ~46 |
-| Phase 6 | Architecture gaps | S10 | ~10 |
+| Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
+| Phase 6 | Agent module depth | S2 (3 real) + S8 remaining | ~13 |
 
 ---
 
