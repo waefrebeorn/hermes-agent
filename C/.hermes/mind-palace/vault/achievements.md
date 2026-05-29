@@ -1645,4 +1645,11 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v245
 | P173-01 | Ported Python `cron/jobs.py` `_job_output_dir()` — `cron_validate_job_id()` rejects empty, ".", "..", "/", "\\", absolute paths, drive letters. `cron_job_output_dir()` builds safe "{home}/cron/output/{id}" path. | `C/src/cron/cron_extras.c` — `cron_validate_job_id()` + `cron_job_output_dir()` |
 | P173-02 | Ported Python `cron/jobs.py` `_normalize_workdir()` — `cron_normalize_workdir()` expands ~, rejects relative paths, validates existence + is_dir, resolves with realpath. | `C/src/cron/cron_extras.c` — `cron_normalize_workdir()` |
 | P173-03 | Added 17 test assertions: validate_job_id NULL/empty/dot/dotdot/slash/backslash/absolute/drive/valid (9), job_output_dir NULL/invalid/valid (3), normalize_workdir NULL/empty/relative/nonexistent/tmp (5). | `C/tests/test_cron_extras_util.c` — 17 new tests |
-Suite: 311/0/0 (270 test files). Gaps: 134. v245
+Suite: 311/0/0 (270 test files). Gaps: 134. v246
+
+## Phase 174: P176 cron Depth — Apply Skill Fields
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P174-01 | Ported Python `cron/jobs.py` `_apply_skill_fields()` — `cron_apply_skill_fields()` deep-copies a cron job JSON object via serialize/parse, normalizes `skill`/`skills` fields into canonical ordered list via `cron_canonical_skills()`, sets `skills` (array) and `skill` (first item or null). Uses libjson serialize/parse for deep copy. | `C/src/cron/cron_extras.c` — `cron_apply_skill_fields()` |
+| P174-02 | Added 5 test assertions: NULL returns empty object, no-skill→skills=[],skill=null, single skill, array dedup, preserves other fields. | `C/tests/test_cron_extras_util.c` — 5 new tests |
+Suite: 311/0/0 (270 test files). Gaps: 134. v246

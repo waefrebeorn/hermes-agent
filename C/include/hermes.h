@@ -1375,6 +1375,7 @@ bool        cron_ensure_dirs(const char *hermes_home);                    /* mkd
 bool        cron_validate_job_id(const char *job_id, char *out_err);      /* Reject path-escape job IDs */
 char       *cron_job_output_dir(const char *hermes_home, const char *job_id, char *out_err); /* Build safe output dir path */
 char       *cron_normalize_workdir(const char *workdir, char *out_err);   /* Validate + resolve cron workdir path */
+json_node_t *cron_apply_skill_fields(json_node_t *job);                  /* Align skill + skills fields in job JSON */
 
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,

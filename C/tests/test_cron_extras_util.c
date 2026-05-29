@@ -531,6 +531,85 @@ static void test_normalize_workdir_tmp(void) {
 }
 
 /* ================================================================
+ *  cron_apply_skill_fields tests
+ * ================================================================ */
+
+static void test_apply_skill_null(void) {
+    TEST("apply_skill_fields(NULL) -> empty object");
+    json_t *r = cron_apply_skill_fields(NULL);
+    if (r && r->type == JSON_OBJECT) { json_free(r); PASS(); return; }
+    FAIL("expected object"); json_free(r);
+}
+
+static void test_apply_skill_no_skill(void) {
+    TEST("no skill fields -> skills=[], skill=null");
+    json_t *job = json_object();
+    json_t *r = cron_apply_skill_fields(job);
+    json_free(job);
+    if (!r) { FAIL("NULL"); return; }
+    json_t *skills = json_obj_get(r, "skills");
+    json_t *skill = json_obj_get(r, "skill");
+    bool ok = (skills && skills->type == JSON_ARRAY && json_len(skills) == 0 &&
+               skill && skill->type == JSON_NULL);
+    json_free(r);
+    if (ok) { PASS(); return; }
+    FAIL("expected empty skills + null skill");
+}
+
+static void test_apply_skill_single(void) {
+    TEST("single skill string -> skills=[\"x\"], skill=\"x\"");
+    json_t *job = json_object();
+    json_set(job, "skill", json_string("x"));
+    json_t *r = cron_apply_skill_fields(job);
+    json_free(job);
+    if (!r) { FAIL("NULL"); return; }
+    json_t *skills = json_obj_get(r, "skills");
+    json_t *skill = json_obj_get(r, "skill");
+    bool ok = (skills && skills->type == JSON_ARRAY && json_len(skills) == 1 &&
+               skill && skill->type == JSON_STRING &&
+               strcmp(skill->str_val, "x") == 0);
+    json_free(r);
+    if (ok) { PASS(); return; }
+    FAIL("expected skills=[x], skill=x");
+}
+
+static void test_apply_skill_array(void) {
+    TEST("skills array -> skills deduplicated, skill=first");
+    json_t *job = json_object();
+    json_t *arr = json_array();
+    json_append(arr, json_string("a"));
+    json_append(arr, json_string("b"));
+    json_append(arr, json_string("a"));
+    json_set(job, "skills", arr);
+    json_t *r = cron_apply_skill_fields(job);
+    json_free(job);
+    if (!r) { FAIL("NULL"); return; }
+    json_t *skills = json_obj_get(r, "skills");
+    json_t *skill = json_obj_get(r, "skill");
+    bool ok = (skills && skills->type == JSON_ARRAY && json_len(skills) == 2 &&
+               skill && skill->type == JSON_STRING &&
+               strcmp(skill->str_val, "a") == 0);
+    json_free(r);
+    if (ok) { PASS(); return; }
+    FAIL("expected skills=[a,b], skill=a");
+}
+
+static void test_apply_skill_preserves_other(void) {
+    TEST("preserves other fields");
+    json_t *job = json_object();
+    json_set(job, "id", json_string("job42"));
+    json_set(job, "skill", json_string("test"));
+    json_t *r = cron_apply_skill_fields(job);
+    json_free(job);
+    if (!r) { FAIL("NULL"); return; }
+    json_t *id = json_obj_get(r, "id");
+    bool ok = (id && id->type == JSON_STRING && strcmp(id->str_val, "job42") == 0);
+    json_free(r);
+    if (ok) { PASS(); return; }
+    FAIL("expected id preserved");
+}
+
+/* ================================================================
  *  cron_parse_duration tests
  * ================================================================ */
 
@@ -708,6 +787,13 @@ int main(void) {
     test_normalize_workdir_relative();
     test_normalize_workdir_nonexistent();
     test_normalize_workdir_tmp();
+
+    printf("\n--- cron_apply_skill_fields ---\n");
+    test_apply_skill_null();
+    test_apply_skill_no_skill();
+    test_apply_skill_single();
+    test_apply_skill_array();
+    test_apply_skill_preserves_other();
 
     printf("\n==========================\n");
     printf("Results: %d/%d passed\n", passed, tests);

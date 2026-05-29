@@ -596,6 +596,69 @@ char *cron_normalize_workdir(const char *workdir, char *out_err) {
     return strdup(resolved);
 }
 
+/**
+ * Align the `skill` and `skills` fields in a cron job JSON object.
+ *
+ * Port of Python cron/jobs.py _apply_skill_fields().
+ * Creates a new JSON object (deep copy), normalizes skill/skills into
+ * canonical ordered list, sets both `skills` (array) and `skill` (first
+ * item or NULL) on the copy.
+ *
+ * Returns new JSON object (caller must json_free). Returns NULL on
+ * allocation failure.
+ */
+json_t *cron_apply_skill_fields(json_t *job) {
+    if (!job || job->type != JSON_OBJECT) {
+        json_t *empty = json_object();
+        return empty;
+    }
+
+    /* Deep copy the job object */
+    const char *json_str = json_serialize(job);
+    if (!json_str) {
+        return json_copy(job);  /* fallback */
+    }
+    char *err = NULL;
+    json_t *copy = json_parse(json_str, &err);
+    free(err);
+    if (!copy) {
+        free((void*)json_str);
+        return json_copy(job);  /* fallback */
+    }
+    free((void*)json_str);
+
+    /* Extract skill and skills fields */
+    json_t *skill_json = json_obj_get(copy, "skill");
+    json_t *skills_json = json_obj_get(copy, "skills");
+
+    const char *skill_str = NULL;
+    if (skill_json && skill_json->type == JSON_STRING) {
+        skill_str = skill_json->str_val;
+    }
+
+    /* Normalize via cron_canonical_skills */
+    size_t skill_count = 0;
+    char **skills_list = cron_canonical_skills(skill_str, skills_json, &skill_count);
+
+    /* Set skills array */
+    json_t *skills_arr = json_array();
+    for (size_t i = 0; i < skill_count; i++) {
+        json_append(skills_arr, json_string(skills_list[i]));
+        free(skills_list[i]);
+    }
+    free(skills_list);
+    json_set(copy, "skills", skills_arr);
+
+    /* Set skill string (first item or JSON_NULL) */
+    if (skill_count > 0) {
+        json_set(copy, "skill", json_string(skills_arr->c.items[0]->str_val));
+    } else {
+        json_set(copy, "skill", json_null());
+    }
+
+    return copy;
+}
+
 /** Normalize a skill/skills parameter into a canonical, deduplicated string list.
  *  Returns malloc'd NULL-terminated array (caller frees each string + array).
  *  Port of Python cronjob_tools._canonical_skills(). */
