@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v157 | Fork diverged — C/ lives only on fork | Suite 295/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 149 structural gaps, 1000+ test case gaps across 9 sectors. yuanbao_tools bug fix + 21-test suite. Phase 81.**
+**v158 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 148 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 82.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -188,8 +188,8 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 249 | 19.7% | P1 |
-| 02 | X02 | Test LOC | 473,891 | 58,416 | 12.3% | P1 |
+| 01 | X01 | Test files | 1,262 | 250 | 19.8% | P1 |
+| 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
 | 05 | X05 | Integration tests (live API) | ~300 | 0 | 0% | P1 |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **149** | **6** | **36** | **63** | **44** | **yuanbao_tools bug fix + test suite (21 tests). Phase 81.** |
+||| **TOTAL** | **148** | **6** | **36** | **63** | **43** | **libtooloutput test suite (23 tests). Phase 82.** |
 
 ### Phase Map
 

@@ -1,7 +1,7 @@
-# Overnight (v157)
+# Overnight (v158)
 
-149 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 295/0/0 (249 test files). Phase 81: yuanbao_tools bug fix + test suite.
+148 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 294/0/0 (250 test files). Phase 82: libtooloutput test suite (23 tests).
 
 ## Current Phase: Phase 6 complete — S2 all real gaps PORTED
 A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.

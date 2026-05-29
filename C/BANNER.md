@@ -1,8 +1,8 @@
-# BANNER — WuBu Slermes C Translation (v157)
+# BANNER — WuBu Slermes C Translation (v158)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v157                                       ║
+║  WuBu Slermes C v158                                       ║
 ║  295/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  151 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
@@ -10,7 +10,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v157)
+## Build Metrics (v158)
 
 | Metric | Value |
 |--------|-------|

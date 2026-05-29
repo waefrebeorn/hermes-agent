@@ -814,6 +814,15 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Rem
 
 Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 models_dev at 60%.
 
+## Phase 82: libtooloutput test suite (v158)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P82-01 | test_tool_output.c (23 tests) — env var overrides, default values, invalid inputs, boundary checks, limit functions | `tests/test_tool_output.c` |
+| P82-02 | Removed stale duplicate tool_output test_runner entry (separate-compilation pattern conflicting with source-include test) | `test_runner.sh` — lines 115-127 removed |
+
+Suite: 294/0/0. Test files: 250. Gaps: 148.
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |
