@@ -1240,7 +1240,17 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P119-02 | Bug fix: `url_is_always_blocked()` now checks dynamic domain blocklist (was checking only hardcoded private IP patterns) | `src/tools/url_safety.c` — blocklist iteration in `url_is_always_blocked()` |
 | P119-03 | First registered url_safety test in test_runner.sh | `test_runner.sh` — url_safety inline compile |
 
-Suite: 300/0/0 (256 test files). Gaps: 145.
+Suite: 300/0/0 (257 test files). Gaps: 145.
+
+## Phase 121: Send Target Parse (M38)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P121-01 | Extracted inline target_ref parsing to standalone `parse_send_target()` with `send_target_t` struct | `src/tools/send_message.c` |
+| P121-02 | 15-test suite (41 assertions) for platform:chat_id[:thread_id] parsing, overrides, edge cases | `tests/test_send_target.c` |
+| P121-03 | Registered as M38 in test_runner.sh (parallel background) | `test_runner.sh` |
+
+Suite: 300/0/0 (257 test files). Gaps: 145.
 
 ## Phase 120: Registry Test Suite
 | ID | Achievement | Evidence |

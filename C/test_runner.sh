@@ -2721,6 +2721,17 @@ if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I
     else fail "send_message_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_sendmsg
 else skip "send_message_tool (compilation failed)"
+fi
+
+# Parse send target unit tests (M38)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_send_target.c" \
+    "$CDIR/src/tools/send_message.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_sendtarget -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_sendtarget > /dev/null 2>&1; then ok "send_target_parse (17 tests)"
+    else fail "send_target_parse (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_sendtarget
+else skip "send_target_parse (compilation failed)"
 fi &
 
 # Voice mode test (voice_mode.c config API)

@@ -1,4 +1,4 @@
-# Slermes C (v196)
+# Slermes C (v197)
 
 Suite: 300/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 257 | C src: 175
@@ -70,6 +70,9 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 116: Credential pool wiring — cred_pool field in llm_config_t, pool creation in agent_configure_from_config, HTTP status reporting to pool, credential_expired check in retry loop triggers fallback. Suite 299/0/0 (v191)
 |- Phase 117: Env passthrough test expansion — 10 new edge-case assertions: NULL/empty handling, blocked-var rejection, duplicate registration, free_list NULL safety, clear-then-re-register. Tests 27→37. Suite 299/0/0 (v192)
 |- Phase 118: B02 vision native base64 data URL — image_to_base64_data_url() converts local images to data: URIs for direct provider consumption. Wire into both extension-based and magic-byte detection paths. 4 new test assertions (35 total). Vision.c 417→517 LOC. B02 29%→36%. Suite 299/0/0 (v194, 1 pre-existing skip)
+|- Phase 119: url_safety test suite (29 assertions) + blocklist bug fix — url_is_always_blocked() wasn't checking dynamic domain blocklist. Suite 300/0/0 (256 test files). S7 X01 test files 255→256.
+|- Phase 120: Registry test suite — 30 assertions (register/dispatch/timeout/name matching/toolset/availability). Suite 300/0/0 (257 test files). (v196)
+|- Phase 121: parse_send_target() extracted from send_message.c inline code to standalone function. 15-test suite (41 assertions) covering platform:chat_id[:thread_id] parsing, overrides, edge cases. Suite 300/0/0 (257 test files).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -78,4 +81,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 108: budget_tracker test suite (31 tests). Suite 299/0/0 (254 test files).
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 121: parse_send_target test suite (17 tests). Suite 300/0/0 (257 test files).

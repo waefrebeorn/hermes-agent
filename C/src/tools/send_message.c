@@ -14,6 +14,69 @@
 #include <sys/stat.h>
 #include <ctype.h>
 
+/* Parsed target info: platform, chat_id, thread_id */
+typedef struct {
+    char platform[64];
+    char chat_id[256];
+    char thread_id[64];
+} send_target_t;
+
+/* Parse target string in "platform:chat_id[:thread_id]" format.
+ * If target is "stdout" or "local" without a colon and no override,
+ * sets platform to empty string (caller interprets bare target).
+ * If platform_override is set, uses it instead of parsing from target.
+ * Returns true on success, false on invalid format. */
+bool parse_send_target(const char *target, const char *platform_override, send_target_t *out) {
+    memset(out, 0, sizeof(*out));
+    if (!target || !target[0]) return false;
+
+    if (platform_override && platform_override[0]) {
+        snprintf(out->platform, sizeof(out->platform), "%s", platform_override);
+        /* If target contains ':', parse chat_id from target even with override */
+        const char *colon = strchr(target, ':');
+        if (colon && colon != target) {
+            const char *second_colon = strchr(colon + 1, ':');
+            if (second_colon) {
+                size_t cid_len = (size_t)(second_colon - colon - 1);
+                if (cid_len < sizeof(out->chat_id)) {
+                    memcpy(out->chat_id, colon + 1, cid_len);
+                    out->chat_id[cid_len] = '\0';
+                }
+                snprintf(out->thread_id, sizeof(out->thread_id), "%s", second_colon + 1);
+            } else {
+                snprintf(out->chat_id, sizeof(out->chat_id), "%s", colon + 1);
+            }
+        }
+        return true;
+    }
+
+    /* No override: parse platform from colon-separated target */
+    const char *colon = strchr(target, ':');
+    if (colon && colon != target) {
+        size_t plen = (size_t)(colon - target);
+        if (plen < sizeof(out->platform)) {
+            memcpy(out->platform, target, plen);
+            /* Check for second colon (chat_id:thread_id) */
+            const char *second_colon = strchr(colon + 1, ':');
+            if (second_colon) {
+                size_t cid_len = (size_t)(second_colon - colon - 1);
+                if (cid_len < sizeof(out->chat_id)) {
+                    memcpy(out->chat_id, colon + 1, cid_len);
+                    out->chat_id[cid_len] = '\0';
+                }
+                snprintf(out->thread_id, sizeof(out->thread_id), "%s", second_colon + 1);
+            } else {
+                snprintf(out->chat_id, sizeof(out->chat_id), "%s", colon + 1);
+            }
+            return true;
+        }
+    }
+
+    /* Bare target like "stdout" or "local" — leave platform empty, caller uses target directly */
+    out->platform[0] = '\0'; /* Signal: use target directly */
+    return true;
+}
+
 /* Redact secrets from error text (port of Python send_message_tool._sanitize_error_text) */
 char *sanitize_error_text(const char *text) {
     if (!text) return NULL;
@@ -232,40 +295,17 @@ char *send_message_handler(const char *args_json, const char *task_id) {
         json_object_set(result, "error", json_new_string("Missing message"));
     } else {
         /* F42: Parse target for platform:chat_id format */
-        char platform_buf[64] = {0};
-        char chat_id_buf[256] = {0};
-        char thread_id_buf[64] = {0};
-        const char *platform = platform_override;
-        const char *chat_id = NULL;
-        const char *target_thread_id = NULL;
-
-        if (!platform) {
-            const char *colon = strchr(target, ':');
-            if (colon && colon != target) {
-                /* platform:chat_id[:thread_id] format */
-                size_t plen = (size_t)(colon - target);
-                if (plen < sizeof(platform_buf)) {
-                    memcpy(platform_buf, target, plen);
-                    platform_buf[plen] = '\0';
-                    platform = platform_buf;
-                    /* Check for second colon (chat_id:thread_id) */
-                    const char *second_colon = strchr(colon + 1, ':');
-                    if (second_colon) {
-                        size_t cid_len = (size_t)(second_colon - colon - 1);
-                        if (cid_len < sizeof(chat_id_buf)) {
-                            memcpy(chat_id_buf, colon + 1, cid_len);
-                            chat_id_buf[cid_len] = '\0';
-                            chat_id = chat_id_buf;
-                        }
-                        snprintf(thread_id_buf, sizeof(thread_id_buf), "%s", second_colon + 1);
-                        target_thread_id = thread_id_buf;
-                    } else {
-                        snprintf(chat_id_buf, sizeof(chat_id_buf), "%s", colon + 1);
-                        chat_id = chat_id_buf;
-                    }
-                }
-            }
+        send_target_t parsed_target;
+        if (!parse_send_target(target, platform_override, &parsed_target)) {
+            json_object_set(result, "error", json_new_string("Invalid target format"));
+            char *json_out = json_serialize(result);
+            json_free(result);
+            json_free(args);
+            return json_out;
         }
+        const char *platform = parsed_target.platform[0] ? parsed_target.platform : NULL;
+        const char *chat_id = parsed_target.chat_id[0] ? parsed_target.chat_id : NULL;
+        const char *target_thread_id = parsed_target.thread_id[0] ? parsed_target.thread_id : NULL;
 
         /* Use thread_id from args if provided, fallback to target parsing */
         if (!thread_id || !thread_id[0]) {

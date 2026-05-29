@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v191)
+# BANNER — WuBu Slermes C Translation (v197)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v196                                       ║
+║  WuBu Slermes C v197                                       ║
 ║  300/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 120: registry test suite                          ║
+║  Phase 121: send target parse                           ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
