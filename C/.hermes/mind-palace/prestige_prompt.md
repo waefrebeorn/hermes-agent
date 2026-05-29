@@ -1,4 +1,4 @@
-# Prestige (v156)
+# Prestige (v157)
 
 ## P0 — Display & Visual + Architecture (6 gaps)
 D09, D16: Prompt input (partial), type-ahead
@@ -31,4 +31,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (47 gaps)
 Plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 150 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:63, P3:44**
+**Total: 149 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:63, P3:43**

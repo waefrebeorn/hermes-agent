@@ -814,6 +814,17 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Rem
 
 Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 models_dev at 60%.
 
+## Phase 81: yuanbao_tools bug fix + test suite (v157)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P81-01 | yb_search_sticker_handler: strdup query before json_free — fixes dangling pointer use-after-free on every search | `src/tools/yuanbao_tools.c:212-213` |
+| P81-02 | yb_send_sticker_handler: strdup sticker_arg/chat_id before json_free — fixes same pattern in sticker send | `src/tools/yuanbao_tools.c:315-316` |
+| P81-03 | yb_send_dm_handler: strdup user_id/name/group_code/message before json_free — fixes same pattern in DM send | `src/tools/yuanbao_tools.c:605-608` |
+| P81-04 | test_yuanbao_tools.c (21 tests) — covers sticker search by ID, empty query, limit clamping, null args, sticker DB integrity | `tests/test_yuanbao_tools.c` |
+
+Suite: 295/0/0. Gaps: 149. Test files: 249.
+
 ## Phase 80: B03 web_get save-to-file mode (v156)
 
 | ID | Achievement | Evidence |

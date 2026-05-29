@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v156 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 150 structural gaps, 1000+ test case gaps across 9 sectors. B03 web: save-to-file mode added to web_get (save_path param for binary downloads). Phase 80.**
+**v157 | Fork diverged — C/ lives only on fork | Suite 295/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 149 structural gaps, 1000+ test case gaps across 9 sectors. yuanbao_tools bug fix + 21-test suite. Phase 81.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -188,8 +188,8 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 248 | 19.6% | P1 |
-| 02 | X02 | Test LOC | 473,891 | 56,787 | 12.0% | P1 |
+| 01 | X01 | Test files | 1,262 | 249 | 19.7% | P1 |
+| 02 | X02 | Test LOC | 473,891 | 58,416 | 12.3% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
 | 05 | X05 | Integration tests (live API) | ~300 | 0 | 0% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 20 gap clusters (9 P1, 3 P2, 8 P3) — 1,000+ individual test cases**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 81: yuanbao_tools test suite (21 tests).**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **150** | **6** | **36** | **64** | **46** | **B03 web save-to-file mode (binary/PDF download). Phase 80.** |
+||| **TOTAL** | **149** | **6** | **36** | **63** | **44** | **yuanbao_tools bug fix + test suite (21 tests). Phase 81.** |
 
 ### Phase Map
 
