@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v173 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 98.**
+**v174 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 99.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -175,12 +175,12 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
 | 07 | B07 | terminal | ~942 | ~2409 | 39% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96) | P2 | PARTIAL |
-| 08 | B08 | send_message | ~516 | ~1786 | 29% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97) | P2 | PARTIAL |
+| 08 | B08 | send_message | ~537 | ~1786 | 30% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99) | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 98: B01 URL safety + full snapshot (browser 45%→60%).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 99: B08 action=list (send_message 29%→30%).**
 
 ---
 

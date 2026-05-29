@@ -89,6 +89,7 @@ char *sanitize_error_text(const char *text) {
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
+      "\"action\":{\"type\":\"string\",\"description\":\"Action: 'send' (default) or 'list' (show available platforms)\"},"
       "\"target\":{\"type\":\"string\",\"description\":\"'local' (save), 'stdout' (print), or 'platform:target' (e.g., telegram:-100123456)\"},"
       "\"message\":{\"type\":\"string\",\"description\":\"Message text to send\"},"
       "\"media_path\":{\"type\":\"string\",\"description\":\"Optional file path to attach as media (image, audio, video, document)\"},"
@@ -190,6 +191,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     json_node_t *args = json_parse(args_json, &err);
     if (!args) { free(err); return strdup("{\"error\":\"JSON parse\"}"); }
 
+    const char *action = json_object_get_string(args, "action", "send");
     const char *target = json_object_get_string(args, "target", "stdout");
     const char *message = json_object_get_string(args, "message", NULL);
     const char *media_path = json_object_get_string(args, "media_path", NULL);
@@ -199,10 +201,29 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     json_node_t *inline_buttons_node = json_object_get(args, "inline_buttons");
     json_node_t *media_group = json_object_get(args, "media_group");
 
-/* Parse disable_link_previews from args before json_free */
+    /* Parse disable_link_previews from args before json_free */
     bool disable_preview = json_object_get_bool(args, "disable_link_previews", false);
 
     json_node_t *result = json_new_object();
+
+    /* action=list: return available platforms */
+    if (strcmp(action, "list") == 0) {
+        json_free(args);
+        json_object_set(result, "action", json_new_string("list"));
+        json_node_t *platforms = json_new_array();
+        json_array_append(platforms, json_new_string("stdout"));
+        json_array_append(platforms, json_new_string("local"));
+        json_array_append(platforms, json_new_string("telegram"));
+        json_array_append(platforms, json_new_string("discord"));
+        json_array_append(platforms, json_new_string("slack"));
+        json_array_append(platforms, json_new_string("matrix"));
+        json_array_append(platforms, json_new_string("signal"));
+        json_object_set(result, "platforms", platforms);
+        json_object_set(result, "format", json_new_string("platform:chat_id[:thread_id]"));
+        char *json_out = json_serialize(result);
+        json_free(result);
+        return json_out;
+    }
 
     if (!message) {
         json_object_set(result, "error", json_new_string("Missing message"));

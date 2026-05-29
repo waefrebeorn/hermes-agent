@@ -984,6 +984,16 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 99: B08 send_message action=list (v174)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P99-01 | send_message handler parses `action` param (default "send") | `src/tools/send_message.c` — `json_object_get_string(args, "action", "send")` |
+| P99-02 | action=list returns available platforms (stdout, local, telegram, discord, slack, matrix, signal) with format hint | `src/tools/send_message.c` — action=list branch, json array of platform names |
+| P99-03 | Schema updated with action param description | `src/tools/send_message.c` — SCHEMA constant |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 98: B01 browser URL safety + full snapshot (v173)
 
 | ID | Achievement | Evidence |
