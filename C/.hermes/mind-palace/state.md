@@ -1,4 +1,4 @@
-# Slermes C (v159)
+# Slermes C (v160)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -35,6 +35,7 @@ Battleship v34 (148 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 81: yuanbao_tools dangling pointer bug fix + 21-test suite. 3 use-after-free bugs fixed.
 - Phase 82: libtooloutput 23-test suite (env vars, defaults, boundary checks). Test count 295→294 (duplicate tool_output entry removed). Test files 249→250. 149→148 gaps.
 - Phase 83: send_message error redaction (B08 depth). Port of Python _sanitize_error_text — redacts secrets (access_token, api_key, token, sig) from error messages before surfacing to users/models.
+- Phase 84: send_message test expansion — 6 sanitize_error_text tests (URL params, generic assignment, safe text, NULL, multiple tokens, sig). Battleship B01 stale claim corrected (PDF download exists via browser_generate_pdf/CDP).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)

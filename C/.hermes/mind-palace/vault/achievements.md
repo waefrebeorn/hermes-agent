@@ -831,6 +831,15 @@ Suite: 294/0/0. Test files: 250. Gaps: 148.
 
 Suite: 294/0/0. Test files: 250. Gaps: 148. B08 depth +1%.
 
+## Phase 84: send_message test expansion + B01 stale fix (v160)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P84-01 | 6 sanitize_error_text tests: URL query param redaction, generic assignment redaction, no false positives on safe text, NULL input, multiple tokens, sig parameter | `tests/test_send_message.c` — tests 15-20 |
+| P84-02 | Battleship B01 stale claim corrected: PDF download already exists via browser_generate_pdf (CDP), not a gap | `.hermes/mind-palace/battleship-v34.md` — B01 entry |
+
+Suite: 294/0/0. Test files: 250. Gaps: 148. B01 44%→45%.
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |
