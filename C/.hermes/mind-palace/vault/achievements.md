@@ -1162,4 +1162,13 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P110-06 | inline_buttons with stdout works | `tests/test_send_message.c` |
 | P110-07 | Very long message (4KB) no-crash | `tests/test_send_message.c` |
 
+## Phase 111: Terminal Quote Stripping
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P111-01 | _strip_quotes() — strips single-quoted, double-quoted, and backtick content | `src/tools/terminal.c` — _strip_quotes() |
+| P111-02 | _check_foreground_guidance uses stripped command — prevents false-positive on echoed text | `src/tools/terminal.c` — _check_foreground_guidance() |
+| P111-03 | Backslash-escape handling inside double-quoted strings | `src/tools/terminal.c` — _strip_quotes() |
+
+
+
 Suite: 298/0/0 (254 test files). Gaps: 145.
