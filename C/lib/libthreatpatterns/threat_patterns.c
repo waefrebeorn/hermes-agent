@@ -175,6 +175,8 @@ static const raw_pattern_t RAW_PATTERNS[] = {
     /* ── C2 / Brainworm-style promptware (scope: context) ──────── */
     { "register\\s+(as\\s+)?a?\\s*node",                            "c2_node_registration", THREAT_SCOPE_CONTEXT },
     { "(heartbeat|beacon|check[\\s\\-]?in)\\s+(to|with)\\s+",       "c2_heartbeat", THREAT_SCOPE_CONTEXT },
+    { "pull\\s+(down\\s+)?(?:new\\s+)?task(?:ing|s)?\\b",           "c2_task_pull", THREAT_SCOPE_CONTEXT },
+    { "connect\\s+to\\s+the\\s+network\\b",                        "c2_network_connect", THREAT_SCOPE_CONTEXT },
     { "you\\s+must\\s+(?:\\w+\\s+){0,3}(register|connect|report|beacon)\\b", "forced_action", THREAT_SCOPE_CONTEXT },
     { "only\\s+use\\s+one[\\s\\-]?liners?\\b",                     "anti_forensic_oneliner", THREAT_SCOPE_CONTEXT },
     { "never\\s+(?:\\w+\\s+)*(?:create|write)\\s+(?:\\w+\\s+)*(?:script|file)\\s+(?:\\w+\\s+)*disk", "anti_forensic_disk", THREAT_SCOPE_CONTEXT },
@@ -185,6 +187,7 @@ static const raw_pattern_t RAW_PATTERNS[] = {
 
     /* ── Exfiltration (scope: all) ──────────────────────────────── */
     { "curl\\s+[^\\n]*\\$\\{?\\w*(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|API)", "exfil_curl", THREAT_SCOPE_ALL },
+    { "wget\\s+[^\\n]*\\$\\{?\\w*(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|API)", "exfil_wget", THREAT_SCOPE_ALL },
     { "cat\\s+[^\\n]*(\\.env|credentials|\\.netrc|\\.pgpass|\\.npmrc|\\.pypirc)", "read_secrets", THREAT_SCOPE_ALL },
 
     /* ── Persistence / SSH backdoor (scope: strict) ─────────────── */
@@ -193,7 +196,9 @@ static const raw_pattern_t RAW_PATTERNS[] = {
     { "\\$HOME/\\.hermes/\\.env|\\~/\\.hermes/\\.env",               "hermes_env", THREAT_SCOPE_STRICT },
     { "(update|modify|edit|write|change|append|add\\s+to)\\s+.*(?:AGENTS\\.md|CLAUDE\\.md|\\.cursorrules|\\.clinerules)", "agent_config_mod", THREAT_SCOPE_STRICT },
     { "(update|modify|edit|write|change|append|add\\s+to)\\s+.*\\.hermes/(config\\.yaml|SOUL\\.md)", "hermes_config_mod", THREAT_SCOPE_STRICT },
-    { "(?:api[_-]?key|token|secret|password)\\s*[=:]\\s*[\"\\'][A-Za-z0-9+/=_-]{20,}", "hardcoded_secret", THREAT_SCOPE_STRICT },
+    { "(?:api[_-]?key|token|secret|password)\\s*[=:]\\s*[\"'][A-Za-z0-9+/=_-]{20,}", "hardcoded_secret", THREAT_SCOPE_STRICT },
+    { "(send|post|upload|transmit)\\s+.*\\s+(to|at)\\s+https?://",   "send_to_url", THREAT_SCOPE_STRICT },
+    { "translate\\s+.*\\s+into\\s+.*\\s+and\\s+(execute|run|eval)",  "translate_execute", THREAT_SCOPE_ALL },
 };
 
 #define RAW_PATTERN_COUNT (sizeof(RAW_PATTERNS) / sizeof(RAW_PATTERNS[0]))

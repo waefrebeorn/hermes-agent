@@ -298,7 +298,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" -I"$CDIR/lib/l
     "$CDIR/tests/test_threat_patterns.c" "$CDIR/lib/libregex/hermes_regex.c" "$CDIR/lib/libthreatpatterns/threat_patterns.c" \
     -o /tmp/hermes_test_threat_patterns -lm 2>/dev/null && [[ -x /tmp/hermes_test_threat_patterns ]]; then
     if /tmp/hermes_test_threat_patterns > /dev/null 2>&1; then
-        ok "threat_patterns"
+        ok "threat_patterns (36 tests)"
     else
         fail "threat_patterns (test binary returned non-zero)"
     fi
