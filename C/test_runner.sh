@@ -2702,11 +2702,11 @@ else skip "send_message_tool (compilation failed)"
 fi &
 
 # Web tool test (M30 — needs web.c + tool_config + registry + http + json)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libhtml" \
     "$CDIR/tests/test_web.c" \
     "$CDIR/src/tools/web.c" "$CDIR/src/tools/tool_config.c" "$CDIR/src/tools/registry.c" \
     "$CDIR/src/tools/url_safety.c" \
-    "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libansi/ansi_strip.c" "$CDIR/src/agent/vault.c" \
+    "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhtml/html.c" "$CDIR/lib/libbase64/base64.c" "$CDIR/lib/libcrypto/crypto.c" "$CDIR/lib/libansi/ansi_strip.c" "$CDIR/src/agent/vault.c" \
     -o /tmp/hermes_test_web -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_web > /dev/null 2>&1; then ok "web_tool (22 tests)"
     else fail "web_tool (test binary returned non-zero)"; fi

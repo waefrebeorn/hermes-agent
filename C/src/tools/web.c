@@ -10,6 +10,7 @@
 #include "hermes_tool_config.h"
 #include "base64.h"
 #include "hermes_url_safety.h"
+#include "html.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -711,6 +712,74 @@ static const char *SCHEMA_EXTRACT = "{"
     "\"required\":[\"url\"]"
 "}";
 
+/* Forward declaration for delegate-based extraction (defined below) */
+static char *web_extract_delegate(const char *url, const char *extract_prompt, int timeout, const char *format);
+
+/* Native HTML-to-text extraction — no Python dependency */
+static char *web_extract_native(const char *url, int timeout) {
+    http_t *http = http_new(timeout);
+    if (!http) return strdup("{\"error\":\"Failed to create HTTP client\"}");
+
+    http_resp_t *resp = http_get(http, url, NULL);
+    if (!resp || resp->status < 200 || resp->status >= 300) {
+        const char *err = resp ? "HTTP error fetching URL" : "Connection failed";
+        if (resp) http_resp_free(resp);
+        http_free(http);
+        json_t *rj = json_object();
+        json_set(rj, "url", json_string(url));
+        json_set(rj, "error", json_string(err));
+        char *out = json_serialize(rj);
+        json_free(rj);
+        return out;
+    }
+
+    char *body = resp->body && resp->body_len > 0 ? strndup(resp->body, resp->body_len) : NULL;
+    http_resp_free(resp);
+    http_free(http);
+
+    if (!body) return strdup("{\"error\":\"Empty response body\"}");
+
+    /* Strip HTML tags to get clean text */
+    char *clean = html_strip_tags(body);
+    free(body);
+    if (!clean) return strdup("{\"error\":\"HTML stripping failed\"}");
+
+    /* Trim whitespace and collapse blank lines */
+    char *src = clean, *dst = clean;
+    while (*src == ' ' || *src == '\t' || *src == '\n' || *src == '\r') src++;
+    bool prev_blank = false;
+    while (*src) {
+        if (*src == '\n') {
+            *dst++ = '\n';
+            src++;
+            while (*src == '\r') src++;
+            prev_blank = true;
+        } else if (*src == ' ' || *src == '\t') {
+            *dst++ = ' ';
+            src++;
+        } else {
+            if (prev_blank && *src == '\n') { src++; continue; }
+            prev_blank = false;
+            *dst++ = *src++;
+        }
+    }
+    while (dst > clean && (dst[-1] == ' ' || dst[-1] == '\n' || dst[-1] == '\r')) dst--;
+    *dst = '\0';
+
+    /* Truncate at 100KB */
+    if (strlen(clean) > 102400) clean[102400] = '\0';
+
+    json_t *result = json_object();
+    json_set(result, "url", json_string(url));
+    json_set(result, "text", json_string(clean));
+    json_set(result, "method", json_string("native"));
+    json_set(result, "length", json_number((double)strlen(clean)));
+    char *json_out = json_serialize(result);
+    json_free(result);
+    free(clean);
+    return json_out;
+}
+
 char *web_extract_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -727,7 +796,18 @@ char *web_extract_handler(const char *args_json, const char *task_id) {
 
     if (!url) return strdup("{\"error\":\"Missing url\"}");
 
-    /* Build delegate script path relative to project root or HERMES_HOME */
+    /* If custom prompt, use LLM-based delegate */
+    if (extract_prompt && strcmp(extract_prompt, "Extract key information from this page") != 0) {
+        return web_extract_delegate(url, extract_prompt, timeout, format);
+    }
+
+    /* Default: native HTML-to-text, no Python dependency */
+    return web_extract_native(url, timeout);
+}
+
+/* Legacy: Python delegate for LLM-based extraction with prompt */
+static char *web_extract_delegate(const char *url, const char *extract_prompt, int timeout, const char *format) {
+    /* Build delegate script path */
     char script_path[1024];
     const char *home = getenv("SLERMES_HOME") ? getenv("SLERMES_HOME") :
                        getenv("HOME") ? getenv("HOME") : ".";
