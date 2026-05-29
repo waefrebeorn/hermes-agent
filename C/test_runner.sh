@@ -1072,6 +1072,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "cron_extras (compilation failed)"
 fi
+# cron_extras P176 utility test (cron_canonical_skills, cron_normalize_value, cron_normalize_deliver)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_cron_extras_util.c" \
+    "$CDIR/src/cron/cron_extras.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_cron_util -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_cron_util > /dev/null 2>&1; then ok "cron_extras_util (P176: 17 tests)"
+    else fail "cron_extras_util (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_cron_util
+else
+    skip "cron_extras_util (compilation failed)"
+fi
 # cron_locking test (P171 — standalone, no external deps beyond hermes.h)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_cron_locking.c" "$CDIR/src/cron/cron_locking.c" \

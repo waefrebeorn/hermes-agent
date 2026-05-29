@@ -359,3 +359,162 @@ bool cron_template_instantiate(const char *template_name,
     snprintf(out_name, out_name_sz, "%s_%ld", template_name, time(NULL));
     return true;
 }
+
+/* ================================================================
+ *  P176: Cron utility functions (port of cronjob_tools.py helpers)
+ * ================================================================ */
+
+/** Normalize a skill/skills parameter into a canonical, deduplicated string list.
+ *  Returns malloc'd NULL-terminated array (caller frees each string + array).
+ *  Port of Python cronjob_tools._canonical_skills(). */
+char **cron_canonical_skills(const char *skill, json_t *skills, size_t *out_count) {
+    size_t cap = 16;
+    size_t count = 0;
+    char **result = calloc(cap, sizeof(char *));
+    if (!result) { *out_count = 0; return NULL; }
+
+    /* Helper: add a string if non-empty and not duplicate */
+    #define ADD_SKILL(s) do { \
+        const char *_s = (s); \
+        if (_s && _s[0]) { \
+            bool dup = false; \
+            for (size_t _i = 0; _i < count; _i++) { \
+                if (strcmp(result[_i], _s) == 0) { dup = true; break; } \
+            } \
+            if (!dup) { \
+                if (count >= cap) { \
+                    cap *= 2; \
+                    char **new_r = realloc(result, cap * sizeof(char *)); \
+                    if (!new_r) { /* leak is acceptable on OOM */ break; } \
+                    result = new_r; \
+                } \
+                result[count] = strdup(_s); \
+                if (result[count]) count++; \
+            } \
+        } \
+    } while(0)
+
+    /* If skills is NULL or empty array, use the single skill string */
+    if (!skills || skills->type != JSON_ARRAY || json_len(skills) == 0) {
+        ADD_SKILL(skill);
+    } else {
+        /* Iterate skills array */
+        size_t n = json_len(skills);
+        for (size_t i = 0; i < n; i++) {
+            json_t *item = json_get(skills, i);
+            if (item && item->type == JSON_STRING) {
+                ADD_SKILL(item->str_val);
+            }
+        }
+        /* If skills array is provided but empty, fall back to skill */
+        if (count == 0) {
+            ADD_SKILL(skill);
+        }
+    }
+
+    #undef ADD_SKILL
+
+    result[count] = NULL;
+    *out_count = count;
+    return result;
+}
+
+/** Normalize an optional value: trim whitespace, return NULL if empty.
+ *  If strip_trailing_slash is true, strips trailing '/' before trimming.
+ *  Returns malloc'd string or NULL. Caller must free.
+ *  Port of Python cronjob_tools._normalize_optional_job_value(). */
+char *cron_normalize_value(const char *value, bool strip_trailing_slash) {
+    if (!value) return NULL;
+
+    const char *p = value;
+    /* Skip leading whitespace */
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+
+    if (!*p) return NULL;  /* empty after leading whitespace */
+
+    /* If strip_trailing_slash, find the effective end (before trailing slashes + whitespace) */
+    const char *end;
+    if (strip_trailing_slash) {
+        /* Find last non-slash non-whitespace char */
+        end = p + strlen(p) - 1;
+        while (end >= p && (*end == '/' || *end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
+            end--;
+    } else {
+        end = p + strlen(p) - 1;
+        while (end >= p && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
+            end--;
+    }
+
+    if (end < p) return NULL;  /* all whitespace/slashes */
+
+    size_t len = (size_t)(end - p + 1);
+    char *result = malloc(len + 1);
+    if (!result) return NULL;
+    memcpy(result, p, len);
+    result[len] = '\0';
+    return result;
+}
+
+/** Normalize a deliver parameter: string stays as trimmed string,
+ *  list/tuple gets joined with commas. Returns malloc'd string or NULL.
+ *  Port of Python cronjob_tools._normalize_deliver_param(). */
+char *cron_normalize_deliver(json_t *deliver) {
+    if (!deliver) return NULL;
+
+    if (deliver->type == JSON_STRING) {
+        /* Trim the string */
+        const char *s = deliver->str_val;
+        while (*s == ' ' || *s == '\t') s++;
+        if (!*s) return NULL;
+        size_t len = strlen(s);
+        while (len > 0 && (s[len-1] == ' ' || s[len-1] == '\t')) len--;
+        return strndup(s, len);
+    }
+
+    if (deliver->type == JSON_ARRAY) {
+        size_t n = json_len(deliver);
+        if (n == 0) return NULL;
+
+        /* First pass: calculate total length */
+        size_t total = 0;
+        for (size_t i = 0; i < n; i++) {
+            json_t *item = json_get(deliver, i);
+            if (item && item->type == JSON_STRING && item->str_val) {
+                const char *s = item->str_val;
+                while (*s == ' ' || *s == '\t') s++;
+                if (*s) {
+                    /* Trim trailing whitespace */
+                    size_t slen = strlen(s);
+                    while (slen > 0 && (s[slen-1] == ' ' || s[slen-1] == '\t')) slen--;
+                    if (slen > 0) total += slen + 1; /* +1 for comma or null */
+                }
+            }
+        }
+        if (total == 0) return NULL;
+
+        char *result = malloc(total);
+        if (!result) return NULL;
+        result[0] = '\0';
+
+        for (size_t i = 0; i < n; i++) {
+            json_t *item = json_get(deliver, i);
+            if (item && item->type == JSON_STRING && item->str_val) {
+                const char *s = item->str_val;
+                while (*s == ' ' || *s == '\t') s++;
+                if (*s) {
+                    /* Trim trailing whitespace */
+                    size_t slen = strlen(s);
+                    while (slen > 0 && (s[slen-1] == ' ' || s[slen-1] == '\t')) slen--;
+                    if (slen > 0) {
+                        if (result[0]) strcat(result, ",");
+                        strncat(result, s, slen);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    return NULL;
+}

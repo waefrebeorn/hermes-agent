@@ -1362,6 +1362,11 @@ const char *cron_chain_get_context(const char *job_name);
 char *cron_chain_get_output(const char *job_name);
 void cron_chain_store_output(const char *job_name, const char *output);
 
+/* P176: Cron utility functions (port of cronjob_tools.py helpers) */
+char **cron_canonical_skills(const char *skill, json_node_t *skills, size_t *out_count);
+char  *cron_normalize_value(const char *value, bool strip_trailing_slash);
+char  *cron_normalize_deliver(json_node_t *deliver);
+
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,
                            const char *command, const char *params_json);
