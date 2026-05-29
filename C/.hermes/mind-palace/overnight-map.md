@@ -1,7 +1,7 @@
-# Overnight (v200)
+# Overnight (v201)
 
 145 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 300/0/0 (257 test files). Phase 124: tool_init registry tests (13 tests). Suite 301/0/0.
+Suite 300/0/0 (257 test files). Phase 125: is_image_size_error depth (B02 vision). Suite 301/0/0.
 
 ## Current Phase: Phase 6 complete — S2 all real gaps PORTED
 A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.
