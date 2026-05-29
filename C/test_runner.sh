@@ -112,20 +112,7 @@ else
     fail "env_passthrough (compilation failed)"
 fi
 
-echo ""; echo "=== Tool Output Lib Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtooloutput" \
-    "$CDIR/tests/test_tool_output.c" "$CDIR/lib/libtooloutput/tool_output.c" \
-    -o /tmp/hermes_test_tool_output -lm 2>/dev/null && [[ -x /tmp/hermes_test_tool_output ]]; then
-    if /tmp/hermes_test_tool_output > /dev/null 2>&1; then
-        ok "tool_output (21 tests)"
-    else
-        fail "tool_output (test binary returned non-zero)"
-    fi
-    rm -f /tmp/hermes_test_tool_output
-else
-    fail "tool_output (compilation failed)"
-fi
-
+echo ""; echo "=== Tool Output Lib Tests === (merged with tool_output below)"
 echo ""; echo "=== Registry Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
     "$CDIR/tests/test_registry.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
@@ -617,12 +604,10 @@ else skip "tool_guardrails (compilation failed)"
 fi &
 
 echo ""; echo "=== Tool Output Limits Tests (tool_output_limits) ==="
-if gcc -O2 -Wall -Wextra \
-    -I"$CDIR/lib/libtooloutput" -I"$CDIR/include" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtooloutput" \
     "$CDIR/tests/test_tool_output.c" \
-    "$CDIR/lib/libtooloutput/tool_output.c" \
     -o /tmp/hermes_test_tool_output -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_tool_output > /dev/null 2>&1; then ok "tool_output"
+    if /tmp/hermes_test_tool_output > /dev/null 2>&1; then ok "tool_output (23 tests)"
     else fail "tool_output (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tool_output
 else skip "tool_output (compilation failed)"
