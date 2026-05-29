@@ -2179,7 +2179,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
     "$CDIR/tests/test_xai_retirement.c" \
     "$CDIR/src/xai_retirement.c" \
     -o /tmp/hermes_test_xretire -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_xretire > /dev/null 2>&1; then ok "xai_retirement (31 tests)"
+    if /tmp/hermes_test_xretire > /dev/null 2>&1; then ok "xai_retirement (35 tests)"
     else
         echo "  xAI retirement test output:"
         /tmp/hermes_test_xretire 2>&1 | sed 's/^/    /'
