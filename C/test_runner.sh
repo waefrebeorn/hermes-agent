@@ -2860,7 +2860,7 @@ echo ""; echo "=== Integration Smoke Tests ==="
 
 echo "  Building hermes binary..."
 make -C "$CDIR" -j$(nproc) > /dev/null 2>&1 || {
-    skip "hermes build"; summary; exit $FAIL
+    wait; skip "hermes build"; summary; exit $FAIL
 }
 HERMES="$CDIR/hermes"
 
