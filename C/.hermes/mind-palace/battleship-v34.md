@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 228+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**Honest assessment: 227+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -15,11 +15,10 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
 | 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search added. Has tab completion + history + bracketed paste. No multi-line edit. | PARTIAL | P0 |
-| 02 | D13 | Bounding box / terminal resize: window resize re-render | SIGWINCH handler + full re-layout | handle_winch exists but no re-layout | REAL GAP | P0 |
-| 03 | D14 | Scaling / wrapping: text reflow on terminal width change | prompt_toolkit auto-wrap + Rich auto-width | Panel has word-wrap; input is fixed-width | REAL GAP | P0 |
-| 04 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
+| 02 | D14 | Scaling / wrapping: text reflow on terminal width change | prompt_toolkit auto-wrap + Rich auto-width | Panel has word-wrap; input is fixed-width | REAL GAP | P0 |
+| 03 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
 
-**S0: 4 gaps (3 real, 1 partial) — down from 18 as of v145 Phase 57.**
+**S0: 3 gaps (2 real, 1 partial) — down from 18 as of v145 Phase 57.**
 
 ---
 
@@ -301,7 +300,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
-| S0: Display & Visual | 4 | 4 | 0 | 0 | 0 | Phase 0 — 13 stale claims retired in v145 |
+| S0: Display & Visual | 3 | 3 | 0 | 0 | 0 | Phase 0 — D13 implemented; 13 stale claims retired |
 | S1: Conversation Loop Plumbing | 28 | 0 | 23 | 5 | 0 | Heart of "how Hermes actually works" |
 | S2: Agent Modules | 45 | 1* | 19 | 14 | 11 | 45 Python modules with no C equivalent |
 | S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
@@ -312,7 +311,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **228** | **9** | **79** | **79** | **61** | **1,000+ test case gaps** |
+|| **TOTAL** | **227** | **8** | **79** | **79** | **61** | **1,000+ test case gaps** |
 
 *S2 includes display.py (A13) marked P0 — moves to Phase 0
 
@@ -320,7 +319,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Phase | Focus | Sectors | Gap Count |
 |-------|-------|---------|-----------|
-|| Phase 0 | Display & Visual | S0 (4) + A13 | 5 |
+|| Phase 0 | Display & Visual | S0 (3) + A13 | 4 |
 | Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (28), S8 (6), S4 P1 (14) | ~48 |
 | Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
 | Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~33 |
