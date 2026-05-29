@@ -1460,6 +1460,14 @@ Suite: 303/0/0 (261 test files). Gaps: 137. v231
 | P160-03 | Added 4 test assertions: HTML `<b>bold</b>` auto-detects HTML, `<a href>` link auto-detects HTML, plain text stays Markdown, explicit Markdown overrides HTML detection. Send_message test suite 44→48 total. | `C/tests/test_send_message.c` — tests 39-42 |
 Suite: 303/0/0 (262 test files). Gaps: 137. v232
 
+## Phase 161: G07 telegram_network Depth — Fallback IP Parsing
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P161-01 | Ported Python telegram_network.py `_normalize_fallback_ips()` and `parse_fallback_ip_env()` — `telegram_parse_fallback_ips()` parses a comma-separated string of IPv4 addresses, validates each via `inet_pton`, and filters out private (10/172.16-31/192.168), loopback (127.x), link-local (169.254.x), unspecified (0.0.0.0), and non-IPv4 values. Returns a malloc'd null-terminated string array with count. | `C/src/gateway/platforms/telegram.c` — `telegram_parse_fallback_ips()` at ~985-1043 |
+| P161-02 | Declared in hermes_gateway.h with doc comment describing the filtering behavior. | `C/include/hermes_gateway.h` — lines ~392-396 |
+| P161-03 | Added 16 standalone test assertions: NULL→empty, empty→empty, valid public IP accepted, private 10.x rejected, loopback 127.x rejected, link-local 169.254.x rejected, invalid string rejected, two valid IPs parsed, mixed valid/invalid keeps valid, IPv6 rejected. | `C/tests/test_telegram_fallback_ips.c` — tests 1-16 |
+Suite: 304/0/0 (263 test files). Gaps: 137. v233
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|

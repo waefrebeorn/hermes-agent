@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v232 | Fork diverged — C/ lives only on fork | Suite 303/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 137 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 262 (20.8% parity). Phase 160: B08 send_message HTML auto-detection. Suite 303/0/0.**
+**v233 | Fork diverged — C/ lives only on fork | Suite 304/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 137 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 263 (20.8% parity). Phase 161: G07 telegram_network — fallback IP parsing (telegram_parse_fallback_ips). Suite 304/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -90,7 +90,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
-|| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Missing: DoH-based fallback IP discovery (TelegramFallbackTransport hostname-preserving transport), _query_doh_provider, discover_fallback_ips, _rewrite_request_for_ip, _normalize_fallback_ips, parse_fallback_ip_env. | P2 | PARTIAL — proxy covered, DoH/fallback transport missing |
+|| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Phase 161: telegram_parse_fallback_ips() validates and normalizes IPv4 addresses for Telegram fallback connectivity. Maps private/loopback/link-local/unspecified/non-IPv4. | P2 | PARTIAL — DoH/fallback transport missing, IP parsing ported |
 || 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
 || 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing). Missing: md5_hex (via hash_md5_hex already in libhash), generate_file_id (via uuid_v4), download_url (async HTTP), COS upload (cloud-specific) | P2 | PARTIAL |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
@@ -98,7 +98,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 8 gaps (2 P1, 6 P2) — G02: media_cache ported. G08: signal_is_rate_limit_error + signal_send_timeout ported from signal_rate_limit.py. G09: basename, MIME, image format, image dimension parsing ported from yuanbao_media.py. All remain PARTIAL.**
+**S3: 8 gaps (2 P1, 6 P2) — Phase 161: G07 telegram_network fallback IP parsing ported.**
 
 ---
 
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 262 | 20.8% | P1 |
+| 01 | X01 | Test files | 1,262 | 263 | 20.8% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 160: test files 261→262.**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 161: test files 262→263.**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | G01 helpers.py ported. G05/G11/G12/G13 stale-retired. 8 remaining. |
+|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 161: G07 fallback IP parsing ported |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 || S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 158: B08 General topic thread_id mapping (telegram_message_thread_id_for_send) |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **137** | **6** | **36** | **63** | **43** | **Phase 160: B08 send_message depth — HTML auto-detection.** |
+||| **TOTAL** | **137** | **6** | **36** | **63** | **43** | **Phase 161: G07 telegram_network fallback IP parsing.** |
 
 ### Phase Map
 

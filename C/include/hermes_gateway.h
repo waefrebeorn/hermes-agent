@@ -389,6 +389,11 @@ const char *telegram_get_message_thread_id(json_node_t *update);
 /* Port of Python TelegramAdapter._message_thread_id_for_send().
  * Maps thread_id "1" (General topic) to NULL for sendMessage. */
 const char *telegram_message_thread_id_for_send(const char *thread_id);
+/* Port of Python telegram_network.parse_fallback_ip_env() +
+ * _normalize_fallback_ips(). Parses comma-separated IPv4 addresses,
+ * filtering private/loopback/link-local/unspecified. Returns malloc'd
+ * array; caller must free each string and the array. */
+char **telegram_parse_fallback_ips(const char *env_value, size_t *count);
 
 /* E07-E12: Interactive Telegram send methods with inline keyboards */
 bool telegram_send_draft(http_client_t *http, const char *chat_id,

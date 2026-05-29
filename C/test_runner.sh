@@ -2764,6 +2764,16 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "telegram_thread_id_for_send (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tg_tid
 else skip "telegram_thread_id_for_send (compilation failed)"
+fi
+
+# Telegram fallback IP parsing (G07 depth)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_telegram_fallback_ips.c" \
+    -o /tmp/hermes_test_tg_fb -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tg_fb > /dev/null 2>&1; then ok "telegram_fallback_ips (16 tests)"
+    else fail "telegram_fallback_ips (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tg_fb
+else skip "telegram_fallback_ips (compilation failed)"
 fi &
 
 # Voice mode test (voice_mode.c config API)

@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v232)**
+**BANNER — WuBu Slermes C Translation (v233)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v232                                       ║
-║  303/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v233                                       ║
+║  304/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  137 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 160: HTML auto-detection                             ║
+║  Phase 161: fallback IP parsing                             ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v232)
+## Build Metrics (v233)
 
 | Metric | Value |
 |--------|-------|

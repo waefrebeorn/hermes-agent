@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 /* ================================================================
  *  Bot identity
@@ -975,6 +976,67 @@ const char *telegram_message_thread_id_for_send(const char *thread_id) {
     if (!thread_id) return NULL;
     if (strcmp(thread_id, "1") == 0) return NULL;
     return thread_id;
+}
+
+/* Port of Python telegram_network._normalize_fallback_ips() and
+ * parse_fallback_ip_env(). Validates and normalizes a comma-separated
+ * list of IPv4 fallback addresses for Telegram API connectivity.
+ * Returns a malloc'd null-terminated string array (caller must free
+ * each string and the array). Sets *count to the number of valid IPs.
+ * Filters out: non-IPv4, private, loopback, link-local, unspecified. */
+char **telegram_parse_fallback_ips(const char *env_value, size_t *count) {
+    if (!env_value || !env_value[0] || !count) {
+        if (count) *count = 0;
+        return NULL;
+    }
+    size_t capacity = 32;
+    size_t n = 0;
+    char **result = (char **)calloc(capacity, sizeof(char *));
+    if (!result) { *count = 0; return NULL; }
+
+    /* Tokenize by comma */
+    char *dup = strdup(env_value);
+    if (!dup) { free(result); *count = 0; return NULL; }
+    char *saveptr = NULL;
+    const char *delim = ",";
+    for (char *tok = strtok_r(dup, delim, &saveptr); tok; tok = strtok_r(NULL, delim, &saveptr)) {
+        /* Strip whitespace */
+        while (*tok == ' ' || *tok == '\t') tok++;
+        char *end = tok + strlen(tok);
+        while (end > tok && (*(end-1) == ' ' || *(end-1) == '\t')) end--;
+        *end = '\0';
+        if (!*tok) continue;
+
+        /* Validate as IPv4 address using inet_pton */
+        struct in_addr addr;
+        if (inet_pton(AF_INET, tok, &addr) != 1) continue;
+        /* Check for private/loopback/link-local/unspecified */
+        const unsigned char *b = (const unsigned char *)&addr;
+        unsigned int ip32 = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+        /* 10.x.x.x, 172.16-31.x.x, 192.168.x.x (private) */
+        if ((b[0] == 10) ||
+            (b[0] == 172 && (b[1] >= 16 && b[1] <= 31)) ||
+            (b[0] == 192 && b[1] == 168)) continue;
+        /* 127.x.x.x (loopback) */
+        if (b[0] == 127) continue;
+        /* 169.254.x.x (link-local) */
+        if (b[0] == 169 && b[1] == 254) continue;
+        /* 0.0.0.0 (unspecified) */
+        if (ip32 == 0) continue;
+
+        /* Accept — grow array if needed */
+        if (n >= capacity) {
+            capacity *= 2;
+            char **new_result = (char **)realloc(result, capacity * sizeof(char *));
+            if (!new_result) break;
+            result = new_result;
+        }
+        result[n] = strdup(tok);
+        if (result[n]) n++;
+    }
+    free(dup);
+    *count = n;
+    return result;
 }
 
 /* ================================================================
