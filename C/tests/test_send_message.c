@@ -274,6 +274,87 @@ int main(void) {
         char *s = json_get_field(res, "status");
         TEST("empty parse_mode defaults to Markdown", s && strcmp(s, "sent") == 0);
         free(s);
+    }
+
+    /* Test 27: disable_link_previews=true accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"preview\",\"disable_link_previews\":true}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("disable_link_previews=true completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 28: thread_id via direct param */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"thread\",\"thread_id\":\"42\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("thread_id param completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 29: reply_to_message_id accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"reply\",\"reply_to_message_id\":\"99\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("reply_to_message_id param completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 30: [[as_document]] directive stripped from message */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"[[as_document]] hello\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("[[as_document]] stripped and completes", s && strcmp(s, "sent") == 0);
+        if (res) {
+            TEST("[[as_document]] removed from message", strstr(res, "[[as_document]]") == NULL);
+        }
+        free(s);
+        free(res);
+    }
+
+    /* Test 31: media_group array accepted (no Telegram, no crash) */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"group\",\"media_group\":[\"/tmp/a.png\",\"/tmp/b.jpg\"]}", NULL);
+        TEST("media_group array does not crash", res != NULL);
+        free(res);
+    }
+
+    /* Test 32: inline_buttons accepted with stdout */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"btns\",\"inline_buttons\":[{\"text\":\"Click\",\"url\":\"https://example.com\"}]}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("inline_buttons with stdout works", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 33: sanitize_error_text sk- prefix in assignment */
+    {
+        char *res = sanitize_error_text("key=sk-proj-abc123def456ghi");
+        /* No specific key=sk- redaction — sanitize uses param names, not value prefixes */
+        TEST("sanitize does not crash on sk prefix", res != NULL);
+        free(res);
+    }
+
+    /* Test 34: Very long message doesn't crash */
+    {
+        char long_msg[4096];
+        memset(long_msg, 'A', sizeof(long_msg) - 1);
+        long_msg[sizeof(long_msg) - 1] = '\0';
+        char args[8192];
+        snprintf(args, sizeof(args),
+            "{\"target\":\"stdout:x\",\"message\":\"%s\"}", long_msg);
+        char *res = send_message_handler(args, NULL);
+        TEST("very long message does not crash", res != NULL);
         free(res);
     }
 
