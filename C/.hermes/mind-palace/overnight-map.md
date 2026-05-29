@@ -1,10 +1,10 @@
-# Overnight (v154)
+# Overnight (v155)
 
-152 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 294/0/0 (248 test files). Phase 78: A22 stream_diag PORTED (user-facing inline notification). Phase 77: A22 streaming header capture.
+151 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 294/0/0 (248 test files). Phase 79: A18 models_dev PORTED (HTTP fetch + 3-tier cache). S2 all real gaps resolved.
 
-## Current Phase: Phase 6 (S2 Agent Module Depth)
-S2 real gaps: A18 models_dev at 60% PARTIAL. A22 stream_diag PORTED.
+## Current Phase: Phase 6 complete — S2 all real gaps PORTED
+A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.
 All S0 remaining, S1 partials stable.
 
 ## Priority stacking

@@ -1,16 +1,16 @@
-# BANNER — WuBu Slermes C Translation (v154)
+# BANNER — WuBu Slermes C Translation (v155)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v154                                       ║
+║  WuBu Slermes C v155                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  152 gaps  │  31MB binary  │  0 warnings                     ║
+║  151 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  A22 stream_diag PORTED │ upstream header notification     ║
+║  S2 complete │ A18 models.dev FETCH │ 3-tier cache        ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v154)
+## Build Metrics (v155)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 152 |
+| Gaps | 151 |

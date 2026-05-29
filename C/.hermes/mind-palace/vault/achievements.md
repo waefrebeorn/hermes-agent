@@ -814,6 +814,17 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Rem
 
 Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 models_dev at 60%.
 
+## Phase 79: A18 models.dev HTTP Fetch + 3-Tier Cache (v155)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P79-01 | models_dev_fetch() — 3-tier cache (in-memory/disk/network) for models.dev/api.json. 1h TTL. Falls back to stale cache on network failure. | `src/agent/provider_metadata.c` — models_dev_fetch() |
+| P79-02 | models_dev_lookup_context() — look up context window from dynamic models.dev data by provider+model | `src/agent/provider_metadata.c` — models_dev_lookup_context() |
+| P79-03 | models_dev_list_json() — flat JSON array matching static table format for /model list integration | `src/agent/provider_metadata.c` — models_dev_list_json() |
+| P79-04 | test_runner.sh: libhttp/http.c + -lz linked into provider_metadata + budget_tracker tests | `test_runner.sh` — provider_metadata, budget_tracker compile blocks |
+
+Suite: 294/0/0 (unchanged). Gaps: 151 — A18 PORTED. S2 phase complete.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

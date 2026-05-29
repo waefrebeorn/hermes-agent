@@ -1,8 +1,8 @@
-# Slermes C (v154)
+# Slermes C (v155)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 175
-Battleship v34 (152 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (151 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -30,12 +30,13 @@ Battleship v34 (152 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 76: Telegram media group support (B08) — media_group array param, builds InputMedia array, sends via telegram_send_media_group()
 - Phase 77: A22 stream diag — upstream header capture wired in streaming path (provider + legacy). http_stream_request now accumulates response headers in http_t.resp_headers. Headers captured before http_free(h) on both streaming paths.
 - Phase 78: A22 stream diag — user-facing inline notification. Logs `[llm] upstream=[cf-ray=... x-openrouter-*]` on stream success. A22 PORTED.
+- Phase 79: A18 models.dev — models_dev_fetch() with 3-tier cache (in-memory/disk/network). models_dev_lookup_context(). models_dev_list_json(). A18 PORTED. S2 all real gaps resolved.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
 - **P1** (37): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (3), CLI ecosystem (1), Architecture (1), Plugin system (1)
-- **P2** (64): S2 agent modules (1), CLI ecosystem (17), Tool depth (8), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
+- **P2** (63): CLI ecosystem (17), Tool depth (8), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 152 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. A22 stream_diag PORTED. Remaining S2 gap: A18 models_dev at 60%.
+Real parity gap is 151 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. S2 phase complete — all 3 real gaps (A15, A22, A18) resolved. Next: S6 tool depth per priority stacking.
