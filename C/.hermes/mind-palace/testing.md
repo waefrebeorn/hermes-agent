@@ -1,4 +1,4 @@
-(v212) (v212)
+(v213) (v213)
 
 301/0/0, 258 test files. All pass. Gap: 258 C tests vs ~17k Python tests.
-Phase 138: safe command preview + B02 stale claim. 140 gaps.
+Phase 139: clean_base64_images. 140 gaps.

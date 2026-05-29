@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v212)
+# BANNER — WuBu Slermes C Translation (v213)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v212                                       ║
+║  WuBu Slermes C v213                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 138: safe command preview + B02 stale claim      ║
+║  Phase 139: base64 image stripping in web      ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

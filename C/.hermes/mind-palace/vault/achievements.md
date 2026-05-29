@@ -1382,3 +1382,9 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P138-01 | Ported _safe_command_preview() from Python terminal_tool. Returns a log-safe, truncated command preview (max 200 chars by default, static buffer). Wired into popen error path for better diagnostics. | `C/src/tools/terminal.c` — _safe_command_preview() at line ~55, used in run_command() error path |
 | P138-02 | Stale claim corrected: B02 "detail param passthrough" confirmed already wired in C vision.c (schema, parsing, forwarding in all 3 code paths + Python delegation). Battleship B02 entry updated. | `C/.hermes/mind-palace/battleship-v34.md` — B02 missing features corrected |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 139: B03 Web Depth — clean_base64_images
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P139-01 | Ported clean_base64_images() from Python web_tools. Strips inline data:image/ URIs (base64-encoded images) from extracted web text, replacing them with placeholder. Wired into web_extract_native() output pipeline. | `C/src/tools/web.c` — _clean_base64_images() near line 740, called in web_extract_native() line ~843 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

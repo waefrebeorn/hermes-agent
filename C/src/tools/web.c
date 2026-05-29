@@ -738,6 +738,51 @@ static const char *SCHEMA_EXTRACT = "{"
 /* Forward declaration for delegate-based extraction (defined below) */
 static char *web_extract_delegate(const char *url, const char *extract_prompt, int timeout, const char *format);
 
+/* Clean base64 encoded images from extracted text.
+ * Mirrors Python web_tools.clean_base64_images(). */
+static char *_clean_base64_images(const char *text) {
+    if (!text) return NULL;
+    size_t len = strlen(text);
+    char *result = (char *)malloc(len + 1);
+    if (!result) return NULL;
+    size_t out = 0;
+    const char *p = text;
+
+    while (*p) {
+        const char *start = strstr(p, "data:image/");
+        if (!start) {
+            size_t remaining = strlen(p);
+            memcpy(result + out, p, remaining);
+            out += remaining;
+            break;
+        }
+        size_t before = (size_t)(start - p);
+        memcpy(result + out, p, before);
+        out += before;
+
+        const char *semi = strstr(start, ";base64,");
+        if (!semi) {
+            size_t rest = strlen(start);
+            memcpy(result + out, start, rest);
+            out += rest;
+            break;
+        }
+        const char *b64_start = semi + 8;
+        const char *b64_end = b64_start;
+        while (*b64_end && *b64_end != ')' && *b64_end != ' ' &&
+               *b64_end != '"' && *b64_end != '\n' && *b64_end != '\t')
+            b64_end++;
+
+        static const char placeholder[] = "[BASE64_IMAGE_REMOVED]";
+        size_t ph_len = strlen(placeholder);
+        memcpy(result + out, placeholder, ph_len);
+        out += ph_len;
+        p = b64_end;
+    }
+    result[out] = '\0';
+    return result;
+}
+
 /* Native HTML-to-text extraction — no Python dependency */
 static char *web_extract_native(const char *url, int timeout) {
     http_t *http = http_new(timeout);
@@ -791,6 +836,13 @@ static char *web_extract_native(const char *url, int timeout) {
 
     /* Truncate at 100KB */
     if (strlen(clean) > 102400) clean[102400] = '\0';
+
+    /* Strip inline base64 images from extracted text */
+    char *cleaned = _clean_base64_images(clean);
+    if (cleaned) {
+        free(clean);
+        clean = cleaned;
+    }
 
     json_t *result = json_object();
     json_set(result, "url", json_string(url));
