@@ -732,3 +732,12 @@ Suite: 294/0/0 (unchanged). Gaps: 154 (−1 from A15 stale).
 | P65-04 | Structured stream error logging with provider/model on failure | `src/agent/llm_client.c` — stream error path |
 
 Suite: 294/0/0 (unchanged). Gaps: 154 (unchanged — A22 reconfirmed as partial gap).
+
+## Phase 66: Stream Drop Diagnostics with Timing (v150)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P66-01 | Stream failure error message includes elapsed time, token count, TTFB from stream_diag_t | `src/agent/llm_client.c` — provider streaming path error handler |
+| P66-02 | Legacy fallback streaming path also gets timing-diagnostic error messages | `src/agent/llm_client.c` — legacy streaming path error handler |
+
+Suite: 294/0/0 (unchanged). Gaps: 154.
