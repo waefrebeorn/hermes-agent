@@ -1,4 +1,4 @@
-# Overnight (v195)
+# Overnight (v196)
 
 145 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
 Suite 300/0/0 (255 test files). Phase 118: B02 base64 + suite fix.

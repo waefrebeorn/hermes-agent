@@ -2,11 +2,11 @@
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v195                                       ║
+║  WuBu Slermes C v196                                       ║
 ║  300/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 119: url_safety tests + blocklist bug                          ║
+║  Phase 120: registry test suite                          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

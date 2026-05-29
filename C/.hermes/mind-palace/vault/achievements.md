@@ -1241,3 +1241,12 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P119-03 | First registered url_safety test in test_runner.sh | `test_runner.sh` — url_safety inline compile |
 
 Suite: 300/0/0 (256 test files). Gaps: 145.
+
+## Phase 120: Registry Test Suite
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P120-01 | 30-assertion test suite for tool registry (registration, dispatch, timeout, name matching, toolset filter, availability) | `tests/test_registry.c` |
+| P120-02 | Cleaned up duplicate registry test entries in test_runner.sh | `test_runner.sh` — removed 2 duplicate blocks |
+| P120-03 | Restored accidentally-removed http_pool test | `test_runner.sh` — restored run_lib_test line |
+
+Suite: 299/0/0 (257 test files). Gaps: 145.
