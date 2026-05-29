@@ -529,6 +529,142 @@ char *feishu_extract_reply_text(json_node_t *reply) {
     return shrunk ? shrunk : result;
 }
 
+/* Port of _truncate: truncate text for prompt embedding, appending "..." when over limit. */
+char *feishu_truncate_text(const char *text, int limit) {
+    if (!text) return NULL;
+    size_t len = strlen(text);
+    if (limit > 0 && (int)len <= limit) return strdup(text);
+    if (limit <= 0) limit = 0; /* truncate to "..." */
+    char *out = (char *)malloc((size_t)limit + 4);
+    if (!out) return NULL;
+    if (limit > 0) memcpy(out, text, (size_t)limit);
+    out[limit] = '.';
+    out[limit + 1] = '.';
+    out[limit + 2] = '.';
+    out[limit + 3] = '\0';
+    return out;
+}
+
+/* Port of _extract_semantic_text: extract semantic text, stripping self @mentions.
+ * Works on a reply JSON node (same structure as feishu_extract_reply_text).
+ * Returns malloc'd string — caller must free(). When self_open_id is non-empty,
+ * person elements matching that user_id are skipped. */
+char *feishu_extract_semantic_text(json_node_t *reply, const char *self_open_id) {
+    if (!reply || reply->type != JSON_OBJECT) return strdup("");
+
+    json_node_t *content = json_object_get(reply, "content");
+    if (!content) return strdup("");
+
+    /* If content is a JSON string, parse it */
+    if (content->type == JSON_STRING) {
+        char *err = NULL;
+        json_node_t *parsed = json_parse(content->str_val, &err);
+        free(err);
+        if (parsed) {
+            char *result = feishu_extract_semantic_text(parsed, self_open_id);
+            json_free(parsed);
+            return result;
+        }
+        return strdup(content->str_val);
+    }
+
+    if (content->type != JSON_OBJECT) return strdup("");
+
+    json_node_t *elements = json_object_get(content, "elements");
+    if (!elements || elements->type != JSON_ARRAY) return strdup("");
+
+    size_t count = json_len(elements);
+    if (count == 0) return strdup("");
+
+    /* Estimate max output size: worst case 128 chars per element */
+    size_t cap = count * 128 + 1;
+    char *result = (char *)malloc(cap);
+    if (!result) return NULL;
+    result[0] = '\0';
+    size_t pos = 0;
+
+    for (size_t i = 0; i < count; i++) {
+        json_node_t *elem = json_array_get(elements, i);
+        if (!elem || elem->type != JSON_OBJECT) continue;
+
+        const char *type = json_object_get_string(elem, "type", "");
+        if (strcmp(type, "person") == 0) {
+            json_node_t *person = json_object_get(elem, "person");
+            if (person && person->type == JSON_OBJECT) {
+                const char *uid = json_object_get_string(person, "user_id", "");
+                /* Skip self @mention */
+                if (self_open_id && self_open_id[0] && strcmp(uid, self_open_id) == 0)
+                    continue;
+                /* Add @user_id */
+                if (pos + 2 + strlen(uid) < cap - 1) {
+                    result[pos++] = ' ';
+                    result[pos++] = '@';
+                    size_t ulen = strlen(uid);
+                    memcpy(result + pos, uid, ulen);
+                    pos += ulen;
+                }
+            }
+        } else if (strcmp(type, "text_run") == 0) {
+            json_node_t *text_run = json_object_get(elem, "text_run");
+            if (text_run && text_run->type == JSON_OBJECT) {
+                const char *text = json_object_get_string(text_run, "text", "");
+                size_t tlen = strlen(text);
+                if (pos + 1 + tlen < cap - 1) {
+                    result[pos++] = ' ';
+                    memcpy(result + pos, text, tlen);
+                    pos += tlen;
+                }
+            }
+        } else if (strcmp(type, "docs_link") == 0) {
+            json_node_t *docs_link = json_object_get(elem, "docs_link");
+            if (docs_link && docs_link->type == JSON_OBJECT) {
+                const char *url = json_object_get_string(docs_link, "url", "");
+                size_t ulen = strlen(url);
+                if (pos + 1 + ulen < cap - 1) {
+                    result[pos++] = ' ';
+                    memcpy(result + pos, url, ulen);
+                    pos += ulen;
+                }
+            }
+        }
+    }
+
+    /* Trim leading space */
+    if (pos > 0 && result[0] == ' ') {
+        memmove(result, result + 1, pos - 1);
+        pos--;
+    }
+
+    result[pos] = '\0';
+    /* Remove extra whitespace: " ".join("".join(parts).split()) */
+    if (pos > 0) {
+        /* Compact multiple spaces into one */
+        size_t wp = 0;
+        bool in_space = false;
+        for (size_t i = 0; i < pos; i++) {
+            if (result[i] == ' ' || result[i] == '\t' || result[i] == '\n' || result[i] == '\r') {
+                if (!in_space) {
+                    result[wp++] = ' ';
+                    in_space = true;
+                }
+            } else {
+                result[wp++] = result[i];
+                in_space = false;
+            }
+        }
+        /* Trim trailing space */
+        while (wp > 0 && result[wp - 1] == ' ') wp--;
+        result[wp] = '\0';
+        /* Realloc to exact size */
+        char *shrunk = (char *)realloc(result, wp + 1);
+        return shrunk ? shrunk : result;
+    }
+
+    /* Realloc to exact size */
+    char *shrunk = (char *)realloc(result, pos + 1);
+    return shrunk ? shrunk : result;
+}
+
 /* ── Registry init ──────────────────────────────────────────────── */
 
 void registry_init_feishu_tools(void) {

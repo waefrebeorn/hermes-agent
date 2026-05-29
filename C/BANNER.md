@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v240)**
+**BANNER — WuBu Slermes C Translation (v241)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v240                                       ║
+║  WuBu Slermes C v241                                       ║
 ║  311/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  135 gaps  │  31MB binary  │  0 warnings                     ║
+║  134 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 168: Cron utility functions (17 tests)              ║
+║  Phase 169: G03 feishu_comment depth — 20 tests              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

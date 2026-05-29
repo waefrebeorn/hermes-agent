@@ -1596,4 +1596,21 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P167-03 | Ported pairing store functions from Python -- `feishu_rules_pairing_add/remove/list()` manage pairing-approved users in `HERMES_HOME/feishu_comment_pairing.json`. Atomic save (tmp+rename), mtime caching, null-filter on save. | `C/src/tools/feishu_comment_rules.c` -- pairing functions at ~450-560 |
 | P167-04 | Ported `is_user_allowed()` from Python -- checks allow_from list first, then pairing store if policy is "pairing". Returns false for NULL inputs. | `C/src/tools/feishu_comment_rules.c` -- `feishu_rules_is_user_allowed()` at ~600 |
 | P167-05 | 56-test suite covering: config loading (defaults, with rules, invalid JSON), wiki key detection, rule resolution, allow_from, pairing CRUD, access control, cache invalidation. | `C/tests/test_feishu_comment_rules.c` -- 8 test functions |
-Suite: 310/0/0 (269 test files). Gaps: 135.
+Suite: 310/0/0 (269 test files). Gaps: 135. v239
+
+## Phase 168: P176 cron Utility Functions
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P168-01 | Ported Python cronjob_tools.py `_canonical_skills()` — `cron_canonical_skills()` normalizes skill/skills to a deduplicated list. Handles NULL skills/skill, empty arrays with fallback to skill. | `C/src/cron/cron_extras.c` — at ~340-390 |
+| P168-02 | Ported Python cronjob_tools.py `_normalize_optional_job_value()` — `cron_normalize_value()` trims whitespace and optionally strips trailing `/`. Returns NULL for NULL/empty/whitespace-only/only-slash inputs. | `C/src/cron/cron_extras.c` — at ~395-420 |
+| P168-03 | Ported Python cronjob_tools.py `_normalize_deliver_param()` — `cron_normalize_deliver()` accepts string or JSON array deliver value, returns trimmed CSV string. Handles NULL, empty array, trimmed items. | `C/src/cron/cron_extras.c` — at ~425-520 |
+| P168-04 | 17-test suite covering: canonical skills (null, single, array, dedup, empty fallback), normalize value (null, empty, whitespace, trim, trailing slash, no-strip, only slash), normalize deliver (null, string, array, empty array, trimmed items). All pass. | `C/tests/test_cron_extras_util.c` — 17 tests |
+Suite: 311/0/0 (270 test files). Gaps: 135. v240
+
+## Phase 169: G03 feishu_comment Depth — Truncate + Semantic Text Extract
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P169-01 | Ported Python feishu_comment.py `_truncate()` — `feishu_truncate_text()` truncates text at limit chars with "..." suffix matching Python's `text[:limit] + "..."` behavior. Returns NULL on NULL input, strdup on within-limit, malloc'd truncated string otherwise. Correctly handles limit <= 0 (returns "..."). | `C/src/tools/feishu_tools.c` — at ~533-546 |
+| P169-02 | Ported Python feishu_comment.py `_extract_semantic_text()` — `feishu_extract_semantic_text()` walks reply JSON content.elements[] extracting text from text_run, docs_link, and person element types. Skips person elements matching `self_open_id` (self @-mention suppression). Whitespace-normalized output: multiple spaces collapsed to one, leading/trailing trimmed. Supports content-as-JSON-string double-parse matching Python's json.loads fallback. | `C/src/tools/feishu_tools.c` — at ~549-690 |
+| P169-03 | Added 9 test assertions to standalone test: truncate (NULL, short, long, exact, zero limit, empty) and semantic text (NULL, simple passthrough, self mention). Test count 11→20. | `C/tests/test_feishu_comment.c` — tests 12-20 |
+Suite: 311/0/0 (270 test files). Gaps: 135. v241

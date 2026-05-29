@@ -1,4 +1,4 @@
-# Overnight (v240)
+# Overnight (v241)
 
-135 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 311/0/0 (270 test files). Phase 168: P176 cron utility functions
+134 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 311/0/0 (270 test files). Phase 169: G03 feishu_comment depth — truncate + semantic text extract.

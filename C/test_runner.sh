@@ -2456,7 +2456,7 @@ fi
 # Feishu comment helper tests
 if gcc -O2 -Wall -Wextra -o /tmp/hermes_test_fc "$CDIR/tests/test_feishu_comment.c" -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_fc > /dev/null 2>&1; then
-        ok "feishu_comment_helpers (G03: 11 tests)"
+        ok "feishu_comment_helpers (G03: 20 tests)"
     else
         echo "  Feishu comment helper test output:"
         /tmp/hermes_test_fc 2>&1 | sed 's/^/    /'

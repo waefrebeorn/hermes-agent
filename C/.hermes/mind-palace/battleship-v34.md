@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v240 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 135 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 168: P176 cron utility functions. Suite 311/0/0.**
+**v241 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 134 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 169: G03 feishu_comment depth — truncate + semantic text extract. feishu_truncate_text() + feishu_extract_semantic_text(). 20 tests. Suite 311/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -86,7 +86,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
 || 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio. Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
-| 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
+| 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling — PORTED: textwrap_chunk(), feishu_sanitize_comment_text(), feishu_get_reply_user_id(), feishu_extract_reply_text(), feishu_truncate_text(), feishu_extract_semantic_text(). Missing: async Feishu API functions, prompt builders (won't port — lark_oapi dependent). | P2 | ✅ PORTED — 20 tests (Phase 169) |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
@@ -98,7 +98,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 7 gaps (2 P1, 5 P2) — Phase 167: G04 feishu_comment_rules ported (56 tests).**
+**S3: 6 gaps (2 P1, 4 P2) — Phase 169: G03 feishu_comment ported (20 tests). G06 wecom_callback, G07 telegram_network, G09 yuanbao_media, G10 yuanbao_proto remain.**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 7 | 0 | 2 | 5 | 0 | Phase 167: G04 feishu_comment_rules ported (56 tests) |
+|| S3: Gateway Helpers | 6 | 0 | 2 | 4 | 0 | Phase 169: G03 feishu_comment ported (20 tests) |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 ||| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 167: G04 feishu_comment_rules ported |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|||| **TOTAL** | **135** | **6** | **36** | **62** | **43** | **Phase 167: G04 feishu_comment_rules — access-control rules.** |
+|||| **TOTAL** | **134** | **6** | **36** | **61** | **43** | **Phase 169: G03 feishu_comment — truncate + semantic text.** |
 
 ### Phase Map
 
