@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v236 | Fork diverged — C/ lives only on fork | Suite 307/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 266 (21.1% parity). Phase 164: B08 send_message depth — Telegram thread-not-found detection. Suite 307/0/0.**
+**v237 | Fork diverged — C/ lives only on fork | Suite 308/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 267 (21.2% parity). Phase 165: B02 vision depth — Video MIME detection + base64 data URL. Suite 308/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -169,7 +169,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority | Status |
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
 | 01 | B01 | browser | ~1712 | ~3800 | 60% | browser_navigate URL safety: secret exfiltration + SSRF protection via url_has_secret()/url_is_safe() (Phase 98). browser_snapshot(full=true) returns complete page content. PDF generation via CDP already implemented. autofill requires real browser engine (won't port) | P2 | PARTIAL |
-|| 02 | B02 | vision | ~567 | ~1436 | 39% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Native base64 data URL conversion — image_to_base64_data_url() for direct provider consumption via data: URIs (Phase 118). Magic byte detection for extensionless files (detect_image_magic in vision.c — reads first 12 bytes, checks 6 formats). detail param passthrough (low/high/auto) already wired C:299,326,362,509. Face detection and barcode require OpenCV (won't port). Color analysis / EXIF extraction / OCR via helpers — STALE (none exist in Python vision_tools.py). Media-in-tool-results support (Phase 162): vision_supports_media_in_tool_results() checks provider+model capability following Python mapping. 23 tests. | P2 | PARTIAL |
+|| 02 | B02 | vision | ~567 | ~1436 | 39% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Native base64 data URL conversion — image_to_base64_data_url() for direct provider consumption via data: URIs (Phase 118). Magic byte detection for extensionless files (detect_image_magic in vision.c — reads first 12 bytes, checks 6 formats). detail param passthrough (low/high/auto) already wired C:299,326,362,509. Face detection and barcode require OpenCV (won't port). Color analysis / EXIF extraction / OCR via helpers — STALE (none exist in Python vision_tools.py). Media-in-tool-results support (Phase 162): vision_supports_media_in_tool_results() checks provider+model capability following Python mapping. 23 tests. Video MIME detection (Phase 165): vision_detect_video_mime_type() maps 7 video extensions (mp4/webm/mov/avi/mkv/mpeg/mpg) to MIME types. Video base64 data URL: vision_video_to_base64_data_url() reads file, base64 encodes, returns data: URI. 14 tests. | P2 | PARTIAL |
 || 03 | B03 | web | ~1046 | ~1326 | 78% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). URL secret exfiltration check blocks URLs containing API key patterns (Phase 93). Multi-URL support accepts urls array for extracting multiple pages in one call (Phase 94). Base64 image stripping: data:image/ URIs removed from extracted text to reduce clutter (Phase 139). 13-test suite for clean_base64_images: NULL, empty, plain passthrough, single/multiple images, JPEG/GIF, inline HTML quotes (Phase 140). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 164: B08 send_message depth — Telegram thread-not-found detection. Suite 307/0/0 (266 test files).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 165: B02 vision depth — Video MIME detection + base64 data URL. Suite 308/0/0 (267 test files).**
 
 ---
 
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-|| 01 | X01 | Test files | 1,262 | 266 | 21.1% | P1 |
+|| 01 | X01 | Test files | 1,262 | 267 | 21.2% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 164: test files 265→266.**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 165: test files 266→267.**
 
 ---
 
@@ -273,12 +273,12 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 164: B08 Telegram thread-not-found detection |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-|| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 164: B08 send_message depth — Telegram thread-not-found detection |
+|| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 165: B02 vision depth — Video MIME detection + base64 data URL |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 164: B08 send_message depth — Telegram thread-not-found detection.** |
+||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 165: B02 vision depth — Video MIME detection + base64 data URL.** |
 
 ### Phase Map
 

@@ -1,7 +1,7 @@
-# Slermes C (v236)
+# Slermes C (v237)
 
-Suite: 307/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 266 | C src: 175
+Suite: 308/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 267 | C src: 175
 Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -107,7 +107,8 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 162: B02 vision depth — media-in-tool-results support. vision_supports_media_in_tool_results() checks if a provider+model combo accepts image content inside tool-result messages. Covers aggregators (openrouter/nous/vertex/bedrock), Anthropic, OpenAI, and Gemini 3+ (model-gated). Conservative default false. Port of Python vision_tools.py _supports_media_in_tool_results(). 23 test assertions. Suite 305/0/0 (v234).
 ||- Phase 163: G03 feishu_comment depth — textwrap_chunk(). Port of Python feishu_comment._chunk_text(). Splits text into chunks at newline boundaries within max_len per chunk. Generic utility added to libtextwrap. 18 test assertions. Suite 306/0/0 (v235).
 |- Phase 164: B08 send_message depth — Telegram thread-not-found detection. telegram_is_thread_not_found() ported from Python send_message_tool._is_telegram_thread_not_found(). Case-insensitive "thread not found" detection with underscore/hyphen separator support. 12 test assertions. Suite 307/0/0 (v236).
-|- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
+|- Phase 165: B02 vision depth — Video MIME detection + base64 data URL. vision_detect_video_mime_type() ported from Python vision_tools._detect_video_mime_type() — maps 7 video extensions (mp4/webm/mov/avi/mkv/mpeg/mpg) to MIME types. vision_video_to_base64_data_url() ported from Python vision_tools._video_to_base64_data_url() — reads video file, base64 encodes, returns "data:<mime>;base64,<encoded>" string. 14 test assertions. Suite 308/0/0 (v237).
+|- Phase 130: terminal test expansion
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
 |- Phase 126: B08 disable_notification (silent send) for Telegram — new param wired through telegram_send_message()/telegram_send_message_with_keyboard(), schema, handler, 3 test assertions, 11 caller updates across 3 files. 145→144 gaps.
@@ -122,4 +123,4 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 307/0/0 (266 test files).
+Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 308/0/0 (267 test files).

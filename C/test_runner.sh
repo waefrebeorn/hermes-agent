@@ -2424,6 +2424,22 @@ else
     skip "telegram_thread_not_found (compilation failed)"
 fi
 
+# Video MIME type detection tests
+if gcc -O2 -Wall -Wextra -o /tmp/hermes_test_vm "$CDIR/tests/test_video_mime.c" -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_vm > /dev/null 2>&1; then
+        ok "video_mime_detection (T01: 14 tests)"
+    else
+        echo "  Video MIME test output:"
+        /tmp/hermes_test_vm 2>&1 | sed 's/^/    /'
+        fail "video_mime_detection (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_vm
+else
+    echo "  Video MIME test compilation error:"
+    gcc -O2 -Wall -Wextra -o /tmp/hermes_test_vm "$CDIR/tests/test_video_mime.c" -lm 2>&1 | sed 's/^/    /'
+    skip "video_mime_detection (compilation failed)"
+fi
+
 # Gateway per-platform webhook tests (T01): HMAC + subscription management
 # Needs crypto library for HMAC verification.
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \

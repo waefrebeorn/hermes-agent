@@ -115,4 +115,14 @@ bool image_routing_notify_error(void *state, const char *error_text);
  * vision analysis step). Conservative default is false. */
 bool vision_supports_media_in_tool_results(const char *provider, const char *model);
 
+/* Port of Python vision_tools.py _detect_video_mime_type().
+ * Returns static MIME type string ("video/mp4", "video/webm", etc.)
+ * based on file extension, or NULL if unrecognised. */
+const char *vision_detect_video_mime_type(const char *path);
+
+/* Port of Python vision_tools.py _video_to_base64_data_url().
+ * Reads a video file, base64-encodes it, and returns a
+ * "data:<mime>;base64,<encoded>" string. Caller must free(). */
+char *vision_video_to_base64_data_url(const char *path);
+
 #endif /* HERMES_IMAGE_ROUTING_H */

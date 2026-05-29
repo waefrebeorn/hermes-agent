@@ -578,6 +578,75 @@ char *vision_handler(const char *args_json, const char *task_id) {
     return json_out;
 }
 
+/* ─── Video MIME detection (port of Python vision_tools._detect_video_mime_type) ─── */
+
+const char *vision_detect_video_mime_type(const char *path) {
+    if (!path) return NULL;
+    const char *dot = strrchr(path, '.');
+    if (!dot) return NULL;
+    dot++; /* skip '.' */
+
+    char ext[16];
+    size_t i;
+    for (i = 0; i < sizeof(ext) - 1 && dot[i]; i++)
+        ext[i] = (char)tolower((unsigned char)dot[i]);
+    ext[i] = '\0';
+
+    if (strcmp(ext, "mp4") == 0)  return "video/mp4";
+    if (strcmp(ext, "webm") == 0) return "video/webm";
+    if (strcmp(ext, "mov") == 0)  return "video/mov";
+    if (strcmp(ext, "avi") == 0)  return "video/mp4";
+    if (strcmp(ext, "mkv") == 0)  return "video/mp4";
+    if (strcmp(ext, "mpeg") == 0 || strcmp(ext, "mpg") == 0) return "video/mpeg";
+    return NULL;
+}
+
+/* ─── Video to base64 data URL (port of Python vision_tools._video_to_base64_data_url) ─── */
+
+char *vision_video_to_base64_data_url(const char *path) {
+    if (!path) return NULL;
+
+    /* Determine MIME type from extension */
+    const char *mime = vision_detect_video_mime_type(path);
+    if (!mime) mime = "video/mp4"; /* fallback */
+
+    /* Open file */
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+
+    /* Determine file size */
+    struct stat st;
+    if (fstat(fileno(f), &st) != 0) {
+        fclose(f);
+        return NULL;
+    }
+    size_t size = (size_t)st.st_size;
+
+    /* Read all bytes */
+    unsigned char *data = (unsigned char *)malloc(size);
+    if (!data) { fclose(f); return NULL; }
+    size_t nread = fread(data, 1, size, f);
+    fclose(f);
+    if (nread != size) {
+        free(data);
+        return NULL;
+    }
+
+    /* Base64 encode */
+    char *encoded = base64_encode(data, size);
+    free(data);
+    if (!encoded) return NULL;
+
+    /* Build data URL:  "data:<mime>;base64,<encoded>" */
+    size_t prefix_len = strlen("data:") + strlen(mime) + strlen(";base64,");
+    size_t result_len = prefix_len + strlen(encoded);
+    char *result = (char *)malloc(result_len + 1);
+    if (!result) { free(encoded); return NULL; }
+    snprintf(result, result_len + 1, "data:%s;base64,%s", mime, encoded);
+    free(encoded);
+    return result;
+}
+
 void registry_init_vision(void) {
     registry_register("vision_analyze",
         "Analyze an image file. Returns metadata (dimensions, type, size) and "

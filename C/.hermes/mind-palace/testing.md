@@ -1,4 +1,4 @@
-(v236) (v236)
+(v237) (v237)
 
-307/0/0, 266 test files. All pass. Gap: 266 C vs ~17k Python.
-Phase 164: B08 send_message depth — Telegram thread-not-found detection — splits text into chunks at newline boundaries. 18 tests. 136 gaps.
+308/0/0, 267 test files. All pass. Gap: 267 C vs ~17k Python.
+Phase 165: B02 vision depth — Video MIME detection + base64 data URL

@@ -1492,6 +1492,15 @@ Suite: 306/0/0 (265 test files). Gaps: 136. v235
 | P164-03 | Added 12 standalone test assertions: NULL→false, empty→false, exact match, case-insensitive UPPER, mixed case, in sentence context, with underscores, with hyphens, partial "thread_no" false, suffix after "found", unrelated error false, prefix before match. All pass. | `C/tests/test_telegram_thread_not_found.c` — tests 1-12 |
 Suite: 307/0/0 (266 test files). Gaps: 136. v236
 
+## Phase 165: B02 vision Depth — Video MIME Detection + Base64 Data URL
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P165-01 | Ported Python vision_tools.py `_detect_video_mime_type()` — `vision_detect_video_mime_type()` maps 7 video file extensions to MIME types: .mp4→video/mp4, .webm→video/webm, .mov→video/mov, .avi→video/mp4, .mkv→video/mp4, .mpeg/mpg→video/mpeg. Returns NULL for non-video extensions. Case-insensitive extension matching. | `C/src/tools/vision.c` — `vision_detect_video_mime_type()` at ~587-610 |
+| P165-02 | Ported Python vision_tools.py `_video_to_base64_data_url()` — `vision_video_to_base64_data_url()` reads a video file via fopen/fread, base64-encodes the contents using `base64_encode()`, and returns a malloc'd "data:<mime>;base64,<encoded>" data URL string. Uses `vision_detect_video_mime_type()` for MIME, with "video/mp4" fallback. | `C/src/tools/vision.c` — `vision_video_to_base64_data_url()` at ~620-665 |
+| P165-03 | Declared both functions in image_routing.h with doc comments. | `C/include/image_routing.h` — lines ~117-126 |
+| P165-04 | Added 14 standalone test assertions: NULL path, no extension, .mp4 valid, .MP4 case-insensitive, .webm, .mov, .avi→mp4, .mkv→mp4, .mpeg, .mpg, .png→NULL, full directory path, dot in dirname, trailing dot→NULL. All pass. | `C/tests/test_video_mime.c` — tests 1-14 |
+Suite: 308/0/0 (267 test files). Gaps: 136. v237
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|
