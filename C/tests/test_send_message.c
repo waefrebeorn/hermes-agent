@@ -276,6 +276,26 @@ int main(void) {
         free(s);
     }
 
+    /* Test 26b: invalid parse_mode returns error */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"bad mode\",\"parse_mode\":\"INVALID\"}", NULL);
+        TEST("invalid parse_mode returns error", json_has_error(res));
+        if (res) {
+            TEST("invalid parse_mode message mentions valid modes",
+                 strstr(res, "Markdown") != NULL && strstr(res, "HTML") != NULL);
+        }
+        free(res);
+    }
+
+    /* Test 26c: bogus parse_mode returns error */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"bogus\",\"parse_mode\":\"PlainText\"}", NULL);
+        TEST("bogus parse_mode returns error", json_has_error(res));
+        free(res);
+    }
+
     /* Test 27: disable_link_previews=true accepted */
     {
         char *res = send_message_handler(

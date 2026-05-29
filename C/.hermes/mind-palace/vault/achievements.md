@@ -1252,6 +1252,16 @@ Suite: 300/0/0 (257 test files). Gaps: 145.
 
 Suite: 300/0/0 (257 test files). Gaps: 145.
 
+## Phase 122: Parse Mode Validation
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P122-01 | parse_mode validation in send_message — rejects invalid modes (INVALID, PlainText) with clear error message referencing valid modes | `src/tools/send_message.c` — validation block after parse_mode default |
+| P122-02 | 3 new test assertions for invalid parse_mode rejection (37 total send_message tests) | `tests/test_send_message.c` — Tests 26b, 26c |
+| P122-03 | Test count updated in test_runner.sh (34→37) | `test_runner.sh` |
+
+Suite: 300/0/0 (257 test files). Gaps: 145.
+
 ## Phase 120: Registry Test Suite
 | ID | Achievement | Evidence |
 |----|-------------|----------|

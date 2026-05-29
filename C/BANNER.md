@@ -1,4 +1,4 @@
-# BANNER — WuBu Slermes C Translation (v197)
+# BANNER — WuBu Slermes C Translation (v198)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗

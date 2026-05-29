@@ -269,6 +269,18 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     bool disable_preview = json_object_get_bool(args, "disable_link_previews", false);
     const char *parse_mode = json_object_get_string(args, "parse_mode", NULL);
     if (!parse_mode || !parse_mode[0]) parse_mode = "Markdown";
+    /* Validate parse_mode against known Telegram modes */
+    if (strcmp(parse_mode, "Markdown") != 0 &&
+        strcmp(parse_mode, "MarkdownV2") != 0 &&
+        strcmp(parse_mode, "HTML") != 0) {
+        json_node_t *result = json_new_object();
+        json_object_set(result, "error", json_new_string("Invalid parse_mode. Must be 'Markdown', 'MarkdownV2', or 'HTML'."));
+        json_object_set(result, "parse_mode", json_new_string(parse_mode));
+        char *json_out = json_serialize(result);
+        json_free(result);
+        json_free(args);
+        return json_out;
+    }
 
     json_node_t *result = json_new_object();
 
