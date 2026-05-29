@@ -2676,6 +2676,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "kanban_tool (compilation failed)"
 fi &
 
+# Account usage tests (M37 depth)
+if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_account_usage.c" \
+    "$CDIR/src/tools/account_usage.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_usage -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_usage > /dev/null 2>&1; then ok "account_usage (14 tests)"
+    else fail "account_usage (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_usage
+else skip "account_usage (compilation failed)"
+fi &
+
 # Send_message tool test (M37)
 if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_send_message.c" \
