@@ -1,12 +1,12 @@
 # Plan (v145)
 
-205+ gaps across 9 sectors (battleship v34). Fork diverged — C/ lives only on fork; upstream removed C/.
+242+ gaps across 10 sectors (battleship v34). Fork diverged
 
-## Phase 0: Display & Visual (S0, P0) — 12 gaps
-Skin engine, spinner, banner, status bar, tool feed, response box, help tables, 24-bit color, prompt input, markdown render, faces, emoji
+## Phase 0: Display & Visual (S0, P0) — 18 gaps
+Skin engine, spinner, banner, status bar, tool feed, response box, help tables, 24-bit color, prompt input, markdown render, faces, emoji, bounding box, scaling, color scheme, recurrent typing, progress display, diff display
 
-## Phase 1: Agent + Adapters + TUI Core (S1, S3, S7, P1) — ~38 gaps
-Missing agent modules, provider adapter layer, TUI gateway server + core components
+## Phase 1: Conversation Loop Plumbing + Agent Modules + Adapters + TUI Core (S1, S2, S8, S4, P1) — ~79 gaps
+23 conversation loop plumbing gaps, agent modules, provider adapter layer, TUI gateway server + core components
 
 ## Phase 2: Test Coverage Campaign (S6, P1) — 20 gap clusters, 1000+ tests
 Build out C test suite to match Python coverage (248 files → 1262, 57K LOC → 474K)
