@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 /* ================================================================
  *  P172: Job Retry
@@ -517,6 +518,30 @@ char *cron_normalize_deliver(json_t *deliver) {
     }
 
     return NULL;
+}
+
+/* Port of cron/jobs.py _secure_dir: set directory to owner-only access (0700). */
+bool cron_secure_dir(const char *path) {
+    if (!path) return false;
+    struct stat st;
+    if (stat(path, &st) != 0) return false;
+    if (!S_ISDIR(st.st_mode)) return false;
+    return chmod(path, 0700) == 0;
+}
+
+/* Port of cron/jobs.py _secure_file: set file to owner-only read/write (0600). */
+bool cron_secure_file(const char *path) {
+    if (!path) return false;
+    struct stat st;
+    if (stat(path, &st) != 0) return false;
+    if (!S_ISREG(st.st_mode)) return false;
+    return chmod(path, 0600) == 0;
+}
+
+/* Port of cron/jobs.py _coerce_job_text: coerce a nullable value to string with fallback. */
+const char *cron_coerce_job_text(const char *value, const char *fallback) {
+    if (!value || !value[0]) return fallback;
+    return value;
 }
 
 /* Port of cron/jobs.py parse_duration: parse "30m", "2h", "1d" into minutes.

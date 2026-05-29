@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v242 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 134 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 170: P176 cron depth — parse_duration(). 9 tests. Suite 311/0/0.**
+**v243 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 134 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 171: P176 cron depth — secure dir/file + coerce. 6 tests. Suite 311/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.

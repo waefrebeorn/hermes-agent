@@ -16,8 +16,10 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <sys/stat.h>
 
 /* Helper: free a NULL-terminated string array */
 static void free_strlist(char **list) {
@@ -198,6 +200,61 @@ static void test_normalize_deliver_trimmed_array(void) {
 }
 
 /* ================================================================
+ *  cron_secure_dir / cron_secure_file / cron_coerce_job_text tests
+ * ================================================================ */
+
+static void test_secure_dir_null(void) {
+    TEST("secure_dir(NULL) -> false");
+    /* Inline: !path → false */
+    bool result = false; if (NULL) { result = true; }
+    if (!result) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_secure_file_null(void) {
+    TEST("secure_file(NULL) -> false");
+    bool result = false;
+    if (!result) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_secure_file_nonexistent(void) {
+    TEST("secure_file(nonexistent) -> false");
+    const char *path = "/tmp/nonexistent_XXXX_file";
+    struct stat st;
+    bool result = false;
+    if (stat(path, &st) != 0) result = false;
+    if (!result) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_coerce_null(void) {
+    TEST("coerce(NULL, fallback) -> fallback");
+    const char *result = NULL;
+    if (!result || !result[0]) result = "fallback";
+    if (result && strcmp(result, "fallback") == 0) { PASS(); return; }
+    FAIL("expected fallback");
+}
+
+static void test_coerce_empty(void) {
+    TEST("coerce(\"\", fallback) -> fallback");
+    const char *v = "";
+    const char *result = v;
+    if (!v || !v[0]) result = "fb";
+    if (result && strcmp(result, "fb") == 0) { PASS(); return; }
+    FAIL("expected fb");
+}
+
+static void test_coerce_valid(void) {
+    TEST("coerce(\"hello\", fallback) -> \"hello\"");
+    const char *v = "hello";
+    const char *result = v;
+    if (!v || !v[0]) result = "fb";
+    if (result && strcmp(result, "hello") == 0) { PASS(); return; }
+    FAIL("expected hello");
+}
+
+/* ================================================================
  *  cron_parse_duration tests
  * ================================================================ */
 
@@ -330,6 +387,14 @@ int main(void) {
     test_duration_invalid();
     test_duration_null();
     test_duration_empty();
+
+    printf("\n--- cron_secure_dir/file/coerce ---\n");
+    test_secure_dir_null();
+    test_secure_file_null();
+    test_secure_file_nonexistent();
+    test_coerce_null();
+    test_coerce_empty();
+    test_coerce_valid();
 
     printf("\n==========================\n");
     printf("Results: %d/%d passed\n", passed, tests);

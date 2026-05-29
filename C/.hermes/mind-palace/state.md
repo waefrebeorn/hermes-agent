@@ -1,4 +1,4 @@
-# Slermes C (v242)
+# Slermes C (v243)
 
 Suite: 311/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 270 | C src: 176
@@ -110,9 +110,10 @@ Battleship v34 (134 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 165: B02 vision depth — Video MIME detection + base64 data URL. vision_detect_video_mime_type() ported from Python vision_tools._detect_video_mime_type() — maps 7 video extensions (mp4/webm/mov/avi/mkv/mpeg/mpg) to MIME types. vision_video_to_base64_data_url() ported from Python vision_tools._video_to_base64_data_url() — reads video file, base64 encodes, returns "data:<mime>;base64,<encoded>" string. 14 test assertions. Suite 308/0/0 (v237).
 ||- Phase 166: G03 feishu_comment depth — comment helpers. feishu_sanitize_comment_text() ported from feishu_comment._sanitize_comment_text() — escapes & < > for Feishu XML. feishu_get_reply_user_id() ported from _get_reply_user_id() — extracts user_id from reply JSON (direct string or nested open_id/user_id dict). feishu_extract_reply_text() ported from _extract_reply_text() — extracts plain text from reply content.elements[] supporting text_run, docs_link, and person elements. 11 test assertions. Suite 309/0/0 (v238).
 ||- Phase 167: G04 feishu_comment_rules depth — comment access-control rules. feishu_rules_load_config(), feishu_rules_resolve_rule(), feishu_rules_pairing_add/remove/list(), feishu_rules_is_user_allowed(). 56 tests. Suite 310/0/0 (v239).
-||- Phase 168: P176 cron utility functions. cron_canonical_skills() — normalize skill/skills to deduplicated list. cron_normalize_value() — trim/optional-slash-strip. cron_normalize_deliver() — normalize deliver param (string/array to CSV). 17 tests. Suite 311/0/0 (v242).
-|- Phase 169: G03 feishu_comment depth — truncate + semantic text extract. feishu_truncate_text() port of _truncate() (text truncation with "..." suffix). feishu_extract_semantic_text() port of _extract_semantic_text() (strips self @mentions from reply text). 20 tests. Suite 311/0/0 (v242).
-|- Phase 170: P176 cron depth — parse_duration(). cron_parse_duration() port of cron/jobs.py parse_duration() — parses "30m"/"2h"/"1d" duration strings into minutes. Accepts 15 unit variants (m/min/mins/minute/minutes/h/hr/hrs/hour/hours/d/day/days). 9 tests. Suite 311/0/0 (v242).
+||- Phase 168: P176 cron utility functions. cron_canonical_skills() — normalize skill/skills to deduplicated list. cron_normalize_value() — trim/optional-slash-strip. cron_normalize_deliver() — normalize deliver param (string/array to CSV). 17 tests. Suite 311/0/0 (v243).
+|- Phase 169: G03 feishu_comment depth — truncate + semantic text extract. feishu_truncate_text() port of _truncate() (text truncation with "..." suffix). feishu_extract_semantic_text() port of _extract_semantic_text() (strips self @mentions from reply text). 20 tests. Suite 311/0/0 (v243).
+|- Phase 170: P176 cron depth — parse_duration(). cron_parse_duration() port of cron/jobs.py parse_duration() — parses "30m"/"2h"/"1d" duration strings into minutes. Accepts 15 unit variants (m/min/mins/minute/minutes/h/hr/hrs/hour/hours/d/day/days). 9 tests. Suite 311/0/0 (v243).
+|- Phase 171: P176 cron depth — secure dir/file + coerce. cron_secure_dir()/cron_secure_file() port of cron/jobs.py _secure_dir()/_secure_file() — set owner-only permissions (0700/0600). cron_coerce_job_text() port of _coerce_job_text() — nullable string coercion with fallback. 6 tests. Suite 311/0/0 (v243).
 |- Phase 130: terminal test expansion
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).

@@ -1367,6 +1367,9 @@ char **cron_canonical_skills(const char *skill, json_node_t *skills, size_t *out
 char  *cron_normalize_value(const char *value, bool strip_trailing_slash);
 char  *cron_normalize_deliver(json_node_t *deliver);
 int    cron_parse_duration(const char *s);   /* Parse "30m", "2h", "1d" → minutes */
+bool   cron_secure_dir(const char *path);     /* chmod 0700 */
+bool   cron_secure_file(const char *path);    /* chmod 0600 */
+const char *cron_coerce_job_text(const char *value, const char *fallback); /* nullable string coercion */
 
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,

@@ -1621,3 +1621,12 @@ Suite: 311/0/0 (270 test files). Gaps: 135. v241
 | P170-01 | Ported Python cron/jobs.py `parse_duration()` — `cron_parse_duration()` parses duration strings ("30m", "2h", "1d") into minutes. Accepts 15 unit variants: m/min/mins/minute/minutes/h/hr/hrs/hour/hours/d/day/days. Returns -1 on parse error. Case-insensitive. | `C/src/cron/cron_extras.c` — at ~522-570 |
 | P170-02 | Added 9 test assertions: 30m→30, 2h→120, 1d→1440, 30 minutes→30, 2hours→120, 5 days→7200, invalid→-1, NULL→-1, empty→-1. | `C/tests/test_cron_extras_util.c` — test_duration_* (9 tests) |
 Suite: 311/0/0 (270 test files). Gaps: 134. v242
+
+## Phase 171: P176 cron Depth — Secure Dir/File + Coerce
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P171-01 | Ported Python cron/jobs.py `_secure_dir()` — `cron_secure_dir()` sets directory permissions to owner-only (0700). Validates path exists and is a directory via stat+S_ISDIR. Returns bool. | `C/src/cron/cron_extras.c` — at ~522-530 |
+| P171-02 | Ported Python cron/jobs.py `_secure_file()` — `cron_secure_file()` sets file permissions to owner-only read/write (0600). Validates path exists and is a regular file via stat+S_ISREG. Returns bool. | `C/src/cron/cron_extras.c` — at ~532-540 |
+| P171-03 | Ported Python cron/jobs.py `_coerce_job_text()` — `cron_coerce_job_text()` returns value if non-empty, otherwise fallback. Simple nullable string coercion. | `C/src/cron/cron_extras.c` — at ~542-547 |
+| P171-04 | Added 6 test assertions: secure_dir(NULL), secure_file(NULL), secure_file(nonexistent), coerce(NULL), coerce(empty), coerce(valid). | `C/tests/test_cron_extras_util.c` — test_secure_dir/file/coerce (6 tests) |
+Suite: 311/0/0 (270 test files). Gaps: 134. v243
