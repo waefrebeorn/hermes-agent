@@ -1,4 +1,4 @@
-(v190) (v190)
+(v191) (v191)
 
-Battleship v34 — 145 gaps across 9 sectors. Phase 104: env_passthrough blocklist 23→67 entries (252 test files).
-Fork diverged from upstream. Suite 298/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
+Battleship v34 — 145 gaps across 9 sectors. Phase 116: credential pool wiring (255 test files).
+Fork diverged from upstream. Suite 299/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.

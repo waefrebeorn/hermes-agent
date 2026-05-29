@@ -1204,4 +1204,14 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 
 
-Suite: 298/0/0 (254 test files). Gaps: 145.
+Suite: 299/0/0 (255 test files). Gaps: 145.
+
+## Phase 116: Credential Pool Wiring
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P116-01 | cred_pool field added to llm_config_t -- opaque credential pool ref | `include/hermes.h` -- void *cred_pool |
+| P116-02 | Credential pool created and API key added in agent_configure_from_config | `src/agent/agent_loop.c` -- credential_pool_create + add_key |
+| P116-03 | HTTP status codes reported to credential pool after each provider-path LLM request | `src/agent/llm_client.c` -- credential_pool_report() |
+| P116-04 | credential_expired field checked in retry loop -- triggers fallback on expired credential | `src/agent/agent_loop.c` -- credential_expired check |
+
+Suite: 299/0/0 (255 test files). Gaps: 145.

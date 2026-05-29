@@ -1,20 +1,20 @@
-# BANNER — WuBu Slermes C Translation (v190)
+# BANNER — WuBu Slermes C Translation (v191)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v190                                       ║
-║  296/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v191                                       ║
+║  299/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B08: disable link previews for Telegram                 ║
+║  Phase 116: credential pool wiring                       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v190)
+## Build Metrics (v191)
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 298/0/0 |
+| Test suite | 299/0/0 |
 | Tools | 85 |
 | CLI commands | 98 |
 | Gateway platforms | 19 |

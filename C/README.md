@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||| Suite:  298/0/0 (254 test files, completes in <60s)
+|||||||||| Suite:  299/0/0 (255 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 ||||||||||||||| Gaps:  145 real parity gaps (1000+ test case gaps) across 9 sectors
@@ -547,7 +547,7 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-| Library tests | 298/0/0 | All pass, ~60s |
+| Library tests | 299/0/0 | All pass, ~60s |
 | Test files | 241 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |
