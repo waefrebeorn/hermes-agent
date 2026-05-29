@@ -1,4 +1,4 @@
-# Slermes C (v171)
+# Slermes C (v172)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -48,6 +48,7 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 94: B03 multi-URL support — web_extract_handler accepts `urls` array for extracting multiple pages in one call. Backward compatible with single `url`. SCHEMA_EXTRACT updated. B03 58%→78% (1046 LOC).
 |- Phase 95: B02 remote URL safety checks for vision — SSRF protection (url_is_safe), secret exfiltration check (url_has_secret), Content-Type validation via HEAD request. data: URIs excluded from checks. url_has_secret moved to url_safety.c. B02 23%→29% (417 LOC).
 |- Phase 96: B07 exit code interpretation — exit_code_interpret() maps non-zero exit codes to human-readable messages per command semantics (grep/diff/find/git/curl). _inject_interpretation() adds exit_code_interpretation field to all backend results. B07 59%→62% (942 LOC).
+|- Phase 97: B08 disable_link_previews — Telegram link preview suppression via disable_web_page_preview param. Added to telegram_send_message + with_keyboard signatures. Schema updated. B08 57%→59% (516 LOC).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -56,4 +57,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 96: B07 exit code interpretation (terminal 59%→62%).
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 97: B08 disable_link_previews (send_message 57%→59%).

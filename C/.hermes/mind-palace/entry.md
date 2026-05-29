@@ -2,4 +2,4 @@
 
 Suite: 294/0/0 | 85 tools | 98 CLI | 37 config sections | 19 GW | 10 prov | 65 libs
 Fork diverged — C/ lives only on fork (upstream removed C/). C/.hermes/ docs tracked.
-Battleship v34 (145 gaps across 9 sectors). Phase 96: B07 exit code interpretation (terminal 59%→62%).
+Battleship v34 (145 gaps across 9 sectors). Phase 97: B08 disable_link_previews (send_message 57%→59%).

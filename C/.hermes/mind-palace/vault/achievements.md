@@ -973,6 +973,17 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 97: B08 disable_link_previews for Telegram (v172)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P97-01 | telegram_send_message() + with_keyboard() accept disable_preview bool param | `src/gateway/platforms/telegram.c` — function signatures + JSON body |
+| P97-02 | disable_web_page_preview:true set when disable_preview=true | `src/gateway/platforms/telegram.c` — JSON body construction |
+| P97-03 | disable_link_previews schema param added to send_message tool | `src/tools/send_message.c` — SCHEMA + args parsing |
+| P97-04 | All internal callers updated (telegram.c, server.c, send_message.c) | `src/gateway/platforms/telegram.c` — 6 call sites + server.c + send_message.c |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |
