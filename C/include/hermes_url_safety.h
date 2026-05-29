@@ -80,6 +80,15 @@ bool url_host_matches(const char *url, const char *expected_host);
 const char *url_has_secret(const char *url);
 
 /* ================================================================
+ *  URL Basename Extraction
+ * ================================================================ */
+
+/* Extract filename from URL path. Strips query/fragment, finds last path
+ * component after '/'. Returns malloc'd string (caller must free) or
+ * empty string on error. Mirrors Python yuanbao_media._basename_from_url(). */
+char *url_extract_basename(const char *url);
+
+/* ================================================================
  *  URL Logging Safety
  * ================================================================ */
 

@@ -1419,6 +1419,13 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
 
+## Phase 148: G09 yuanbao_media Depth — URL Basename Extraction
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P148-01 | Ported `_basename_from_url()` from Python gateway/platforms/yuanbao_media.py — `url_extract_basename()` extracts the filename from a URL path, stripping query parameters and fragments. Handles NULL/empty URLs safely. | `C/src/tools/url_safety.c` — `url_extract_basename()` at ~615-665 |
+| P148-02 | Added 7 test assertions: standard URL with path, no path returns empty, query stripped, fragment stripped, just filename, NULL returns empty, empty returns empty. URL safety tests 44→51. | `C/tests/test_url_safety.c` — section 8.5 |
+Suite: 301/0/0 (258 test files). Gaps: 140.
+
 ## Phase 147: G08 signal_rate_limit Depth — Duration Formatting
 | ID | Achievement | Evidence |
 |----|-------------|----------|

@@ -133,6 +133,22 @@ int main(void) {
         free(s);
     }
 
+    /* 8.5. url_extract_basename */
+    TEST("url_basename standard URL",
+         strcmp(url_extract_basename("https://example.com/path/to/file.json"), "file.json") == 0);
+    TEST("url_basename no path",
+         strcmp(url_extract_basename("https://example.com"), "") == 0);
+    TEST("url_basename query stripped",
+         strcmp(url_extract_basename("https://example.com/path/file.txt?key=val"), "file.txt") == 0);
+    TEST("url_basename fragment stripped",
+         strcmp(url_extract_basename("https://example.com/path/doc.html#section"), "doc.html") == 0);
+    TEST("url_basename just filename",
+         strcmp(url_extract_basename("https://example.com/file.png"), "file.png") == 0);
+    TEST("url_basename NULL returns empty",
+         strcmp(url_extract_basename(NULL), "") == 0);
+    TEST("url_basename empty returns empty",
+         strcmp(url_extract_basename(""), "") == 0);
+
     /* 9. url_is_network_accessible */
     TEST("network_access localhost is not accessible",
          !url_is_network_accessible("127.0.0.1"));

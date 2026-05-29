@@ -612,6 +612,56 @@ const char *url_has_secret(const char *url) {
 }
 
 /* ================================================================
+ *  URL Basename Extraction
+ * ================================================================ */
+
+/* Extract filename from URL path. Strips query/fragment, returns last
+ * path component after '/'. Mirrors Python _basename_from_url(). */
+char *url_extract_basename(const char *url) {
+    if (!url || !*url) return strdup("");
+
+    /* Skip scheme:// */
+    const char *path = strstr(url, "://");
+    if (path) {
+        path += 3; /* skip "://" */
+        /* Move past host:port to path */
+        path = strchr(path, '/');
+    } else {
+        path = url;
+    }
+    if (!path) return strdup("");
+
+    /* Skip query/fragment after the path */
+    const char *query = strchr(path, '?');
+    const char *fragment = strchr(path, '#');
+    const char *end = NULL;
+    if (query && (!fragment || query < fragment)) {
+        end = query;
+    } else if (fragment) {
+        end = fragment;
+    }
+
+    /* Find last '/' to get basename */
+    const char *last_slash = NULL;
+    const char *scan = path;
+    while (scan < (end ? end : scan + strlen(scan))) {
+        if (*scan == '/') last_slash = scan;
+        scan++;
+    }
+
+    const char *basename_start = last_slash ? last_slash + 1 : path;
+    size_t basename_len = end ? (size_t)(end - basename_start) : strlen(basename_start);
+
+    if (basename_len == 0) return strdup("");
+
+    char *out = (char *)malloc(basename_len + 1);
+    if (!out) return NULL;
+    memcpy(out, basename_start, basename_len);
+    out[basename_len] = '\0';
+    return out;
+}
+
+/* ================================================================
  *  Network Accessibility Check
  * ================================================================ */
 
