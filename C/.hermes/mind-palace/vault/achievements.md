@@ -864,6 +864,14 @@ Suite: 294/0/0. Phase 86: B04 PKCE auth code flow wired. Gaps: 148→147.
 
 Suite: 294/0/0. Phase 87: B03 native web_extract. web parity 42%→58%.
 
+## Phase 88: B07 Terminal Safety Checks (v164)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B07 | Workdir validation + disk usage warning for terminal tool — `_check_workdir()` validates workdir exists and is a directory. `_check_disk_usage()` warns if < 100MB free on workdir filesystem via statfs(). Both are non-blocking warnings injected into result JSON via `_inject_warnings()`. terminal.c 795→859 LOC, parity 53%→57%. | `src/tools/terminal.c` — _check_workdir(), _check_disk_usage(), _inject_warnings() functions |
+
+Suite: 294/0/0. Phase 88: B07 terminal safety checks (53%→57%).
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |

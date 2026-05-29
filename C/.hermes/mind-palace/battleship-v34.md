@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v163 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 147 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 87.**
+**v164 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 147 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 88.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -174,13 +174,13 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
-| 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder) | P2 | PARTIAL |
+| 07 | B07 | terminal | ~859 | ~1500 | 57% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder). workdir validation + disk usage warning — _check_workdir() + _check_disk_usage() flags in result JSON (Phase 88) | P2 | PARTIAL |
 | 08 | B08 | send_message | ~500 | ~900 | 56% | inline_buttons + reply_to_message_id implemented. media_group array support added — sends multiple files as Telegram sendMediaGroup. error redaction: secrets (access_token, api_key, token, sig) sanitized from error messages | P2 | PARTIAL |
 | 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution now returns snippet JSON (offset + context) for each match when multiple exact matches found | P2 | PARTIAL |
 | 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude) — ALL implemented | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 14 gaps (7 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07). Phase 86: PKCE auth code flow wired for OAuth MCP servers (B04). Phase 87: native web_extract for B03 (42%→58%).**
+**S6: 14 gaps (7 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07). Phase 86: PKCE auth code flow wired for OAuth MCP servers (B04). Phase 87: native web_extract for B03 (42%→58%). Phase 88: terminal safety checks for B07 (53%→57%).**
 
 ---
 
