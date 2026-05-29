@@ -984,6 +984,16 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 100: B07 terminal foreground/background guidance (v175)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P100-01 | _check_foreground_guidance() detects nohup/disown/setsid patterns, suggests background=true | `src/tools/terminal.c` — _check_foreground_guidance function |
+| P100-02 | Trailing & and inline & background detection with guidance | `src/tools/terminal.c` — string checks for ' & ' patterns |
+| P100-03 | guidance field injected into result JSON via _inject_warnings() for all backend paths (pty, ssh, docker, compose, modal, default) | `src/tools/terminal.c` — all _inject_warnings call sites updated |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 99: B08 send_message action=list (v174)
 
 | ID | Achievement | Evidence |

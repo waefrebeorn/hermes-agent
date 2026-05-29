@@ -644,12 +644,13 @@ static const char *_check_disk_usage(const char *workdir) {
 
 /* Inject safety warnings into result JSON. Returns malloc'd string. */
 static char *_inject_warnings(const char *result_json,
-                               const char *wd_warn, const char *disk_warn) {
-    if (!wd_warn && !disk_warn) return strdup(result_json);
+                               const char *wd_warn, const char *disk_warn,
+                               const char *guidance) {
     json_t *rj = json_parse(result_json, NULL);
     if (!rj) return strdup(result_json);
     if (wd_warn) json_set(rj, "workdir_warning", json_string(wd_warn));
     if (disk_warn) json_set(rj, "disk_warning", json_string(disk_warn));
+    if (guidance) json_set(rj, "guidance", json_string(guidance));
     char *out = json_serialize(rj);
     json_free(rj);
     return out;
@@ -747,6 +748,32 @@ static char *_inject_interpretation(const char *result_json, const char *command
     return out;
 }
 
+/* Check command for shell-level background wrappers and suggest background=true.
+ * Mirrors Python terminal_tool._foreground_background_guidance(). */
+static const char *_check_foreground_guidance(const char *command) {
+    if (!command) return NULL;
+    /* Check for shell-level background wrappers */
+    const char *patterns[] = {"nohup ", " disown", " setsid", NULL};
+    for (int i = 0; patterns[i]; i++) {
+        if (strstr(command, patterns[i])) return
+            "Foreground command uses shell-level background wrappers (nohup/disown/setsid). "
+            "Use terminal(background=true) so Hermes can track lifecycle, "
+            "then run readiness checks and tests in separate commands.";
+    }
+    /* Check for trailing & backgrounding */
+    size_t len = strlen(command);
+    if (len > 0 && command[len-1] == '&') return
+        "Foreground command uses '&' backgrounding. "
+        "Use terminal(background=true) for long-lived processes, "
+        "then run health checks and tests in follow-up calls.";
+    /* Check for inline & (cmd1 & cmd2) */
+    if (strstr(command, " & ") || strstr(command, " &;")) return
+        "Foreground command uses inline '&' backgrounding. "
+        "Use terminal(background=true) for long-lived processes, "
+        "then run health checks and tests in follow-up calls.";
+    return NULL;
+}
+
 /* ================================================================
  *  Main terminal handler
  * ================================================================ */
@@ -832,6 +859,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* Safety checks: workdir validation + disk usage warning */
     const char *wd_warn = _check_workdir(workdir);
     const char *disk_warn = _check_disk_usage(workdir);
+    const char *guidance = _check_foreground_guidance(command);
 
     /* O14: Check command for sandbox escape patterns before execution */
     sandbox_escape_result_t esc = sandbox_escape_check(command, -1, "terminal");
@@ -875,12 +903,12 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     if (use_pty) {
 #ifdef __linux__
         char *res1 = run_command_pty(full_command, timeout);
-        char *w1 = _inject_warnings(res1, wd_warn, disk_warn);
+        char *w1 = _inject_warnings(res1, wd_warn, disk_warn, guidance);
         free(res1);
         return _inject_interpretation(w1, command);
 #else
         char *res1b = run_command(full_command, timeout);
-        char *w1b = _inject_warnings(res1b, wd_warn, disk_warn);
+        char *w1b = _inject_warnings(res1b, wd_warn, disk_warn, guidance);
         free(res1b);
         return _inject_interpretation(w1b, command);
 #endif
@@ -889,7 +917,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* D84: Route to SSH execution backend if configured */
     if (backend && strcasecmp(backend, "ssh") == 0) {
         char *res2 = run_command_ssh(command, timeout);
-        char *w2 = _inject_warnings(res2, wd_warn, disk_warn);
+        char *w2 = _inject_warnings(res2, wd_warn, disk_warn, guidance);
         free(res2);
         return _inject_interpretation(w2, command);
     }
@@ -897,7 +925,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* F11: Route to Docker execution backend if configured */
     if (backend && strcasecmp(backend, "docker") == 0) {
         char *res3 = run_command_docker(command, timeout, docker_image);
-        char *w3 = _inject_warnings(res3, wd_warn, disk_warn);
+        char *w3 = _inject_warnings(res3, wd_warn, disk_warn, guidance);
         free(res3);
         return _inject_interpretation(w3, command);
     }
@@ -915,7 +943,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     }
 
     char *res_default = run_command(full_command, timeout);
-    char *w_default = _inject_warnings(res_default, wd_warn, disk_warn);
+    char *w_default = _inject_warnings(res_default, wd_warn, disk_warn, guidance);
     free(res_default);
     return _inject_interpretation(w_default, command);
 }
