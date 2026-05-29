@@ -27,12 +27,20 @@ static void test_blocked_vars(void) {
     T("HOME is not blocked", !env_passthrough_is_blocked("HOME"));
     T("PATH is not blocked", !env_passthrough_is_blocked("PATH"));
     T("TENOR_API_KEY is not blocked", !env_passthrough_is_blocked("TENOR_API_KEY"));
+    T("NULL is not blocked", !env_passthrough_is_blocked(NULL));
+    T("empty is not blocked", !env_passthrough_is_blocked(""));
 }
 
 static void test_register_and_allowed(void) {
     T("register MY_CUSTOM_VAR", env_passthrough_register("MY_CUSTOM_VAR"));
     T("MY_CUSTOM_VAR is allowed", env_passthrough_is_allowed("MY_CUSTOM_VAR"));
     T("unregistered VAR not allowed", !env_passthrough_is_allowed("UNREGISTERED_VAR"));
+    T("NULL name not allowed", !env_passthrough_is_allowed(NULL));
+    T("empty name not allowed", !env_passthrough_is_allowed(""));
+    T("register duplicate returns true", env_passthrough_register("MY_CUSTOM_VAR"));
+    T("register blocked var rejected", !env_passthrough_register("OPENAI_API_KEY"));
+    T("register NULL name rejected", !env_passthrough_register(NULL));
+    T("register empty name rejected", !env_passthrough_register(""));
 }
 
 static void test_register_batch(void) {
@@ -55,12 +63,19 @@ static void test_get_all(void) {
     }
     T("MY_CUSTOM_VAR found in list", found == 1);
     env_passthrough_free_list(list, count);
+    /* free_list with NULL should not crash */
+    env_passthrough_free_list(NULL, 0);
+    T("free_list NULL no crash", 1);
 }
 
 static void test_clear(void) {
     env_passthrough_clear();
     T("after clear, MY_CUSTOM_VAR not allowed", !env_passthrough_is_allowed("MY_CUSTOM_VAR"));
     T("after clear, VAR_A not allowed", !env_passthrough_is_allowed("VAR_A"));
+    /* Re-register for subsequent tests */
+    env_passthrough_register("MY_CUSTOM_VAR");
+    env_passthrough_register("VAR_A");
+    T("re-register works after clear", env_passthrough_is_allowed("MY_CUSTOM_VAR"));
 }
 
 int main(void) {
