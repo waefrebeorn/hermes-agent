@@ -59,10 +59,14 @@ char *clarify_handler(const char *args_json, const char *task_id) {
         response[--len] = '\0';
 
     json_node_t *result = json_new_object();
+    json_object_set(result, "question", json_new_string(question));
     json_object_set(result, "response", json_new_string(response));
 
-    /* If choice-based, capture choice index */
+    /* If choice-based, capture choice index and offered choices */
     if (choices && json_array_count(choices) > 0) {
+        /* Include offered choices in result (like Python) */
+        json_node_t *offered = json_copy(choices);
+        json_object_set(result, "choices_offered", offered);
         int choice_idx = atoi(response) - 1;
         if (choice_idx >= 0 && choice_idx < (int)json_array_count(choices)) {
             json_node_t *selected = json_array_get(choices, (size_t)choice_idx);
@@ -79,7 +83,10 @@ char *clarify_handler(const char *args_json, const char *task_id) {
 
 void registry_init_clarify(void) {
     registry_register("clarify",
-        "Ask the user a question. Supports optional multiple-choice options. "
-        "Use when you need user input or a decision.",
+        "Ask the user a question when you need clarification, feedback, or a "
+        "decision before proceeding. Supports multiple choice (up to 4 choices) "
+        "and open-ended modes. Do NOT use for simple yes/no confirmation of "
+        "dangerous commands (terminal handles that). Prefer making a reasonable "
+        "default choice when the decision is low-stakes.",
         SCHEMA, clarify_handler);
 }

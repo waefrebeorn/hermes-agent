@@ -78,6 +78,10 @@ int main(void)
         if (result) {
             TEST("response contains Alice",
                  json_has(result, "response", "Alice"));
+            TEST("question echoed in result",
+                 json_has(result, "question", "What is your name?"));
+            TEST("no choices_offered without choices",
+                 strstr(result, "\"choices_offered\"") == NULL);
             free(result);
         }
     }
@@ -92,6 +96,8 @@ int main(void)
         if (result) {
             TEST("response contains '2'", json_has(result, "response", "2"));
             TEST("selected is Green", json_has(result, "selected", "Green"));
+            TEST("choices_offered present",
+                 strstr(result, "\"choices_offered\"") != NULL);
             free(result);
         }
     }

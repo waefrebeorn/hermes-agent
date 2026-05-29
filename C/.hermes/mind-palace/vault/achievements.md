@@ -1296,3 +1296,9 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 |----|-------------|----------|
 | P126-01 | `disable_notification` (silent send) param added to Telegram message API: telegram_send_message() + telegram_send_message_with_keyboard() signatures, JSON body wiring, send_message.c schema + handler parse + 3 caller updates. 11 caller updates across 3 files. 3 new test assertions (40 total). | `src/tools/send_message.c`, `src/gateway/platforms/telegram.c`, `src/gateway/server.c`, `include/hermes_gateway.h`, `tests/test_send_message.c` |
 Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 127: Clarify Response Format Parity
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P127-01 | `question` field echoed in clarify result (matching Python behavior). `choices_offered` field included when choices are present. Rich registry description with usage guidance matching Python's clarify_tool description. | `src/tools/clarify.c`, `tests/test_clarify.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.

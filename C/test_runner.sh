@@ -2823,7 +2823,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_clarify.c" \
     "$CDIR/src/tools/clarify.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_clarify -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if echo "answer" | /tmp/hermes_test_clarify > /dev/null 2>&1; then ok "clarify_tool (9 tests)"
+    if echo "answer" | /tmp/hermes_test_clarify > /dev/null 2>&1; then ok "clarify_tool (19 tests)"
     else fail "clarify_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_clarify
 else skip "clarify_tool (compilation failed)"
@@ -3149,7 +3149,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
     "$CDIR/src/tools/clarify.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_clarify -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_clarify ]]; then
-    if /tmp/hermes_test_clarify > /dev/null 2>&1; then ok "clarify (8 tests)"
+    if /tmp/hermes_test_clarify > /dev/null 2>&1; then ok "clarify (19 tests)"
     else fail "clarify (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_clarify
 else skip "clarify (compilation failed)"
