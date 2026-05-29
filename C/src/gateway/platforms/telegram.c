@@ -966,6 +966,17 @@ const char *telegram_get_message_thread_id(json_node_t *update) {
     return buf;
 }
 
+/* Port of Python TelegramAdapter._message_thread_id_for_send().
+ * Maps thread_id "1" (General topic in forum supergroups) to NULL
+ * because Telegram Bot API sendMessage rejects message_thread_id=1
+ * with "Message thread not found". Returns the original thread_id
+ * for all other values. */
+const char *telegram_message_thread_id_for_send(const char *thread_id) {
+    if (!thread_id) return NULL;
+    if (strcmp(thread_id, "1") == 0) return NULL;
+    return thread_id;
+}
+
 /* ================================================================
  *  E07-E12: Interactive Telegram send methods
  * ================================================================ */

@@ -386,6 +386,9 @@ const char *telegram_get_update_type(json_node_t *update);
 const char *telegram_get_callback_query_id(json_node_t *update);
 const char *telegram_get_inline_query_id(json_node_t *update);
 const char *telegram_get_message_thread_id(json_node_t *update);
+/* Port of Python TelegramAdapter._message_thread_id_for_send().
+ * Maps thread_id "1" (General topic) to NULL for sendMessage. */
+const char *telegram_message_thread_id_for_send(const char *thread_id);
 
 /* E07-E12: Interactive Telegram send methods with inline keyboards */
 bool telegram_send_draft(http_client_t *http, const char *chat_id,

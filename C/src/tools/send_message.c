@@ -480,6 +480,12 @@ char *send_message_handler(const char *args_json, const char *task_id) {
 
                 http_client_t *http = http_client_new(30);
                 if (http) {
+                    /* B08: Apply General topic thread_id mapping for Telegram */
+                    const char *tg_thread_id = thread_id;
+                    if (strcmp(platform, "telegram") == 0 && tg_thread_id) {
+                        tg_thread_id = telegram_message_thread_id_for_send(tg_thread_id);
+                    }
+
                     /* B08: Retry up to 3 times with exponential backoff
                      * (port of Python _send_telegram_message_with_retry). */
                     int max_attempts = 3;
@@ -509,16 +515,16 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                             json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
                             if (reply_markup) {
                                 sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
-                                                                           tg_msg, parse_mode, thread_id, reply_markup, disable_notification, disable_preview);
+                                                                           tg_msg, parse_mode, tg_thread_id, reply_markup, disable_notification, disable_preview);
                                 json_free(reply_markup);
                             } else {
                                 /* Fallback: send without keyboard */
                                 sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                             tg_msg, parse_mode, thread_id, disable_notification, disable_preview);
+                                                             tg_msg, parse_mode, tg_thread_id, disable_notification, disable_preview);
                             }
                         } else {
                             sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                         tg_msg, parse_mode, thread_id, disable_notification, disable_preview);
+                                                         tg_msg, parse_mode, tg_thread_id, disable_notification, disable_preview);
                         }
 
                         if (!sent && attempt < max_attempts - 1) {

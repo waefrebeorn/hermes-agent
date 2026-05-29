@@ -1,8 +1,8 @@
-# Slermes C (v229)
+# Slermes C (v230)
 
-Suite: 302/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 259 | C src: 175
-Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Suite: 303/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 260 | C src: 175
+Battleship v34 (138 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -99,7 +99,8 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 154: Vaulted 3 stale B02 claims (color analysis, EXIF extraction, OCR — none exist in Python vision_tools.py). Battleship B02 updated.
 ||- Phase 155: B11 cron depth — cron_inject_repeat_display() ported from Python cronjob_tools._repeat_display(). Injects human-readable repeat_display field ("forever", "once", "3/5", "5 times") into cron list JSON output. Suite 302/0/0 (v229).
 |- Phase 156: G08 signal_rate_limit depth — signal_is_rate_limit_error() + signal_send_timeout() ported from Python gateway/platforms/signal_rate_limit.py. Rate limit error detection checks [429]/ratelimit/RetryLater/retry after in error messages. Send timeout scales with attachment count (30s text, 60-160s for attachments). 20 new test assertions (T01: 39→59). Suite 302/0/0 (v228).
-|- Phase 157: G08 signal_rate_limit depth — signal_extract_retry_after() + signal_parse_retry_after_message() ported from Python gateway/platforms/signal_rate_limit.py. Extracts retry-after value from structured JSON (error.data.response.results[*].retryAfterSeconds) and "Retry after N seconds" text fallback. Bug fix: use-after-free when json_free(root) freed string before parse. 16 new test assertions (T01: 59→75). Suite 302/0/0 (v229).
+- Phase 157: G08 signal_rate_limit depth — signal_extract_retry_after() + signal_parse_retry_after_message() ported from Python gateway/platforms/signal_rate_limit.py. Extracts retry-after value from structured JSON and "Retry after N seconds" text fallback. Bug fix: use-after-free when json_free(root) freed string before parse. 16 new test assertions (T01: 59→75). Suite 302/0/0 (v229).
+|- Phase 158: B08 send_message depth — General topic thread_id mapping ported from Python TelegramAdapter._message_thread_id_for_send(). telegram_message_thread_id_for_send() maps thread_id "1" (forum General topic) to NULL because Bot API rejects message_thread_id=1. Wired into send_message.c Telegram routing. 6 new test assertions. Suite 303/0/0 (v230).
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -115,4 +116,4 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 150: media_cache_save + media_cache_cleanup ported from base.py. New media_cache module (15 tests). Suite 302/0/0 (259 test files).
+Real parity gap is 138 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 303/0/0 (260 test files).

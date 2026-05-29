@@ -1434,7 +1434,15 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P157-01 | Ported `_extract_retry_after_seconds()` from Python signal_rate_limit.py — `signal_extract_retry_after()` parses a signal-cli error JSON string and extracts the Retry-After window (seconds). Tries two sources: (1) structured `error.data.response.results[*].retryAfterSeconds`, taking max across multiple results; (2) "Retry after N seconds" from error.message text. Returns -1.0 when not found. Bug fix: use-after-free — `json_free(root)` was called before consuming `json_get_str` pointer; now copies string via `strdup` before freeing JSON tree. | `C/src/gateway/platforms/signal.c` — `signal_extract_retry_after()` at ~428-493 |
 | P157-02 | Ported fallback text parser from Python `_RETRY_AFTER_RE` regex — `signal_parse_retry_after_message()` scans plain text for "Retry after N seconds" (case-insensitive) using strstr + strtod, avoiding POSIX regex dependency while matching Python logic. Handles integer (4 → 4.0) and decimal (3.5 → 3.5) values, singular "second" and plural "seconds". | `C/src/gateway/platforms/signal.c` — `signal_parse_retry_after_message()` at ~499-533 |
 | P157-03 | Added 16 test assertions: 10 extract_retry_after (structured JSON, multiple results, empty array, message text, decimal, raw text fallback, raw no-match, NULL, empty, no retry-after), 6 parse_retry_after_message (standard, decimal, singular, NULL, no match, empty). T01 gateway platforms 59→75. | `C/tests/test_gateway_platforms.c` — `test_signal_rate_limit()` section 3-4 |
-|Suite: 302/0/0 (259 test files). Gaps: 139.
+Suite: 302/0/0 (259 test files). Gaps: 139.
+
+## Phase 158: B08 send_message Depth — General Topic Thread ID Mapping
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P158-01 | Ported Python `TelegramAdapter._message_thread_id_for_send()` — `telegram_message_thread_id_for_send()` maps Telegram forum thread_id "1" (General topic) to NULL because Bot API `sendMessage` rejects `message_thread_id=1` with "Message thread not found". All other thread_ids pass through unchanged. | `C/src/gateway/platforms/telegram.c` — `telegram_message_thread_id_for_send()` at ~970-979 |
+| P158-02 | Wired into `send_message.c` Telegram routing — thread_id transformed via `telegram_message_thread_id_for_send()` before passing to `telegram_send_message()` and `telegram_send_message_with_keyboard()`, matching Python's General-topic behavior. | `C/src/tools/send_message.c` — `tg_thread_id` variable at ~486-491, used at lines ~518, ~524, ~530 |
+| P158-03 | Added 6 standalone test assertions: NULL → NULL, "1" → NULL, "42" → "42", "0" → "0", "999" → "999", "" → "". All pass. Declared in hermes_gateway.h. | `C/tests/test_telegram_thread_id_standalone.c` — tests 1-6 |
+Suite: 303/0/0 (260 test files). Gaps: 138. v230
 
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
