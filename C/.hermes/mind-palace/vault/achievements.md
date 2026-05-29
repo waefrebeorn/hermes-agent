@@ -1404,3 +1404,10 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P141-02 | Added 18 test assertions covering 9 long-lived patterns (npm run dev, npm start, npm dev, docker compose up, python -m http.server, uvicorn, gunicorn, next dev, nodemon) + 1 negative test (normal command). Tests 58→76 total. | `C/tests/test_terminal.c` — tests 27-35 |
 | P141-03 | Updated test_runner.sh terminal_tool test count from 58 to 76. All tests PASS. | `C/test_runner.sh` — terminal_tool (76 tests) |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 142: B07 Terminal Depth — Sudo Failure Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P142-01 | Ported `_handle_sudo_failure()` from Python terminal_tool — detects "sudo: a password is required", "sudo: no tty present", "sudo: a terminal is required" in command output and adds a sudo_tip field with SUDO_PASSWORD guidance. | `C/src/tools/terminal.c` — `_inject_sudo_failure()` called from `_inject_interpretation()` |
+| P142-02 | Added 5 test assertions covering sudo failure patterns (password required, no tty present) + negative test (exit 0 with sudo text). Terminal tests 76→81. | `C/tests/test_terminal.c` — tests 36-37 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

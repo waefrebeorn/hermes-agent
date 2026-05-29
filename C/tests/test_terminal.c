@@ -411,6 +411,27 @@ int main(void) {
         free(res);
     }
 
+    /* Test 36: Sudo failure detection — password required */
+    {
+        char *res = terminal_handler("{\"command\":\"echo sudo: a password is required && false\"}", NULL);
+        TEST("sudo fail returns non-NULL", res != NULL);
+        if (res) {
+            TEST("sudo fail has sudo_tip", json_contains(res, "sudo_tip"));
+            TEST("sudo fail tip mentions SUDO_PASSWORD", json_contains(res, "SUDO_PASSWORD"));
+        }
+        free(res);
+    }
+
+    /* Test 37: Sudo failure detection — no tty */
+    {
+        char *res = terminal_handler("{\"command\":\"echo sudo: no tty present && false\"}", NULL);
+        TEST("sudo no tty returns non-NULL", res != NULL);
+        if (res) {
+            TEST("sudo no tty has sudo_tip", json_contains(res, "sudo_tip"));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);

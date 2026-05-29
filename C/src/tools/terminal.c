@@ -753,6 +753,29 @@ static const char *exit_code_interpret(const char *command, int exit_code) {
     return NULL;
 }
 
+/* Check command output for sudo failure patterns and add a helpful tip.
+ * Mirrors Python terminal_tool._handle_sudo_failure(). */
+static void _inject_sudo_failure(json_t *rj, const char *command) {
+    (void)command;
+    if (!rj) return;
+    const char *output = json_get_str(rj, "output", NULL);
+    if (!output) return;
+
+    static const char *sudo_failures[] = {
+        "sudo: a password is required",
+        "sudo: no tty present",
+        "sudo: a terminal is required",
+        NULL
+    };
+    for (int i = 0; sudo_failures[i]; i++) {
+        if (strstr(output, sudo_failures[i])) {
+            json_set(rj, "sudo_tip",
+                json_string("Tip: To enable sudo over messaging, add SUDO_PASSWORD to your .env file"));
+            return;
+        }
+    }
+}
+
 /* Inject exit_code_interpretation field into result JSON */
 static char *_inject_interpretation(const char *result_json, const char *command) {
     if (!result_json) return NULL;
@@ -764,6 +787,7 @@ static char *_inject_interpretation(const char *result_json, const char *command
     if (interpretation) {
         json_set(rj, "exit_code_interpretation", json_string(interpretation));
     }
+    _inject_sudo_failure(rj, command);
     char *out = json_serialize(rj);
     json_free(rj);
     return out;

@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v215)
+# BANNER — WuBu Slermes C Translation (v216)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v215                                       ║
+║  WuBu Slermes C v216                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 141: long-lived pattern detect       ║
+║  Phase 142: sudo failure detection           ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
