@@ -1687,10 +1687,10 @@ else skip "tirith_policy (compilation failed)"
 fi &
 
 # Provider metadata test (needs libjson + libplugin + url_safety)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_provider_metadata.c" \
-    "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_provmeta -lm > /dev/null 2>&1; then
+    "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_provmeta -lssl -lcrypto -ldl -lpthread -lz -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_provmeta > /dev/null 2>&1; then ok "provider_metadata"
     else fail "provider_metadata (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provmeta
@@ -2296,12 +2296,13 @@ else skip "credential_pool (compilation failed)"
 fi &
 
 # Budget tracker test (needs budget_tracker.c + provider_metadata + url_safety + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_budget_tracker.c" \
     "$CDIR/src/agent/budget_tracker.c" "$CDIR/src/agent/provider_metadata.c" \
     "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_budget -lm > /dev/null 2>&1; then
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_budget -lssl -lcrypto -lz -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_budget > /dev/null 2>&1; then ok "budget_tracker (104 tests)"
     else fail "budget_tracker (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_budget

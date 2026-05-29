@@ -132,6 +132,23 @@ char *provider_derive_api_key_name(const char *provider_name, const char *base_u
  * provider_cfg can be NULL (no override). */
 bool model_supports_vision(const char *model_name, const provider_config_t *provider_cfg);
 
+/* ================================================================
+ *  A18: models.dev Integration
+ * ================================================================ */
+
+/* Fetch models.dev data with 3-tier cache (in-memory -> disk -> network).
+ * force_refresh=true skips cache, always hits network.
+ * Returns parsed JSON object keyed by provider ID, or NULL on failure. */
+json_t *models_dev_fetch(bool force_refresh);
+
+/* Look up context window for a specific provider/model from models.dev data.
+ * Returns context window, or -1 if not found / unavailable. */
+int models_dev_lookup_context(const char *provider, const char *model);
+
+/* Convert models.dev data to flat JSON array string (same format as
+ * model_metadata_list_json). Returns malloc'd string, caller must free(). */
+char *models_dev_list_json(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -3,16 +3,33 @@
  *
  * Central registry of model capabilities, context windows, and pricing.
  * Longer prefixes must come before shorter ones to avoid false matches.
+ *
+ * A18: models.dev integration — HTTP fetch + 3-tier cache.
  */
 
 #include "provider_metadata.h"
 #include "hermes_json.h"
+#include "hermes_http.h"
 #include "hermes_url_safety.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+
+/* models.dev fetch constants */
+#define MODELS_DEV_URL       "https://models.dev/api.json"
+#define MODELS_DEV_CACHE_TTL 3600  /* 1 hour */
+#define MODELS_DEV_TIMEOUT   10    /* 10s HTTP timeout */
+#define MODELS_DEV_CACHE_FILE "models_dev_cache.json"
+
+/* In-memory cache */
+static json_t *g_models_dev_cache = NULL;
+static time_t  g_models_dev_cache_time = 0;
 
 /* Parse a capability name string (e.g. "vision", "streaming") into a bitmask.
  * Returns 0 on unknown. Comma-separated or space-separated multiple values. */
@@ -412,4 +429,222 @@ bool model_supports_vision(const char *model_name, const provider_config_t *prov
 
     /* 3. Fall back to metadata lookup */
     return model_name_has_capability(model_name, MODEL_CAP_VISION);
+}
+
+
+/* ================================================================
+ *  A18: models.dev Integration — HTTP fetch + 3-tier cache
+ * ================================================================ */
+
+/* Build path to models.dev disk cache: ~/.hermes/models_dev_cache.json */
+static char *get_models_dev_cache_path(void) {
+    const char *home = getenv("XDG_CONFIG_HOME");
+    if (!home || !*home) home = getenv("HOME");
+    if (!home) return NULL;
+    size_t len = strlen(home) + 64;
+    char *path = (char *)malloc(len);
+    if (!path) return NULL;
+    snprintf(path, len, "%s/.hermes/%s", home, MODELS_DEV_CACHE_FILE);
+    return path;
+}
+
+/* Load models.dev cache from disk. Returns parsed JSON or NULL. */
+static json_t *models_dev_load_disk_cache(void) {
+    char *path = get_models_dev_cache_path();
+    if (!path) return NULL;
+
+    struct stat st;
+    if (stat(path, &st) != 0) { free(path); return NULL; }
+    time_t now = time(NULL);
+    if (now - st.st_mtime > MODELS_DEV_CACHE_TTL * 2) {
+        free(path);
+        return NULL;
+    }
+
+    FILE *f = fopen(path, "r");
+    free(path);
+    if (!f) return NULL;
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    if (fsize <= 0) { fclose(f); return NULL; }
+    rewind(f);
+
+    char *buf = (char *)malloc((size_t)fsize + 1);
+    if (!buf) { fclose(f); return NULL; }
+    size_t nread = fread(buf, 1, (size_t)fsize, f);
+    fclose(f);
+    buf[nread] = '\0';
+
+    char *err = NULL;
+    json_t *root = json_parse(buf, &err);
+    free(buf);
+    free(err);
+    return root;
+}
+
+/* Save models.dev data to disk cache. */
+static bool models_dev_save_disk_cache(json_t *data) {
+    char *path = get_models_dev_cache_path();
+    if (!path) return false;
+
+    char *json_str = json_serialize(data);
+    if (!json_str) { free(path); return false; }
+
+    char tmp_path[4096];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", path);
+
+    FILE *f = fopen(tmp_path, "w");
+    if (!f) { free(json_str); free(path); return false; }
+    fputs(json_str, f);
+    fclose(f);
+    free(json_str);
+
+    rename(tmp_path, path);
+    free(path);
+    return true;
+}
+
+/* Fetch models.dev data from network. Returns parsed JSON or NULL. */
+static json_t *models_dev_fetch_network(void) {
+    http_t *h = http_new(MODELS_DEV_TIMEOUT);
+    if (!h) return NULL;
+
+    http_resp_t *resp = http_get(h, MODELS_DEV_URL, NULL);
+    if (!resp || resp->status != 200) {
+        if (resp) http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    char *err = NULL;
+    json_t *root = json_parse(resp->body, &err);
+    http_resp_free(resp);
+    http_free(h);
+    free(err);
+    return root;
+}
+
+/* Fetch models.dev data with 3-tier cache: in-memory -> disk -> network.
+ * Returns parsed JSON (root is a JSON object keyed by provider ID),
+ * or NULL if all sources fail. */
+json_t *models_dev_fetch(bool force_refresh) {
+    time_t now = time(NULL);
+
+    /* Stage 1: fresh in-memory cache */
+    if (!force_refresh && g_models_dev_cache &&
+        (now - g_models_dev_cache_time) < MODELS_DEV_CACHE_TTL) {
+        return g_models_dev_cache;
+    }
+
+    /* Stage 2: fresh disk cache (load into memory) */
+    if (!force_refresh) {
+        json_t *disk = models_dev_load_disk_cache();
+        if (disk) {
+            struct stat st;
+            char *path = get_models_dev_cache_path();
+            if (path) {
+                if (stat(path, &st) == 0 &&
+                    (now - st.st_mtime) < MODELS_DEV_CACHE_TTL) {
+                    if (g_models_dev_cache) json_free(g_models_dev_cache);
+                    g_models_dev_cache = disk;
+                    g_models_dev_cache_time = now;
+                    free(path);
+                    return g_models_dev_cache;
+                }
+                free(path);
+            }
+            json_free(disk);
+        }
+    }
+
+    /* Stage 3: network fetch */
+    json_t *net = models_dev_fetch_network();
+    if (net) {
+        models_dev_save_disk_cache(net);
+        if (g_models_dev_cache) json_free(g_models_dev_cache);
+        g_models_dev_cache = net;
+        g_models_dev_cache_time = now;
+        return g_models_dev_cache;
+    }
+
+    /* Stage 4: fallback to any disk cache (even stale) */
+    json_t *stale = models_dev_load_disk_cache();
+    if (stale) {
+        if (g_models_dev_cache) json_free(g_models_dev_cache);
+        g_models_dev_cache = stale;
+        g_models_dev_cache_time = now;
+        return g_models_dev_cache;
+    }
+
+    return NULL;
+}
+
+/* Look up context window from models.dev data.
+ * Returns context window, or -1 if not found. */
+int models_dev_lookup_context(const char *provider, const char *model) {
+    if (!provider || !model) return -1;
+    json_t *data = models_dev_fetch(false);
+    if (!data) return -1;
+
+    json_t *prov_node = json_obj_get(data, provider);
+    if (!prov_node) return -1;
+
+    json_t *models_node = json_obj_get(prov_node, "models");
+    if (!models_node) return -1;
+
+    json_t *model_node = json_obj_get(models_node, model);
+    if (!model_node) return -1;
+
+    json_t *ctx_node = json_obj_get(model_node, "context");
+    if (!ctx_node || ctx_node->type != JSON_NUMBER) return -1;
+    return (int)ctx_node->num_val;
+}
+
+/* Convert models.dev data to a flat JSON array string for /model list.
+ * Returns malloc'd JSON string, caller must free(). */
+char *models_dev_list_json(void) {
+    json_t *data = models_dev_fetch(false);
+    if (!data) return NULL;
+
+    json_t *arr = json_array();
+    if (!arr) return NULL;
+
+    /* Iterate all provider keys */
+    for (size_t i = 0; i < data->c.count; i++) {
+        const char *prov_name = data->c.keys[i];
+        json_t *prov = data->c.items[i];
+        if (!prov_name || !prov) continue;
+
+        json_t *models = json_obj_get(prov, "models");
+        if (!models || models->type != JSON_OBJECT) continue;
+
+        for (size_t mi = 0; mi < models->c.count; mi++) {
+            const char *model_name = models->c.keys[mi];
+            json_t *md = models->c.items[mi];
+            if (!model_name || !md) continue;
+
+            json_t *entry = json_object();
+            json_set(entry, "id", json_string(model_name));
+            json_set(entry, "provider", json_string(prov_name));
+
+            json_t *ctx = json_obj_get(md, "context");
+            if (ctx && ctx->type == JSON_NUMBER)
+                json_set(entry, "context_window", json_copy(ctx));
+
+            json_t *out = json_obj_get(md, "max_output");
+            if (out && out->type == JSON_NUMBER)
+                json_set(entry, "max_output", json_copy(out));
+
+            json_t *desc = json_obj_get(md, "description");
+            if (desc && desc->type == JSON_STRING)
+                json_set(entry, "description", json_copy(desc));
+
+            json_append(arr, entry);
+        }
+    }
+
+    char *result = json_serialize(arr);
+    json_free(arr);
+    return result;
 }
