@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 static char g_signal_cli[256] = "signal-cli";
 static char g_signal_number[64] = "";
@@ -369,4 +370,54 @@ const char *signal_get_reaction(json_node_t *update) {
 /* P108: Get attachment file path from a polled update (NULL if none) */
 const char *signal_get_attachment(json_node_t *update) {
     return json_get_str(update, "attachment", NULL);
+}
+
+/* ------------------------------------------------------------------
+ * G08: Check if a signal-cli error message indicates a rate-limit failure.
+ * Ported from Python signal_rate_limit._is_signal_rate_limit_error().
+ *
+ * Matches:
+ *   - "[429]" substring (legacy signal-cli RateLimitException)
+ *   - "ratelimit" substring (case-insensitive)
+ *   - "retrylaterexception" substring (case-insensitive, libsignal-net)
+ *   - "retry after" substring (case-insensitive)
+ * ------------------------------------------------------------------ */
+bool signal_is_rate_limit_error(const char *error_message) {
+    if (!error_message || !error_message[0]) return false;
+
+    /* Check exact substrings first (fast path). "[429]" appears in
+     * legacy signal-cli error messages for RateLimitException. */
+    if (strstr(error_message, "[429]") != NULL) return true;
+
+    /* Case-insensitive checks — convert to lowercase buffer for
+     * single-pass matching. Limit to first 1K to avoid unbounded scan. */
+    size_t len = strlen(error_message);
+    if (len > 1024) len = 1024;
+
+    char lower[1025];
+    for (size_t i = 0; i < len; i++)
+        lower[i] = (char)tolower((unsigned char)error_message[i]);
+    lower[len] = '\0';
+
+    if (strstr(lower, "ratelimit") != NULL) return true;
+    if (strstr(lower, "retrylaterexception") != NULL) return true;
+    if (strstr(lower, "retry after") != NULL) return true;
+
+    return false;
+}
+
+/* ------------------------------------------------------------------
+ * G08: Compute the HTTP timeout for a Signal send RPC based on
+ * the number of attachments. Ported from Python
+ * signal_rate_limit._signal_send_timeout().
+ *
+ * signal-cli uploads attachments serially, so the server-side time
+ * scales with batch size. 30s is fine for text-only but truncates
+ * large attachment batches mid-upload.
+ * ------------------------------------------------------------------ */
+int signal_send_timeout(int num_attachments) {
+    if (num_attachments <= 0)
+        return 30;
+    int timeout = 5 * num_attachments;
+    return timeout > 60 ? timeout : 60;
 }

@@ -713,6 +713,14 @@ const char *signal_get_group_id(json_node_t *update);
 const char *signal_get_reaction(json_node_t *update);
 const char *signal_get_attachment(json_node_t *update);
 
+/* G08: Check if a signal-cli error message indicates a rate-limit failure.
+ * Ported from Python signal_rate_limit._is_signal_rate_limit_error(). */
+bool signal_is_rate_limit_error(const char *error_message);
+
+/* G08: Compute HTTP timeout for Signal send RPC based on attachment count.
+ * Ported from Python signal_rate_limit._signal_send_timeout(). */
+int signal_send_timeout(int num_attachments);
+
 /* ================================================================
  *  HomeAssistant platform
  * ================================================================ */

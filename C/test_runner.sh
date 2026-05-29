@@ -2385,10 +2385,11 @@ echo ""; echo "=== Gateway Per-Platform Tests (T01) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_gateway_platforms.c" \
     "$CDIR/src/gateway/platforms/telegram.c" "$CDIR/src/gateway/platforms/discord.c" \
+    "$CDIR/src/gateway/platforms/signal.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_gw_platforms -lm \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 39 tests)"
+    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 59 tests)"
     else
         echo "  Gateway platform test output:"
         /tmp/hermes_test_gw_platforms 2>&1 | sed 's/^/    /'
@@ -2400,6 +2401,7 @@ else
     gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
         "$CDIR/tests/test_gateway_platforms.c" \
         "$CDIR/src/gateway/platforms/telegram.c" "$CDIR/src/gateway/platforms/discord.c" \
+        "$CDIR/src/gateway/platforms/signal.c" \
         "$CDIR/lib/libjson/json.c" \
         -o /tmp/hermes_test_gw_platforms -lm \
         -Wl,--unresolved-symbols=ignore-all 2>&1 | sed 's/^/    /'

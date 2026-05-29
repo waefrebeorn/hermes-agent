@@ -1428,6 +1428,15 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P156-01 | Ported `_is_signal_rate_limit_error()` from Python signal_rate_limit.py — `signal_is_rate_limit_error()` checks signal-cli error messages for rate-limit indicators: "[429]" substring, "ratelimit" (case-insensitive), "retrylaterexception" (case-insensitive), "retry after" (case-insensitive). Handles NULL/empty safely. Matches Python logic exactly. | `C/src/gateway/platforms/signal.c` — `signal_is_rate_limit_error()` at ~377-415 |
+| P156-02 | Ported `_signal_send_timeout()` from Python signal_rate_limit.py — `signal_send_timeout()` computes HTTP timeout for Signal send RPC based on attachment count. 0 att → 30s, 1-12 att → 60s min, 13+ att → 5s/attachment. Matches Python formula. | `C/src/gateway/platforms/signal.c` — `signal_send_timeout()` at ~417-425 |
+| P156-03 | Declarations added to hermes_gateway.h for both new functions. | `C/include/hermes_gateway.h` — lines ~716-723 |
+| P156-04 | Added 20 test assertions: 8 rate-limit positive (429, RateLimit, RATELIMIT, RateLimit no-space, camelCase, RetryLater, retry after, mixed case), 4 negative (NULL, empty, normal, wrong message), 8 timeout (0, -1, 1, 5, 12, 13, 20, 32 attachments). T01 gateway platforms 39→59. | `C/tests/test_gateway_platforms.c` — `test_signal_rate_limit()` |
+|Suite: 302/0/0 (259 test files). Gaps: 140.
+
 ## Phase 155: B11 Cron Depth — Repeat Display Formatter
 | ID | Achievement | Evidence |
 |----|-------------|----------|

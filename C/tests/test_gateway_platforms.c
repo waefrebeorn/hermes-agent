@@ -462,6 +462,48 @@ static void test_webhook_subscriptions(void) {
 #endif /* WEBHOOK_TESTS */
 
 /* ================================================================
+ *  G08: Signal rate-limit error detection & send timeout
+ * ================================================================ */
+static void test_signal_rate_limit(void) {
+    printf("\n--- Signal rate-limit error detection ---\n");
+
+    /* signal_is_rate_limit_error: exact match cases */
+    TEST("ratelimit: [429] in message",
+         signal_is_rate_limit_error("[429] RateLimitException: Too many attachments"));
+    TEST("ratelimit: 'RateLimit' substring",
+         signal_is_rate_limit_error("RateLimit: please slow down"));
+    TEST("ratelimit: 'RATELIMIT' uppercase",
+         signal_is_rate_limit_error("RATELIMIT_EXCEEDED"));
+    TEST("ratelimit: 'rate limit' no-space match",
+         signal_is_rate_limit_error("RateLimit: exceeded"));
+    TEST("ratelimit: 'RateLimit' camelCase",
+         signal_is_rate_limit_error("RateLimit: slow down"));
+    TEST("ratelimit: 'RetryLaterException'",
+         signal_is_rate_limit_error("AttachmentInvalidException: RetryLaterException"));
+    TEST("ratelimit: 'retry after' text",
+         signal_is_rate_limit_error("Retry after 4 seconds"));
+    TEST("ratelimit: mixed case retry after",
+         signal_is_rate_limit_error("RETRY AFTER 10 seconds"));
+
+    /* Negative cases */
+    TEST("ratelimit: NULL input", !signal_is_rate_limit_error(NULL));
+    TEST("ratelimit: empty string", !signal_is_rate_limit_error(""));
+    TEST("ratelimit: normal error", !signal_is_rate_limit_error("Connection refused"));
+    TEST("ratelimit: not found in message",
+         !signal_is_rate_limit_error("Message too long"));
+
+    /* signal_send_timeout: compute timeout */
+    TEST_INT_EQ("timeout: text-only (0 attachments)", signal_send_timeout(0), 30);
+    TEST_INT_EQ("timeout: text-only (-1 attachments)", signal_send_timeout(-1), 30);
+    TEST_INT_EQ("timeout: 1 attachment (60 min)", signal_send_timeout(1), 60);
+    TEST_INT_EQ("timeout: 5 attachments (60 min)", signal_send_timeout(5), 60);
+    TEST_INT_EQ("timeout: 12 attachments (60 min)", signal_send_timeout(12), 60);
+    TEST_INT_EQ("timeout: 13 attachments (65 min)", signal_send_timeout(13), 65);
+    TEST_INT_EQ("timeout: 20 attachments (100 min)", signal_send_timeout(20), 100);
+    TEST_INT_EQ("timeout: 32 attachments (160 min)", signal_send_timeout(32), 160);
+}
+
+/* ================================================================
  *  Main
  * ================================================================ */
 int main(void) {
@@ -475,6 +517,7 @@ int main(void) {
     test_telegram_get_text();
     test_telegram_get_update_type();
     test_discord_setters();
+    test_signal_rate_limit();
 #endif
 
 #ifdef WEBHOOK_TESTS
