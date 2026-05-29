@@ -1637,4 +1637,12 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v244
 | P172-01 | Ported Python `cron/jobs.py` `_schedule_display_for_job()` — `cron_schedule_display_for_job()` extracts display string from job JSON: checks `schedule_display` field first, then `schedule` dict keys (display→value→expr→run_at), then string `schedule`, falls back to "?". Uses `json_obj_get()` for dict field access. | `C/src/cron/cron_extras.c` — `cron_schedule_display_for_job()` ~370-440 |
 | P172-02 | Ported Python `cron/jobs.py` `ensure_dirs()` — `cron_ensure_dirs()` creates `{hermes_home}/cron/` and `{hermes_home}/cron/output/` via `mkdir(0700)` with `EEXIST` tolerance, then applies `cron_secure_dir()` to both. | `C/src/cron/cron_extras.c` — `cron_ensure_dirs()` ~442-470 |
 | P172-03 | Added 9 test assertions for schedule display: NULL→"?", explicit schedule_display, dict→display, dict→expr, dict→run_at, string schedule, empty→"?", plus ensure_dirs NULL/empty/create. | `C/tests/test_cron_extras_util.c` — `test_sched_display_*` (7 tests) + `test_ensure_dirs_*` (3 tests) |
-Suite: 311/0/0 (270 test files). Gaps: 134. v244
+Suite: 311/0/0 (270 test files). Gaps: 134. v245
+
+## Phase 173: P176 cron Depth — Job ID Validation + Workdir Normalization
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P173-01 | Ported Python `cron/jobs.py` `_job_output_dir()` — `cron_validate_job_id()` rejects empty, ".", "..", "/", "\\", absolute paths, drive letters. `cron_job_output_dir()` builds safe "{home}/cron/output/{id}" path. | `C/src/cron/cron_extras.c` — `cron_validate_job_id()` + `cron_job_output_dir()` |
+| P173-02 | Ported Python `cron/jobs.py` `_normalize_workdir()` — `cron_normalize_workdir()` expands ~, rejects relative paths, validates existence + is_dir, resolves with realpath. | `C/src/cron/cron_extras.c` — `cron_normalize_workdir()` |
+| P173-03 | Added 17 test assertions: validate_job_id NULL/empty/dot/dotdot/slash/backslash/absolute/drive/valid (9), job_output_dir NULL/invalid/valid (3), normalize_workdir NULL/empty/relative/nonexistent/tmp (5). | `C/tests/test_cron_extras_util.c` — 17 new tests |
+Suite: 311/0/0 (270 test files). Gaps: 134. v245

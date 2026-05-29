@@ -455,6 +455,147 @@ bool cron_ensure_dirs(const char *hermes_home) {
     return true;
 }
 
+/**
+ * Validate a job ID for use as a safe filesystem path component.
+ * Port of Python cron/jobs.py _job_output_dir().
+ *
+ * Rejects: empty, "." , "..", paths containing "/" or "\\", paths that
+ * appear absolute, or paths with a Windows drive letter.
+ *
+ * @param job_id   The job ID string to validate.
+ * @param out_err  Optional output buffer for error message (256 bytes).
+ * @return true if job_id is safe, false with error in out_err if not.
+ */
+bool cron_validate_job_id(const char *job_id, char *out_err) {
+    if (!job_id || !job_id[0]) {
+        if (out_err) snprintf(out_err, 256, "Job ID is empty");
+        return false;
+    }
+    /* Trim whitespace */
+    const char *p = job_id;
+    while (*p == ' ' || *p == '\t') p++;
+    if (!*p) {
+        if (out_err) snprintf(out_err, 256, "Job ID is whitespace only");
+        return false;
+    }
+    /* Reject "." and ".." */
+    if (strcmp(p, ".") == 0 || strcmp(p, "..") == 0) {
+        if (out_err) snprintf(out_err, 256, "Job ID cannot be '.' or '..'");
+        return false;
+    }
+    /* Reject paths containing "/" or "\\" */
+    if (strchr(p, '/') || strchr(p, '\\')) {
+        if (out_err) snprintf(out_err, 256, "Job ID cannot contain path separators");
+        return false;
+    }
+    /* Reject absolute paths (starts with / on Unix) */
+    if (p[0] == '/') {
+        if (out_err) snprintf(out_err, 256, "Job ID cannot be an absolute path");
+        return false;
+    }
+    /* Reject Windows drive letters (e.g. "C:foo") */
+    if (p[0] && p[1] == ':' && p[2]) {
+        if (out_err) snprintf(out_err, 256, "Job ID contains a drive letter");
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Build a safe output directory path for a cron job.
+ *
+ * Creates "{hermes_home}/cron/output/{job_id}" after validating the job_id
+ * with cron_validate_job_id(). Returns malloc'd path (caller must free),
+ * or NULL on validation failure with error in out_err.
+ *
+ * Port of Python cron/jobs.py _job_output_dir() returning the full path.
+ */
+char *cron_job_output_dir(const char *hermes_home, const char *job_id, char *out_err) {
+    if (!hermes_home || !hermes_home[0]) {
+        if (out_err) snprintf(out_err, 256, "HERMES_HOME is empty");
+        return NULL;
+    }
+    if (!cron_validate_job_id(job_id, out_err)) {
+        return NULL;
+    }
+    size_t len = strlen(hermes_home) + 1 + 5 + 1 + 6 + 1 + strlen(job_id) + 1;
+    char *path = malloc(len);
+    if (!path) {
+        if (out_err) snprintf(out_err, 256, "Out of memory");
+        return NULL;
+    }
+    snprintf(path, len, "%s/cron/output/%s", hermes_home, job_id);
+    return path;
+}
+
+/**
+ * Normalize and validate a cron job workdir path.
+ *
+ * Rules (port of Python cron/jobs.py _normalize_workdir()):
+ *   - NULL/empty → NULL (feature off).
+ *   - ~ is expanded to $HOME.
+ *   - Relative paths are rejected.
+ *   - Path must exist and be a directory.
+ *
+ * Returns malloc'd resolved absolute path (caller must free),
+ * or NULL on validation failure with error in out_err.
+ */
+char *cron_normalize_workdir(const char *workdir, char *out_err) {
+    if (!workdir || !workdir[0]) {
+        return NULL;  /* feature off, not an error */
+    }
+    /* Trim whitespace */
+    const char *p = workdir;
+    while (*p == ' ' || *p == '\t') p++;
+    if (!*p) {
+        return NULL;  /* feature off */
+    }
+
+    /* Expand ~ to $HOME */
+    char expanded[HERMES_PATH_MAX];
+    if (p[0] == '~') {
+        const char *home = getenv("HOME");
+        if (!home) {
+            if (out_err) snprintf(out_err, 256, "HOME not set, cannot expand ~");
+            return NULL;
+        }
+        snprintf(expanded, sizeof(expanded), "%s%s", home, p + 1);
+    } else {
+        snprintf(expanded, sizeof(expanded), "%s", p);
+    }
+
+    /* Reject relative paths */
+    if (expanded[0] != '/') {
+        if (out_err) snprintf(out_err, 256,
+            "Cron workdir must be an absolute path (got '%s'). "
+            "Cron jobs run detached from any shell cwd.", workdir);
+        return NULL;
+    }
+
+    /* Resolve the path */
+    char resolved[HERMES_PATH_MAX];
+    struct stat st;
+    if (stat(expanded, &st) != 0) {
+        if (out_err) snprintf(out_err, 256, "Cron workdir does not exist: %s", expanded);
+        return NULL;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        if (out_err) snprintf(out_err, 256, "Cron workdir is not a directory: %s", expanded);
+        return NULL;
+    }
+
+    /* Use realpath if available, else expanded */
+    char *real = realpath(expanded, NULL);
+    if (real) {
+        snprintf(resolved, sizeof(resolved), "%s", real);
+        free(real);
+    } else {
+        snprintf(resolved, sizeof(resolved), "%s", expanded);
+    }
+
+    return strdup(resolved);
+}
+
 /** Normalize a skill/skills parameter into a canonical, deduplicated string list.
  *  Returns malloc'd NULL-terminated array (caller frees each string + array).
  *  Port of Python cronjob_tools._canonical_skills(). */

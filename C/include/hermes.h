@@ -1372,6 +1372,9 @@ bool   cron_secure_file(const char *path);    /* chmod 0600 */
 const char *cron_coerce_job_text(const char *value, const char *fallback); /* nullable string coercion */
 const char *cron_schedule_display_for_job(json_node_t *job);              /* Extract display string from job schedule */
 bool        cron_ensure_dirs(const char *hermes_home);                    /* mkdir -p ~/.hermes/cron/ + ~/.hermes/cron/output/ */
+bool        cron_validate_job_id(const char *job_id, char *out_err);      /* Reject path-escape job IDs */
+char       *cron_job_output_dir(const char *hermes_home, const char *job_id, char *out_err); /* Build safe output dir path */
+char       *cron_normalize_workdir(const char *workdir, char *out_err);   /* Validate + resolve cron workdir path */
 
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,

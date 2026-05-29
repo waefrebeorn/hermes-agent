@@ -383,6 +383,154 @@ static void test_ensure_dirs_tmp(void) {
 }
 
 /* ================================================================
+ *  cron_validate_job_id tests
+ * ================================================================ */
+
+static void test_validate_job_id_null(void) {
+    TEST("validate_job_id(NULL) -> false");
+    char err[256];
+    bool r = cron_validate_job_id(NULL, err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_empty(void) {
+    TEST("validate_job_id(\"\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_dot(void) {
+    TEST("validate_job_id(\".\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id(".", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_dotdot(void) {
+    TEST("validate_job_id(\"..\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("..", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_slash(void) {
+    TEST("validate_job_id(\"a/b\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("a/b", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_backslash(void) {
+    TEST("validate_job_id(\"a\\\\b\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("a\\b", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_absolute(void) {
+    TEST("validate_job_id(\"/etc/passwd\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("/etc/passwd", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_drive_letter(void) {
+    TEST("validate_job_id(\"C:foo\") -> false");
+    char err[256];
+    bool r = cron_validate_job_id("C:foo", err);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_validate_job_id_valid(void) {
+    TEST("validate_job_id(\"abc123\") -> true");
+    char err[256];
+    bool r = cron_validate_job_id("abc123", err);
+    if (r) { PASS(); return; }
+    FAIL("expected true"); printf("  err=%s\n", err);
+}
+
+/* ================================================================
+ *  cron_job_output_dir tests
+ * ================================================================ */
+
+static void test_job_output_dir_null_home(void) {
+    TEST("job_output_dir(NULL, \"x\", err) -> NULL");
+    char err[256];
+    char *p = cron_job_output_dir(NULL, "x", err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_job_output_dir_invalid_id(void) {
+    TEST("job_output_dir(\"/tmp\", \"../escape\", err) -> NULL");
+    char err[256];
+    char *p = cron_job_output_dir("/tmp", "../escape", err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_job_output_dir_valid(void) {
+    TEST("job_output_dir(\"/tmp\", \"job42\", err) -> path");
+    char err[256];
+    char *p = cron_job_output_dir("/tmp", "job42", err);
+    if (p && strcmp(p, "/tmp/cron/output/job42") == 0) { PASS(); free(p); return; }
+    FAIL("expected /tmp/cron/output/job42"); printf("  got=%s err=%s\n", p ? p : "NULL", err); free(p);
+}
+
+/* ================================================================
+ *  cron_normalize_workdir tests
+ * ================================================================ */
+
+static void test_normalize_workdir_null(void) {
+    TEST("normalize_workdir(NULL) -> NULL (feature off)");
+    char err[256];
+    char *p = cron_normalize_workdir(NULL, err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_normalize_workdir_empty(void) {
+    TEST("normalize_workdir(\"\") -> NULL (feature off)");
+    char err[256];
+    char *p = cron_normalize_workdir("", err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_normalize_workdir_relative(void) {
+    TEST("normalize_workdir(\"rel\") -> NULL (relative)");
+    char err[256];
+    char *p = cron_normalize_workdir("rel", err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_normalize_workdir_nonexistent(void) {
+    TEST("normalize_workdir(\"/nonexistent_XXXX\") -> NULL");
+    char err[256];
+    char *p = cron_normalize_workdir("/nonexistent_XXXX", err);
+    if (!p) { PASS(); return; }
+    FAIL("expected NULL"); free(p);
+}
+
+static void test_normalize_workdir_tmp(void) {
+    TEST("normalize_workdir(\"/tmp\") -> path");
+    char err[256];
+    char *p = cron_normalize_workdir("/tmp", err);
+    if (p && strncmp(p, "/tmp", 4) == 0) { PASS(); free(p); return; }
+    FAIL("expected /tmp..."); printf("  got=%s err=%s\n", p ? p : "NULL", err); free(p);
+}
+
+/* ================================================================
  *  cron_parse_duration tests
  * ================================================================ */
 
@@ -537,6 +685,29 @@ int main(void) {
     test_ensure_dirs_null();
     test_ensure_dirs_empty();
     test_ensure_dirs_tmp();
+
+    printf("\n--- cron_validate_job_id ---\n");
+    test_validate_job_id_null();
+    test_validate_job_id_empty();
+    test_validate_job_id_dot();
+    test_validate_job_id_dotdot();
+    test_validate_job_id_slash();
+    test_validate_job_id_backslash();
+    test_validate_job_id_absolute();
+    test_validate_job_id_drive_letter();
+    test_validate_job_id_valid();
+
+    printf("\n--- cron_job_output_dir ---\n");
+    test_job_output_dir_null_home();
+    test_job_output_dir_invalid_id();
+    test_job_output_dir_valid();
+
+    printf("\n--- cron_normalize_workdir ---\n");
+    test_normalize_workdir_null();
+    test_normalize_workdir_empty();
+    test_normalize_workdir_relative();
+    test_normalize_workdir_nonexistent();
+    test_normalize_workdir_tmp();
 
     printf("\n==========================\n");
     printf("Results: %d/%d passed\n", passed, tests);
