@@ -1412,7 +1412,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
     "$CDIR/tests/test_media_cache.c" \
     "$CDIR/src/tools/media_cache.c" \
     -o /tmp/hermes_test_media_cache -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_media_cache > /dev/null 2>&1; then ok "media_cache (15 tests)"
+    if /tmp/hermes_test_media_cache > /dev/null 2>&1; then ok "media_cache (32 tests)"
     else fail "media_cache (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_media_cache
 else skip "media_cache (compilation failed)"

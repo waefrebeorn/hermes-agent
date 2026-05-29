@@ -32,6 +32,13 @@ char *media_cache_save(const char *type, const unsigned char *data, size_t data_
  * Mirrors Python base.py cleanup_image_cache(). */
 int media_cache_cleanup(const char *type, int max_age_hours);
 
+/* Determine if a media file should be sent as audio (voice message).
+ * For Telegram: Opus/OGG only when is_voice=true, MP3/M4A always audio.
+ * Other platforms: all known audio extensions are sent as audio.
+ * Returns true if the file should use the audio delivery path.
+ * Mirrors Python base.py should_send_media_as_audio(). */
+bool media_should_send_as_audio(const char *ext, bool is_telegram, bool is_voice);
+
 #ifdef __cplusplus
 }
 #endif

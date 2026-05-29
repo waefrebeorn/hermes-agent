@@ -1428,6 +1428,13 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 152: G02 base.py Depth — Audio Routing Helper
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P152-01 | Ported `should_send_media_as_audio()` + audio extension constants from Python base.py — `media_should_send_as_audio()` checks if a file extension should be sent via audio delivery path. Supports 6 audio extensions (ogg/opus/mp3/wav/m4a/flac). Telegram-specific: Opus/OGG only when is_voice, MP3/M4A always audio. Other platforms send all known audio exts as audio. | `C/src/tools/media_cache.c` — `media_should_send_as_audio()` at ~200-230 |
+| P152-02 | Added 17 test assertions: 6 non-Telegram audio exts, 2 Telegram audio attachments (mp3/m4a), 2 Telegram voice when is_voice (ogg/opus), 2 Telegram voice not without is_voice, Telegram wav not audio, unknown ext, pdf, NULL, empty. Media cache tests 15→32. | `C/tests/test_media_cache.c` — section 6 |
+|Suite: 302/0/0 (259 test files). Gaps: 140.
+
 ## Phase 151: G09 yuanbao_media Depth — Image Format & Dimension Parsing
 | ID | Achievement | Evidence |
 |----|-------------|----------|

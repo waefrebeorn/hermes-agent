@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v224 | Fork diverged — C/ lives only on fork | Suite 302/0/0 | 85 tools | 98 CLI**
+**v225 | Fork diverged — C/ lives only on fork | Suite 302/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 139 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 259 (20.5% parity). Phase 151: get_image_format() + parse_image_size() ported from yuanbao_media.py (url safety tests 83, +15). Suite 302/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -85,7 +85,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup. Missing: proxy detection | P1 | PARTIAL |
+|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio. Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |

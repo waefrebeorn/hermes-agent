@@ -99,6 +99,44 @@ int main(void) {
         TEST("cleanup with negative age returns 0", removed == 0);
     }
 
+    /* 6. media_should_send_as_audio */
+    {
+        TEST("audio .mp3 send as audio (non-Telegram)",
+             media_should_send_as_audio(".mp3", false, false));
+        TEST("audio .ogg send as audio (non-Telegram)",
+             media_should_send_as_audio(".ogg", false, false));
+        TEST("audio .wav send as audio (non-Telegram)",
+             media_should_send_as_audio(".wav", false, false));
+        TEST("audio .opus send as audio (non-Telegram)",
+             media_should_send_as_audio(".opus", false, false));
+        TEST("audio .m4a send as audio (non-Telegram)",
+             media_should_send_as_audio(".m4a", false, false));
+        TEST("audio .flac send as audio (non-Telegram)",
+             media_should_send_as_audio(".flac", false, false));
+        TEST("Telegram mp3 send as audio attachment",
+             media_should_send_as_audio(".mp3", true, false));
+        TEST("Telegram m4a send as audio attachment",
+             media_should_send_as_audio(".m4a", true, false));
+        TEST("Telegram ogg NOT audio unless is_voice",
+             !media_should_send_as_audio(".ogg", true, false));
+        TEST("Telegram ogg IS audio when is_voice",
+             media_should_send_as_audio(".ogg", true, true));
+        TEST("Telegram opus NOT audio unless is_voice",
+             !media_should_send_as_audio(".opus", true, false));
+        TEST("Telegram opus IS audio when is_voice",
+             media_should_send_as_audio(".opus", true, true));
+        TEST("Telegram wav not audio (not in Telegram audio exts)",
+             !media_should_send_as_audio(".wav", true, false));
+        TEST("unknown extension not audio",
+             !media_should_send_as_audio(".xyz", false, false));
+        TEST(".pdf not audio",
+             !media_should_send_as_audio(".pdf", false, false));
+        TEST("NULL ext not audio",
+             !media_should_send_as_audio(NULL, false, false));
+        TEST("empty ext not audio",
+             !media_should_send_as_audio("", false, false));
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

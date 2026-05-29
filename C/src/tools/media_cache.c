@@ -191,3 +191,40 @@ int media_cache_cleanup(const char *type, int max_age_hours) {
     closedir(d);
     return removed;
 }
+
+/* ================================================================
+ *  Audio Routing Helper
+ * ================================================================ */
+
+/* Known audio file extensions */
+static const char *AUDIO_EXTS[] = {".ogg", ".opus", ".mp3", ".wav", ".m4a", ".flac", NULL};
+
+/* Telegram Bot API sendAudio accepts only MP3 / M4A */
+static const char *TELEGRAM_AUDIO_ATTACHMENT_EXTS[] = {".mp3", ".m4a", NULL};
+
+/* Telegram Bot API sendVoice accepts Opus/OGG */
+static const char *TELEGRAM_VOICE_EXTS[] = {".ogg", ".opus", NULL};
+
+/* Check if extension is in a list */
+static bool ext_in_list(const char *ext, const char **list) {
+    for (int i = 0; list[i]; i++) {
+        if (strcasecmp(ext, list[i]) == 0) return true;
+    }
+    return false;
+}
+
+/* Determine if a media file should be sent as audio (voice message).
+ * For Telegram: Opus/OGG only when is_voice=true, MP3/M4A always audio.
+ * Other platforms: all known audio extensions are sent as audio.
+ * Returns true if the file should use the audio delivery path.
+ * Mirrors Python base.py should_send_media_as_audio(). */
+bool media_should_send_as_audio(const char *ext, bool is_telegram, bool is_voice) {
+    if (!ext || !*ext) return false;
+    if (!ext_in_list(ext, AUDIO_EXTS)) return false;
+    if (is_telegram) {
+        if (ext_in_list(ext, TELEGRAM_VOICE_EXTS))
+            return is_voice;
+        return ext_in_list(ext, TELEGRAM_AUDIO_ATTACHMENT_EXTS);
+    }
+    return true;
+}
