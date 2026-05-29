@@ -2,7 +2,7 @@
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
-Battleship v34 (226+ gaps across 10 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (216+ gaps across 10 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -22,4 +22,4 @@ Battleship v34 (226+ gaps across 10 sectors, 1000+ test case gaps). Fork diverge
 - **P3** (60): Agent modules (11), Plugins (15), CLI ecosystem (12), Tool depth (10), TUI (4), Tests (8)
 
 ## Honest Assessment
-Real parity gap is 200+ structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Display/visual layer (Phase 0) is the most critical — 5 real gaps remain after Phase 57 stale-claim sweep.
+Real parity gap is 200+ structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 58 retired 7 stale S1 claims + implemented L03 (vision auto-disable) + L14 (log tagging).

@@ -37,6 +37,16 @@ const char *decide_image_input_mode(const char *provider,
                                     const void *cfg);
 
 /**
+ * image_routing_decide_mode: Like decide_image_input_mode but also checks
+ * vision_disabled flag from the runtime agent state.
+ * Returns "text" if vision is disabled, otherwise delegates.
+ */
+const char *image_routing_decide_mode(const void *state,
+                                       const char *provider,
+                                       const char *model,
+                                       const void *cfg);
+
+/**
  * build_native_content_parts: Build OpenAI-style content list JSON string.
  *
  * user_text:    the user's text input.
@@ -78,5 +88,25 @@ const char *sniff_mime_from_bytes(const unsigned char *data, size_t len);
 const char *guess_mime(const char *path,
                        const unsigned char *data,
                        size_t data_len);
+
+/**
+ * image_routing_disable_vision: Mark vision as disabled for this session.
+ * Called when a provider returns an error indicating images are not supported.
+ */
+void image_routing_disable_vision(void *state);
+
+/**
+ * image_routing_vision_disabled: Check if vision is disabled.
+ * Returns true if a provider error previously triggered disable_vision.
+ */
+bool image_routing_vision_disabled(const void *state);
+
+/**
+ * image_routing_notify_error: Feed an error string to the image router.
+ * If the error message suggests the model doesn't support images,
+ * auto-disables vision for the rest of the session.
+ * Returns true if vision was newly disabled by this call.
+ */
+bool image_routing_notify_error(void *state, const char *error_text);
 
 #endif /* HERMES_IMAGE_ROUTING_H */

@@ -74,6 +74,7 @@ const char *sniff_mime_from_bytes(const unsigned char *data, size_t len) {
     return NULL;
 }
 
+
 const char *guess_mime(const char *path,
                        const unsigned char *data,
                        size_t data_len)
@@ -264,6 +265,27 @@ const char *decide_image_input_mode(const char *provider,
     return "text";
 }
 
+/**
+ * image_routing_decide_mode: Wrapper around decide_image_input_mode that
+ * also checks runtime vision-disabled state from provider errors.
+ *
+ * Returns "text" if vision is disabled, otherwise delegates to
+ * decide_image_input_mode().
+ */
+const char *image_routing_decide_mode(const void *state,
+                                       const char *provider,
+                                       const char *model,
+                                       const void *cfg)
+{
+    if (state) {
+        /* Cast to agent_state_t — only field we access is vision_disabled */
+        const agent_state_t *s = (const agent_state_t *)state;
+        if (s->vision_disabled)
+            return "text";
+    }
+    return decide_image_input_mode(provider, model, cfg);
+}
+
 char *build_native_content_parts(const char *user_text,
                                   const char **image_paths,
                                   size_t num_paths,
@@ -382,4 +404,62 @@ char *build_native_content_parts(const char *user_text,
     free(skipped);
 
     return result;
+}
+
+/* ── Vision disable (L03) ────────────────────────────────── */
+
+void image_routing_disable_vision(void *state) {
+    if (!state) return;
+    agent_state_t *s = (agent_state_t *)state;
+    s->vision_disabled = true;
+}
+
+bool image_routing_vision_disabled(const void *state) {
+    if (!state) return false;
+    const agent_state_t *s = (const agent_state_t *)state;
+    return s->vision_disabled;
+}
+
+/**
+ * image_routing_notify_error: Check if error suggests vision not supported.
+ *
+ * Triggers on patterns like:
+ *   - "text only" / "text-only" model
+ *   - "image" not supported / rejected
+ *   - "vision" not available
+ *
+ * Only disables if the model/provider was thought to support vision.
+ * Returns true if vision was newly disabled.
+ */
+bool image_routing_notify_error(void *state, const char *error_text) {
+    if (!state || !error_text) return false;
+    agent_state_t *s = (agent_state_t *)state;
+    if (s->vision_disabled) return false; /* already disabled */
+
+    /* Check for vision-incompatible error patterns */
+    const char *patterns[] = {
+        "text only",
+        "text-only",
+        "does not support image",
+        "image input is not supported",
+        "does not support vision",
+        "vision is not supported",
+        "content has invalid image",
+        "images are not supported",
+        "image_url is not supported",
+        "image_url is not enabled",
+        "image data is not supported",
+        NULL
+    };
+
+    for (int i = 0; patterns[i]; i++) {
+        if (strstr(error_text, patterns[i])) {
+            s->vision_disabled = true;
+            fprintf(stderr, "[image_routing] Vision auto-disabled: pattern '%s' matched in error\n",
+                    patterns[i]);
+            return true;
+        }
+    }
+
+    return false;
 }

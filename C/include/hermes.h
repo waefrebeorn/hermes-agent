@@ -339,6 +339,9 @@ typedef struct {
 
     /* G37: Optional background tool result review (see llm_background_review) */
     bool enable_background_review;
+
+    /* L03: Vision disabled flag — set when provider rejects image content */
+    bool vision_disabled;
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */

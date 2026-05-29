@@ -20,6 +20,7 @@
 #include "hermes_onboarding.h"
 #include "hermes_logger.h"
 #include "hermes_hooks.h"
+#include "image_routing.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1036,6 +1037,11 @@ char *agent_run_conversation(agent_state_t *state,
                     (const message_t **)state->messages,
                     state->message_count,
                     tools_json);
+            }
+
+            /* L03: Check if response error suggests vision not supported */
+            if (llm_resp && llm_resp->content && state->vision_disabled == false) {
+                image_routing_notify_error(state, llm_resp->content);
             }
 
             if (!llm_resp) {
