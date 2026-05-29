@@ -1,7 +1,7 @@
-# Overnight (v169)
+# Overnight (v170)
 
 145 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 294/0/0 (250 test files). Phase 93-94: B03 URL secret exfiltration check + multi-URL support (web 58%→78%).
+Suite 294/0/0 (250 test files). Phase 95: B02 remote URL safety checks (vision 23%→29%).
 
 ## Current Phase: Phase 6 complete — S2 all real gaps PORTED
 A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.

@@ -179,61 +179,7 @@ static void cookie_jar_update(const char *path, const char *raw_headers) {
     cookie_jar_write(path, write_entries, existing_count);
 }
 
-/* Check if a URL contains embedded API keys/secrets (exfiltration prevention).
- * Checks raw URL and URL-decoded version for common secret prefix patterns.
- * Returns a description of what was found, or NULL if clean. */
-static const char *url_has_secret(const char *url) {
-    if (!url || !*url) return NULL;
-
-    /* Common API key prefixes to check (subset of Python agent/redact.py _PREFIX_PATTERNS) */
-    static const char *prefixes[] = {
-        "sk-", "sk-ant-",
-        "ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_",
-        "xoxb-", "xoxp-", "xoxa-", "xoxr-",
-        "AIza", "pplx-", "fal_", "fc-", "bb_live_",
-        "AKIA",
-        "sk_live_", "sk_test_", "rk_live_",
-        "SG.", "hf_", "r8_", "npm_", "pypi-",
-        "dop_v1_", "doo_v1_",
-        "am_", "tvly-", "exa_", "gsk_",
-        "syt_", "retaindb_", "hsk-",
-        "mem0_", "brv_", "xai-",
-        NULL
-    };
-
-    /* Check raw URL */
-    for (int i = 0; prefixes[i]; i++) {
-        if (strstr(url, prefixes[i]))
-            return prefixes[i];
-    }
-
-    /* URL-decode a copy for percent-encoded variants (%73k- etc.) */
-    char decoded[4096];
-    int di = 0;
-    for (int si = 0; url[si] && di < (int)sizeof(decoded) - 1; si++) {
-        if (url[si] == '%' && url[si+1] && url[si+2]) {
-            char hex[3] = {url[si+1], url[si+2], 0};
-            char *end = NULL;
-            long val = strtol(hex, &end, 16);
-            if (end && *end == 0 && val >= 0 && val <= 255) {
-                decoded[di++] = (char)val;
-                si += 2;
-                continue;
-            }
-        }
-        decoded[di++] = url[si];
-    }
-    decoded[di] = 0;
-
-    if (strcmp(decoded, url) != 0) {
-        for (int i = 0; prefixes[i]; i++) {
-            if (strstr(decoded, prefixes[i]))
-                return prefixes[i];
-        }
-    }
-
-    return NULL;
-}
+/* url_has_secret() moved to url_safety.c */
 
 /* ================================================================
  *  HTTP GET / POST / PUT / DELETE handler

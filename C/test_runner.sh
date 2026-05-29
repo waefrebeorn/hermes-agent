@@ -2595,7 +2595,7 @@ fi &
 # Vision tool test (M33 — needs vision.c + json lib)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_vision.c" \
-    "$CDIR/src/tools/vision.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/src/tools/vision.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_vision -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_vision > /dev/null 2>&1; then ok "vision_tool (31 tests)"
     else fail "vision_tool (test binary returned non-zero)"; fi

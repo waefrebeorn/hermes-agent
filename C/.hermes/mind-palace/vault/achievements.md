@@ -951,6 +951,18 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 95: B02 remote URL safety checks for vision (v170)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P95-01 | SSRF protection for remote image URLs — url_is_safe() check before processing | `src/tools/vision.c` — vision_handler remote URL branch |
+| P95-02 | Secret exfiltration check — url_has_secret() blocks URLs with API key patterns | `src/tools/vision.c` — vision_handler remote URL branch |
+| P95-03 | Content-Type validation via HEAD request — warns if image URL returns non-image content type | `src/tools/vision.c` — HEAD query in remote URL branch |
+| P95-04 | data: URI passthrough — data URIs excluded from URL safety checks | `src/tools/vision.c` — skip condition for data: prefix |
+| P95-05 | url_has_secret moved from web.c to url_safety.c — reusable across tools | `src/tools/url_safety.c` — `src/include/hermes_url_safety.h` |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

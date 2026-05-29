@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v169)
+# BANNER — WuBu Slermes C Translation (v170)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v169                                       ║
+║  WuBu Slermes C v170                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B03: multi-URL support + URL secret check                 ║
+║  B02: remote URL safety checks for vision                 ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

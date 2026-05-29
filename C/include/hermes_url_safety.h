@@ -74,6 +74,11 @@ char *url_extract_hostname(const char *url);
  * Returns true if host matches or is subdomain of expected. */
 bool url_host_matches(const char *url, const char *expected_host);
 
+/* Check if URL contains embedded API keys/secrets (exfiltration prevention).
+ * Checks raw URL and URL-decoded version for common API key prefix patterns.
+ * Returns the matched prefix string or NULL if clean. */
+const char *url_has_secret(const char *url);
+
 #ifdef __cplusplus
 }
 #endif

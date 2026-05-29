@@ -5,6 +5,7 @@
  */
 #include "hermes.h"
 #include "hermes_json.h"
+#include "hermes_url_safety.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -250,6 +251,54 @@ char *vision_handler(const char *args_json, const char *task_id) {
             }
         } else if (is_local && st.st_size > VISION_MAX_FILE_BYTES) {
             json_object_set(result, "error", json_new_string("File too large (>50 MB)"));
+        } else if (!is_local && strncmp(image_url, "data:", 5) != 0) {
+            /* Remote URL safety checks (skip for data: URIs) */
+            const char *secret = url_has_secret(image_url);
+            if (secret) {
+                char buf[256];
+                snprintf(buf, sizeof(buf), "Blocked: URL contains what appears to be a %s API key. Secrets must not be sent in URLs.", secret);
+                json_object_set(result, "error", json_new_string(buf));
+            } else if (!url_is_safe(image_url)) {
+                json_object_set(result, "error", json_new_string("URL blocked by SSRF protection: private or internal address"));
+            } else {
+                /* Remote URL — pass through for LLM processing */
+                json_object_set(result, "image_url", json_new_string(image_url));
+                if (detail) json_object_set(result, "detail", json_new_string(detail));
+                if (analysis) json_object_set(result, "analysis", json_new_string(analysis));
+                if (question) {
+                    json_object_set(result, "question", json_new_string(question));
+                    /* Attempt quick HEAD-like check for content-type validation */
+                    http_t *h = http_new(5);
+                    if (h) {
+                        http_resp_t *resp = http_get(h, image_url, NULL);
+                        if (resp && resp->status >= 200 && resp->status < 300 && resp->headers) {
+                            /* Search for Content-Type in raw headers */
+                            const char *ct = strstr(resp->headers, "content-type:");
+                            if (!ct) ct = strstr(resp->headers, "Content-Type:");
+                            if (ct) {
+                                ct += 13; /* skip "content-type:" or "Content-Type:" */
+                                while (*ct == ' ') ct++;
+                                if (strncmp(ct, "image/", 6) != 0) {
+                                    char warn[256];
+                                    const char *nl = strchr(ct, '\r');
+                                    if (!nl) nl = strchr(ct, '\n');
+                                    size_t ct_len = nl ? (size_t)(nl - ct) : strlen(ct);
+                                    if (ct_len > 64) ct_len = 64;
+                                    char ct_buf[65];
+                                    memcpy(ct_buf, ct, ct_len);
+                                    ct_buf[ct_len] = '\0';
+                                    snprintf(warn, sizeof(warn),
+                                             "Content-Type is '%s', not an image. Remote URL may not be an image.",
+                                             ct_buf);
+                                    json_object_set(result, "remote_content_type_warning", json_new_string(warn));
+                                }
+                            }
+                        }
+                        if (resp) http_resp_free(resp);
+                        http_free(h);
+                    }
+                }
+            }
         } else {
             json_object_set(result, "image_url", json_new_string(image_url));
             if (detail) json_object_set(result, "detail", json_new_string(detail));
