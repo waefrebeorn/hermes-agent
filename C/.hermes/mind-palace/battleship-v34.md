@@ -88,17 +88,17 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 02 | G02 | base.py | ~600 | Gateway base class, rate limiting, retry | P1 |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
-| 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 |
+| 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
 | 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config | P2 |
 | 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting | P2 |
 | 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments | P2 |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
 | 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 |
-| 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 |
+| 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 |
 
-**S3: 12 gaps (2 P1, 10 P2)**
+**S3: 10 gaps (2 P1, 8 P2)**
 
 ---
 
@@ -249,7 +249,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | # | ID | Gap | Detail | Priority |
 |---|----|-----|--------|----------|
 | 01 | F01 | C can't hook Python | Standalone binary, cannot import Python | P0 |
-| 02 | F02 | Test count mismatch | 248 C vs 1,262 Python tests | P0 |
+| 02 | F02 | Test count mismatch | 258 C vs 1,262 Python tests | P0 |
 | 03 | F03 | No Python interop | Cannot reuse Python libraries at runtime | P0 |
 | 04 | F04 | Single-threaded agent loop | Python uses asyncio for concurrent ops | P0 |
 | 05 | F05 | No credential automation | Python OAuth flows not replicated | P1 |
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-| S3: Gateway Helpers | 12 | 0 | 2 | 10 | 0 | G01 helpers.py ported. 12 remaining. |
+| S3: Gateway Helpers | 10 | 0 | 2 | 8 | 0 | G01 helpers.py ported. G05/G12 stale-retired. 10 remaining. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 72: B07 env passthrough wired. B08/B10 stale claims corrected |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **144** | **6** | **36** | **63** | **43** | **Phase 132: Telegram retry with exponential backoff (B08 depth).** |
+||| **TOTAL** | **142** | **6** | **36** | **63** | **43** | **Phase 133: Stale S3 claims vaulted (G05 wecom_crypto, G12 api_server). file_merge test expansion.** |
 
 ### Phase Map
 

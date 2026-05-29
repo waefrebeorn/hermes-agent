@@ -1332,3 +1332,12 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 |----|-------------|----------|
 | P132-01 | Telegram retry with exponential backoff: port of Python _telegram_retry_delay + _send_telegram_message_with_retry. `telegram_retry_ns()` provides 0.5s/1s/2s exponential backoff across 3 attempts. Media_group InputMedia array pre-built once and reused across retries. Inline keyboard reply_markup rebuilt fresh each attempt. | `src/tools/send_message.c` — `telegram_retry_ns()` function + retry loop wrapping all Telegram send paths |
 Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 133: Stale S3 Claims Vaulted + file_merge Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P133-01 | G05 stale claim retired: wecom_crypto.py listed as gap — C already has wecom_crypto.c with 28-test suite (test_wecom_crypto.c) compiled into binary | `C/src/tools/wecom_crypto.c`, `C/tests/test_wecom_crypto.c` |
+| P133-02 | G12 stale claim retired: api_server.py listed as gap — C has api_server.c (1224 LOC) with full HTTP API server | `C/src/api_server.c` — api_server_start/stop/is_running |
+| P133-03 | file_merge test expansion 4→13 tests: added missing params (modified, output), identical files, different files with diff verification, unknown strategy, both files missing, empty base file, output file written verification | `C/tests/test_file_merge.c` — 9 new tests (13 total) |
+| P133-04 | S10 F02 stale test count in battleship: 248→258 corrected | `C/.hermes/mind-palace/battleship-v34.md` |
+Suite: 301/0/0 (258 test files). Gaps: 142.

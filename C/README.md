@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 144 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 132: Telegram retry with exponential backoff (B08 depth). See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 142 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 133: Stale S3 claims vaulted (G05/G12). See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v34.md` — Canonical gap list (144 gaps across 9 sectors, 1000+ test case gaps)
+- `battleship-v34.md` — Canonical gap list (142 gaps across 9 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
