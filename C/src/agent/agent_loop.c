@@ -1192,6 +1192,12 @@ char *agent_run_conversation(agent_state_t *state,
         }
 
 retry_done:
+        /* P95: Log upstream diagnostic headers on success */
+        if (llm_resp && llm_resp->diag.upstream_headers[0]) {
+            fprintf(stderr, "[llm] upstream=[%s]\n",
+                    llm_resp->diag.upstream_headers);
+        }
+
         /* P91: Mark system prompt as cached after first successful call */
         if (!state->llm.system_cached) {
             state->llm.system_cached = true;
