@@ -1347,3 +1347,9 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 | P134-02 | G13 stale claim retired: _http_client_limits.py listed as gap — C has http_client_set_pool(max_connections, idle_timeout_sec) for connection pool limits | `C/include/hermes_http.h:133` — http_client_set_pool() API |
 | P134-03 | B07 terminal depth: _command_requires_pipe_stdin() ported from Python — PTY auto-override for gh auth login --with-token (which hangs in PTY waiting for piped stdin). Overrides use_pty=false when detected. | `C/src/tools/terminal.c` — PTY check block after use_pty parse |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 135: B07 Terminal Depth — help/version Command Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P135-01 | Ported _looks_like_help_or_version_command() from Python terminal_tool. Detects --help/-h/--version/-v early in _check_foreground_guidance() and returns NULL (no guidance needed), preventing false-positive background guidance on informational commands. | `C/src/tools/terminal.c` — help/version check block at top of _check_foreground_guidance() |
+Suite: 301/0/0 (258 test files). Gaps: 140.

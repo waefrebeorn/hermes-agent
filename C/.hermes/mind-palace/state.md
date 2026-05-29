@@ -1,4 +1,4 @@
-# Slermes C (v208)
+# Slermes C (v209)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -79,6 +79,7 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 132: B08 Telegram send retry with exponential backoff — port of Python _telegram_retry_delay + _send_telegram_message_with_retry. Exponential backoff 0.5s/1s/2s on transient Telegram send failures. Media_group InputMedia array pre-built once and reused across retries. Suite 301/0/0.
 ||- Phase 133: Stale S3 claims vaulted (G05 wecom_crypto — C has wecom_crypto.c + 28 tests; G12 api_server — C has api_server.c 1224 LOC). S3 12→10 gaps. file_merge test expansion 4→13 tests (identical files, different files, missing modified/output, empty base, output verification). Suite 301/0/0. Battleship total 144→142.
 |- Phase 134: Stale S3 claims vaulted (G11 yuanbao_sticker — C has 59-sticker DB + search/send; G13 _http_client_limits — C has http_client_set_pool). S3 10→8 gaps. B07 terminal depth: _command_requires_pipe_stdin() ported from Python — PTY auto-override for gh auth login --with-token (hangs in PTY, needs piped stdin). Suite 301/0/0. Battleship total 142→140.
+|- Phase 135: B07 terminal depth: _looks_like_help_or_version_command() ported from Python — help/version commands (--help, -h, --version, -v) detected early in _check_foreground_guidance() to skip background guidance (avoids false positives on informational commands). Suite 301/0/0.
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -94,4 +95,4 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 134: Stale S3 claims vaulted (G11/G13). B07 terminal pipe_stdin ported. Suite 301/0/0 (258 test files).
+Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 135: B07 terminal help/version detection. Suite 301/0/0 (258 test files).

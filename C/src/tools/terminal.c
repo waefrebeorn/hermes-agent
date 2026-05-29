@@ -800,6 +800,28 @@ static char *_strip_quotes(const char *command) {
  * Mirrors Python terminal_tool._foreground_background_guidance(). */
 static const char *_check_foreground_guidance(const char *command) {
     if (!command) return NULL;
+
+    /* Check if this is a help/version command — return no guidance needed.
+     * Mirrors Python terminal_tool._looks_like_help_or_version_command(). */
+    {
+        char cmd_lower[512];
+        size_t clen = strlen(command);
+        if (clen < sizeof(cmd_lower)) {
+            for (size_t i = 0; i < clen; i++)
+                cmd_lower[i] = (char)tolower((unsigned char)command[i]);
+            cmd_lower[clen] = '\0';
+            /* --help or --version anywhere in command */
+            if (strstr(cmd_lower, " --help") != NULL ||
+                strstr(cmd_lower, " --version") != NULL)
+                return NULL;
+            /* Ends with -h or -v (preceded by space) */
+            int len = (int)strlen(cmd_lower);
+            if ((len >= 3 && strcmp(cmd_lower + len - 3, " -h") == 0) ||
+                (len >= 3 && strcmp(cmd_lower + len - 3, " -v") == 0))
+                return NULL;
+        }
+    }
+
     /* Strip quotes to avoid false positives on echoed text */
     char *stripped = _strip_quotes(command);
     if (!stripped) return NULL;
