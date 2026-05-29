@@ -1,12 +1,12 @@
 # Plan (v145)
 
-213+ gaps across 10 sectors (battleship v34). Fork diverged
+212+ gaps across 10 sectors (battleship v34). Fork diverged
 
 ## Phase 0: Display & Visual (S0, P0) — 2 gaps
 Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping, type-ahead
 
-## Phase 1: Conversation Loop Plumbing + Agent Modules + Adapters + TUI Core (S1, S2, S8, S4, P1) — ~75 gaps
-16 conversation loop plumbing gaps (5 done + 1 stale), agent modules, provider adapter layer, TUI gateway server + core components
+## Phase 1: Conversation Loop Plumbing + Agent Modules + Adapters + TUI Core (S1, S2, S8, S4, P1) — ~74 gaps
+15 conversation loop plumbing gaps (5 done + 2 stale), agent modules, provider adapter layer, TUI gateway server + core components
 
 ## Phase 2: Test Coverage Campaign (S6, P1) — 20 gap clusters, 1000+ tests
 Build out C test suite to match Python coverage (248 files → 1262, 57K LOC → 474K)
