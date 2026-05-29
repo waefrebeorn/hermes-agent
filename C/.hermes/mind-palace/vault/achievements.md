@@ -584,7 +584,13 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
 | L21 | Compression feedback loop missing | compression_feedback_init/positive/negative/get_threshold wired into agent_loop.c | `src/agent/context.c` — feedback functions |
 | L22 | Budget tracking missing
 | L07 | Stream context scrubber reset
-| L11 | Compression warning replay via status_cb | Python gateway feature — C CLI doesn't have status callback mechanism. Warnings go to stderr directly during operation. | STALE |
+| L11 | Compression warning replay via status_cb
+| L04 | Todo state hydration from history | C's todo uses file-backed JSON persistence — no in-memory-only store to hydrate. Loads from disk on every call. | STALE |
+| L18 | Nous entitlement handling | nous_rate_guard.c fully implemented — port of Python nous_rate_guard.py | STALE |
+| L19 | Billing/entitlement error messages | Handled by liberrorclassifier — error_classify() with billing/entitlement categories | STALE |
+| L20 | Ollama context limit validation | Handled by liberrorclassifier — error_classify() with context limit categories | STALE |
+| L23 | Error classification & failover reason mapping | liberrorclassifier fully implemented — error_classify() with status code + body, 10+ error categories | STALE |
+ | Python gateway feature — C CLI doesn't have status callback mechanism. Warnings go to stderr directly during operation. | STALE |
  — C sync streaming, no hung-span issue | C uses synchronous llm_chat_completion_stream() — fully consumes stream per call. No persistent streaming context across turns. Python async architecture only. | STALE |
  | budget_tracker.c (30+ functions) wired into agent_loop.c | `src/agent/budget_tracker.c` — per-turn tracking |
 
@@ -600,5 +606,5 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
  — auto-disable vision on 'text only' error | `src/agent/image_routing.c` — image_routing_notify_error() checks 11 error patterns; `src/include/hermes.h` — vision_disabled flag on agent_state_t; `src/agent/agent_loop.c` — wired into retry loop after llm_chat_completion |
  — hermes_log_set_context() wired in agent_loop turn loop | `src/hermes_logging.h` — set_context; `src/agent/agent_loop.c` — per-turn call |
 
-S1 corrected: 28 → 15 gaps (9 stale retired, 3 done). 10 real + 5 partial remain.
+S1 corrected: 28 → 10 gaps (14 stale retired, 3 done). 5 real + 5 partial remain.
 Suite: 294/0/0 (unchanged).
