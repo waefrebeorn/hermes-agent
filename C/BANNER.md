@@ -2,7 +2,7 @@
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v180                                       ║
+║  WuBu Slermes C v181                                       ║
 ║  296/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
@@ -10,7 +10,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v180)
+## Build Metrics (v181)
 
 | Metric | Value |
 |--------|-------|

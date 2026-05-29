@@ -1,4 +1,4 @@
-# Slermes C (v180)
+# Slermes C (v181)
 
 Suite: 296/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 252 | C src: 175
@@ -57,6 +57,7 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 103: SMS gateway test suite — 42 tests for sms.c (setters, webhook parsing, queue ops, update extractors). Bug fix: sms_get_media_url() used json_get_str(NULL key) which always returns NULL. Fixed to access item->str_val directly. Test count 296→297, test files 252→253. S7 X07 gateway platform tests 20→21. Suite now 296/0/0 (v179 test_runner cleanup).
 |- Phase 104: Env passthrough blocklist expanded 23→67 entries
 |- Phase 105: Threat patterns parity — added 5 missing Python patterns (c2_task_pull, c2_network_connect, exfil_wget, send_to_url, translate_execute). C 30→35 patterns, test coverage 24→36 assertions. — added provider URLs, gateway credentials, infra secrets. GHSA hardening completeness for Docker/SSH/Modal env vars. Test coverage 15→27. Removed stale test_paths.c ref + duplicate cli_paths entry. Suite 297→296, test files 253→252.
+|- Phase 106: parse_mode support in send_message — B08 depth: add parse_mode param (Markdown/MarkdownV2/HTML/plain). 3 test assertions. Suite 296/0/0 (v181). — added 5 missing Python patterns (c2_task_pull, c2_network_connect, exfil_wget, send_to_url, translate_execute). C 30→35 patterns, test coverage 24→36 assertions. — added provider URLs, gateway credentials, infra secrets. GHSA hardening completeness for Docker/SSH/Modal env vars. Test coverage 15→27. Removed stale test_paths.c ref + duplicate cli_paths entry. Suite 297→296, test files 253→252.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)

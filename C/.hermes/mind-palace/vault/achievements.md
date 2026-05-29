@@ -1028,6 +1028,28 @@ Suite: 296/0/0. Test files: 252. Gaps: 145.
 
 Suite: 296/0/0. Test files: 252. Gaps: 145.
 
+## Phase 105: Threat patterns parity (v180)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P105-01 | Added 5 missing threat patterns from Python threat_patterns.py: c2_task_pull, c2_network_connect, exfil_wget, send_to_url, translate_execute | `lib/libthreatpatterns/threat_patterns.c` — 30→35 patterns |
+| P105-02 | Test coverage expanded 24→36 assertions for all patterns | `tests/test_threat_patterns.c` — 12 new assertions |
+| P105-03 | Added provider URLs, gateway credentials, and infra secrets to env_passthrough blocklist | `lib/libenvpassthrough/env_passthrough.c` — entries 42-84 |
+| P105-04 | Removed stale test_paths.c reference + duplicate cli_paths entry | `test_runner.sh` — cleanup |
+
+Suite: 296/0/0. Test files: 252. Gaps: 145.
+
+## Phase 106: parse_mode support in send_message (v181)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P106-01 | parse_mode parameter added to send_message schema (Markdown/MarkdownV2/HTML/plain) | `src/tools/send_message.c` — SCHEMA constant |
+| P106-02 | send_message handler extracts parse_mode from args, defaults to "Markdown" | `src/tools/send_message.c:205-207` |
+| P106-03 | All 3 telegram send call sites use parse_mode instead of hardcoded "Markdown" | `src/tools/send_message.c` — lines 428, 433, 437 |
+| P106-04 | Test coverage: parse_mode=HTML, MarkdownV2, empty default — 3 new assertions | `tests/test_send_message.c` — tests 24-26 |
+
+Suite: 296/0/0. Test files: 252. Gaps: 145.
+
 ## Phase 101: voice_mode test suite (v176)
 
 | ID | Achievement | Evidence |
