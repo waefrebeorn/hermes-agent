@@ -31,7 +31,8 @@ static const char *SCHEMA_GET = "{"
       "\"max_redirects\":{\"type\":\"integer\",\"description\":\"Max redirects to follow (0=unlimited, default: 5)\",\"default\":5},"
       "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"},"
       "\"include_body\":{\"type\":\"boolean\",\"description\":\"Include response body in output. Set false to return only status code and URL (faster, less token usage).\",\"default\":true},"
-      "\"auth_type\":{\"type\":\"string\",\"description\":\"Authentication type: 'basic' (user:pass) or 'bearer' (token only). Default: basic\"}"
+      "\"auth_type\":{\"type\":\"string\",\"description\":\"Authentication type: 'basic' (user:pass) or 'bearer' (token only). Default: basic\"},"
+      "\"cookie_jar\":{\"type\":\"string\",\"description\":\"Path to JSON cookie jar file. Cookies from Set-Cookie headers are auto-saved and re-sent.\"}"
     "},"
     "\"required\":[\"url\"]"
 "}"; /* end SCHEMA_GET */
@@ -43,6 +44,137 @@ static http_method_t method_str_to_enum(const char *method) {
     if (strcasecmp(method, "PUT") == 0) return HTTP_PUT;
     if (strcasecmp(method, "DELETE") == 0) return HTTP_DELETE;
     return HTTP_GET;
+}
+
+/* Cookie jar helpers — load/save cookies from JSON file */
+/* Cookie jar format: plain text file, one "name=value" per line.
+ * Simpler than JSON — avoids needing JSON object key iteration API. */
+#define COOKIE_JAR_MAX_LINE 2048
+#define COOKIE_JAR_MAX_COOKIES 128
+
+/* Read cookie jar file into a flat buffer (raw text). */
+static char *cookie_jar_read(const char *path) {
+    if (!path || !*path) return NULL;
+    FILE *f = fopen(path, "r");
+    if (!f) return NULL;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    if (sz <= 0 || sz > 65536) { fclose(f); return NULL; }
+    rewind(f);
+    char *buf = (char *)malloc((size_t)sz + 1);
+    if (!buf) { fclose(f); return NULL; }
+    size_t n = fread(buf, 1, (size_t)sz, f);
+    fclose(f);
+    buf[n] = '\0';
+    return buf;
+}
+
+/* Write cookie entries (null-terminated array of "name=value") to jar file. */
+static bool cookie_jar_write(const char *path, const char *entries[], int count) {
+    if (!path || !*path || !entries) return false;
+    FILE *f = fopen(path, "w");
+    if (!f) return false;
+    for (int i = 0; i < count; i++) {
+        if (entries[i]) {
+            fputs(entries[i], f);
+            fputc('\n', f);
+        }
+    }
+    fclose(f);
+    return true;
+}
+
+/* Parse Set-Cookie headers from raw HTTP response headers.
+ * Extracts name=value pairs into entries array (up to max_count).
+ * Returns number of cookies found. */
+static int cookie_jar_parse_headers(const char *raw_headers, char entries[][COOKIE_JAR_MAX_LINE], int max_count) {
+    if (!raw_headers) return 0;
+    int count = 0;
+    const char *p = raw_headers;
+    while ((p = strstr(p, "Set-Cookie:")) != NULL && count < max_count) {
+        p += 11;
+        while (*p == ' ') p++;
+        const char *semi = strchr(p, ';');
+        const char *eol = strchr(p, '\r');
+        if (!eol) eol = strchr(p, '\n');
+        if (!eol) eol = p + strlen(p);
+        const char *end = semi && semi < eol ? semi : eol;
+        const char *eq = (const char *)memchr(p, '=', (size_t)(end - p));
+        if (eq && eq > p && eq < end) {
+            size_t name_len = (size_t)(eq - p);
+            size_t val_len = (size_t)(end - eq - 1);
+            if (name_len > 0 && name_len + val_len + 2 < COOKIE_JAR_MAX_LINE) {
+                memcpy(entries[count], p, name_len);
+                entries[count][name_len] = '=';
+                memcpy(entries[count] + name_len + 1, eq + 1, val_len);
+                entries[count][name_len + 1 + val_len] = '\0';
+                count++;
+            }
+        }
+        p = end;
+    }
+    return count;
+}
+
+/* Update cookie jar file from HTTP response headers.
+ * Reads existing jar, merges new Set-Cookie entries, writes back.
+ * New entries overwrite existing ones with the same name. */
+static void cookie_jar_update(const char *path, const char *raw_headers) {
+    if (!path || !*path || !raw_headers) return;
+
+    /* Read existing entries */
+    char existing[COOKIE_JAR_MAX_COOKIES][COOKIE_JAR_MAX_LINE];
+    int existing_count = 0;
+    char *jar_data = cookie_jar_read(path);
+    if (jar_data) {
+        char *line = jar_data;
+        char *next;
+        while (line && existing_count < COOKIE_JAR_MAX_COOKIES) {
+            next = strchr(line, '\n');
+            if (next) *next = '\0';
+            if (line[0] && strchr(line, '=')) {
+                strncpy(existing[existing_count], line, COOKIE_JAR_MAX_LINE - 1);
+                existing[existing_count][COOKIE_JAR_MAX_LINE - 1] = '\0';
+                existing_count++;
+            }
+            line = next ? (next + 1) : NULL;
+        }
+        free(jar_data);
+    }
+
+    /* Parse new Set-Cookie entries and merge (overwrite on name match) */
+    char new_entries[COOKIE_JAR_MAX_COOKIES][COOKIE_JAR_MAX_LINE];
+    int new_count = cookie_jar_parse_headers(raw_headers, new_entries, COOKIE_JAR_MAX_COOKIES);
+    for (int i = 0; i < new_count; i++) {
+        /* Extract name part (before =) */
+        char *eq = strchr(new_entries[i], '=');
+        if (!eq) continue;
+        size_t name_len = (size_t)(eq - new_entries[i]);
+
+        /* Check if this name already exists in existing entries */
+        bool found = false;
+        for (int j = 0; j < existing_count; j++) {
+            if (strncmp(existing[j], new_entries[i], name_len) == 0 && existing[j][name_len] == '=') {
+                strncpy(existing[j], new_entries[i], COOKIE_JAR_MAX_LINE - 1);
+                existing[j][COOKIE_JAR_MAX_LINE - 1] = '\0';
+                found = true;
+                break;
+            }
+        }
+        /* If not found, add new entry */
+        if (!found && existing_count < COOKIE_JAR_MAX_COOKIES) {
+            strncpy(existing[existing_count], new_entries[i], COOKIE_JAR_MAX_LINE - 1);
+            existing[existing_count][COOKIE_JAR_MAX_LINE - 1] = '\0';
+            existing_count++;
+        }
+    }
+
+    /* Build string array for write */
+    const char *write_entries[COOKIE_JAR_MAX_COOKIES];
+    for (int i = 0; i < existing_count; i++)
+        write_entries[i] = existing[i];
+
+    cookie_jar_write(path, write_entries, existing_count);
 }
 
 /* ================================================================
@@ -67,6 +199,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *proxy = json_object_get_string(args, "proxy", NULL);
     const char *user_agent = json_object_get_string(args, "user_agent", NULL);
     const char *cookies = json_object_get_string(args, "cookies", NULL);
+    const char *cookie_jar = json_object_get_string(args, "cookie_jar", NULL);
     const char *auth_type = json_object_get_string(args, "auth_type", NULL);
 
     /* Strdup values that survive json_free */
@@ -110,6 +243,41 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(url_copy);
         return strdup("{\"error\":\"URL blocked by SSRF protection: private or internal address\"}");
     }
+
+    /* Load cookie jar if specified */
+    char *jar_cookies_str = NULL;
+    char merged_cookies[8192] = {0};
+    if (cookie_jar && cookie_jar[0]) {
+        char *jar_data = cookie_jar_read(cookie_jar);
+        if (jar_data) {
+            /* Parse lines into Cookie header string (name=val; name=val) */
+            char *line = jar_data;
+            char *next;
+            while (line) {
+                next = strchr(line, '\n');
+                if (next) *next = '\0';
+                if (line[0] && strchr(line, '=')) {
+                    size_t cur = strlen(merged_cookies);
+                    snprintf(merged_cookies + cur, sizeof(merged_cookies) - cur,
+                             "%s%s", cur > 0 ? "; " : "", line);
+                }
+                line = next ? (next + 1) : NULL;
+            }
+            free(jar_data);
+            /* Merge with explicit cookies param if provided */
+            if (cookies_copy && cookies_copy[0]) {
+                size_t cur = strlen(merged_cookies);
+                if (cur > 0)
+                    snprintf(merged_cookies + cur, sizeof(merged_cookies) - cur,
+                             "; %s", cookies_copy);
+                else
+                    snprintf(merged_cookies, sizeof(merged_cookies), "%s", cookies_copy);
+            }
+            if (merged_cookies[0])
+                jar_cookies_str = merged_cookies;
+        }
+    }
+    const char *effective_cookies = jar_cookies_str ? jar_cookies_str : cookies_copy;
 
     http_client_t *client = http_client_new(timeout);
     http_client_enable_cookies((http_t *)client, true);
@@ -201,6 +369,11 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     if (include_body_val) {
         json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
         json_object_set(result, "body_length", json_new_number((double)resp->body_len));
+    }
+
+    /* Save updated cookies to jar if enabled */
+    if (cookie_jar && cookie_jar[0] && resp && resp->headers) {
+        cookie_jar_update(cookie_jar, resp->headers);
     }
 
     char *json_out = json_serialize(result);
