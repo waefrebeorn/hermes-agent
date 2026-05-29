@@ -418,6 +418,44 @@ int main(void) {
         free(res);
     }
 
+    /* Test 39: HTML auto-detection — message with <b> tags defaults to HTML */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"<b>bold</b> text\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("HTML message auto-detects parse_mode=HTML", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 40: HTML auto-detection — message with <a href> tag */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"<a href=\\\"https://x.com\\\">link</a>\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("HTML link auto-detects parse_mode=HTML", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 41: HTML auto-detection — plain text stays Markdown (no error) */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"just plain text\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("plain text stays Markdown", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 42: Explicit parse_mode=Markdown overrides HTML detection */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"<b>bold</b>\",\"parse_mode\":\"Markdown\"}", NULL);
+        TEST("explicit Markdown overrides HTML detection", !json_has_error(res));
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All send_message tests PASSED");
     return failures ? 1 : 0;

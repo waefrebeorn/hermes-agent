@@ -268,6 +268,29 @@ static json_node_t *build_inline_keyboard(json_node_t *buttons) {
     return reply_markup;
 }
 
+/* B08: Check if message text looks like HTML (contains HTML tags).
+ * Port of Python send_message_tool.py:827 pattern
+ *   re.search(r'<[a-zA-Z/][^>]*>', message)
+ * Returns true if the message contains at least one HTML-like tag. */
+static bool message_looks_like_html(const char *msg) {
+    if (!msg) return false;
+    /* Scan for '<' followed by a letter or '/' then '>'-like content */
+    for (const char *p = msg; *p; p++) {
+        if (*p == '<') {
+            const char *next = p + 1;
+            if (*next == '/') next++;  /* closing tag </...> */
+            if ((*next >= 'a' && *next <= 'z') || (*next >= 'A' && *next <= 'Z')) {
+                /* Found tag start — scan for '>' */
+                for (const char *q = next; *q; q++) {
+                    if (*q == '>') return true;
+                    if (*q == '<') break;  /* nested or false start */
+                }
+            }
+        }
+    }
+    return false;
+}
+
 /* B08 helper: Send Telegram message with the given parse_mode using the
  * appropriate API endpoint (media group, single media, text with keyboard,
  * or plain text). Returns true on success. Extracted to reduce duplication
@@ -348,7 +371,13 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     bool disable_preview = json_object_get_bool(args, "disable_link_previews", false);
     bool disable_notification = json_object_get_bool(args, "disable_notification", false);
     const char *parse_mode = json_object_get_string(args, "parse_mode", NULL);
+    bool parse_mode_explicit = (parse_mode != NULL && parse_mode[0] != '\0');
     if (!parse_mode || !parse_mode[0]) parse_mode = "Markdown";
+    /* B08: HTML auto-detection — if message looks like HTML and no explicit
+     * parse_mode was provided, switch to HTML (port of Python line 827-831). */
+    if (!parse_mode_explicit && message && message_looks_like_html(message)) {
+        parse_mode = "HTML";
+    }
     /* Validate parse_mode against known Telegram modes */
     if (strcmp(parse_mode, "Markdown") != 0 &&
         strcmp(parse_mode, "MarkdownV2") != 0 &&

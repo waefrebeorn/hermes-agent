@@ -1,7 +1,7 @@
-# Slermes C (v231)
+# Slermes C (v232)
 
 Suite: 303/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 261 | C src: 175
+Binary: 31M | Warnings: 0 | Test files: 262 | C src: 175
 Battleship v34 (137 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -102,6 +102,7 @@ Battleship v34 (137 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 157: G08 signal_rate_limit depth — signal_extract_retry_after() + signal_parse_retry_after_message() ported from Python gateway/platforms/signal_rate_limit.py. Extracts retry-after value from structured JSON and "Retry after N seconds" text fallback. Bug fix: use-after-free when json_free(root) freed string before parse. 16 new test assertions (T01: 59→75). Suite 302/0/0 (v229).
 |- Phase 158: B08 send_message depth — General topic thread_id mapping ported from Python TelegramAdapter._message_thread_id_for_send(). telegram_message_thread_id_for_send() maps thread_id "1" (forum General topic) to NULL because Bot API rejects message_thread_id=1. Wired into send_message.c Telegram routing. 6 new test assertions. Suite 303/0/0 (v230).
 |- Phase 159: B08 send_message depth — parse mode fallback. telegram_send_with_mode() helper extracted from retry loop. When send fails with non-default parse_mode (MarkdownV2/HTML), retries once with parse_mode=NULL (plain text). Matches Python's _send_telegram parse error fallback. 3 new test assertions (44 total). Suite 303/0/0 (v231).
+|- Phase 160: B08 send_message depth — HTML auto-detection. message_looks_like_html() checks message for HTML-like tags (<tag> or </tag>). When HTML detected and no explicit parse_mode provided, auto-switches to parse_mode=HTML. Port of Python send_message_tool.py:827 _has_html detection. 4 new test assertions (48 total). Suite 303/0/0 (v232).
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -117,4 +118,4 @@ Battleship v34 (137 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 137 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 303/0/0 (261 test files).
+Real parity gap is 137 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 303/0/0 (262 test files).

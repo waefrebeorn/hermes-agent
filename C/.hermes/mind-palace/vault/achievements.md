@@ -1452,6 +1452,14 @@ Suite: 303/0/0 (260 test files). Gaps: 138. v230
 | P159-03 | Added 3 new test assertions: parse_mode=MarkdownV2 with stdout (regression). Send_message test suite 41→44 total. | `C/tests/test_send_message.c` — test 38 |
 Suite: 303/0/0 (261 test files). Gaps: 137. v231
 
+## Phase 160: B08 send_message Depth — HTML Auto-Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P160-01 | Ported Python send_message_tool.py:827 HTML auto-detection (`re.search(r'<[a-zA-Z/][^>]*>', message)`). `message_looks_like_html()` scans the message for `<tag>` or `</tag>` patterns — when found and no explicit parse_mode was provided by the user, the parse_mode is auto-switched from default "Markdown" to "HTML". | `C/src/tools/send_message.c` — `message_looks_like_html()` at ~273-296; usage at ~378-381 |
+| P160-02 | Explicit parse_mode always takes precedence — if user sets parse_mode="Markdown" on an HTML message, the auto-detection is skipped (matches Python behavior where explicit parse_mode is honored). | `C/src/tools/send_message.c` — `parse_mode_explicit` guard at ~374-381 |
+| P160-03 | Added 4 test assertions: HTML `<b>bold</b>` auto-detects HTML, `<a href>` link auto-detects HTML, plain text stays Markdown, explicit Markdown overrides HTML detection. Send_message test suite 44→48 total. | `C/tests/test_send_message.c` — tests 39-42 |
+Suite: 303/0/0 (262 test files). Gaps: 137. v232
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|
