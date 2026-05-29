@@ -1366,6 +1366,7 @@ void cron_chain_store_output(const char *job_name, const char *output);
 char **cron_canonical_skills(const char *skill, json_node_t *skills, size_t *out_count);
 char  *cron_normalize_value(const char *value, bool strip_trailing_slash);
 char  *cron_normalize_deliver(json_node_t *deliver);
+int    cron_parse_duration(const char *s);   /* Parse "30m", "2h", "1d" → minutes */
 
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,

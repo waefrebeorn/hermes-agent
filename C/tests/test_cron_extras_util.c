@@ -198,6 +198,98 @@ static void test_normalize_deliver_trimmed_array(void) {
 }
 
 /* ================================================================
+ *  cron_parse_duration tests
+ * ================================================================ */
+
+static int test_parse_duration(const char *input) {
+    if (!input || !input[0]) return -1;
+    /* Skip leading whitespace */
+    while (*input == ' ' || *input == '\t') input++;
+    if (!*input) return -1;
+    char *end = NULL;
+    long val = strtol(input, &end, 10);
+    if (end == input || val <= 0 || val > 1000000) return -1;
+    const char *unit = end;
+    while (*unit == ' ' || *unit == '\t') unit++;
+    if (!*unit) return -1;
+    char unit_lower[16];
+    size_t ui = 0;
+    while (unit[ui] && ui < 15) { unit_lower[ui] = (unit[ui] >= 'A' && unit[ui] <= 'Z') ? unit[ui] + 32 : unit[ui]; ui++; }
+    unit_lower[ui] = '\0';
+    int mult = 0;
+    if (strcmp(unit_lower, "m")==0||strcmp(unit_lower,"min")==0||strcmp(unit_lower,"mins")==0||strcmp(unit_lower,"minute")==0||strcmp(unit_lower,"minutes")==0) mult=1;
+    else if (strcmp(unit_lower, "h")==0||strcmp(unit_lower,"hr")==0||strcmp(unit_lower,"hrs")==0||strcmp(unit_lower,"hour")==0||strcmp(unit_lower,"hours")==0) mult=60;
+    else if (strcmp(unit_lower, "d")==0||strcmp(unit_lower,"day")==0||strcmp(unit_lower,"days")==0) mult=1440;
+    if (mult == 0) return -1;
+    long r = val * mult;
+    if (r > 1000000 || r < 0) return -1;
+    return (int)r;
+}
+
+static void test_duration_30m(void) {
+    TEST("30m -> 30");
+    int r = test_parse_duration("30m");
+    if (r == 30) { PASS(); return; }
+    FAIL("expected 30"); printf("  got %d\n", r);
+}
+
+static void test_duration_2h(void) {
+    TEST("2h -> 120");
+    int r = test_parse_duration("2h");
+    if (r == 120) { PASS(); return; }
+    FAIL("expected 120"); printf("  got %d\n", r);
+}
+
+static void test_duration_1d(void) {
+    TEST("1d -> 1440");
+    int r = test_parse_duration("1d");
+    if (r == 1440) { PASS(); return; }
+    FAIL("expected 1440"); printf("  got %d\n", r);
+}
+
+static void test_duration_variants(void) {
+    TEST("30 minutes -> 30");
+    int r = test_parse_duration("30 minutes");
+    if (r == 30) { PASS(); return; }
+    FAIL("expected 30"); printf("  got %d\n", r);
+}
+
+static void test_duration_2hours(void) {
+    TEST("2hours -> 120");
+    int r = test_parse_duration("2hours");
+    if (r == 120) { PASS(); return; }
+    FAIL("expected 120"); printf("  got %d\n", r);
+}
+
+static void test_duration_5days(void) {
+    TEST("5 days -> 7200");
+    int r = test_parse_duration("5 days");
+    if (r == 7200) { PASS(); return; }
+    FAIL("expected 7200"); printf("  got %d\n", r);
+}
+
+static void test_duration_invalid(void) {
+    TEST("invalid returns -1");
+    int r = test_parse_duration("xyz");
+    if (r == -1) { PASS(); return; }
+    FAIL("expected -1"); printf("  got %d\n", r);
+}
+
+static void test_duration_null(void) {
+    TEST("NULL -> -1");
+    int r = test_parse_duration(NULL);
+    if (r == -1) { PASS(); return; }
+    FAIL("expected -1"); printf("  got %d\n", r);
+}
+
+static void test_duration_empty(void) {
+    TEST("empty -> -1");
+    int r = test_parse_duration("");
+    if (r == -1) { PASS(); return; }
+    FAIL("expected -1"); printf("  got %d\n", r);
+}
+
+/* ================================================================
  *  Main
  * ================================================================ */
 
@@ -227,6 +319,17 @@ int main(void) {
     test_normalize_deliver_array();
     test_normalize_deliver_empty_array();
     test_normalize_deliver_trimmed_array();
+
+    printf("\n--- cron_parse_duration ---\n");
+    test_duration_30m();
+    test_duration_2h();
+    test_duration_1d();
+    test_duration_variants();
+    test_duration_2hours();
+    test_duration_5days();
+    test_duration_invalid();
+    test_duration_null();
+    test_duration_empty();
 
     printf("\n==========================\n");
     printf("Results: %d/%d passed\n", passed, tests);

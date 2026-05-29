@@ -518,3 +518,52 @@ char *cron_normalize_deliver(json_t *deliver) {
 
     return NULL;
 }
+
+/* Port of cron/jobs.py parse_duration: parse "30m", "2h", "1d" into minutes.
+ * Returns minutes on success, -1 on parse error. */
+int cron_parse_duration(const char *s) {
+    if (!s || !s[0]) return -1;
+
+    /* Skip leading whitespace */
+    while (*s == ' ' || *s == '\t') s++;
+    if (!*s) return -1;
+
+    /* Parse digits */
+    char *end = NULL;
+    long val = strtol(s, &end, 10);
+    if (end == s || val <= 0 || val > 1000000) return -1;
+
+    /* Skip to unit */
+    const char *unit = end;
+    while (*unit == ' ' || *unit == '\t') unit++;
+    if (!*unit) return -1;
+
+    /* Convert unit to lowercase for comparison */
+    char unit_lower[16];
+    size_t ui = 0;
+    while (unit[ui] && ui < sizeof(unit_lower) - 1) {
+        unit_lower[ui] = (unit[ui] >= 'A' && unit[ui] <= 'Z') ? unit[ui] + 32 : unit[ui];
+        ui++;
+    }
+    unit_lower[ui] = '\0';
+
+    /* Match unit */
+    int multiplier = 0;
+    if (strcmp(unit_lower, "m") == 0 || strcmp(unit_lower, "min") == 0 ||
+        strcmp(unit_lower, "mins") == 0 || strcmp(unit_lower, "minute") == 0 ||
+        strcmp(unit_lower, "minutes") == 0)
+        multiplier = 1;
+    else if (strcmp(unit_lower, "h") == 0 || strcmp(unit_lower, "hr") == 0 ||
+             strcmp(unit_lower, "hrs") == 0 || strcmp(unit_lower, "hour") == 0 ||
+             strcmp(unit_lower, "hours") == 0)
+        multiplier = 60;
+    else if (strcmp(unit_lower, "d") == 0 || strcmp(unit_lower, "day") == 0 ||
+             strcmp(unit_lower, "days") == 0)
+        multiplier = 1440;
+
+    if (multiplier == 0) return -1;
+
+    long result = val * multiplier;
+    if (result > 1000000 || result < 0) return -1;
+    return (int)result;
+}

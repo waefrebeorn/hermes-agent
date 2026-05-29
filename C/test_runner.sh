@@ -1078,7 +1078,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/cron/cron_extras.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_cron_util -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_cron_util > /dev/null 2>&1; then ok "cron_extras_util (P176: 17 tests)"
+    if /tmp/hermes_test_cron_util > /dev/null 2>&1; then ok "cron_extras_util (P176: 26 tests)"
     else fail "cron_extras_util (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_cron_util

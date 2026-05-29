@@ -1614,3 +1614,10 @@ Suite: 311/0/0 (270 test files). Gaps: 135. v240
 | P169-02 | Ported Python feishu_comment.py `_extract_semantic_text()` — `feishu_extract_semantic_text()` walks reply JSON content.elements[] extracting text from text_run, docs_link, and person element types. Skips person elements matching `self_open_id` (self @-mention suppression). Whitespace-normalized output: multiple spaces collapsed to one, leading/trailing trimmed. Supports content-as-JSON-string double-parse matching Python's json.loads fallback. | `C/src/tools/feishu_tools.c` — at ~549-690 |
 | P169-03 | Added 9 test assertions to standalone test: truncate (NULL, short, long, exact, zero limit, empty) and semantic text (NULL, simple passthrough, self mention). Test count 11→20. | `C/tests/test_feishu_comment.c` — tests 12-20 |
 Suite: 311/0/0 (270 test files). Gaps: 135. v241
+
+## Phase 170: P176 cron Depth — parse_duration()
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P170-01 | Ported Python cron/jobs.py `parse_duration()` — `cron_parse_duration()` parses duration strings ("30m", "2h", "1d") into minutes. Accepts 15 unit variants: m/min/mins/minute/minutes/h/hr/hrs/hour/hours/d/day/days. Returns -1 on parse error. Case-insensitive. | `C/src/cron/cron_extras.c` — at ~522-570 |
+| P170-02 | Added 9 test assertions: 30m→30, 2h→120, 1d→1440, 30 minutes→30, 2hours→120, 5 days→7200, invalid→-1, NULL→-1, empty→-1. | `C/tests/test_cron_extras_util.c` — test_duration_* (9 tests) |
+Suite: 311/0/0 (270 test files). Gaps: 134. v242
