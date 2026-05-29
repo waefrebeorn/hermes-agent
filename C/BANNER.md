@@ -1,9 +1,9 @@
-# BANNER — WuBu Slermes C Translation (v175)
+# BANNER — WuBu Slermes C Translation (v176)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v175                                       ║
-║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v176                                       ║
+║  295/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
 ║  B08: disable link previews for Telegram                 ║

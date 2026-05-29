@@ -984,6 +984,18 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 101: voice_mode test suite (v176)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P101-01 | voice_mode.c config API test: voice_set_enabled/voice_is_enabled | `tests/test_voice_mode.c` — tests 1-6 |
+| P101-02 | voice_set_device tests: NULL, empty, valid, long string edge cases | `tests/test_voice_mode.c` — tests 7-10 |
+| P101-03 | voice_set_asr_cmd tests: NULL, empty, valid strings | `tests/test_voice_mode.c` — tests 11-13 |
+| P101-04 | voice_record + voice_transcribe graceful NULL handling tests | `tests/test_voice_mode.c` — tests 14-15 |
+| P101-05 | Registered in test_runner.sh with proper dependency chain | `test_runner.sh` — voice_mode section |
+
+Suite: 295/0/0. Test files: 251. Gaps: 145.
+
 ## Phase 100: B07 terminal foreground/background guidance (v175)
 
 | ID | Achievement | Evidence |

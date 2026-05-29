@@ -2701,6 +2701,17 @@ if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I
 else skip "send_message_tool (compilation failed)"
 fi &
 
+# Voice mode test (voice_mode.c config API)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libtranscribe" -I"$CDIR/lib/libhttp" \
+    "$CDIR/tests/test_voice_mode.c" \
+    "$CDIR/src/tools/voice_mode.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_voice -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_voice > /dev/null 2>&1; then ok "voice_mode (15 tests)"
+    else fail "voice_mode (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_voice
+else skip "voice_mode (compilation failed)"
+fi &
+
 # Web tool test (M30 — needs web.c + tool_config + registry + http + json)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libhtml" \
     "$CDIR/tests/test_web.c" \
