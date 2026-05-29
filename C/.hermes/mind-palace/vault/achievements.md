@@ -582,7 +582,9 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
 | L12 | Fallback restoration missing | fallback_routing.c with using_fallback flag, restore logic | `src/agent/fallback_routing.c` — fallback_chain + restore |
 | L16 | Broken pipe guard missing | install_safe_stdio() called at main.c:25 | `src/main.c:25` — stdio guard |
 | L21 | Compression feedback loop missing | compression_feedback_init/positive/negative/get_threshold wired into agent_loop.c | `src/agent/context.c` — feedback functions |
-| L22 | Budget tracking missing | budget_tracker.c (30+ functions) wired into agent_loop.c | `src/agent/budget_tracker.c` — per-turn tracking |
+| L22 | Budget tracking missing
+| L07 | Stream context scrubber reset — C sync streaming, no hung-span issue | C uses synchronous llm_chat_completion_stream() — fully consumes stream per call. No persistent streaming context across turns. Python async architecture only. | STALE |
+ | budget_tracker.c (30+ functions) wired into agent_loop.c | `src/agent/budget_tracker.c` — per-turn tracking |
 
 ### Implemented This Session (Phase 57 → 58)
 
@@ -596,5 +598,5 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
  — auto-disable vision on 'text only' error | `src/agent/image_routing.c` — image_routing_notify_error() checks 11 error patterns; `src/include/hermes.h` — vision_disabled flag on agent_state_t; `src/agent/agent_loop.c` — wired into retry loop after llm_chat_completion |
  — hermes_log_set_context() wired in agent_loop turn loop | `src/hermes_logging.h` — set_context; `src/agent/agent_loop.c` — per-turn call |
 
-S1 corrected: 28 → 17 gaps (7 stale retired, 4 done). 12 real + 5 partial remain.
+S1 corrected: 28 → 16 gaps (8 stale retired, 3 done). 11 real + 5 partial remain.
 Suite: 294/0/0 (unchanged).
