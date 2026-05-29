@@ -632,6 +632,11 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         break;
                 }
             }
+            /* Alt+Enter (ESC \r) — insert literal newline */
+            if (seq[0] == '\r') {
+                line_buf_insert(le->buf, '\n');
+                term_redraw_line(le->buf);
+            }
             continue;
         }
 
