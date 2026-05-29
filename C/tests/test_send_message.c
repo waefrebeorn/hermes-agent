@@ -247,6 +247,36 @@ int main(void) {
         free(res);
     }
 
+    /* Test 24: parse_mode=HTML accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"html test\",\"parse_mode\":\"HTML\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("parse_mode=HTML completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 25: parse_mode=MarkdownV2 accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"mdv2 test\",\"parse_mode\":\"MarkdownV2\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("parse_mode=MarkdownV2 completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 26: empty parse_mode defaults to Markdown */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"empty parse\",\"parse_mode\":\"\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("empty parse_mode defaults to Markdown", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All send_message tests PASSED");
     return failures ? 1 : 0;

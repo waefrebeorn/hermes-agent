@@ -98,7 +98,8 @@ static const char *SCHEMA = "{"
       "\"reply_to_message_id\":{\"type\":\"string\",\"description\":\"Message ID to reply to\"},"
       "\"inline_buttons\":{\"type\":\"array\",\"description\":\"D06: Array of inline button objects [{text, url?, callback_data?, row?}] for inline keyboards\"},"
       "\"media_group\":{\"type\":\"array\",\"description\":\"B08: Array of file paths for Telegram media group\",\"items\":{\"type\":\"string\"}},"
-      "\"disable_link_previews\":{\"type\":\"boolean\",\"description\":\"Disable link previews in sent message (Telegram). Default: false\"}"
+      "\"disable_link_previews\":{\"type\":\"boolean\",\"description\":\"Disable link previews in sent message (Telegram). Default: false\"},"
+      "\"parse_mode\":{\"type\":\"string\",\"description\":\"Telegram parse mode: Markdown, MarkdownV2, HTML, or empty for plain text. Default: Markdown\"}"
     "},"
     "\"required\":[\"message\"]"
 "}";
@@ -201,8 +202,10 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     json_node_t *inline_buttons_node = json_object_get(args, "inline_buttons");
     json_node_t *media_group = json_object_get(args, "media_group");
 
-    /* Parse disable_link_previews from args before json_free */
+    /* Parse disable_link_previews and parse_mode from args before json_free */
     bool disable_preview = json_object_get_bool(args, "disable_link_previews", false);
+    const char *parse_mode = json_object_get_string(args, "parse_mode", NULL);
+    if (!parse_mode || !parse_mode[0]) parse_mode = "Markdown";
 
     json_node_t *result = json_new_object();
 
@@ -422,16 +425,16 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                         json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
                         if (reply_markup) {
                             sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
-                                                                       tg_msg, "Markdown", thread_id, reply_markup, disable_preview);
+                                                                       tg_msg, parse_mode, thread_id, reply_markup, disable_preview);
                             json_free(reply_markup);
                         } else {
                             /* Fallback: send without keyboard */
                             sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                         tg_msg, "Markdown", thread_id, disable_preview);
+                                                         tg_msg, parse_mode, thread_id, disable_preview);
                         }
                     } else {
                         sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                     tg_msg, "Markdown", thread_id, disable_preview);
+                                                     tg_msg, parse_mode, thread_id, disable_preview);
                     }
 send_done:
                     http_client_free(http);
