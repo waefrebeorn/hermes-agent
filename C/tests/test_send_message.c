@@ -220,6 +220,33 @@ int main(void) {
         free(res);
     }
 
+    /* Test 21: action=list returns no error */
+    {
+        char *res = send_message_handler("{\"action\":\"list\"}", NULL);
+        TEST("action=list returns non-NULL", res != NULL);
+        if (res) {
+            TEST("action=list no error", !json_has_error(res));
+        }
+        free(res);
+    }
+
+    /* Test 22: action=list contains telegram */
+    {
+        char *res = send_message_handler("{\"action\":\"list\"}", NULL);
+        TEST("action=list contains telegram", res && strstr(res, "telegram") != NULL);
+        free(res);
+    }
+
+    /* Test 23: action=list contains stdout and local */
+    {
+        char *res = send_message_handler("{\"action\":\"list\"}", NULL);
+        if (res) {
+            TEST("action=list contains stdout", strstr(res, "stdout") != NULL);
+            TEST("action=list contains local", strstr(res, "local") != NULL);
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All send_message tests PASSED");
     return failures ? 1 : 0;
