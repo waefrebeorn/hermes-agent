@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 /* ================================================================
  *  P172: Job Retry
@@ -364,6 +365,95 @@ bool cron_template_instantiate(const char *template_name,
 /* ================================================================
  *  P176: Cron utility functions (port of cronjob_tools.py helpers)
  * ================================================================ */
+
+/**
+ * Extract a schedule display string from a job JSON object.
+ *
+ * Logic (port of Python _schedule_display_for_job):
+ *   1. Return schedule_display if non-empty.
+ *   2. If schedule is a dict, try display → value → expr → run_at keys.
+ *   3. If schedule is a string, return it directly.
+ *   4. Fallback "?".
+ *
+ * Returns a pointer to a static buffer (NOT thread-safe, but fine for
+ * display/convenience usage, matching pattern of cron_coerce_job_text).
+ * Returns "?" on NULL or empty input.
+ */
+const char *cron_schedule_display_for_job(json_t *job) {
+    static char buf[256];
+    if (!job || job->type != JSON_OBJECT) return "?";
+
+    /* 1. Explicit schedule_display field */
+    json_t *sd = json_obj_get(job, "schedule_display");
+    if (sd && sd->type == JSON_STRING && sd->str_val && sd->str_val[0]) {
+        /* Trim */
+        const char *s = sd->str_val;
+        while (*s == ' ' || *s == '\t') s++;
+        if (*s) {
+            size_t slen = strlen(s);
+            while (slen > 0 && (s[slen-1] == ' ' || s[slen-1] == '\t')) slen--;
+            if (slen > 0 && slen < sizeof(buf)) {
+                memcpy(buf, s, slen);
+                buf[slen] = '\0';
+                return buf;
+            }
+        }
+    }
+
+    /* 2. schedule field */
+    json_t *schedule = json_obj_get(job, "schedule");
+    if (schedule && schedule->type == JSON_OBJECT) {
+        const char *keys[] = {"display", "value", "expr", "run_at", NULL};
+        for (int i = 0; keys[i]; i++) {
+            json_t *v = json_obj_get(schedule, keys[i]);
+            if (v && v->type == JSON_STRING && v->str_val && v->str_val[0]) {
+                const char *s = v->str_val;
+                while (*s == ' ' || *s == '\t') s++;
+                if (*s) {
+                    size_t slen = strlen(s);
+                    while (slen > 0 && (s[slen-1] == ' ' || s[slen-1] == '\t')) slen--;
+                    if (slen > 0 && slen < sizeof(buf)) {
+                        memcpy(buf, s, slen);
+                        buf[slen] = '\0';
+                        return buf;
+                    }
+                }
+            }
+        }
+    } else if (schedule && schedule->type == JSON_STRING && schedule->str_val) {
+        /* 3. Direct string schedule */
+        snprintf(buf, sizeof(buf), "%s", schedule->str_val);
+        return buf;
+    }
+
+    /* 4. Fallback */
+    return "?";
+}
+
+/**
+ * Ensure cron directories exist with secure permissions.
+ * Port of Python cron/jobs.py ensure_dirs().
+ *
+ * @param hermes_home  Path to HERMES_HOME (e.g. ~/.hermes)
+ */
+bool cron_ensure_dirs(const char *hermes_home) {
+    if (!hermes_home || !hermes_home[0]) return false;
+
+    char cron_dir[HERMES_PATH_MAX];
+    char output_dir[HERMES_PATH_MAX];
+    snprintf(cron_dir, sizeof(cron_dir), "%s/cron", hermes_home);
+    snprintf(output_dir, sizeof(output_dir), "%s/cron/output", hermes_home);
+
+    /* mkdir -p both */
+    if (mkdir(cron_dir, 0700) != 0 && errno != EEXIST) return false;
+    if (mkdir(output_dir, 0700) != 0 && errno != EEXIST) return false;
+
+    /* Secure permissions */
+    cron_secure_dir(cron_dir);
+    cron_secure_dir(output_dir);
+
+    return true;
+}
 
 /** Normalize a skill/skills parameter into a canonical, deduplicated string list.
  *  Returns malloc'd NULL-terminated array (caller frees each string + array).

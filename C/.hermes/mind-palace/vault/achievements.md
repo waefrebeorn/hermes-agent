@@ -1629,4 +1629,12 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v242
 | P171-02 | Ported Python cron/jobs.py `_secure_file()` — `cron_secure_file()` sets file permissions to owner-only read/write (0600). Validates path exists and is a regular file via stat+S_ISREG. Returns bool. | `C/src/cron/cron_extras.c` — at ~532-540 |
 | P171-03 | Ported Python cron/jobs.py `_coerce_job_text()` — `cron_coerce_job_text()` returns value if non-empty, otherwise fallback. Simple nullable string coercion. | `C/src/cron/cron_extras.c` — at ~542-547 |
 | P171-04 | Added 6 test assertions: secure_dir(NULL), secure_file(NULL), secure_file(nonexistent), coerce(NULL), coerce(empty), coerce(valid). | `C/tests/test_cron_extras_util.c` — test_secure_dir/file/coerce (6 tests) |
-Suite: 311/0/0 (270 test files). Gaps: 134. v243
+Suite: 311/0/0 (270 test files). Gaps: 134. v244
+
+## Phase 172: P176 cron Depth — Schedule Display + Ensure Dirs
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P172-01 | Ported Python `cron/jobs.py` `_schedule_display_for_job()` — `cron_schedule_display_for_job()` extracts display string from job JSON: checks `schedule_display` field first, then `schedule` dict keys (display→value→expr→run_at), then string `schedule`, falls back to "?". Uses `json_obj_get()` for dict field access. | `C/src/cron/cron_extras.c` — `cron_schedule_display_for_job()` ~370-440 |
+| P172-02 | Ported Python `cron/jobs.py` `ensure_dirs()` — `cron_ensure_dirs()` creates `{hermes_home}/cron/` and `{hermes_home}/cron/output/` via `mkdir(0700)` with `EEXIST` tolerance, then applies `cron_secure_dir()` to both. | `C/src/cron/cron_extras.c` — `cron_ensure_dirs()` ~442-470 |
+| P172-03 | Added 9 test assertions for schedule display: NULL→"?", explicit schedule_display, dict→display, dict→expr, dict→run_at, string schedule, empty→"?", plus ensure_dirs NULL/empty/create. | `C/tests/test_cron_extras_util.c` — `test_sched_display_*` (7 tests) + `test_ensure_dirs_*` (3 tests) |
+Suite: 311/0/0 (270 test files). Gaps: 134. v244

@@ -1370,6 +1370,8 @@ int    cron_parse_duration(const char *s);   /* Parse "30m", "2h", "1d" → minu
 bool   cron_secure_dir(const char *path);     /* chmod 0700 */
 bool   cron_secure_file(const char *path);    /* chmod 0600 */
 const char *cron_coerce_job_text(const char *value, const char *fallback); /* nullable string coercion */
+const char *cron_schedule_display_for_job(json_node_t *job);              /* Extract display string from job schedule */
+bool        cron_ensure_dirs(const char *hermes_home);                    /* mkdir -p ~/.hermes/cron/ + ~/.hermes/cron/output/ */
 
 /* P175: Job templating */
 bool cron_template_create(const char *name, const char *schedule,

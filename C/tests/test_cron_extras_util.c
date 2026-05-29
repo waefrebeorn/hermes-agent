@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <time.h>
 
 /* Helper: free a NULL-terminated string array */
 static void free_strlist(char **list) {
@@ -255,6 +258,131 @@ static void test_coerce_valid(void) {
 }
 
 /* ================================================================
+ *  cron_schedule_display_for_job tests
+ * ================================================================ */
+
+static void test_sched_display_null(void) {
+    TEST("NULL job -> \"?\"");
+    const char *r = cron_schedule_display_for_job(NULL);
+    if (r && strcmp(r, "?") == 0) { PASS(); return; }
+    FAIL("expected ?"); printf("  got %s\n", r ? r : "NULL");
+}
+
+/* Build a simple job JSON object {schedule: <value>} */
+static json_t *make_job(const char *sched_key, json_t *sched_val) {
+    json_t *job = json_object();
+    if (sched_key && sched_val) {
+        json_set(job, sched_key, sched_val);
+    }
+    return job;
+}
+
+static void test_sched_display_explicit(void) {
+    TEST("schedule_display field");
+    json_t *job = json_object();
+    json_set(job, "schedule_display", json_string("every 30m"));
+    json_set(job, "schedule", json_string("every 30m"));
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "every 30m") == 0) { PASS(); return; }
+    FAIL("expected 'every 30m'"); printf("  got %s\n", r ? r : "NULL");
+}
+
+static void test_sched_display_dict_display(void) {
+    TEST("schedule dict -> display key");
+    json_t *sched = json_object();
+    json_set(sched, "display", json_string("every 30m"));
+    json_t *job = make_job("schedule", sched);
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "every 30m") == 0) { PASS(); return; }
+    FAIL("expected 'every 30m'"); printf("  got %s\n", r ? r : "NULL");
+}
+
+static void test_sched_display_dict_expr(void) {
+    TEST("schedule dict -> expr key");
+    json_t *sched = json_object();
+    json_set(sched, "expr", json_string("0 9 * * *"));
+    json_t *job = make_job("schedule", sched);
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "0 9 * * *") == 0) { PASS(); return; }
+    FAIL("expected '0 9 * * *'"); printf("  got %s\n", r ? r : "NULL");
+}
+
+static void test_sched_display_dict_run_at(void) {
+    TEST("schedule dict -> run_at key");
+    json_t *sched = json_object();
+    json_set(sched, "run_at", json_string("2026-06-01T09:00:00"));
+    json_t *job = make_job("schedule", sched);
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "2026-06-01T09:00:00") == 0) { PASS(); return; }
+    FAIL("expected timestamp"); printf("  got %s\n", r ? r : "NULL");
+}
+
+static void test_sched_display_string(void) {
+    TEST("schedule as string");
+    json_t *job = make_job("schedule", json_string("30m"));
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "30m") == 0) { PASS(); return; }
+    FAIL("expected '30m'"); printf("  got %s\n", r ? r : "NULL");
+}
+
+static void test_sched_display_fallback(void) {
+    TEST("no schedule -> \"?\"");
+    json_t *job = json_object();
+    const char *r = cron_schedule_display_for_job(job);
+    json_free(job);
+    if (r && strcmp(r, "?") == 0) { PASS(); return; }
+    FAIL("expected ?"); printf("  got %s\n", r ? r : "NULL");
+}
+
+/* ================================================================
+ *  cron_ensure_dirs tests
+ * ================================================================ */
+
+static void test_ensure_dirs_null(void) {
+    TEST("ensure_dirs(NULL) -> false");
+    bool r = cron_ensure_dirs(NULL);
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_ensure_dirs_empty(void) {
+    TEST("ensure_dirs(\"\") -> false");
+    bool r = cron_ensure_dirs("");
+    if (!r) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_ensure_dirs_tmp(void) {
+    TEST("ensure_dirs creates dirs");
+    char tmpdir[256];
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/cron_test_%ld", (long)time(NULL));
+    /* Create the parent dir first (mkdir -p equivalent) */
+    if (mkdir(tmpdir, 0700) != 0 && errno != EEXIST) { FAIL("mkdir parent failed"); return; }
+    bool r = cron_ensure_dirs(tmpdir);
+    if (!r) { FAIL("ensure_dirs returned false"); rmdir(tmpdir); return; }
+    /* Check dirs exist */
+    char path[512];
+    struct stat st;
+    snprintf(path, sizeof(path), "%s/cron", tmpdir);
+    bool cron_ok = (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+    snprintf(path, sizeof(path), "%s/cron/output", tmpdir);
+    bool out_ok = (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+    /* Cleanup */
+    snprintf(path, sizeof(path), "%s/cron/output", tmpdir);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/cron", tmpdir);
+    rmdir(path);
+    rmdir(tmpdir);
+    if (cron_ok && out_ok) { PASS(); return; }
+    FAIL("dirs not created");
+}
+
+/* ================================================================
  *  cron_parse_duration tests
  * ================================================================ */
 
@@ -395,6 +523,20 @@ int main(void) {
     test_coerce_null();
     test_coerce_empty();
     test_coerce_valid();
+
+    printf("\n--- cron_schedule_display_for_job ---\n");
+    test_sched_display_null();
+    test_sched_display_explicit();
+    test_sched_display_dict_display();
+    test_sched_display_dict_expr();
+    test_sched_display_dict_run_at();
+    test_sched_display_string();
+    test_sched_display_fallback();
+
+    printf("\n--- cron_ensure_dirs ---\n");
+    test_ensure_dirs_null();
+    test_ensure_dirs_empty();
+    test_ensure_dirs_tmp();
 
     printf("\n==========================\n");
     printf("Results: %d/%d passed\n", passed, tests);

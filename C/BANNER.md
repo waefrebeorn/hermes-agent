@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v243)**
+**BANNER — WuBu Slermes C Translation (v244)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v243                                       ║
+║  WuBu Slermes C v244                                       ║
 ║  311/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  134 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 171: P176 cron depth — 6 tests                          ║
+║  Phase 172: P176 cron depth — 9 tests                          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
