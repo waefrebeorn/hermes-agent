@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v238 | Fork diverged — C/ lives only on fork | Suite 309/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 267 (21.2% parity). Phase 166: G03 feishu_comment depth — comment helpers — Video MIME detection + base64 data URL. Suite 309/0/0.**
+**v239 | Fork diverged — C/ lives only on fork | Suite 310/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 135 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 269 (21.3% parity). Phase 167: G04 feishu_comment_rules — access-control rules. Suite 310/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -87,7 +87,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
 || 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio. Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
-| 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
+| 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
 || 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Phase 161: telegram_parse_fallback_ips() validates and normalizes IPv4 addresses for Telegram fallback connectivity. Maps private/loopback/link-local/unspecified/non-IPv4. | P2 | PARTIAL — DoH/fallback transport missing, IP parsing ported |
@@ -98,7 +98,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 8 gaps (2 P1, 6 P2) — Phase 161: G07 telegram_network fallback IP parsing ported.**
+**S3: 7 gaps (2 P1, 5 P2) — Phase 167: G04 feishu_comment_rules ported (56 tests).**
 
 ---
 
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 166: G03 feishu_comment depth — comment helpers — Video MIME detection + base64 data URL. Suite 309/0/0 (268 test files).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 167: G04 feishu_comment_rules ported. Suite 310/0/0 (269 test files).**
 
 ---
 
@@ -270,15 +270,15 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 164: B08 Telegram thread-not-found detection |
+|| S3: Gateway Helpers | 7 | 0 | 2 | 5 | 0 | Phase 167: G04 feishu_comment_rules ported (56 tests) |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-|| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 166: G03 feishu_comment depth — comment helpers — Video MIME detection + base64 data URL |
+||| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 167: G04 feishu_comment_rules ported |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 166: G03 feishu_comment depth — comment helpers — Video MIME detection + base64 data URL.** |
+|||| **TOTAL** | **135** | **6** | **36** | **62** | **43** | **Phase 167: G04 feishu_comment_rules — access-control rules.** |
 
 ### Phase Map
 

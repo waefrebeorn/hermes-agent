@@ -2456,6 +2456,33 @@ else
     skip "feishu_comment_helpers (compilation failed)"
 fi
 
+# Feishu comment rules test (G04 — needs json lib + includes)
+RULES_INCS="-I $CDIR/include -I $CDIR/lib/libjson -I $CDIR/lib/liblineedit -I $CDIR/lib/libbase64 -I $CDIR/lib/libhash -I $CDIR/lib/libdatetime -I $CDIR/lib/libpath -I $CDIR/lib/libuuid -I $CDIR/lib/libhttp -I $CDIR/lib/libhtml -I $CDIR/lib/libtextwrap -I $CDIR/lib/libcrypto -I $CDIR/lib/libdotenv -I $CDIR/lib/libcron -I $CDIR/lib/libproc -I $CDIR/lib/libtui -I $CDIR/lib/libdb -I $CDIR/lib/libplugin -I $CDIR/lib/libskin -I $CDIR/lib/libwebsocket -I $CDIR/lib/libprotobuf -I $CDIR/lib/libmcp -I $CDIR/lib/libcsv -I $CDIR/lib/libglob -I $CDIR/lib/libsignal -I $CDIR/lib/libenum -I $CDIR/lib/libdifflib -I $CDIR/lib/libregex -I $CDIR/lib/libansi -I $CDIR/lib/libjson5 -I $CDIR/lib/libskillusage -I $CDIR/lib/libskillsync -I $CDIR/lib/libtranscribe -I $CDIR/lib/libmcp_oauth -I $CDIR/lib/libfal_common -I $CDIR/libtooloutput -I $CDIR/lib/libxai_http -I $CDIR/lib/libenvpassthrough -I $CDIR/lib/libcredential -I $CDIR/lib/libschemasanitizer -I $CDIR/lib/libfuzzymatch -I $CDIR/lib/libinterrupt -I $CDIR/lib/libfilestate -I $CDIR/lib/libtooldispatch -I $CDIR/lib/librateguard -I $CDIR/lib/libskillutils -I $CDIR/lib/liberrorclassifier -I $CDIR/lib/libfile_sync -I $CDIR/lib/libbudgetconfig -I $CDIR/lib/libthreatpatterns -I $CDIR/lib/libcredentialfiles -I $CDIR/lib/libskillaudit -I $CDIR/lib/libslashconfirm -I $CDIR/lib/libmsgraph -I $CDIR/lib/libbinary -I $CDIR/lib/libbrowser -I $CDIR/lib/libdebug -I $CDIR/lib/libosv -I $CDIR/lib/libwebsite -I $CDIR/lib/libtemplate -I $CDIR/lib/libratelimit -I $CDIR/lib/libmangateway -I $CDIR/lib/libtoolbackend"
+if gcc -O2 -Wall -Wextra $RULES_INCS \
+    -o /tmp/hermes_test_fcrules \
+    "$CDIR/tests/test_feishu_comment_rules.c" \
+    "$CDIR/src/tools/feishu_comment_rules.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_fcrules > /dev/null 2>&1; then
+        ok "feishu_comment_rules (G04: 56 tests)"
+    else
+        echo "  Feishu rules test output:"
+        /tmp/hermes_test_fcrules 2>&1 | sed 's/^/    /'
+        fail "feishu_comment_rules (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_fcrules
+else
+    echo "  Feishu rules test compilation error:"
+    gcc -O2 -Wall -Wextra $RULES_INCS \
+        -o /tmp/hermes_test_fcrules \
+        "$CDIR/tests/test_feishu_comment_rules.c" \
+        "$CDIR/src/tools/feishu_comment_rules.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -lm 2>&1 | sed 's/^/    /'
+    skip "feishu_comment_rules (compilation failed)"
+fi
+
 # Gateway per-platform webhook tests (T01): HMAC + subscription management
 # Needs crypto library for HMAC verification.
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \

@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v238)**
+**BANNER — WuBu Slermes C Translation (v239)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v238                                       ║
-║  309/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  136 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v239                                       ║
+║  310/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  135 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 166: Feishu comment helpers (sanitize, extract, user_id)              ║
+║  Phase 167: Feishu comment rules (G04: 56 tests)            ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

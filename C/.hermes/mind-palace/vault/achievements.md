@@ -1587,3 +1587,13 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P145-01 | Ported `safe_url_for_log()` from Python gateway/platforms/base.py — `url_safe_for_log()` strips userinfo credentials (user:pass@), query parameters, and fragments from URLs for safe logging. Returns condensed "scheme://host/.../basename" format, truncating to max_len with ellipsis. Handles NULL/empty/non-URL inputs safely. | `C/src/tools/url_safety.c` — `url_safe_for_log()` at ~615-710 |
 | P145-02 | Added 9 test assertions: NULL/empty returns NULL, normal URL path condensed, userinfo stripped, bare domain preserved, non-URL string truncated, port preserved, max_len truncation, trailing slash. URL safety tests 29→38. | `C/tests/test_url_safety.c` — tests 30-38 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 167: G04 feishu_comment_rules — Access-Control Rules
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P167-01 | Ported `CommentsConfig`, `CommentDocumentRule`, `ResolvedCommentRule`, `_MtimeCache` from Python gateway/platforms/feishu_comment_rules.py -- `feishu_rules_load_config()` loads JSON config from `HERMES_HOME/feishu_comment_rules.json` with mtime-based hot-reload. Falls back to defaults (enabled=true, policy=pairing) when file is missing or malformed. | `C/src/tools/feishu_comment_rules.c` -- `feishu_rules_load_config()` at ~195 |
+| P167-02 | Ported `resolve_rule()` from Python feishu_comment_rules -- `feishu_rules_resolve_rule()` implements 3-tier field-by-field fallback: exact doc -> wiki key -> wildcard -> top-level defaults. Each field falls back independently. | `C/src/tools/feishu_comment_rules.c` -- `feishu_rules_resolve_rule()` at ~285 |
+| P167-03 | Ported pairing store functions from Python -- `feishu_rules_pairing_add/remove/list()` manage pairing-approved users in `HERMES_HOME/feishu_comment_pairing.json`. Atomic save (tmp+rename), mtime caching, null-filter on save. | `C/src/tools/feishu_comment_rules.c` -- pairing functions at ~450-560 |
+| P167-04 | Ported `is_user_allowed()` from Python -- checks allow_from list first, then pairing store if policy is "pairing". Returns false for NULL inputs. | `C/src/tools/feishu_comment_rules.c` -- `feishu_rules_is_user_allowed()` at ~600 |
+| P167-05 | 56-test suite covering: config loading (defaults, with rules, invalid JSON), wiki key detection, rule resolution, allow_from, pairing CRUD, access control, cache invalidation. | `C/tests/test_feishu_comment_rules.c` -- 8 test functions |
+Suite: 310/0/0 (269 test files). Gaps: 135.
