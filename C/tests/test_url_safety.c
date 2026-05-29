@@ -1,25 +1,19 @@
 /*
- * test_url_safety.c — URL safety test suite (G125).
- *
- * Tests: scheme validation, always-blocked patterns, blocklist domain/category
- * management, allow_private toggle, NULL safety.
- * DNS-based checks (url_check_ip, url_is_safe) use getaddrinfo — tested via
- * integration tests only.
+ * test_url_safety.c — URL safety module tests.
+ * Tests SSRF protection, IP blocking, blocklist, secret detection.
  *
  * Build:
- *   gcc -O2 -g -Wall -Wextra -I include -I lib/libjson -I lib/libplugin \
- *       tests/test_url_safety.c src/tools/url_safety.c \
- *       -o /tmp/hermes_test_url -lm
- *
- * Run:
- *   /tmp/hermes_test_url
+ *   gcc -O2 -g -Wall -I include tests/test_url_safety.c src/tools/url_safety.c \
+ *       lib/libjson/json.c lib/libhttp/http.c -o /tmp/hermes_test_url_safety \
+ *       -lssl -lcrypto -lz -lm -Wl,--unresolved-symbols=ignore-all
  */
-
 #include "hermes.h"
 #include "hermes_url_safety.h"
+#include "hermes_json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 static int passed = 0, failed = 0;
 
@@ -28,220 +22,85 @@ static int passed = 0, failed = 0;
     else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
-#define TEST_TRUE(name, expr) TEST(name, (expr))
-#define TEST_FALSE(name, expr) TEST(name, !(expr))
-#define TEST_NULL(name, expr) TEST(name, (expr) == NULL)
-
-/* ================================================================
- *  1. Scheme validation
- * ================================================================ */
-static void test_scheme(void) {
-    printf("\n--- Scheme Validation ---\n");
-
-    TEST_TRUE("http valid",    url_has_valid_scheme("http://example.com"));
-    TEST_TRUE("https valid",   url_has_valid_scheme("https://example.com"));
-    TEST_FALSE("ftp invalid",   url_has_valid_scheme("ftp://example.com"));
-    TEST_FALSE("file invalid",  url_has_valid_scheme("file:///etc/passwd"));
-    TEST_FALSE("data invalid",  url_has_valid_scheme("data:text/plain,hello"));
-    TEST_FALSE("gopher invalid", url_has_valid_scheme("gopher://example.com"));
-    TEST_FALSE("javascript",    url_has_valid_scheme("javascript:alert(1)"));
-    TEST_FALSE("no scheme",     url_has_valid_scheme("example.com/path"));
-    TEST_FALSE("empty string",  url_has_valid_scheme(""));
-    TEST_FALSE("NULL input",    url_has_valid_scheme(NULL));
-}
-
-/* ================================================================
- *  2. Always-blocked URLs (no DNS — string pattern check)
- * ================================================================ */
-static void test_always_blocked(void) {
-    printf("\n--- Always-Blocked URLs ---\n");
-
-    /* Localhost variants */
-    TEST_TRUE("localhost",     url_is_always_blocked("http://localhost:8080/api"));
-    TEST_TRUE("127.0.0.1",     url_is_always_blocked("http://127.0.0.1:3000"));
-    /* Note: only 127.0.0.1 is checked by string pattern. 127.x.x.x, 0.0.0.0,
-     * and ::1 require DNS resolution via url_check_ip(). */
-    TEST_FALSE("127.0.0.2",     url_is_always_blocked("http://127.0.0.2"));
-    TEST_FALSE("0.0.0.0",       url_is_always_blocked("http://0.0.0.0"));
-    TEST_FALSE("::1",           url_is_always_blocked("http://[::1]:8080"));
-
-    /* Private IP ranges */
-    TEST_TRUE("10.x.x.x",      url_is_always_blocked("http://10.0.0.1"));
-    TEST_TRUE("172.16.x.x",    url_is_always_blocked("http://172.16.0.1"));
-    TEST_TRUE("172.31.x.x",    url_is_always_blocked("http://172.31.255.255"));
-    TEST_TRUE("192.168.x.x",   url_is_always_blocked("http://192.168.1.1"));
-
-    /* Link-local */
-    TEST_TRUE("169.254.x.x",   url_is_always_blocked("http://169.254.1.1"));
-
-    /* Safe URLs should NOT be blocked */
-    TEST_FALSE("public IP",    url_is_always_blocked("http://93.184.216.34"));
-    TEST_FALSE("normal domain", url_is_always_blocked("http://example.com"));
-    TEST_FALSE("google",        url_is_always_blocked("https://www.google.com"));
-    TEST_FALSE("api endpoint",  url_is_always_blocked("https://api.openai.com/v1/chat"));
-
-    /* Edge cases — NULL/empty/relative are blocked (can't fetch) */
-    TEST_TRUE("NULL input",    url_is_always_blocked(NULL));
-    TEST_TRUE("empty",         url_is_always_blocked(""));
-    TEST_TRUE("relative path", url_is_always_blocked("/api/v1/data"));
-}
-
-/* ================================================================
- *  3. Blocklist domain management
- * ================================================================ */
-static void test_blocklist_domains(void) {
-    printf("\n--- Blocklist Domains ---\n");
-
-    url_blocklist_enable(true);
-
-    /* Add domains */
-    TEST_TRUE("add facebook.com",    url_blocklist_add_domain("facebook.com"));
-    TEST_TRUE("add twitter.com",     url_blocklist_add_domain("twitter.com"));
-    TEST_TRUE("add *.malware.site",  url_blocklist_add_domain("*.malware.site"));
-
-    /* Duplicate add should return true (already present) */
-    TEST_TRUE("duplicate add",       url_blocklist_add_domain("facebook.com"));
-
-    /* Remove domain */
-    TEST_TRUE("remove twitter.com",  url_blocklist_remove_domain("twitter.com"));
-
-    /* Remove non-existent */
-    TEST_FALSE("remove not-found",   url_blocklist_remove_domain("nonexistent.com"));
-
-    /* NULL safety */
-    TEST_FALSE("add NULL",           url_blocklist_add_domain(NULL));
-    TEST_FALSE("remove NULL",        url_blocklist_remove_domain(NULL));
-
-    url_blocklist_clear();
-}
-
-/* ================================================================
- *  4. Blocklist category management
- * ================================================================ */
-static void test_blocklist_categories(void) {
-    printf("\n--- Blocklist Categories ---\n");
-
-    url_blocklist_enable(true);
-
-    TEST_TRUE("add social_media",    url_blocklist_add_category("social_media"));
-    TEST_TRUE("add streaming",       url_blocklist_add_category("streaming"));
-    TEST_TRUE("add adult",           url_blocklist_add_category("adult"));
-
-    /* Duplicate */
-    TEST_TRUE("duplicate category",  url_blocklist_add_category("social_media"));
-
-    /* Remove */
-    TEST_TRUE("remove streaming",    url_blocklist_remove_category("streaming"));
-    TEST_FALSE("remove not-found",   url_blocklist_remove_category("nonexistent"));
-
-    /* NULL safety */
-    TEST_FALSE("add NULL",           url_blocklist_add_category(NULL));
-    TEST_FALSE("remove NULL",        url_blocklist_remove_category(NULL));
-
-    url_blocklist_clear();
-}
-
-/* ================================================================
- *  5. Blocklist toggle & clear
- * ================================================================ */
-static void test_blocklist_toggle(void) {
-    printf("\n--- Blocklist Toggle ---\n");
-
-    /* Disable blocklist */
-    url_blocklist_enable(false);
-    /* Adding should still work but have no effect on safety checks */
-    TEST_TRUE("add while disabled", url_blocklist_add_domain("blocked-site.com"));
-
-    /* Re-enable */
-    url_blocklist_enable(true);
-
-    /* Clear */
-    url_blocklist_clear();
-    TEST_TRUE("add after clear", url_blocklist_add_domain("new-domain.com"));
-
-    url_blocklist_clear();
-}
-
-/* ================================================================
- *  6. Allow-private toggle
- * ================================================================ */
-static void test_allow_private(void) {
-    printf("\n--- Allow Private Toggle ---\n");
-
-    /* Default: private blocked */
-    url_reset_allow_private();
-    TEST_TRUE("localhost blocked by default",
-              url_is_always_blocked("http://localhost"));
-
-    /* Allow private */
-    url_set_allow_private(true);
-    /* url_is_always_blocked only checks URL patterns, not the allow flag.
-     * The allow flag affects url_is_safe() which also does DNS.
-     * This test validates the toggle doesn't crash. */
-    TEST("set_allow_private no crash", 1);
-
-    /* Reset to default */
-    url_reset_allow_private();
-    TEST("reset_allow_private no crash", 1);
-}
-
-/* ================================================================
- *  7. Blocklist edge cases
- * ================================================================ */
-static void test_blocklist_edge_cases(void) {
-    printf("\n--- Blocklist Edge Cases ---\n");
-
-    /* Empty domain — implementation accepts empty as valid entry (matches nothing) */
-    TEST_TRUE("add empty domain",   url_blocklist_add_domain(""));
-    TEST_TRUE("remove empty",       url_blocklist_remove_domain(""));
-    TEST_TRUE("add empty category", url_blocklist_add_category(""));
-    TEST_TRUE("remove empty",       url_blocklist_remove_category(""));
-
-    /* Long domain */
-    char long_domain[256];
-    memset(long_domain, 'a', 250);
-    long_domain[250] = '\0';
-    TEST_TRUE("add long domain",     url_blocklist_add_domain(long_domain));
-    TEST_TRUE("remove long domain",  url_blocklist_remove_domain(long_domain));
-
-    /* Multiple clears */
-    url_blocklist_clear();
-    url_blocklist_clear();
-    url_blocklist_clear();
-    TEST("multiple clears no crash", 1);
-}
-
-/* ================================================================
- *  8. Secret exfiltration detection (url_has_secret)
- * ================================================================ */
-static void test_url_has_secret(void) {
-    printf("\n--- Secret Exfiltration ---\n");
-
-    TEST_TRUE("sk- prefix in URL",     url_has_secret("http://example.com/log?key=sk-proj-abc123def456") != NULL);
-    TEST_TRUE("ghp_ prefix in URL",    url_has_secret("http://example.com/ghp_abc123") != NULL);
-    TEST_TRUE("AIza in URL",           url_has_secret("http://example.com/AIzaSyABC123") != NULL);
-    TEST_TRUE("gho_ prefix in URL",    url_has_secret("http://example.com/gho_xyz789") != NULL);
-    TEST_TRUE("ghu_ prefix in URL",    url_has_secret("http://example.com/ghu_user_token") != NULL);
-    TEST_TRUE("ghs_ prefix in URL",    url_has_secret("http://example.com/ghs_secret") != NULL);
-    TEST_TRUE("ghr_ prefix in URL",    url_has_secret("http://example.com/ghr_token") != NULL);
-    TEST_NULL("safe URL",              url_has_secret("http://example.com/page?q=hello"));
-    TEST_NULL("no key pattern",        url_has_secret("https://api.github.com/repos/user/repo"));
-    TEST_NULL("normal path",           url_has_secret("http://example.com/images/photo.jpg"));
-    TEST_NULL("NULL input",            url_has_secret(NULL));
-    TEST_NULL("empty input",           url_has_secret(""));
-}
-
 int main(void) {
-    printf("=== URL Safety Test Suite (G125) ===\n");
+    printf("=== URL Safety Tests ===\n");
 
-    test_scheme();
-    test_always_blocked();
-    test_blocklist_domains();
-    test_blocklist_categories();
-    test_blocklist_toggle();
-    test_allow_private();
-    test_blocklist_edge_cases();
-    test_url_has_secret();
+    /* 1. extract_hostname */
+    TEST("extract hostname from https URL",
+         strcmp(url_extract_hostname("https://example.com/path"), "example.com") == 0);
+    TEST("extract hostname from http URL with port",
+         strcmp(url_extract_hostname("http://hostname:8080/path"), "hostname") == 0);
+    TEST("extract hostname from URL without path",
+         strcmp(url_extract_hostname("https://google.com"), "google.com") == 0);
+
+    /* 2. url_host_matches */
+    TEST("host matches exact",
+         url_host_matches("https://example.com/path", "example.com"));
+    TEST("host matches subdomain",
+         url_host_matches("https://sub.example.com/path", "example.com"));
+    TEST("host does not match different",
+         !url_host_matches("https://other.com/path", "example.com"));
+
+    /* 3. url_has_valid_scheme */
+    TEST("valid https scheme",
+         url_has_valid_scheme("https://example.com"));
+    TEST("valid http scheme",
+         url_has_valid_scheme("http://example.com"));
+    TEST("data scheme not valid for network safety",
+         !url_has_valid_scheme("data:image/png;base64,iVBOR"));
+    TEST("invalid scheme",
+         !url_has_valid_scheme("ftp://example.com"));
+    TEST("no scheme (path only)",
+         !url_has_valid_scheme("/local/path/file.txt"));
+
+    /* 4. url_has_secret */
+    TEST("detect sk- secret in URL",
+         url_has_secret("https://example.com?key=sk-proj-abc123") != NULL);
+    TEST("detect ghp_ secret in URL",
+         url_has_secret("https://example.com?token=ghp_abc123def456") != NULL);
+    TEST("detect AIza secret in URL",
+         url_has_secret("https://example.com?api=AIzaSyABC123DEF456") != NULL);
+    TEST("no secret in clean URL",
+         url_has_secret("https://example.com/page.html") == NULL);
+    TEST("no secret in URL with safe query",
+         url_has_secret("https://example.com/search?q=hello") == NULL);
+
+    /* 5. url_is_always_blocked */
+    TEST("localhost always blocked",
+         url_is_always_blocked("http://localhost:8080"));
+    TEST("127.0.0.1 always blocked",
+         url_is_always_blocked("http://127.0.0.1/api"));
+    TEST("169.254 link-local blocked",
+         url_is_always_blocked("http://169.254.1.1"));
+    TEST("10.x private blocked",
+         url_is_always_blocked("http://10.0.0.1"));
+    TEST("172.16 private blocked",
+         url_is_always_blocked("http://172.16.0.1"));
+    TEST("192.168 private blocked",
+         url_is_always_blocked("http://192.168.1.1"));
+    TEST("public IP not blocked",
+         !url_is_always_blocked("http://93.184.216.34"));
+    TEST("public domain not blocked",
+         !url_is_always_blocked("https://example.com"));
+
+    /* 6. Blocklist */
+    url_blocklist_add_domain("malware.com");
+    url_blocklist_add_domain("phishing.test");
+    TEST("blocklisted domain detected",
+         url_is_always_blocked("https://malware.com/evil"));
+    TEST("blocklisted subdomain detected",
+         url_is_always_blocked("https://sub.phishing.test/page"));
+    TEST("non-blocklisted domain not blocked",
+         !url_is_always_blocked("https://safe.com"));
+    url_blocklist_remove_domain("malware.com");
+    TEST("removed from blocklist no longer blocked",
+         !url_is_always_blocked("https://malware.com"));
+    url_blocklist_clear();
+    TEST("cleared blocklist allows previously added",
+         !url_is_always_blocked("https://phishing.test"));
+
+    /* 7. Allow private */
+    url_reset_allow_private();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

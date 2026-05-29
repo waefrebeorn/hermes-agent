@@ -442,6 +442,14 @@ bool url_is_always_blocked(const char *url) {
     if (strstr(lower, ".private")) return true;
     if (strstr(lower, ".local")) return true;
 
+    /* Check blocklist domains */
+    if (g_blocklist_enabled) {
+        for (int i = 0; i < g_blocked_domain_count; i++) {
+            if (g_blocked_domains[i] && strstr(lower, g_blocked_domains[i]))
+                return true;
+        }
+    }
+
     return false;
 }
 

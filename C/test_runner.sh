@@ -1399,6 +1399,17 @@ fi &
 # Test file exists at tests/test_result_storage.c — requires full link with config.c
 # echo ""; echo "=== Tool Result Storage Tests (P49-P50) === (skipped — needs config dependency resolution)"
 
+# URL safety test (needs url_safety.c + json + http)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_url_safety.c" \
+    "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_url_safety -lssl -lcrypto -lz -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_url_safety > /dev/null 2>&1; then ok "url_safety (29 tests)"
+    else fail "url_safety (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_url_safety
+else skip "url_safety (compilation failed)"
+fi &
+
 # Config test (needs config.c + paths.c + yaml + json + provider_metadata + url_safety)
 if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_config.c" \
