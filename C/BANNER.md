@@ -2,11 +2,11 @@
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v194                                       ║
-║  299/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v195                                       ║
+║  300/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 118: B02 base64 + suite fix                          ║
+║  Phase 119: url_safety tests + blocklist bug                          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -14,7 +14,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 299/0/0 |
+| Test suite | 300/0/0 |
 | Tools | 85 |
 | CLI commands | 98 |
 | Gateway platforms | 19 |

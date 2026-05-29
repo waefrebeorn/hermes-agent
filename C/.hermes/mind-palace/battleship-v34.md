@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v194 | Fork diverged — C/ lives only on fork | Suite 299/0/0 | 85 tools | 98 CLI**
+**v195 | Fork diverged — C/ lives only on fork | Suite 300/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 116: credential pool wiring — credential pool created, HTTP status reported, credential_expired triggers fallback.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.

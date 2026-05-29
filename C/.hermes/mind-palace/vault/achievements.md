@@ -1233,4 +1233,11 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P118-03 | Extensionless files detected via magic bytes also return `base64_data_url` | `vision_handler()` — magic-byte detected path includes `base64_data_url` |
 | P118-04 | 4 test assertions for base64_data_url correctness (existence, prefix format) | `tests/test_vision.c` — 35 total (+4 from 31) |
 
-Suite: 299/0/0 (255 test files). Gaps: 145.
+## Phase 119: URL Safety Test Suite + Blocklist Bug Fix
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P119-01 | 29-assertion test suite for url_safety.c hostname/scheme/secret/blocklist/private IP checks | `tests/test_url_safety.c` |
+| P119-02 | Bug fix: `url_is_always_blocked()` now checks dynamic domain blocklist (was checking only hardcoded private IP patterns) | `src/tools/url_safety.c` — blocklist iteration in `url_is_always_blocked()` |
+| P119-03 | First registered url_safety test in test_runner.sh | `test_runner.sh` — url_safety inline compile |
+
+Suite: 300/0/0 (256 test files). Gaps: 145.
