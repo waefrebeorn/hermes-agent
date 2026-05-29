@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 298/0/0
+bash test_runner.sh        # 299/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes

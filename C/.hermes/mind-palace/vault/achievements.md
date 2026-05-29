@@ -1183,6 +1183,13 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 |----|-------------|----------|
 | P113-01 | Warning logged when config.yaml attempts to register blocked provider credential via env_passthrough | `src/tools/terminal.c` — registry_init_terminal() |
 
+## Phase 114: Content-Policy Immediate Fallback
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P114-01 | content_filter finish_reason detected in agent_loop retry loop — skips retry of filtered model | `src/agent/agent_loop.c` — retry loop at ~1089 |
+| P114-02 | Content filter triggers immediate fallback to configured fallback model/provider | `src/agent/agent_loop.c` — fallback trigger path |
+
+
 
 
 
