@@ -1,6 +1,5 @@
-# BATTLE MAP — Active Gap Audit
+# Battleship Index
 
-> Canonical battleship at `mind-palace/battleship-v33.md`.
+> Canonical battleship at `mind-palace/battleship-v34.md`.
 >
-> v33: 17 gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 upstream drift).
-> Fork synced. v133.
+> v34: 205+ gaps (12+45+13+28+30+20+20+10+20+7 across 9 sectors, 1000+ test case gaps).

@@ -4,18 +4,18 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||| Suite:  294/0/0 (248 test files, completes in <60s)
-||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||||| Gaps:  17 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 drift)
-||||||||||Stubs:  0 stubs remain. All entry points verified.
-|||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
-|||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
-|||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
-||||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
-||||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
-||||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
-```
+||||||||||| Suite:  294/0/0 (248 test files, completes in <60s)
+|||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+|||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+||||||||||||| Gaps:  205+ real parity gaps (1000+ test case gaps) across 9 sectors
+|||||||||||Stubs:  0 stubs remain. All entry points verified.
+||||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
+||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
+|||||||||Libraries: 65 C modules — zero external deps beyond libc+libssl
+|||||||||Gateway: 19 platform adapters (Telegram, Discord, Slack, Signal, SMS, etc.)
+|||||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
+|```
 
 > **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
 >
@@ -34,7 +34,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 - [Plugins (10 .c)](#plugins-10-c)
 - [Libraries (65 Units)](#libraries-65-units)
 - [CLI Commands (98 CLI, Real)](#cli-commands-80-slash-real)
-- [Battleship Roadmap (17 Gaps)](#battleship-roadmap-17-gaps)
+- [Battleship Roadmap (205+ Gaps)](#battleship-roadmap-1000-gaps)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 17 real parity gaps remain (S0-S4) — form-vs-function issues, test coverage gaps, and upstream drift. See `.hermes/mind-palace/battleship-v33.md` for the active gap map.
+**However:** 205+ real parity gaps remain (9 sectors, 1000+ test case gaps) — display, agent modules, test coverage, provider adapters, and more. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v33.md` — Canonical gap list (17 items across 5 sectors)
+- `battleship-v34.md` — Canonical gap list (205+ items across 9 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
@@ -615,7 +615,7 @@ make -j$(nproc)
 ### Workflow
 
 1. Read `.hermes/mind-palace/` for current state and priority
-2. Pick the next gap from battleship-v33.md
+2. Pick the next gap from battleship-v34.md
 3. Build + test before PR
 4. Update all docs — state, prestige, plan, overnight, goal-mantra, battleship, README, BANNER, vault
 5. Commit with descriptive message
@@ -659,4 +659,4 @@ The C code was forked from upstream commit `2517917de` and later rebased onto up
 - Security/auth overhaul (OAuth PKCE, API key enforcement)
 - ~17k new tests
 
-See `.hermes/mind-palace/battleship-v33.md` for the full gap map.
+See `.hermes/mind-palace/battleship-v34.md` for the full gap map.

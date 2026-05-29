@@ -1,18 +1,24 @@
 # Plan (v145)
 
-17 gaps across 5 sectors. Fork diverged — C/ lives only on fork; upstream removed C/.
+205+ gaps across 9 sectors (battleship v34). Fork diverged — C/ lives only on fork; upstream removed C/.
 
-## S0: Form-vs-Function (P0) — 2 gaps
-no Python hook, test cheating
+## Phase 0: Display & Visual (S0, P0) — 12 gaps
+Skin engine, spinner, banner, status bar, tool feed, response box, help tables, 24-bit color, prompt input, markdown render, faces, emoji
 
-## S1: Pipeline (P1) — 4 gaps
-plumbing, TUI bugs, linkage, display, general bugs
+## Phase 1: Agent + Adapters + TUI Core (S1, S3, S7, P1) — ~38 gaps
+Missing agent modules, provider adapter layer, TUI gateway server + core components
 
-## S2: Cross-Compare (P1) — 4 gaps
-AST comparison, test recreation, behavioral parity, schema parity
+## Phase 2: Test Coverage Campaign (S6, P1) — 20 gap clusters, 1000+ tests
+Build out C test suite to match Python coverage (248 files → 1262, 57K LOC → 474K)
 
-## S3: Product Features (P2) — 6 gaps
-multi-turn, persistence, plugins, skins, gateways, providers
+## Phase 3: Gateway Helpers + Tool Depth (S2, S5, P2) — ~33 gaps
+13 gateway sub-modules, 10 tool depth improvements
 
-## S4: Upstream Drift (P1) — 1 gap
-test suite (U07). S4 U01-U06 retired — features already exist in C or never existed in Python.
+## Phase 4: CLI Ecosystem (S4, P2) — ~30 gaps
+Setup wizard, doctor, config, models, auth, kanban, skills hub, voice mode, etc.
+
+## Phase 5: Plugin System + Remaining Agent Modules (S8, S1 P2-P3) — ~46 gaps
+Plugin architecture, memory/model/kanban plugins, small agent modules
+
+## Phase 6: Architecture + Platform Gaps (S9) — ~7 gaps
+Python interop, async, ACP protocol, credential automation

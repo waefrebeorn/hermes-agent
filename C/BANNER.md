@@ -4,7 +4,7 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║  WuBu Slermes C v145                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  17 gaps  │  31MB binary  │  0 warnings                     ║
+║  205+ gaps  │  31MB binary  │  0 warnings                    ║
 ║  Fork diverged — C/ lives only on fork                   ║
 ║  Patch tool tab/CR unescape ported from upstream            ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps remaining | 17 |
+| Gaps remaining | 205+ |
