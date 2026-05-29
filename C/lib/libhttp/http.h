@@ -96,6 +96,9 @@ int http_stream_request(http_t *h, http_method_t method,
                         const char *body, size_t body_len,
                         http_stream_cb callback, void *userdata);
 
+/* Get raw response headers captured during streaming request (diagnostics) */
+const char *http_get_resp_headers(http_t *h);
+
 /* === SSE stream (persistent connection) === */
 /* Handle for persistent SSE stream — one connection, multiple events. */
 typedef struct http_sse_t http_sse_t;

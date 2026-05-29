@@ -72,6 +72,8 @@ struct http_t {
     int      cookie_count;
     /* Connection pool */
     void    *pool; /* http_pool_t*, opaque to avoid circular include */
+    /* Response headers from last request (for streaming diagnostics) */
+    char     resp_headers[4096];
 };
 
 typedef struct {
@@ -1001,12 +1003,21 @@ int http_stream_request(http_t *h, http_method_t method,
     size_t rlen = 0;
     if (!rbuf) { if (ssl) SSL_free(ssl); close(fd); return -1; }
 
-    /* Read until blank line */
+    /* Read until blank line, accumulating response headers */
+    h->resp_headers[0] = '\0';
     while (1) {
         char line[4096];
         ss = read_line_buffered(fd, ssl, line, sizeof(line), rbuf, &rlen, rcap, h->timeout_sec);
         if (ss <= 0) { free(rbuf); if (ssl) SSL_free(ssl); close(fd); return -1; }
         if (line[0] == '\r' || line[0] == '\n') break; /* end of headers */
+        /* Accumulate response headers for stream diagnostics */
+        size_t cur = strlen(h->resp_headers);
+        size_t llen = strlen(line);
+        if (cur + llen + 2 < sizeof(h->resp_headers)) {
+            memcpy(h->resp_headers + cur, line, llen);
+            h->resp_headers[cur + llen] = '\n';
+            h->resp_headers[cur + llen + 1] = '\0';
+        }
     }
 
     /* Read SSE stream */
@@ -1043,6 +1054,12 @@ int http_stream_request(http_t *h, http_method_t method,
     if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
     close(fd);
     return result;
+}
+
+/* Get raw response headers captured during streaming request */
+const char *http_get_resp_headers(http_t *h) {
+    if (!h) return "";
+    return h->resp_headers;
 }
 
 /* ================================================================

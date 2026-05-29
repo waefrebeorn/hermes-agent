@@ -1479,6 +1479,8 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                                     headers, body, strlen(body),
                                     on_provider_stream_chunk, &ctx);
         free(url); free(headers); free(body);
+        /* P95: Capture response headers for stream diagnostics */
+        populate_stream_diag_headers(resp, http_get_resp_headers(h));
         http_free(h);
 
         /* P95: Finalize stream diagnostics */
@@ -1580,6 +1582,8 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
                                 on_stream_chunk, &ctx);
     json_free(req);
     free(body);
+    /* P95: Capture response headers for stream diagnostics */
+    populate_stream_diag_headers(resp, http_get_resp_headers(h));
     http_free(h);
 
     /* P95: Finalize stream diagnostics */
