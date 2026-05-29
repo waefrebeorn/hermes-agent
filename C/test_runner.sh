@@ -3190,6 +3190,21 @@ else fail "file_batch (compilation failed)"
 fi
 
 # ==============================================
+# Yuanbao Tools Tests
+# ==============================================
+echo ""; echo "=== Yuanbao Tools Tests (sticker_search) ==="
+INCDIRS=$(for d in "$CDIR"/lib/*/; do echo -n " -I${d%/}"; done)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" $INCDIRS \
+    "$CDIR/tests/test_yuanbao_tools.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_yuanbao_tools -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_yuanbao_tools ]]; then
+    if /tmp/hermes_test_yuanbao_tools > /dev/null 2>&1; then ok "yuanbao_tools (sticker search)"
+    else fail "yuanbao_tools (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_yuanbao_tools
+else skip "yuanbao_tools (compilation failed)"
+fi
+
+# ==============================================
 # 7. Completions test
 # ==============================================
 echo ""; echo "=== Completions Tests ==="

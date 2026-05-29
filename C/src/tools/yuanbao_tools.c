@@ -209,7 +209,8 @@ static char *yb_search_sticker_handler(const char *args_json, const char *task_i
         return strdup("{\"error\":\"Failed to parse arguments\"}");
     }
 
-    const char *query = json_object_get_string(args, "query", "");
+    const char *query_ptr = json_object_get_string(args, "query", "");
+    char *query = query_ptr && *query_ptr ? strdup(query_ptr) : NULL;
     int limit = (int)json_object_get_number(args, "limit", 10);
     if (limit <= 0) limit = 10;
     if (limit > 50) limit = 50;
@@ -283,6 +284,7 @@ static char *yb_search_sticker_handler(const char *args_json, const char *task_i
 
     char *json_out = json_serialize(result);
     json_free(result);
+    free(query);
 
     return json_out ? json_out : strdup("{\"error\":\"Serialization failed\"}");
 }
@@ -310,12 +312,16 @@ static char *yb_send_sticker_handler(const char *args_json, const char *task_id)
         return strdup("{\"success\":false,\"error\":\"Failed to parse arguments\"}");
     }
 
-    const char *sticker_arg = json_object_get_string(args, "sticker", "");
-    const char *chat_id = json_object_get_string(args, "chat_id", "");
+    const char *sticker_ptr = json_object_get_string(args, "sticker", "");
+    const char *chat_ptr = json_object_get_string(args, "chat_id", "");
+    char *sticker_arg = sticker_ptr && *sticker_ptr ? strdup(sticker_ptr) : NULL;
+    char *chat_id = chat_ptr && *chat_ptr ? strdup(chat_ptr) : NULL;
 
     json_free(args);
 
     if (!sticker_arg || !*sticker_arg) {
+        free(sticker_arg);
+        free(chat_id);
         return strdup("{\"success\":false,\"error\":\"sticker name or ID required\"}");
     }
 
@@ -334,6 +340,8 @@ static char *yb_send_sticker_handler(const char *args_json, const char *task_id)
                  "{\"success\":false,\"error\":\"Sticker not found: %s\","
                  "\"hint\":\"Use yb_search_sticker first to find a sticker\"}",
                  sticker_arg);
+        free(sticker_arg);
+        free(chat_id);
         return strdup(err);
     }
 
@@ -371,9 +379,13 @@ static char *yb_send_sticker_handler(const char *args_json, const char *task_id)
                  ",\"chat_id\":\"%s\""
                  ",\"note\":\"Sticker sent successfully.\"}",
                  found->sticker_id, found->name, to_uid);
+        free(sticker_arg);
+        free(chat_id);
         return strdup(result);
     }
 
+    free(sticker_arg);
+    free(chat_id);
     return strdup("{\"success\":false,\"error\":\"Failed to send sticker: gateway not connected or send failed\"}");
 }
 
@@ -590,16 +602,24 @@ static char *yb_send_dm_handler(const char *args_json, const char *task_id) {
     json_node_t *args = json_parse(args_json, NULL);
     if (!args) return strdup("{\"success\":false,\"error\":\"Failed to parse arguments\"}");
 
-    const char *user_id = json_object_get_string(args, "user_id", "");
-    const char *name = json_object_get_string(args, "name", "");
-    const char *group_code = json_object_get_string(args, "group_code", "");
-    const char *message = json_object_get_string(args, "message", "");
+    const char *uid_ptr = json_object_get_string(args, "user_id", "");
+    const char *name_ptr = json_object_get_string(args, "name", "");
+    const char *gc_ptr = json_object_get_string(args, "group_code", "");
+    const char *msg_ptr = json_object_get_string(args, "message", "");
+    char *user_id = uid_ptr && *uid_ptr ? strdup(uid_ptr) : NULL;
+    char *name = name_ptr && *name_ptr ? strdup(name_ptr) : NULL;
+    char *group_code = gc_ptr && *gc_ptr ? strdup(gc_ptr) : NULL;
+    char *message = msg_ptr && *msg_ptr ? strdup(msg_ptr) : NULL;
     json_free(args);
 
-    if ((!user_id || !*user_id) && (!name || !*name))
+    if ((!user_id || !*user_id) && (!name || !*name)) {
+        free(user_id); free(name); free(group_code); free(message);
         return strdup("{\"success\":false,\"error\":\"user_id or name required\"}");
-    if (!message || !*message)
+    }
+    if (!message || !*message) {
+        free(user_id); free(name); free(group_code); free(message);
         return strdup("{\"success\":false,\"error\":\"message required\"}");
+    }
 
     /* Resolve user_id from name if needed */
     char resolved_uid[256] = "";
@@ -622,19 +642,26 @@ static char *yb_send_dm_handler(const char *args_json, const char *task_id) {
             }
             free(members_resp);
         }
-        if (!*resolved_uid)
+        if (!*resolved_uid) {
+            free(user_id); free(name); free(group_code); free(message);
             return strdup("{\"success\":false,\"error\":\"Could not resolve user_id from name. Use yb_query_group_members first.\"}");
+        }
     } else {
+        free(user_id); free(name); free(group_code); free(message);
         return strdup("{\"success\":false,\"error\":\"group_code required when using name-based lookup\"}");
     }
 
-    if (!*resolved_uid)
+    if (!*resolved_uid) {
+        free(user_id); free(name); free(group_code); free(message);
         return strdup("{\"success\":false,\"error\":\"Could not resolve user_id\"}");
+    }
 
     /* Send DM */
     char *resp = yuanbao_send_dm(resolved_uid, message);
-    if (!resp)
+    if (!resp) {
+        free(user_id); free(name); free(group_code); free(message);
         return strdup("{\"success\":false,\"error\":\"Yuanbao gateway not connected or send failed\"}");
+    }
 
     json_node_t *result = json_parse(resp, NULL);
     free(resp);
@@ -643,9 +670,11 @@ static char *yb_send_dm_handler(const char *args_json, const char *task_id) {
         json_object_set(result, "user_id", json_new_string(resolved_uid));
         char *json_out = json_serialize(result);
         json_free(result);
+        free(user_id); free(name); free(group_code); free(message);
         return json_out ? json_out : strdup("{\"success\":true}");
     }
 
+    free(user_id); free(name); free(group_code); free(message);
     return strdup("{\"success\":true,\"note\":\"DM sent\"}");
 }
 
