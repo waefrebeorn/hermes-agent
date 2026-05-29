@@ -20,6 +20,9 @@
 #include <errno.h>
 #include <sys/stat.h>
 #ifdef __linux__
+#include <sys/vfs.h>
+#endif
+#ifdef __linux__
 #include <pty.h>
 #endif
 
@@ -603,6 +606,53 @@ static char *build_env_passthrough_export(void) {
 }
 
 /* ================================================================
+ *  Safety checks (workdir validation, disk usage warning)
+ * ================================================================ */
+
+/* Validate workdir exists and is a directory. Returns NULL on success, warning string on failure. */
+static const char *_check_workdir(const char *workdir) {
+    if (!workdir || !workdir[0]) return NULL;
+    struct stat st;
+    if (stat(workdir, &st) != 0)
+        return "WARNING: workdir does not exist (will be created by shell)";
+    if (!S_ISDIR(st.st_mode))
+        return "WARNING: workdir exists but is not a directory";
+    return NULL;
+}
+
+/* Check free disk space on workdir's filesystem. Returns NULL if OK, warning if < 100MB free. */
+static const char *_check_disk_usage(const char *workdir) {
+#ifdef __linux__
+    const char *path = workdir && workdir[0] ? workdir : "/tmp";
+    struct statfs sfs;
+    if (statfs(path, &sfs) != 0) return NULL;
+    unsigned long long free_bytes = (unsigned long long)sfs.f_bfree * (unsigned long long)sfs.f_bsize;
+    unsigned long long free_mb = free_bytes / (1024 * 1024);
+    if (free_mb < 100) {
+        static char buf[128];
+        snprintf(buf, sizeof(buf), "WARNING: Low disk space — ~%llu MB free on %s", free_mb, path);
+        return buf;
+    }
+#else
+    (void)workdir;
+#endif
+    return NULL;
+}
+
+/* Inject safety warnings into result JSON. Returns malloc'd string. */
+static char *_inject_warnings(const char *result_json,
+                               const char *wd_warn, const char *disk_warn) {
+    if (!wd_warn && !disk_warn) return strdup(result_json);
+    json_t *rj = json_parse(result_json, NULL);
+    if (!rj) return strdup(result_json);
+    if (wd_warn) json_set(rj, "workdir_warning", json_string(wd_warn));
+    if (disk_warn) json_set(rj, "disk_warning", json_string(disk_warn));
+    char *out = json_serialize(rj);
+    json_free(rj);
+    return out;
+}
+
+/* ================================================================
  *  Main terminal handler
  * ================================================================ */
 
@@ -666,6 +716,10 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     if (!command)
         return strdup("{\"error\": \"Missing required 'command' argument\"}");
 
+    /* Safety checks: workdir validation + disk usage warning */
+    const char *wd_warn = _check_workdir(workdir);
+    const char *disk_warn = _check_disk_usage(workdir);
+
     /* O14: Check command for sandbox escape patterns before execution */
     sandbox_escape_result_t esc = sandbox_escape_check(command, -1, "terminal");
     if (esc.blocked) {
@@ -703,20 +757,24 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     if (use_pty) {
 #ifdef __linux__
-        return run_command_pty(full_command, timeout);
+        char *res1 = run_command_pty(full_command, timeout);
+        return _inject_warnings(res1, wd_warn, disk_warn);
 #else
-        return run_command(full_command, timeout);
+        char *res1b = run_command(full_command, timeout);
+        return _inject_warnings(res1b, wd_warn, disk_warn);
 #endif
     }
 
     /* D84: Route to SSH execution backend if configured */
     if (backend && strcasecmp(backend, "ssh") == 0) {
-        return run_command_ssh(command, timeout);
+        char *res2 = run_command_ssh(command, timeout);
+        return _inject_warnings(res2, wd_warn, disk_warn);
     }
 
     /* F11: Route to Docker execution backend if configured */
     if (backend && strcasecmp(backend, "docker") == 0) {
-        return run_command_docker(command, timeout, docker_image);
+        char *res3 = run_command_docker(command, timeout, docker_image);
+        return _inject_warnings(res3, wd_warn, disk_warn);
     }
 
     /* D04: Route to Docker Compose backend if configured */
@@ -729,7 +787,8 @@ char *terminal_handler(const char *args_json, const char *task_id) {
         return run_command_modal(command, timeout);
     }
 
-    return run_command(full_command, timeout);
+    char *res_default = run_command(full_command, timeout);
+    return _inject_warnings(res_default, wd_warn, disk_warn);
 }
 
 /* Auto-register */
