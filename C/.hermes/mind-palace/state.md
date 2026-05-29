@@ -33,12 +33,12 @@ Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 beh
 - Phase 50: Scheduler parsing tests (18 assertions)
 - Phase 51: Auth store persistence tests (20 assertions)
 - Phase 52: ACP resource content-to-text tests (6 assertions)
-- Phase 53: Hook & tool result tests, memory leak fixes
+- Phase 53: Hook & tool result tests, memory leak fixes (root cause)
   Fixed hook_parse_result context-overrides-block bug (now block > context).
-  Fixed agent_free message array leak (512-byte ASan).
+  Fixed context_init nulling messages/capacity after agent_init allocated them (root cause of the 512-byte ASan leak, not just missing agent_free).
   Added test_hook_registry.c (96 assertions) + test_tool_result.c (30 assertions).
   Rewrote/expanded test_title.c, test_lmstudio_reasoning.c, test_trajectory.c.
-  Suite 293/0/0. Commits: 1e17559ab..3eb84a94f (11 commits pushed).
+  Suite 293/0/0. Commits: 1e17559ab..f4a51aa4b (12 commits pushed).
 
 ## Critical Gaps
 - **P0**: Form-vs-function (2 gaps) — Python hook, test cheating

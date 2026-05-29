@@ -513,7 +513,8 @@
 
 - Fixed hook_parse_result: context check no longer overrides block decision
   (order of checks: block > context, not context overwrites block)
-- Fixed agent_free: freed state->messages calloc array (512-byte ASan leak)
+- Fixed context_init: nulled state->messages and state->message_capacity after
+  agent_init had already allocated them — root cause of the 512-byte ASan leak
 - Added test_hook_registry.c: 96 assertions covering register, invoke,
   unregister, collect results, parse_result, event/callback limits
 - Added test_tool_result.c: 30 assertions covering write_file/patch
