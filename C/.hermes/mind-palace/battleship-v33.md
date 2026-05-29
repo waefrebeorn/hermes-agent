@@ -10,7 +10,7 @@
     10|| # | ID | Issue | C State | Python State | Priority |
     11||---|----|-------|---------|-------------|----------|
     12|| 1 | F04 | C can't hook Python | Standalone C, cannot import Python modules | Python is source of truth | P0 |
-    13|| 2 | F05 | Test cheating | 248 C test files vs ~17k Python tests | Full behavioral test suite | P0 |
+    13|| 2 | F05 | Test cheating | 249 C test files vs ~17k Python tests | Full behavioral test suite | P0 |
     14|
     15|## S1: Pipeline & Integration (P1)
     16|
@@ -47,7 +47,7 @@
     47|
     48|| # | ID | Topic | Details | Priority |
     49||---|-----|-------|---------|----------|
-    50|| 1 | U07 | Test suite gap | ~17k Python tests grown since fork; C: 248 tests — order-of-magnitude gap | P1 |
+    50|| 1 | U07 | Test suite gap | ~17k Python tests grown since fork; C: 249 tests — order-of-magnitude gap | P1 |
     51|
     52|## Summary
     53|
