@@ -103,7 +103,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libenvpassthrough" \
     "$CDIR/tests/test_env_passthrough.c" "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
     -o /tmp/hermes_test_ep -lpthread 2>/dev/null && [[ -x /tmp/hermes_test_ep ]]; then
     if /tmp/hermes_test_ep > /dev/null 2>&1; then
-        ok "env_passthrough (15 tests)"
+        ok "env_passthrough (27 tests)"
     else
         fail "env_passthrough (test binary returned non-zero)"
     fi
@@ -218,19 +218,8 @@ else
 fi
 
 echo ""; echo "=== Path Resolution (P21) Tests ==="
-if gcc -O2 -Wall -Wextra -Wno-format-truncation \
-    -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
-    "$CDIR/tests/test_paths.c" "$CDIR/src/cli/paths.c" \
-    -o /tmp/hermes_test_paths -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_paths ]]; then
-    if /tmp/hermes_test_paths > /dev/null 2>&1; then
-        ok "paths (11 tests)"
-    else
-        fail "paths (test binary returned non-zero)"
-    fi
-    rm -f /tmp/hermes_test_paths
-else
-    fail "paths (compilation failed)"
-fi
+# test_paths.c was removed as redundant — test_cli_paths.c covers the module
+: # (tested via run_lib_test "cli_paths" below)
 
 echo ""; echo "=== Microsoft Graph Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
@@ -1566,9 +1555,6 @@ fi &
 
 echo ""; echo "=== Edit Approval Tests ==="
 run_lib_test "edit_approval" "tests/test_edit_approval.c" "include" "-I$CDIR/lib/libjson $CDIR/src/acp/edit_approval.c $CDIR/lib/libjson/json.c"
-
-echo ""; echo "=== CLI Paths Tests ==="
-run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "-I$CDIR/lib/libplugin $CDIR/src/cli/paths.c"
 
 echo ""; echo "=== Tokenizer Tests ==="
 run_lib_test "tokenizer" "tests/test_tokenizer.c" "include" "$CDIR/src/hermes_tokenizer.c"

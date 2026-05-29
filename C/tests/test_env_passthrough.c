@@ -13,8 +13,20 @@ static int pass = 0, fail = 0;
 static void test_blocked_vars(void) {
     T("OPENAI_API_KEY is blocked", env_passthrough_is_blocked("OPENAI_API_KEY"));
     T("ANTHROPIC_API_KEY is blocked", env_passthrough_is_blocked("ANTHROPIC_API_KEY"));
+    T("ANTHROPIC_BASE_URL is blocked", env_passthrough_is_blocked("ANTHROPIC_BASE_URL"));
+    T("OPENAI_BASE_URL is blocked", env_passthrough_is_blocked("OPENAI_BASE_URL"));
+    T("MISTRAL_API_KEY is blocked", env_passthrough_is_blocked("MISTRAL_API_KEY"));
+    T("GROQ_API_KEY is blocked", env_passthrough_is_blocked("GROQ_API_KEY"));
+    T("FIRECRAWL_API_KEY is blocked", env_passthrough_is_blocked("FIRECRAWL_API_KEY"));
+    T("TELEGRAM_BOT_TOKEN is blocked", env_passthrough_is_blocked("TELEGRAM_BOT_TOKEN"));
+    T("DISCORD_BOT_TOKEN is blocked", env_passthrough_is_blocked("DISCORD_BOT_TOKEN"));
+    T("GH_TOKEN is blocked", env_passthrough_is_blocked("GH_TOKEN"));
+    T("DOCKER_HOST is blocked", env_passthrough_is_blocked("DOCKER_HOST"));
+    T("SSH_AUTH_SOCK is blocked", env_passthrough_is_blocked("SSH_AUTH_SOCK"));
+    T("MODAL_TOKEN_ID is blocked", env_passthrough_is_blocked("MODAL_TOKEN_ID"));
     T("HOME is not blocked", !env_passthrough_is_blocked("HOME"));
     T("PATH is not blocked", !env_passthrough_is_blocked("PATH"));
+    T("TENOR_API_KEY is not blocked", !env_passthrough_is_blocked("TENOR_API_KEY"));
 }
 
 static void test_register_and_allowed(void) {

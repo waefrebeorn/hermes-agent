@@ -17,10 +17,16 @@
 
 /* Must match Python tools/environments/local.py _HERMES_PROVIDER_ENV_BLOCKLIST */
 static const char *PROVIDER_BLOCKLIST[] = {
+    /* Provider API keys */
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_TOKEN",
+    "ANTHROPIC_BASE_URL",
     "OPENAI_API_KEY",
     "OPENAI_TOKEN",
+    "OPENAI_BASE_URL",
+    "OPENAI_API_BASE",
+    "OPENAI_ORG_ID",
+    "OPENAI_ORGANIZATION",
     "OPENROUTER_API_KEY",
     "OPENROUTER_TOKEN",
     "HERMES_ANTHROPIC_API_KEY",
@@ -33,17 +39,60 @@ static const char *PROVIDER_BLOCKLIST[] = {
     "HERMES_BEDROCK_API_KEY",
     "XAI_API_KEY",
     "DEEPSEEK_API_KEY",
+    "MISTRAL_API_KEY",
+    "GROQ_API_KEY",
+    "TOGETHER_API_KEY",
+    "PERPLEXITY_API_KEY",
+    "COHERE_API_KEY",
+    "FIREWORKS_API_KEY",
+    "HELICONE_API_KEY",
+    "PARALLEL_API_KEY",
     "GOOGLE_API_KEY",
     "AZURE_API_KEY",
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_SESSION_TOKEN",
+    "LLM_MODEL",
+
+    /* Gateway platform credentials */
+    "TELEGRAM_HOME_CHANNEL",
+    "TELEGRAM_HOME_CHANNEL_NAME",
+    "TELEGRAM_BOT_TOKEN",
+    "DISCORD_BOT_TOKEN",
+    "DISCORD_HOME_CHANNEL",
+    "DISCORD_HOME_CHANNEL_NAME",
+    "DISCORD_REQUIRE_MENTION",
+    "DISCORD_FREE_RESPONSE_CHANNELS",
+    "DISCORD_AUTO_THREAD",
+    "SLACK_BOT_TOKEN",
+    "SLACK_HOME_CHANNEL",
+    "SLACK_ALLOWED_USERS",
+    "SIGNAL_HTTP_URL",
+    "SIGNAL_ACCOUNT",
+    "SIGNAL_ALLOWED_USERS",
+    "SIGNAL_HOME_CHANNEL",
+    "HASS_TOKEN",
+    "HASS_URL",
+    "GH_TOKEN",
+    "GITHUB_APP_ID",
+    "GITHUB_APP_PRIVATE_KEY_PATH",
+    "GITHUB_APP_INSTALLATION_ID",
+    "FIRECRAWL_API_KEY",
+    "FIRECRAWL_API_URL",
+
+    /* Infrastructure secrets */
+    "DOCKER_HOST",
+    "DOCKER_CERT_PATH",
+    "DOCKER_TLS_VERIFY",
+    "SSH_AUTH_SOCK",
+    "MODAL_TOKEN_ID",
+    "MODAL_TOKEN_SECRET",
     "HERMES_HOME",
     "SLERMES_HOME",
     NULL  /* sentinel */
 };
 
-#define BLOCKLIST_TOTAL 23
+#define BLOCKLIST_TOTAL 67
 
 /* ─── Allowlist (session-scoped) ────────────────────────────────────── */
 
