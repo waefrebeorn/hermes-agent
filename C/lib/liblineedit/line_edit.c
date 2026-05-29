@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <sys/select.h>
+#include <sys/ioctl.h>
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -157,14 +158,44 @@ static void term_exit_raw(void) {
     g_raw_mode = false;
 }
 
-/* Redraw current line after cursor position */
+/* Redraw current line after cursor position — with horizontal scrolling */
 static void term_redraw_line(const line_buf_t *lb) {
-    /* Move to start of line, print buffer, clear to end */
-    printf("\r\033[K%s", lb->buf);
-    /* Move cursor back to position */
-    size_t move_back = lb->len - lb->cursor;
-    if (move_back > 0)
-        printf("\033[%zuD", move_back);
+    /* Get terminal width */
+    struct winsize ws;
+    int term_w = 80;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 10)
+        term_w = ws.ws_col;
+
+    /* Reserve margin for scroll indicator */
+    int margin = 3;  /* "> " prefix when scrolled */
+
+    /* If buffer fits, simple redraw */
+    if ((int)lb->len + margin <= term_w) {
+        printf("\r\033[K%s", lb->buf);
+        size_t move_back = lb->len - lb->cursor;
+        if (move_back > 0)
+            printf("\033[%zuD", move_back);
+        fflush(stdout);
+        return;
+    }
+
+    /* Buffer wider than terminal — horizontal scroll */
+    int view_w = term_w - margin;
+    int cursor_vis = (int)lb->cursor;
+    int scroll_offset = cursor_vis - view_w / 2;
+    if (scroll_offset < 0) scroll_offset = 0;
+    if (scroll_offset + view_w > (int)lb->len)
+        scroll_offset = (int)lb->len - view_w;
+    if (scroll_offset < 0) scroll_offset = 0;
+
+    printf("\r\033[K> ");
+    printf("%.*s", view_w, lb->buf + scroll_offset);
+    int vis_cursor = cursor_vis - scroll_offset;
+    int trailing = view_w - vis_cursor;
+    if (trailing > 1)
+        printf("\033[%dD", trailing);
+    else if (trailing == 1)
+        printf("\033[1D");
     fflush(stdout);
 }
 
