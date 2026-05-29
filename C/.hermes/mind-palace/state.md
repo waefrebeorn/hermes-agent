@@ -1,4 +1,4 @@
-# Slermes C (v203)
+# Slermes C (v204)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -74,7 +74,8 @@ Battleship v34 (144 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 120: Registry test suite — 30 assertions (register/dispatch/timeout/name matching/toolset/availability). Suite 300/0/0 (257 test files). (v196)
 |- Phase 121: parse_send_target() extracted from send_message.c inline code to standalone function. 15-test suite (41 assertions) covering platform:chat_id[:thread_id] parsing, overrides, edge cases. Suite 300/0/0 (257 test files).
 ||- Phase 122: parse_mode validation for send_message — rejects invalid modes (INVALID, PlainText) with 3 new test assertions (37 total). Suite 300/0/0 (257 test files).
-||||- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
+|||||- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
+|- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
 |- Phase 126: B08 disable_notification (silent send) for Telegram — new param wired through telegram_send_message()/telegram_send_message_with_keyboard(), schema, handler, 3 test assertions, 11 caller updates across 3 files. 145→144 gaps.
 |- Phase 125: is_image_size_error port from Python vision_tools — checks error text for image/payload size hints (too large, 413, content_too_large, exceeds). Wired into vision_handler to add resize_hint on delegation failure.
 ||- Phase 124: test_tool_init.c rewrite + registration — 13 registry tests (register, dispatch, count, get_name, NULL safety). Suite 301/0/0 (258 test files).

@@ -1302,3 +1302,9 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 |----|-------------|----------|
 | P127-01 | `question` field echoed in clarify result (matching Python behavior). `choices_offered` field included when choices are present. Rich registry description with usage guidance matching Python's clarify_tool description. | `src/tools/clarify.c`, `tests/test_clarify.c` |
 Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 128: exec_code Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P128-01 | exec_code test suite expanded from 3→8 tests: missing code error, NULL args, timeout param, sandbox flag, output content verification, plus existing hello/fail/syntax. | `tests/test_exec_code.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.

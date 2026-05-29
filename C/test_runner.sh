@@ -1642,7 +1642,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_exec_code.c" \
     "$CDIR/src/tools/exec_code.c" "$CDIR/lib/libjson/json.c" "$CDIR/src/sandbox_escape.c" \
     -o /tmp/hermes_test_exec_code -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_exec_code > /dev/null 2>&1; then ok "exec_code_tool (4 tests)"
+    if /tmp/hermes_test_exec_code > /dev/null 2>&1; then ok "exec_code_tool (8 tests)"
     else fail "exec_code_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_exec_code
 else skip "exec_code_tool (compilation failed)"
