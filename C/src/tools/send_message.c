@@ -247,6 +247,28 @@ char *send_message_handler(const char *args_json, const char *task_id) {
         /* F43: Check for MEDIA: prefix in message (backward compat) */
         const char *actual_message = message;
         const char *actual_media = media_path;
+        bool force_document = false;
+
+        /* B08: [[as_document]] directive — strip from message, force document delivery */
+        char *cleaned_msg = NULL;
+        if (actual_message) {
+            const char *as_doc = strstr(actual_message, "[[as_document]]");
+            if (as_doc) {
+                force_document = true;
+                /* Remove [[as_document]] from message */
+                size_t prefix_len = (size_t)(as_doc - actual_message);
+                size_t remaining = strlen(actual_message) - prefix_len - 14; /* len of "[[as_document]]" */
+                cleaned_msg = (char *)malloc(prefix_len + remaining + 2);
+                if (cleaned_msg) {
+                    memcpy(cleaned_msg, actual_message, prefix_len);
+                    const char *after = as_doc + 14;
+                    while (*after == ' ' || *after == '\n') after++;
+                    memcpy(cleaned_msg + prefix_len, after, remaining + 1);
+                    actual_message = cleaned_msg;
+                }
+            }
+        }
+
         if (!actual_media && strncmp(message, "MEDIA:", 6) == 0) {
             const char *space = strchr(message + 6, ' ');
             if (space) {
@@ -326,7 +348,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                                 if (!path || !path[0]) continue;
                                 const char *ext = strrchr(path, '.');
                                 const char *media_type = "document";
-                                if (ext) {
+                                if (ext && !force_document) {
                                     if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
                                         strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
                                         media_type = "photo";
@@ -355,7 +377,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                     if (actual_media && actual_media[0]) {
                         /* MEDIA: prefix — send file via appropriate API */
                         const char *ext = strrchr(actual_media, '.');
-                        if (ext) {
+                        if (ext && !force_document) {
                             if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
                                 strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
                                 sent = telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
@@ -464,6 +486,10 @@ send_done:
         /* Clean up strdup'd media path if created from MEDIA: prefix */
         if (actual_media && actual_media != media_path) {
             free((void *)actual_media);
+        }
+        /* Clean up malloc'd cleaned message if [[as_document]] was stripped */
+        if (cleaned_msg) {
+            free(cleaned_msg);
         }
     }
 
