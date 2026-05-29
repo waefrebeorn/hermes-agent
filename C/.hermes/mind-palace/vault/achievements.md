@@ -1362,3 +1362,10 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P136-03 | Updated battleship G02 entry: base.py correctly noted as 4286 LOC (not ~600). Rate limiting (gw_rate_limiter_t), retry (gw_retry_with_backoff), platform vtable (gw_platform_t), and UTF-16 helpers all marked PORTED. | `C/.hermes/mind-palace/battleship-v34.md` — G02 now PARTIAL |
 | P136-04 | Gateway escape test expansion: 9→38 total assertions covering gw_utf16_len (9 tests) and gw_prefix_within_utf16_limit (10 tests) | `C/tests/test_gateway_escape.c` — sections 4 and 5 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 137: B07 Terminal Depth — Env Assignment Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P137-01 | Ported _looks_like_env_assignment() from Python terminal_tool. Detects leading KEY=VALUE tokens in commands (e.g. PATH=/usr/bin command) and skips foreground/background guidance — env assignments are setup, not commands to background. | `C/src/tools/terminal.c` — env assignment check block at top of _check_foreground_guidance() |
+| P137-02 | Terminal test expansion: 47→58 total assertions covering env assignment variants (single, multi, with &, combined with nohup), all verifying no false guidance. | `C/tests/test_terminal.c` — tests 23-26 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

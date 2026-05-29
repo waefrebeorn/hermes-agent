@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v210)
+# BANNER — WuBu Slermes C Translation (v211)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v210                                       ║
+║  WuBu Slermes C v211                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 136: UTF-16 helpers for Telegram (gw_utf16_len)   ║
+║  Phase 137: env assignment detection for terminal        ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

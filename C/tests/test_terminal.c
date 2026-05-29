@@ -266,6 +266,50 @@ int main(void) {
         free(res);
     }
 
+    /* Test 23: Env assignment prefix — no foreground guidance */
+    {
+        char *res = terminal_handler("{\"command\":\"PATH=/usr/bin echo envtest\"}", NULL);
+        TEST("env assignment returns non-NULL", res != NULL);
+        if (res) {
+            TEST("env assignment exit code 0", get_exit_code(res) == 0);
+            TEST("no guidance for env assignment", !json_contains(res, "guidance"));
+            TEST("env assignment output contains envtest", json_contains(res, "envtest"));
+        }
+        free(res);
+    }
+
+    /* Test 24: Multiple env assignments — no foreground guidance */
+    {
+        char *res = terminal_handler("{\"command\":\"HOME=/tmp MY_VAR=hello env\"}", NULL);
+        TEST("multi env assignment returns non-NULL", res != NULL);
+        if (res) {
+            TEST("multi env exit code 0", get_exit_code(res) == 0);
+            TEST("no guidance for multi env", !json_contains(res, "guidance"));
+        }
+        free(res);
+    }
+
+    /* Test 25: Env assignment with & suffix — still NOT guided (env assignment check runs first) */
+    {
+        char *res = terminal_handler("{\"command\":\"MYVAR=val echo test &\"}", NULL);
+        TEST("env assignment + & returns non-NULL", res != NULL);
+        if (res) {
+            TEST("env + & does NOT have guidance (env check short-circuits)", !json_contains(res, "guidance"));
+        }
+        free(res);
+    }
+
+    /* Test 26: Trailing & with env assignment before the actual command */
+    {
+        char *res = terminal_handler("{\"command\":\"DEBUG=1 nohup echo test &\"}", NULL);
+        TEST("env+background wrappers returns non-NULL", res != NULL);
+        if (res) {
+            /* Env assignment check catches PATH=, short-circuits before checking nohup */
+            TEST("env prefix short-circuits guidance", !json_contains(res, "guidance"));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);

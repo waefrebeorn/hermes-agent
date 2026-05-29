@@ -801,6 +801,36 @@ static char *_strip_quotes(const char *command) {
 static const char *_check_foreground_guidance(const char *command) {
     if (!command) return NULL;
 
+    /* Skip leading whitespace to find first token */
+    const char *first = command;
+    while (*first == ' ' || *first == '\t') first++;
+
+    /* Check if the first token looks like a shell environment assignment
+     * (e.g. PATH=/usr/bin command). Mirrors Python _looks_like_env_assignment(). */
+    if (*first) {
+        const char *eq = strchr(first, '=');
+        if (eq && eq != first) {
+            /* Check that only '=' and alphanumeric/underscore chars precede it */
+            bool valid = true;
+            for (const char *p = first; p < eq; p++) {
+                if (p == first) {
+                    if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') || *p == '_'))
+                        valid = false;
+                } else {
+                    if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
+                          (*p >= '0' && *p <= '9') || *p == '_'))
+                        valid = false;
+                }
+            }
+            /* Verify the character after '=' is not whitespace (would be empty value, unlikely env var) */
+            if (valid) {
+                /* Env assignment — likely a non-interactive command prefix.
+                 * Skip guidance (matches Python behaviour: env assignments are setup, not commands). */
+                return NULL;
+            }
+        }
+    }
+
     /* Check if this is a help/version command — return no guidance needed.
      * Mirrors Python terminal_tool._looks_like_help_or_version_command(). */
     {
