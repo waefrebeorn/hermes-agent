@@ -178,7 +178,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder) | P2 | PARTIAL |
 | 08 | B08 | send_message | ~500 | ~900 | 55% | inline_buttons + reply_to_message_id implemented. media groups remain | P2 | PARTIAL |
 | 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution now returns snippet JSON (offset + context) for each match when multiple exact matches found | P2 | PARTIAL |
-| 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination — ALL implemented. FTS5 syntax remains | P2 | PARTIAL |
+| 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude) — ALL implemented | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
 **S6: 15 gaps (8 P2, 7 P3) — Phase 72: env passthrough wired (B07). Stale claims corrected: B08 inline_buttons/reply_to implemented, B10 all filters implemented.**

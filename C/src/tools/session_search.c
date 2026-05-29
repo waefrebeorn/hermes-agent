@@ -111,12 +111,119 @@ static int count_occurrences(const char *haystack, const char *needle) {
     return count;
 }
 
+/* ================================================================
+ *  FTS5-style query parsing
+ * ================================================================ */
+
+#define FTS5_MAX_TERMS 32
+
+typedef enum { FTS5_REQUIRED, FTS5_EXCLUDED, FTS5_PHRASE } fts5_term_type_t;
+
+typedef struct {
+    fts5_term_type_t type;
+    char text[256];
+} fts5_term_t;
+
+typedef struct {
+    fts5_term_t terms[FTS5_MAX_TERMS];
+    int count;
+} fts5_query_t;
+
+/* Parse an FTS5-style query string into a structured query.
+ * Supported syntax:
+ *   term1 term2         — AND (all required)
+ *   "phrase words"      — quoted phrase (all words required in sequence)
+ *   -exclude            — exclusion (must NOT appear)
+ *   term1 term2 -bad    — required terms + exclusion
+ */
+static fts5_query_t fts5_parse(const char *query) {
+    fts5_query_t q = {0};
+    if (!query) return q;
+
+    const char *p = query;
+    while (*p && q.count < FTS5_MAX_TERMS) {
+        /* Skip whitespace */
+        while (*p == ' ' || *p == '\t') p++;
+        if (!*p) break;
+
+        fts5_term_t *t = &q.terms[q.count];
+        t->type = FTS5_REQUIRED;
+        size_t pos = 0;
+
+        if (*p == '-') {
+            t->type = FTS5_EXCLUDED;
+            p++;
+        }
+
+        if (*p == '"') {
+            /* Quoted phrase */
+            t->type = FTS5_PHRASE;
+            p++; /* skip opening quote */
+            while (*p && *p != '"' && pos < sizeof(t->text) - 1) {
+                t->text[pos++] = *p++;
+            }
+            if (*p == '"') p++; /* skip closing quote */
+        } else {
+            /* Bare word */
+            while (*p && *p != ' ' && *p != '\t' && pos < sizeof(t->text) - 1) {
+                t->text[pos++] = *p++;
+            }
+        }
+        t->text[pos] = '\0';
+
+        if (t->text[0]) q.count++;
+    }
+    return q;
+}
+
+/* Check if content matches an FTS5 query (all required terms present, none excluded) */
+static bool fts5_matches(const char *content, const fts5_query_t *q) {
+    if (!content || q->count == 0) return true;
+    for (int i = 0; i < q->count; i++) {
+        const fts5_term_t *t = &q->terms[i];
+        if (!t->text[0]) continue;
+        if (t->type == FTS5_EXCLUDED) {
+            if (strcasestr(content, t->text)) return false;
+        } else {
+            if (!strcasestr(content, t->text)) return false;
+        }
+    }
+    return true;
+}
+
+/* Count total occurrences of ALL required/ phrase terms in an FTS5 query */
+static int fts5_count_matches(const char *content, const fts5_query_t *q) {
+    if (!content || q->count == 0) return count_occurrences(content, "");
+    int total = 0;
+    for (int i = 0; i < q->count; i++) {
+        const fts5_term_t *t = &q->terms[i];
+        if (!t->text[0]) continue;
+        if (t->type != FTS5_EXCLUDED) {
+            total += count_occurrences(content, t->text);
+        }
+    }
+    return total;
+}
+
+/* Simple case-insensitive substring count */
 /* Compute TF-based relevance score for a file.
  * Score = match_count + (match_count / max(1, file_size/1000)) + title_bonus
- * Higher is better. */
+ * Higher is better.
+ * Supports FTS5-style multi-term queries. */
 static double compute_score(const char *content, const char *query, size_t file_size) {
     if (!content || !query) return 0.0;
 
+    fts5_query_t q = fts5_parse(query);
+    if (q.count > 1 || (q.count == 1 && q.terms[0].type != FTS5_REQUIRED)) {
+        /* Multi-term FTS5 query */
+        if (!fts5_matches(content, &q)) return 0.0;
+        int match_count = fts5_count_matches(content, &q);
+        if (match_count == 0) return 0.0;
+        double tf = (double)match_count / (1.0 + (double)file_size / 1000.0);
+        return (double)match_count * 2.0 + tf * 10.0;
+    }
+
+    /* Single-term fallback (backward compatible) */
     int match_count = count_occurrences(content, query);
     if (match_count == 0) return 0.0;
 
@@ -137,11 +244,60 @@ static double compute_score(const char *content, const char *query, size_t file_
     return (double)match_count * 2.0 + tf * 10.0 + title_bonus;
 }
 
-/* Extract snippet around first match position */
+/* Extract snippet around region with most query term matches.
+ * Supports FTS5-style multi-term queries. */
 static void extract_snippet(const char *content, const char *query,
                             char *snippet_out, size_t snippet_sz) {
     if (!content || !query || !snippet_out) return;
 
+    fts5_query_t q = fts5_parse(query);
+
+    if (q.count > 1 || (q.count == 1 && q.terms[0].type != FTS5_REQUIRED)) {
+        /* Multi-term: find the 200-char window with most term matches */
+        size_t content_len = strlen(content);
+        size_t best_start = 0;
+        int best_matches = 0;
+        size_t window = 200;
+        if (window > content_len) window = content_len;
+
+        for (size_t start = 0; start + window <= content_len; start += 50) {
+            int region_matches = 0;
+            for (int ti = 0; ti < q.count; ti++) {
+                if (q.terms[ti].type == FTS5_EXCLUDED) continue;
+                /* Bounded case-insensitive search within window */
+                bool found = false;
+                size_t tlen = strlen(q.terms[ti].text);
+                size_t search_end = start + window;
+                if (search_end > content_len) search_end = content_len;
+                for (size_t sp = start; sp + tlen <= search_end && !found; sp++) {
+                    if (strncasecmp(content + sp, q.terms[ti].text, tlen) == 0)
+                        found = true;
+                }
+                if (found) region_matches++;
+            }
+            if (region_matches > best_matches) {
+                best_matches = region_matches;
+                best_start = start;
+            }
+        }
+
+        size_t ctx_end = best_start + window;
+        if (ctx_end > content_len) ctx_end = content_len;
+        size_t pos = 0;
+        if (best_start > 0)
+            pos += snprintf(snippet_out + pos, snippet_sz - pos, "...");
+        size_t copy_len = ctx_end - best_start;
+        if (copy_len > snippet_sz - pos - 4)
+            copy_len = snippet_sz - pos - 4;
+        memcpy(snippet_out + pos, content + best_start, copy_len);
+        pos += copy_len;
+        if (best_start + copy_len < content_len)
+            pos += snprintf(snippet_out + pos, snippet_sz - pos, "...");
+        snippet_out[pos] = '\0';
+        return;
+    }
+
+    /* Single-term fallback: find first match position with context */
     size_t qlen = strlen(query);
     const char *match_pos = NULL;
 

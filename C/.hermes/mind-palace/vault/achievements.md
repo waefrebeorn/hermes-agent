@@ -774,6 +774,18 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B04 now uses libmcp_oauth for token st
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B09 conflict resolution now returns structured snippet data instead of bare error string.
 
+## Phase 75: FTS5 Query Syntax for session_search (B10) (v152)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P75-01 | fts5_parse() — FTS5-style query tokenizer supporting AND (space), OR, quoted phrases, -exclude | `src/tools/session_search.c` — FTS5 query parsing block |
+| P75-02 | fts5_matches() — multi-term filter: all required terms present, no excluded terms | `src/tools/session_search.c` — FTS5 match check |
+| P75-03 | fts5_count_matches() — aggregates occurrences across all required/phrase terms | `src/tools/session_search.c` — FTS5 match count |
+| P75-04 | compute_score() updated — uses FTS5 multi-term scoring for complex queries, falls back to single-term for simple | `src/tools/session_search.c` — compute_score() |
+| P75-05 | extract_snippet() updated — finds 200-char window with most term matches for FTS5 queries | `src/tools/session_search.c` — extract_snippet() window scan |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — B10 FTS5 syntax added. Remaining: full-text indexing for performance.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |
