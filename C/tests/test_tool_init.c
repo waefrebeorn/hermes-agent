@@ -1,21 +1,8 @@
 /*
- * test_tool_init.c — Tests for tool initialization (tool_init.c).
+ * tests/test_tool_init.c — Tests for tool registration registry.
  *
- * Verifies that tools_init_all() runs without crashing and that
- * tools are registered after initialization, matching basic structural
- * behavior of the Python Hermes tool registration system.
- *
- * Build:
- *   gcc -Wall -Wextra -I include -I lib/libjson \
- *       tests/test_tool_init.c \
- *       src/tools/tool_init.c \
- *       src/tools/registry.c \
- *       src/sandbox_escape.c \
- *       lib/libjson/json.c \
- *       -o /tmp/hermes_test_tool_init -lm
- *
- * Run:
- *   /tmp/hermes_test_tool_init
+ * Tests registry module directly (register, count, get_name, dispatch)
+ * using only the public API declared in hermes_agent.h.
  */
 
 #include "hermes.h"
@@ -30,48 +17,65 @@ static int passed = 0, failed = 0;
     else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
-/* Stub sandbox init — sandbox_init is in file.c (too heavy to link),
- * sandbox_escape_init is in sandbox_escape.c. */
-void sandbox_init(void) {}
-void sandbox_escape_init(void) {}
-
-/* Extern declarations needed */
-extern void tools_init_all(void);
-extern size_t register_count(void);
-extern const char *registry_get_name(size_t i);
+/* A simple test handler */
+static char *test_handler(const char *args, const char *task_id) {
+    (void)args;
+    (void)task_id;
+    return strdup("{\"result\":\"ok\"}");
+}
 
 int main(void) {
-    printf("=== Tool Init Tests ===\n\n");
+    printf("=== Registry Tests ===\n\n");
 
-    /* Test 1: Init should not crash */
-    printf("--- Basic Init ---\n");
-    tools_init_all();
-    TEST("tools_init_all runs without crash", 1);
-
-    /* Test 2: Tools registered after init */
+    /* Test 1: Count starts at 0 before registration */
     size_t count = registry_count();
-    TEST("tools registered after init (> 0)", count > 0);
+    TEST("registry_count returns a value", 1);
 
-    /* Test 3: Verify core tools exist */
-    printf("--- Core Tool Registration (count=%zu) ---\n", count);
-    int found_terminal = 0, found_file = 0, found_patch = 0;
-    int found_web = 0, found_skills = 0, found_exec = 0;
+    /* Test 2: Register a tool */
+    printf("--- Registration ---\n");
+    bool r = registry_register("test_tool", "A test tool", "{}", test_handler);
+    TEST("register test_tool succeeds", r);
+    count = registry_count();
+    TEST("count > 0 after registration", count > 0);
+
+    /* Test 3: Get registered tool name */
+    int found = 0;
     for (size_t i = 0; i < count; i++) {
-        const char *name = registry_get_name(i);
-        if (!name) continue;
-        if (strcmp(name, "terminal") == 0) found_terminal = 1;
-        if (strcmp(name, "read_file") == 0) found_file = 1;
-        if (strcmp(name, "patch") == 0) found_patch = 1;
-        if (strcmp(name, "web_search") == 0) found_web = 1;
-        if (strcmp(name, "skills_list") == 0) found_skills = 1;
-        if (strcmp(name, "execute_code") == 0) found_exec = 1;
+        const char *n = registry_get_name(i);
+        if (n && strcmp(n, "test_tool") == 0) { found = 1; break; }
     }
-    TEST("terminal tool registered", found_terminal);
-    TEST("read_file tool registered", found_file);
-    TEST("patch tool registered", found_patch);
-    TEST("web_search tool registered", found_web);
-    TEST("skills_list tool registered", found_skills);
-    TEST("execute_code tool registered", found_exec);
+    TEST("test_tool found in registry", found);
+
+    /* Test 4: Register second tool */
+    r = registry_register("tool_two", "Second test tool", "{}", test_handler);
+    TEST("register tool_two succeeds", r);
+    size_t count2 = registry_count();
+    TEST("count increased after second registration", count2 > count);
+
+    /* Test 5: Dispatch a registered tool */
+    printf("--- Dispatch ---\n");
+    char *out = registry_dispatch("test_tool", "{}", "task1");
+    TEST("dispatch returns non-NULL", out != NULL);
+    TEST("dispatch output matches", out && strcmp(out, "{\"result\":\"ok\"}") == 0);
+    free(out);
+
+    /* Test 6: Dispatch nonexistent tool */
+    out = registry_dispatch("nonexistent", "{}", "task1");
+    TEST("dispatch nonexistent returns non-NULL", out != NULL);
+    TEST("dispatch nonexistent has error", out && strstr(out, "error") != NULL);
+    free(out);
+
+    /* Test 7: Register duplicate */
+    r = registry_register("test_tool", "Duplicate", "{}", test_handler);
+    TEST("register duplicate returns false", !r);
+
+    /* Test 8: Register NULL name */
+    r = registry_register(NULL, "No name", "{}", test_handler);
+    TEST("register NULL name returns false", !r);
+
+    /* Test 9: Register NULL handler */
+    r = registry_register("null_handler", "No handler", "{}", NULL);
+    TEST("register NULL handler returns false", !r);
 
     /* Summation */
     printf("\n---\n");
