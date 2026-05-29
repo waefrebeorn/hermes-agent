@@ -844,8 +844,47 @@ static char *apply_patch(const char *path, const char *old_str,
     }
 
     if (!replace_all && count > 1) {
+        /* Conflict resolution: build JSON with snippets for each match */
+        json_node_t *result = json_new_object();
+        json_object_set(result, "conflict", json_new_bool(true));
+        json_object_set(result, "error", json_new_string("old_string found multiple times in file — conflict resolution needed"));
+        json_object_set(result, "count", json_new_number((double)count));
+
+        json_node_t *matches = json_new_array();
+        const char *scan = content;
+        size_t search_len = strlen(old_str);
+        for (int i = 0; i < count && i < 20; i++) {
+            const char *found = strstr(scan, old_str);
+            if (!found) break;
+            size_t offset = (size_t)(found - content);
+
+            json_node_t *m = json_new_object();
+            json_object_set(m, "offset", json_new_number((double)offset));
+
+            /* Build context snippet: 40 chars before, match, 40 chars after */
+            const char *ctx_start = found > content + 40 ? found - 40 : content;
+            size_t ctx_prefix_len = (size_t)(found - ctx_start);
+            char snippet[512];
+            size_t sn = 0;
+            if (ctx_prefix_len > 0) {
+                sn += snprintf(snippet + sn, sizeof(snippet) - sn, "%.*s", (int)ctx_prefix_len, ctx_start);
+            }
+            sn += snprintf(snippet + sn, sizeof(snippet) - sn, "[MATCH]");
+            size_t remaining = sizeof(snippet) - sn - 1;
+            size_t after_len = strlen(found);
+            if (after_len > remaining) after_len = remaining;
+            memcpy(snippet + sn, found, after_len);
+            snippet[sn + after_len] = '\0';
+            json_object_set(m, "snippet", json_new_string(snippet));
+
+            json_array_append(matches, m);
+            scan = found + search_len;
+        }
+        json_object_set(result, "matches", matches);
+        char *json_out = json_serialize(result);
+        json_free(result);
         free(content);
-        return strdup("{\"error\":\"old_string found multiple times (use replace_all=true)\"}");
+        return json_out;
     }
 
     /* Conditional unescape of \\t/\\r in new_string — mirrors Python's

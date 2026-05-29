@@ -766,6 +766,14 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B08 and B10 partial gaps retired. B04 
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B04 now uses libmcp_oauth for token storage. PKCE auth code flow (callback server, browser open) still unwired.
 
+## Phase 74: Patch Conflict Resolution (B09) (v152)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P74-01 | Conflict resolution JSON when old_string found multiple times — returns `{conflict:true, count:N, matches:[{offset, snippet}]}` with context snippets for each match | `src/tools/patch.c` — patch_file() conflict resolution block |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — B09 conflict resolution now returns structured snippet data instead of bare error string.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |
