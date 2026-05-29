@@ -800,6 +800,79 @@ void mcp_init_all(void) {
                 const char *url = yaml_get_string(doc, key);
                 if (!url) continue;
 
+                /* Parse auth config for URL-based servers too */
+                {
+                    char auth_key[256];
+                    snprintf(auth_key, sizeof(auth_key), "mcp_servers.%s.auth", dynamic_names[si]);
+                    int aidx = g_server_count;
+                    memset(&g_server_auth[aidx], 0, sizeof(mcp_auth_t));
+
+                    char auth_type_key[256];
+                    snprintf(auth_type_key, sizeof(auth_type_key), "%s.type", auth_key);
+                    const char *auth_type = yaml_get_string(doc, auth_type_key);
+                    if (auth_type && auth_type[0]) {
+                        snprintf(g_server_auth[aidx].type, sizeof(g_server_auth[aidx].type),
+                                 "%s", auth_type);
+
+                        char ah_key[256];
+                        snprintf(ah_key, sizeof(ah_key), "%s.header_name", auth_key);
+                        const char *hname = yaml_get_string(doc, ah_key);
+                        if (hname) snprintf(g_server_auth[aidx].header_name,
+                                             sizeof(g_server_auth[aidx].header_name), "%s", hname);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.token", auth_key);
+                        const char *tok = yaml_get_string(doc, ah_key);
+                        if (tok) snprintf(g_server_auth[aidx].token,
+                                           sizeof(g_server_auth[aidx].token), "%s", tok);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.env_var", auth_key);
+                        const char *ev = yaml_get_string(doc, ah_key);
+                        if (ev) snprintf(g_server_auth[aidx].env_var,
+                                          sizeof(g_server_auth[aidx].env_var), "%s", ev);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.client_id", auth_key);
+                        const char *cid = yaml_get_string(doc, ah_key);
+                        if (cid) snprintf(g_server_auth[aidx].client_id,
+                                           sizeof(g_server_auth[aidx].client_id), "%s", cid);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.client_secret", auth_key);
+                        const char *csec = yaml_get_string(doc, ah_key);
+                        if (csec) snprintf(g_server_auth[aidx].client_secret,
+                                            sizeof(g_server_auth[aidx].client_secret), "%s", csec);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.token_url", auth_key);
+                        const char *turl = yaml_get_string(doc, ah_key);
+                        if (turl) snprintf(g_server_auth[aidx].token_url,
+                                            sizeof(g_server_auth[aidx].token_url), "%s", turl);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.scopes", auth_key);
+                        const char *sc = yaml_get_string(doc, ah_key);
+                        if (sc) snprintf(g_server_auth[aidx].scopes,
+                                          sizeof(g_server_auth[aidx].scopes), "%s", sc);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.authorization_url", auth_key);
+                        const char *authz_url = yaml_get_string(doc, ah_key);
+                        if (authz_url) snprintf(g_server_auth[aidx].authorization_url,
+                                                 sizeof(g_server_auth[aidx].authorization_url), "%s", authz_url);
+
+                        snprintf(ah_key, sizeof(ah_key), "%s.redirect_uri", auth_key);
+                        const char *redir = yaml_get_string(doc, ah_key);
+                        if (redir) snprintf(g_server_auth[aidx].redirect_uri,
+                                             sizeof(g_server_auth[aidx].redirect_uri), "%s", redir);
+
+                        /* refresh_before_sec */
+                        char rbk[256];
+                        snprintf(rbk, sizeof(rbk), "%s.refresh_before_sec", auth_key);
+                        g_server_auth[aidx].refresh_before_sec = yaml_get_int(doc, rbk, 60);
+
+                        fprintf(stderr, "MCP: Auth enabled for '%s' (type=%s)\n",
+                                dynamic_names[si], auth_type);
+                    }
+
+                    /* Store server URL for OAuth metadata discovery */
+                    snprintf(g_server_auth[aidx].url, sizeof(g_server_auth[aidx].url), "%s", url);
+                }
+
                 /* Check if explicit transport type is specified */
                 snprintf(key, sizeof(key), "mcp_servers.%s.transport", dynamic_names[si]);
                 const char *transport_type = yaml_get_string(doc, key);
@@ -1266,30 +1339,74 @@ static bool mcp_auth_refresh_if_needed(int server_idx) {
         }
     }
 
-    /* Need to refresh */
-    char *new_token = oauth_refresh_token(&g_server_auth[server_idx]);
-    if (new_token) {
-        snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
-                 "%s", new_token);
+    /* Need to refresh or run initial PKCE auth code flow */
+    {
+        mcp_auth_t *auth = &g_server_auth[server_idx];
 
-        /* Save to libmcp_oauth storage — wrap in JSON with expires_at */
-        json_t *tj = json_object();
-        json_set(tj, "access_token", json_string(new_token));
-        long long expires_in = 3600;
-        /* Parse expires_in from HTTP response if available */
-        /* For client_credentials, the refresh already handles this */
-        long long expires_at = (long long)time(NULL) + expires_in;
-        json_set(tj, "expires_at", json_number((double)expires_at));
-        char *token_json = json_serialize(tj);
-        if (token_json) {
-            mcp_oauth_storage_set_tokens(oauth_st, token_json);
-            free(token_json);
+        if (auth->authorization_url[0]) {
+            /* PKCE auth code flow — use libmcp_oauth manager.
+             * Build oauth_config_json from auth struct fields. */
+            json_t *cfg = json_object();
+            if (auth->client_id[0])
+                json_set(cfg, "client_id", json_string(auth->client_id));
+            if (auth->client_secret[0])
+                json_set(cfg, "client_secret", json_string(auth->client_secret));
+            if (auth->scopes[0])
+                json_set(cfg, "scope", json_string(auth->scopes));
+            json_set(cfg, "timeout", json_number(300));
+            if (auth->redirect_uri[0])
+                json_set(cfg, "redirect_uri", json_string(auth->redirect_uri));
+            char *cfg_str = json_serialize(cfg);
+            json_free(cfg);
+
+            const char *srv_url = auth->url[0] ? auth->url : NULL;
+            char *result = mcp_oauth_manager_get_token(srv_name, srv_url,
+                                                       cfg_str ? cfg_str : "");
+            free(cfg_str);
+
+            if (result) {
+                json_t *rj = json_parse(result, NULL);
+                free(result);
+                if (rj) {
+                    bool success = json_get_bool(rj, "success", false);
+                    const char *access_token = json_get_str(rj, "access_token", "");
+                    if (success && access_token[0]) {
+                        snprintf(auth->token, sizeof(auth->token),
+                                 "%s", access_token);
+                        json_free(rj);
+                        mcp_oauth_storage_free(oauth_st);
+                        return true;
+                    }
+                    json_free(rj);
+                }
+            }
+            mcp_oauth_storage_free(oauth_st);
+            return false;
         }
-        json_free(tj);
 
-        free(new_token);
-        mcp_oauth_storage_free(oauth_st);
-        return true;
+        /* Fall back to client_credentials refresh for non-PKCE OAuth */
+        char *new_token = oauth_refresh_token(auth);
+        if (new_token) {
+            snprintf(auth->token, sizeof(auth->token),
+                     "%s", new_token);
+
+            /* Save to libmcp_oauth storage — wrap in JSON with expires_at */
+            json_t *tj = json_object();
+            json_set(tj, "access_token", json_string(new_token));
+            long long expires_in = 3600;
+            long long expires_at = (long long)time(NULL) + expires_in;
+            json_set(tj, "expires_at", json_number((double)expires_at));
+            char *token_json = json_serialize(tj);
+            if (token_json) {
+                mcp_oauth_storage_set_tokens(oauth_st, token_json);
+                free(token_json);
+            }
+            json_free(tj);
+
+            free(new_token);
+            mcp_oauth_storage_free(oauth_st);
+            return true;
+        }
     }
 
     mcp_oauth_storage_free(oauth_st);

@@ -618,6 +618,7 @@ typedef struct {
     char  redirect_uri[1024];      /* Redirect URI for callback server */
     char  scopes[1024];           /* space-separated scopes */
     int   refresh_before_sec;     /* refresh if < N seconds left on expiry */
+    char  url[1024];              /* MCP server base URL (for OAuth metadata discovery) */
 } mcp_auth_t;
 
 /* ================================================================
