@@ -658,6 +658,10 @@ Suite: 294/0/0 (unchanged).
 
 S0 corrected 4→3 gaps. D13 resolved.
 
+| D14 | Input scaling/wrapping missing in prompt | Horizontal scrolling implemented in term_redraw_line: queries terminal width via ioctl, scrolls viewport around cursor with '> ' indicator. Falls back to simple redraw when buffer fits. | lib/liblineedit/line_edit.c lines 161-199 |
+
+S0 corrected 3→2 gaps. D14 resolved.
+
 | D10 | "markdown_tables.c parses tables only" | Full markdown renderer in markdown_render.c (452 LOC) handles headers, bold, italic, inline/fenced code, links, lists, blockquotes, HR — called by CLI at 3 call sites | src/agent/markdown_render.c lines 238-372 |
 
 S0 further corrected: 5→4 real gaps. D10 retired as stale.

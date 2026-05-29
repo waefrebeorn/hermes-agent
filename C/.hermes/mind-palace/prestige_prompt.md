@@ -1,7 +1,7 @@
 # Prestige (v145)
 
-## P0 — Display & Visual + Architecture (12 gaps)
-D09, D14, D16: Prompt input (partial), input scaling, type-ahead
+## P0 — Display & Visual + Architecture (11 gaps)
+D09, D16: Prompt input (partial), type-ahead
 F01: C can't hook Python
 F02: Test count mismatch (248 vs 1262)
 F03: No Python interop
@@ -34,4 +34,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (61 gaps)
 Various small agent modules, plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 227 structural gaps, 1000+ test case gaps — P0:14, P1:79, P2:79, P3:61**
+**Total: 226 structural gaps, 1000+ test case gaps — P0:14, P1:79, P2:79, P3:61**
