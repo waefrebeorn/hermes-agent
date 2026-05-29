@@ -309,3 +309,70 @@ char *textwrap_shorten(const char *text, int max_len) {
 
     return result;
 }
+
+/* Port of Python feishu_comment._chunk_text(). Split text into chunks at
+ * newline boundaries within max_len per chunk. Returns malloc'd array with
+ * *count set. Caller must free each string and the array. */
+char **textwrap_chunk(const char *text, int max_len, size_t *count) {
+    if (!count) return NULL;
+    *count = 0;
+    if (!text || max_len <= 0) return NULL;
+
+    size_t capacity = 16;
+    size_t n = 0;
+    char **chunks = (char **)calloc(capacity, sizeof(char *));
+    if (!chunks) return NULL;
+
+    size_t text_len = strlen(text);
+    size_t pos = 0;
+
+    while (pos < text_len) {
+        size_t remaining = text_len - pos;
+        size_t this_chunk = remaining < (size_t)max_len ? remaining : (size_t)max_len;
+
+        /* Try to find last newline within the chunk for a clean break */
+        if (this_chunk == (size_t)max_len) {
+            size_t newline_pos = pos + this_chunk;  /* scan backwards from end */
+            while (newline_pos > pos) {
+                newline_pos--;
+                if (text[newline_pos] == '\n') {
+                    this_chunk = newline_pos - pos;  /* exclude newline */
+                    break;
+                }
+            }
+        }
+
+        /* Allocate and copy chunk */
+        char *chunk = (char *)malloc(this_chunk + 1);
+        if (!chunk) {
+            for (size_t i = 0; i < n; i++) free(chunks[i]);
+            free(chunks);
+            *count = 0;
+            return NULL;
+        }
+        memcpy(chunk, text + pos, this_chunk);
+        chunk[this_chunk] = '\0';
+        pos += this_chunk;
+
+        /* Skip leading newlines on next iteration */
+        while (pos < text_len && text[pos] == '\n') pos++;
+
+        /* Grow array if needed */
+        if (n >= capacity) {
+            capacity *= 2;
+            char **new_chunks = (char **)realloc(chunks, capacity * sizeof(char *));
+            if (!new_chunks) {
+                free(chunk);
+                for (size_t i = 0; i < n; i++) free(chunks[i]);
+                free(chunks);
+                *count = 0;
+                return NULL;
+            }
+            chunks = new_chunks;
+        }
+        chunks[n++] = chunk;
+    }
+
+    *count = n;
+    return chunks;
+}

@@ -50,6 +50,14 @@ char *textwrap_dedent(const char *text);
  */
 char *textwrap_shorten(const char *text, int max_len);
 
+/**
+ * Split text into chunks at newline boundaries within max_len per chunk.
+ * Port of Python feishu_comment._chunk_text().
+ * Returns a malloc'd null-terminated string array. Sets *count to the
+ * number of chunks. Caller must free each string and the array.
+ */
+char **textwrap_chunk(const char *text, int max_len, size_t *count);
+
 #ifdef __cplusplus
 }
 #endif

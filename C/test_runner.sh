@@ -2785,6 +2785,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "vision_supports_media (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_vis_media
 else skip "vision_supports_media (compilation failed)"
+fi
+
+# Textwrap chunk test (feishu_comment._chunk_text port)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libtextwrap" \
+    "$CDIR/tests/test_textwrap_chunk.c" \
+    "$CDIR/lib/libtextwrap/textwrap.c" \
+    -o /tmp/hermes_test_twc -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_twc > /dev/null 2>&1; then ok "textwrap_chunk (18 tests)"
+    else fail "textwrap_chunk (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_twc
+else skip "textwrap_chunk (compilation failed)"
 fi &
 
 # Voice mode test (voice_mode.c config API)
