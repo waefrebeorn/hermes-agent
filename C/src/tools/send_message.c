@@ -12,6 +12,79 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <ctype.h>
+
+/* Redact secrets from error text (port of Python send_message_tool._sanitize_error_text) */
+static char *sanitize_error_text(const char *text) {
+    if (!text) return NULL;
+    size_t len = strlen(text);
+    char *buf = (char *)malloc(len + 1);
+    if (!buf) return NULL;
+    /* Copy and redact in-place */
+    strcpy(buf, text);
+
+    /* URL secret query param redact: [?&]access_token=xxx -> [?&]access_token=*** */
+    const char *secret_params[] = {"access_token", "api_key", "api-key",
+        "auth_token", "auth-token", "token", "signature", "sig", NULL};
+    for (int pi = 0; secret_params[pi]; pi++) {
+        size_t plen = strlen(secret_params[pi]);
+        char *p = buf;
+        while ((p = strstr(p, secret_params[pi])) != NULL) {
+            /* Check preceded by ? or & or whitespace or start */
+            if (p > buf && p[-1] != '?' && p[-1] != '&' && p[-1] != ' ' &&
+                p[-1] != '\n' && p[-1] != '=') {
+                p++;
+                continue;
+            }
+            /* Check followed by = */
+            if (p[plen] == '=') {
+                char *val_start = p + plen + 1;
+                char *val_end = val_start;
+                while (*val_end && *val_end != '&' && *val_end != ' ' &&
+                       *val_end != '\n' && *val_end != '\r' && *val_end != ';' &&
+                       *val_end != ',') val_end++;
+                if (val_end > val_start) {
+                    memset(val_start, '*', (size_t)(val_end - val_start));
+                }
+                p = val_end;
+            } else {
+                p++;
+            }
+        }
+    }
+
+    /* Generic secret assign redact: access_token = xxx -> access_token=*** */
+    for (int pi = 0; secret_params[pi]; pi++) {
+        size_t plen = strlen(secret_params[pi]);
+        char *p = buf;
+        while ((p = strstr(p, secret_params[pi])) != NULL) {
+            /* Check preceded by word boundary (non-alnum, not first char of word) */
+            if (p > buf && (isalnum((unsigned char)p[-1]) || p[-1] == '_')) {
+                p++;
+                continue;
+            }
+            char *eq = p + plen;
+            /* Skip whitespace before = */
+            while (*eq == ' ' || *eq == '\t') eq++;
+            if (*eq == '=') {
+                eq++;
+                /* Skip whitespace after = */
+                while (*eq == ' ' || *eq == '\t') eq++;
+                char *val_end = eq;
+                while (*val_end && *val_end != ' ' && *val_end != '\t' &&
+                       *val_end != '\n' && *val_end != '\r' && *val_end != ';' &&
+                       *val_end != ',') val_end++;
+                if (val_end > eq) {
+                    memset(eq, '*', (size_t)(val_end - eq));
+                }
+                p = val_end;
+            } else {
+                p++;
+            }
+        }
+    }
+    return buf;
+}
 
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
@@ -359,7 +432,9 @@ send_done:
                 json_object_set(result, "status", json_new_string("error"));
                 char errbuf[256];
                 snprintf(errbuf, sizeof(errbuf), "Platform '%s' send failed", platform);
-                json_object_set(result, "error", json_new_string(errbuf));
+                char *sanitized = sanitize_error_text(errbuf);
+                json_object_set(result, "error", json_new_string(sanitized ? sanitized : errbuf));
+                free(sanitized);
             }
 
         } else {
