@@ -212,6 +212,60 @@ int main(void) {
         free(res);
     }
 
+    /* Test 18: Force param accepted */
+    {
+        char *res = terminal_handler("{\"command\":\"echo force_test\",\"force\":true}", NULL);
+        TEST("force param returns non-NULL", res != NULL);
+        if (res) {
+            TEST("force exit code 0", get_exit_code(res) == 0);
+            TEST("force output correct", json_contains(res, "force_test"));
+        }
+        free(res);
+    }
+
+    /* Test 19: Status field present on success */
+    {
+        char *res = terminal_handler("{\"command\":\"echo status_check\"}", NULL);
+        TEST("success returns non-NULL", res != NULL);
+        if (res) {
+            TEST("status field is success", json_contains(res, "\"status\":\"success\""));
+        }
+        free(res);
+    }
+
+    /* Test 20: Foreground timeout >600s rejected */
+    {
+        char *res = terminal_handler("{\"command\":\"echo timeout_guard\",\"timeout\":900}", NULL);
+        TEST("excessive timeout returns non-NULL", res != NULL);
+        if (res) {
+            TEST("excessive timeout returns error", has_error(res));
+            TEST("excessive timeout mentions 600s", json_contains(res, "600"));
+        }
+        free(res);
+    }
+
+    /* Test 21: Non-existent workdir returns workdir warning */
+    {
+        char *res = terminal_handler("{\"command\":\"echo nodir\",\"workdir\":\"/nonexistent_path_xyzzy\"}", NULL);
+        TEST("bad workdir returns non-NULL", res != NULL);
+        if (res) {
+            /* Should produce some output about the bad workdir */
+            TEST("bad workdir has status", json_contains(res, "\"status\""));
+        }
+        free(res);
+    }
+
+    /* Test 22: Normal command with status success */
+    {
+        char *res = terminal_handler("{\"command\":\"echo final_check\"}", NULL);
+        TEST("final check returns non-NULL", res != NULL);
+        if (res) {
+            TEST("final exit code 0", get_exit_code(res) == 0);
+            TEST("final status success", json_contains(res, "\"status\":\"success\""));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);
