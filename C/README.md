@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||| Suite:  293/0/0 (246 test files, completes in <60s)
+|||||||||| Suite:  294/0/0 (249 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||| Gaps:  17 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 drift)
@@ -33,8 +33,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 - [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c)
 - [Libraries (65 Units)](#libraries-65-units)
-- [CLI Commands (80 Slash, Real)](#cli-commands-80-slash-real)
-- [Battleship Roadmap (23 Gaps)](#battleship-roadmap-23-gaps)
+- [CLI Commands (98 CLI, Real)](#cli-commands-80-slash-real)
+- [Battleship Roadmap (17 Gaps)](#battleship-roadmap-17-gaps)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 293/0/0
+bash test_runner.sh        # 294/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -513,7 +513,7 @@ C/
 │   ├── gateway/      # Gateway adapters
 │   └── deps/         # Core dependencies
 ├── lib/              # 65 self-contained library modules
-├── tests/            # 246 test files
+├── tests/            # 249 test files
 ├── examples/         # Plugin examples
 ├── plugins/          # Plugin source
 ├── .hermes/
@@ -547,7 +547,7 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-| Library tests | 293/0/0 | All pass, ~60s |
+| Library tests | 294/0/0 | All pass, ~60s |
 | Test files | 241 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |

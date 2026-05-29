@@ -1,7 +1,7 @@
-# Slermes C (v143)
+# Slermes C (v144)
 
-Suite: 293/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
+Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 249 | C src: 174
 Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
 
 ## Fork State
@@ -39,6 +39,11 @@ Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 beh
   Added test_hook_registry.c (96 assertions) + test_tool_result.c (30 assertions).
   Rewrote/expanded test_title.c, test_lmstudio_reasoning.c, test_trajectory.c.
   Suite 293/0/0. Commits: 1e17559ab..f4a51aa4b (12 commits pushed).
+- Phase 54: ACP events & error system tests
+  Added test_acp_events.c (57 assertions: tool call ID register/pop/FIFO, notification builders, plan update).
+  Added test_hermes_error.c (42 assertions: error name lookup, creation, formatting edge cases).
+  Fixed acp_events compilation flags in test_runner.sh (was skipping, now passing).
+  Suite 294/0/0. Commits: 9375694d6..cf11a2085.
 
 ## Critical Gaps
 - **P0**: Form-vs-function (2 gaps) — Python hook, test cheating

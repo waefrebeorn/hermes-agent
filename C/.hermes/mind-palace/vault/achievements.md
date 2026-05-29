@@ -509,7 +509,7 @@
 - Tests verify direct string path without static function dependencies
 - Evidence: commit 24f5a3fb2, file src/acp/resource.c
 
-## Phase 53: Hook & Tool Result Tests, Memory Leak Fixes (v143)
+## Phase 53: Hook & Tool Result Tests, Memory Leak Fixes (v144)
 
 - Fixed hook_parse_result: context check no longer overrides block decision
   (order of checks: block > context, not context overwrites block)
