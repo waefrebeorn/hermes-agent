@@ -589,7 +589,13 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
 | L18 | Nous entitlement handling | nous_rate_guard.c fully implemented — port of Python nous_rate_guard.py | STALE |
 | L19 | Billing/entitlement error messages | Handled by liberrorclassifier — error_classify() with billing/entitlement categories | STALE |
 | L20 | Ollama context limit validation | Handled by liberrorclassifier — error_classify() with context limit categories | STALE |
-| L23 | Error classification & failover reason mapping | liberrorclassifier fully implemented — error_classify() with status code + body, 10+ error categories | STALE |
+| L23 | Error classification
+| L01 | Connection health check / TCP zombie detection | C uses synchronous HTTP (libhttp) — fresh connections per request. No async zombie connection issue. | STALE |
+| L05 | Nudge counter hydration from history | C CLI doesn't recreate agent per message (unlike Python gateway). Counter persists in agent_state_t. | STALE |
+| L13 | Auxiliary client runtime setting | auxiliary_client.c fully implemented — port of Python auxiliary_client.py | STALE |
+| L15 | Skill write-origin tracking | skills.c: skill_get_origin/skill_set_origin implemented with SKILL_ORIGIN_FOREGROUND/SELF_IMPROVEMENT/HUB | STALE |
+| L17 | System prompt caching with three-way state | llm_client.c: system_cached flag passed to provider. Cached after first successful call per session. | STALE |
+ & failover reason mapping | liberrorclassifier fully implemented — error_classify() with status code + body, 10+ error categories | STALE |
  | Python gateway feature — C CLI doesn't have status callback mechanism. Warnings go to stderr directly during operation. | STALE |
  — C sync streaming, no hung-span issue | C uses synchronous llm_chat_completion_stream() — fully consumes stream per call. No persistent streaming context across turns. Python async architecture only. | STALE |
  | budget_tracker.c (30+ functions) wired into agent_loop.c | `src/agent/budget_tracker.c` — per-turn tracking |
@@ -606,5 +612,5 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
  — auto-disable vision on 'text only' error | `src/agent/image_routing.c` — image_routing_notify_error() checks 11 error patterns; `src/include/hermes.h` — vision_disabled flag on agent_state_t; `src/agent/agent_loop.c` — wired into retry loop after llm_chat_completion |
  — hermes_log_set_context() wired in agent_loop turn loop | `src/hermes_logging.h` — set_context; `src/agent/agent_loop.c` — per-turn call |
 
-S1 corrected: 28 → 10 gaps (14 stale retired, 3 done). 5 real + 5 partial remain.
+S1 corrected: 28 → 5 gaps (19 stale retired, 4 done). 0 real + 5 partial remain. S1 plumbing complete.
 Suite: 294/0/0 (unchanged).

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 207+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**Honest assessment: 202+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -23,23 +23,18 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 ## S1: Conversation Loop — Plumbing Gaps (P1)
 
-Python's run_conversation (4606 LOC) has features C's agent_loop.c (1600 LOC) lacks.
-14 stale (L02/L06/L08/L12/L16/L21/L22/L04/L07/L11/L18/L19/L20/L23) + 3 done (L14/L03/L09). 5 real + 5 partial remain.
+Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all plumbing features except 5 partial depth items.
+14 stale + 3 done (L14/L03/L09/L10). All 5 REAL claims retired as stale. 5 PARTIAL remain (L24-L28).
 
 | # | ID | Feature | Python | C | Priority | Status |
 |---|----|---------|--------|---|----------|--------|
-| 01 | L01 | Connection health check: detect/clean up dead TCP connections | Pre-turn socket health check (zombie detection) | None | P1 | REAL |
-| 02 | L05 | Nudge counter hydration per session (gateway fresh AIAgent) | Reconstruct turn count from history | None | P1 | REAL |
-| 03 | L13 | Auxiliary client runtime setting (tools see active model) | set_runtime_main(model, provider) per turn | None | P1 | REAL |
-| 04 | L15 | Skill write-origin tracking (foreground vs self-improvement) | set_current_write_origin per turn | None | P1 | REAL |
-| 05 | L17 | System prompt caching with three-way state tracking | DB-backed: missing/null/empty/present with logging | None | P1 | REAL |
-| 06 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
-| 07 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 | REAL |
-| 08 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
-| 09 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
-| 10 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
+| 01 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
+| 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 | REAL |
+| 03 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
+| 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
+| 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
 
-**S1: 10 gaps (5 real, 5 partial) — +L04/L18/L19/L20/L23 stale. 14 stale + 3 done.**
+**S1: 5 gaps (all partial: L24-L28) — 19 stale + 4 done. No remaining real gaps.**
 
 ---
 
@@ -292,7 +287,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **207** | **7** | **61** | **79** | **61** | **Phase 58: 14 stale + 3 done. 5 real S1 gaps remain.** |
+|| **TOTAL** | **202** | **7** | **56** | **79** | **61** | **Phase 58: 19 stale + 4 done. All S1 real gaps retired.** |
 
 *S2 includes display.py (A13) marked P0 — moves to Phase 0
 
