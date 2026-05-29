@@ -1144,4 +1144,22 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P67-06 | /model providers — list known providers with base URLs and feature flags | `src/cli/commands.c` — cmd_model providers subcommand |
 | P67-07 | /model set <name> — explicit set subcommand (replaces bare arg set) | `src/cli/commands.c` — cmd_model set subcommand |
 
-Suite: 294/0/0 (unchanged). Gaps: 154.
+## Phase 109: Interruptible Streaming
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P109-01 | token_cb return value checked in provider streaming path | `src/agent/llm_client.c` |
+| P109-02 | token_cb return value checked in legacy streaming path | `src/agent/llm_client.c` |
+| P109-03 | cli_stream_cb checks interrupted flag per token | `src/cli/commands.c` |
+
+## Phase 110: Send Message Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P110-01 | disable_link_previews param accepted | `tests/test_send_message.c` |
+| P110-02 | thread_id direct param accepted | `tests/test_send_message.c` |
+| P110-03 | reply_to_message_id param accepted | `tests/test_send_message.c` |
+| P110-04 | [[as_document]] directive stripped | `tests/test_send_message.c` |
+| P110-05 | media_group array no-crash | `tests/test_send_message.c` |
+| P110-06 | inline_buttons with stdout works | `tests/test_send_message.c` |
+| P110-07 | Very long message (4KB) no-crash | `tests/test_send_message.c` |
+
+Suite: 298/0/0 (254 test files). Gaps: 145.
