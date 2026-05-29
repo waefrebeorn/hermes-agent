@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
@@ -266,6 +267,25 @@ static char *extract_dimensions_native(const char *path) {
     return NULL;
 }
 
+/* Check if an error string indicates image/payload size limit.
+ * Mirrors Python vision_tools._is_image_size_error(). */
+static bool is_image_size_error(const char *error_text) {
+    if (!error_text || !error_text[0]) return false;
+    const char *hints[] = {
+        "too large", "payload", "413", "content_too_large",
+        "request_too_large", "image_url", "invalid_request",
+        "exceeds", "size limit", NULL
+    };
+    char *lower = strdup(error_text);
+    if (!lower) return false;
+    for (char *p = lower; *p; p++) *p = (char)tolower((unsigned char)*p);
+    for (int i = 0; hints[i]; i++) {
+        if (strstr(lower, hints[i])) { free(lower); return true; }
+    }
+    free(lower);
+    return false;
+}
+
 char *vision_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -499,6 +519,11 @@ char *vision_handler(const char *args_json, const char *task_id) {
                         json_new_string("Full vision analysis requires LLM with vision support. "
                                         "Python Hermes delegation unavailable. "
                                         "Use a vision-capable LLM provider directly."));
+                    /* Check if error is image-size related, add resize hint */
+                    if (desc && is_image_size_error(desc)) {
+                        json_object_set(result, "resize_hint",
+                            json_new_string("Image may exceed size limits. Try resizing to <20MB or using lower resolution."));
+                    }
                 }
                 free(desc);
             }
