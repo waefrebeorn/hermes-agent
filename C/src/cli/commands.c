@@ -16,7 +16,8 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
-#include "skill_bundles.h"
+#include "provider.h"
+#include "provider_metadata.h"
 #include "usage_pricing.h"
 #include "hermes_display.h"
 #include "hermes_curator.h"
@@ -128,7 +129,7 @@ static const command_def_t COMMANDS[] = {
     {"/history",NULL,     "Show full conversation history",                cmd_history},
 
     /* Configuration */
-    {"/model",   "/m",    "Show or set model configuration: /model [name]",cmd_model},
+    {"/model",   "/m",    "Model mgmt: list [--cap NAME] | show <name> | providers | set <name>",cmd_model},
     {"/config",  "/cfg",  "Show or edit configuration: /config [key] [val]",cmd_config},
     {"/topic",   "/t",    "Set the system topic/personality: /topic <text>",cmd_topic},
 
@@ -576,19 +577,93 @@ static void cmd_clear(const char *args, agent_state_t *state) {
 }
 
 static void cmd_model(const char *args, agent_state_t *state) {
-    if (args && args[0]) {
-        /* Set model */
-        snprintf(state->llm.model, sizeof(state->llm.model), "%s", args);
+    if (!args || !args[0]) {
+        /* No args: show current model */
+        printf("Model:        %s\n", state->llm.model);
+        printf("Provider:     %s\n", state->llm.provider[0] ? state->llm.provider : "(auto)");
+        printf("Base URL:     %s\n", state->llm.base_url[0] ? state->llm.base_url : "(default)");
+        printf("Max turns:    %d\n", state->max_iterations);
+        printf("Tools:        %zu available\n", state->tools.count);
+        printf("Usage: /model list [--cap NAME] | /model show <name> | /model providers | /model set <name>\n");
+        return;
+    }
+
+    /* Parse subcommand */
+    char arg_copy[256];
+    snprintf(arg_copy, sizeof(arg_copy), "%s", args);
+    const char *cmd = strtok(arg_copy, " ");
+    if (!cmd) {
+        printf("Usage: /model list [--cap NAME] | /model show <name> | /model providers | /model set <name>\n");
+        return;
+    }
+
+    if (strcmp(cmd, "list") == 0 || strcmp(cmd, "ls") == 0) {
+        /* /model list [--cap NAME] */
+        const char *cap_str = strstr(args, "--cap");
+        if (cap_str && cap_str[6]) {
+            cap_str += 6;
+            while (*cap_str == '=' || *cap_str == ' ') cap_str++;
+            model_capability_t caps = model_capability_parse(cap_str);
+            char *json = model_metadata_list_filtered_json(caps);
+            if (json) {
+                printf("Models with capability '%s':\n%s\n", cap_str, json);
+                free(json);
+            }
+        } else {
+            char *json = model_metadata_list_json();
+            if (json) {
+                printf("Known models:\n%s\n", json);
+                free(json);
+            }
+        }
+        return;
+    }
+
+    if (strcmp(cmd, "show") == 0 || strcmp(cmd, "info") == 0) {
+        const char *name = strtok(NULL, " ");
+        if (!name) {
+            printf("Usage: /model show <model_name>\n");
+            return;
+        }
+        const model_metadata_t *m = model_metadata_find(name);
+        if (!m) {
+            printf("Model '%s' not found in local metadata.\n", name);
+            return;
+        }
+        char caps_str[128];
+        model_capability_format(m->caps, caps_str, sizeof(caps_str));
+        printf("Model:        %s\n", m->model_prefix);
+        printf("Family:       %s\n", m->family);
+        printf("Context:      %d tokens\n", m->context_window);
+        printf("Max output:   %d tokens\n", m->max_output);
+        printf("Capabilities: %s\n", caps_str[0] ? caps_str : "(none)");
+        printf("Pricing:      $%.4f/$%.4f per 1M in/out\n", m->input_per_1m, m->output_per_1m);
+        return;
+    }
+
+    if (strcmp(cmd, "providers") == 0 || strcmp(cmd, "prov") == 0) {
+        char *json = provider_metadata_list_json();
+        if (json) {
+            printf("Known providers:\n%s\n", json);
+            free(json);
+        }
+        return;
+    }
+
+    if (strcmp(cmd, "set") == 0) {
+        const char *model_name = strtok(NULL, " ");
+        if (!model_name) {
+            printf("Usage: /model set <model_name>\n");
+            return;
+        }
+        snprintf(state->llm.model, sizeof(state->llm.model), "%s", model_name);
         printf("Model set to: %s\n", state->llm.model);
         return;
     }
 
-    /* Show current model */
-    printf("Model:        %s\n", state->llm.model);
-    printf("Provider:     %s\n", state->llm.provider[0] ? state->llm.provider : "(auto)");
-    printf("Base URL:     %s\n", state->llm.base_url[0] ? state->llm.base_url : "(default)");
-    printf("Max turns:    %d\n", state->max_iterations);
-    printf("Tools:        %zu available\n", state->tools.count);
+    /* Unknown subcommand */
+    printf("Unknown: /model %s\n", cmd);
+    printf("Usage: /model list [--cap NAME] | /model show <name> | /model providers | /model set <name>\n");
 }
 
 static void cmd_sessions(const char *args, agent_state_t *state) {

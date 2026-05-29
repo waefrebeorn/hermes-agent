@@ -86,6 +86,21 @@ double model_estimate_cost(const char *model, long long input_tokens, long long 
 /* List all known models as JSON string (malloc'd). Caller must free(). */
 char *model_metadata_list_json(void);
 
+/* List models filtered by required capabilities as JSON string (malloc'd).
+ * required_caps: bitmask of capabilities the model must have (all must match).
+ * Pass 0 to list all models (equivalent to model_metadata_list_json). */
+char *model_metadata_list_filtered_json(model_capability_t required_caps);
+
+/* Parse a capability name string (e.g. "vision", "streaming") into a bitmask.
+ * Returns 0 on unknown/empty input. Accepts comma or space-separated. */
+model_capability_t model_capability_parse(const char *name);
+
+/* Get the short name for a capability flag. Returns "" for unknown. */
+const char *model_capability_name(model_capability_t cap);
+
+/* Format capability bitmask as comma-separated string into buf. */
+void model_capability_format(model_capability_t caps, char *buf, size_t bufsz);
+
 /* Get all known providers as JSON string (malloc'd). Caller must free(). */
 char *provider_metadata_list_json(void);
 

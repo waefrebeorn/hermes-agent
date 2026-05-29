@@ -741,3 +741,17 @@ Suite: 294/0/0 (unchanged). Gaps: 154 (unchanged — A22 reconfirmed as partial 
 | P66-02 | Legacy fallback streaming path also gets timing-diagnostic error messages | `src/agent/llm_client.c` — legacy streaming path error handler |
 
 Suite: 294/0/0 (unchanged). Gaps: 154.
+
+## Phase 67: Model Management CLI — A18 Port (v151)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P67-01 | model_capability_parse() — string-to-bitmask parser for capability names (vision, streaming, thinking, fc, json, code, caching) | `src/agent/provider_metadata.c` — includes + parser |
+| P67-02 | model_capability_name() + model_capability_format() — capability to human string helpers | `src/agent/provider_metadata.c` — format function |
+| P67-03 | model_metadata_list_filtered_json() — JSON model list filtered by capability bitmask | `src/agent/provider_metadata.c` — filtered JSON export |
+| P67-04 | /model list [--cap NAME] — list known models, optionally filtered by capability | `src/cli/commands.c` — cmd_model with subcommands |
+| P67-05 | /model show <name> — show model details (context, output, capabilities, pricing) | `src/cli/commands.c` — cmd_model show subcommand |
+| P67-06 | /model providers — list known providers with base URLs and feature flags | `src/cli/commands.c` — cmd_model providers subcommand |
+| P67-07 | /model set <name> — explicit set subcommand (replaces bare arg set) | `src/cli/commands.c` — cmd_model set subcommand |
+
+Suite: 294/0/0 (unchanged). Gaps: 154.

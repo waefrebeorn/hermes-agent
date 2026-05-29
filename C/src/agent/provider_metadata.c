@@ -14,6 +14,49 @@
 #include <strings.h>
 #include <ctype.h>
 
+/* Parse a capability name string (e.g. "vision", "streaming") into a bitmask.
+ * Returns 0 on unknown. Comma-separated or space-separated multiple values. */
+model_capability_t model_capability_parse(const char *name) {
+    if (!name || !*name) return 0;
+    model_capability_t caps = 0;
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s", name);
+    char *save = NULL;
+    const char *tok = strtok_r(buf, " ,", &save);
+    while (tok) {
+        if (strcasecmp(tok, "vision") == 0) caps |= MODEL_CAP_VISION;
+        else if (strcasecmp(tok, "streaming") == 0) caps |= MODEL_CAP_STREAMING;
+        else if (strcasecmp(tok, "thinking") == 0 ||
+                 strcasecmp(tok, "reasoning") == 0) caps |= MODEL_CAP_THINKING;
+        else if (strcasecmp(tok, "fc") == 0 ||
+                 strcasecmp(tok, "function_calling") == 0 ||
+                 strcasecmp(tok, "tool_calling") == 0 ||
+                 strcasecmp(tok, "tools") == 0) caps |= MODEL_CAP_FUNCTION_CALLING;
+        else if (strcasecmp(tok, "structured_output") == 0 ||
+                 strcasecmp(tok, "json") == 0) caps |= MODEL_CAP_STRUCTURED_OUTPUT;
+        else if (strcasecmp(tok, "code") == 0 ||
+                 strcasecmp(tok, "code_execution") == 0) caps |= MODEL_CAP_CODE_EXECUTION;
+        else if (strcasecmp(tok, "caching") == 0 ||
+                 strcasecmp(tok, "context_caching") == 0) caps |= MODEL_CAP_CONTEXT_CACHING;
+        tok = strtok_r(NULL, " ,", &save);
+    }
+    return caps;
+}
+
+/* Capability name lookup (returns static ptr, not thread-safe) */
+const char *model_capability_name(model_capability_t cap) {
+    switch (cap) {
+        case MODEL_CAP_VISION: return "vision";
+        case MODEL_CAP_FUNCTION_CALLING: return "fc";
+        case MODEL_CAP_STREAMING: return "streaming";
+        case MODEL_CAP_THINKING: return "thinking";
+        case MODEL_CAP_STRUCTURED_OUTPUT: return "json";
+        case MODEL_CAP_CODE_EXECUTION: return "code";
+        case MODEL_CAP_CONTEXT_CACHING: return "caching";
+        default: return "";
+    }
+}
+
 /* ================================================================
  *  Provider metadata
  * ================================================================ */
@@ -143,6 +186,51 @@ char *model_metadata_list_json(void) {
     char *result = json_serialize_pretty(root, 2);
     json_free(root);
     return result;
+}
+
+/* List models filtered by required capabilities */
+char *model_metadata_list_filtered_json(model_capability_t required_caps) {
+    json_node_t *root = json_array();
+    for (int i = 0; MODELS[i].model_prefix; i++) {
+        if (required_caps != 0 && (MODELS[i].caps & required_caps) != required_caps)
+            continue;
+        json_node_t *entry = json_object();
+        json_set(entry, "model", json_string(MODELS[i].model_prefix));
+        json_set(entry, "family", json_string(MODELS[i].family));
+        json_set(entry, "context_window", json_number(MODELS[i].context_window));
+        json_set(entry, "max_output", json_number(MODELS[i].max_output));
+        json_set(entry, "caps", json_number((double)MODELS[i].caps));
+        json_append(root, entry);
+    }
+    char *result = json_serialize_pretty(root, 2);
+    json_free(root);
+    return result;
+}
+
+/* Format capability bitmask as comma-separated string */
+void model_capability_format(model_capability_t caps, char *buf, size_t bufsz) {
+    if (!buf || bufsz == 0) return;
+    buf[0] = '\0';
+    size_t pos = 0;
+    #define APPEND_CAP(flag, name) do { \
+        if (caps & flag) { \
+            size_t nlen = strlen(name); \
+            if (pos + nlen + 2 < bufsz) { \
+                if (pos > 0) { buf[pos++] = ','; buf[pos] = '\0'; } \
+                memcpy(buf + pos, name, nlen); \
+                pos += nlen; \
+                buf[pos] = '\0'; \
+            } \
+        } \
+    } while(0)
+    APPEND_CAP(MODEL_CAP_VISION, "vision");
+    APPEND_CAP(MODEL_CAP_FUNCTION_CALLING, "fc");
+    APPEND_CAP(MODEL_CAP_STREAMING, "streaming");
+    APPEND_CAP(MODEL_CAP_THINKING, "thinking");
+    APPEND_CAP(MODEL_CAP_STRUCTURED_OUTPUT, "json");
+    APPEND_CAP(MODEL_CAP_CODE_EXECUTION, "code");
+    APPEND_CAP(MODEL_CAP_CONTEXT_CACHING, "caching");
+    #undef APPEND_CAP
 }
 
 char *provider_metadata_list_json(void) {
