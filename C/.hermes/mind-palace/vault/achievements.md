@@ -823,6 +823,14 @@ Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 mode
 
 Suite: 294/0/0. Test files: 250. Gaps: 148.
 
+## Phase 83: send_message error redaction (v159)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P83-01 | sanitize_error_text() — redacts access_token, api_key, token, sig, etc. from error messages before surfacing (port of Python _sanitize_error_text) | `src/tools/send_message.c` — sanitize_error_text() function, wired into platform error path |
+
+Suite: 294/0/0. Test files: 250. Gaps: 148. B08 depth +1%.
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |

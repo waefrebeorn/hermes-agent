@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v158 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**v159 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 148 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 82.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -175,7 +175,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
 | 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder) | P2 | PARTIAL |
-| 08 | B08 | send_message | ~500 | ~900 | 55% | inline_buttons + reply_to_message_id implemented. media_group array support added — sends multiple files as Telegram sendMediaGroup | P2 | PARTIAL |
+| 08 | B08 | send_message | ~500 | ~900 | 56% | inline_buttons + reply_to_message_id implemented. media_group array support added — sends multiple files as Telegram sendMediaGroup. error redaction: secrets (access_token, api_key, token, sig) sanitized from error messages | P2 | PARTIAL |
 | 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution now returns snippet JSON (offset + context) for each match when multiple exact matches found | P2 | PARTIAL |
 | 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude) — ALL implemented | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
