@@ -30,6 +30,7 @@ static int passed = 0, failed = 0;
 
 #define TEST_TRUE(name, expr) TEST(name, (expr))
 #define TEST_FALSE(name, expr) TEST(name, !(expr))
+#define TEST_NULL(name, expr) TEST(name, (expr) == NULL)
 
 /* ================================================================
  *  1. Scheme validation
@@ -210,6 +211,26 @@ static void test_blocklist_edge_cases(void) {
     TEST("multiple clears no crash", 1);
 }
 
+/* ================================================================
+ *  8. Secret exfiltration detection (url_has_secret)
+ * ================================================================ */
+static void test_url_has_secret(void) {
+    printf("\n--- Secret Exfiltration ---\n");
+
+    TEST_TRUE("sk- prefix in URL",     url_has_secret("http://example.com/log?key=sk-proj-abc123def456") != NULL);
+    TEST_TRUE("ghp_ prefix in URL",    url_has_secret("http://example.com/ghp_abc123") != NULL);
+    TEST_TRUE("AIza in URL",           url_has_secret("http://example.com/AIzaSyABC123") != NULL);
+    TEST_TRUE("gho_ prefix in URL",    url_has_secret("http://example.com/gho_xyz789") != NULL);
+    TEST_TRUE("ghu_ prefix in URL",    url_has_secret("http://example.com/ghu_user_token") != NULL);
+    TEST_TRUE("ghs_ prefix in URL",    url_has_secret("http://example.com/ghs_secret") != NULL);
+    TEST_TRUE("ghr_ prefix in URL",    url_has_secret("http://example.com/ghr_token") != NULL);
+    TEST_NULL("safe URL",              url_has_secret("http://example.com/page?q=hello"));
+    TEST_NULL("no key pattern",        url_has_secret("https://api.github.com/repos/user/repo"));
+    TEST_NULL("normal path",           url_has_secret("http://example.com/images/photo.jpg"));
+    TEST_NULL("NULL input",            url_has_secret(NULL));
+    TEST_NULL("empty input",           url_has_secret(""));
+}
+
 int main(void) {
     printf("=== URL Safety Test Suite (G125) ===\n");
 
@@ -220,6 +241,7 @@ int main(void) {
     test_blocklist_toggle();
     test_allow_private();
     test_blocklist_edge_cases();
+    test_url_has_secret();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

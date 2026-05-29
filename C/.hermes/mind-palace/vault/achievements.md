@@ -1189,6 +1189,14 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P114-01 | content_filter finish_reason detected in agent_loop retry loop — skips retry of filtered model | `src/agent/agent_loop.c` — retry loop at ~1089 |
 | P114-02 | Content filter triggers immediate fallback to configured fallback model/provider | `src/agent/agent_loop.c` — fallback trigger path |
 
+## Phase 115: URL Safety Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P115-01 | Secret exfiltration tests: sk-, ghp_, AIza, gho_, ghu_, ghs_, ghr_ prefix detection | `tests/test_url_safety.c` — test_url_has_secret() |
+| P115-02 | Safe URL negative tests — verify no false positives on normal URLs | `tests/test_url_safety.c` — test_url_has_secret() |
+| P115-03 | TEST_NULL macro added — NULL-result assertion helper | `tests/test_url_safety.c` — #define TEST_NULL |
+
+
 
 
 
