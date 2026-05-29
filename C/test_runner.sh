@@ -118,7 +118,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
     "$CDIR/tests/test_registry.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_registry -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_registry ]]; then
     if /tmp/hermes_test_registry > /dev/null 2>&1; then
-        ok "registry"
+        ok "registry (30 tests)"
     else
         fail "registry (test binary returned non-zero)"
     fi
@@ -1357,18 +1357,6 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     else fail "tool_dispatch_helpers (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tool_dispatch
 else skip "tool_dispatch_helpers (compilation failed)"
-fi &
-
-# Registry test (core tool registration/dispatch)
-echo ""; echo "=== Registry Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
-    "$CDIR/tests/test_registry.c" \
-    "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
-    -o /tmp/hermes_test_registry -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_registry > /dev/null 2>&1; then ok "registry (30 tests)"
-    else fail "registry (test binary returned non-zero)"; fi
-    rm -f /tmp/hermes_test_registry
-else skip "registry (compilation failed)"
 fi &
 
 # Home Assistant tool test (needs json lib + http lib for unresolved symbols)
