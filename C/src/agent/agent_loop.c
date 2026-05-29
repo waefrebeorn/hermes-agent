@@ -246,6 +246,10 @@ void agent_free(agent_state_t *state) {
     /* Free budget tracker */
     free(state->budget);
     state->budget = NULL;
+    /* Free message pointer array */
+    free(state->messages);
+    state->messages = NULL;
+    state->message_capacity = 0;
     /* P89: Unregister SIGINT handler */
 #ifndef _WIN32
     if (g_signal_state == state) {
