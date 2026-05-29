@@ -840,6 +840,14 @@ Suite: 294/0/0. Test files: 250. Gaps: 148. B08 depth +1%.
 
 Suite: 294/0/0. Test files: 250. Gaps: 148. B01 44%→45%.
 
+## Phase 85: native image dimension extraction (v161)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P85-01 | extract_dimensions_native() — PNG/JPEG/GIF/BMP/WebP header parsing for width/height. Removes Python PIL dependency for basic dimension detection. Falls back to PIL if native fails | `src/tools/vision.c` — extract_dimensions_native() function, wired into vision_handler |
+
+Suite: 294/0/0. Test files: 250. Gaps: 148. B02 depth +1% (PNG/JPEG/GIF/BMP/WebP dims now native).
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |
