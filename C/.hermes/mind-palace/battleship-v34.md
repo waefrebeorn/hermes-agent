@@ -168,7 +168,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority | Status |
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
-| 01 | B01 | browser | ~1678 | ~3800 | 44% | autofill, PDF download | P2 | REAL |
+| 01 | B01 | browser | ~1678 | ~3800 | 45% | PDF download via browser_generate_pdf (CDP). autofill still missing (requires Playwright/real browser engine) | P2 | REAL |
 | 02 | B02 | vision | ~296 | ~1421 | 21% | face detection, barcode (OCR/EXIF via Python helper) | P2 | PARTIAL |
 | 03 | B03 | web | ~651 | ~1561 | 42% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80) | P2 | PARTIAL |
 | 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth now integrated — token storage via mcp_oauth_storage, PKCE fields (authorization_url, redirect_uri) parsed from config. Full PKCE auth code flow (callback server, browser open) still unwired | P2 | PARTIAL |

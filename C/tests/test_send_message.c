@@ -13,6 +13,7 @@
 
 /* Forward declaration from send_message.c */
 char *send_message_handler(const char *args_json, const char *task_id);
+char *sanitize_error_text(const char *text);
 
 static int failures = 0;
 #define TEST(name, cond) do { \
@@ -170,6 +171,52 @@ int main(void) {
         TEST("empty message string is valid",
              (s && strcmp(s, "sent") == 0) || !s);
         free(s);
+        free(res);
+    }
+
+    /* Test 15: sanitize_error_text — URL query param redaction */
+    {
+        char *res = sanitize_error_text("https://example.com/api?access_token=secret123&key=val");
+        TEST("sanitize redacts access_token in URL", res && strstr(res, "***") != NULL);
+        TEST("sanitize keeps param name", res && strstr(res, "access_token=") != NULL);
+        TEST("sanitize removes secret value", res && strstr(res, "secret123") == NULL);
+        free(res);
+    }
+
+    /* Test 16: sanitize_error_text — generic assignment redaction */
+    {
+        char *res = sanitize_error_text("error: api_key=sk-abc123xyz, something else");
+        TEST("sanitize redacts api_key assignment", res && strstr(res, "***") != NULL);
+        TEST("sanitize keeps key name", res && strstr(res, "api_key=") != NULL);
+        TEST("sanitize removes key value", res && strstr(res, "sk-abc") == NULL);
+        free(res);
+    }
+
+    /* Test 17: sanitize_error_text — no false positives on safe text */
+    {
+        char *res = sanitize_error_text("Platform 'telegram' send failed");
+        TEST("sanitize doesn't modify safe text", res && strcmp(res, "Platform 'telegram' send failed") == 0);
+        free(res);
+    }
+
+    /* Test 18: sanitize_error_text — null input */
+    {
+        char *res = sanitize_error_text(NULL);
+        TEST("sanitize handles NULL input", res == NULL);
+    }
+
+    /* Test 19: sanitize_error_text — multiple tokens */
+    {
+        char *res = sanitize_error_text("token=ghp_abc123&token=ghp_def456");
+        TEST("sanitize redacts multiple tokens", res && strstr(res, "token=***") != NULL);
+        TEST("sanitize all tokens redacted", res && strstr(res, "ghp_") == NULL);
+        free(res);
+    }
+
+    /* Test 20: sanitize_error_text — sig parameter */
+    {
+        char *res = sanitize_error_text("?sig=abc123def456&other=val");
+        TEST("sanitize redacts sig param", res && strstr(res, "sig=***") != NULL);
         free(res);
     }
 

@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 /* Redact secrets from error text (port of Python send_message_tool._sanitize_error_text) */
-static char *sanitize_error_text(const char *text) {
+char *sanitize_error_text(const char *text) {
     if (!text) return NULL;
     size_t len = strlen(text);
     char *buf = (char *)malloc(len + 1);
