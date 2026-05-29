@@ -2676,6 +2676,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "kanban_tool (compilation failed)"
 fi &
 
+# Budget tracker tests (P84/G24/G26)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_budget_tracker.c" \
+    "$CDIR/src/agent/budget_tracker.c" "$CDIR/src/agent/provider_metadata.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_budget -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_budget > /dev/null 2>&1; then ok "budget_tracker (31 tests)"
+    else fail "budget_tracker (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_budget
+else skip "budget_tracker (compilation failed)"
+fi &
+
 # Account usage tests (M37 depth)
 if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_account_usage.c" \

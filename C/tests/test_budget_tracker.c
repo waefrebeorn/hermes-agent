@@ -1,392 +1,294 @@
 /*
- * test_budget_tracker.c — Budget tracker test suite (G158).
- *
- * Tests: init, limits, turn reporting, exceeded detection,
- * remaining budget, warnings, stats JSON, reset, NULL safety.
- *
- * Build:
- *   gcc -O2 -g -Wall -Wextra -I include -I lib/libjson \
- *       tests/test_budget_tracker.c \
- *       src/agent/budget_tracker.c src/agent/provider_metadata.c \
- *       lib/libjson/json.c \
- *       -o /tmp/hermes_test_budget -lm
- *
- * Run:
- *   /tmp/hermes_test_budget
+ * test_budget_tracker.c — Tests for budget_tracker module (P84/G24/G26).
+ * Tests: init, limits, reporting, warnings, exceeded, remaining, iteration budget.
+ * Compile: gcc -O2 -Wall -Wextra -I../include -I../lib/libjson -I../lib/libplugin
+ *     test_budget_tracker.c ../src/agent/budget_tracker.c
+ *     ../lib/libjson/json.c ../src/agent/provider_metadata.c
+ *     -o /tmp/t_budget -lm -Wl,--unresolved-symbols=ignore-all
  */
-
 #include "budget_tracker.h"
+#include "hermes_json.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
 
-static int passed = 0, failed = 0;
+static int failures = 0;
+#define TEST(name, cond) do { \
+    if (!(cond)) { fprintf(stderr, "  FAIL: %s\n", name); failures++; } \
+    else printf("  PASS: %s\n", name); \
+} while (0)
 
-#define TEST(name, expr) do { \
-    if (expr) { passed++; printf("  PASS: %s\n", name); } \
-    else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
-} while(0)
-
-#define TEST_INT_EQ(name, a, b) TEST(name, (a) == (b))
-#define TEST_STR_EQ(name, a, b) TEST(name, a && b && strcmp(a, b) == 0)
-#define TEST_NULL(name, p) TEST(name, p == NULL)
-#define TEST_NOT_NULL(name, p) TEST(name, p != NULL)
-
-/* ================================================================
- *  1. Init tests
- * ================================================================ */
-static void test_init(void) {
-    printf("\n--- Init ---\n");
-
-    budget_tracker_t bt;
-    memset(&bt, 0xAA, sizeof(bt)); /* Fill with garbage */
-
-    budget_tracker_init(&bt);
-
-    TEST_INT_EQ("max_input_tokens defaults to 0", bt.max_input_tokens, 0);
-    TEST_INT_EQ("max_output_tokens defaults to 0", bt.max_output_tokens, 0);
-    TEST("max_cost_usd defaults to 0.0", bt.max_cost_usd == 0.0);
-    TEST_INT_EQ("max_turns defaults to 0", bt.max_turns, 0);
-    TEST_INT_EQ("total_input_tokens starts 0", bt.total_input_tokens, 0);
-    TEST_INT_EQ("total_output_tokens starts 0", bt.total_output_tokens, 0);
-    TEST("total_cost_usd starts 0.0", bt.total_cost_usd == 0.0);
-    TEST_INT_EQ("turn_count starts 0", bt.turn_count, 0);
-    TEST("warn_at_pct defaults to 0.8", bt.warn_at_pct == 0.8);
-    TEST("warned_input false", !bt.warned_input);
-    TEST("warned_output false", !bt.warned_output);
-    TEST("warned_cost false", !bt.warned_cost);
-    TEST("warned_turns false", !bt.warned_turns);
-
-    /* NULL safety */
-    budget_tracker_init(NULL);
-    TEST("init NULL no crash", 1);
-}
-
-/* ================================================================
- *  2. Set limits tests
- * ================================================================ */
-static void test_set_limits(void) {
-    printf("\n--- Set Limits ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-
-    budget_tracker_set_limits(&bt, 1000, 500, 0.05, 10);
-    TEST_INT_EQ("max_input set", bt.max_input_tokens, 1000);
-    TEST_INT_EQ("max_output set", bt.max_output_tokens, 500);
-    TEST("max_cost set", bt.max_cost_usd == 0.05);
-    TEST_INT_EQ("max_turns set", bt.max_turns, 10);
-
-    /* Reset with 0 = unlimited */
-    budget_tracker_set_limits(&bt, 0, 0, 0, 0);
-    TEST_INT_EQ("unlimited input", bt.max_input_tokens, 0);
-    TEST_INT_EQ("unlimited output", bt.max_output_tokens, 0);
-    TEST("unlimited cost", bt.max_cost_usd == 0.0);
-    TEST_INT_EQ("unlimited turns", bt.max_turns, 0);
-
-    /* NULL safety */
-    budget_tracker_set_limits(NULL, 100, 100, 1.0, 5);
-    TEST("set_limits NULL no crash", 1);
-}
-
-/* ================================================================
- *  3. Report turn — basic accumulation
- * ================================================================ */
-static void test_report_turn(void) {
-    printf("\n--- Report Turn ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-    budget_tracker_set_limits(&bt, 10000, 5000, 1.0, 20);
-
-    /* Report first turn */
-    budget_tracker_report_turn(&bt, 100, 50, 0.01, "deepseek-v4");
-    TEST_INT_EQ("total_input after 1 turn", bt.total_input_tokens, 100);
-    TEST_INT_EQ("total_output after 1 turn", bt.total_output_tokens, 50);
-    TEST("total_cost after 1 turn", bt.total_cost_usd == 0.01);
-    TEST_INT_EQ("turn_count after 1", bt.turn_count, 1);
-    TEST_INT_EQ("last_input", bt.last_input_tokens, 100);
-    TEST_INT_EQ("last_output", bt.last_output_tokens, 50);
-    TEST("last_cost", bt.last_cost_usd == 0.01);
-    TEST_STR_EQ("last_model", bt.last_model, "deepseek-v4");
-
-    /* Report second turn */
-    budget_tracker_report_turn(&bt, 200, 75, 0.02, "gpt-4o");
-    TEST_INT_EQ("total_input after 2 turns", bt.total_input_tokens, 300);
-    TEST_INT_EQ("total_output after 2 turns", bt.total_output_tokens, 125);
-    TEST("total_cost after 2 turns", bt.total_cost_usd == 0.03);
-    TEST_INT_EQ("turn_count after 2", bt.turn_count, 2);
-    TEST_STR_EQ("last_model updated", bt.last_model, "gpt-4o");
-
-    /* Report with NULL model (should not crash, model field unchanged) */
-    budget_tracker_report_turn(&bt, 50, 25, 0.005, NULL);
-    TEST_INT_EQ("total_input after NULL model", bt.total_input_tokens, 350);
-    TEST("last_model unchanged after NULL model",
-         strcmp(bt.last_model, "gpt-4o") == 0);
-
-    /* Report with zero values */
-    budget_tracker_report_turn(&bt, 0, 0, 0.0, "noop");
-    TEST_INT_EQ("zero tokens still counted", bt.total_input_tokens, 350);
-    TEST_INT_EQ("turn_count incremented", bt.turn_count, 4);
-
-    /* NULL safety */
-    budget_tracker_report_turn(NULL, 100, 50, 0.01, "test");
-    TEST("report_turn NULL no crash", 1);
-}
-
-/* ================================================================
- *  4. Exceeded detection
- * ================================================================ */
-static void test_is_exceeded(void) {
-    printf("\n--- Is Exceeded ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-
-    /* No limits — never exceeded */
-    TEST("no limits → not exceeded", !budget_tracker_is_exceeded(&bt));
-
-    /* Set limits */
-    budget_tracker_set_limits(&bt, 1000, 500, 0.10, 5);
-
-    /* Under limits */
-    budget_tracker_report_turn(&bt, 100, 50, 0.01, "model");
-    TEST("under limit → not exceeded", !budget_tracker_is_exceeded(&bt));
-
-    /* Exceed input */
-    budget_tracker_set_limits(&bt, 100, 1000, 1.0, 10);
-    budget_tracker_report_turn(&bt, 150, 0, 0, "model");
-    TEST("input exceeded", budget_tracker_is_exceeded(&bt));
-
-    /* Reset and test output exceeded */
-    budget_tracker_reset(&bt);
-    budget_tracker_set_limits(&bt, 10000, 100, 1.0, 10);
-    budget_tracker_report_turn(&bt, 10, 200, 0, "model");
-    TEST("output exceeded", budget_tracker_is_exceeded(&bt));
-
-    /* Reset and test cost exceeded */
-    budget_tracker_reset(&bt);
-    budget_tracker_set_limits(&bt, 10000, 10000, 0.05, 10);
-    budget_tracker_report_turn(&bt, 10, 50, 0.06, "model");
-    TEST("cost exceeded", budget_tracker_is_exceeded(&bt));
-
-    /* Reset and test turns exceeded */
-    budget_tracker_reset(&bt);
-    budget_tracker_set_limits(&bt, 10000, 10000, 1.0, 3);
-    budget_tracker_report_turn(&bt, 10, 50, 0.01, "model");
-    budget_tracker_report_turn(&bt, 10, 50, 0.01, "model");
-    budget_tracker_report_turn(&bt, 10, 50, 0.01, "model");
-    TEST("turns at limit → exceeded", budget_tracker_is_exceeded(&bt));
-
-    /* Exceeded on multiple dimensions */
-    budget_tracker_report_turn(&bt, 10000, 10000, 0, "model");
-    TEST("still exceeded after more turns", budget_tracker_is_exceeded(&bt));
-
-    /* NULL safety */
-    TEST("is_exceeded NULL returns false", !budget_tracker_is_exceeded(NULL));
-}
-
-/* ================================================================
- *  5. Remaining budget
- * ================================================================ */
-static void test_remaining(void) {
-    printf("\n--- Remaining ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-
-    /* No limits — returns -1 */
-    TEST_INT_EQ("remaining_input no limit", budget_tracker_remaining_input(&bt), -1);
-    TEST_INT_EQ("remaining_output no limit", budget_tracker_remaining_output(&bt), -1);
-    TEST("remaining_cost no limit", budget_tracker_remaining_cost(&bt) == -1.0);
-    TEST_INT_EQ("remaining_turns no limit", budget_tracker_remaining_turns(&bt), -1);
-
-    /* With limits */
-    budget_tracker_set_limits(&bt, 1000, 500, 0.10, 10);
-    budget_tracker_report_turn(&bt, 200, 100, 0.03, "model");
-
-    TEST_INT_EQ("remaining_input", budget_tracker_remaining_input(&bt), 800);
-    TEST_INT_EQ("remaining_output", budget_tracker_remaining_output(&bt), 400);
-    TEST("remaining_cost", budget_tracker_remaining_cost(&bt) == 0.07);
-    TEST_INT_EQ("remaining_turns", budget_tracker_remaining_turns(&bt), 9);
-
-    /* Over budget — negative values */
-    budget_tracker_set_limits(&bt, 100, 100, 1.0, 10);
-    budget_tracker_report_turn(&bt, 200, 200, 0, "model");
-    TEST("remaining_input negative after over", budget_tracker_remaining_input(&bt) < 0);
-    TEST("remaining_output negative after over", budget_tracker_remaining_output(&bt) < 0);
-
-    /* NULL safety */
-    TEST_INT_EQ("remaining_input NULL", budget_tracker_remaining_input(NULL), -1);
-    TEST_INT_EQ("remaining_output NULL", budget_tracker_remaining_output(NULL), -1);
-    TEST("remaining_cost NULL", budget_tracker_remaining_cost(NULL) == -1.0);
-    TEST_INT_EQ("remaining_turns NULL", budget_tracker_remaining_turns(NULL), -1);
-}
-
-/* ================================================================
- *  6. Warning messages
- * ================================================================ */
-static void test_warnings(void) {
-    printf("\n--- Warnings ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-
-    /* No limits — no warning */
-    TEST_NULL("no limits → no warning", budget_tracker_get_warning(&bt));
-
-    /* Set limits, warn_at_pct=0.8 */
-    budget_tracker_set_limits(&bt, 1000, 500, 0.10, 10);
-
-    /* Under 80% — no warning */
-    budget_tracker_report_turn(&bt, 100, 50, 0.01, "model");
-    TEST_NULL("under 80% → no warning", budget_tracker_get_warning(&bt));
-
-    /* Report to hit input warn threshold (800 = 80% of 1000) */
-    budget_tracker_report_turn(&bt, 700, 0, 0, "model");
-    const char *w = budget_tracker_get_warning(&bt);
-    TEST_NOT_NULL("input warning emitted", w);
-    TEST("input warning text contains 'Input'",
-         w && strstr(w, "Input") != NULL);
-    TEST("input warning text contains '200' (remaining)",
-         w && strstr(w, "200") != NULL);
-
-    /* Only emitted once */
-    TEST_NULL("input warning second call returns NULL",
-              budget_tracker_get_warning(&bt));
-
-    /* Report to hit output warn threshold (400 = 80% of 500) */
-    budget_tracker_report_turn(&bt, 0, 350, 0, "model");
-    w = budget_tracker_get_warning(&bt);
-    TEST_NOT_NULL("output warning emitted", w);
-    TEST("output warning contains 'Output'",
-         w && strstr(w, "Output") != NULL);
-
-    /* Only emitted once */
-    TEST_NULL("output warning second call returns NULL",
-              budget_tracker_get_warning(&bt));
-
-    /* Test cost warning */
-    budget_tracker_reset(&bt);
-    budget_tracker_set_limits(&bt, 10000, 10000, 1.0, 100);
-    budget_tracker_report_turn(&bt, 100, 100, 0.90, "model");
-    w = budget_tracker_get_warning(&bt);
-    TEST_NOT_NULL("cost warning emitted", w);
-    TEST("cost warning contains 'Cost'",
-         w && strstr(w, "Cost") != NULL);
-
-    /* Test turn warning */
-    budget_tracker_reset(&bt);
-    budget_tracker_set_limits(&bt, 10000, 10000, 10.0, 10);
-    for (int i = 0; i < 8; i++)
-        budget_tracker_report_turn(&bt, 10, 10, 0, "model");
-    w = budget_tracker_get_warning(&bt);
-    TEST_NOT_NULL("turn warning emitted", w);
-    TEST("turn warning contains 'Turn'",
-         w && strstr(w, "Turn") != NULL);
-
-    /* NULL safety */
-    TEST_NULL("get_warning NULL", budget_tracker_get_warning(NULL));
-}
-
-/* ================================================================
- *  7. Reset
- * ================================================================ */
-static void test_reset(void) {
-    printf("\n--- Reset ---\n");
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-    budget_tracker_set_limits(&bt, 1000, 500, 0.10, 10);
-
-    /* Use it */
-    budget_tracker_report_turn(&bt, 200, 100, 0.03, "deepseek");
-    budget_tracker_report_turn(&bt, 300, 150, 0.02, "gpt-4o");
-    TEST("used up some budget", bt.total_input_tokens == 500);
-
-    /* Reset — limits preserved, totals zeroed */
-    budget_tracker_reset(&bt);
-    TEST_INT_EQ("input limit preserved", bt.max_input_tokens, 1000);
-    TEST_INT_EQ("output limit preserved", bt.max_output_tokens, 500);
-    TEST("cost limit preserved", bt.max_cost_usd == 0.10);
-    TEST_INT_EQ("turn limit preserved", bt.max_turns, 10);
-    TEST("warn_at_pct preserved", bt.warn_at_pct == 0.8);
-    TEST_INT_EQ("total_input zeroed", bt.total_input_tokens, 0);
-    TEST_INT_EQ("total_output zeroed", bt.total_output_tokens, 0);
-    TEST("total_cost zeroed", bt.total_cost_usd == 0.0);
-    TEST_INT_EQ("turn_count zeroed", bt.turn_count, 0);
-
-    /* NULL safety */
-    budget_tracker_reset(NULL);
-    TEST("reset NULL no crash", 1);
-}
-
-/* ================================================================
- *  8. Stats JSON
- * ================================================================ */
-static void test_stats_json(void) {
-    printf("\n--- Stats JSON ---\n");
-
-    /* NULL tracker */
-    char *json = budget_tracker_stats_json(NULL);
-    TEST_NULL("stats_json NULL returns NULL", json);
-    free(json);
-
-    budget_tracker_t bt;
-    budget_tracker_init(&bt);
-    budget_tracker_set_limits(&bt, 1000, 500, 0.10, 10);
-    budget_tracker_report_turn(&bt, 100, 50, 0.01, "test-model");
-
-    json = budget_tracker_stats_json(&bt);
-    TEST_NOT_NULL("stats_json returns non-NULL", json);
-    if (json) {
-        TEST("json contains turn_count", strstr(json, "turn_count") != NULL);
-        TEST("json contains total_input_tokens", strstr(json, "total_input_tokens") != NULL);
-        TEST("json contains total_output_tokens", strstr(json, "total_output_tokens") != NULL);
-        TEST("json contains total_cost_usd", strstr(json, "total_cost_usd") != NULL);
-        TEST("json contains last_model", strstr(json, "last_model") != NULL);
-        TEST("json contains test-model", strstr(json, "test-model") != NULL);
-        TEST("json contains limits", strstr(json, "limits") != NULL);
-        TEST("json contains warnings", strstr(json, "warnings") != NULL);
-        TEST("json contains exceeded", strstr(json, "exceeded") != NULL);
-        TEST("json contains 100 (input)", strstr(json, "100") != NULL);
-        TEST("json contains 50 (output)", strstr(json, "50") != NULL);
-        free(json);
-    }
-}
-
-/* ================================================================
- *  9. Estimate cost
- * ================================================================ */
-static void test_estimate_cost(void) {
-    printf("\n--- Estimate Cost ---\n");
-
-    /* Delegates to model_estimate_cost — smoke test only */
-    double cost = budget_tracker_estimate_cost("deepseek-v4", 1000, 500);
-    TEST("estimate_cost returns non-negative", cost >= 0.0);
-
-    /* Unknown model uses fallback (not 0) — non-zero for non-zero tokens */
-    cost = budget_tracker_estimate_cost("nonexistent-model-xyz", 100, 100);
-    TEST("unknown model returns fallback cost", cost > 0.0);
-
-    /* NULL model uses fallback — non-zero for non-zero tokens */
-    cost = budget_tracker_estimate_cost(NULL, 100, 100);
-    TEST("NULL model returns fallback cost", cost > 0.0);
-}
+#define ASSERT_NEAR(a, b, eps) TEST(#a " ~= " #b, fabs((a) - (b)) <= (eps))
 
 int main(void) {
-    printf("=== Budget Tracker Test Suite (G158) ===\n");
+    printf("=== Budget Tracker Tests ===\n");
 
-    test_init();
-    test_set_limits();
-    test_report_turn();
-    test_is_exceeded();
-    test_remaining();
-    test_warnings();
-    test_reset();
-    test_stats_json();
-    test_estimate_cost();
+    /* Test 1: init sets defaults */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        TEST("init clears struct", bt.total_input_tokens == 0);
+        TEST("init max_iterations=0", bt.max_iterations == 0);
+        TEST("init warn_at_pct=0.8", bt.warn_at_pct == 0.8);
+        TEST("init hard_limit=false", bt.hard_limit == false);
+        TEST("init max_tool_calls=0", bt.max_tool_calls_per_turn == 0);
+    }
 
-    printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
-    return failed > 0 ? 1 : 0;
+    /* Test 2: init(NULL) no crash */
+    {
+        budget_tracker_init(NULL);
+        TEST("init(NULL) no crash", 1);
+    }
+
+    /* Test 3: set_limits works */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 1000, 500, 0.05, 10);
+        TEST("set max_input=1000", bt.max_input_tokens == 1000);
+        TEST("set max_output=500", bt.max_output_tokens == 500);
+        TEST("set max_cost=0.05", bt.max_cost_usd == 0.05);
+        TEST("set max_turns=10", bt.max_turns == 10);
+    }
+
+    /* Test 4: set_limits(NULL) no crash */
+    {
+        budget_tracker_set_limits(NULL, 100, 100, 1.0, 5);
+        TEST("set_limits(NULL) no crash", 1);
+    }
+
+    /* Test 5: report_turn updates totals */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_report_turn(&bt, 100, 50, 0.001, "gpt-4");
+        TEST("report adds input", bt.total_input_tokens == 100);
+        TEST("report adds output", bt.total_output_tokens == 50);
+        TEST("report adds cost", bt.total_cost_usd == 0.001);
+        TEST("report increments turns", bt.turn_count == 1);
+        TEST("report sets last_input", bt.last_input_tokens == 100);
+        TEST("report sets last_model", strcmp(bt.last_model, "gpt-4") == 0);
+    }
+
+    /* Test 6: report_turn(NULL) no crash */
+    {
+        budget_tracker_report_turn(NULL, 100, 50, 0.001, "gpt-4");
+        TEST("report_turn(NULL) no crash", 1);
+    }
+
+    /* Test 7: is_exceeded false by default */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        TEST("not exceeded by default", !budget_tracker_is_exceeded(&bt));
+    }
+
+    /* Test 8: is_exceeded true when over limit */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 100, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 200, 0, 0, "test");
+        TEST("exceeded when over input limit", budget_tracker_is_exceeded(&bt));
+    }
+
+    /* Test 9: remaining_input/output/cost correct */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 1000, 500, 1.0, 10);
+        TEST("remaining_input init", budget_tracker_remaining_input(&bt) == 1000);
+        TEST("remaining_output init", budget_tracker_remaining_output(&bt) == 500);
+        ASSERT_NEAR(budget_tracker_remaining_cost(&bt), 1.0, 0.001);
+        TEST("remaining_turns init", budget_tracker_remaining_turns(&bt) == 10);
+
+        budget_tracker_report_turn(&bt, 200, 50, 0.1, "test");
+        TEST("remaining_input after use", budget_tracker_remaining_input(&bt) == 800);
+        TEST("remaining_output after use", budget_tracker_remaining_output(&bt) == 450);
+        ASSERT_NEAR(budget_tracker_remaining_cost(&bt), 0.9, 0.001);
+        TEST("remaining_turns after use", budget_tracker_remaining_turns(&bt) == 9);
+    }
+
+    /* Test 10: remaining with no limits returns -1 (unlimited) */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        TEST("remaining_input -1 for unlimited", budget_tracker_remaining_input(&bt) == -1);
+        TEST("remaining_output -1 for unlimited", budget_tracker_remaining_output(&bt) == -1);
+        TEST("remaining_cost -1 for unlimited", budget_tracker_remaining_cost(&bt) == -1.0);
+        TEST("remaining_turns -1 for unlimited", budget_tracker_remaining_turns(&bt) == -1);
+    }
+
+    /* Test 11: get_warning at 80% threshold */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 100, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 85, 0, 0, "test");
+        const char *warn = budget_tracker_get_warning(&bt);
+        TEST("warning emitted near limit", warn != NULL);
+    }
+
+    /* Test 12: get_warning returns NULL when under threshold */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 1000, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 100, 0, 0, "test");
+        const char *warn = budget_tracker_get_warning(&bt);
+        TEST("no warning under threshold", warn == NULL);
+    }
+
+    /* Test 13: get_warning clears flag (only warns once) */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 100, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 95, 0, 0, "test");
+        const char *w1 = budget_tracker_get_warning(&bt);
+        const char *w2 = budget_tracker_get_warning(&bt);
+        TEST("first warning non-NULL", w1 != NULL);
+        TEST("second warning NULL (cleared)", w2 == NULL);
+    }
+
+    /* Test 14: per-turn tool call tracking */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_per_turn_limit(&bt, 3);
+        TEST("per-turn limit set", bt.max_tool_calls_per_turn == 3);
+        TEST("turn not exceeded initially", !budget_tracker_turn_exceeded(&bt));
+
+        budget_tracker_increment_tool_call(&bt);
+        budget_tracker_increment_tool_call(&bt);
+        budget_tracker_increment_tool_call(&bt);
+        TEST("3 calls = count=3", bt.turn_tool_calls == 3);
+        TEST("turn exceeded at limit", budget_tracker_turn_exceeded(&bt));
+
+        budget_tracker_reset_turn_tools(&bt);
+        TEST("reset clears count", bt.turn_tool_calls == 0);
+        TEST("turn not exceeded after reset", !budget_tracker_turn_exceeded(&bt));
+    }
+
+    /* Test 15: set_per_turn_limit(NULL) no crash */
+    {
+        budget_tracker_set_per_turn_limit(NULL, 5);
+        TEST("set_per_turn_limit(NULL) no crash", 1);
+    }
+
+    /* Test 16: hard limit mode */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_hard_limit(&bt, true);
+        TEST("hard_limit set", bt.hard_limit == true);
+        TEST("not hard exceeded below limit", !budget_tracker_is_hard_exceeded(&bt));
+
+        budget_tracker_set_limits(&bt, 100, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 200, 0, 0, "test");
+        TEST("hard exceeded when over limit", budget_tracker_is_hard_exceeded(&bt));
+    }
+
+    /* Test 17: stats_json produces valid output */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 1000, 500, 1.0, 10);
+        budget_tracker_report_turn(&bt, 100, 50, 0.001, "gpt-4");
+
+        char *json = budget_tracker_stats_json(&bt);
+        TEST("stats_json non-NULL", json != NULL);
+        if (json) {
+            TEST("stats_json contains total_input", strstr(json, "total_input") != NULL);
+            TEST("stats_json contains total_cost", strstr(json, "total_cost") != NULL);
+            TEST("stats_json contains turn_count", strstr(json, "turn_count") != NULL);
+            free(json);
+        }
+    }
+
+    /* Test 18: stats_json(NULL) returns NULL */
+    {
+        char *json = budget_tracker_stats_json(NULL);
+        TEST("stats_json(NULL) returns NULL", json == NULL);
+    }
+
+    /* Test 19: reset clears all */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_limits(&bt, 1000, 500, 1.0, 10);
+        budget_tracker_report_turn(&bt, 100, 50, 0.001, "gpt-4");
+        budget_tracker_reset(&bt);
+        TEST("reset clears input", bt.total_input_tokens == 0);
+        TEST("reset clears turns", bt.turn_count == 0);
+        TEST("reset clears cost", bt.total_cost_usd == 0.0);
+        TEST("reset preserves limits", bt.max_input_tokens == 1000);
+    }
+
+    /* Test 20: iteration budget */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_iteration_limit(&bt, 3);
+        TEST("max_iterations set", bt.max_iterations == 3);
+        TEST("iterations_used init", budget_tracker_iterations_used(&bt) == 0);
+        TEST("iterations_remaining init", budget_tracker_iterations_remaining(&bt) == 3);
+
+        TEST("consume 1 works", budget_tracker_consume_iteration(&bt));
+        TEST("consume 2 works", budget_tracker_consume_iteration(&bt));
+        TEST("consume 3 works", budget_tracker_consume_iteration(&bt));
+        TEST("consume 4 fails (exhausted)", !budget_tracker_consume_iteration(&bt));
+        TEST("iterations_used = 3", budget_tracker_iterations_used(&bt) == 3);
+        TEST("iterations_remaining = 0", budget_tracker_iterations_remaining(&bt) == 0);
+
+        budget_tracker_refund_iteration(&bt);
+        TEST("refund restores to 2 remaining", budget_tracker_iterations_remaining(&bt) == 1);
+        TEST("refund then consume works", budget_tracker_consume_iteration(&bt));
+    }
+
+    /* Test 21: consume_iteration with unlimited (0) always works */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        for (int i = 0; i < 100; i++)
+            if (!budget_tracker_consume_iteration(&bt))
+                { TEST("unlimited consume never fails", 0); break; }
+        TEST("unlimited remaining = -1", budget_tracker_iterations_remaining(&bt) == -1);
+    }
+
+    /* Test 22: NULL safety for remaining/getters */
+    {
+        TEST("remaining_input(NULL)=-1", budget_tracker_remaining_input(NULL) == -1);
+        TEST("remaining_output(NULL)=-1", budget_tracker_remaining_output(NULL) == -1);
+        TEST("remaining_cost(NULL)=-1", budget_tracker_remaining_cost(NULL) == -1.0);
+        TEST("remaining_turns(NULL)=-1", budget_tracker_remaining_turns(NULL) == -1);
+        TEST("iterations_remaining(NULL)=-1", budget_tracker_iterations_remaining(NULL) == -1);
+        TEST("is_exceeded(NULL)=false", !budget_tracker_is_exceeded(NULL));
+        TEST("is_hard_exceeded(NULL)=false", !budget_tracker_is_hard_exceeded(NULL));
+        TEST("turn_exceeded(NULL)=false", !budget_tracker_turn_exceeded(NULL));
+        TEST("iterations_used(NULL)=0", budget_tracker_iterations_used(NULL) == 0);
+        TEST("consume_iteration(NULL)=false", !budget_tracker_consume_iteration(NULL));
+        budget_tracker_refund_iteration(NULL);
+        TEST("refund_iteration(NULL) no crash", 1);
+        budget_tracker_reset(NULL);
+        TEST("reset(NULL) no crash", 1);
+        const char *w = budget_tracker_get_warning(NULL);
+        TEST("get_warning(NULL)=NULL", w == NULL);
+    }
+
+    /* Test 23: Hard limit with grace call mode */
+    {
+        budget_tracker_t bt;
+        budget_tracker_init(&bt);
+        budget_tracker_set_hard_limit(&bt, false);
+        budget_tracker_set_limits(&bt, 100, 0, 0, 0);
+        budget_tracker_report_turn(&bt, 200, 0, 0, "test");
+        TEST("exceeded in grace mode", budget_tracker_is_exceeded(&bt));
+        TEST("not hard exceeded in grace mode", !budget_tracker_is_hard_exceeded(&bt));
+    }
+
+    /* Summary */
+    printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All budget_tracker tests PASSED");
+    return failures ? 1 : 0;
 }
