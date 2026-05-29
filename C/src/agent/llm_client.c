@@ -1485,16 +1485,27 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
         finalize_stream_diag(&ctx);
 
         if (r != 0 && r != -2) {
-            /* Log structured stream error */
+            /* Log structured stream error with diagnostics */
             const char *upstream = resp->diag.upstream_headers;
-            if (upstream && upstream[0])
-                fprintf(stderr, "[llm] Stream failed for %s/%s [upstream: %s]\n",
-                        cfg->provider, cfg->model, upstream);
-            else
-                fprintf(stderr, "[llm] Stream failed for %s/%s\n",
-                        cfg->provider, cfg->model);
-            if (!resp->content)
-                resp->content = strdup("HTTP stream request failed");
+            double elapsed = resp->diag.total_stream_time > 0 ?
+                resp->diag.total_stream_time : 0.0;
+            size_t tokens = resp->diag.total_tokens;
+            double ttfb = resp->diag.time_to_first_token;
+
+            fprintf(stderr, "[llm] Stream failed for %s/%s"
+                    " elapsed=%.1fs tokens=%zu ttfb=%.2fs"
+                    "%s%s\n",
+                    cfg->provider, cfg->model,
+                    elapsed, tokens, ttfb,
+                    upstream[0] ? " upstream=[" : "",
+                    upstream[0] ? upstream : "");
+            if (!resp->content) {
+                char drop_msg[512];
+                snprintf(drop_msg, sizeof(drop_msg),
+                         "Stream drop: %s/%s after %.1fs (%zu tokens, TTFB %.2fs)",
+                         cfg->provider, cfg->model, elapsed, tokens, ttfb);
+                resp->content = strdup(drop_msg);
+            }
             provider_free(prov);
             return resp;
         }
@@ -1575,7 +1586,15 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
     finalize_stream_diag(&ctx);
 
     if (r != 0 && r != -2 /* aborted by callback OK */) {
-        resp->content = strdup("HTTP stream request failed");
+        double elapsed = resp->diag.total_stream_time > 0 ?
+            resp->diag.total_stream_time : 0.0;
+        size_t tokens = resp->diag.total_tokens;
+        fprintf(stderr, "[llm] Legacy stream failed after %.1fs (%zu tokens)\n",
+                elapsed, tokens);
+        char drop_msg[256];
+        snprintf(drop_msg, sizeof(drop_msg),
+                 "Stream drop after %.1fs (%zu tokens)", elapsed, tokens);
+        resp->content = strdup(drop_msg);
         return resp;
     }
 
