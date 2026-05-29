@@ -1,4 +1,4 @@
-(v239) (v239)
+(v240) (v240)
 # Plan — Slermes C Translation
 135 gaps across 9 sectors (battleship v34). Fork diverged
 
