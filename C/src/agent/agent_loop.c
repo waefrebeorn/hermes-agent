@@ -95,6 +95,10 @@ void agent_init(agent_state_t *state) {
     /* L09: Memory nudge defaults — 10 turns between nudges, starts at 0 */
     state->memory_nudge_interval = 10;
     state->turns_since_memory = 0;
+
+    /* L10: Skill nudge defaults — 15 iterations between nudges, disabled by default */
+    state->skill_nudge_interval = 0;
+    state->iters_since_skill = 0;
 }
 
 /* P99: Initialize agent infrastructure from configuration.
@@ -1208,6 +1212,26 @@ retry_done:
 
         iteration++;
 
+        /* L10: Increment skill nudge counter per tool iteration */
+        if (state->skill_nudge_interval > 0)
+            state->iters_since_skill++;
+
+        /* L10: Check skill nudge threshold after this iteration */
+        if (state->skill_nudge_interval > 0
+                && state->iters_since_skill >= state->skill_nudge_interval) {
+            state->iters_since_skill = 0;
+            /* Inject skill nudge via steer queue */
+            if (state->steer_count < HERMES_MAX_STEERS) {
+                snprintf(state->steer_queue[state->steer_count],
+                         sizeof(state->steer_queue[0]),
+                         "[Skill reminder] You can use the skill_manage tool to "
+                         "create, edit, or review skills. Consider reviewing your "
+                         "available skills for this task.");
+                state->steer_roles[state->steer_count] = MSG_SYSTEM;
+                state->steer_count++;
+            }
+        }
+
         /* P86: Report turn to budget tracker */
         if (state->budget) {
             double cost = budget_tracker_estimate_cost(
@@ -1431,6 +1455,10 @@ retry_done:
             /* L09: Reset memory nudge counter when memory tool is used */
             if (strcmp(works[i].tool_name, "memory") == 0)
                 state->turns_since_memory = 0;
+
+            /* L10: Reset skill nudge counter when skill_manage tool is used */
+            if (strcmp(works[i].tool_name, "skill_manage") == 0)
+                state->iters_since_skill = 0;
 
             message_t *tool_msg = message_new_tool(
                 works[i].tool_id,

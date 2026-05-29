@@ -346,6 +346,10 @@ typedef struct {
     /* L09: Memory nudge — periodic suggestion to update memory */
     int  memory_nudge_interval;  /* turns between nudges (0=disabled) */
     int  turns_since_memory;     /* turns since last memory nudge */
+
+    /* L10: Skill nudge — periodic suggestion after N tool iterations */
+    int  skill_nudge_interval;   /* iterations between nudges (0=disabled) */
+    int  iters_since_skill;      /* tool iterations since last skill nudge */
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */

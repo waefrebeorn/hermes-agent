@@ -590,9 +590,11 @@ Battleship v34 S1 claimed 28 conversation loop gaps. Audit verified 7 stale (alr
 |----|---------------|----------|
 | L14 | Log tagging with session ID
 | L03 | Image support detection
-| L09 | Memory nudge trigger — periodic suggestion to update memory | `include/hermes.h` — memory_nudge_interval, turns_since_memory; `src/agent/agent_loop.c` — nudge check before steer queue, reset on memory tool use |
+| L09 | Memory nudge trigger
+| L10 | Skill trigger — periodic suggestion to review skills after N tool iterations | `include/hermes.h` — skill_nudge_interval, iters_since_skill; `src/agent/agent_loop.c` — increment per iteration, threshold check, reset on skill_manage use |
+ — periodic suggestion to update memory | `include/hermes.h` — memory_nudge_interval, turns_since_memory; `src/agent/agent_loop.c` — nudge check before steer queue, reset on memory tool use |
  — auto-disable vision on 'text only' error | `src/agent/image_routing.c` — image_routing_notify_error() checks 11 error patterns; `src/include/hermes.h` — vision_disabled flag on agent_state_t; `src/agent/agent_loop.c` — wired into retry loop after llm_chat_completion |
  — hermes_log_set_context() wired in agent_loop turn loop | `src/hermes_logging.h` — set_context; `src/agent/agent_loop.c` — per-turn call |
 
-S1 corrected: 28 → 18 gaps (7 stale retired, 3 done). 13 real + 5 partial remain.
+S1 corrected: 28 → 17 gaps (7 stale retired, 4 done). 12 real + 5 partial remain.
 Suite: 294/0/0 (unchanged).
