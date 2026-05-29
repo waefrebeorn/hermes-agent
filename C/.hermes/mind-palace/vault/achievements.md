@@ -1411,3 +1411,10 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P142-01 | Ported `_handle_sudo_failure()` from Python terminal_tool — detects "sudo: a password is required", "sudo: no tty present", "sudo: a terminal is required" in command output and adds a sudo_tip field with SUDO_PASSWORD guidance. | `C/src/tools/terminal.c` — `_inject_sudo_failure()` called from `_inject_interpretation()` |
 | P142-02 | Added 5 test assertions covering sudo failure patterns (password required, no tty present) + negative test (exit 0 with sudo text). Terminal tests 76→81. | `C/tests/test_terminal.c` — tests 36-37 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 143: B07 Terminal Depth — Workdir Validation
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P143-01 | Ported `_validate_workdir()` from Python terminal_tool — allowlist-based safe-path validation that blocks shell metacharacters (;, $, backticks, parens, etc.) in workdir paths. Blocking check (returns error JSON) runs before command execution. | `C/src/tools/terminal.c` — `_validate_workdir()` called in `terminal_handler()` before sandbox escape check |
+| P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

@@ -432,6 +432,39 @@ int main(void) {
         free(res);
     }
 
+    /* Test 38: Workdir validation — safe path allowed */
+    {
+        char *res = terminal_handler("{\"command\":\"echo safe_wd_test\",\"workdir\":\"/tmp\"}", NULL);
+        TEST("safe workdir returns non-NULL", res != NULL);
+        if (res) {
+            TEST("safe workdir exit code 0", get_exit_code(res) == 0);
+            TEST("safe workdir output contains safe_wd_test", json_contains(res, "safe_wd_test"));
+        }
+        free(res);
+    }
+
+    /* Test 39: Workdir validation — shell metachar blocked */
+    {
+        char *res = terminal_handler("{\"command\":\"echo should_not_run\",\"workdir\":\"/tmp; rm -rf /\"}", NULL);
+        TEST("dangerous workdir returns non-NULL", res != NULL);
+        if (res) {
+            TEST("dangerous workdir has error", has_error(res));
+            TEST("dangerous workdir mentions blocked", json_contains(res, "Blocked"));
+        }
+        free(res);
+    }
+
+    /* Test 40: Workdir validation — backtick injection blocked */
+    {
+        char *res = terminal_handler("{\"command\":\"echo should_not_run\",\"workdir\":\"/tmp/$(id)\"}", NULL);
+        TEST("backtick workdir returns non-NULL", res != NULL);
+        if (res) {
+            TEST("backtick workdir has error", has_error(res));
+            TEST("backtick workdir mentions blocked", json_contains(res, "Blocked"));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);

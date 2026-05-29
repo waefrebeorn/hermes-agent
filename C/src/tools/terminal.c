@@ -633,7 +633,30 @@ static char *build_env_passthrough_export(void) {
  *  Safety checks (workdir validation, disk usage warning)
  * ================================================================ */
 
-/* Validate workdir exists and is a directory. Returns NULL on success, warning string on failure. */
+/* Validate workdir uses only safe filesystem characters.
+ * Mirrors Python terminal_tool._validate_workdir().
+ * Uses allowlist: alphanumeric plus / \ _ : - . ~ space + @ = ,
+ * Returns error string if dangerous, NULL if safe. */
+static const char *_validate_workdir(const char *workdir) {
+    if (!workdir || !workdir[0]) return NULL;
+    static const char safe[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                               "abcdefghijklmnopqrstuvwxyz"
+                               "0123456789/\\_:\\-.~ +@=,";
+    for (const char *p = workdir; *p; p++) {
+        if (!strchr(safe, *p)) {
+            static char buf[256];
+            snprintf(buf, sizeof(buf),
+                     "Blocked: workdir contains disallowed character '%c'. "
+                     "Use a simple filesystem path without shell metacharacters.",
+                     *p);
+            return buf;
+        }
+    }
+    return NULL;
+}
+
+/* Check workdir filesystem path (exists, is directory). Returns warning or NULL.
+ * Mirrors Python terminal_tool._validate_workdir() for existence check. */
 static const char *_check_workdir(const char *workdir) {
     if (!workdir || !workdir[0]) return NULL;
     struct stat st;
@@ -1101,6 +1124,16 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     const char *wd_warn = _check_workdir(workdir);
     const char *disk_warn = _check_disk_usage(workdir);
     const char *guidance = _check_foreground_guidance(command);
+
+    /* F14: Validate workdir uses only safe filesystem characters.
+     * Blocking check (rejects command) — not a warning. */
+    const char *wd_valid = _validate_workdir(workdir);
+    if (wd_valid) {
+        char err[512];
+        snprintf(err, sizeof(err),
+                 "{\"error\": \"%s\", \"status\": \"error\"}", wd_valid);
+        return strdup(err);
+    }
 
     /* O14: Check command for sandbox escape patterns before execution */
     sandbox_escape_result_t esc = sandbox_escape_check(command, -1, "terminal");
