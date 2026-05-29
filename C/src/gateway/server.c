@@ -1129,11 +1129,11 @@ static void gateway_send(const char *platform, const char *target, const char *t
             char chunk[4001];
             memcpy(chunk, text, 4000);
             chunk[4000] = '\0';
-            telegram_send_message(g_gw.http, target, chunk, "Markdown");
+            telegram_send_message(g_gw.http, target, chunk, "Markdown", NULL);
             if (len > 4000)
-                telegram_send_message(g_gw.http, target, text + 4000, "Markdown");
+                telegram_send_message(g_gw.http, target, text + 4000, "Markdown", NULL);
         } else {
-            telegram_send_message(g_gw.http, target, text, "Markdown");
+            telegram_send_message(g_gw.http, target, text, "Markdown", NULL);
         }
     } else if (strcmp(platform, "discord") == 0) {
         discord_send_message(g_gw.http, text);

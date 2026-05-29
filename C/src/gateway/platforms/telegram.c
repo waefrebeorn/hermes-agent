@@ -150,7 +150,8 @@ static http_response_t *tg_post(http_client_t *http, const char *method,
  * ================================================================ */
 
 bool telegram_send_message(http_client_t *http, const char *chat_id,
-                            const char *text, const char *parse_mode)
+                            const char *text, const char *parse_mode,
+                            const char *thread_id)
 {
     if (!http || !chat_id || !text) return false;
 
@@ -159,6 +160,8 @@ bool telegram_send_message(http_client_t *http, const char *chat_id,
     json_object_set(body, "text", json_new_string(text));
     if (parse_mode)
         json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    if (thread_id)
+        json_object_set(body, "message_thread_id", json_new_string(thread_id));
 
     http_response_t *resp = tg_post(http, "sendMessage", body);
     bool ok = resp && resp->status == 200;
@@ -174,6 +177,7 @@ bool telegram_send_message_with_keyboard(http_client_t *http,
                                           const char *chat_id,
                                           const char *text,
                                           const char *parse_mode,
+                                          const char *thread_id,
                                           json_node_t *reply_markup)
 {
     if (!http || !chat_id || !text) return false;
@@ -183,6 +187,8 @@ bool telegram_send_message_with_keyboard(http_client_t *http,
     json_object_set(body, "text", json_new_string(text));
     if (parse_mode)
         json_object_set(body, "parse_mode", json_new_string(parse_mode));
+    if (thread_id)
+        json_object_set(body, "message_thread_id", json_new_string(thread_id));
     if (reply_markup)
         json_object_set(body, "reply_markup", json_copy(reply_markup));
 
@@ -956,9 +962,8 @@ const char *telegram_get_message_thread_id(json_node_t *update) {
 bool telegram_send_draft(http_client_t *http, const char *chat_id,
                           const char *text, const char *parse_mode)
 {
-    return telegram_send_message_with_keyboard(http, chat_id, text, parse_mode, NULL);
+    return telegram_send_message_with_keyboard(http, chat_id, text, parse_mode, NULL, NULL);
 }
-
 /* E08: Send clarification prompt with inline Yes/No/Explain buttons */
 bool telegram_send_clarify(http_client_t *http, const char *chat_id,
                             const char *question, const char **options, int n_options,
@@ -978,11 +983,10 @@ bool telegram_send_clarify(http_client_t *http, const char *chat_id,
     json_array_append(rows, row);
     json_object_set(keyboard, "inline_keyboard", rows);
 
-    bool ok = telegram_send_message_with_keyboard(http, chat_id, question, parse_mode, keyboard);
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, question, parse_mode, NULL, keyboard);
     json_free(keyboard);
     return ok;
 }
-
 /* E09: Send dangerous command approval prompt with Approve/Deny buttons */
 bool telegram_send_approval_prompt(http_client_t *http, const char *chat_id,
                                     const char *command, const char *reason,
@@ -1013,11 +1017,10 @@ bool telegram_send_approval_prompt(http_client_t *http, const char *chat_id,
     json_array_append(rows, row);
     json_object_set(keyboard, "inline_keyboard", rows);
 
-    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, "Markdown", keyboard);
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, "Markdown", NULL, keyboard);
     json_free(keyboard);
     return ok;
 }
-
 /* E10: Send slash command confirmation with Confirm/Cancel buttons */
 bool telegram_send_confirm_prompt(http_client_t *http, const char *chat_id,
                                    const char *action, const char *detail,
@@ -1049,7 +1052,7 @@ bool telegram_send_confirm_prompt(http_client_t *http, const char *chat_id,
     json_object_set(keyboard, "inline_keyboard", rows);
 
     bool ok = telegram_send_message_with_keyboard(http, chat_id, text,
-                parse_mode ? parse_mode : "Markdown", keyboard);
+                parse_mode ? parse_mode : "Markdown", NULL, keyboard);
     json_free(keyboard);
     return ok;
 }
@@ -1093,11 +1096,10 @@ bool telegram_send_model_picker(http_client_t *http, const char *chat_id,
     }
     json_object_set(keyboard, "inline_keyboard", rows);
 
-    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, NULL, keyboard);
+    bool ok = telegram_send_message_with_keyboard(http, chat_id, text, NULL, NULL, keyboard);
     json_free(keyboard);
     return ok;
 }
-
 /* E12: Send update prompt with diff + Apply/Dismiss buttons */
 bool telegram_send_update_prompt(http_client_t *http, const char *chat_id,
                                   const char *diff_text, const char *summary,
@@ -1129,7 +1131,7 @@ bool telegram_send_update_prompt(http_client_t *http, const char *chat_id,
     json_object_set(keyboard, "inline_keyboard", rows);
 
     bool ok = telegram_send_message_with_keyboard(http, chat_id, text,
-                parse_mode ? parse_mode : "Markdown", keyboard);
+                parse_mode ? parse_mode : "Markdown", NULL, keyboard);
     json_free(keyboard);
     return ok;
 }

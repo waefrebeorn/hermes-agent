@@ -285,7 +285,8 @@ bool telegram_get_me(http_client_t *http);
 bool telegram_is_mentioned(json_node_t *update);
 bool telegram_is_group(json_node_t *update);
 bool telegram_send_message(http_client_t *http, const char *chat_id,
-                            const char *text, const char *parse_mode);
+                            const char *text, const char *parse_mode,
+                            const char *thread_id);
 bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
                                 const char *action);
 json_node_t *telegram_get_updates(http_client_t *http, int offset, int timeout);
@@ -301,6 +302,7 @@ bool telegram_send_message_with_keyboard(http_client_t *http,
                                           const char *chat_id,
                                           const char *text,
                                           const char *parse_mode,
+                                          const char *thread_id,
                                           json_node_t *reply_markup);
 
 /* Edit/delete */

@@ -206,22 +206,42 @@ char *send_message_handler(const char *args_json, const char *task_id) {
         /* F42: Parse target for platform:chat_id format */
         char platform_buf[64] = {0};
         char chat_id_buf[256] = {0};
+        char thread_id_buf[64] = {0};
         const char *platform = platform_override;
         const char *chat_id = NULL;
+        const char *target_thread_id = NULL;
 
         if (!platform) {
             const char *colon = strchr(target, ':');
             if (colon && colon != target) {
-                /* platform:chat_id format */
+                /* platform:chat_id[:thread_id] format */
                 size_t plen = (size_t)(colon - target);
                 if (plen < sizeof(platform_buf)) {
                     memcpy(platform_buf, target, plen);
                     platform_buf[plen] = '\0';
                     platform = platform_buf;
-                    snprintf(chat_id_buf, sizeof(chat_id_buf), "%s", colon + 1);
-                    chat_id = chat_id_buf;
+                    /* Check for second colon (chat_id:thread_id) */
+                    const char *second_colon = strchr(colon + 1, ':');
+                    if (second_colon) {
+                        size_t cid_len = (size_t)(second_colon - colon - 1);
+                        if (cid_len < sizeof(chat_id_buf)) {
+                            memcpy(chat_id_buf, colon + 1, cid_len);
+                            chat_id_buf[cid_len] = '\0';
+                            chat_id = chat_id_buf;
+                        }
+                        snprintf(thread_id_buf, sizeof(thread_id_buf), "%s", second_colon + 1);
+                        target_thread_id = thread_id_buf;
+                    } else {
+                        snprintf(chat_id_buf, sizeof(chat_id_buf), "%s", colon + 1);
+                        chat_id = chat_id_buf;
+                    }
                 }
             }
+        }
+
+        /* Use thread_id from args if provided, fallback to target parsing */
+        if (!thread_id || !thread_id[0]) {
+            thread_id = target_thread_id;
         }
 
         /* F43: Check for MEDIA: prefix in message (backward compat) */
@@ -355,16 +375,16 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                         json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
                         if (reply_markup) {
                             sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
-                                                                       tg_msg, "Markdown", reply_markup);
+                                                                       tg_msg, "Markdown", thread_id, reply_markup);
                             json_free(reply_markup);
                         } else {
                             /* Fallback: send without keyboard */
                             sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                         tg_msg, "Markdown");
+                                                         tg_msg, "Markdown", thread_id);
                         }
                     } else {
                         sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                     tg_msg, "Markdown");
+                                                     tg_msg, "Markdown", thread_id);
                     }
 send_done:
                     http_client_free(http);
