@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v172 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 97.**
+**v173 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 98.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -168,7 +168,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority | Status |
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
-| 01 | B01 | browser | ~1678 | ~3800 | 45% | PDF download via browser_generate_pdf (CDP). autofill still missing (requires Playwright/real browser engine) | P2 | REAL |
+| 01 | B01 | browser | ~1712 | ~3800 | 60% | browser_navigate URL safety: secret exfiltration + SSRF protection via url_has_secret()/url_is_safe() (Phase 98). browser_snapshot(full=true) returns complete page content. PDF generation via CDP already implemented. autofill requires real browser engine (won't port) | P2 | PARTIAL |
 | 02 | B02 | vision | ~417 | ~1436 | 29% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Still missing: face detection, barcode. OCR/EXIF/colors via Python helper | P2 | PARTIAL |
 || 03 | B03 | web | ~1046 | ~1326 | 78% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). URL secret exfiltration check blocks URLs containing API key patterns (Phase 93). Multi-URL support accepts urls array for extracting multiple pages in one call (Phase 94). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 97: B08 disable_link_previews (send_message 57%→59%).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 98: B01 URL safety + full snapshot (browser 45%→60%).**
 
 ---
 

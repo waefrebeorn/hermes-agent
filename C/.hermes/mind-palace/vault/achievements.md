@@ -973,7 +973,7 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
-## Phase 97: B08 disable_link_previews for Telegram (v172)
+## Phase 97: B08 disable_link_previews for Telegram (v173)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -981,6 +981,17 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P97-02 | disable_web_page_preview:true set when disable_preview=true | `src/gateway/platforms/telegram.c` — JSON body construction |
 | P97-03 | disable_link_previews schema param added to send_message tool | `src/tools/send_message.c` — SCHEMA + args parsing |
 | P97-04 | All internal callers updated (telegram.c, server.c, send_message.c) | `src/gateway/platforms/telegram.c` — 6 call sites + server.c + send_message.c |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
+## Phase 98: B01 browser URL safety + full snapshot (v173)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P98-01 | browser_navigate URL safety checks: secret exfiltration via url_has_secret() | `src/tools/browser.c` — browser_navigate_handler → url_has_secret() |
+| P98-02 | browser_navigate SSRF protection via url_is_safe() | `src/tools/browser.c` — browser_navigate_handler → url_is_safe() |
+| P98-03 | browser_snapshot(full=true) returns complete page content without 4K truncation | `src/tools/browser.c` — browser_snapshot_handler full=true path |
+| P98-04 | Vaulted stale battleship claim: browser_generate_pdf PDF download already existed via CDP | `src/tools/browser.c` — cdp_generate_pdf + registry_init_browser |
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 

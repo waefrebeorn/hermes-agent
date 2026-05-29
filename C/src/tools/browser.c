@@ -7,6 +7,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include "hermes_url_safety.h"
 #include "base64.h"
 #include <websocket.h>
 #include <stdio.h>
@@ -424,6 +425,25 @@ char *browser_navigate_handler(const char *args_json, const char *task_id) {
         return strdup("{\"error\": \"Missing 'url' parameter\"}");
     }
 
+    /* Secret exfiltration prevention: block URLs containing API keys */
+    {
+        const char *secret_found = url_has_secret(url);
+        if (secret_found) {
+            json_free(args);
+            char result[256];
+            snprintf(result, sizeof(result),
+                     "{\"error\":\"Blocked: URL contains what appears to be a %s API key. Secrets must not be sent in URLs.\"}",
+                     secret_found);
+            return strdup(result);
+        }
+    }
+
+    /* SSRF protection: block internal/private URLs */
+    if (!url_is_safe(url)) {
+        json_free(args);
+        return strdup("{\"error\":\"Blocked: URL targets a private or internal address\"}");
+    }
+
     const char *err = browser_navigate_to(url);
     json_free(args);
 
@@ -464,37 +484,34 @@ char *browser_navigate_handler(const char *args_json, const char *task_id) {
 
 /* browser_snapshot: Get current page state with scroll support */
 char *browser_snapshot_handler(const char *args_json, const char *task_id) {
-    (void)args_json; (void)task_id;
+    (void)task_id;
     if (!g_tab.html) {
         return strdup("{\"error\": \"No page loaded. Navigate to a URL first.\"}");
+    }
+
+    /* Parse args for 'full' parameter */
+    bool full = false;
+    if (args_json && args_json[0]) {
+        json_t *args = json_parse(args_json, NULL);
+        if (args) {
+            full = json_get_bool(args, "full", false);
+            json_free(args);
+        }
     }
 
     char *full_text = html_to_text(g_tab.html);
     size_t text_len = full_text ? strlen(full_text) : 0;
 
-    /* Apply scroll offset */
+    /* Apply scroll offset (only when not full) */
     const char *scroll_start = full_text;
     size_t remaining = text_len;
-    if (g_tab.scroll_offset < text_len) {
+    if (!full && g_tab.scroll_offset < text_len) {
         scroll_start = full_text + g_tab.scroll_offset;
         remaining = text_len - g_tab.scroll_offset;
-    } else {
+    } else if (!full) {
         scroll_start = "";
         remaining = 0;
     }
-
-    char preview[4096];
-    size_t preview_sz = remaining > 4000 ? 4000 : remaining;
-    memcpy(preview, scroll_start, preview_sz);
-    if (remaining > 4000) {
-        preview[3997] = '.'; preview[3998] = '.'; preview[3999] = '.';
-        preview[4000] = '\0';
-    } else {
-        preview[preview_sz] = '\0';
-    }
-
-    char *result = (char *)malloc(16384);
-    if (!result) { free(full_text); return strdup("{\"error\": \"OOM\"}"); }
 
     /* Build element list string */
     char elements_str[4096] = "";
@@ -512,33 +529,105 @@ char *browser_snapshot_handler(const char *args_json, const char *task_id) {
     char elements_json[4096];
     size_t ej = 0;
     for (size_t i = 0; elements_str[i] && ej < sizeof(elements_json) - 2; i++) {
-        if (elements_str[i] == '"') { elements_json[ej++] = '\\'; elements_json[ej++] = '"'; }
+        if (elements_str[i] == '\"') { elements_json[ej++] = '\\'; elements_json[ej++] = '\"'; }
         else if (elements_str[i] == '\\') { elements_json[ej++] = '\\'; elements_json[ej++] = '\\'; }
         else if (elements_str[i] == '\n') { elements_json[ej++] = '\\'; elements_json[ej++] = 'n'; }
         else elements_json[ej++] = elements_str[i];
     }
     elements_json[ej] = '\0';
 
-    snprintf(result, 16384,
-        "{"
-        "  \"url\": \"%s\","
-        "  \"title\": \"%s\","
-        "  \"content_length\": %zu,"
-        "  \"text\": %s,"
-        "  \"elements\": \"%s\","
-        "  \"element_count\": %d,"
-        "  \"history_size\": %zu,"
-        "  \"can_go_back\": %s,"
-        "  \"can_go_forward\": %s,"
-        "  \"scroll_offset\": %zu,"
-        "  \"total_text_length\": %zu"
-        "}",
-        g_tab.url, g_tab.title, g_tab.html_len, preview,
-        elements_json, g_tab.element_count,
-        g_tab.history_count,
-        g_tab.history_pos > 0 ? "true" : "false",
-        g_tab.history_pos < g_tab.history_count - 1 ? "true" : "false",
-        g_tab.scroll_offset, text_len);
+    /* Build result: when full=true, include complete text in result buffer */
+    char *result = NULL;
+    if (full) {
+        /* Allocate enough for full text + overhead */
+        size_t result_sz = text_len + 8096;
+        result = (char *)malloc(result_sz);
+        if (!result) { free(full_text); return strdup("{\"error\": \"OOM\"}"); }
+
+        /* Truncated preview from beginning of text */
+        char preview[4096];
+        size_t ps = remaining > 4000 ? 4000 : remaining;
+        memcpy(preview, scroll_start, ps);
+        if (remaining > 4000) {
+            preview[3997] = '.'; preview[3998] = '.'; preview[3999] = '.';
+            preview[4000] = '\0';
+        } else {
+            preview[ps] = '\0';
+        }
+
+        /* JSON-escape the full text content for the `full_text` field */
+        char *escaped_text = (char *)malloc(text_len * 2 + 1);
+        if (!escaped_text) { free(full_text); free(result); return strdup("{\"error\": \"OOM\"}"); }
+        size_t ei = 0;
+        for (size_t i = 0; i < text_len && ei < text_len * 2; i++) {
+            if (full_text[i] == '\"') { escaped_text[ei++] = '\\'; escaped_text[ei++] = '\"'; }
+            else if (full_text[i] == '\\') { escaped_text[ei++] = '\\'; escaped_text[ei++] = '\\'; }
+            else if (full_text[i] == '\n') { escaped_text[ei++] = '\\'; escaped_text[ei++] = 'n'; }
+            else if (full_text[i] == '\t') { escaped_text[ei++] = '\\'; escaped_text[ei++] = 't'; }
+            else escaped_text[ei++] = full_text[i];
+        }
+        escaped_text[ei] = '\0';
+
+        snprintf(result, result_sz,
+            "{"
+            "  \"url\": \"%s\","
+            "  \"title\": \"%s\","
+            "  \"content_length\": %zu,"
+            "  \"text\": %s,"
+            "  \"full_text\": \"%s\","
+            "  \"full\": true,"
+            "  \"elements\": \"%s\","
+            "  \"element_count\": %d,"
+            "  \"history_size\": %zu,"
+            "  \"can_go_back\": %s,"
+            "  \"can_go_forward\": %s,"
+            "  \"total_text_length\": %zu"
+            "}",
+            g_tab.url, g_tab.title, g_tab.html_len, preview,
+            escaped_text,
+            elements_json, g_tab.element_count,
+            g_tab.history_count,
+            g_tab.history_pos > 0 ? "true" : "false",
+            g_tab.history_pos < g_tab.history_count - 1 ? "true" : "false",
+            text_len);
+        free(escaped_text);
+    } else {
+        /* Standard mode: preview truncated to 4000 chars */
+        char preview[4096];
+        size_t preview_sz = remaining > 4000 ? 4000 : remaining;
+        memcpy(preview, scroll_start, preview_sz);
+        if (remaining > 4000) {
+            preview[3997] = '.'; preview[3998] = '.'; preview[3999] = '.';
+            preview[4000] = '\0';
+        } else {
+            preview[preview_sz] = '\0';
+        }
+
+        result = (char *)malloc(16384);
+        if (!result) { free(full_text); return strdup("{\"error\": \"OOM\"}"); }
+
+        snprintf(result, 16384,
+            "{"
+            "  \"url\": \"%s\","
+            "  \"title\": \"%s\","
+            "  \"content_length\": %zu,"
+            "  \"text\": %s,"
+            "  \"full\": false,"
+            "  \"elements\": \"%s\","
+            "  \"element_count\": %d,"
+            "  \"history_size\": %zu,"
+            "  \"can_go_back\": %s,"
+            "  \"can_go_forward\": %s,"
+            "  \"scroll_offset\": %zu,"
+            "  \"total_text_length\": %zu"
+            "}",
+            g_tab.url, g_tab.title, g_tab.html_len, preview,
+            elements_json, g_tab.element_count,
+            g_tab.history_count,
+            g_tab.history_pos > 0 ? "true" : "false",
+            g_tab.history_pos < g_tab.history_count - 1 ? "true" : "false",
+            g_tab.scroll_offset, text_len);
+    }
     free(full_text);
     return result;
 }
