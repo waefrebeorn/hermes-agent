@@ -1,4 +1,4 @@
-# Overnight (v179)
+# Overnight (v180)
 
 145 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
 Suite 296/0/0 (252 test files). Phase 104: env_passthrough blocklist 23→67 entries. GHSA hardening complete.
