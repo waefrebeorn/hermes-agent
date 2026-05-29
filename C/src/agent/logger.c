@@ -29,6 +29,12 @@ static FILE *g_err_fp       = NULL;   /* errors.log (WARNING+)   */
 static bool  g_log_inited   = false;
 static pthread_mutex_t g_log_lock = PTHREAD_MUTEX_INITIALIZER;
 
+/* Per-turn session context for log tagging (L14) */
+static char  g_ctx_session[64]  = "";
+static char  g_ctx_model[64]    = "";
+static char  g_ctx_provider[64] = "";
+static int   g_ctx_iteration    = -1;
+
 /* Max file size in bytes — rotate when exceeded */
 #define LOG_MAX_BYTES  (10 * 1024 * 1024)   /* 10 MB */
 
@@ -150,16 +156,45 @@ void hermes_log(log_level_t level, const char *module, const char *fmt, ...) {
 
     /* Write to agent.log for INFO+ */
     if (g_log_fp && level >= LOG_INFO) {
-        fprintf(g_log_fp, "%s %-7s %s: %s\n", ts, lvl_name, module, msg);
-        rotate_if_needed(&g_log_fp, NULL);   /* path known internally */
+        fprintf(g_log_fp, "%s %-7s %s: %s", ts, lvl_name, module, msg);
+        /* Append per-turn context if set */
+        if (g_ctx_session[0] || g_ctx_model[0])
+            fprintf(g_log_fp, " [session:%s model:%s iter:%d]",
+                    g_ctx_session, g_ctx_model, g_ctx_iteration);
+        fprintf(g_log_fp, "\n");
+        rotate_if_needed(&g_log_fp, NULL);
     }
 
     /* Write to errors.log for WARNING+ */
     if (g_err_fp && level >= LOG_WARNING) {
-        fprintf(g_err_fp, "%s %-7s %s: %s\n", ts, lvl_name, module, msg);
+        fprintf(g_err_fp, "%s %-7s %s: %s", ts, lvl_name, module, msg);
+        if (g_ctx_session[0] || g_ctx_model[0])
+            fprintf(g_err_fp, " [session:%s model:%s iter:%d]",
+                    g_ctx_session, g_ctx_model, g_ctx_iteration);
+        fprintf(g_err_fp, "\n");
         rotate_if_needed(&g_err_fp, NULL);
     }
 
+    pthread_mutex_unlock(&g_log_lock);
+}
+
+void hermes_log_set_context(const char *session_id, const char *model,
+                             const char *provider, int iteration) {
+    pthread_mutex_lock(&g_log_lock);
+    if (session_id) {
+        strncpy(g_ctx_session, session_id, sizeof(g_ctx_session) - 1);
+        g_ctx_session[sizeof(g_ctx_session) - 1] = '\0';
+    }
+    if (model) {
+        strncpy(g_ctx_model, model, sizeof(g_ctx_model) - 1);
+        g_ctx_model[sizeof(g_ctx_model) - 1] = '\0';
+    }
+    if (provider) {
+        strncpy(g_ctx_provider, provider, sizeof(g_ctx_provider) - 1);
+        g_ctx_provider[sizeof(g_ctx_provider) - 1] = '\0';
+    }
+    if (iteration >= 0)
+        g_ctx_iteration = iteration;
     pthread_mutex_unlock(&g_log_lock);
 }
 

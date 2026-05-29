@@ -14,7 +14,7 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
-| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll. Has tab completion + history + bracketed paste. No multi-line edit. | PARTIAL | P0 |
+| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Has tab completion + history + bracketed paste. Missing vi/emacs modes. | PARTIAL | P0 |
 | 02 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
 
 **S0: 2 gaps (1 real, 1 partial) — down from 18 as of v145 Phase 57.**

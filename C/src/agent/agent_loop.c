@@ -893,6 +893,13 @@ char *agent_run_conversation(agent_state_t *state,
            !(iteration > 0 && grace_call)) {
         state->iteration_count = iteration;
 
+        /* L14: Update log context for this turn */
+        hermes_log_set_context(
+            state->session_id[0] ? state->session_id : NULL,
+            state->llm.model[0] ? state->llm.model : NULL,
+            state->llm.provider[0] ? state->llm.provider : NULL,
+            iteration);
+
         /* P86: Check budget exceeded — trigger grace call */
         if (state->budget && budget_tracker_is_exceeded(state->budget) && !grace_call) {
             grace_call = true;

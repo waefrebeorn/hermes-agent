@@ -63,6 +63,19 @@ void hermes_log(log_level_t level, const char *module, const char *fmt, ...)
  */
 void hermes_log_shutdown(void);
 
+/**
+ * Set per-turn session context for log tagging.
+ * Call at the start of each turn to tag subsequent log entries.
+ * Pass NULL for any field that hasn't changed.
+ *
+ * @param session_id  Active session ID (or NULL to keep current)
+ * @param model       Active model name (or NULL to keep current)
+ * @param provider    Active provider name (or NULL to keep current)
+ * @param iteration   Current iteration number (-1 to skip)
+ */
+void hermes_log_set_context(const char *session_id, const char *model,
+                             const char *provider, int iteration);
+
 #ifdef __cplusplus
 }
 #endif
