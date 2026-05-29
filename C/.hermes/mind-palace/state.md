@@ -1,4 +1,4 @@
-# Slermes C (v205)
+# Slermes C (v206)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -76,6 +76,7 @@ Battleship v34 (144 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 122: parse_mode validation for send_message — rejects invalid modes (INVALID, PlainText) with 3 new test assertions (37 total). Suite 300/0/0 (257 test files).
 |- Phase 129: approval test expansion — session reset, cache ops, 18→23 tests.
 ||||||- Phase 131: process test expansion — 9 new assertions covering list, health, log, invalid action, and process-not-found. Tests 18→27 assertions. Suite 301/0/0.
+|- Phase 132: B08 Telegram send retry with exponential backoff — port of Python _telegram_retry_delay + _send_telegram_message_with_retry. Exponential backoff 0.5s/1s/2s on transient Telegram send failures. Media_group InputMedia array pre-built once and reused across retries. Suite 301/0/0.
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).

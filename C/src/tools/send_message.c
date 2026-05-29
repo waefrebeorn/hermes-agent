@@ -14,6 +14,14 @@
 #include <sys/stat.h>
 #include <ctype.h>
 
+/* Exponential backoff delay for Telegram retry (port of Python _telegram_retry_delay).
+ * Returns delay in nanoseconds for given attempt (0.5s, 1s, 2s). */
+static long telegram_retry_ns(int attempt) {
+    if (attempt < 0) attempt = 0;
+    if (attempt > 5) attempt = 5;  /* cap at ~16s */
+    return (long)((1 << attempt) * 500000000L);  /* 0.5s, 1s, 2s, 4s, 8s, 16s */
+}
+
 /* Parsed target info: platform, chat_id, thread_id */
 typedef struct {
     char platform[64];
@@ -414,82 +422,99 @@ char *send_message_handler(const char *args_json, const char *task_id) {
 
             if (bot_token && bot_token[0]) {
                 telegram_set_token(bot_token);
-                http_client_t *http = http_client_new(30);
-                if (http) {
-                    /* B08: Media group — send multiple files as a single Telegram media group */
-                    if (media_group && media_group->type == JSON_ARRAY) {
-                        size_t mg_count = json_len(media_group);
-                        if (mg_count >= 2) {
-                            json_node_t *input_media = json_new_array();
-                            size_t added = 0;
-                            for (size_t mi = 0; mi < mg_count; mi++) {
-                                json_node_t *item = json_array_get(media_group, mi);
-                                if (!item || item->type != JSON_STRING) continue;
-                                const char *path = item->str_val;
-                                if (!path || !path[0]) continue;
-                                const char *ext = strrchr(path, '.');
-                                const char *media_type = "document";
-                                if (ext && !force_document) {
-                                    if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
-                                        strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
-                                        media_type = "photo";
-                                    else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
-                                        media_type = "video";
-                                    else if (strcasecmp(ext, ".gif") == 0)
-                                        media_type = "animation";
-                                }
-                                json_node_t *mi2 = json_new_object();
-                                json_object_set(mi2, "type", json_new_string(media_type));
-                                json_object_set(mi2, "media", json_new_string(path));
-                                json_array_append(input_media, mi2);
-                                added++;
+
+                /* Pre-build media_group InputMedia array (reused across retries) */
+                json_node_t *input_media = NULL;
+                size_t mg_added = 0;
+                if (media_group && media_group->type == JSON_ARRAY) {
+                    size_t mg_count = json_len(media_group);
+                    if (mg_count >= 2) {
+                        input_media = json_new_array();
+                        for (size_t mi = 0; mi < mg_count; mi++) {
+                            json_node_t *item = json_array_get(media_group, mi);
+                            if (!item || item->type != JSON_STRING) continue;
+                            const char *path = item->str_val;
+                            if (!path || !path[0]) continue;
+                            const char *ext = strrchr(path, '.');
+                            const char *media_type = "document";
+                            if (ext && !force_document) {
+                                if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                                    strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
+                                    media_type = "photo";
+                                else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
+                                    media_type = "video";
+                                else if (strcasecmp(ext, ".gif") == 0)
+                                    media_type = "animation";
                             }
-                            if (added >= 2) {
-                                sent = telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
-                            } else if (added == 1) {
+                            json_node_t *mi2 = json_new_object();
+                            json_object_set(mi2, "type", json_new_string(media_type));
+                            json_object_set(mi2, "media", json_new_string(path));
+                            json_array_append(input_media, mi2);
+                            mg_added++;
+                        }
+                        if (mg_added < 2) {
+                            /* Not enough valid items — convert to single media */
+                            json_free(input_media);
+                            input_media = NULL;
+                            if (mg_added == 1 && media_group->type == JSON_ARRAY) {
                                 json_node_t *first = json_array_get(media_group, 0);
                                 if (first && first->type == JSON_STRING)
                                     actual_media = first->str_val;
                             }
-                            json_free(input_media);
-                            if (sent) goto send_done;
                         }
                     }
-                    if (actual_media && actual_media[0]) {
-                        /* MEDIA: prefix — send file via appropriate API */
-                        const char *ext = strrchr(actual_media, '.');
-                        if (ext && !force_document) {
-                            if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
-                                strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
-                                sent = telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            else if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0)
-                                sent = telegram_send_voice(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
-                                sent = telegram_send_video(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            else if (strcasecmp(ext, ".gif") == 0)
-                                sent = telegram_send_animation(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            else
+                }
+
+                http_client_t *http = http_client_new(30);
+                if (http) {
+                    /* B08: Retry up to 3 times with exponential backoff
+                     * (port of Python _send_telegram_message_with_retry). */
+                    int max_attempts = 3;
+                    for (int attempt = 0; attempt < max_attempts && !sent; attempt++) {
+                        if (input_media && mg_added >= 2) {
+                            sent = telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
+                        } else if (actual_media && actual_media[0]) {
+                            /* MEDIA: prefix — send file via appropriate API */
+                            const char *ext = strrchr(actual_media, '.');
+                            if (ext && !force_document) {
+                                if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                                    strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
+                                    sent = telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                                else if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0)
+                                    sent = telegram_send_voice(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                                else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
+                                    sent = telegram_send_video(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                                else if (strcasecmp(ext, ".gif") == 0)
+                                    sent = telegram_send_animation(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                                else
+                                    sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            } else {
                                 sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+                            }
+                        } else if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
+                            /* Build reply_markup with inline keyboard (fresh each retry) */
+                            json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
+                            if (reply_markup) {
+                                sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
+                                                                           tg_msg, parse_mode, thread_id, reply_markup, disable_notification, disable_preview);
+                                json_free(reply_markup);
+                            } else {
+                                /* Fallback: send without keyboard */
+                                sent = telegram_send_message(http, chat_id ? chat_id : "",
+                                                             tg_msg, parse_mode, thread_id, disable_notification, disable_preview);
+                            }
                         } else {
-                            sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                        }
-                    } else if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
-                        /* Build reply_markup with inline keyboard */
-                        json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
-                        if (reply_markup) {
-                            sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
-                                                                       tg_msg, parse_mode, thread_id, reply_markup, disable_notification, disable_preview);
-                            json_free(reply_markup);
-                        } else {
-                            /* Fallback: send without keyboard */
                             sent = telegram_send_message(http, chat_id ? chat_id : "",
                                                          tg_msg, parse_mode, thread_id, disable_notification, disable_preview);
                         }
-                    } else {
-                        sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                     tg_msg, parse_mode, thread_id, disable_notification, disable_preview);
+
+                        if (!sent && attempt < max_attempts - 1) {
+                            /* Exponential backoff: 0.5s, 1s, 2s */
+                            struct timespec ts = {0, telegram_retry_ns(attempt)};
+                            nanosleep(&ts, NULL);
+                        }
                     }
-send_done:
+                    json_free(input_media);
                     http_client_free(http);
                 }
             }

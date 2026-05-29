@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 148 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 85: native image dimension extraction (B02 depth). S6 tool depth continues. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 144 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 132: Telegram retry with exponential backoff (B08 depth). See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v34.md` — Canonical gap list (205+ items across 9 sectors, 1000+ test case gaps)
+- `battleship-v34.md` — Canonical gap list (144 gaps across 9 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
@@ -592,7 +592,7 @@ Each test file is a standalone `.c` with `main()`. Add to `test_runner.sh` as a 
 
 ## CI/CD
 
-- **`c-build.yml`** — PR/merge: build + test_runner (clean compile, all 283 pass)
+- **`c-build.yml`** — PR/merge: build + test_runner (clean compile, all 301 pass)
 - **`c-release.yml`** — Tag push: `make clean && make && docker build && push to ghcr`
 - **`c-asan.yml`** — Nightly: AddressSanitizer + UBSan on full test suite
 - **`c-cppcheck.yml`** — Static analysis (cppcheck)

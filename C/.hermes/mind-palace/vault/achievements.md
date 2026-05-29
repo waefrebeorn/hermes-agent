@@ -1314,3 +1314,21 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 |----|-------------|----------|
 | P129-01 | Approval test suite expanded 18→23: session reset (null/crash safety, double reset), cache operations (initial count, empty entry NULL safety). | `tests/test_approval.c` |
 Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 130: Terminal Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P130-01 | Terminal test suite expanded 30→47 assertions: force param, status field (success/error), foreground timeout guard (>600s reject), bad workdir handling. | `tests/test_terminal.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 131: Process Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P131-01 | Process test suite expanded 18→27 assertions: list action, health check, log output retrieval, invalid action enum, process-not-found edge case. | `tests/test_process.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 132: Telegram Send Retry — B08 Send Message Depth
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P132-01 | Telegram retry with exponential backoff: port of Python _telegram_retry_delay + _send_telegram_message_with_retry. `telegram_retry_ns()` provides 0.5s/1s/2s exponential backoff across 3 attempts. Media_group InputMedia array pre-built once and reused across retries. Inline keyboard reply_markup rebuilt fresh each attempt. | `src/tools/send_message.c` — `telegram_retry_ns()` function + retry loop wrapping all Telegram send paths |
+Suite: 301/0/0 (258 test files). Gaps: 144.
