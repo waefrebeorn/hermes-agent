@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v228 | Fork diverged — C/ lives only on fork | Suite 302/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 139 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 259 (20.5% parity). Phase 156: G08 signal_rate_limit — signal_is_rate_limit_error() + signal_send_timeout() ported. 20 new test assertions. Suite 302/0/0.
+**v229 | Fork diverged — C/ lives only on fork | Suite 302/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 139 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 259 (20.5% parity). Phase 157: G08 signal_rate_limit depth — signal_extract_retry_after + signal_parse_retry_after_message ported. 16 new test assertions. Suite 302/0/0.
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -91,7 +91,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
 || 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Missing: DoH-based fallback IP discovery (TelegramFallbackTransport hostname-preserving transport), _query_doh_provider, discover_fallback_ips, _rewrite_request_for_ip, _normalize_fallback_ips, parse_fallback_ip_env. | P2 | PARTIAL — proxy covered, DoH/fallback transport missing |
-|| 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156 — checks [429]/ratelimit/RetryLater/retry after), signal_send_timeout (Phase 156 — 30s text, 60-160s attachments). Missing: _extract_retry_after_seconds (parses Retry-After from error struct/regex). SignalAttachmentScheduler (asyncio, won't port) | P2 | PARTIAL |
+|| 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
 || 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing). Missing: md5_hex (via hash_md5_hex already in libhash), generate_file_id (via uuid_v4), download_url (async HTTP), COS upload (cloud-specific) | P2 | PARTIAL |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
 | 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 | ✅ PORTED — C has 59-sticker DB, search/send tools |

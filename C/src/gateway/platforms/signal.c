@@ -421,3 +421,116 @@ int signal_send_timeout(int num_attachments) {
     int timeout = 5 * num_attachments;
     return timeout > 60 ? timeout : 60;
 }
+
+/* Forward declaration for signal_parse_retry_after_message */
+double signal_parse_retry_after_message(const char *msg);
+
+/* ------------------------------------------------------------------
+ * G08: Extract the per-token Retry-After window (in seconds) from a
+ * signal-cli rate-limit error JSON string.
+ * Ported from Python signal_rate_limit._extract_retry_after_seconds().
+ *
+ * Tries two sources, in order:
+ *   1. error.data.response.results[*].retryAfterSeconds — structured
+ *      field from signal-cli >= v0.14.3 for plain RateLimitException.
+ *   2. "Retry after N seconds" parsed from error.message — covers
+ *      libsignal-net's RetryLaterException wrapped as
+ *      AttachmentInvalidException during attachment upload.
+ *
+ * Returns the retry-after in seconds, or -1.0 when neither yields a value.
+ * ------------------------------------------------------------------ */
+double signal_extract_retry_after(const char *error_json) {
+    if (!error_json || !error_json[0]) return -1.0;
+
+    char *parse_err = NULL;
+    json_node_t *root = json_parse(error_json, &parse_err);
+    if (!root) {
+        free(parse_err);
+        /* Try plain text — might be a raw error message */
+        goto try_message_scan;
+    }
+
+    /* Source 1: error.data.response.results[*].retryAfterSeconds */
+    json_node_t *data = json_obj_get(root, "data");
+    if (data) {
+        json_node_t *response = json_obj_get(data, "response");
+        if (response) {
+            json_node_t *results = json_obj_get(response, "results");
+            if (results && json_len(results) > 0) {
+                double max_ras = -1.0;
+                size_t n = json_len(results);
+                for (size_t i = 0; i < n; i++) {
+                    json_node_t *item = json_array_get(results, i);
+                    if (item) {
+                        double ras = json_get_num(item, "retryAfterSeconds", -1.0);
+                        if (ras > max_ras)
+                            max_ras = ras;
+                    }
+                }
+                if (max_ras >= 0.0) {
+                    json_free(root);
+                    return max_ras;
+                }
+            }
+        }
+    }
+
+    /* Source 2: "Retry after N seconds" from error.message */
+    {
+        const char *msg = json_get_str(root, "message", NULL);
+        if (msg) {
+            char *msg_copy = strdup(msg);
+            json_free(root);
+            double r = signal_parse_retry_after_message(msg_copy);
+            free(msg_copy);
+            return r;
+        }
+    }
+
+    json_free(root);
+    return -1.0;
+
+try_message_scan:;
+    /* Raw error string — try plain-text scan */
+    return signal_parse_retry_after_message(error_json);
+}
+
+/* ------------------------------------------------------------------
+ * G08: Parse "Retry after N seconds" out of a plain text message.
+ * Shared helper for the regex-fallback path.
+ * ------------------------------------------------------------------ */
+double signal_parse_retry_after_message(const char *msg) {
+    if (!msg || !msg[0]) return -1.0;
+
+    /* Look for "Retry after N.N seconds" or "Retry after N seconds"
+     * Case-insensitive match at any position in the message. */
+    const char *needle = "retry after";
+    size_t nlen = strlen(needle);
+
+    /* Convert search window to lowercase for case-insensitive match */
+    size_t mlen = strlen(msg);
+    if (mlen > 512) mlen = 512; /* limit scan to first 512 chars */
+
+    char lower[513];
+    for (size_t i = 0; i < mlen; i++)
+        lower[i] = (char)tolower((unsigned char)msg[i]);
+    lower[mlen] = '\0';
+
+    const char *pos = lower;
+    while ((pos = strstr(pos, needle)) != NULL) {
+        pos += nlen;
+        /* Skip spaces */
+        while (*pos == ' ') pos++;
+        /* Parse number */
+        char *end = NULL;
+        double val = strtod(pos, &end);
+        if (end != pos && val >= 0.0) {
+            /* Check for "seconds" or "second" after the number */
+            while (*end == ' ') end++;
+            if (strncmp(end, "second", 6) == 0)
+                return val;
+        }
+        /* Continue searching after this position */
+    }
+    return -1.0;
+}

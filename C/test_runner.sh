@@ -2389,7 +2389,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_gw_platforms -lm \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 59 tests)"
+    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 75 tests)"
     else
         echo "  Gateway platform test output:"
         /tmp/hermes_test_gw_platforms 2>&1 | sed 's/^/    /'

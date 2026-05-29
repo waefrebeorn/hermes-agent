@@ -721,6 +721,15 @@ bool signal_is_rate_limit_error(const char *error_message);
  * Ported from Python signal_rate_limit._signal_send_timeout(). */
 int signal_send_timeout(int num_attachments);
 
+/* G08: Extract per-token Retry-After seconds from a signal-cli rate-limit
+ * error JSON string. Returns -1.0 when not found.
+ * Ported from Python signal_rate_limit._extract_retry_after_seconds(). */
+double signal_extract_retry_after(const char *error_json);
+
+/* G08: Parse "Retry after N seconds" from a plain text message.
+ * Returns seconds on success, -1.0 when not found. */
+double signal_parse_retry_after_message(const char *msg);
+
 /* ================================================================
  *  HomeAssistant platform
  * ================================================================ */

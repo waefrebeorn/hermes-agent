@@ -1428,6 +1428,14 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 157: G08 signal_rate_limit Depth — Retry-After Extraction
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P157-01 | Ported `_extract_retry_after_seconds()` from Python signal_rate_limit.py — `signal_extract_retry_after()` parses a signal-cli error JSON string and extracts the Retry-After window (seconds). Tries two sources: (1) structured `error.data.response.results[*].retryAfterSeconds`, taking max across multiple results; (2) "Retry after N seconds" from error.message text. Returns -1.0 when not found. Bug fix: use-after-free — `json_free(root)` was called before consuming `json_get_str` pointer; now copies string via `strdup` before freeing JSON tree. | `C/src/gateway/platforms/signal.c` — `signal_extract_retry_after()` at ~428-493 |
+| P157-02 | Ported fallback text parser from Python `_RETRY_AFTER_RE` regex — `signal_parse_retry_after_message()` scans plain text for "Retry after N seconds" (case-insensitive) using strstr + strtod, avoiding POSIX regex dependency while matching Python logic. Handles integer (4 → 4.0) and decimal (3.5 → 3.5) values, singular "second" and plural "seconds". | `C/src/gateway/platforms/signal.c` — `signal_parse_retry_after_message()` at ~499-533 |
+| P157-03 | Added 16 test assertions: 10 extract_retry_after (structured JSON, multiple results, empty array, message text, decimal, raw text fallback, raw no-match, NULL, empty, no retry-after), 6 parse_retry_after_message (standard, decimal, singular, NULL, no match, empty). T01 gateway platforms 59→75. | `C/tests/test_gateway_platforms.c` — `test_signal_rate_limit()` section 3-4 |
+|Suite: 302/0/0 (259 test files). Gaps: 139.
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|

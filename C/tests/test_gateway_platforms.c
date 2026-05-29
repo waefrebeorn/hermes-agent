@@ -43,6 +43,7 @@ static int passed = 0, failed = 0;
 #define TEST_NULL(name, p) TEST(name, p == NULL)
 #define TEST_NOT_NULL(name, p) TEST(name, p != NULL)
 #define TEST_INT_EQ(name, a, b) TEST(name, (a) == (b))
+#define TEST_DBL_NEAR(name, a, b, eps) TEST(name, ((a) >= (b) - (eps) && (a) <= (b) + (eps)))
 
 /* Helper: build Telegram message update JSON */
 static json_node_t *tg_update(const char *chat_type, const char *text,
@@ -501,6 +502,53 @@ static void test_signal_rate_limit(void) {
     TEST_INT_EQ("timeout: 13 attachments (65 min)", signal_send_timeout(13), 65);
     TEST_INT_EQ("timeout: 20 attachments (100 min)", signal_send_timeout(20), 100);
     TEST_INT_EQ("timeout: 32 attachments (160 min)", signal_send_timeout(32), 160);
+
+    /* signal_extract_retry_after: from structured JSON (source 1) */
+    TEST_DBL_NEAR("extract: structured retryAfterSeconds",
+         signal_extract_retry_after(
+             "{\"data\":{\"response\":{\"results\":[{\"retryAfterSeconds\":4.0}]}}}"),
+         4.0, 0.01);
+    TEST_DBL_NEAR("extract: multiple results, takes max",
+         signal_extract_retry_after(
+             "{\"data\":{\"response\":{\"results\":["
+             "{\"retryAfterSeconds\":2.0},{\"retryAfterSeconds\":5.0}]}}}"),
+         5.0, 0.01);
+    TEST_DBL_NEAR("extract: empty results array",
+         signal_extract_retry_after(
+             "{\"data\":{\"response\":{\"results\":[]}}}"),
+         -1.0, 0.01);
+
+    /* signal_extract_retry_after: from message text (source 2) */
+    TEST_DBL_NEAR("extract: retry after from message",
+         signal_extract_retry_after(
+             "{\"message\":\"Retry after 4 seconds\"}"),
+         4.0, 0.01);
+    TEST_DBL_NEAR("extract: retry after decimal seconds",
+         signal_extract_retry_after(
+             "{\"message\":\"Retry after 10.5 seconds\"}"),
+         10.5, 0.01);
+    TEST("extract: raw text fallback (non-JSON)",
+         signal_extract_retry_after("Retry after 8 seconds") > 7.9);
+    TEST("extract: raw text no match",
+         signal_extract_retry_after("Connection refused") < 0);
+
+    /* signal_extract_retry_after: edge cases */
+    TEST("extract: NULL input", signal_extract_retry_after(NULL) < 0);
+    TEST("extract: empty input", signal_extract_retry_after("") < 0);
+    TEST("extract: no retry-after in JSON",
+         signal_extract_retry_after("{\"error\":\"not found\"}") < 0);
+
+    /* signal_parse_retry_after_message: direct text parsing */
+    TEST_DBL_NEAR("parse_msg: standard",
+         signal_parse_retry_after_message("Retry after 4 seconds"), 4.0, 0.01);
+    TEST_DBL_NEAR("parse_msg: decimal",
+         signal_parse_retry_after_message("Retry after 3.5 seconds"), 3.5, 0.01);
+    TEST_DBL_NEAR("parse_msg: 'second' singular",
+         signal_parse_retry_after_message("Retry after 1 second"), 1.0, 0.01);
+    TEST("parse_msg: NULL", signal_parse_retry_after_message(NULL) < 0);
+    TEST("parse_msg: no match",
+         signal_parse_retry_after_message("everything is fine") < 0);
+    TEST("parse_msg: empty", signal_parse_retry_after_message("") < 0);
 }
 
 /* ================================================================
