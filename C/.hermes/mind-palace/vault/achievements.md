@@ -742,7 +742,7 @@ Suite: 294/0/0 (unchanged). Gaps: 154 (unchanged — A22 reconfirmed as partial 
 
 Suite: 294/0/0 (unchanged). Gaps: 154.
 
-## Phase 72: Terminal Env Passthrough Wiring (v152)
+## Phase 72: Terminal Env Passthrough Wiring (v153)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -753,7 +753,7 @@ Suite: 294/0/0 (unchanged). Gaps: 154.
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B08 and B10 partial gaps retired. B04 OAuth, B08 media groups, B10 FTS5 remain as real/partial gaps.
 
-## Phase 73: libmcp_oauth Integration into mcp_tool (B04) (v152)
+## Phase 73: libmcp_oauth Integration into mcp_tool (B04) (v153)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -766,7 +766,7 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B08 and B10 partial gaps retired. B04 
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B04 now uses libmcp_oauth for token storage. PKCE auth code flow (callback server, browser open) still unwired.
 
-## Phase 74: Patch Conflict Resolution (B09) (v152)
+## Phase 74: Patch Conflict Resolution (B09) (v153)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -774,7 +774,7 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B04 now uses libmcp_oauth for token st
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B09 conflict resolution now returns structured snippet data instead of bare error string.
 
-## Phase 75: FTS5 Query Syntax for session_search (B10) (v152)
+## Phase 75: FTS5 Query Syntax for session_search (B10) (v153)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -786,7 +786,7 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B09 conflict resolution now returns st
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B10 FTS5 syntax added. Remaining: full-text indexing for performance.
 
-## Phase 76: Telegram Media Group Support (B08) (v152)
+## Phase 76: Telegram Media Group Support (B08) (v153)
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
@@ -794,6 +794,17 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B10 FTS5 syntax added. Remaining: full
 | P76-02 | Media group handler — builds InputMedia array from file paths, detects type by extension (photo/video/animation/document), sends via telegram_send_media_group() | `src/tools/send_message.c` — send_message_handler media group block |
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B08 media group support added.
+
+## Phase 77: A22 Stream Diagnostics — Upstream Header Capture in Streaming Path (v153)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P77-01 | http_t.resp_headers[4096] field + accumulation in http_stream_request() header-read loop — raw response headers captured during SSE streaming for diagnostics | `lib/libhttp/http.c` — http_t struct + http_stream_request() header loop |
+| P77-02 | http_get_resp_headers() getter in libhttp API | `lib/libhttp/http.h` — getter declaration + `lib/libhttp/http.c` — getter impl |
+| P77-03 | Provider-based streaming path: populate_stream_diag_headers() called before http_free(h) — captures cf-ray, x-request-id, x-openrouter-* headers in streaming responses | `src/agent/llm_client.c` — llm_chat_completion_stream() provider path |
+| P77-04 | Legacy streaming path: same header capture wired before http_free(h) | `src/agent/llm_client.c` — llm_chat_completion_stream() legacy path |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Remaining: user-facing inline notification.
 
 ## Phase 67: Model Management CLI — A18 Port (v151)
 

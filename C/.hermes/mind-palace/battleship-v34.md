@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v152 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**v153 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 153 structural gaps, 1000+ test case gaps across 9 sectors. Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -47,7 +47,7 @@ S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direc
 | # | ID | Python Module | LOC | Priority | Description |
 |---|----|--------------|-----|----------|-------------|
 | 01 | A18 | models_dev.py | 725 | P2 | models.dev registry: model metadata, provider info, capabilities lookup. C now has: /model list (with --cap filter), /model show <name>, /model providers via static tables. Missing: dynamic HTTP fetch from models.dev, disk cache | PARTIAL (60%) |
-| 02 | A22 | stream_diag.py | 280 | P2 | Stream diagnostics. C now has: stream_diag_t timing data model, upstream header capture (non-streaming), structured retry logging, stream drop diagnostics with timing. Missing: upstream header capture in streaming path, user-facing inline notification | PARTIAL (85%) |
+|| 02 | A22 | stream_diag.py | 280 | P2 | Stream diagnostics. C now has: stream_diag_t timing data model, upstream header capture (non-streaming + streaming), structured retry logging, stream drop diagnostics with timing. Missing: user-facing inline notification | PARTIAL (95%) |
 
 ### Vaulted Stale Claims
 
