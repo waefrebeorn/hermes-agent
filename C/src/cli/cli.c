@@ -316,6 +316,9 @@ static void print_banner(void) {
 /* Streaming output callback — prints tokens directly to stdout */
 static int cli_stream_cb(const char *token, void *userdata) {
     (void)userdata;
+    /* Check for interrupt — abort streaming if user interrupted */
+    if (g_cli.agent.interrupted)
+        return 1;
     /* Stop spinner on first token (if interactive) */
     if (g_cli.interactive && g_cli.spinner.active)
         display_kawaii_stop(&g_cli.spinner, NULL);

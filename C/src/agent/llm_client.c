@@ -1099,8 +1099,14 @@ static int on_provider_stream_chunk(const char *data, size_t len, void *userdata
                 ctx->resp->content = newc;
                 memcpy(ctx->resp->content + cur, delta->content, add + 1);
             }
-            if (ctx->token_cb)
-                ctx->token_cb(delta->content, ctx->userdata);
+            if (ctx->token_cb) {
+                int cb_ret = ctx->token_cb(delta->content, ctx->userdata);
+                if (cb_ret != 0) {
+                    /* Caller requested abort (e.g. user interrupt) — stop streaming */
+                    ctx->prov_ops->free_response(delta);
+                    return 1;
+                }
+            }
         }
 
         /* B22: finish_reason from provider delta */
@@ -1245,8 +1251,14 @@ static int on_stream_chunk(const char *data, size_t len, void *userdata) {
             memcpy(ctx->resp->content + cur, content, add + 1);
         }
         /* Call token callback */
-        if (ctx->token_cb)
-            ctx->token_cb(content, ctx->userdata);
+        if (ctx->token_cb) {
+            int cb_ret = ctx->token_cb(content, ctx->userdata);
+            if (cb_ret != 0) {
+                /* Caller requested abort (e.g. user interrupt) */
+                json_free(root);
+                return 1;
+            }
+        }
     }
 
     /* Extract delta tool_calls (streaming builds them across chunks) */
