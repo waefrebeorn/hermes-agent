@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v191 | Fork diverged — C/ lives only on fork | Suite 299/0/0 | 85 tools | 98 CLI**
+**v193 | Fork diverged — C/ lives only on fork | Suite 298/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 116: credential pool wiring — credential pool created, HTTP status reported, credential_expired triggers fallback.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -169,7 +169,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | # | ID | Tool | C LOC | Python LOC | Parity | Missing Features | Priority | Status |
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
 | 01 | B01 | browser | ~1712 | ~3800 | 60% | browser_navigate URL safety: secret exfiltration + SSRF protection via url_has_secret()/url_is_safe() (Phase 98). browser_snapshot(full=true) returns complete page content. PDF generation via CDP already implemented. autofill requires real browser engine (won't port) | P2 | PARTIAL |
-| 02 | B02 | vision | ~417 | ~1436 | 29% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Color analysis, EXIF extraction, OCR via Python helpers. Magic byte detection for extensionless files. detail param passthrough. Face detection and barcode require OpenCV (won't port) | P2 | PARTIAL |
+| 02 | B02 | vision | ~517 | ~1436 | 36% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Remote URL safety checks: SSRF protection (url_is_safe), secret exfiltration (url_has_secret), Content-Type validation via HEAD query (Phase 95). Native base64 data URL conversion — image_to_base64_data_url() for direct provider consumption via data: URIs (Phase 118). Color analysis, EXIF extraction, OCR via Python helpers. Magic byte detection for extensionless files. detail param passthrough. Face detection and barcode require OpenCV (won't port) | P2 | PARTIAL |
 || 03 | B03 | web | ~1046 | ~1326 | 78% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). URL secret exfiltration check blocks URLs containing API key patterns (Phase 93). Multi-URL support accepts urls array for extracting multiple pages in one call (Phase 94). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |

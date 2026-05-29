@@ -20,7 +20,7 @@ P01: Plugin architecture
 
 ## P2 — Depth & Ecosystem (62 gaps)
 C01-C17: CLI ecosystem (setup wizard, doctor, profiles, config, model management, gateway CLI, kanban, skills hub, etc.)
-|B01-B10: Tool depth (browser 60%, vision 29%, web 78%, mcp_tool ✅ PKCE wired, file/feishu ✅ implemented, terminal 63%, send_message 30%, patch ✅ 96%, session_search ✅ 96%)
+|B01-B10: Tool depth (browser 60%, vision 36%, web 78%, mcp_tool ✅ PKCE wired, file/feishu ✅ implemented, terminal 63%, send_message 30%, patch ✅ 96%, session_search ✅ 96%)
 G04-G13: Gateway sub-modules (feishu_comment, wecom_crypto, telegram_network, etc.)
 T15-T24: TUI components (session picker, model picker, agents overlay, todo panel, etc.)
 X10-X12: Performance/benchmark tests

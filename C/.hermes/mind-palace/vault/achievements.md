@@ -1225,4 +1225,12 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P117-04 | free_list NULL safety test (no crash) | `tests/test_env_passthrough.c` — free_list(NULL, 0) |
 | P117-05 | Clear-then-re-register works test | `tests/test_env_passthrough.c` — clear + register + is_allowed |
 
-Suite: 299/0/0 (255 test files). Gaps: 145.
+## Phase 118: B02 Vision Base64 Data URL
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P118-01 | Native image-to-base64 data URL conversion — `image_to_base64_data_url()` reads file, detects MIME type from format, encodes as data: URI | `src/tools/vision.c` — `image_to_base64_data_url()`, `read_file_bytes()`, `image_format_to_mime()` |
+| P118-02 | Extension-based image path returns base64 data URL in result | `vision_handler()` — local file valid-image path includes `base64_data_url` |
+| P118-03 | Extensionless files detected via magic bytes also return `base64_data_url` | `vision_handler()` — magic-byte detected path includes `base64_data_url` |
+| P118-04 | 4 test assertions for base64_data_url correctness (existence, prefix format) | `tests/test_vision.c` — 35 total (+4 from 31) |
+
+Suite: 298/0/0 (255 test files). Gaps: 145.
