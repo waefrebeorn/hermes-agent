@@ -1,4 +1,4 @@
-# Slermes C (v198)
+# Slermes C (v199)
 
 Suite: 300/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 257 | C src: 175
@@ -73,7 +73,8 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 119: url_safety test suite (29 assertions) + blocklist bug fix — url_is_always_blocked() wasn't checking dynamic domain blocklist. Suite 300/0/0 (256 test files). S7 X01 test files 255→256.
 |- Phase 120: Registry test suite — 30 assertions (register/dispatch/timeout/name matching/toolset/availability). Suite 300/0/0 (257 test files). (v196)
 |- Phase 121: parse_send_target() extracted from send_message.c inline code to standalone function. 15-test suite (41 assertions) covering platform:chat_id[:thread_id] parsing, overrides, edge cases. Suite 300/0/0 (257 test files).
-|- Phase 122: parse_mode validation for send_message — rejects invalid modes (INVALID, PlainText) with clear error. 3 new test assertions (37 total). Suite 300/0/0 (257 test files).
+||- Phase 122: parse_mode validation for send_message — rejects invalid modes (INVALID, PlainText) with 3 new test assertions (37 total). Suite 300/0/0 (257 test files).
+||- Phase 123: libdotenv test expansion — replaced minimal test with comprehensive 30-test suite covering parsing, quoting, export, NULL safety, iter, file load, and edge cases. Suite 300/0/0 (257 test files).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)

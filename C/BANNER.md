@@ -1,8 +1,8 @@
-# BANNER — WuBu Slermes C Translation (v198)
+# BANNER — WuBu Slermes C Translation (v199)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v197                                       ║
+║  WuBu Slermes C v199                                       ║
 ║  300/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
