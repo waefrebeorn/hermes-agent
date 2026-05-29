@@ -1468,6 +1468,14 @@ Suite: 303/0/0 (262 test files). Gaps: 137. v232
 | P161-03 | Added 16 standalone test assertions: NULL→empty, empty→empty, valid public IP accepted, private 10.x rejected, loopback 127.x rejected, link-local 169.254.x rejected, invalid string rejected, two valid IPs parsed, mixed valid/invalid keeps valid, IPv6 rejected. | `C/tests/test_telegram_fallback_ips.c` — tests 1-16 |
 Suite: 304/0/0 (263 test files). Gaps: 137. v233
 
+## Phase 162: B02 vision Depth — Media-in-Tool-Results Support
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P162-01 | Ported Python vision_tools.py `_supports_media_in_tool_results()` — `vision_supports_media_in_tool_results()` returns true for aggregators (openrouter, nous, vertex, bedrock, anthropic-vertex, google-vertex), Anthropic (anthropic, claude, anthropic-direct), OpenAI (openai, openai-chat, openai-codex, azure-openai), and Gemini 3+ (model-gated: requires gemini-3/gemini-pro-3/gemini-flash-3 in model name). Conservative default false for unknown providers. | `C/src/tools/vision.c` — `vision_supports_media_in_tool_results()` at ~290-332 |
+| P162-02 | Declared in image_routing.h with doc comment. | `C/include/image_routing.h` — lines ~112-116 |
+| P162-03 | Added 23 standalone test assertions: openrouter/nous/vertex/bedrock/anthropic-vertex/google-vertex (aggregators), anthropic/claude/anthropic-direct (Anthropic), openai/openai-chat/openai-codex/azure-openai (OpenAI), google+gemini-3-flash/gemini+gemini-pro-3/google-gemini+gemini-flash-3 (Gemini 3+), google+gemini-2.5/google+gemini-pro-2/gemini+NULL/google+NULL rejects (Gemini <3), NULL/empty/unknown rejects. | `C/tests/test_vision_supports_media.c` — all 23 tests |
+Suite: 305/0/0 (264 test files). Gaps: 137. v234
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|

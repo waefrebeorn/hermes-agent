@@ -1,4 +1,4 @@
-(v233) (v233)
+(v234) (v234)
 
-304/0/0, 263 test files. All pass. Gap: 263 C vs ~17k Python.
-Phase 161: G07 telegram_network fallback IP parsing — telegram_parse_fallback_ips() validates/normalizes IPv4 addresses. 16 tests. 137 gaps.
+305/0/0, 264 test files. All pass. Gap: 264 C vs ~17k Python.
+Phase 162: B02 vision media-in-tool-results support — vision_supports_media_in_tool_results() checks provider+model. 23 tests. 137 gaps.
