@@ -1,8 +1,8 @@
-# Slermes C (v164)
+# Slermes C (v165)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
-Battleship v34 (147 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -39,13 +39,14 @@ Battleship v34 (147 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 85: native image dimension extraction for vision tool (B02 depth). PNG/JPEG/GIF/BMP/WebP header parsing — removes Python PIL dependency for basic dimensions. Fallback to PIL if native fails.
 - Phase 86: B04 PKCE auth code flow wired — mcp_oauth_manager_get_token() in mcp_tool.c. Auth config parsed for HTTP/SSE MCP servers (previously skipped). 148→147 gaps.
 - Phase 87: B03 web native HTML-to-text extraction — web_extract_native() with html_strip_tags, no Python dependency for basic extraction. web.c 823→905 LOC, parity 42%→58%. Python delegate reserved for custom LLM extraction prompts.
-- Phase 88: B07 terminal safety checks — workdir validation + disk usage warning. _check_workdir() validates path. _check_disk_usage() warns if <100MB free. Non-blocking warnings in result JSON. B07 53%→57%. — web_extract_native() with html_strip_tags, no Python dependency for basic extraction. web.c 823→905 LOC, parity 42%→58%. Python delegate reserved for custom LLM extraction prompts.
+- Phase 88: B07 terminal safety checks — workdir validation + disk usage warning. _check_workdir() validates path. _check_disk_usage() warns if <100MB free. Non-blocking warnings in result JSON. B07 53%→57%.
+- Phase 89: B09/B10 stale claim correction — patch.c 1154 LOC (96% parity, V4A mode + dry_run + conflict resolution all done). session_search.c 621 LOC (96% parity, all features done). Both moved to IMPLEMENTED. 147→145 gaps.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
 - **P1** (37): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (3), CLI ecosystem (1), Architecture (1), Plugin system (1)
-|- **P2** (62): CLI ecosystem (17), Tool depth (6), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
+|- **P2** (60): CLI ecosystem (17), Tool depth (4), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 147 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 88: B07 terminal safety checks.
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 89: stale claim sweep — B09/B10 IMPLEMENTED.

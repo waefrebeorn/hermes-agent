@@ -6,7 +6,7 @@
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  147 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B07 terminal safety checks │ 147 gaps                      ║
+║  B09/B10 IMPLEMENTED │ 145 gaps                          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

@@ -1,4 +1,4 @@
-# Prestige (v164)
+# Prestige (v165)
 
 ## P0 — Display & Visual + Architecture (6 gaps)
 D09, D16: Prompt input (partial), type-ahead
@@ -20,7 +20,7 @@ P01: Plugin architecture
 
 ## P2 — Depth & Ecosystem (62 gaps)
 C01-C17: CLI ecosystem (setup wizard, doctor, profiles, config, model management, gateway CLI, kanban, skills hub, etc.)
-|B01-B10: Tool depth (browser 45%, vision 23%, web 58%, mcp_tool ✅ PKCE wired, file/feishu ✅ implemented, terminal 57%, send_message 56%, patch 58%+dry_run, session_search 71%+scroll+browse)
+|B01-B10: Tool depth (browser 45%, vision 23%, web 58%, mcp_tool ✅ PKCE wired, file/feishu ✅ implemented, terminal 54%, send_message 52%, patch ✅ 96%, session_search ✅ 96%)
 G04-G13: Gateway sub-modules (feishu_comment, wecom_crypto, telegram_network, etc.)
 T15-T24: TUI components (session picker, model picker, agents overlay, todo panel, etc.)
 X10-X12: Performance/benchmark tests
@@ -31,4 +31,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (47 gaps)
 Plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 147 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:62, P3:42**
+**Total: 145 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:60, P3:42**
