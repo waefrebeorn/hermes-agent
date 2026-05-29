@@ -1,4 +1,4 @@
-# Prestige (v153)
+# Prestige (v154)
 
 ## P0 — Display & Visual + Architecture (6 gaps)
 D09, D16: Prompt input (partial), type-ahead
@@ -18,8 +18,8 @@ F05, F08, F10: Credential automation, socket health, stdio guard
 C11: Auth/OAuth system
 P01: Plugin architecture
 
-## P2 — Depth & Ecosystem (66 gaps)
-A15, A18, A22: Agent module depth (insights, models_dev, stream_diag — PENDING REAUDIT: these were claimed stale by filename matching. Real feature-gap audit needed against upstream v0.15.0 codebase.)
+## P2 — Depth & Ecosystem (64 gaps)
+A18: Agent module depth (models_dev — 60% PARTIAL)
 C01-C17: CLI ecosystem (setup wizard, doctor, profiles, config, model management, gateway CLI, kanban, skills hub, etc.)
 B01-B10: Tool depth (browser 44%, vision 21%, web 40%, mcp_tool 108% LOC, file/feishu ✅ implemented, terminal 53%, send_message 55%, patch 58%+dry_run, session_search 71%+scroll+browse)
 G04-G13: Gateway sub-modules (feishu_comment, wecom_crypto, telegram_network, etc.)
@@ -32,4 +32,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (47 gaps)
 Plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 153 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:65, P3:47**
+**Total: 152 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:64, P3:47**

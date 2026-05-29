@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v153 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 153 structural gaps, 1000+ test case gaps across 9 sectors. Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected.**
+**v154 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 152 structural gaps, 1000+ test case gaps across 9 sectors. A22 stream_diag PORTED — upstream headers captured in streaming path + user-facing notification. Phase 78.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -47,13 +47,13 @@ S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direc
 | # | ID | Python Module | LOC | Priority | Description |
 |---|----|--------------|-----|----------|-------------|
 | 01 | A18 | models_dev.py | 725 | P2 | models.dev registry: model metadata, provider info, capabilities lookup. C now has: /model list (with --cap filter), /model show <name>, /model providers via static tables. Missing: dynamic HTTP fetch from models.dev, disk cache | PARTIAL (60%) |
-|| 02 | A22 | stream_diag.py | 280 | P2 | Stream diagnostics. C now has: stream_diag_t timing data model, upstream header capture (non-streaming + streaming), structured retry logging, stream drop diagnostics with timing. Missing: user-facing inline notification | PARTIAL (95%) |
 
-### Vaulted Stale Claims
+### Vaulted / Ported Items
 
 | # | ID | Reason |
 |---|----|--------|
 | 01 | A15 | insights.py (930 LOC) — already ported as usage_pricing.c + cmd_insights. Suite verified. |
+| 02 | A22 | stream_diag.py (280 LOC) — PORTED. upstream header capture in both streaming paths + user-facing inline notification on stream success. |
 
 ### Cloud-Specific / Python-Architecture (won't port to C)
 
@@ -75,7 +75,7 @@ S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direc
 | 14 | async_utils.py | ~200 | Python async utilities — C is sync |
 | 15 | background_review.py | 597 | Heavy async+subprocess orchestration — C arch mismatch |
 
-**S2: 17 gaps (0 P0, 0 P1, 2 P2 partial, 15 won't-port). A18 /model subcommands added. A22 stream diag 85%.**
+**S2: 16 gaps (0 P0, 0 P1, 1 P2, 0 P3 real + 15 won't-port). A18 /model subcommands. A22 PORTED.**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
-| S2: Agent Modules | 17 | 0 | 0 | 2 | 0 | A18 /model subcommands. A22 stream diag 85%. 15 won't-port. |
+|| S2: Agent Modules | 16 | 0 | 0 | 1 | 0 | A18 /model subcommands. A22 PORTED. 15 won't-port. |
 | S3: Gateway Helpers | 12 | 0 | 2 | 10 | 0 | G01 helpers.py ported. 12 remaining. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
@@ -279,7 +279,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-| **TOTAL** | **153** | **6** | **36** | **66** | **47** | **Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected.** |
+|| **TOTAL** | **152** | **6** | **36** | **65** | **47** | **A22 stream_diag PORTED. Phase 78: user-facing upstream header notification.** |
 
 ### Phase Map
 
@@ -291,7 +291,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~33 |
 | Phase 4 | CLI ecosystem | S5 | ~30 |
 | Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
-| Phase 6 | Agent module depth | S2 (2 real) + S8 remaining | ~13 |
+|| Phase 6 | Agent module depth | S2 (1 real) + S8 remaining | ~12 |
 
 ---
 

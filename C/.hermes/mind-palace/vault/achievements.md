@@ -806,6 +806,14 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B08 media group support added.
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Remaining: user-facing inline notification.
 
+## Phase 78: A22 Stream Diagnostics — User-Facing Inline Notification (v154)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P78-01 | Upstream response headers logged on stream success: `[llm] upstream=[cf-ray=... x-openrouter-provider=...]` — matches Python's log_stream_retry upstream=[...] pattern | `src/agent/agent_loop.c` — retry_done label |
+
+Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 models_dev at 60%.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |
