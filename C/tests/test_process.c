@@ -166,6 +166,64 @@ int main(void) {
          r && strstr(result_get_str(r, "error", ""), "JSON parse") != NULL);
     json_free(r);
 
+    /* 14. list action — should have running/completed processes */
+    {
+        json_node_t *r2 = parse_result(process_handler("{\"action\":\"list\"}", NULL));
+        TEST("process list returns non-null", r2 != NULL);
+        if (r2) {
+            double count = json_object_get_number(r2, "count", -1);
+            TEST("process list has count > 0", count > 0);
+        }
+        json_free(r2);
+    }
+
+    /* 15. health action */
+    {
+        json_node_t *r2 = parse_result(process_handler("{\"action\":\"health\"}", NULL));
+        TEST("process health returns non-null", r2 != NULL);
+        if (r2) {
+            const char *status = json_object_get_string(r2, "status", "");
+            TEST("process health has status field", strlen(status) > 0);
+            double total = json_object_get_number(r2, "total_slots", 0);
+            TEST("process health total_slots > 0", total > 0);
+        }
+        json_free(r2);
+    }
+
+    /* 16. log action — get output from completed echo */
+    {
+        double sid_log = sid;  /* from test 3-5, the echo process */
+        char log_args[256];
+        snprintf(log_args, sizeof(log_args),
+                 "{\"action\":\"log\",\"session_id\":%.0f}", sid_log);
+        json_node_t *r2 = parse_result(process_handler(log_args, NULL));
+        TEST("process log returns non-null", r2 != NULL);
+        if (r2) {
+            /* output field always present (may be empty for no-capture procs) */
+            const char *out = json_object_get_string(r2, "output", NULL);
+            TEST("process log has output field", out != NULL);
+        }
+        json_free(r2);
+    }
+
+    /* 17. Invalid action string */
+    {
+        json_node_t *r2 = parse_result(process_handler(
+            "{\"action\":\"nonexistent_action\",\"session_id\":1}", NULL));
+        TEST("process invalid action returns error",
+             r2 && strstr(json_object_get_string(r2, "error", ""), "Unknown action") != NULL);
+        json_free(r2);
+    }
+
+    /* 18. Process not found for kill */
+    {
+        json_node_t *r2 = parse_result(process_handler(
+            "{\"action\":\"kill\",\"session_id\":99999}", NULL));
+        TEST("process kill non-existent returns error",
+             r2 && strstr(json_object_get_string(r2, "error", ""), "Process not found") != NULL);
+        json_free(r2);
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

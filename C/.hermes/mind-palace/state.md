@@ -75,7 +75,8 @@ Battleship v34 (144 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 121: parse_send_target() extracted from send_message.c inline code to standalone function. 15-test suite (41 assertions) covering platform:chat_id[:thread_id] parsing, overrides, edge cases. Suite 300/0/0 (257 test files).
 ||- Phase 122: parse_mode validation for send_message — rejects invalid modes (INVALID, PlainText) with 3 new test assertions (37 total). Suite 300/0/0 (257 test files).
 |- Phase 129: approval test expansion — session reset, cache ops, 18→23 tests.
-||||||- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
+||||||- Phase 131: process test expansion — 9 new assertions covering list, health, log, invalid action, and process-not-found. Tests 18→27 assertions. Suite 301/0/0.
+|- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
 |- Phase 126: B08 disable_notification (silent send) for Telegram — new param wired through telegram_send_message()/telegram_send_message_with_keyboard(), schema, handler, 3 test assertions, 11 caller updates across 3 files. 145→144 gaps.

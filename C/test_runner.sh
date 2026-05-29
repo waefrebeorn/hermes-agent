@@ -2667,7 +2667,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/tools/process.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_process -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     # Use temp SLERMES_HOME to avoid loading stale process checkpoints
-    if SLERMES_HOME=/tmp/hermes_test_proc /tmp/hermes_test_process > /dev/null 2>&1; then ok "process_tool (17 tests)"
+    if SLERMES_HOME=/tmp/hermes_test_proc /tmp/hermes_test_process > /dev/null 2>&1; then ok "process_tool (26 tests)"
     else fail "process_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_process
 else skip "process_tool (compilation failed)"
