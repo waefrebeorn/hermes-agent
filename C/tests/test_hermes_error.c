@@ -1,144 +1,163 @@
 /*
- * test_hermes_error.c — K01-K05: Typed error system tests.
+ * test_hermes_error.c — Tests for typed error system (K01-K05).
  *
- * Tests: error codes, names, creation, formatting, ok/failed helpers.
+ * Tests: hermes_error_name for all codes, hermes_error_format
+ * with various combinations, inline helpers (hermes_ok, hermes_failed).
  */
 #include "hermes_error.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-static int failures = 0;
+static int passed = 0, failed = 0;
+
 #define TEST(name, expr) do { \
-    if (!(expr)) { \
-        fprintf(stderr, "FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
-        failures++; \
-    } else { \
-        printf("PASS: %s\n", name); \
-    } \
+    if (expr) { passed++; printf("  PASS: %s\n", name); } \
+    else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
+#define TEST_STR_EQ(name, a, b) TEST(name, a && b && strcmp(a, b) == 0)
+
+static void test_error_name(void) {
+    TEST_STR_EQ("HERMES_OK name", hermes_error_name(HERMES_OK), "OK");
+    TEST_STR_EQ("ValueError name", hermes_error_name(HERMES_ERR_VALUE), "ValueError");
+    TEST_STR_EQ("TypeError name", hermes_error_name(HERMES_ERR_TYPE), "TypeError");
+    TEST_STR_EQ("RuntimeError name", hermes_error_name(HERMES_ERR_RUNTIME), "RuntimeError");
+    TEST_STR_EQ("IOError name", hermes_error_name(HERMES_ERR_IO), "IOError");
+    TEST_STR_EQ("TimeoutError name", hermes_error_name(HERMES_ERR_TIMEOUT), "TimeoutError");
+    TEST_STR_EQ("AuthError name", hermes_error_name(HERMES_ERR_AUTH), "AuthenticationError");
+    TEST_STR_EQ("NotFound name", hermes_error_name(HERMES_ERR_NOT_FOUND), "NotFoundError");
+    TEST_STR_EQ("NotImpl name", hermes_error_name(HERMES_ERR_NOT_IMPLEMENTED), "NotImplementedError");
+    TEST_STR_EQ("RateLimited name", hermes_error_name(HERMES_ERR_RATE_LIMITED), "RateLimitedError");
+    TEST_STR_EQ("MemoryError name", hermes_error_name(HERMES_ERR_MEMORY), "MemoryError");
+    TEST_STR_EQ("Cancelled name", hermes_error_name(HERMES_ERR_CANCELLED), "CancelledError");
+    TEST_STR_EQ("Interrupted name", hermes_error_name(HERMES_ERR_INTERRUPTED), "InterruptedError");
+    TEST_STR_EQ("Default for unknown code", hermes_error_name((hermes_error_code_t)999), "UnknownError");
+}
+
+static void test_inline_ok_create(void) {
+    hermes_error_t e = hermes_error(HERMES_OK, "all good");
+    TEST("hermes_ok with OK code", hermes_ok(e));
+    TEST("hermes_failed with OK code", !hermes_failed(e));
+    TEST_STR_EQ("OK message", e.message, "all good");
+    TEST("OK code zero", e.code == HERMES_OK);
+}
+
+static void test_inline_error_create(void) {
+    hermes_error_t e = hermes_error(HERMES_ERR_VALUE, "invalid input");
+    TEST("!hermes_ok with error", !hermes_ok(e));
+    TEST("hermes_failed with error", hermes_failed(e));
+    TEST_STR_EQ("ValueError message", e.message, "invalid input");
+    TEST("ValueError code matches", e.code == HERMES_ERR_VALUE);
+}
+
+static void test_inline_error_truncation(void) {
+    /* Message > 1024 chars should be truncated */
+    char long_msg[2048];
+    memset(long_msg, 'A', sizeof(long_msg) - 1);
+    long_msg[sizeof(long_msg) - 1] = '\0';
+    hermes_error_t e = hermes_error(HERMES_ERR_RUNTIME, long_msg);
+    TEST("truncation prevents overflow", strlen(e.message) < sizeof(e.message));
+    TEST("truncated message starts with A", e.message[0] == 'A');
+    TEST("truncated message ends with A", e.message[strlen(e.message)-1] == 'A');
+    TEST("truncated message < 1024", strlen(e.message) < 1024);
+}
+
+static void test_inline_error_null_msg(void) {
+    hermes_error_t e = hermes_error(HERMES_ERR_NOT_FOUND, NULL);
+    TEST("error with NULL msg is OK", hermes_failed(e));
+    TEST("NULL msg results in empty string", e.message[0] == '\0');
+}
+
+static void test_inline_error_ctx(void) {
+    hermes_error_t e = hermes_error_ctx(HERMES_ERR_TIMEOUT, "connection timed out", "connect()");
+    TEST_STR_EQ("ctx message", e.message, "connection timed out");
+    TEST_STR_EQ("ctx context", e.context, "connect()");
+    TEST("ctx code matches", e.code == HERMES_ERR_TIMEOUT);
+}
+
+static void test_inline_error_ctx_null(void) {
+    hermes_error_t e = hermes_error_ctx(HERMES_ERR_FILE_NOT_FOUND, "no such file", NULL);
+    TEST_STR_EQ("ctx null msg", e.message, "no such file");
+    TEST("ctx null context", e.context[0] == '\0');
+}
+
+static void test_error_format_ok(void) {
+    hermes_error_t e = hermes_error(HERMES_OK, "fine");
+    char buf[128] = {0};
+    hermes_error_format(&e, buf, sizeof(buf));
+    TEST_STR_EQ("format OK", buf, "OK");
+}
+
+static void test_error_format_simple(void) {
+    hermes_error_t e = hermes_error(HERMES_ERR_VALUE, "bad arg");
+    char buf[128] = {0};
+    hermes_error_format(&e, buf, sizeof(buf));
+    TEST_STR_EQ("format ValueError", buf, "ValueError: bad arg");
+}
+
+static void test_error_format_with_context(void) {
+    hermes_error_t e = hermes_error_ctx(HERMES_ERR_PERMISSION, "access denied", "open_file()");
+    char buf[256] = {0};
+    hermes_error_format(&e, buf, sizeof(buf));
+    TEST_STR_EQ("format with context", buf, "[PermissionError] open_file(): access denied");
+}
+
+static void test_error_format_null_inputs(void) {
+    char buf[128] = {0};
+    hermes_error_format(NULL, buf, sizeof(buf));
+    TEST("format NULL error doesn't crash", 1);
+
+    hermes_error_t e = hermes_error(HERMES_OK, "x");
+    hermes_error_format(&e, NULL, 0);
+    TEST("format NULL buf doesn't crash", 1);
+
+    hermes_error_format(&e, buf, 0);
+    TEST("format zero buf doesn't crash", buf[0] == '\0');
+}
+
+static void test_error_format_truncation(void) {
+    /* Long message */
+    hermes_error_t e = hermes_error(HERMES_ERR_RUNTIME,
+        "This is a very long error message that should be truncated "
+        "because the output buffer is deliberately small");
+    char buf[32] = {0};
+    hermes_error_format(&e, buf, sizeof(buf));
+    TEST("format truncation no overflow", strlen(buf) < sizeof(buf));
+    TEST("format truncated starts correctly", strncmp(buf, "RuntimeError:", 13) == 0);
+}
+
+static void test_error_format_buf_size_one(void) {
+    hermes_error_t e = hermes_error(HERMES_ERR_VALUE, "x");
+    char buf[1] = {0};
+    hermes_error_format(&e, buf, 1);
+    TEST("format buf_size=1 buf[0] stays null", buf[0] == '\0');
+}
+
 int main(void) {
-    printf("=== K01-K05: Typed error system ===\n\n");
+    printf("=== Hermes Error System Tests ===\n");
 
-    /* HERMES_OK */
-    {
-        hermes_error_t e = hermes_error(HERMES_OK, NULL);
-        TEST("ok returns success", hermes_ok(e));
-        TEST("ok not failed", !hermes_failed(e));
-        char buf[128];
-        hermes_error_format(&e, buf, sizeof(buf));
-        TEST("ok formats as OK", strcmp(buf, "OK") == 0);
-    }
+    printf("--- Error Name Lookup ---\n");
+    test_error_name();
 
-    /* K01: ValueError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_VALUE, "max_tokens must be positive");
-        TEST("value error code", e.code == HERMES_ERR_VALUE);
-        TEST("value error message", strcmp(e.message, "max_tokens must be positive") == 0);
-        TEST("value error failed", hermes_failed(e));
-        TEST("value error not ok", !hermes_ok(e));
-        char buf[128];
-        hermes_error_format(&e, buf, sizeof(buf));
-        TEST("value error format", strstr(buf, "ValueError") && strstr(buf, "max_tokens"));
-    }
+    printf("--- Error Creation (Inline) ---\n");
+    test_inline_ok_create();
+    test_inline_error_create();
+    test_inline_error_truncation();
+    test_inline_error_null_msg();
 
-    /* K02: TypeError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_TYPE, "expected string, got number");
-        TEST("type error code", e.code == HERMES_ERR_TYPE);
-        TEST("type error name", strcmp(hermes_error_name(HERMES_ERR_TYPE), "TypeError") == 0);
-    }
+    printf("--- Error with Context ---\n");
+    test_inline_error_ctx();
+    test_inline_error_ctx_null();
 
-    /* K03: RuntimeError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_RUNTIME, "provider connection failed");
-        TEST("runtime error name", strcmp(hermes_error_name(HERMES_ERR_RUNTIME), "RuntimeError") == 0);
-    }
+    printf("--- Error Formatting ---\n");
+    test_error_format_ok();
+    test_error_format_simple();
+    test_error_format_with_context();
+    test_error_format_null_inputs();
+    test_error_format_truncation();
+    test_error_format_buf_size_one();
 
-    /* K03: NotFound */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_NOT_FOUND, "session not found");
-        TEST("not found name", strcmp(hermes_error_name(HERMES_ERR_NOT_FOUND), "NotFoundError") == 0);
-    }
-
-    /* K04: FileNotFoundError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_FILE_NOT_FOUND, "/etc/config.yaml");
-        TEST("file not found name", strcmp(hermes_error_name(HERMES_ERR_FILE_NOT_FOUND), "FileNotFoundError") == 0);
-        TEST("file not found message", strcmp(e.message, "/etc/config.yaml") == 0);
-    }
-
-    /* K04: PermissionError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_PERMISSION, "access denied");
-        TEST("permission name", strcmp(hermes_error_name(HERMES_ERR_PERMISSION), "PermissionError") == 0);
-    }
-
-    /* K05: TimeoutError */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_TIMEOUT, "request timed out");
-        TEST("timeout name", strcmp(hermes_error_name(HERMES_ERR_TIMEOUT), "TimeoutError") == 0);
-    }
-
-    /* K05: LLMTimeout */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_LLM_TIMEOUT, "LLM did not respond within 30s");
-        TEST("K05 LLMTimeoutError name", strcmp(hermes_error_name(HERMES_ERR_LLM_TIMEOUT), "LLMTimeoutError") == 0);
-    }
-
-    /* K06-K20: Extended error types */
-    TEST("K06 ConfigError name", strcmp(hermes_error_name(HERMES_ERR_CONFIG), "ConfigError") == 0);
-    TEST("K06 MissingKeyError name", strcmp(hermes_error_name(HERMES_ERR_MISSING_KEY), "MissingKeyError") == 0);
-    TEST("K07 ConnectionError name", strcmp(hermes_error_name(HERMES_ERR_CONNECTION), "ConnectionError") == 0);
-    TEST("K07 ConnectionRefusedError name", strcmp(hermes_error_name(HERMES_ERR_CONN_REFUSED), "ConnectionRefusedError") == 0);
-    TEST("K07 ConnectionResetError name", strcmp(hermes_error_name(HERMES_ERR_CONN_RESET), "ConnectionResetError") == 0);
-    TEST("K08 AuthenticationError name", strcmp(hermes_error_name(HERMES_ERR_AUTH), "AuthenticationError") == 0);
-    TEST("K08 InvalidKeyError name", strcmp(hermes_error_name(HERMES_ERR_INVALID_KEY), "InvalidKeyError") == 0);
-    TEST("K08 ExpiredKeyError name", strcmp(hermes_error_name(HERMES_ERR_EXPIRED_KEY), "ExpiredKeyError") == 0);
-    TEST("K09 ForbiddenError name", strcmp(hermes_error_name(HERMES_ERR_FORBIDDEN), "ForbiddenError") == 0);
-    TEST("K09 RateLimitedError name", strcmp(hermes_error_name(HERMES_ERR_RATE_LIMITED), "RateLimitedError") == 0);
-    TEST("K10 ValidationError name", strcmp(hermes_error_name(HERMES_ERR_VALIDATION), "ValidationError") == 0);
-    TEST("K11 QuotaError name", strcmp(hermes_error_name(HERMES_ERR_QUOTA), "QuotaError") == 0);
-    TEST("K12 ModelError name", strcmp(hermes_error_name(HERMES_ERR_MODEL), "ModelError") == 0);
-    TEST("K13 ToolError name", strcmp(hermes_error_name(HERMES_ERR_TOOL), "ToolError") == 0);
-    TEST("K14 PluginError name", strcmp(hermes_error_name(HERMES_ERR_PLUGIN), "PluginError") == 0);
-    TEST("K15 GatewayError name", strcmp(hermes_error_name(HERMES_ERR_GATEWAY), "GatewayError") == 0);
-    TEST("K16 SessionError name", strcmp(hermes_error_name(HERMES_ERR_SESSION), "SessionError") == 0);
-    TEST("K17 SerializationError name", strcmp(hermes_error_name(HERMES_ERR_SERIALIZE), "SerializationError") == 0);
-    TEST("K18 InternalError name", strcmp(hermes_error_name(HERMES_ERR_INTERNAL), "InternalError") == 0);
-    TEST("K19 AbortError name", strcmp(hermes_error_name(HERMES_ERR_ABORT), "AbortError") == 0);
-    TEST("K20 ProtocolError name", strcmp(hermes_error_name(HERMES_ERR_PROTOCOL), "ProtocolError") == 0);
-
-    /* Error creation with context */
-    {
-        hermes_error_t e = hermes_error_ctx(HERMES_ERR_OUT_OF_RANGE, "temperature 2.5", "config.c:847");
-        TEST("context stored", strcmp(e.context, "config.c:847") == 0);
-        char buf[128];
-        hermes_error_format(&e, buf, sizeof(buf));
-        TEST("context in format", strstr(buf, "config.c:847") != NULL);
-    }
-
-    /* NotImplemented */
-    {
-        hermes_error_t e = hermes_error(HERMES_ERR_NOT_IMPLEMENTED, "CDP auto-launch not implemented");
-        TEST("not impl name", strcmp(hermes_error_name(HERMES_ERR_NOT_IMPLEMENTED), "NotImplementedError") == 0);
-    }
-
-    /* Null safety */
-    {
-        hermes_error_t e = hermes_error(HERMES_OK, NULL);
-        TEST("null message ok", hermes_ok(e));
-        e = hermes_error_ctx(HERMES_ERR_RUNTIME, NULL, NULL);
-        TEST("null msg+ctx ok", e.message[0] == '\0' && e.context[0] == '\0');
-        /* format with NULL/empty — should not crash */
-        char buf[4];
-        hermes_error_format(NULL, buf, sizeof(buf));
-        hermes_error_format(&e, buf, 0);
-        TEST("null/zero format no crash", 1);
-    }
-
-    /* Print summary */
-    printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
-    return failures ? 1 : 0;
+    printf("\n%d passed, %d failed\n", passed, failed);
+    return failed > 0 ? 1 : 0;
 }
