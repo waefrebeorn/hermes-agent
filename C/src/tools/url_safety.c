@@ -890,3 +890,124 @@ char *url_safe_for_log(const char *url, int max_len) {
 
     return out;
 }
+
+/* ================================================================
+ *  Image Format & Dimension Parsing
+ * ================================================================ */
+
+/* MIME type → TIM image format number.
+ * Mirrors Python yuanbao_media.get_image_format(). */
+int url_get_image_format(const char *mime_type) {
+    if (!mime_type || !*mime_type) return 255;
+    static const struct {
+        const char *mime;
+        int fmt;
+    } map[] = {
+        {"image/jpeg", 1},
+        {"image/jpg",  1},
+        {"image/gif",  2},
+        {"image/png",  3},
+        {"image/bmp",  4},
+        {"image/webp", 255},
+        {"image/heic", 255},
+        {"image/tiff", 255},
+        {NULL, 0}
+    };
+    for (int i = 0; map[i].mime; i++) {
+        if (strcasecmp(mime_type, map[i].mime) == 0)
+            return map[i].fmt;
+    }
+    return 255;
+}
+
+/* Parse PNG dimensions from raw bytes.
+ * Mirrors Python yuanbao_media._parse_png_size(). */
+static bool _parse_png_size(const unsigned char *data, size_t len,
+                            int *width, int *height) {
+    if (len < 24) return false;
+    if (data[0] != 0x89 || data[1] != 'P' || data[2] != 'N' || data[3] != 'G')
+        return false;
+    *width  = (data[16] << 24) | (data[17] << 16) | (data[18] << 8) | data[19];
+    *height = (data[20] << 24) | (data[21] << 16) | (data[22] << 8) | data[23];
+    return true;
+}
+
+/* Parse JPEG dimensions from raw bytes.
+ * Mirrors Python yuanbao_media._parse_jpeg_size(). */
+static bool _parse_jpeg_size(const unsigned char *data, size_t len,
+                             int *width, int *height) {
+    if (len < 4) return false;
+    if (data[0] != 0xFF || data[1] != 0xD8) return false;
+    size_t i = 2;
+    while (i < len - 1) {
+        if (data[i] != 0xFF) { i++; continue; }
+        unsigned char marker = data[i + 1];
+        if (marker == 0xC0 || marker == 0xC2) {
+            if (i + 9 > len) return false;
+            *height = (data[i + 5] << 8) | data[i + 6];
+            *width  = (data[i + 7] << 8) | data[i + 8];
+            return true;
+        }
+        if (i + 3 <= len) {
+            unsigned seg_len = (data[i + 2] << 8) | data[i + 3];
+            i += 2 + seg_len;
+        } else break;
+    }
+    return false;
+}
+
+/* Parse GIF dimensions from raw bytes.
+ * Mirrors Python yuanbao_media._parse_gif_size(). */
+static bool _parse_gif_size(const unsigned char *data, size_t len,
+                            int *width, int *height) {
+    if (len < 10) return false;
+    /* Check GIF signature */
+    if (memcmp(data, "GIF87a", 6) != 0 && memcmp(data, "GIF89a", 6) != 0)
+        return false;
+    *width  = data[6] | (data[7] << 8);
+    *height = data[8] | (data[9] << 8);
+    return true;
+}
+
+/* Parse WebP dimensions from raw bytes.
+ * Supports VP8 (lossy), VP8L (lossless), VP8X (extended).
+ * Mirrors Python yuanbao_media._parse_webp_size(). */
+static bool _parse_webp_size(const unsigned char *data, size_t len,
+                             int *width, int *height) {
+    if (len < 16) return false;
+    if (memcmp(data, "RIFF", 4) != 0 || memcmp(data + 8, "WEBP", 4) != 0)
+        return false;
+    /* Determine sub-format from bytes 12-15 */
+    if (len >= 30 && memcmp(data + 12, "VP8 ", 4) == 0) {
+        if (data[23] == 0x9D && data[24] == 0x01 && data[25] == 0x2A) {
+            *width  = (data[26] | (data[27] << 8)) & 0x3FFF;
+            *height = (data[28] | (data[29] << 8)) & 0x3FFF;
+            return true;
+        }
+    } else if (len >= 25 && memcmp(data + 12, "VP8L", 4) == 0) {
+        if (data[20] == 0x2F) {
+            unsigned bits = (unsigned)data[21] | ((unsigned)data[22] << 8)
+                          | ((unsigned)data[23] << 16) | ((unsigned)data[24] << 24);
+            *width  = (bits & 0x3FFF) + 1;
+            *height = ((bits >> 14) & 0x3FFF) + 1;
+            return true;
+        }
+    } else if (len >= 30 && memcmp(data + 12, "VP8X", 4) == 0) {
+        *width  = (data[24] | (data[25] << 8) | (data[26] << 16)) + 1;
+        *height = (data[27] | (data[28] << 8) | (data[29] << 16)) + 1;
+        return true;
+    }
+    return false;
+}
+
+/* Parse image dimensions from raw bytes. Supports PNG, JPEG, GIF, WebP.
+ * Returns true on success and sets *width and *height.
+ * Mirrors Python yuanbao_media.parse_image_size(). */
+bool url_parse_image_size(const unsigned char *data, size_t len,
+                          int *width, int *height) {
+    if (!data || !len || !width || !height) return false;
+    return _parse_png_size(data, len, width, height)
+        || _parse_jpeg_size(data, len, width, height)
+        || _parse_gif_size(data, len, width, height)
+        || _parse_webp_size(data, len, width, height);
+}

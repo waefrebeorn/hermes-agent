@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v220 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 259 (20.5% parity). Phase 147: datetime_format_duration ported from signal_rate_limit.py (datetime tests 83, +7). Suite 301/0/0.**
+**v224 | Fork diverged — C/ lives only on fork | Suite 302/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 139 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 259 (20.5% parity). Phase 151: get_image_format() + parse_image_size() ported from yuanbao_media.py (url safety tests 83, +15). Suite 302/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -85,20 +85,20 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(). Missing: proxy detection, media caching | P1 | PARTIAL |
+|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup. Missing: proxy detection | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
 || 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Missing: DoH-based fallback IP discovery (TelegramFallbackTransport hostname-preserving transport), _query_doh_provider, discover_fallback_ips, _rewrite_request_for_ip, _normalize_fallback_ips, parse_fallback_ip_env. | P2 | PARTIAL — proxy covered, DoH/fallback transport missing |
 | 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting | P2 |
-| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments | P2 |
+|| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing). Missing: md5_hex (via hash_md5_hex already in libhash), generate_file_id (via uuid_v4), download_url (async HTTP), COS upload (cloud-specific) | P2 | PARTIAL |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
 | 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 | ✅ PORTED — C has 59-sticker DB, search/send tools |
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 8 gaps (2 P1, 6 P2)**
+**S3: 8 gaps (2 P1, 6 P2) — G02: media_cache ported. G09: basename, MIME, image format, image dimension parsing ported from yuanbao_media.py. Both remain PARTIAL.**
 
 ---
 

@@ -1428,13 +1428,21 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 151: G09 yuanbao_media Depth — Image Format & Dimension Parsing
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P151-01 | Ported `get_image_format()` from Python yuanbao_media.py — `url_get_image_format()` maps 8 MIME types to TIM image format numbers (1=jpeg, 2=gif, 3=png, 4=bmp, 255=other/unknown). Returns 255 for NULL/empty/unknown. | `C/src/tools/url_safety.c` — `url_get_image_format()` |
+| P151-02 | Ported `parse_image_size()` from Python yuanbao_media.py — `url_parse_image_size()` auto-detects PNG/JPEG/GIF/WebP via magic bytes and extracts dimensions. Includes 4 sub-parsers: `_parse_png_size()` (IHDR chunk, big-endian), `_parse_jpeg_size()` (SOF0/SOF2 marker walk), `_parse_gif_size()` (GIF87a/GIF89a signature), `_parse_webp_size()` (VP8 lossy/VP8L lossless/VP8X extended). | `C/src/tools/url_safety.c` — `url_parse_image_size()` + 4 static helpers |
+| P151-03 | Added 15 test assertions: 8 image format tests (jpeg/png/gif/bmp/webp/unknown/NULL/empty), 7 dimension parsing tests (PNG 4x4, JPEG 2x2, GIF 8x6, WebP VP8X 16x12, invalid data, too short, NULL data). URL safety tests 68→83. | `C/tests/test_url_safety.c` — sections 10-11 |
+|Suite: 302/0/0 (259 test files). Gaps: 140.
+
 ## Phase 149: G09 yuanbao_media Depth — MIME Type Utilities
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | P149-01 | Ported `guess_mime_type()` from Python yuanbao_media.py — `url_guess_mime_type()` maps 27 file extensions to MIME types via a lookup table. Returns "application/octet-stream" on unknown/empty input. | `C/src/tools/url_safety.c` — `url_guess_mime_type()` at ~665-700 |
 | P149-02 | Ported `is_image()` from Python yuanbao_media.py — `url_is_image_extension()` checks filename extension against 9 known image extensions (.jpg/.png/.gif/.webp/.bmp/.heic/.tiff/.ico/.jpeg). | `C/src/tools/url_safety.c` — `url_is_image_extension()` at ~702-715 |
 | P149-03 | Added 17 test assertions: MIME type for 6 known types, unknown ext, no ext, NULL, empty, 5 image extension checks, 2 non-image checks, NULL not image. URL safety tests 51→68. | `C/tests/test_url_safety.c` — section 8.6 |
-Suite: 301/0/0 (258 test files). Gaps: 140.
+|Suite: 302/0/0 (259 test files). Gaps: 140.
 
 ## Phase 148: G09 yuanbao_media Depth — URL Basename Extraction
 | ID | Achievement | Evidence |

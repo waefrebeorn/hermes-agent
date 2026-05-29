@@ -182,6 +182,100 @@ int main(void) {
     TEST("network_access empty returns true (fail closed)",
          url_is_network_accessible(""));
 
+    /* 10. url_get_image_format */
+    TEST("get_image_format jpeg",
+         url_get_image_format("image/jpeg") == 1);
+    TEST("get_image_format png",
+         url_get_image_format("image/png") == 3);
+    TEST("get_image_format gif",
+         url_get_image_format("image/gif") == 2);
+    TEST("get_image_format bmp",
+         url_get_image_format("image/bmp") == 4);
+    TEST("get_image_format webp (unknown→255)",
+         url_get_image_format("image/webp") == 255);
+    TEST("get_image_format unknown returns 255",
+         url_get_image_format("image/svg+xml") == 255);
+    TEST("get_image_format NULL returns 255",
+         url_get_image_format(NULL) == 255);
+    TEST("get_image_format empty returns 255",
+         url_get_image_format("") == 255);
+
+    /* 11. url_parse_image_size */
+    {
+        int w = 0, h = 0;
+        /* PNG: 4x4 minimal valid PNG */
+        unsigned char png[] = {
+            0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, /* signature */
+            0x00, 0x00, 0x00, 0x0D, /* chunk length (13) */
+            'I', 'H', 'D', 'R',     /* IHDR chunk type */
+            0x00, 0x00, 0x00, 0x04, /* width = 4 */
+            0x00, 0x00, 0x00, 0x04, /* height = 4 */
+            0x08, 0x02, 0x00, 0x00, 0x00, /* bit depth, color type, etc. */
+        };
+        TEST("parse_image_size PNG 4x4",
+             url_parse_image_size(png, sizeof(png), &w, &h) && w == 4 && h == 4);
+    }
+    {
+        int w = 0, h = 0;
+        /* JPEG: minimal 2x2 with SOF0 marker */
+        unsigned char jpg[] = {
+            0xFF, 0xD8,             /* SOI */
+            0xFF, 0xE0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, /* APP0 */
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, /* padding */
+            0xFF, 0xC0, 0x00, 0x0B, /* SOF0 segment length (11) */
+            0x08,                   /* precision */
+            0x00, 0x02,             /* height = 2 */
+            0x00, 0x02,             /* width = 2 */
+            0x03,                   /* number of components */
+            0x01, 0x11, 0x00,
+            0x02, 0x11, 0x01,
+            0x03, 0x11, 0x01,
+        };
+        TEST("parse_image_size JPEG 2x2",
+             url_parse_image_size(jpg, sizeof(jpg), &w, &h) && w == 2 && h == 2);
+    }
+    {
+        int w = 0, h = 0;
+        /* GIF: 8x6 minimal */
+        unsigned char gif[] = "GIF89a\x08\x00\x06\x00";
+        TEST("parse_image_size GIF 8x6",
+             url_parse_image_size(gif, 10, &w, &h) && w == 8 && h == 6);
+    }
+    {
+        int w = 0, h = 0;
+        /* WebP VP8X: 16x12 */
+        unsigned char webp_vp8x[] = {
+            'R', 'I', 'F', 'F',
+            0x24, 0x00, 0x00, 0x00, /* file size (36) */
+            'W', 'E', 'B', 'P',
+            'V', 'P', '8', 'X',     /* VP8X chunk */
+            0x0A, 0x00, 0x00, 0x00, /* chunk size (10) */
+            0x00,                   /* flags */
+            0x00, 0x00, 0x00,       /* reserved */
+            0x0F, 0x00, 0x00,       /* width - 1 = 15 → width = 16 */
+            0x0B, 0x00, 0x00,       /* height - 1 = 11 → height = 12 */
+        };
+        TEST("parse_image_size WebP VP8X 16x12",
+             url_parse_image_size(webp_vp8x, sizeof(webp_vp8x), &w, &h) && w == 16 && h == 12);
+    }
+    {
+        int w = 0, h = 0;
+        /* Invalid data — not a valid image */
+        unsigned char invalid[] = { 0x00, 0x01, 0x02, 0x03 };
+        TEST("parse_image_size invalid returns false",
+             !url_parse_image_size(invalid, 4, &w, &h));
+    }
+    {
+        int w = 0, h = 0;
+        TEST("parse_image_size too short returns false",
+             !url_parse_image_size((const unsigned char*)"abc", 3, &w, &h));
+    }
+    {
+        int w = 0, h = 0;
+        TEST("parse_image_size NULL data returns false",
+             !url_parse_image_size(NULL, 10, &w, &h));
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

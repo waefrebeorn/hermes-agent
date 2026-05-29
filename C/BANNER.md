@@ -14,7 +14,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 301/0/0 |
+| Test suite | 302/0/0 |
 | Tools | 85 |
 | CLI commands | 98 |
 | Gateway platforms | 19 |

@@ -123,6 +123,20 @@ bool url_is_image_extension(const char *filename);
  * Mirrors Python gateway/platforms/base.py is_network_accessible(). */
 bool url_is_network_accessible(const char *host);
 
+/* ================================================================
+ *  Image Format & Dimension Parsing
+ * ================================================================ */
+
+/* Map MIME type to TIM image format number.
+ * Mirrors Python yuanbao_media.get_image_format(). */
+int url_get_image_format(const char *mime_type);
+
+/* Parse image dimensions from raw bytes. Supports PNG, JPEG, GIF, WebP.
+ * Returns true on success and sets *width and *height.
+ * Mirrors Python yuanbao_media.parse_image_size(). */
+bool url_parse_image_size(const unsigned char *data, size_t len,
+                          int *width, int *height);
+
 #ifdef __cplusplus
 }
 #endif
