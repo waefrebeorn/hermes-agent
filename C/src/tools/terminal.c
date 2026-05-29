@@ -1021,7 +1021,13 @@ void registry_init_terminal(void) {
         char *tok = strtok_r(copy, ",\t ", &save);
         while (tok) {
             while (*tok == ' ' || *tok == '\t') tok++;
-            if (*tok) env_passthrough_register(tok);
+            if (*tok) {
+                if (!env_passthrough_register(tok)) {
+                    /* GHSA-rhgp-j443-p4rf: warn when blocked credential attempted */
+                    fprintf(stderr, "[terminal] WARNING: env_passthrough '%s' blocked — "
+                            "provider credential cannot be forwarded to sandboxed execution.\n", tok);
+                }
+            }
             tok = strtok_r(NULL, ",\t ", &save);
         }
     }
