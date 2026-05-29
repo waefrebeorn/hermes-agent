@@ -569,12 +569,21 @@ static char *apply_v4a_hunk(const char *file_content, v4a_hunk_t *hunk,
     bool fuzzy = false;
 
     if (!match) {
-        /* Try fuzzy (line-trimmed) */
+        /* Try all 4 fuzzy strategies */
         size_t ms, ml;
-        if (!_fuzzy_line_trimmed(file_content, search_str, &ms, &ml)) {
-            *error_out = malloc(256);
-            if (*error_out)
-                snprintf(*error_out, 256, "Hunk not found (tried exact + line-trimmed)");
+        const char *best_strategy = NULL;
+        if (!_fuzzy_find(file_content, search_str, &ms, &ml, &best_strategy)) {
+            size_t content_len = strlen(file_content);
+            *error_out = malloc(512);
+            if (*error_out) {
+                snprintf(*error_out, 512,
+                    "Hunk not found (tried exact, line-trimmed, indentation-flexible, "
+                    "whitespace-normalized). "
+                    "Snippet around closest context match near offset %zu:\n%.*s[...]",
+                    content_len > 200 ? (size_t)100 : (size_t)0,
+                    content_len > 200 ? 200 : (int)content_len,
+                    content_len > 200 ? file_content + 100 : file_content);
+            }
             free(search_str);
             free(repl_str);
             return NULL;
@@ -582,6 +591,8 @@ static char *apply_v4a_hunk(const char *file_content, v4a_hunk_t *hunk,
         offset = ms;
         match_len = ml;
         fuzzy = true;
+        fprintf(stderr, "[patch] Fuzzy match: strategy=%s offset=%zu\n",
+                best_strategy, offset);
     } else {
         offset = (size_t)(match - file_content);
         match_len = strlen(search_str);
