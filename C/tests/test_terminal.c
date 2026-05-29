@@ -172,6 +172,46 @@ int main(void) {
         free(res);
     }
 
+    /* Test 14: Foreground guidance — nohup wrapper detected */
+    {
+        char *res = terminal_handler("{\"command\":\"nohup echo test > /dev/null 2>&1\"}", NULL);
+        TEST("nohup command returns non-NULL", res != NULL);
+        if (res) {
+            TEST("nohup guidance present (background wrapper)", json_contains(res, "background"));
+        }
+        free(res);
+    }
+
+    /* Test 15: Foreground guidance — trailing & detected */
+    {
+        char *res = terminal_handler("{\"command\":\"echo bg_test &\"}", NULL);
+        TEST("trailing & returns non-NULL", res != NULL);
+        if (res) {
+            TEST("trailing & guidance present", json_contains(res, "background"));
+        }
+        free(res);
+    }
+
+    /* Test 16: Foreground guidance — inline & detected */
+    {
+        char *res = terminal_handler("{\"command\":\"echo a & echo b\"}", NULL);
+        TEST("inline & returns non-NULL", res != NULL);
+        if (res) {
+            TEST("inline & guidance present", json_contains(res, "background"));
+        }
+        free(res);
+    }
+
+    /* Test 17: No guidance for normal foreground command */
+    {
+        char *res = terminal_handler("{\"command\":\"echo no_background\"}", NULL);
+        TEST("normal command returns non-NULL", res != NULL);
+        if (res) {
+            TEST("no guidance for normal command", !json_contains(res, "guidance"));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);
