@@ -114,6 +114,7 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                         json_node_t *j = json_get(all, i);
                         const char *jname = json_object_get_string(j, "name", "");
                         if (strstr(jname, filter_name) != NULL) {
+                            cron_inject_repeat_display(j);
                             json_array_append(filtered, j);
                         }
                     }
@@ -127,6 +128,11 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
                 char *pe = NULL;
                 json_node_t *list = json_parse(list_json, &pe);
                 if (list) {
+                    size_t n = json_len(list);
+                    for (size_t i = 0; i < n; i++) {
+                        json_node_t *j = json_get(list, i);
+                        cron_inject_repeat_display(j);
+                    }
                     json_object_set(result, "jobs", list);
                 } else {
                     json_object_set(result, "jobs", json_new_array());
@@ -394,6 +400,35 @@ char *cronjob_handler(const char *args_json, const char *task_id) {
     json_free(result);
     json_free(args);
     return json_out;
+}
+
+/* Inject a human-readable repeat_display field into a cron job JSON object.
+ * Format: "forever" (no limit), "once", "1/1" (completed once), "3/5" (3 of 5), etc.
+ * Mirrors Python cronjob_tools._repeat_display(). */
+void cron_inject_repeat_display(json_node_t *job) {
+    if (!job) return;
+    json_node_t *repeat = json_object_get(job, "repeat");
+    if (!repeat) {
+        json_object_set(job, "repeat_display", json_new_string("forever"));
+        return;
+    }
+    int times = (int)json_get_num(repeat, "times", 0);
+    int completed = (int)json_get_num(repeat, "completed", 0);
+
+    if (times == 0) {
+        json_object_set(job, "repeat_display", json_new_string("forever"));
+    } else if (times == 1) {
+        json_object_set(job, "repeat_display",
+            json_new_string(completed == 0 ? "once" : "1/1"));
+    } else if (completed > 0) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%d/%d", completed, times);
+        json_object_set(job, "repeat_display", json_new_string(buf));
+    } else {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%d times", times);
+        json_object_set(job, "repeat_display", json_new_string(buf));
+    }
 }
 
 void registry_init_cronjob(void) {

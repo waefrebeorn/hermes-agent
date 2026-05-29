@@ -1428,6 +1428,17 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 155: B11 Cron Depth — Repeat Display Formatter
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P155-01 | Ported `_repeat_display()` from Python cronjob_tools.py — `cron_inject_repeat_display()` adds a human-readable `repeat_display` field to each cron job in list output. Formats: "forever" (no limit), "once", "1/1", "3/5", "5 times". Mirrors Python logic exactly. | `C/src/tools/cronjob.c` — `cron_inject_repeat_display()` at ~407-427, wired into list handler at lines 117 and 133 |
+| P155-02 | Declared in hermes.h with json_node_t parameter. All existing cron tests pass (no new tests needed — pure display enhancement). Suite 302/0/0. | `C/include/hermes.h` — line ~1331 |
+
+## Phase 154: Vaulted Stale B02 Vision Claims
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P154-01 | Vaulted 3 stale B02 claims: Color analysis, EXIF extraction, OCR via Python helpers — NONE exist in Python vision_tools.py (searched entire tools/vision_tools.py, tools/image_gen*, agent/image_routing*). Battleship B02 updated. | Python tools/vision_tools.py has no color/exif/ocr functions. C vision.c has detect_image_magic for extensionless files already. |
+
 ## Phase 153: G02 base.py Depth — Retry-After Header Parser
 | ID | Achievement | Evidence |
 |----|-------------|----------|

@@ -1328,6 +1328,9 @@ bool cron_sqlite_save_job(cron_sqlite_store_t *store, const char *name,
                            const char *script_type);
 bool cron_sqlite_load_jobs(cron_sqlite_store_t *store);
 char *cron_sqlite_list_to_json(cron_sqlite_store_t *store);
+/* Inject a human-readable repeat_display field into a cron job JSON object.
+ * Mirrors Python cronjob_tools._repeat_display(). */
+void cron_inject_repeat_display(json_node_t *job);
 bool cron_sqlite_delete_job(cron_sqlite_store_t *store, const char *name);
 bool cron_sqlite_update_job(cron_sqlite_store_t *store, const char *name,
                              const char *field, const char *value);
