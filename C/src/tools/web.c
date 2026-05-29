@@ -32,6 +32,7 @@ static const char *SCHEMA_GET = "{"
       "\"cookies\":{\"type\":\"string\",\"description\":\"Cookie header value to send with request (e.g., session=abc123; token=xyz)\"},"
       "\"include_body\":{\"type\":\"boolean\",\"description\":\"Include response body in output. Set false to return only status code and URL (faster, less token usage).\",\"default\":true},"
       "\"auth_type\":{\"type\":\"string\",\"description\":\"Authentication type: 'basic' (user:pass) or 'bearer' (token only). Default: basic\"},"
+      "\"save_path\":{\"type\":\"string\",\"description\":\"Save response body to file path instead of returning in output. Useful for downloading PDFs, images, and other binary files.\"},"
       "\"cookie_jar\":{\"type\":\"string\",\"description\":\"Path to JSON cookie jar file. Cookies from Set-Cookie headers are auto-saved and re-sent.\"}"
     "},"
     "\"required\":[\"url\"]"
@@ -201,6 +202,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     const char *cookies = json_object_get_string(args, "cookies", NULL);
     const char *cookie_jar = json_object_get_string(args, "cookie_jar", NULL);
     const char *auth_type = json_object_get_string(args, "auth_type", NULL);
+    const char *save_path = json_object_get_string(args, "save_path", NULL);
 
     /* Strdup values that survive json_free */
     char *url_copy = url ? strdup(url) : NULL;
@@ -211,6 +213,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     char *ua_copy = user_agent ? strdup(user_agent) : NULL;
     char *cookies_copy = cookies ? strdup(cookies) : NULL;
     char *auth_type_copy = auth_type ? strdup(auth_type) : NULL;
+    char *save_path_copy = save_path ? strdup(save_path) : NULL;
     bool include_body_val = json_object_get_bool(args, "include_body", true);
 
     /* Redirect following params */
@@ -228,6 +231,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(proxy_copy);
         free(cookies_copy);
         free(auth_type_copy);
+        free(save_path_copy);
         free(ua_copy);
         return strdup("{\"error\":\"Missing url\"}");
     }
@@ -239,6 +243,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(proxy_copy);
         free(cookies_copy);
         free(auth_type_copy);
+        free(save_path_copy);
         free(ua_copy);
         free(url_copy);
         return strdup("{\"error\":\"URL blocked by SSRF protection: private or internal address\"}");
@@ -357,6 +362,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(proxy_copy);
         free(cookies_copy);
         free(auth_type_copy);
+        free(save_path_copy);
         free(ua_copy);
         free(url_copy);
         return strdup("{\"error\":\"HTTP request failed\"}");
@@ -366,7 +372,21 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     json_object_set(result, "url", json_new_string(url_copy));
     json_object_set(result, "status_code", json_new_number((double)resp->status));
     json_object_set(result, "headers", json_new_string(resp->headers ? resp->headers : ""));
-    if (include_body_val) {
+    if (save_path_copy && save_path_copy[0]) {
+        /* Save response body to file */
+        FILE *f = fopen(save_path_copy, "wb");
+        if (f && resp->body) {
+            size_t written = fwrite(resp->body, 1, resp->body_len, f);
+            fclose(f);
+            json_object_set(result, "saved_to", json_new_string(save_path_copy));
+            json_object_set(result, "saved_size", json_new_number((double)written));
+            json_object_set(result, "body", json_new_string("[saved to file]"));
+        } else {
+            if (f) fclose(f);
+            json_object_set(result, "save_error", json_new_string("Cannot write to save_path"));
+            json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
+        }
+    } else if (include_body_val) {
         json_object_set(result, "body", json_new_string(resp->body ? resp->body : ""));
         json_object_set(result, "body_length", json_new_number((double)resp->body_len));
     }
@@ -386,6 +406,7 @@ char *web_get_handler(const char *args_json, const char *task_id) {
     free(proxy_copy);
     free(cookies_copy);
     free(ua_copy);
+    free(save_path_copy);
     free(url_copy);
     return json_out;
 }
