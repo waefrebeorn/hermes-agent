@@ -22,7 +22,8 @@ static const char *SCHEMA = "{"
       "\"platform\":{\"type\":\"string\",\"description\":\"Platform name override (e.g., 'telegram', 'discord') — overrides target parsing\"},"
       "\"thread_id\":{\"type\":\"string\",\"description\":\"Thread/topic ID for platforms that support threaded conversations (e.g., Telegram topic ID)\"},"
       "\"reply_to_message_id\":{\"type\":\"string\",\"description\":\"Message ID to reply to\"},"
-      "\"inline_buttons\":{\"type\":\"array\",\"description\":\"D06: Array of inline button objects [{text, url?, callback_data?, row?}] for inline keyboards\"}"
+      "\"inline_buttons\":{\"type\":\"array\",\"description\":\"D06: Array of inline button objects [{text, url?, callback_data?, row?}] for inline keyboards\"},"
+      "\"media_group\":{\"type\":\"array\",\"description\":\"B08: Array of file paths for Telegram media group\",\"items\":{\"type\":\"string\"}}"
     "},"
     "\"required\":[\"message\"]"
 "}";
@@ -122,6 +123,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
     const char *thread_id = json_object_get_string(args, "thread_id", NULL);
     const char *reply_to = json_object_get_string(args, "reply_to_message_id", NULL);
     json_node_t *inline_buttons_node = json_object_get(args, "inline_buttons");
+    json_node_t *media_group = json_object_get(args, "media_group");
 
     json_node_t *result = json_new_object();
 
@@ -218,6 +220,45 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                 telegram_set_token(bot_token);
                 http_client_t *http = http_client_new(30);
                 if (http) {
+                    /* B08: Media group — send multiple files as a single Telegram media group */
+                    if (media_group && media_group->type == JSON_ARRAY) {
+                        size_t mg_count = json_len(media_group);
+                        if (mg_count >= 2) {
+                            json_node_t *input_media = json_new_array();
+                            size_t added = 0;
+                            for (size_t mi = 0; mi < mg_count; mi++) {
+                                json_node_t *item = json_array_get(media_group, mi);
+                                if (!item || item->type != JSON_STRING) continue;
+                                const char *path = item->str_val;
+                                if (!path || !path[0]) continue;
+                                const char *ext = strrchr(path, '.');
+                                const char *media_type = "document";
+                                if (ext) {
+                                    if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                                        strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
+                                        media_type = "photo";
+                                    else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
+                                        media_type = "video";
+                                    else if (strcasecmp(ext, ".gif") == 0)
+                                        media_type = "animation";
+                                }
+                                json_node_t *mi2 = json_new_object();
+                                json_object_set(mi2, "type", json_new_string(media_type));
+                                json_object_set(mi2, "media", json_new_string(path));
+                                json_array_append(input_media, mi2);
+                                added++;
+                            }
+                            if (added >= 2) {
+                                sent = telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
+                            } else if (added == 1) {
+                                json_node_t *first = json_array_get(media_group, 0);
+                                if (first && first->type == JSON_STRING)
+                                    actual_media = first->str_val;
+                            }
+                            json_free(input_media);
+                            if (sent) goto send_done;
+                        }
+                    }
                     if (actual_media && actual_media[0]) {
                         /* MEDIA: prefix — send file via appropriate API */
                         const char *ext = strrchr(actual_media, '.');
@@ -252,6 +293,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                         sent = telegram_send_message(http, chat_id ? chat_id : "",
                                                      tg_msg, "Markdown");
                     }
+send_done:
                     http_client_free(http);
                 }
             }

@@ -786,6 +786,15 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — B09 conflict resolution now returns st
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B10 FTS5 syntax added. Remaining: full-text indexing for performance.
 
+## Phase 76: Telegram Media Group Support (B08) (v152)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P76-01 | media_group param added to send_message schema — array of file path strings | `src/tools/send_message.c` — SCHEMA definition |
+| P76-02 | Media group handler — builds InputMedia array from file paths, detects type by extension (photo/video/animation/document), sends via telegram_send_media_group() | `src/tools/send_message.c` — send_message_handler media group block |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — B08 media group support added.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

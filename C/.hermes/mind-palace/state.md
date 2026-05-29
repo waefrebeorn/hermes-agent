@@ -26,7 +26,8 @@ Battleship v34 (153 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 72: Terminal env passthrough wired (B07 — build_env_passthrough_export, integrated into command builder). Stale claims corrected: B08 inline_buttons/reply_to already implemented, B10 filters already implemented.
 - Phase 73: libmcp_oauth integrated into mcp_tool.c (B04) — token storage via mcp_oauth_storage, PKCE fields (authorization_url, redirect_uri) parsed from YAML config. test_runner.sh updated for mcp_oauth + crypto + base64 deps.
 - Phase 74: patch conflict resolution (B09) — when old_string found multiple times, returns JSON with offset + context snippet for each match instead of bare error
-- Phase 75: FTS5 query syntax for session_search (B10) — AND/OR/\"phrase\"/-exclude parsing, multi-term scoring, windowed snippet extraction
+- Phase 75: FTS5 query syntax for session_search (B10) — AND/OR/"phrase"/-exclude parsing, multi-term scoring, windowed snippet extraction
+- Phase 76: Telegram media group support (B08) — media_group array param, builds InputMedia array, sends via telegram_send_media_group()
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
