@@ -286,6 +286,48 @@ static bool is_image_size_error(const char *error_text) {
     return false;
 }
 
+/* Port of Python vision_tools.py _supports_media_in_tool_results().
+ * Returns true if the given provider+model accepts image content inside
+ * a tool-result message. Conservative default is false. */
+bool vision_supports_media_in_tool_results(const char *provider, const char *model) {
+    if (!provider || !provider[0]) return false;
+
+    /* Aggregators that route to vision-capable models */
+    if (strcmp(provider, "openrouter") == 0 ||
+        strcmp(provider, "nous") == 0 ||
+        strcmp(provider, "vertex") == 0 ||
+        strcmp(provider, "bedrock") == 0 ||
+        strcmp(provider, "anthropic-vertex") == 0 ||
+        strcmp(provider, "google-vertex") == 0)
+        return true;
+
+    /* Native Anthropic */
+    if (strcmp(provider, "anthropic") == 0 ||
+        strcmp(provider, "claude") == 0 ||
+        strcmp(provider, "anthropic-direct") == 0)
+        return true;
+
+    /* OpenAI Chat Completions and Responses */
+    if (strcmp(provider, "openai") == 0 ||
+        strcmp(provider, "openai-chat") == 0 ||
+        strcmp(provider, "openai-codex") == 0 ||
+        strcmp(provider, "azure-openai") == 0)
+        return true;
+
+    /* Gemini — gate on model name; only Gemini 3+ supports */
+    if (strcmp(provider, "google") == 0 ||
+        strcmp(provider, "gemini") == 0 ||
+        strcmp(provider, "google-gemini") == 0 ||
+        strcmp(provider, "google-vertex-gemini") == 0) {
+        if (!model || !model[0]) return false;
+        if (strstr(model, "gemini-3") || strstr(model, "gemini-pro-3") || strstr(model, "gemini-flash-3"))
+            return true;
+        return false;
+    }
+
+    return false;
+}
+
 char *vision_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");

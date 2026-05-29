@@ -109,4 +109,10 @@ bool image_routing_vision_disabled(const void *state);
  */
 bool image_routing_notify_error(void *state, const char *error_text);
 
+/* Port of Python vision_tools.py _supports_media_in_tool_results().
+ * Returns true if the given provider+model combination accepts image
+ * content inside a tool-result message (vs. requiring a separate
+ * vision analysis step). Conservative default is false. */
+bool vision_supports_media_in_tool_results(const char *provider, const char *model);
+
 #endif /* HERMES_IMAGE_ROUTING_H */

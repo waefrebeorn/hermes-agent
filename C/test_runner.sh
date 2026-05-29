@@ -2774,6 +2774,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     else fail "telegram_fallback_ips (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tg_fb
 else skip "telegram_fallback_ips (compilation failed)"
+fi
+
+# Vision media-in-tool-results support (B02 depth)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_vision_supports_media.c" \
+    "$CDIR/src/tools/vision.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_vis_media -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_vis_media > /dev/null 2>&1; then ok "vision_supports_media (23 tests)"
+    else fail "vision_supports_media (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_vis_media
+else skip "vision_supports_media (compilation failed)"
 fi &
 
 # Voice mode test (voice_mode.c config API)
