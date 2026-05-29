@@ -1086,6 +1086,17 @@ char *agent_run_conversation(agent_state_t *state,
                 continue; /* retry */
             }
 
+            /* B22: Content filter response → skip retry of filtered model */
+            if (llm_resp && strcmp(llm_resp->finish_reason, "content_filter") == 0) {
+                fprintf(stderr, "[content_filter] Model returned content filter response, "
+                        "skipping retry and triggering fallback.\n");
+                dont_retry = true;
+                /* Free the filtered response so fallback logic triggers */
+                llm_response_free(llm_resp);
+                llm_resp = NULL;
+                break;
+            }
+
             /* Success — break out of retry loop */
             break;
         }
