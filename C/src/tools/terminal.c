@@ -905,6 +905,69 @@ static const char *_check_foreground_guidance(const char *command) {
             "Use terminal(background=true) for long-lived processes, "
             "then run health checks and tests in follow-up calls.";
     }
+    /* Check for known long-lived foreground processes (servers, watchers).
+     * Mirrors Python terminal_tool._LONG_LIVED_FOREGROUND_PATTERNS. */
+    {
+        /* Build lower-case copy for case-insensitive matching */
+        char lc[512];
+        size_t clen = strlen(check);
+        if (clen >= sizeof(lc)) clen = sizeof(lc) - 1;
+        for (size_t i = 0; i < clen; i++)
+            lc[i] = (char)tolower((unsigned char)check[i]);
+        lc[clen] = '\0';
+
+        bool is_long_lived = false;
+        /* npm/pnpm/yarn/bun with run: "npm run dev|start|serve|watch" */
+        if (strstr(lc, "npm run") || strstr(lc, "pnpm run") ||
+            strstr(lc, "yarn run") || strstr(lc, "bun run"))
+            is_long_lived = true;
+        /* npm/pnpm/yarn/bun dev|start|serve|watch (without "run") */
+        else if (strstr(lc, "npm dev") || strstr(lc, "pnpm dev") ||
+                 strstr(lc, "yarn dev") || strstr(lc, "bun dev"))
+            is_long_lived = true;
+        else if (strstr(lc, "npm start") || strstr(lc, "pnpm start") ||
+                 strstr(lc, "yarn start") || strstr(lc, "bun start"))
+            is_long_lived = true;
+        else if (strstr(lc, "npm serve") || strstr(lc, "pnpm serve") ||
+                 strstr(lc, "yarn serve") || strstr(lc, "bun serve"))
+            is_long_lived = true;
+        else if (strstr(lc, "npm watch") || strstr(lc, "pnpm watch") ||
+                 strstr(lc, "yarn watch") || strstr(lc, "bun watch"))
+            is_long_lived = true;
+        /* docker compose up */
+        else if (strstr(lc, "docker compose up") || strstr(lc, "docker-compose up"))
+            is_long_lived = true;
+        /* next dev */
+        else if (strstr(lc, "next dev"))
+            is_long_lived = true;
+        /* vite */
+        else if (strstr(lc, "vite ") || strcmp(lc, "vite") == 0)
+            is_long_lived = true;
+        /* nodemon */
+        else if (strstr(lc, "nodemon"))
+            is_long_lived = true;
+        /* uvicorn */
+        else if (strstr(lc, "uvicorn"))
+            is_long_lived = true;
+        /* gunicorn */
+        else if (strstr(lc, "gunicorn"))
+            is_long_lived = true;
+        /* python -m http.server */
+        else if (strstr(lc, "python -m http.server") ||
+                 strstr(lc, "python3 -m http.server"))
+            is_long_lived = true;
+        /* py (Windows python launcher) -m http.server */
+        else if (strstr(lc, "py -m http.server"))
+            is_long_lived = true;
+
+        if (is_long_lived) {
+            free(stripped);
+            return
+                "This foreground command appears to start a long-lived server/watch process. "
+                "Run it with background=true, verify readiness (health endpoint/log signal), "
+                "then execute tests in a separate command.";
+        }
+    }
     free(stripped);
     return NULL;
 }

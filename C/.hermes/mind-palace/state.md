@@ -1,4 +1,4 @@
-# Slermes C (v214)
+# Slermes C (v215)
 
 Suite: 301/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 258 | C src: 175
@@ -85,6 +85,7 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 138: B07 terminal depth — _safe_command_preview() ported from Python (log-safe truncated command preview). Wired into popen error path for better diagnostics. Stale claim corrected: B02 detail param confirmed already wired in vision.c (schema + handler forwarding). Suite 301/0/0.
 |- Phase 139: B03 web depth — clean_base64_images() ported from Python web_tools. Strips inline data:image/ URIs (base64 images) from extracted web text, replacing with placeholder [BASE64_IMAGE_REMOVED]. Wired into web_extract_native() output. Suite 301/0/0.
 |- Phase 140: B03 web depth — clean_base64_images() exposed + 13-test suite. NULL, empty, plain passthrough, single/multiple images, JPEG/GIF, inline HTML contexts all verified. test_runner.sh count updated 22→35. Suite 301/0/0.
+|- Phase 141: B07 terminal depth — long-lived foreground pattern detection (npm/pnpm/yarn/bun run dev|start|serve|watch, docker compose up, next dev, vite, nodemon, uvicorn, gunicorn, python -m http.server). 18 new test assertions, terminal 58→76 tests. Suite 301/0/0.
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -100,4 +101,4 @@ Battleship v34 (140 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 140: clean_base64_images test suite expanded 22→35. Suite 301/0/0 (258 test files).
+Real parity gap is 140 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 141: long-lived pattern detection in terminal (76 tests). Suite 301/0/0 (258 test files).

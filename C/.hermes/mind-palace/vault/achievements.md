@@ -1396,3 +1396,11 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P140-02 | Added 13 test assertions covering clean_base64_images: NULL input, empty string, plain text passthrough, single image removal, before/after text preservation, raw base64 absence, multiple images, only-image edge case, JPEG data URL, inline HTML with quotes. | `C/tests/test_web.c` — tests 23-35, 22→35 total |
 | P140-03 | Updated test_runner.sh web_tool test count from 22 to 35. All tests PASS. | `C/test_runner.sh` — web_tool (35 tests) |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 141: B07 Terminal Depth — Long-Lived Pattern Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P141-01 | Ported _LONG_LIVED_FOREGROUND_PATTERNS from Python terminal_tool — detects npm/pnpm/yarn/bun run (dev/start/serve/watch), docker compose up, next dev, vite, nodemon, uvicorn, gunicorn, python -m http.server, py -m http.server. Returns guidance suggesting background=true for server/watch processes. | `C/src/tools/terminal.c` — long-lived pattern check block in _check_foreground_guidance() |
+| P141-02 | Added 18 test assertions covering 9 long-lived patterns (npm run dev, npm start, npm dev, docker compose up, python -m http.server, uvicorn, gunicorn, next dev, nodemon) + 1 negative test (normal command). Tests 58→76 total. | `C/tests/test_terminal.c` — tests 27-35 |
+| P141-03 | Updated test_runner.sh terminal_tool test count from 58 to 76. All tests PASS. | `C/test_runner.sh` — terminal_tool (76 tests) |
+Suite: 301/0/0 (258 test files). Gaps: 140.

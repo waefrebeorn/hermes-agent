@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v214)
+# BANNER — WuBu Slermes C Translation (v215)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v214                                       ║
+║  WuBu Slermes C v215                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 140: clean_base64_images test suite     ║
+║  Phase 141: long-lived pattern detect       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

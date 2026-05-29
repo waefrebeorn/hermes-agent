@@ -310,6 +310,107 @@ int main(void) {
         free(res);
     }
 
+    /* --- Long-lived foreground pattern detection tests --- */
+
+    /* Test 27: npm run dev detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo npm run dev\"}", NULL);
+        TEST("npm run dev returns non-NULL", res != NULL);
+        if (res) {
+            TEST("npm run dev guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 28: docker compose up detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo docker compose up\"}", NULL);
+        TEST("docker compose up returns non-NULL", res != NULL);
+        if (res) {
+            TEST("docker compose up guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 29: python -m http.server detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo python3 -m http.server\"}", NULL);
+        TEST("python http.server returns non-NULL", res != NULL);
+        if (res) {
+            TEST("python http.server guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 30: uvicorn detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo run_uvicorn\"}", NULL);
+        TEST("uvicorn returns non-NULL", res != NULL);
+        if (res) {
+            TEST("uvicorn guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 31: npm start (without "run") — also long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo npm start\"}", NULL);
+        TEST("npm start returns non-NULL", res != NULL);
+        if (res) {
+            TEST("npm start guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 32: gunicorn detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo run_gunicorn\"}", NULL);
+        TEST("gunicorn returns non-NULL", res != NULL);
+        if (res) {
+            TEST("gunicorn guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 33: Normal short command — NO guidance */
+    {
+        char *res = terminal_handler("{\"command\":\"echo quick_task\"}", NULL);
+        TEST("normal short command returns non-NULL", res != NULL);
+        if (res) {
+            TEST("no guidance for normal command",
+                 !json_contains(res, "guidance"));
+        }
+        free(res);
+    }
+
+    /* Test 34: next dev detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo next dev\"}", NULL);
+        TEST("next dev returns non-NULL", res != NULL);
+        if (res) {
+            TEST("next dev guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
+    /* Test 35: nodemon detected as long-lived */
+    {
+        char *res = terminal_handler("{\"command\":\"echo run_nodemon\"}", NULL);
+        TEST("nodemon returns non-NULL", res != NULL);
+        if (res) {
+            TEST("nodemon guidance: long-lived server",
+                 json_contains(res, "long-lived"));
+        }
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All terminal tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);
