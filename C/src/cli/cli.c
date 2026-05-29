@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 /* ================================================================
  *  State
@@ -78,6 +79,14 @@ static cli_state_t g_cli;
  * ================================================================ */
 
 static skin_t *g_skin = NULL;
+
+/* SIGWINCH flag — set when terminal resized */
+static volatile sig_atomic_t g_winch_flag = 0;
+
+static void cli_sigwinch_handler(int sig) {
+    (void)sig;
+    g_winch_flag = 1;
+}
 
 /* Map a skin color name (e.g. "cyan", "red:bold") to display_color_t.
  * Returns fallback on unknown name. */
@@ -411,6 +420,14 @@ int hermes_cli_main(int argc, char **argv) {
     hermes_config_load_env(&g_cli.config);
     /* P19: Enable SIGHUP-based config reload */
     hermes_config_setup_reload();
+
+    /* D13: Install SIGWINCH handler for terminal resize */
+    {
+        struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = cli_sigwinch_handler;
+        sigaction(SIGWINCH, &sa, NULL);
+    }
 
     /* L04: Check for retired xAI models and warn */
     {
@@ -847,6 +864,15 @@ start_interactive:
     while (g_cli.running) {
         /* P19: Check SIGHUP-based config reload before each input */
         hermes_config_check_reload(&g_cli.config, NULL);
+
+        /* D13: Check SIGWINCH flag — re-draw prompt on terminal resize */
+        if (g_winch_flag) {
+            g_winch_flag = 0;
+            if (g_cli.interactive && g_le) {
+                printf("\r\033[K");
+                fflush(stdout);
+            }
+        }
 
         /* Get prompt symbol from skin branding or fallback */
     const char *prompt_symbol = NULL;

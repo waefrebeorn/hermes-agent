@@ -1,7 +1,7 @@
 # Prestige (v145)
 
 ## P0 — Display & Visual + Architecture (13 gaps)
-D09, D13, D14, D16: Prompt input, bounding box re-layout, input scaling, type-ahead: Prompt input, CLI markdown render, bounding box re-layout, input scaling, type-ahead
+D09, D13, D14, D16: Prompt input, bounding box re-layout, input scaling, type-ahead
 F01: C can't hook Python
 F02: Test count mismatch (248 vs 1262)
 F03: No Python interop
