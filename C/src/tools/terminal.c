@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #ifdef __linux__
 #include <sys/vfs.h>
 #endif
@@ -868,6 +869,25 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     /* F09: PTY mode */
     bool use_pty = json_object_get_bool(args, "pty", false);
+
+    /* Check if command requires piped stdin instead of PTY.
+     * Some CLIs (gh auth login --with-token) change behavior when stdin
+     * is a TTY and hang forever waiting for piped input.
+     * Port of Python terminal_tool._command_requires_pipe_stdin(). */
+    if (use_pty && command_buf[0]) {
+        char cmd_lower[512];
+        size_t clen = strlen(command_buf);
+        if (clen < sizeof(cmd_lower)) {
+            for (size_t i = 0; i < clen; i++)
+                cmd_lower[i] = (char)tolower((unsigned char)command_buf[i]);
+            cmd_lower[clen] = '\0';
+            /* Check: gh auth login --with-token requires piped stdin, not PTY */
+            if (strstr(cmd_lower, "gh auth login") != NULL &&
+                strstr(cmd_lower, "--with-token") != NULL) {
+                use_pty = false;
+            }
+        }
+    }
 
     /* F13: Force — skip sandbox escape check (use after user confirms) */
     bool force = json_object_get_bool(args, "force", false);

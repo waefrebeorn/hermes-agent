@@ -1340,4 +1340,10 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 | P133-02 | G12 stale claim retired: api_server.py listed as gap — C has api_server.c (1224 LOC) with full HTTP API server | `C/src/api_server.c` — api_server_start/stop/is_running |
 | P133-03 | file_merge test expansion 4→13 tests: added missing params (modified, output), identical files, different files with diff verification, unknown strategy, both files missing, empty base file, output file written verification | `C/tests/test_file_merge.c` — 9 new tests (13 total) |
 | P133-04 | S10 F02 stale test count in battleship: 248→258 corrected | `C/.hermes/mind-palace/battleship-v34.md` |
-Suite: 301/0/0 (258 test files). Gaps: 142.
+## Phase 134: Stale S3 Claims Vaulted + B07 Terminal pipe_stdin Port
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P134-01 | G11 stale claim retired: yuanbao_sticker.py listed as gap — C has 59-sticker database with search scoring and yb_search_sticker/yb_send_sticker tools | `C/src/tools/yuanbao_tools.c` — YB_STICKERS array (59 entries), score_sticker(), yb_search_sticker handler |
+| P134-02 | G13 stale claim retired: _http_client_limits.py listed as gap — C has http_client_set_pool(max_connections, idle_timeout_sec) for connection pool limits | `C/include/hermes_http.h:133` — http_client_set_pool() API |
+| P134-03 | B07 terminal depth: _command_requires_pipe_stdin() ported from Python — PTY auto-override for gh auth login --with-token (which hangs in PTY waiting for piped stdin). Overrides use_pty=false when detected. | `C/src/tools/terminal.c` — PTY check block after use_pty parse |
+Suite: 301/0/0 (258 test files). Gaps: 140.

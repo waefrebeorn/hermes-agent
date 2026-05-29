@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v206 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 144 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 132: Telegram retry with exponential backoff (B08 depth).**
+**v208 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 134: Stale S3 claims vaulted (G11/G13). B07 terminal pipe_stdin ported.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -94,11 +94,11 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting | P2 |
 | 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments | P2 |
 | 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
-| 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 |
+| 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 | ✅ PORTED — C has 59-sticker DB, search/send tools |
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
-| 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 |
+| 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 10 gaps (2 P1, 8 P2)**
+**S3: 8 gaps (2 P1, 6 P2)**
 
 ---
 
@@ -174,7 +174,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
-| 07 | B07 | terminal | ~969 | ~2409 | 40% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96). foreground/background guidance: detects nohup/disown/setsid/& and suggests background=true (Phase 100) | P2 | PARTIAL |
+| 07 | B07 | terminal | ~969 | ~2409 | 40% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96). foreground/background guidance: detects nohup/disown/setsid/& and suggests background=true (Phase 100). pipe_stdin detection: PTY auto-override for gh auth login --with-token (Phase 134) | P2 | PARTIAL |
 | 08 | B08 | send_message | ~540 | ~1786 | 33% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99). parse_mode parameter (Markdown/MarkdownV2/HTML/plain) (Phase 106). disable_notification (silent send) for Telegram (Phase 126). Telegram retry with exponential backoff (Phase 132): 3 attempts with 0.5s/1s/2s delay on transient failures, port of Python _telegram_retry_delay + _send_telegram_message_with_retry | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-| S3: Gateway Helpers | 10 | 0 | 2 | 8 | 0 | G01 helpers.py ported. G05/G12 stale-retired. 10 remaining. |
+| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | G01 helpers.py ported. G05/G11/G12/G13 stale-retired. 8 remaining. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 72: B07 env passthrough wired. B08/B10 stale claims corrected |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **142** | **6** | **36** | **63** | **43** | **Phase 133: Stale S3 claims vaulted (G05 wecom_crypto, G12 api_server). file_merge test expansion.** |
+||| **TOTAL** | **140** | **6** | **36** | **63** | **43** | **Phase 134: Stale S3 claims vaulted (G11 yuanbao_sticker, G13 _http_client_limits).** |
 
 ### Phase Map
 
