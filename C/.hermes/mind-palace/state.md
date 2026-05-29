@@ -1,8 +1,8 @@
-# Slermes C (v147)
+# Slermes C (v148)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
-Battleship v34 (155 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (154 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -19,12 +19,13 @@ Battleship v34 (155 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 60: B09 dry_run + S6 stale sweep — 5 claims retired (B05/B06/B08/B10)
 - Phase 61: Surrogate sanitization wired. env_passthrough+config bridged
 - Phase 62: session_search scroll+browse modes. Feature-gap methodology documented
+- Phase 64: error_classify() wired into LLM client (structured error logging + compress/rotate hints). S2 stale sweep — A15 (insights) retired, already ported as usage_pricing.c + cmd_insights
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
 - **P1** (37): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (3), CLI ecosystem (1), Architecture (1), Plugin system (1)
-- **P2** (66): S2 agent modules (3), CLI ecosystem (17), Tool depth (8), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
+- **P2** (65): S2 agent modules (2), CLI ecosystem (17), Tool depth (8), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 155 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 62: session_search scroll+browse. surrogate sanitization wired. feature-gap methodology documented. stale-claim pitfall corrected: compare feature sets, not file names.
+Real parity gap is 154 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 64: error_classify() wired into non-streaming LLM path. A15 (insights) retired as stale — already ported. Stale-claim pitfall methodology applied.

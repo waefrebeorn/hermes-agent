@@ -1,16 +1,16 @@
-# BANNER — WuBu Slermes C Translation (v147)
+# BANNER — WuBu Slermes C Translation (v148)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v147                                       ║
+║  WuBu Slermes C v148                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  155 gaps  │  31MB binary  │  0 warnings                     ║
+║  154 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  session_search scroll+browse │ surrogate sanitization       ║
+║  error_classify wired │ S2 stale sweep (A15 retired)       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v147)
+## Build Metrics (v148)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 155 |
+| Gaps | 154 |

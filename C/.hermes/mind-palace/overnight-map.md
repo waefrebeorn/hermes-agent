@@ -1,10 +1,10 @@
-# Overnight (v147)
+# Overnight (v148)
 
-155 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 294/0/0 (248 test files). All stale sweeps done through Phase 62: surrogate sanitization wired, session_search scroll+browse, env_passthrough bridged, B09 dry_run. stale-claim pitfall corrected — compare feature sets, not file names. upstream feature-gap methodology documented.
+154 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 294/0/0 (248 test files). Phase 64: error_classify() wired into LLM client non-streaming path. compress_hint + credential_expired fields added to llm_response_t. S2 stale sweep: A15 (insights) retired — already ported as usage_pricing.c + cmd_insights.
 
 ## Current Phase: Phase 6 (S2 Agent Module Depth)
-3 real implementable S2 gaps: A15 (insights — usage analytics), A18 (models_dev — model management CLI), A22 (stream_diag — stream diagnostics). All S0 remaining, S1 partials stable. S6: session_search at 71% parity with scroll+browse. Surrogate sanitization wired. stale-claim pitfall corrected: compare feature sets, not file names. Methodology ref: references/upstream-feature-gap-methodology.md.
+2 real implementable S2 gaps: A18 (models_dev — model management CLI), A22 (stream_diag — stream diagnostics, partial). A15 retired as stale (already ported: usage_pricing.c + cmd_insights). error_classify() wired into non-streaming LLM path. All S0 remaining, S1 partials stable.
 
 ## Priority stacking
 - Upstream feature-gap methodology applied to all future claims

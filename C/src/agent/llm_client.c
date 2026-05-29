@@ -9,6 +9,7 @@
 #include "hermes_http.h"
 #include "provider.h"
 #include "provider_metadata.h"
+#include "error_classifier.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -863,6 +864,22 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
         http_response_t *http_resp = http_request(client, HTTP_POST, url,
                                                    headers, body, strlen(body));
         free(url); free(headers); free(body);
+
+        /* Classify HTTP error responses for logging and retry decisions */
+        if (http_resp && http_resp->status >= 400) {
+            classified_error_t err;
+            error_classify(http_resp->status, http_resp->body,
+                           cfg->provider, cfg->model,
+                           0, 0, &err);
+            char err_buf[256];
+            error_format(&err, err_buf, sizeof(err_buf));
+            fprintf(stderr, "[llm] %s\n", err_buf);
+            if (err.should_compress)
+                resp->compress_hint = true;
+            if (err.should_rotate_credential)
+                resp->credential_expired = true;
+        }
+
         if (!http_resp || http_resp->status < 0) {
             resp->content = strdup("HTTP request failed");
             if (http_resp) http_response_free(http_resp);

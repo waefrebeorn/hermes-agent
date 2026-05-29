@@ -184,6 +184,8 @@ typedef struct {
     char          finish_reason[32]; /* B22: "stop", "length", "tool_calls", "content_filter" */
     /* P95: Stream diagnostic — populated by streaming path */
     stream_diag_t diag;
+    bool          compress_hint;        /* Set by error_classify: should compress context */
+    bool          credential_expired;   /* Set by error_classify: should rotate credential */
 } llm_response_t;
 
 /* Forward declaration for session database (defined in hermes_db.h) */

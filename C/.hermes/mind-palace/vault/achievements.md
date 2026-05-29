@@ -710,3 +710,14 @@ New S6 gap structure:
 - B04 mcp_tool: missing full OAuth integration (libmcp_oauth exists but not wired)
 - B07 terminal: missing env passthrough wiring from libenvpassthrough to exec
 - B09 patch: missing conflict resolution
+
+## Phase 64: error_classify Wiring + S2 Stale Sweep (v148)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P64-01 | error_classify() wired into non-streaming LLM path — structured error logging with failover reason, retry hints (compress, rotate credential) | `src/agent/llm_client.c` — added #include + error_classify call before error check |
+| P64-02 | compress_hint + credential_expired fields added to llm_response_t for agent-level retry/fallback decisions | `include/hermes.h` — llm_response_t struct |
+| P64-03 | A15 (insights.py, 930 LOC) retired as STALE — already ported as usage_pricing.c + cmd_insights. C has: usage_pricing_estimate(), cmd_insights with DB-backed historical stats, per-model cost breakdown, platform filtering, --days filter | `src/cli/commands.c` line 3061 (cmd_insights), `src/agent/usage_pricing.c` (pricing estimates), `include/usage_pricing.h` (usage_cost_t, usage_counts_t API) |
+| P64-04 | A22 (stream_diag.py) reclassified REAL→PARTIAL — C has stream_diag_t with timing, TTFB, tokens/sec, http_status, retry_count. Missing: upstream header capture, structured retry logging, user-facing stream drop notification | `include/hermes.h` stream_diag_t, `src/agent/llm_client.c` finalize_stream_diag() |
+
+Suite: 294/0/0 (unchanged). Gaps: 154 (−1 from A15 stale).
