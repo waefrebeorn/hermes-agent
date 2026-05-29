@@ -18,7 +18,10 @@
 static const char *SCHEMA = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"query\":{\"type\":\"string\",\"description\":\"Search terms or phrase\"},"
+      "\"query\":{\"type\":\"string\",\"description\":\"Search terms or phrase (omit for browse mode)\"},"
+      "\"session_id\":{\"type\":\"string\",\"description\":\"Session ID for scroll mode\"},"
+      "\"around_message_id\":{\"type\":\"number\",\"description\":\"Message ID to center scroll window on\"},"
+      "\"window\":{\"type\":\"number\",\"description\":\"Messages each side of anchor (scroll mode)\",\"default\":5},"
       "\"limit\":{\"type\":\"number\",\"description\":\"Max results\",\"default\":10},"
       "\"offset\":{\"type\":\"number\",\"description\":\"Result offset for pagination\",\"default\":0},"
       "\"tag_filter\":{\"type\":\"string\",\"description\":\"Filter by tag (substring match)\"},"
@@ -26,7 +29,7 @@ static const char *SCHEMA = "{"
       "\"session_id_filter\":{\"type\":\"string\",\"description\":\"Filter by session ID (substring match)\"},"
       "\"min_score\":{\"type\":\"number\",\"description\":\"Minimum relevance score\",\"default\":0}"
     "},"
-    "\"required\":[\"query\"]"
+    "\"required\":[]"
 "}";
 
 static char *get_sessions_dir(void) {
@@ -214,11 +217,80 @@ char *session_search_handler(const char *args_json, const char *task_id) {
     const char *role_filter = json_object_get_string(args, "role_filter", NULL);
     const char *session_id_filter = json_object_get_string(args, "session_id_filter", NULL);
     double min_score = json_object_get_number(args, "min_score", 0.0);
+    const char *scroll_session = json_object_get_string(args, "session_id", NULL);
+    int around_id = (int)json_object_get_number(args, "around_message_id", 0);
+    int scroll_window = (int)json_object_get_number(args, "window", 5);
 
     json_node_t *result = json_new_object();
 
-    if (!query || !*query) {
-        json_object_set(result, "error", json_new_string("Missing query"));
+    /* Three modes inferred from args (single-shape API) */
+    if (scroll_session && scroll_session[0] && around_id > 0) {
+        /* SCROLL mode: return window around a message in a specific session */
+        json_object_set(result, "mode", json_new_string("scroll"));
+        json_object_set(result, "session_id", json_new_string(scroll_session));
+        json_object_set(result, "around_message_id", json_new_number((double)around_id));
+
+        /* Read session file */
+        const char *sdir = get_sessions_dir();
+        char session_path[4096];
+        snprintf(session_path, sizeof(session_path), "%s/%s.json", sdir, scroll_session);
+        FILE *f = fopen(session_path, "rb");
+        if (!f) {
+            json_object_set(result, "error", json_new_string("Session file not found"));
+            json_free(args);
+            char *out = json_serialize(result);
+            json_free(result);
+            return out;
+        }
+        fseek(f, 0, SEEK_END);
+        long fsize = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        char *fcontent = (char *)malloc((size_t)fsize + 1);
+        if (!fcontent) { fclose(f); return strdup("{\"error\":\"OOM\"}"); }
+        size_t nread = fread(fcontent, 1, (size_t)fsize, f);
+        fclose(f);
+        fcontent[nread] = '\0';
+
+        json_node_t *session_data = json_parse(fcontent, &err);
+        free(fcontent);
+        if (!session_data) {
+            free(err);
+            json_object_set(result, "error", json_new_string("Session file corrupt"));
+            json_free(args);
+            char *out = json_serialize(result);
+            json_free(result);
+            return out;
+        }
+        free(err);
+
+        /* Find messages array */
+        json_node_t *msgs = json_object_get(session_data, "messages");
+        if (!msgs || msgs->type != JSON_ARRAY) {
+            json_object_set(result, "error", json_new_string("No messages in session"));
+            json_free(session_data);
+            json_free(args);
+            char *out = json_serialize(result);
+            json_free(result);
+            return out;
+        }
+
+        int total_msgs = (int)json_len(msgs);
+        int start = around_id - scroll_window;
+        if (start < 0) start = 0;
+        int end = around_id + scroll_window + 1;
+        if (end > total_msgs) end = total_msgs;
+
+        json_node_t *window_arr = json_new_array();
+        for (int i = start; i < end; i++) {
+            json_node_t *msg = json_copy(json_get(msgs, (size_t)i));
+            if (msg) json_array_append(window_arr, msg);
+        }
+
+        json_object_set(result, "messages", window_arr);
+        json_object_set(result, "messages_before", json_new_number((double)(around_id - start)));
+        json_object_set(result, "messages_after", json_new_number((double)(end - around_id - 1)));
+        json_object_set(result, "total_messages", json_new_number((double)total_msgs));
+        json_free(session_data);
     } else {
         const char *sdir = get_sessions_dir();
         struct stat st;
@@ -226,6 +298,12 @@ char *session_search_handler(const char *args_json, const char *task_id) {
             json_object_set(result, "error", json_new_string("Session dir not found"));
             json_object_set(result, "sessions_dir", json_new_string(sdir));
         } else {
+            /* BROWSE mode placeholder: empty query returns 0 results */
+            if (!query || !*query) {
+                json_object_set(result, "count", json_new_number(0));
+                json_object_set(result, "mode", json_new_string("browse"));
+                json_object_set(result, "results", json_new_array());
+            } else {
             /* Read all session files and compute scores */
 #define MAX_MATCH_FILES 512
             typedef struct {
@@ -369,7 +447,8 @@ char *session_search_handler(const char *args_json, const char *task_id) {
                 json_object_set(result, "role_filter", json_new_string(role_filter));
             if (session_id_filter && *session_id_filter)
                 json_object_set(result, "session_id_filter", json_new_string(session_id_filter));
-        }
+            }  /* close inner else (discovery) */
+        }  /* close stat-ok else */
     }
 
     char *json_out = json_serialize(result);

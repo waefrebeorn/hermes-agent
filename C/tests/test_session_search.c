@@ -120,12 +120,18 @@ int main(void) {
         free(res);
     }
     {
-        TEST("empty query returns error");
+        TEST("empty query returns zero results (browse mode)");
         char *res = session_search_handler("{\"query\":\"\"}", NULL);
         json_node_t *j = json_parse(res, NULL);
         if (j) {
             const char *err = json_str(j, "error");
-            if (err && *err) { PASS; } else { FAIL("no error field"); }
+            if (!err || !*err) {
+                double count = json_num(j, "count");
+                json_node_t *results = json_object_get(j, "results");
+                double rcount = results ? (double)json_len(results) : 0;
+                if (count == 0 && rcount == 0) { PASS; }
+                else { FAIL("expected 0 results"); }
+            } else { FAIL("unexpected error for browse"); }
             json_free(j);
         } else { FAIL("parse failed"); }
         free(res);
