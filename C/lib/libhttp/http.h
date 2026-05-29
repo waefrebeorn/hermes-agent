@@ -204,6 +204,12 @@ void http_client_set_decompress(http_t *h, bool enable);
 void http_cookie_parse_set_cookie(http_t *h, const char *header_value);
 char *http_cookie_build_header(http_t *h, const char *url);
 
+/* === Retry-After header parsing === */
+/* Parse a Retry-After header value and return the delay in seconds.
+ * Supports both integer seconds and HTTP-date format.
+ * Returns -1 on parse failure or NULL/empty input. */
+double http_parse_retry_after(const char *header_value);
+
 #ifdef __cplusplus
 }
 #endif

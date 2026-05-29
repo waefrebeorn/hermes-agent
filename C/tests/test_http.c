@@ -142,6 +142,26 @@ int main(void) {
         http_free(h4);
     }
 
+    /* Test 12: http_parse_retry_after */
+    {
+        /* Integer seconds */
+        TEST("retry_after integer 120",
+             http_parse_retry_after("120") == 120.0);
+        TEST("retry_after integer 0",
+             http_parse_retry_after("0") == 0.0);
+        TEST("retry_after integer with leading space",
+             http_parse_retry_after("  30") == 30.0);
+        /* Negative cases */
+        TEST("retry_after NULL returns -1",
+             http_parse_retry_after(NULL) == -1.0);
+        TEST("retry_after empty returns -1",
+             http_parse_retry_after("") == -1.0);
+        TEST("retry_after garbage returns -1",
+             http_parse_retry_after("not-a-number") == -1.0);
+        TEST("retry_after whitespace only returns -1",
+             http_parse_retry_after("   ") == -1.0);
+    }
+
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All HTTP tests PASSED");
     return failures ? 1 : 0;
 }

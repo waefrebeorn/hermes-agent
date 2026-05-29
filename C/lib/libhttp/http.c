@@ -4,6 +4,8 @@
  * MIT License — WuBu Hermes Project
  */
 
+#define _GNU_SOURCE
+
 #include "http.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -1847,4 +1849,66 @@ void http_client_set_max_redirects(http_t *h, int max_redirects) {
 void http_client_set_decompress(http_t *h, bool enable) {
     if (!h) return;
     h->decompress = enable;
+}
+
+/* ================================================================
+ *  Retry-After Header Parsing
+ * ================================================================ */
+
+/* Parse a Retry-After header value and return the delay in seconds.
+ * Supports both integer seconds (e.g. "120") and HTTP-date format.
+ * Returns -1 on parse failure or NULL/empty input.
+ * Mirrors Python http.client / httpx Retry-After handling. */
+double http_parse_retry_after(const char *header_value) {
+    if (!header_value || !*header_value) return -1.0;
+
+    /* Skip leading whitespace */
+    while (*header_value == ' ' || *header_value == '\t') header_value++;
+    if (!*header_value) return -1.0;
+
+    /* Try integer seconds first */
+    char *end = NULL;
+    double seconds = strtod(header_value, &end);
+    if (end != header_value && *end == '\0') {
+        return seconds > 0.0 ? seconds : 0.0;
+    }
+
+    /* Try HTTP-date format: "Wed, 21 Oct 2015 07:28:00 GMT"
+     * Parse using a simple approach: try strptime with common formats */
+    struct tm tm;
+    memset(&tm, 0, sizeof(tm));
+
+    /* Try RFC 1123 format (most common): "EEE, dd MMM yyyy HH:mm:ss GMT" */
+    if (strptime(header_value, "%a, %d %b %Y %H:%M:%S %Z", &tm)) {
+        time_t then = timegm(&tm);
+        if (then != (time_t)-1) {
+            time_t now = time(NULL);
+            double diff = difftime(then, now);
+            return diff > 0.0 ? diff : 0.0;
+        }
+    }
+
+    /* Try RFC 850 / RFC 1036: "EEEE, dd-MMM-yy HH:mm:ss GMT" */
+    memset(&tm, 0, sizeof(tm));
+    if (strptime(header_value, "%A, %d-%b-%y %H:%M:%S %Z", &tm)) {
+        time_t then = timegm(&tm);
+        if (then != (time_t)-1) {
+            time_t now = time(NULL);
+            double diff = difftime(then, now);
+            return diff > 0.0 ? diff : 0.0;
+        }
+    }
+
+    /* Try ANSI C asctime: "EEE MMM dd HH:mm:ss yyyy" */
+    memset(&tm, 0, sizeof(tm));
+    if (strptime(header_value, "%a %b %d %H:%M:%S %Y", &tm)) {
+        time_t then = timegm(&tm);
+        if (then != (time_t)-1) {
+            time_t now = time(NULL);
+            double diff = difftime(then, now);
+            return diff > 0.0 ? diff : 0.0;
+        }
+    }
+
+    return -1.0;
 }

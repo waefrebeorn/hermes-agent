@@ -1428,6 +1428,13 @@ Suite: 302/0/0 (259 test files). Gaps: 140.
 | P150-04 | Suite crosses 300 for first time | 302/0/0, 259 test files |
 Suite: 302/0/0 (259 test files). Gaps: 140.
 
+## Phase 153: G02 base.py Depth — Retry-After Header Parser
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P153-01 | Ported `http_parse_retry_after()` — parses Retry-After HTTP header values. Supports integer seconds ("120") and HTTP-date formats. Returns delay in seconds, -1 on failure. Used for rate-limit retry timing. | `C/lib/libhttp/http.c` — `http_parse_retry_after()` at ~1852 |
+| P153-02 | Added 7 test assertions: integer 120, 0, leading space, NULL, empty, garbage, whitespace-only. All pass. | `C/tests/test_http.c` — Test 12 |
+|Suite: 302/0/0 (259 test files). Gaps: 140.
+
 ## Phase 152: G02 base.py Depth — Audio Routing Helper
 | ID | Achievement | Evidence |
 |----|-------------|----------|
