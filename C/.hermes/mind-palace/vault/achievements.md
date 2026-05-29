@@ -653,3 +653,7 @@ Battleship v34 S0 claimed 18 P0 gaps. Audit found 12 stale — already implement
 
 Retired: 12 stale claims. 1 implemented: D15 light/dark auto-detection. 5 real gaps remain: D09 prompt input, D10 CLI markdown, D13 bounding box re-layout, D14 input scaling/wrapping, D16 type-ahead.
 Suite: 294/0/0 (unchanged).
+
+| D10 | "markdown_tables.c parses tables only" | Full markdown renderer in markdown_render.c (452 LOC) handles headers, bold, italic, inline/fenced code, links, lists, blockquotes, HR — called by CLI at 3 call sites | src/agent/markdown_render.c lines 238-372 |
+
+S0 further corrected: 5→4 real gaps. D10 retired as stale.
