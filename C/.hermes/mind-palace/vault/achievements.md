@@ -1308,3 +1308,9 @@ Suite: 301/0/0 (258 test files). Gaps: 144.
 |----|-------------|----------|
 | P128-01 | exec_code test suite expanded from 3→8 tests: missing code error, NULL args, timeout param, sandbox flag, output content verification, plus existing hello/fail/syntax. | `tests/test_exec_code.c` |
 Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 129: Approval Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P129-01 | Approval test suite expanded 18→23: session reset (null/crash safety, double reset), cache operations (initial count, empty entry NULL safety). | `tests/test_approval.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.

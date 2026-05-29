@@ -25,9 +25,42 @@ static int passed = 0, failed = 0;
     else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
-#define TEST_TRUE(name, expr) TEST(name, (expr))
-#define TEST_FALSE(name, expr) TEST(name, !(expr))
 #define TEST_INT_EQ(name, a, b) TEST(name, (a) == (b))
+#define TEST_NULL(name, ptr) TEST(name, (ptr) == NULL)
+#define TEST_NOT_NULL(name, ptr) TEST(name, (ptr) != NULL)
+
+/* ================================================================
+ *  0. Session reset
+ * ================================================================ */
+static void test_session_reset(void) {
+    printf("\n--- Session Reset ---\n");
+
+    /* Should not crash */
+    approval_reset_session();
+    TEST("reset session no crash", 1);
+
+    /* Resetting twice should also not crash */
+    approval_reset_session();
+    TEST("reset session twice no crash", 1);
+}
+
+/* ================================================================
+ *  0c. Cache operations
+ * ================================================================ */
+static void test_cache_ops(void) {
+    printf("\n--- Cache Operations ---\n");
+
+    /* Cache count starts at 0 */
+    int before = approval_cache_count();
+    TEST_INT_EQ("initial cache count is 0", before, 0);
+
+    /* Cache entry from empty cache returns NULL */
+    const char *entry = approval_cache_entry(0);
+    TEST_NULL("empty cache entry 0 is NULL", entry);
+
+    entry = approval_cache_entry(999);
+    TEST_NULL("empty cache entry 999 is NULL", entry);
+}
 
 /* ================================================================
  *  1. Timeout
@@ -137,6 +170,8 @@ static void test_allowlist_path(void) {
 int main(void) {
     printf("=== Approval System Test Suite (G128/G169) ===\n");
 
+    test_session_reset();
+    test_cache_ops();
     test_timeout();
     test_yolo();
     test_cache_count();
