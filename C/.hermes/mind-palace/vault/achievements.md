@@ -1079,6 +1079,16 @@ Suite: 297/0/0. Test files: 253. Gaps: 145.
 
 Suite: 298/0/0. Test files: 254. Gaps: 145.
 
+## Phase 109: interruptible streaming (v184)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P109-01 | token_cb return value checked in on_provider_stream_chunk — non-zero aborts streaming | `src/agent/llm_client.c:1102-1110` |
+| P109-02 | token_cb return value checked in OpenAI fallback stream chunk handler | `src/agent/llm_client.c:1254-1262` |
+| P109-03 | cli_stream_cb checks g_cli.agent.interrupted before each token, returns 1 to abort | `src/cli/cli.c:319-321` |
+
+Suite: 298/0/0. Test files: 254. Gaps: 145.
+
 ## Phase 101: voice_mode test suite (v176)
 
 | ID | Achievement | Evidence |
