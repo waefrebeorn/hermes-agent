@@ -509,6 +509,19 @@
 - Tests verify direct string path without static function dependencies
 - Evidence: commit 24f5a3fb2, file src/acp/resource.c
 
+## Phase 53: Hook & Tool Result Tests, Memory Leak Fixes (v143)
+
+- Fixed hook_parse_result: context check no longer overrides block decision
+  (order of checks: block > context, not context overwrites block)
+- Fixed agent_free: freed state->messages calloc array (512-byte ASan leak)
+- Added test_hook_registry.c: 96 assertions covering register, invoke,
+  unregister, collect results, parse_result, event/callback limits
+- Added test_tool_result.c: 30 assertions covering write_file/patch
+  success/failure detection and JSON edge cases
+- Rewrote/expanded test_title.c, test_lmstudio_reasoning.c,
+  test_trajectory.c with broader coverage
+- Suite: 293/0/0 (was 292/0/0)
+
 
 - Fixed token_exchange.c: dead code activated — struct field mismatch
   (root->collection → root->c, resp->status_code → resp->status),
