@@ -1419,6 +1419,14 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
 
+## Phase 149: G09 yuanbao_media Depth — MIME Type Utilities
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P149-01 | Ported `guess_mime_type()` from Python yuanbao_media.py — `url_guess_mime_type()` maps 27 file extensions to MIME types via a lookup table. Returns "application/octet-stream" on unknown/empty input. | `C/src/tools/url_safety.c` — `url_guess_mime_type()` at ~665-700 |
+| P149-02 | Ported `is_image()` from Python yuanbao_media.py — `url_is_image_extension()` checks filename extension against 9 known image extensions (.jpg/.png/.gif/.webp/.bmp/.heic/.tiff/.ico/.jpeg). | `C/src/tools/url_safety.c` — `url_is_image_extension()` at ~702-715 |
+| P149-03 | Added 17 test assertions: MIME type for 6 known types, unknown ext, no ext, NULL, empty, 5 image extension checks, 2 non-image checks, NULL not image. URL safety tests 51→68. | `C/tests/test_url_safety.c` — section 8.6 |
+Suite: 301/0/0 (258 test files). Gaps: 140.
+
 ## Phase 148: G09 yuanbao_media Depth — URL Basename Extraction
 | ID | Achievement | Evidence |
 |----|-------------|----------|

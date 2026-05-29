@@ -149,6 +149,25 @@ int main(void) {
     TEST("url_basename empty returns empty",
          strcmp(url_extract_basename(""), "") == 0);
 
+    /* 8.6. MIME type utilities */
+    TEST("guess_mime_type .jpg", strcmp(url_guess_mime_type("photo.jpg"), "image/jpeg") == 0);
+    TEST("guess_mime_type .png", strcmp(url_guess_mime_type("img.png"), "image/png") == 0);
+    TEST("guess_mime_type .pdf", strcmp(url_guess_mime_type("doc.pdf"), "application/pdf") == 0);
+    TEST("guess_mime_type .mp3", strcmp(url_guess_mime_type("song.mp3"), "audio/mpeg") == 0);
+    TEST("guess_mime_type .mp4", strcmp(url_guess_mime_type("video.mp4"), "video/mp4") == 0);
+    TEST("guess_mime_type .ogg", strcmp(url_guess_mime_type("voice.ogg"), "audio/ogg") == 0);
+    TEST("guess_mime_type unknown ext", strcmp(url_guess_mime_type("file.xyz"), "application/octet-stream") == 0);
+    TEST("guess_mime_type no ext", strcmp(url_guess_mime_type("README"), "application/octet-stream") == 0);
+    TEST("guess_mime_type NULL", strcmp(url_guess_mime_type(NULL), "application/octet-stream") == 0);
+    TEST("guess_mime_type empty", strcmp(url_guess_mime_type(""), "application/octet-stream") == 0);
+    TEST("is_image_ext .jpg", url_is_image_extension("photo.jpg"));
+    TEST("is_image_ext .png", url_is_image_extension("img.png"));
+    TEST("is_image_ext .gif", url_is_image_extension("anim.gif"));
+    TEST("is_image_ext .webp", url_is_image_extension("pic.webp"));
+    TEST("is_image_ext .pdf is NOT image", !url_is_image_extension("doc.pdf"));
+    TEST("is_image_ext no ext is NOT image", !url_is_image_extension("README"));
+    TEST("is_image_ext NULL is NOT image", !url_is_image_extension(NULL));
+
     /* 9. url_is_network_accessible */
     TEST("network_access localhost is not accessible",
          !url_is_network_accessible("127.0.0.1"));

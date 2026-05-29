@@ -662,6 +662,69 @@ char *url_extract_basename(const char *url) {
 }
 
 /* ================================================================
+ *  MIME Type Utilities
+ * ================================================================ */
+
+/* Extension-to-MIME lookup table. */
+static const char *_mime_for_ext(const char *ext) {
+    if (!ext || !*ext) return "application/octet-stream";
+    struct { const char *ext; const char *mime; } map[] = {
+        {".jpg", "image/jpeg"}, {".jpeg", "image/jpeg"},
+        {".png", "image/png"}, {".gif", "image/gif"},
+        {".webp", "image/webp"}, {".bmp", "image/bmp"},
+        {".heic", "image/heic"}, {".tiff", "image/tiff"},
+        {".ico", "image/x-icon"},
+        {".pdf", "application/pdf"},
+        {".doc", "application/msword"},
+        {".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+        {".xls", "application/vnd.ms-excel"},
+        {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+        {".ppt", "application/vnd.ms-powerpoint"},
+        {".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+        {".txt", "text/plain"},
+        {".zip", "application/zip"}, {".tar", "application/x-tar"},
+        {".gz", "application/gzip"},
+        {".mp3", "audio/mpeg"}, {".mp4", "video/mp4"},
+        {".wav", "audio/wav"}, {".ogg", "audio/ogg"},
+        {".webm", "video/webm"},
+        {NULL, NULL}
+    };
+    for (int i = 0; map[i].ext; i++) {
+        if (strcasecmp(ext, map[i].ext) == 0)
+            return map[i].mime;
+    }
+    return "application/octet-stream";
+}
+
+/* Guess MIME type from filename extension.
+ * Returns pointer to static string (never NULL, always valid).
+ * Mirrors Python yuanbao_media.guess_mime_type(). */
+const char *url_guess_mime_type(const char *filename) {
+    if (!filename || !*filename) return "application/octet-stream";
+    /* Find last dot */
+    const char *dot = strrchr(filename, '.');
+    if (!dot) return "application/octet-stream";
+    return _mime_for_ext(dot);
+}
+
+/* Check if filename extension is a known image type.
+ * Mirrors Python yuanbao_media.is_image(). */
+bool url_is_image_extension(const char *filename) {
+    if (!filename || !*filename) return false;
+    const char *dot = strrchr(filename, '.');
+    if (!dot) return false;
+    const char *ext = dot;
+    static const char *image_exts[] = {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp",
+        ".bmp", ".heic", ".tiff", ".ico", NULL
+    };
+    for (int i = 0; image_exts[i]; i++) {
+        if (strcasecmp(ext, image_exts[i]) == 0) return true;
+    }
+    return false;
+}
+
+/* ================================================================
  *  Network Accessibility Check
  * ================================================================ */
 

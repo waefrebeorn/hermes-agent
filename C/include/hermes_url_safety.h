@@ -101,6 +101,19 @@ char *url_extract_basename(const char *url);
 char *url_safe_for_log(const char *url, int max_len);
 
 /* ================================================================
+ *  MIME Type Detection
+ * ================================================================ */
+
+/* Guess MIME type from filename extension.
+ * Returns pointer to static string (never NULL).
+ * Mirrors Python yuanbao_media.guess_mime_type(). */
+const char *url_guess_mime_type(const char *filename);
+
+/* Check if filename extension is a known image type (.jpg, .png, .gif, etc.).
+ * Mirrors Python yuanbao_media.is_image(). */
+bool url_is_image_extension(const char *filename);
+
+/* ================================================================
  *  Network Accessibility
  * ================================================================ */
 
