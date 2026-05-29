@@ -1,7 +1,7 @@
-# Slermes C (v178)
+# Slermes C (v179)
 
-Suite: 297/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 253 | C src: 175
+Suite: 296/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 252 | C src: 175
 Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -54,7 +54,8 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 100: B07 terminal foreground/background guidance
 |- Phase 101: voice_mode test suite
 |- Phase 102: token_exchange test suite — 7 tests (error state, token free, auth store free edge cases). Test count 295→296, test files 251→252. — 15 config tests (enabled state, device config, ASR cmd, edge cases). Test count 294→295, test files 250→251. — _check_foreground_guidance() detects nohup/disown/setsid/& and suggests background=true with lifecycle tracking guidance. Injected as guidance field in result JSON via _inject_warnings(). B07 62%→63% (969 LOC).
-|- Phase 103: SMS gateway test suite — 42 tests for sms.c (setters, webhook parsing, queue ops, update extractors). Bug fix: sms_get_media_url() used json_get_str(NULL key) which always returns NULL. Fixed to access item->str_val directly. Test count 296→297, test files 252→253. S7 X07 gateway platform tests 20→21.
+|- Phase 103: SMS gateway test suite — 42 tests for sms.c (setters, webhook parsing, queue ops, update extractors). Bug fix: sms_get_media_url() used json_get_str(NULL key) which always returns NULL. Fixed to access item->str_val directly. Test count 296→297, test files 252→253. S7 X07 gateway platform tests 20→21. Suite now 296/0/0 (v179 test_runner cleanup).
+|- Phase 104: Env passthrough blocklist expanded 23→67 entries — added provider URLs, gateway credentials, infra secrets. GHSA hardening completeness for Docker/SSH/Modal env vars. Test coverage 15→27. Removed stale test_paths.c ref + duplicate cli_paths entry. Suite 297→296, test files 253→252.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -63,4 +64,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 103: SMS gateway test suite (297 tests, 253 files). Bug fix: sms_get_media_url() json_get_str(NULL key) → item->str_val.
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 104: env_passthrough blocklist expanded 23→67 entries. GHSA hardening complete. Suite 296/0/0 (252 test files).

@@ -1012,7 +1012,21 @@ Suite: 296/0/0. Test files: 252. Gaps: 145.
 | P103-11 | sms_handle_webhook(NULL) no crash | `tests/test_sms.c` — test 14 |
 | P103-B01 | Bug fix: sms_get_media_url() used json_get_str(NULL key) which always returns NULL | `src/gateway/platforms/sms.c:452` — Fixed to access item->str_val directly |
 
-Suite: 297/0/0. Test files: 253. Gaps: 145.
+Suite: 296/0/0. Test files: 252. Gaps: 145.
+
+## Phase 104: Env passthrough blocklist expansion (v179)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P104-01 | Blocklist expanded 23→67 entries: provider URLs (OPENAI_BASE_URL, ANTHROPIC_BASE_URL, FIRECRAWL_API_URL) | `lib/libenvpassthrough/env_passthrough.c:19` |
+| P104-02 | Additional provider keys: MISTRAL_API_KEY, GROQ_API_KEY, TOGETHER_API_KEY, PERPLEXITY_API_KEY, COHERE_API_KEY, FIREWORKS_API_KEY, HELICONE_API_KEY, PARALLEL_API_KEY | `lib/libenvpassthrough/env_passthrough.c:42-50` |
+| P104-03 | Gateway credential coverage: TELEGRAM_BOT_TOKEN, DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, GH_TOKEN, HASS_TOKEN, SIGNAL_HTTP_URL, etc. | `lib/libenvpassthrough/env_passthrough.c:53-75` |
+| P104-04 | Infra secrets: DOCKER_HOST, DOCKER_CERT_PATH, SSH_AUTH_SOCK, MODAL_TOKEN_ID/SECRET | `lib/libenvpassthrough/env_passthrough.c:79-84` |
+| P104-05 | Test coverage expanded 15→27: 12 new blocked-var assertions for new entries | `tests/test_env_passthrough.c` |
+| P104-06 | Removed stale test_paths.c ref (file deleted earlier, test_runner.sh still referenced it) | `test_runner.sh` — removed dead code |
+| P104-07 | Removed duplicate cli_paths run_lib_test entry | `test_runner.sh` — dedup cleanup |
+
+Suite: 296/0/0. Test files: 252. Gaps: 145.
 
 ## Phase 101: voice_mode test suite (v176)
 

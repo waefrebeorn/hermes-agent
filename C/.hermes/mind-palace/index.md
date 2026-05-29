@@ -1,4 +1,4 @@
-(v178) (v178)
+(v179) (v179)
 
-Battleship v34 — 145 gaps across 9 sectors. Phase 103: SMS gateway test suite (42 tests, 253 files).
-Fork diverged from upstream. Suite 297/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
+Battleship v34 — 145 gaps across 9 sectors. Phase 104: env_passthrough blocklist 23→67 entries (252 test files).
+Fork diverged from upstream. Suite 296/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
