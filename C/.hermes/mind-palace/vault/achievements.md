@@ -721,3 +721,14 @@ New S6 gap structure:
 | P64-04 | A22 (stream_diag.py) reclassified REAL→PARTIAL — C has stream_diag_t with timing, TTFB, tokens/sec, http_status, retry_count. Missing: upstream header capture, structured retry logging, user-facing stream drop notification | `include/hermes.h` stream_diag_t, `src/agent/llm_client.c` finalize_stream_diag() |
 
 Suite: 294/0/0 (unchanged). Gaps: 154 (−1 from A15 stale).
+
+## Phase 65: Upstream Header Capture + Stream Diagnostics (v149)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P65-01 | upstream_headers[384] field added to stream_diag_t — captures cf-ray, x-openrouter-provider, x-openrouter-model, x-openrouter-id, x-request-id, x-vercel-id, server | `include/hermes.h` — stream_diag_t struct |
+| P65-02 | populate_stream_diag_headers() helper — case-insensitive header extraction from raw HTTP response headers | `src/agent/llm_client.c` — static helper before finalize_stream_diag |
+| P65-03 | Upstream headers wired into non-streaming LLM path — captured from every http_resp, included in error_classify log output | `src/agent/llm_client.c` — llm_chat_completion() after http_request |
+| P65-04 | Structured stream error logging with provider/model on failure | `src/agent/llm_client.c` — stream error path |
+
+Suite: 294/0/0 (unchanged). Gaps: 154 (unchanged — A22 reconfirmed as partial gap).

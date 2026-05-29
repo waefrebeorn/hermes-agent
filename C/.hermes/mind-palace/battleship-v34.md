@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v148 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 154 structural gaps, 1000+ test case gaps across 9 sectors. Phase 64: error_classify wired. S2 stale sweep (A15 retired).**
+**v149 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 154 structural gaps, 1000+ test case gaps across 9 sectors. Phase 65: upstream header capture. Phase 64: error_classify wired.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.

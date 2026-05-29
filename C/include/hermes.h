@@ -167,6 +167,7 @@ typedef struct {
     double  request_start_time;    /* monotonic time when request was sent */
     double  first_token_time;      /* monotonic time when first token arrived */
     double  stream_end_time;       /* monotonic time when stream finished */
+    char    upstream_headers[384];  /* captured upstream headers (cf-ray, x-openrouter-*) */
 } stream_diag_t;
 
 /* LLM response */

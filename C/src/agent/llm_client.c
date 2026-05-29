@@ -26,6 +26,9 @@ static double mono_time(void) {
     return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }
 
+/* Forward: populate upstream diagnostic headers from HTTP response */
+static void populate_stream_diag_headers(llm_response_t *resp, const char *raw_headers);
+
 /* ================================================================
  *  Internal helpers
  * ================================================================ */
@@ -865,6 +868,10 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                                                    headers, body, strlen(body));
         free(url); free(headers); free(body);
 
+        /* P95: Capture upstream diagnostic headers from response */
+        if (http_resp)
+            populate_stream_diag_headers(resp, http_resp->headers);
+
         /* Classify HTTP error responses for logging and retry decisions */
         if (http_resp && http_resp->status >= 400) {
             classified_error_t err;
@@ -873,7 +880,11 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                            0, 0, &err);
             char err_buf[256];
             error_format(&err, err_buf, sizeof(err_buf));
-            fprintf(stderr, "[llm] %s\n", err_buf);
+            if (resp->diag.upstream_headers[0])
+                fprintf(stderr, "[llm] %s [upstream: %s]\n",
+                        err_buf, resp->diag.upstream_headers);
+            else
+                fprintf(stderr, "[llm] %s\n", err_buf);
             if (err.should_compress)
                 resp->compress_hint = true;
             if (err.should_rotate_credential)
@@ -1317,6 +1328,58 @@ static void finalize_stream_toolcalls(stream_ctx_t *ctx) {
     }
 }
 
+/* P95: Populate upstream diagnostic headers from HTTP response.
+ * Extracts key headers (cf-ray, x-openrouter-*, x-request-id, server)
+ * from the raw HTTP response headers string into stream_diag_t. */
+static void populate_stream_diag_headers(llm_response_t *resp, const char *raw_headers) {
+    if (!resp || !raw_headers) return;
+    char buf[384] = {0};
+    size_t pos = 0;
+
+    /* Header names to capture (lowercase for case-insensitive search) */
+    const char *headers_to_capture[] = {
+        "cf-ray",
+        "x-openrouter-provider",
+        "x-openrouter-model",
+        "x-openrouter-id",
+        "x-request-id",
+        "x-vercel-id",
+        "server",
+        NULL
+    };
+
+    for (int i = 0; headers_to_capture[i] && pos < sizeof(buf) - 64; i++) {
+        const char *name = headers_to_capture[i];
+        size_t nlen = strlen(name);
+
+        /* Case-insensitive search in raw headers */
+        const char *h = raw_headers;
+        while ((h = strcasestr(h, name)) != NULL) {
+            const char *val = h + nlen;
+            while (*val == ':' || *val == ' ') val++;
+            const char *end = val;
+            while (*end && *end != '\r' && *end != '\n') end++;
+            size_t vlen = (size_t)(end - val);
+            if (vlen > 120) vlen = 120;
+            if (vlen > 0) {
+                size_t remaining = sizeof(buf) - pos;
+                int written = snprintf(buf + pos, remaining, "%s=%.*s ",
+                                       name, (int)vlen, val);
+                if (written > 0) pos += (size_t)written;
+            }
+            h = end; /* Continue after this match */
+            break;    /* Only first occurrence */
+        }
+    }
+
+    if (pos > 0) {
+        /* Remove trailing space */
+        if (pos > 0 && buf[pos-1] == ' ') buf[pos-1] = '\0';
+        strncpy(resp->diag.upstream_headers, buf, sizeof(resp->diag.upstream_headers) - 1);
+        resp->diag.upstream_headers[sizeof(resp->diag.upstream_headers) - 1] = '\0';
+    }
+}
+
 /* P95: Finalize stream diagnostic info */
 static void finalize_stream_diag(stream_ctx_t *ctx) {
     if (!ctx->resp) return;
@@ -1422,6 +1485,14 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
         finalize_stream_diag(&ctx);
 
         if (r != 0 && r != -2) {
+            /* Log structured stream error */
+            const char *upstream = resp->diag.upstream_headers;
+            if (upstream && upstream[0])
+                fprintf(stderr, "[llm] Stream failed for %s/%s [upstream: %s]\n",
+                        cfg->provider, cfg->model, upstream);
+            else
+                fprintf(stderr, "[llm] Stream failed for %s/%s\n",
+                        cfg->provider, cfg->model);
             if (!resp->content)
                 resp->content = strdup("HTTP stream request failed");
             provider_free(prov);

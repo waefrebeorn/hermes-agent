@@ -1,4 +1,4 @@
-# Slermes C (v148)
+# Slermes C (v149)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
@@ -20,6 +20,7 @@ Battleship v34 (154 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 61: Surrogate sanitization wired. env_passthrough+config bridged
 - Phase 62: session_search scroll+browse modes. Feature-gap methodology documented
 - Phase 64: error_classify() wired into LLM client (structured error logging + compress/rotate hints). S2 stale sweep — A15 (insights) retired, already ported as usage_pricing.c + cmd_insights
+- Phase 65: Upstream header capture (cf-ray, x-openrouter-*, x-request-id) wired into non-streaming LLM path. Structured stream error logging with provider/model.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
