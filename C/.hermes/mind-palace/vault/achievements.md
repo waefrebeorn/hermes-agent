@@ -1233,4 +1233,4 @@ Suite: 299/0/0 (255 test files). Gaps: 145.
 | P118-03 | Extensionless files detected via magic bytes also return `base64_data_url` | `vision_handler()` — magic-byte detected path includes `base64_data_url` |
 | P118-04 | 4 test assertions for base64_data_url correctness (existence, prefix format) | `tests/test_vision.c` — 35 total (+4 from 31) |
 
-Suite: 298/0/0 (255 test files). Gaps: 145.
+Suite: 299/0/0 (255 test files). Gaps: 145.

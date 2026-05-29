@@ -1,6 +1,6 @@
-# Slermes C (v193)
+# Slermes C (v194)
 
-Suite: 298/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Suite: 299/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 255 | C src: 175
 Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
@@ -59,17 +59,17 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 105: Threat patterns parity — added 5 missing Python patterns (c2_task_pull, c2_network_connect, exfil_wget, send_to_url, translate_execute). C 30→35 patterns, test coverage 24→36 assertions. — added provider URLs, gateway credentials, infra secrets. GHSA hardening completeness for Docker/SSH/Modal env vars. Test coverage 15→27. Removed stale test_paths.c ref + duplicate cli_paths entry. Suite 297→296, test files 253→252.
 |- Phase 106: parse_mode support in send_message — B08 depth: add parse_mode param (Markdown/MarkdownV2/HTML/plain). 3 test assertions. Suite 296/0/0 (v181).
 |- Phase 107: account_usage test suite — 14 new assertions for account_usage.c: NULL safety on free/render/fetch, unknown provider, empty provider, minimal snapshot rendering, windows rendering. Test files 252→253. Suite 297/0/0 (v182).
-||- Phase 108: budget_tracker test suite — 31 new assertions for budget_tracker.c: init, limits, reporting, warnings, exceeded, remaining, per-turn tools, hard limit, iteration budget, NULL safety. Test files 253→254. Suite 298/0/0 (v183).
+||- Phase 108: budget_tracker test suite — 31 new assertions for budget_tracker.c: init, limits, reporting, warnings, exceeded, remaining, per-turn tools, hard limit, iteration budget, NULL safety. Test files 253→254. Suite 299/0/0 (v183).
 |- Phase 109: Interruptible streaming — token_cb return checked in provider+fallback paths, cli_stream_cb checks interrupt flag per token. Upstream gap: interruptible API calls. (v184)
-|- Phase 110: send_message test expansion 23->34 assertions — 8 new tests: disable_link_previews, thread_id, reply_to_message_id, [[as_document]] stripping, media_group (no-crash), inline_buttons, sanitize sk- prefix, very long message. Suite 298/0/0 (v185)
-|- Phase 111: terminal _strip_quotes — quote stripping prevents false-positive foreground guidance matches on echoed text. Fork of Python _strip_quotes(). Suite 298/0/0 (v186)
+|- Phase 110: send_message test expansion 23->34 assertions — 8 new tests: disable_link_previews, thread_id, reply_to_message_id, [[as_document]] stripping, media_group (no-crash), inline_buttons, sanitize sk- prefix, very long message. Suite 299/0/0 (v185)
+|- Phase 111: terminal _strip_quotes — quote stripping prevents false-positive foreground guidance matches on echoed text. Fork of Python _strip_quotes(). Suite 299/0/0 (v186)
 |- Phase 112: gateway helpers test suite — 29 assertions covering msg_dedup, strip_markdown, redact_phone, thread_tracker. Bug fix: redact_phone() buffer overflow (malloc too small). Test files 254→255. Suite 299/0/0 (v187)
 |- Phase 113: GHSA-rhgp-j443-p4rf env_passthrough warning — warn when config.yaml attempts to register a blocked provider credential. Suite 299/0/0 (v188)
 |- Phase 114: Content-policy immediate fallback — content_filter finish_reason skips retry of filtered model and triggers fallback config immediately. Upstream gap closed. Suite 299/0/0 (v189)
 |- Phase 115: URL safety test expansion — added secret exfiltration detection tests (url_has_secret: sk-, ghp_, AIza, gho_, ghu_, ghs_, ghr_) + TEST_NULL macro. Tests 44→67. Suite 299/0/0 (v190)
 ||- Phase 116: Credential pool wiring — cred_pool field in llm_config_t, pool creation in agent_configure_from_config, HTTP status reporting to pool, credential_expired check in retry loop triggers fallback. Suite 299/0/0 (v191)
 |- Phase 117: Env passthrough test expansion — 10 new edge-case assertions: NULL/empty handling, blocked-var rejection, duplicate registration, free_list NULL safety, clear-then-re-register. Tests 27→37. Suite 299/0/0 (v192)
-|- Phase 118: B02 vision native base64 data URL — image_to_base64_data_url() converts local images to data: URIs for direct provider consumption. Wire into both extension-based and magic-byte detection paths. 4 new test assertions (35 total). Vision.c 417→517 LOC. B02 29%→36%. Suite 298/0/0 (v193, 1 pre-existing skip)
+|- Phase 118: B02 vision native base64 data URL — image_to_base64_data_url() converts local images to data: URIs for direct provider consumption. Wire into both extension-based and magic-byte detection paths. 4 new test assertions (35 total). Vision.c 417→517 LOC. B02 29%→36%. Suite 299/0/0 (v194, 1 pre-existing skip)
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -78,4 +78,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 108: budget_tracker test suite (31 tests). Suite 298/0/0 (254 test files).
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 108: budget_tracker test suite (31 tests). Suite 299/0/0 (254 test files).
