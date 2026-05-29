@@ -1,6 +1,6 @@
 # Plan (v145)
 
-216+ gaps across 10 sectors (battleship v34). Fork diverged
+215+ gaps across 10 sectors (battleship v34). Fork diverged
 
 ## Phase 0: Display & Visual (S0, P0) — 2 gaps
 Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping, type-ahead

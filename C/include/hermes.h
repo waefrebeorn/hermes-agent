@@ -342,6 +342,10 @@ typedef struct {
 
     /* L03: Vision disabled flag — set when provider rejects image content */
     bool vision_disabled;
+
+    /* L09: Memory nudge — periodic suggestion to update memory */
+    int  memory_nudge_interval;  /* turns between nudges (0=disabled) */
+    int  turns_since_memory;     /* turns since last memory nudge */
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */

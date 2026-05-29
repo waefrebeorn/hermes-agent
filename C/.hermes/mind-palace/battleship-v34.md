@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 216+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**Honest assessment: 215+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -24,7 +24,7 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 ## S1: Conversation Loop — Plumbing Gaps (P1)
 
 Python's run_conversation (4606 LOC) has features C's agent_loop.c (1600 LOC) lacks.
-8 stale claims vaulted + 1 implemented (L14 log tagging) + 1 implemented (L03 vision auto-disable). 14 real + 5 partial remain.
+8 stale claims vaulted + 2 implemented (L14 log tagging, L03 vision auto-disable) + 1 implemented (L09 memory nudge). 13 real + 5 partial remain.
 
 | # | ID | Feature | Python | C | Priority | Status |
 |---|----|---------|--------|---|----------|--------|
@@ -32,23 +32,22 @@ Python's run_conversation (4606 LOC) has features C's agent_loop.c (1600 LOC) la
 | 02 | L04 | Todo state hydration from conversation history | Recover todo state from tool responses | None | P1 | REAL |
 | 03 | L05 | Nudge counter hydration per session (gateway fresh AIAgent) | Reconstruct turn count from history | None | P1 | REAL |
 | 04 | L07 | Stream context scrubber reset (interrupted stream hang) | Reset streaming context per turn | None | P1 | REAL |
-| 05 | L09 | Memory nudge trigger (turn-based periodic suggestion) | _turns_since_memory, memory.nudge_interval | None | P1 | REAL |
-| 06 | L10 | Skill trigger (post-turn tool-iteration-based) | _iters_since_skill, skill check after loop | None | P1 | REAL |
-| 07 | L11 | Compression warning replay through status_callback | _compression_warning sent via status_cb | None | P1 | REAL |
-| 08 | L13 | Auxiliary client runtime setting (tools see active model) | set_runtime_main(model, provider) per turn | None | P1 | REAL |
-| 09 | L15 | Skill write-origin tracking (foreground vs self-improvement) | set_current_write_origin per turn | None | P1 | REAL |
-| 10 | L17 | System prompt caching with three-way state tracking | DB-backed: missing/null/empty/present with logging | None | P1 | REAL |
-| 11 | L18 | Nous entitlement handling (paid service checks) | _nous_entitlement_message, credential refresh | None | P2 | REAL |
-| 12 | L19 | Billing/entitlement error messages (per-provider guidance) | _billing_or_entitlement_message, OpenRouter link | None | P2 | REAL |
-| 13 | L20 | Ollama context limit validation | _ollama_context_limit_error | None | P2 | REAL |
-| 14 | L23 | Error classification & failover reason mapping | classify_api_error, FailoverReason enum | None | P1 | REAL |
-| 15 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
-| 16 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 | REAL |
-| 17 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
-| 18 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
-| 19 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
+| 05 | L10 | Skill trigger (post-turn tool-iteration-based) | _iters_since_skill, skill check after loop | None | P1 | REAL |
+| 06 | L11 | Compression warning replay through status_callback | _compression_warning sent via status_cb | None | P1 | REAL |
+| 07 | L13 | Auxiliary client runtime setting (tools see active model) | set_runtime_main(model, provider) per turn | None | P1 | REAL |
+| 08 | L15 | Skill write-origin tracking (foreground vs self-improvement) | set_current_write_origin per turn | None | P1 | REAL |
+| 09 | L17 | System prompt caching with three-way state tracking | DB-backed: missing/null/empty/present with logging | None | P1 | REAL |
+| 10 | L18 | Nous entitlement handling (paid service checks) | _nous_entitlement_message, credential refresh | None | P2 | REAL |
+| 11 | L19 | Billing/entitlement error messages (per-provider guidance) | _billing_or_entitlement_message, OpenRouter link | None | P2 | REAL |
+| 12 | L20 | Ollama context limit validation | _ollama_context_limit_error | None | P2 | REAL |
+| 13 | L23 | Error classification & failover reason mapping | classify_api_error, FailoverReason enum | None | P1 | REAL |
+| 14 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
+| 15 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 | REAL |
+| 16 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
+| 17 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
+| 18 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
 
-**S1: 19 gaps (14 real, 5 partial) — 7 stale + 1 done + 1 implemented (L03) retired to vault Phase 58.**
+**S1: 18 gaps (13 real, 5 partial) — 7 stale + 2 done + 1 implemented (L03) + 1 implemented (L09) retired to vault Phase 58.**
 
 ---
 
@@ -301,7 +300,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **216** | **7** | **70** | **79** | **61** | **+L03 done. Phase 58 covers 7 stale + 2 done.** |
+|| **TOTAL** | **215** | **7** | **69** | **79** | **61** | **+L09 done. Phase 58 covers 7 stale + 3 done.** |
 
 *S2 includes display.py (A13) marked P0 — moves to Phase 0
 

@@ -91,6 +91,10 @@ void agent_init(agent_state_t *state) {
     state->prefill_role = MSG_ASSISTANT;
     /* G35: No interrupt */
     state->interrupt_type = INTERRUPT_NONE;
+
+    /* L09: Memory nudge defaults — 10 turns between nudges, starts at 0 */
+    state->memory_nudge_interval = 10;
+    state->turns_since_memory = 0;
 }
 
 /* P99: Initialize agent infrastructure from configuration.
@@ -813,6 +817,24 @@ char *agent_run_conversation(agent_state_t *state,
     /* G10: Set last activity on user message */
     state->last_activity_ts = time(NULL);
 
+    /* L09: Memory nudge — check if we should suggest a memory review */
+    if (state->memory_nudge_interval > 0) {
+        state->turns_since_memory++;
+        if (state->turns_since_memory >= state->memory_nudge_interval) {
+            state->turns_since_memory = 0;
+            /* Inject memory nudge via steer queue */
+            if (state->steer_count < HERMES_MAX_STEERS) {
+                snprintf(state->steer_queue[state->steer_count],
+                         sizeof(state->steer_queue[0]),
+                         "[Memory reminder] You can use the memory tool to save "
+                         "or retrieve information. Consider updating memory with "
+                         "any new facts from this session.");
+                state->steer_roles[state->steer_count] = MSG_SYSTEM;
+                state->steer_count++;
+            }
+        }
+    }
+
     /* G33-G34: Process steer queue — inject all queued steers in priority order */
     if (state->steer_count > 0) {
         for (int si = 0; si < state->steer_count && si < HERMES_MAX_STEERS; si++) {
@@ -1405,6 +1427,10 @@ retry_done:
                     free(hints);
                 }
             }
+
+            /* L09: Reset memory nudge counter when memory tool is used */
+            if (strcmp(works[i].tool_name, "memory") == 0)
+                state->turns_since_memory = 0;
 
             message_t *tool_msg = message_new_tool(
                 works[i].tool_id,
