@@ -274,6 +274,34 @@ else
     fail "tool_result_storage (compilation failed)"
 fi
 
+echo ""; echo "=== Tool Result Classification Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_tool_result.c" "$CDIR/src/tools/tool_result.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tool_result -lm 2>/dev/null && [[ -x /tmp/hermes_test_tool_result ]]; then
+    if /tmp/hermes_test_tool_result > /dev/null 2>&1; then
+        ok "tool_result_classification"
+    else
+        fail "tool_result_classification (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tool_result
+else
+    fail "tool_result_classification (compilation failed)"
+fi
+
+echo ""; echo "=== Hook Registry Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_hook_registry.c" "$CDIR/src/agent/hook_registry.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_hooks -lpthread -lm 2>/dev/null && [[ -x /tmp/hermes_test_hooks ]]; then
+    if /tmp/hermes_test_hooks > /dev/null 2>&1; then
+        ok "hook_registry"
+    else
+        fail "hook_registry (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_hooks
+else
+    fail "hook_registry (compilation failed)"
+fi
+
 echo ""; echo "=== Clarify Tool Tests === "
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_clarify.c" "$CDIR/src/tools/clarify.c" "$CDIR/lib/libjson/json.c" \

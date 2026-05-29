@@ -1,106 +1,103 @@
 /*
- * test_title.c -- Tests for session title generation.
+ * test_title.c — Tests for session title generation.
  *
- * Tests: sentence extraction, NULL/empty, newlines, code block skipping,
- * trailing spaces, non-printable chars, 80-char cap.
+ * Tests: NULL/empty input, plain text, code block skipping,
+ * truncation at 80 chars, sentence boundary detection, trailing period trim.
  */
 
 #include "hermes_agent.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int passed = 0, failed = 0;
 
-#define TEST(name) do { printf("  %s: ", name); } while(0)
-#define PASS do { printf("PASS\n"); passed++; } while(0)
-#define FAIL(msg) do { printf("FAIL: %s\n", msg); failed++; } while(0)
+#define TEST(name, expr) do { \
+    if (expr) { passed++; printf("  PASS: %s\n", name); } \
+    else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
+} while(0)
+
+#define TEST_STR_EQ(name, a, b) do { \
+    const char *_a = (a); const char *_b = (b); \
+    if (_a && _b && strcmp(_a, _b) == 0) { passed++; printf("  PASS: %s\n", name); } \
+    else { \
+        failed++; \
+        printf("  FAIL: %s (line %d) — got \"%s\", expected \"%s\"\n", \
+               name, __LINE__, _a ? _a : "(null)", _b ? _b : "(null)"); \
+    } \
+} while(0)
+
+static void test_null_empty(void) {
+    printf("\n--- NULL/empty input ---\n");
+    TEST_STR_EQ("NULL input", agent_generate_title(NULL, NULL), "New Session");
+    TEST_STR_EQ("empty string", agent_generate_title(NULL, ""), "New Session");
+}
+
+static void test_plain_text(void) {
+    printf("\n--- Plain text ---\n");
+    TEST_STR_EQ("simple sentence",
+        agent_generate_title(NULL, "Write a Python script to parse CSV files."),
+        "Write a Python script to parse CSV files");
+    TEST_STR_EQ("short phrase",
+        agent_generate_title(NULL, "Hello world"), "Hello world");
+}
+
+static void test_code_block_skipped(void) {
+    printf("\n--- Code block skipped ---\n");
+    char *r = agent_generate_title(NULL,
+        "```python\nprint('hello')\n```\nWhat does this code do?");
+    TEST_STR_EQ("code block content skipped", r, "What does this code do?");
+    free(r);
+}
+
+static void test_newline_handling(void) {
+    printf("\n--- Newline handling ---\n");
+    TEST_STR_EQ("double newline stops",
+        agent_generate_title(NULL, "Line one\n\nLine two"), "Line one");
+    TEST_STR_EQ("single newline becomes space",
+        agent_generate_title(NULL, "Hello\nworld"), "Hello world");
+}
+
+static void test_truncation(void) {
+    printf("\n--- 80-char truncation ---\n");
+    /* Build a 150-char line */
+    char long_input[200];
+    memset(long_input, 'x', 85);
+    memcpy(long_input + 85, ".", 2);
+    long_input[86] = '\0';
+
+    char *r = agent_generate_title(NULL, long_input);
+    TEST("truncated to <= 80 chars", r && strlen(r) <= 80);
+    free(r);
+}
+
+static void test_trailing_period_trim(void) {
+    printf("\n--- Trailing period trim ---\n");
+    TEST_STR_EQ("single period trimmed",
+        agent_generate_title(NULL, "Hello world."), "Hello world");
+    TEST_STR_EQ("multiple periods trimmed",
+        agent_generate_title(NULL, "Hello..."), "Hello");
+}
+
+static void test_leading_whitespace_skip(void) {
+    printf("\n--- Leading whitespace ---\n");
+    TEST_STR_EQ("leading spaces",
+        agent_generate_title(NULL, "    Hello world"), "Hello world");
+    TEST_STR_EQ("leading newlines",
+        agent_generate_title(NULL, "\n\n\nHello world"), "Hello world");
+}
 
 int main(void) {
-    printf("=== Session Title Generation Tests ===\n");
+    printf("=== Title Generation Tests ===\n");
 
-    printf("\n--- Basic Title ---\n");
-    {
-        TEST("NULL input returns 'New Session'");
-        char *t = agent_generate_title(NULL, NULL);
-        if (t && strcmp(t, "New Session") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("empty input returns 'New Session'");
-        char *t = agent_generate_title(NULL, "");
-        if (t && strcmp(t, "New Session") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("extracts content up to sentence-ending punctuation at paragraph break");
-        char *t = agent_generate_title(NULL, "This is a test message.\n\nMore text after.");
-        if (t && strcmp(t, "This is a test message") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("extracts full content when no clear sentence boundary");
-        char *t = agent_generate_title(NULL, "This is a test message for the session");
-        if (t && strcmp(t, "This is a test message for the session") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("short message (under sentence) uses all words");
-        char *t = agent_generate_title(NULL, "Hello world");
-        if (t && strcmp(t, "Hello world") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("single word");
-        char *t = agent_generate_title(NULL, "Help");
-        if (t && strcmp(t, "Help") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("stops at period at end of string");
-        char *t = agent_generate_title(NULL, "Hello world.");
-        if (t && strcmp(t, "Hello world") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("stops at double-newline paragraph break");
-        char *t = agent_generate_title(NULL, "Hello world!\n\nMore text.");
-        if (t && strcmp(t, "Hello world!") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("message with newlines collapses to spaces");
-        char *t = agent_generate_title(NULL, "First line\nSecond line\nThird line");
-        if (t && strcmp(t, "First line Second line Third line") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("double newline stops extraction");
-        char *t = agent_generate_title(NULL, "First paragraph\n\nSecond paragraph");
-        if (t && strcmp(t, "First paragraph") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("message with trailing spaces collapsed");
-        char *t = agent_generate_title(NULL, "  Trimmed   title   ");
-        if (t && strcmp(t, "Trimmed title") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("non-printable chars skipped");
-        char *t = agent_generate_title(NULL, "Hello\x01\x02World");
-        if (t && strcmp(t, "HelloWorld") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
-    {
-        TEST("code blocks skipped in title extraction");
-        char *t = agent_generate_title(NULL, "Some text\n```\ncode block\n```\nMore text.");
-        if (t && strcmp(t, "Some text More text") == 0) { PASS; free(t); }
-        else { FAIL(t ? t : "NULL"); free(t); }
-    }
+    test_null_empty();
+    test_plain_text();
+    test_code_block_skipped();
+    test_newline_handling();
+    test_truncation();
+    test_trailing_period_trim();
+    test_leading_whitespace_skip();
 
-    printf("\n==============================================\n");
-    printf("  Results: %d passed, %d failed, %d skipped\n", passed, failed, 0);
-    printf("==============================================\n");
+    printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

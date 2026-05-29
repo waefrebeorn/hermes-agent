@@ -226,7 +226,8 @@ hook_result_t hook_parse_result(const char *stdout_json) {
     }
 
     if (strstr(stdout_json, "\"context\":\"")) {
-        r.decision = HOOK_DECISION_CONTEXT;
+        if (r.decision == HOOK_DECISION_ALLOW)
+            r.decision = HOOK_DECISION_CONTEXT;
     }
 
     return r;
