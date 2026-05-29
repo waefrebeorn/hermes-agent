@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v145 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 226+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
+**Honest assessment: 217+ structural gaps, 1000+ test case gaps across 9 sectors. Compiled May 28 2026.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -24,40 +24,40 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 ## S1: Conversation Loop — Plumbing Gaps (P1)
 
 Python's run_conversation (4606 LOC) has features C's agent_loop.c (1600 LOC) lacks.
-This is the HEART of "how Hermes actually works" — the plumbing that makes the agent function.
+Many v34 claims are stale — verified 8 already implemented + 1 implemented this session.
 
-| # | ID | Feature | Python | C | Priority |
-|---|----|---------|--------|---|----------|
-| 01 | L01 | Connection health check: detect/clean up dead TCP connections | Pre-turn socket health check (zombie detection) | None | P1 |
-| 02 | L02 | Surrogate/UTF-8 sanitization: clipboard paste from rich text editors | _sanitize_messages_surrogates, _sanitize_surrogates (8 functions) | None | P1 |
-| 03 | L03 | Image support detection: toggle vision on/off per provider error | Auto-disable images on "text only" error, persist for session | None | P1 |
-| 04 | L04 | Todo state hydration from conversation history | Recover todo state from tool responses | None | P1 |
-| 05 | L05 | Nudge counter hydration per session (gateway fresh AIAgent) | Reconstruct turn count from history | None | P1 |
-| 06 | L06 | Prefill/few-shot message injection (ephemeral, re-applied per call) | Injected at API-call time only, never stored | None | P1 |
-| 07 | L07 | Stream context scrubber reset (interrupted stream hang) | Reset streaming context per turn | None | P1 |
-| 08 | L08 | Think scrubber reset (unterminated scratchpad blocks) | Reset think state per turn | None | P1 |
-| 09 | L09 | Memory nudge trigger (turn-based periodic suggestion) | _turns_since_memory, memory.nudge_interval | None | P1 |
-| 10 | L10 | Skill trigger (post-turn tool-iteration-based) | _iters_since_skill, skill check after loop | None | P1 |
-| 11 | L11 | Compression warning replay through status_callback | _compression_warning sent via status_cb | None | P1 |
-| 12 | L12 | Fallback restoration: revert from fallback model on next turn | _fallback_activated → restore primary | None | P1 |
-| 13 | L13 | Auxiliary client runtime setting (tools see active model) | set_runtime_main(model, provider) per turn | None | P1 |
-| 14 | L14 | Log tagging with session ID for log filtering | set_session_context(session_id) per turn | hermes_log_setsession? Not per-turn | P1 |
-| 15 | L15 | Skill write-origin tracking (foreground vs self-improvement) | set_current_write_origin per turn | None | P1 |
-| 16 | L16 | Broken pipe guard (systemd/headless/daemon crash prevention) | _install_safe_stdio | None | P1 |
-| 17 | L17 | System prompt caching with three-way state tracking | DB-backed: missing/null/empty/present with logging | None | P1 |
-| 18 | L18 | Nous entitlement handling (paid service checks) | _nous_entitlement_message, credential refresh | None | P2 |
-| 19 | L19 | Billing/entitlement error messages (per-provider guidance) | _billing_or_entitlement_message, OpenRouter link | None | P2 |
-| 20 | L20 | Ollama context limit validation | _ollama_context_limit_error | None | P2 |
-| 21 | L21 | Context compression feedback loop: adaptive threshold tuning | compression_feedback (C has basic version) | C has compression_feedback_get_threshold | P1 |
-| 22 | L22 | Token budget tracking per-turn vs cumulative | IterationBudget with per-turn reset | budget_tracker but simpler | P1 |
-| 23 | L23 | Error classification & failover reason mapping | classify_api_error, FailoverReason enum | None | P1 |
-| 24 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 |
-| 25 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 |
-| 26 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 |
-| 27 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 |
-| 28 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 |
+| # | ID | Feature | Python | C | Priority | Status |
+|---|----|---------|--------|---|----------|--------|
+| 01 | L01 | Connection health check: detect/clean up dead TCP connections | Pre-turn socket health check (zombie detection) | None | P1 | REAL |
+| 02 | L02 | Surrogate/UTF-8 sanitization: clipboard paste from rich text editors | _sanitize_messages_surrogates, _sanitize_surrogates (8 functions) | hermes_sanitize_output, repair_tool_call_arguments in sanitize.c | P1 | STALE |
+| 03 | L03 | Image support detection: toggle vision on/off per provider error | Auto-disable images on "text only" error, persist for session | None | P1 | REAL |
+| 04 | L04 | Todo state hydration from conversation history | Recover todo state from tool responses | None | P1 | REAL |
+| 05 | L05 | Nudge counter hydration per session (gateway fresh AIAgent) | Reconstruct turn count from history | None | P1 | REAL |
+| 06 | L06 | Prefill/few-shot message injection (ephemeral, re-applied per call) | Injected at API-call time only, never stored | prefill_role in agent_loop.c | P1 | STALE |
+| 07 | L07 | Stream context scrubber reset (interrupted stream hang) | Reset streaming context per turn | None | P1 | REAL |
+| 08 | L08 | Think scrubber reset (unterminated scratchpad blocks) | Reset think state per turn | think_scrubber.c with full implementation | P1 | STALE |
+| 09 | L09 | Memory nudge trigger (turn-based periodic suggestion) | _turns_since_memory, memory.nudge_interval | None | P1 | REAL |
+| 10 | L10 | Skill trigger (post-turn tool-iteration-based) | _iters_since_skill, skill check after loop | None | P1 | REAL |
+| 11 | L11 | Compression warning replay through status_callback | _compression_warning sent via status_cb | None | P1 | REAL |
+| 12 | L12 | Fallback restoration: revert from fallback model on next turn | _fallback_activated → restore primary | fallback_routing.c with using_fallback flag | P1 | STALE |
+| 13 | L13 | Auxiliary client runtime setting (tools see active model) | set_runtime_main(model, provider) per turn | None | P1 | REAL |
+| 14 | L14 | Log tagging with session ID for log filtering | set_session_context(session_id) per turn | hermes_log_set_context() wired in agent_loop turn loop | P1 | ✅ DONE |
+| 15 | L15 | Skill write-origin tracking (foreground vs self-improvement) | set_current_write_origin per turn | None | P1 | REAL |
+| 16 | L16 | Broken pipe guard (systemd/headless/daemon crash prevention) | _install_safe_stdio | install_safe_stdio() at main.c:25 | P1 | STALE |
+| 17 | L17 | System prompt caching with three-way state tracking | DB-backed: missing/null/empty/present with logging | None | P1 | REAL |
+| 18 | L18 | Nous entitlement handling (paid service checks) | _nous_entitlement_message, credential refresh | None | P2 | REAL |
+| 19 | L19 | Billing/entitlement error messages (per-provider guidance) | _billing_or_entitlement_message, OpenRouter link | None | P2 | REAL |
+| 20 | L20 | Ollama context limit validation | _ollama_context_limit_error | None | P2 | REAL |
+| 21 | L21 | Context compression feedback loop: adaptive threshold tuning | compression_feedback (C has basic version) | compression_feedback_init/positive/negative/get_threshold in context.c, wired into agent_loop.c | P1 | STALE |
+| 22 | L22 | Token budget tracking per-turn vs cumulative | IterationBudget with per-turn reset | budget_tracker.c (30+ functions) wired into agent_loop.c | P1 | STALE |
+| 23 | L23 | Error classification & failover reason mapping | classify_api_error, FailoverReason enum | None | P1 | REAL |
+| 24 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
+| 25 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | None | P1 | REAL |
+| 26 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
+| 27 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
+| 28 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
 
-**S1: 28 gaps (23 P1, 5 P2)**
+**S1: 28 gaps (15 real, 8 stale, 1 partial, 1 done) — 8 stale claims discovered in Phase 57 sweep.**
 
 ---
 
@@ -300,7 +300,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
-| S1: Conversation Loop Plumbing | 28 | 0 | 23 | 5 | 0 | Heart of "how Hermes actually works" |
+| S1: Conversation Loop Plumbing | 20 | 0 | 15 | 5 | 0 | 8 stale claims + 1 done (L14) discovered in Phase 57 sweep |
 | S2: Agent Modules | 45 | 1* | 19 | 14 | 11 | 45 Python modules with no C equivalent |
 | S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
@@ -310,7 +310,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **226** | **7** | **79** | **79** | **61** | **1,000+ test case gaps** |
+|| **TOTAL** | **217** | **7** | **71** | **79** | **61** | **S1: 8 stale + 1 done. Count reflects real gaps.** |
 
 *S2 includes display.py (A13) marked P0 — moves to Phase 0
 
