@@ -1,6 +1,6 @@
-(v230) (v230)
+(v231) (v231)
 # Plan — Slermes C Translation
-138 gaps across 9 sectors (battleship v34). Fork diverged
+137 gaps across 9 sectors (battleship v34). Fork diverged
 
 ## Phase 0: Display & Visual (S0, P0) — 2 gaps
 Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping

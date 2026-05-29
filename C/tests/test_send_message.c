@@ -408,6 +408,16 @@ int main(void) {
         free(res);
     }
 
+    /* Test 38: parse_mode=MarkdownV2 accepted via stdout */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"mdv2 test\",\"parse_mode\":\"MarkdownV2\"}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("parse_mode=MarkdownV2 with stdout completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All send_message tests PASSED");
     return failures ? 1 : 0;

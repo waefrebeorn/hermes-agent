@@ -1,4 +1,4 @@
-(v230) (v230)
+(v231) (v231)
 
-303/0/0, 260 test files. All pass. Gap: 260 C vs ~17k Python.
-Phase 158: B08 send_message depth — General topic thread_id mapping. 6 assertions. 138 gaps.
+303/0/0, 261 test files. All pass. Gap: 261 C vs ~17k Python.
+Phase 159: B08 send_message parse mode fallback — retry with plain text when non-default parse_mode fails. 44 send_message tests. 137 gaps.

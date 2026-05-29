@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v230)**
+**BANNER — WuBu Slermes C Translation (v231)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v230                                       ║
+║  WuBu Slermes C v231                                       ║
 ║  303/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  138 gaps  │  31MB binary  │  0 warnings                     ║
+║  137 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 158: General topic thread_id mapping                 ║
+║  Phase 159: parse mode fallback                             ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v230)
+## Build Metrics (v231)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 138 |
+| Gaps | 137 |

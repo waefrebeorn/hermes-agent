@@ -268,6 +268,64 @@ static json_node_t *build_inline_keyboard(json_node_t *buttons) {
     return reply_markup;
 }
 
+/* B08 helper: Send Telegram message with the given parse_mode using the
+ * appropriate API endpoint (media group, single media, text with keyboard,
+ * or plain text). Returns true on success. Extracted to reduce duplication
+ * in the retry + fallback loop. */
+static bool telegram_send_with_mode(http_client_t *http,
+                                    const char *chat_id,
+                                    const char *actual_message,
+                                    const char *actual_media,
+                                    bool force_document,
+                                    json_node_t *inline_buttons_node,
+                                    const char *tg_msg,
+                                    const char *parse_mode,
+                                    const char *tg_thread_id,
+                                    bool disable_notification,
+                                    bool disable_preview,
+                                    json_node_t *input_media,
+                                    size_t mg_added)
+{
+    if (input_media && mg_added >= 2) {
+        return telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
+    } else if (actual_media && actual_media[0]) {
+        const char *ext = strrchr(actual_media, '.');
+        if (ext && !force_document) {
+            if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
+                return telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+            else if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0)
+                return telegram_send_voice(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+            else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
+                return telegram_send_video(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+            else if (strcasecmp(ext, ".gif") == 0)
+                return telegram_send_animation(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+            else
+                return telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+        } else {
+            return telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
+        }
+    } else if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
+        json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
+        bool ok = false;
+        if (reply_markup) {
+            ok = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
+                                                     tg_msg, parse_mode, tg_thread_id,
+                                                     reply_markup, disable_notification, disable_preview);
+            json_free(reply_markup);
+        } else {
+            ok = telegram_send_message(http, chat_id ? chat_id : "",
+                                       tg_msg, parse_mode, tg_thread_id,
+                                       disable_notification, disable_preview);
+        }
+        return ok;
+    } else {
+        return telegram_send_message(http, chat_id ? chat_id : "",
+                                     tg_msg, parse_mode, tg_thread_id,
+                                     disable_notification, disable_preview);
+    }
+}
+
 char *send_message_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -490,48 +548,30 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                      * (port of Python _send_telegram_message_with_retry). */
                     int max_attempts = 3;
                     for (int attempt = 0; attempt < max_attempts && !sent; attempt++) {
-                        if (input_media && mg_added >= 2) {
-                            sent = telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
-                        } else if (actual_media && actual_media[0]) {
-                            /* MEDIA: prefix — send file via appropriate API */
-                            const char *ext = strrchr(actual_media, '.');
-                            if (ext && !force_document) {
-                                if (strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".jpg") == 0 ||
-                                    strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".webp") == 0)
-                                    sent = telegram_send_photo(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                                else if (strcasecmp(ext, ".ogg") == 0 || strcasecmp(ext, ".opus") == 0)
-                                    sent = telegram_send_voice(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                                else if (strcasecmp(ext, ".mp4") == 0 || strcasecmp(ext, ".mov") == 0)
-                                    sent = telegram_send_video(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                                else if (strcasecmp(ext, ".gif") == 0)
-                                    sent = telegram_send_animation(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                                else
-                                    sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            } else {
-                                sent = telegram_send_document(http, chat_id ? chat_id : "", actual_media, NULL, NULL);
-                            }
-                        } else if (inline_buttons_node && inline_buttons_node->type == JSON_ARRAY) {
-                            /* Build reply_markup with inline keyboard (fresh each retry) */
-                            json_node_t *reply_markup = build_inline_keyboard(inline_buttons_node);
-                            if (reply_markup) {
-                                sent = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
-                                                                           tg_msg, parse_mode, tg_thread_id, reply_markup, disable_notification, disable_preview);
-                                json_free(reply_markup);
-                            } else {
-                                /* Fallback: send without keyboard */
-                                sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                             tg_msg, parse_mode, tg_thread_id, disable_notification, disable_preview);
-                            }
-                        } else {
-                            sent = telegram_send_message(http, chat_id ? chat_id : "",
-                                                         tg_msg, parse_mode, tg_thread_id, disable_notification, disable_preview);
-                        }
+                        sent = telegram_send_with_mode(http, chat_id, actual_message,
+                                                      actual_media, force_document,
+                                                      inline_buttons_node, tg_msg,
+                                                      parse_mode, tg_thread_id,
+                                                      disable_notification, disable_preview,
+                                                      input_media, mg_added);
 
                         if (!sent && attempt < max_attempts - 1) {
                             /* Exponential backoff: 0.5s, 1s, 2s */
                             struct timespec ts = {0, telegram_retry_ns(attempt)};
                             nanosleep(&ts, NULL);
                         }
+                    }
+
+                    /* B08: Parse mode fallback — if send failed with a non-default
+                     * parse_mode, retry once with plain text (port of Python's
+                     * _send_telegram parse error fallback at line 924-942). */
+                    if (!sent && parse_mode && strcmp(parse_mode, "Markdown") != 0) {
+                        sent = telegram_send_with_mode(http, chat_id, actual_message,
+                                                      actual_media, force_document,
+                                                      inline_buttons_node, tg_msg,
+                                                      NULL, tg_thread_id,
+                                                      disable_notification, disable_preview,
+                                                      input_media, mg_added);
                     }
                     json_free(input_media);
                     http_client_free(http);

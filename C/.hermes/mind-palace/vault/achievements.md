@@ -1444,6 +1444,14 @@ Suite: 302/0/0 (259 test files). Gaps: 139.
 | P158-03 | Added 6 standalone test assertions: NULL → NULL, "1" → NULL, "42" → "42", "0" → "0", "999" → "999", "" → "". All pass. Declared in hermes_gateway.h. | `C/tests/test_telegram_thread_id_standalone.c` — tests 1-6 |
 Suite: 303/0/0 (260 test files). Gaps: 138. v230
 
+## Phase 159: B08 send_message Depth — Parse Mode Fallback
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P159-01 | Extracted `telegram_send_with_mode()` helper from the retry loop — a static function in send_message.c that dispatches to the correct Telegram API (media group, single media, text with inline keyboard, or plain text). Reduces duplication across retry attempts and the fallback path. | `C/src/tools/send_message.c` — `telegram_send_with_mode()` at ~274-335 |
+| P159-02 | Ported Python's `_send_telegram` parse error fallback (send_message_tool.py:924-942). When Telegram send fails with a non-default parse_mode (MarkdownV2 or HTML) after 3 retries, C now retries once with parse_mode=NULL (plain text). Matches Python fallback behavior. | `C/src/tools/send_message.c` — parse mode fallback block at ~540-548 (after retry loop) |
+| P159-03 | Added 3 new test assertions: parse_mode=MarkdownV2 with stdout (regression). Send_message test suite 41→44 total. | `C/tests/test_send_message.c` — test 38 |
+Suite: 303/0/0 (261 test files). Gaps: 137. v231
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|
