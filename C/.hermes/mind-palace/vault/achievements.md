@@ -931,6 +931,14 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 92: B08 [[as_document]] directive (v168)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P92-01 | [[as_document]] stripped from message text, images/video/audio sent as documents preserving original bytes | `src/tools/send_message.c` — force_document flag + media routing |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v167)
+# BANNER — WuBu Slermes C Translation (v168)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v167                                       ║
+║  WuBu Slermes C v168                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B07 force/status: terminal safety depth                  ║
+║  B08 [[as_document]]: force-document delivery             ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
