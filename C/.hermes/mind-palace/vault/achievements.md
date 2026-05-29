@@ -1369,3 +1369,16 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P137-01 | Ported _looks_like_env_assignment() from Python terminal_tool. Detects leading KEY=VALUE tokens in commands (e.g. PATH=/usr/bin command) and skips foreground/background guidance — env assignments are setup, not commands to background. | `C/src/tools/terminal.c` — env assignment check block at top of _check_foreground_guidance() |
 | P137-02 | Terminal test expansion: 47→58 total assertions covering env assignment variants (single, multi, with &, combined with nohup), all verifying no false guidance. | `C/tests/test_terminal.c` — tests 23-26 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Stale Claim: B02 detail param (v211)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| SC01 | Stale claim corrected: B02 "detail param passthrough" listed as missing feature. C vision.c parses detail from JSON args (line 299), forwards in result for local files (line 326), remote URLs (line 362), unknown schemes (line 400), passes to Python delegation (line 509). | `C/src/tools/vision.c:299,326,362,400,509` |
+Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 138: B07 Terminal Depth — Safe Command Preview
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P138-01 | Ported _safe_command_preview() from Python terminal_tool. Returns a log-safe, truncated command preview (max 200 chars by default, static buffer). Wired into popen error path for better diagnostics. | `C/src/tools/terminal.c` — _safe_command_preview() at line ~55, used in run_command() error path |
+| P138-02 | Stale claim corrected: B02 "detail param passthrough" confirmed already wired in C vision.c (schema, parsing, forwarding in all 3 code paths + Python delegation). Battleship B02 entry updated. | `C/.hermes/mind-palace/battleship-v34.md` — B02 missing features corrected |
+Suite: 301/0/0 (258 test files). Gaps: 140.

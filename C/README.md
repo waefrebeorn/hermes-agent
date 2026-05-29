@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 140 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 137: B07 env assignment detection ported (_looks_like_env_assignment). See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 140 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 138: safe command preview + B02 stale claim corrected. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 

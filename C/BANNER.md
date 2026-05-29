@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v211)
+# BANNER — WuBu Slermes C Translation (v212)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v211                                       ║
+║  WuBu Slermes C v212                                       ║
 ║  301/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  140 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 137: env assignment detection for terminal        ║
+║  Phase 138: safe command preview + B02 stale claim      ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

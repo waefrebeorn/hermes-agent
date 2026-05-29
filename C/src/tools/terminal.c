@@ -46,6 +46,25 @@ static const char *SCHEMA = "{"
 "}";
 
 /* ================================================================
+ *  Safe command preview
+ * ================================================================ */
+
+/* Return a log-safe preview of a command, truncated at limit bytes.
+ * Returns pointer to a static buffer (NOT thread-safe — terminal.c
+ * is single-threaded). Mirrors Python _safe_command_preview(). */
+static const char *_safe_command_preview(const char *command, int limit) {
+    static char buf[512];
+    if (!command) return "<None>";
+    if (limit <= 0) limit = 200;
+    if (limit > (int)sizeof(buf) - 1) limit = (int)sizeof(buf) - 1;
+    size_t len = strlen(command);
+    if ((int)len <= limit) return command;
+    memcpy(buf, command, (size_t)limit);
+    buf[limit] = '\0';
+    return buf;
+}
+
+/* ================================================================
  *  Execution
  * ================================================================ */
 
@@ -61,7 +80,8 @@ static char *run_command(const char *command, int timeout_sec) {
     FILE *fp = popen(full_cmd, "r");
     if (!fp) {
         char buf[256];
-        snprintf(buf, sizeof(buf), "{\"error\": \"popen failed: %s\"}", strerror(errno));
+        snprintf(buf, sizeof(buf), "{\"error\": \"popen failed: %s\", \"command_preview\": \"%s\"}",
+                 strerror(errno), _safe_command_preview(command, 100));
         return strdup(buf);
     }
 
