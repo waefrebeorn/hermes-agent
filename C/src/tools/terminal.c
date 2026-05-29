@@ -748,29 +748,91 @@ static char *_inject_interpretation(const char *result_json, const char *command
     return out;
 }
 
+/* Strip quoted content from command to prevent false-positive pattern matches.
+ * Mirrors Python terminal_tool._strip_quotes().
+ * Removes content inside single quotes, double quotes (with escape handling),
+ * and backtick-quoted strings. Replaces with empty quotes to preserve structure. */
+static char *_strip_quotes(const char *command) {
+    if (!command) return NULL;
+    size_t len = strlen(command);
+    if (len == 0) return strdup("");
+    char *result = strdup(command);
+    if (!result) return NULL;
+
+    size_t dst = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (result[i] == '\'' || result[i] == '`') {
+            char quote = result[i];
+            result[dst++] = quote;
+            result[dst++] = quote;  /* '' or `` */
+            /* Skip until matching close quote */
+            i++;
+            while (i < len && result[i] != quote) i++;
+            if (result[i] == quote) {
+                /* Skip the closing quote — already emitted the pair above */
+            }
+        } else if (result[i] == '"') {
+            /* Double-quoted string with possible backslash escapes */
+            result[dst++] = '"';
+            result[dst++] = '"';  /* "" */
+            i++;
+            while (i < len) {
+                if (result[i] == '\\' && i + 1 < len) {
+                    i += 2;  /* skip escaped char */
+                    continue;
+                }
+                if (result[i] == '"') break;
+                i++;
+            }
+            if (result[i] == '"') {
+                /* skip closing quote — already emitted the pair */
+            }
+        } else {
+            result[dst++] = result[i];
+        }
+    }
+    result[dst] = '\0';
+    return result;
+}
+
 /* Check command for shell-level background wrappers and suggest background=true.
  * Mirrors Python terminal_tool._foreground_background_guidance(). */
 static const char *_check_foreground_guidance(const char *command) {
     if (!command) return NULL;
+    /* Strip quotes to avoid false positives on echoed text */
+    char *stripped = _strip_quotes(command);
+    if (!stripped) return NULL;
+    const char *check = stripped;
+
     /* Check for shell-level background wrappers */
     const char *patterns[] = {"nohup ", " disown", " setsid", NULL};
     for (int i = 0; patterns[i]; i++) {
-        if (strstr(command, patterns[i])) return
-            "Foreground command uses shell-level background wrappers (nohup/disown/setsid). "
-            "Use terminal(background=true) so Hermes can track lifecycle, "
-            "then run readiness checks and tests in separate commands.";
+        if (strstr(check, patterns[i])) {
+            free(stripped);
+            return
+                "Foreground command uses shell-level background wrappers (nohup/disown/setsid). "
+                "Use terminal(background=true) so Hermes can track lifecycle, "
+                "then run readiness checks and tests in separate commands.";
+        }
     }
     /* Check for trailing & backgrounding */
-    size_t len = strlen(command);
-    if (len > 0 && command[len-1] == '&') return
-        "Foreground command uses '&' backgrounding. "
-        "Use terminal(background=true) for long-lived processes, "
-        "then run health checks and tests in follow-up calls.";
+    size_t len = strlen(check);
+    if (len > 0 && check[len-1] == '&') {
+        free(stripped);
+        return
+            "Foreground command uses '&' backgrounding. "
+            "Use terminal(background=true) for long-lived processes, "
+            "then run health checks and tests in follow-up calls.";
+    }
     /* Check for inline & (cmd1 & cmd2) */
-    if (strstr(command, " & ") || strstr(command, " &;")) return
-        "Foreground command uses inline '&' backgrounding. "
-        "Use terminal(background=true) for long-lived processes, "
-        "then run health checks and tests in follow-up calls.";
+    if (strstr(check, " & ") || strstr(check, " &;")) {
+        free(stripped);
+        return
+            "Foreground command uses inline '&' backgrounding. "
+            "Use terminal(background=true) for long-lived processes, "
+            "then run health checks and tests in follow-up calls.";
+    }
+    free(stripped);
     return NULL;
 }
 
