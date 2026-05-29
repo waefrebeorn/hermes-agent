@@ -1,7 +1,7 @@
-# Slermes C (v237)
+# Slermes C (v238)
 
-Suite: 308/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 267 | C src: 175
+Suite: 309/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 268 | C src: 175
 Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -108,6 +108,7 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 163: G03 feishu_comment depth — textwrap_chunk(). Port of Python feishu_comment._chunk_text(). Splits text into chunks at newline boundaries within max_len per chunk. Generic utility added to libtextwrap. 18 test assertions. Suite 306/0/0 (v235).
 |- Phase 164: B08 send_message depth — Telegram thread-not-found detection. telegram_is_thread_not_found() ported from Python send_message_tool._is_telegram_thread_not_found(). Case-insensitive "thread not found" detection with underscore/hyphen separator support. 12 test assertions. Suite 307/0/0 (v236).
 |- Phase 165: B02 vision depth — Video MIME detection + base64 data URL. vision_detect_video_mime_type() ported from Python vision_tools._detect_video_mime_type() — maps 7 video extensions (mp4/webm/mov/avi/mkv/mpeg/mpg) to MIME types. vision_video_to_base64_data_url() ported from Python vision_tools._video_to_base64_data_url() — reads video file, base64 encodes, returns "data:<mime>;base64,<encoded>" string. 14 test assertions. Suite 308/0/0 (v237).
+|- Phase 166: G03 feishu_comment depth — comment helpers. feishu_sanitize_comment_text() ported from feishu_comment._sanitize_comment_text() — escapes & < > for Feishu XML. feishu_get_reply_user_id() ported from _get_reply_user_id() — extracts user_id from reply JSON (direct string or nested open_id/user_id dict). feishu_extract_reply_text() ported from _extract_reply_text() — extracts plain text from reply content.elements[] supporting text_run, docs_link, and person elements. 11 test assertions. Suite 309/0/0 (v238).
 |- Phase 130: terminal test expansion
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -123,4 +124,4 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 308/0/0 (267 test files).
+Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 309/0/0 (268 test files).

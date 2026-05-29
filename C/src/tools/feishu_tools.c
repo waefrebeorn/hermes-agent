@@ -405,6 +405,130 @@ static const char *FEISHU_DRIVE_SCHEMA =
     "\"page_size\":{\"type\":\"string\",\"description\":\"Results per page (default 20)\"}"
     "}}";
 
+/* ── Ports from Python feishu_comment.py ──────────────────────────── */
+
+/* Port of _sanitize_comment_text: escape XML special chars in Feishu text_run content. */
+char *feishu_sanitize_comment_text(const char *text) {
+    if (!text) return NULL;
+    size_t len = strlen(text);
+    /* Worst case: all chars become &amp; (5x). Oversized=ok. */
+    size_t cap = len * 5 + 1;
+    char *out = (char *)malloc(cap);
+    if (!out) return NULL;
+    size_t pos = 0;
+    for (size_t i = 0; i < len && pos < cap - 6; i++) {
+        char c = text[i];
+        switch (c) {
+            case '&':  memcpy(out + pos, "&amp;", 5);  pos += 5; break;
+            case '<':  memcpy(out + pos, "&lt;", 4);   pos += 4; break;
+            case '>':  memcpy(out + pos, "&gt;", 4);   pos += 4; break;
+            default:   out[pos++] = c; break;
+        }
+    }
+    out[pos] = '\0';
+    return out;
+}
+
+/* Port of _get_reply_user_id: extract user_id from a reply JSON node.
+ * Returns static string pointer into the JSON tree — do NOT free. */
+const char *feishu_get_reply_user_id(json_node_t *reply) {
+    if (!reply || reply->type != JSON_OBJECT) return "";
+    json_node_t *user_id = json_object_get(reply, "user_id");
+    if (!user_id) return "";
+    if (user_id->type == JSON_STRING) return user_id->str_val;
+    if (user_id->type == JSON_OBJECT) {
+        json_node_t *open_id = json_object_get(user_id, "open_id");
+        if (open_id && open_id->type == JSON_STRING && open_id->str_val[0])
+            return open_id->str_val;
+        json_node_t *uid = json_object_get(user_id, "user_id");
+        if (uid && uid->type == JSON_STRING) return uid->str_val;
+    }
+    return "";
+}
+
+/* Port of _extract_reply_text: extract plain text from a reply JSON node.
+ * Walks content.elements[] for text_run/documents_link/person types.
+ * Returns malloc'd string — caller must free(). */
+char *feishu_extract_reply_text(json_node_t *reply) {
+    if (!reply || reply->type != JSON_OBJECT) return strdup("");
+
+    json_node_t *content = json_object_get(reply, "content");
+    if (!content) return strdup("");
+
+    /* If content is a JSON string, parse it */
+    if (content->type == JSON_STRING) {
+        char *err = NULL;
+        json_node_t *parsed = json_parse(content->str_val, &err);
+        free(err);
+        if (parsed) {
+            char *result = feishu_extract_reply_text(parsed);
+            json_free(parsed);
+            return result;
+        }
+        return strdup(content->str_val);
+    }
+
+    if (content->type != JSON_OBJECT) return strdup("");
+
+    json_node_t *elements = json_object_get(content, "elements");
+    if (!elements || elements->type != JSON_ARRAY) return strdup("");
+
+    size_t count = json_len(elements);
+    if (count == 0) return strdup("");
+
+    /* Estimate max output size: worst case 256 chars per element */
+    size_t cap = count * 256 + 1;
+    char *result = (char *)malloc(cap);
+    if (!result) return NULL;
+    result[0] = '\0';
+    size_t pos = 0;
+
+    for (size_t i = 0; i < count; i++) {
+        json_node_t *elem = json_array_get(elements, i);
+        if (!elem || elem->type != JSON_OBJECT) continue;
+
+        const char *type = json_object_get_string(elem, "type", "");
+        if (strcmp(type, "text_run") == 0) {
+            json_node_t *text_run = json_object_get(elem, "text_run");
+            if (text_run && text_run->type == JSON_OBJECT) {
+                const char *text = json_object_get_string(text_run, "text", "");
+                size_t tlen = strlen(text);
+                if (pos + tlen < cap - 1) {
+                    memcpy(result + pos, text, tlen);
+                    pos += tlen;
+                }
+            }
+        } else if (strcmp(type, "docs_link") == 0) {
+            json_node_t *docs_link = json_object_get(elem, "docs_link");
+            if (docs_link && docs_link->type == JSON_OBJECT) {
+                const char *url = json_object_get_string(docs_link, "url", "");
+                size_t ulen = strlen(url);
+                if (pos + ulen < cap - 1) {
+                    memcpy(result + pos, url, ulen);
+                    pos += ulen;
+                }
+            }
+        } else if (strcmp(type, "person") == 0) {
+            json_node_t *person = json_object_get(elem, "person");
+            if (person && person->type == JSON_OBJECT) {
+                const char *uid = json_object_get_string(person, "user_id", "unknown");
+                /* Format: @user_id */
+                result[pos++] = '@';
+                size_t ulen = strlen(uid);
+                if (pos + ulen < cap - 1) {
+                    memcpy(result + pos, uid, ulen);
+                    pos += ulen;
+                }
+            }
+        }
+    }
+
+    result[pos] = '\0';
+    /* Realloc to exact size */
+    char *shrunk = (char *)realloc(result, pos + 1);
+    return shrunk ? shrunk : result;
+}
+
 /* ── Registry init ──────────────────────────────────────────────── */
 
 void registry_init_feishu_tools(void) {

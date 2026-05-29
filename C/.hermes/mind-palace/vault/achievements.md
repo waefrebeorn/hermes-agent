@@ -1501,6 +1501,15 @@ Suite: 307/0/0 (266 test files). Gaps: 136. v236
 | P165-04 | Added 14 standalone test assertions: NULL path, no extension, .mp4 valid, .MP4 case-insensitive, .webm, .mov, .avi→mp4, .mkv→mp4, .mpeg, .mpg, .png→NULL, full directory path, dot in dirname, trailing dot→NULL. All pass. | `C/tests/test_video_mime.c` — tests 1-14 |
 Suite: 308/0/0 (267 test files). Gaps: 136. v237
 
+## Phase 166: G03 feishu_comment Depth — Comment Helpers
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P166-01 | Ported Python feishu_comment.py `_sanitize_comment_text()` — `feishu_sanitize_comment_text()` escapes &, <, > to &amp;, &lt;, &gt; for Feishu XML text_run content (port of line 465-467). Handles NULL/empty safely. Allocates worst-case buffer (5x) and copies with escape. | `C/src/tools/feishu_tools.c` — `feishu_sanitize_comment_text()` at ~411-430 |
+| P166-02 | Ported Python feishu_comment.py `_get_reply_user_id()` — `feishu_get_reply_user_id()` extracts user_id from a reply JSON node. Supports both direct string user_id and nested dict with open_id/user_id keys — matching Python's two-branch logic. Returns empty string on NULL/missing. | `C/src/tools/feishu_tools.c` — `feishu_get_reply_user_id()` at ~434-450 |
+| P166-03 | Ported Python feishu_comment.py `_extract_reply_text()` — `feishu_extract_reply_text()` traverses reply JSON content.elements[] to extract text from text_run, docs_link (URL), and person (@user_id) element types. Supports content-as-JSON-string (double-parse) matching Python's json.loads fallback. Returns malloc'd string. | `C/src/tools/feishu_tools.c` — `feishu_extract_reply_text()` at ~452-530 |
+| P166-04 | Added 11 standalone test assertions: sanitize (NULL, empty, plain, &amp;, &lt;&gt;, all special, mixed) and get_reply_user_id (direct, nested open_id, nested user_id fallback, unknown). All pass. | `C/tests/test_feishu_comment.c` — tests 1-11 |
+Suite: 309/0/0 (268 test files). Gaps: 136. v238
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|

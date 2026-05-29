@@ -1,4 +1,4 @@
-(v237) (v237)
+(v238) (v238)
 
-308/0/0, 267 test files. All pass. Gap: 267 C vs ~17k Python.
-Phase 165: B02 vision depth — Video MIME detection + base64 data URL
+309/0/0, 268 test files. All pass. Gap: 268 C vs ~17k Python.
+Phase 166: G03 feishu_comment depth — comment helpers

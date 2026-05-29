@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v237)**
+**BANNER — WuBu Slermes C Translation (v238)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v237                                       ║
-║  308/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v238                                       ║
+║  309/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  136 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 165: Video MIME detection + base64 data URL              ║
+║  Phase 166: Feishu comment helpers (sanitize, extract, user_id)              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v237)
+## Build Metrics (v238)
 
 | Metric | Value |
 |--------|-------|
