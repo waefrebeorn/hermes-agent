@@ -179,6 +179,62 @@ static void cookie_jar_update(const char *path, const char *raw_headers) {
     cookie_jar_write(path, write_entries, existing_count);
 }
 
+/* Check if a URL contains embedded API keys/secrets (exfiltration prevention).
+ * Checks raw URL and URL-decoded version for common secret prefix patterns.
+ * Returns a description of what was found, or NULL if clean. */
+static const char *url_has_secret(const char *url) {
+    if (!url || !*url) return NULL;
+
+    /* Common API key prefixes to check (subset of Python agent/redact.py _PREFIX_PATTERNS) */
+    static const char *prefixes[] = {
+        "sk-", "sk-ant-",
+        "ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_",
+        "xoxb-", "xoxp-", "xoxa-", "xoxr-",
+        "AIza", "pplx-", "fal_", "fc-", "bb_live_",
+        "AKIA",
+        "sk_live_", "sk_test_", "rk_live_",
+        "SG.", "hf_", "r8_", "npm_", "pypi-",
+        "dop_v1_", "doo_v1_",
+        "am_", "tvly-", "exa_", "gsk_",
+        "syt_", "retaindb_", "hsk-",
+        "mem0_", "brv_", "xai-",
+        NULL
+    };
+
+    /* Check raw URL */
+    for (int i = 0; prefixes[i]; i++) {
+        if (strstr(url, prefixes[i]))
+            return prefixes[i];
+    }
+
+    /* URL-decode a copy for percent-encoded variants (%73k- etc.) */
+    char decoded[4096];
+    int di = 0;
+    for (int si = 0; url[si] && di < (int)sizeof(decoded) - 1; si++) {
+        if (url[si] == '%' && url[si+1] && url[si+2]) {
+            char hex[3] = {url[si+1], url[si+2], 0};
+            char *end = NULL;
+            long val = strtol(hex, &end, 16);
+            if (end && *end == 0 && val >= 0 && val <= 255) {
+                decoded[di++] = (char)val;
+                si += 2;
+                continue;
+            }
+        }
+        decoded[di++] = url[si];
+    }
+    decoded[di] = 0;
+
+    if (strcmp(decoded, url) != 0) {
+        for (int i = 0; prefixes[i]; i++) {
+            if (strstr(decoded, prefixes[i]))
+                return prefixes[i];
+        }
+    }
+
+    return NULL;
+}
+
 /* ================================================================
  *  HTTP GET / POST / PUT / DELETE handler
  * ================================================================ */
@@ -235,6 +291,26 @@ char *web_get_handler(const char *args_json, const char *task_id) {
         free(save_path_copy);
         free(ua_copy);
         return strdup("{\"error\":\"Missing url\"}");
+    }
+
+    /* Secret exfiltration prevention: block URLs containing API keys */
+    {
+        const char *secret_found = url_has_secret(url_copy);
+        if (secret_found) {
+            char result[128];
+            snprintf(result, sizeof(result),
+                     "{\"error\":\"Blocked: URL contains what appears to be a %s API key. Secrets must not be sent in URLs.\"}",
+                     secret_found);
+            free(headers_copy);
+            free(body_copy);
+            free(proxy_copy);
+            free(cookies_copy);
+            free(auth_type_copy);
+            free(save_path_copy);
+            free(ua_copy);
+            free(url_copy);
+            return strdup(result);
+        }
     }
 
     /* SSRF protection: block internal/private URLs */
@@ -704,12 +780,13 @@ char *web_search_handler(const char *args_json, const char *task_id) {
 static const char *SCHEMA_EXTRACT = "{"
     "\"type\":\"object\","
     "\"properties\":{"
-      "\"url\":{\"type\":\"string\",\"description\":\"URL to extract content from\"},"
+      "\"url\":{\"type\":\"string\",\"description\":\"URL to extract content from (single URL)\"},"
+      "\"urls\":{\"type\":\"array\",\"description\":\"List of URLs to extract content from (multi-URL mode)\",\"items\":{\"type\":\"string\"}},"
       "\"prompt\":{\"type\":\"string\",\"description\":\"What to extract from the page (e.g., 'key metrics', 'main arguments', 'pricing info')\",\"default\":\"Extract key information\"},"
       "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":30},"
       "\"format\":{\"type\":\"string\",\"description\":\"Output format: 'markdown' or 'html'\",\"default\":\"markdown\"}"
     "},"
-    "\"required\":[\"url\"]"
+    "\"required\":[]"
 "}";
 
 /* Forward declaration for delegate-based extraction (defined below) */
@@ -785,23 +862,89 @@ char *web_extract_handler(const char *args_json, const char *task_id) {
     if (!args_json) return strdup("{\"error\":\"No args\"}");
 
     json_t *args = json_parse(args_json, NULL);
-    if (!args) return strdup("{\"error\":\"JSON parse\"}");
+    if (!args) return strdup("{\"error\":\"JSON parse error\"}");
 
     const char *url = json_get_str(args, "url", NULL);
+    json_t *urls_node = json_has(args, "urls") ? json_obj_get(args, "urls") : NULL;
     const char *extract_prompt = json_get_str(args, "prompt", "Extract key information from this page");
     int timeout = (int)json_get_num(args, "timeout", 30);
     const char *format = json_get_str(args, "format", "markdown");
+    bool is_custom_prompt = (extract_prompt && strcmp(extract_prompt, "Extract key information from this page") != 0);
+
+    /* Multi-URL mode: urls array */
+    if (urls_node && urls_node->type == JSON_ARRAY && json_len(urls_node) > 0) {
+        size_t count = json_len(urls_node);
+        json_t *results = json_object();
+        json_t *items = json_array();
+        json_set(results, "results", items);
+        json_set(results, "count", json_number((double)count));
+
+        for (size_t i = 0; i < count; i++) {
+            json_t *item_node = json_get(urls_node, i);
+            const char *single_url = (item_node && item_node->type == JSON_STRING) ? item_node->str_val : NULL;
+
+            json_t *entry = json_object();
+            json_set(entry, "url", json_string(single_url ? single_url : "(null)"));
+
+            if (!single_url) {
+                json_set(entry, "error", json_string("URL entry is null or not a string"));
+            } else {
+                const char *sf = url_has_secret(single_url);
+                if (sf) {
+                    char err[256];
+                    snprintf(err, sizeof(err),
+                             "Blocked: URL contains what appears to be a %s API key", sf);
+                    json_set(entry, "error", json_string(err));
+                } else {
+                    char *content;
+                    if (is_custom_prompt)
+                        content = web_extract_delegate(single_url, extract_prompt, timeout, format);
+                    else
+                        content = web_extract_native(single_url, timeout);
+
+                    if (content) {
+                        json_t *parsed = json_parse(content, NULL);
+                        if (parsed) {
+                            json_set(entry, "data", parsed);
+                            json_free(parsed);
+                        } else {
+                            json_set(entry, "raw", json_string(content));
+                        }
+                        free(content);
+                    }
+                }
+            }
+            json_append(items, entry);
+            json_free(entry);
+        }
+
+        json_free(items);
+        char *result = json_serialize(results);
+        json_free(results);
+        json_free(args);
+        return result;
+    }
 
     json_free(args);
 
-    if (!url) return strdup("{\"error\":\"Missing url\"}");
+    /* Single URL mode (backward compatible) */
+    if (!url) return strdup("{\"error\":\"Missing url. Provide 'url' (string) or 'urls' (array).\"}");
 
-    /* If custom prompt, use LLM-based delegate */
-    if (extract_prompt && strcmp(extract_prompt, "Extract key information from this page") != 0) {
-        return web_extract_delegate(url, extract_prompt, timeout, format);
+    /* Secret exfiltration prevention */
+    {
+        const char *secret_found = url_has_secret(url);
+        if (secret_found) {
+            char result[256];
+            snprintf(result, sizeof(result),
+                     "{\"success\":false,\"error\":\"Blocked: URL contains what appears to be a %s API key. Secrets must not be sent in URLs.\"}",
+                     secret_found);
+            return strdup(result);
+        }
     }
 
-    /* Default: native HTML-to-text, no Python dependency */
+    if (is_custom_prompt)
+        return web_extract_delegate(url, extract_prompt, timeout, format);
+
     return web_extract_native(url, timeout);
 }
 

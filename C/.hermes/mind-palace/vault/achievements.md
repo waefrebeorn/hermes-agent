@@ -939,6 +939,18 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 93-94: B03 URL secret check + multi-URL support (v169)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P93-01 | `url_has_secret()` — detects 30+ API key prefix patterns in raw and URL-encoded URLs | `src/tools/web.c` — static helper + call sites |
+| P93-02 | URL exfiltration check in web_get_handler — blocks requests containing secrets before fetch | `src/tools/web.c` — web_get_handler |
+| P93-03 | URL exfiltration check in web_extract_handler — blocks extract requests with secrets | `src/tools/web.c` — web_extract_handler |
+| P94-01 | Multi-URL support in web_extract — accepts `urls` array, processes each URL, returns results array | `src/tools/web.c` — web_extract_handler multi-URL branch |
+| P94-02 | Backward compatible: single `url` field still works for existing callers | `src/tools/web.c` — single-URL fallback path |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

@@ -1,4 +1,4 @@
-# Slermes C (v168)
+# Slermes C (v169)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -44,6 +44,8 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 90: B08 thread_id support for Telegram topics — telegram_send_message() and telegram_send_message_with_keyboard() accept optional thread_id parameter. send_message.c parses thread_id from args or target:chat_id:thread_id format. `message_thread_id` forwarded in Telegram sendMessage JSON body. B08 52%→55%.
 |- Phase 91: B07 terminal force param + foreground timeout guard + status field. force skips sandbox escape check (user-confirmed commands). Foreground timeout reject >600s with guidance. status field in result JSON: success/error. B07 57%→59%.
 |- Phase 92: B08 [[as_document]] directive — strip from message text, force document delivery for all media types (preserves original bytes for info-graph JPGs, etc.). Applies to single-file and media_group sends. B08 55%→57%.
+|- Phase 93: B03 URL secret exfiltration check — `url_has_secret()` blocks URLs containing API key patterns (sk-, ghp_, AIza, etc.) before fetch. Applied to web_get_handler and web_extract_handler. Matches Python's web_extract_tool URL exfiltration prevention.
+|- Phase 94: B03 multi-URL support — web_extract_handler accepts `urls` array for extracting multiple pages in one call. Backward compatible with single `url`. SCHEMA_EXTRACT updated. B03 58%→78% (1046 LOC).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -52,4 +54,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 92: B08 [[as_document]] — force-document directive.
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 94: B03 multi-URL support + URL secret exfiltration check (web 58%→78%).
