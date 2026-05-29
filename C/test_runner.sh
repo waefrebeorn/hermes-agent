@@ -2744,6 +2744,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "sms (compilation failed)"
 fi &
 
+# Gateway helpers test (G01) — msg_dedup, strip_markdown, redact_phone, thread_tracker
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_helpers.c" \
+    "$CDIR/src/gateway/helpers.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_helpers -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_helpers > /dev/null 2>&1; then ok "gateway helpers (29 tests)"
+    else fail "gateway helpers (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_helpers
+else skip "gateway helpers (compilation failed)"
+fi &
+
 # Web tool test (M30 — needs web.c + tool_config + registry + http + json)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libhtml" \
     "$CDIR/tests/test_web.c" \

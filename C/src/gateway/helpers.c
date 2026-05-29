@@ -232,15 +232,15 @@ char *redact_phone(const char *phone) {
     if (len <= 4) return strdup("****");
     if (len <= 8) {
         /* Show first 2 and last 2 */
-        char *result = malloc(7);
+        char *result = malloc(10);
         if (!result) return NULL;
-        snprintf(result, 7, "%.2s****%.2s", phone, phone + len - 2);
+        snprintf(result, 10, "%.2s****%.2s", phone, phone + len - 2);
         return result;
     }
     /* Show first 4 and last 4 */
-    char *result = malloc(11);
+    char *result = malloc(14);
     if (!result) return NULL;
-    snprintf(result, 11, "%.4s****%.4s", phone, phone + len - 4);
+    snprintf(result, 14, "%.4s****%.4s", phone, phone + len - 4);
     return result;
 }
 
