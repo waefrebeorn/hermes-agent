@@ -911,6 +911,16 @@ Suite: 294/0/0 (unchanged). Gaps: 150 — B03 improved with save-to-file mode.
 
 Suite: 294/0/0 (unchanged). Gaps: 151 — A18 PORTED. S2 phase complete.
 
+## Phase 90: B08 Telegram Topic thread_id Support (v166)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P90-01 | telegram_send_message() + telegram_send_message_with_keyboard() accept optional thread_id param. `message_thread_id` forwarded in Telegram sendMessage JSON body | `include/hermes_gateway.h` — declarations, `src/gateway/platforms/telegram.c` |
+| P90-02 | send_message.c parses thread_id from args or target:chat_id:thread_id format. Fallback: args preferred over target string | `src/tools/send_message.c` — second-colon parsing + fallback logic |
+| P90-03 | All existing callers in server.c (3) + telegram.c (6) pass NULL for thread_id — backward compatible | `src/gateway/server.c`, `src/gateway/platforms/telegram.c` |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

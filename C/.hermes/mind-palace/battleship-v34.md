@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v165 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 89.**
+**v166 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 90.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -175,12 +175,12 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
 | 07 | B07 | terminal | ~813 | ~1500 | 54% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder). workdir validation + disk usage warning — _check_workdir() + _check_disk_usage() flags in result JSON (Phase 88) | P2 | PARTIAL |
-| 08 | B08 | send_message | ~466 | ~900 | 52% | inline_buttons + reply_to_message_id implemented. media_group array support added — sends multiple files as Telegram sendMediaGroup. error redaction: secrets (access_token, api_key, token, sig) sanitized from error messages | P2 | PARTIAL |
+| 08 | B08 | send_message | ~492 | ~900 | 55% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support for Telegram topics — parsed from args or target:chat_id:thread_id format. `message_thread_id` forwarded in Telegram sendMessage JSON body | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07). Phase 86: PKCE auth code flow wired for OAuth MCP servers (B04). Phase 87: native web_extract for B03 (42%→58%). Phase 88: terminal safety checks for B07 (53%→57%). Phase 89: B09/B10 stale LOC claims corrected — both IMPLEMENTED at 96% parity.**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 90: thread_id support for Telegram topics added to send_message (B08 52%→55%).**
 
 ---
 

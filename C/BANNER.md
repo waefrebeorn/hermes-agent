@@ -1,12 +1,12 @@
-# BANNER — WuBu Slermes C Translation (v164)
+# BANNER — WuBu Slermes C Translation (v166)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v164                                       ║
+║  WuBu Slermes C v166                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  147 gaps  │  31MB binary  │  0 warnings                     ║
+║  145 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B09/B10 IMPLEMENTED │ 145 gaps                          ║
+║  B08 thread_id: Telegram topic messaging                  ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

@@ -1,4 +1,4 @@
-# Slermes C (v165)
+# Slermes C (v166)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -40,7 +40,8 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 86: B04 PKCE auth code flow wired — mcp_oauth_manager_get_token() in mcp_tool.c. Auth config parsed for HTTP/SSE MCP servers (previously skipped). 148→147 gaps.
 - Phase 87: B03 web native HTML-to-text extraction — web_extract_native() with html_strip_tags, no Python dependency for basic extraction. web.c 823→905 LOC, parity 42%→58%. Python delegate reserved for custom LLM extraction prompts.
 - Phase 88: B07 terminal safety checks — workdir validation + disk usage warning. _check_workdir() validates path. _check_disk_usage() warns if <100MB free. Non-blocking warnings in result JSON. B07 53%→57%.
-- Phase 89: B09/B10 stale claim correction — patch.c 1154 LOC (96% parity, V4A mode + dry_run + conflict resolution all done). session_search.c 621 LOC (96% parity, all features done). Both moved to IMPLEMENTED. 147→145 gaps.
+|- Phase 89: B09/B10 stale claim correction — patch.c 1154 LOC (96% parity, V4A mode + dry_run + conflict resolution all done). session_search.c 621 LOC (96% parity, all features done). Both moved to IMPLEMENTED. 147→145 gaps.
+|- Phase 90: B08 thread_id support for Telegram topics — telegram_send_message() and telegram_send_message_with_keyboard() accept optional thread_id parameter. send_message.c parses thread_id from args or target:chat_id:thread_id format. `message_thread_id` forwarded in Telegram sendMessage JSON body. B08 52%→55%.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -49,4 +50,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 89: stale claim sweep — B09/B10 IMPLEMENTED.
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 90: B08 thread_id support — Telegram topic messaging.
