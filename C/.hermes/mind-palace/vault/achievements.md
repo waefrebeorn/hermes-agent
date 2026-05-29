@@ -984,6 +984,17 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 102: token_exchange test suite (v177)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P102-01 | oauth_last_error() initial state test | `tests/test_token_exchange.c` — test 1 |
+| P102-02 | oauth_token_free handles NULL + allocated + populated tokens | `tests/test_token_exchange.c` — tests 2-4 |
+| P102-03 | auth_store_free handles NULL + empty array edge cases | `tests/test_token_exchange.c` — tests 5-6 |
+| P102-04 | Registered in test_runner.sh | `test_runner.sh` — token_exchange section |
+
+Suite: 296/0/0. Test files: 252. Gaps: 145.
+
 ## Phase 101: voice_mode test suite (v176)
 
 | ID | Achievement | Evidence |

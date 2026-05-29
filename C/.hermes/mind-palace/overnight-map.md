@@ -1,7 +1,7 @@
-# Overnight (v176)
+# Overnight (v177)
 
 145 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 295/0/0 (251 test files). Phase 101: voice_mode test suite (295 tests, 251 files).
+Suite 296/0/0 (252 test files). Phase 101: voice_mode test suite (296 tests, 251 files).
 
 ## Current Phase: Phase 6 complete — S2 all real gaps PORTED
 A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.

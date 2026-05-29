@@ -1,4 +1,4 @@
-# Prestige (v176)
+# Prestige (v177)
 
 ## P0 — Display & Visual + Architecture (6 gaps)
 D09, D16: Prompt input (partial), type-ahead

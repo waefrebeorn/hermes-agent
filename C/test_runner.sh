@@ -2712,6 +2712,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "voice_mode (compilation failed)"
 fi &
 
+# Token exchange test (provider/token_exchange.c)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_token_exchange.c" \
+    "$CDIR/src/provider/token_exchange.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_token_exchange -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_token_exchange > /dev/null 2>&1; then ok "token_exchange (7 tests)"
+    else fail "token_exchange (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_token_exchange
+else skip "token_exchange (compilation failed)"
+fi &
+
 # Web tool test (M30 — needs web.c + tool_config + registry + http + json)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libhtml" \
     "$CDIR/tests/test_web.c" \
