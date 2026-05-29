@@ -395,6 +395,10 @@ const char *telegram_message_thread_id_for_send(const char *thread_id);
  * array; caller must free each string and the array. */
 char **telegram_parse_fallback_ips(const char *env_value, size_t *count);
 
+/* Port of Python send_message_tool._is_telegram_thread_not_found().
+ * Returns true if the error text suggests a Telegram thread-not-found failure. */
+bool telegram_is_thread_not_found(const char *error_text);
+
 /* E07-E12: Interactive Telegram send methods with inline keyboards */
 bool telegram_send_draft(http_client_t *http, const char *chat_id,
                           const char *text, const char *parse_mode);

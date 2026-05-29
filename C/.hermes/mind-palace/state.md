@@ -1,7 +1,7 @@
-# Slermes C (v235)
+# Slermes C (v236)
 
-Suite: 306/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 265 | C src: 175
+Suite: 307/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 266 | C src: 175
 Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -105,7 +105,8 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 160: B08 send_message depth — HTML auto-detection. message_looks_like_html() checks message for HTML-like tags (<tag> or </tag>). When HTML detected and no explicit parse_mode provided, auto-switches to parse_mode=HTML. Port of Python send_message_tool.py:827 _has_html detection. 4 new test assertions (48 total). Suite 303/0/0 (v232).
 |- Phase 161: G07 telegram_network depth — fallback IP parsing. telegram_parse_fallback_ips() validates and normalizes comma-separated IPv4 addresses for Telegram API fallback connectivity. Filters private (10/172.16-31/192.168), loopback (127.x), link-local (169.254.x), unspecified (0.0.0.0), and non-IPv4. Port of Python telegram_network._normalize_fallback_ips() and parse_fallback_ip_env(). 16 test assertions. Suite 304/0/0 (v233).
 |- Phase 162: B02 vision depth — media-in-tool-results support. vision_supports_media_in_tool_results() checks if a provider+model combo accepts image content inside tool-result messages. Covers aggregators (openrouter/nous/vertex/bedrock), Anthropic, OpenAI, and Gemini 3+ (model-gated). Conservative default false. Port of Python vision_tools.py _supports_media_in_tool_results(). 23 test assertions. Suite 305/0/0 (v234).
-|- Phase 163: G03 feishu_comment depth — textwrap_chunk(). Port of Python feishu_comment._chunk_text(). Splits text into chunks at newline boundaries within max_len per chunk. Generic utility added to libtextwrap. 18 test assertions. Suite 306/0/0 (v235).
+||- Phase 163: G03 feishu_comment depth — textwrap_chunk(). Port of Python feishu_comment._chunk_text(). Splits text into chunks at newline boundaries within max_len per chunk. Generic utility added to libtextwrap. 18 test assertions. Suite 306/0/0 (v235).
+|- Phase 164: B08 send_message depth — Telegram thread-not-found detection. telegram_is_thread_not_found() ported from Python send_message_tool._is_telegram_thread_not_found(). Case-insensitive "thread not found" detection with underscore/hyphen separator support. 12 test assertions. Suite 307/0/0 (v236).
 |- Phase 130: terminal test expansion — 17 new assertions covering force param, status field, foreground timeout guard, bad workdir handling. Tests 30→47 assertions. Suite 301/0/0.
 |- Phase 128: exec_code test expansion — 8 tests (missing code, NULL args, timeout, sandbox, output content). 144→144 gaps.
 |- Phase 127: clarify response format parity — question echo + choices_offered fields + rich description. 144→144 gaps (depth).
@@ -121,4 +122,4 @@ Battleship v34 (136 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 306/0/0 (265 test files).
+Real parity gap is 136 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 307/0/0 (266 test files).

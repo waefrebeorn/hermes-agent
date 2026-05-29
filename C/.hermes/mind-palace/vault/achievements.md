@@ -1484,6 +1484,14 @@ Suite: 305/0/0 (264 test files). Gaps: 137. v234
 | P163-03 | Added 18 standalone tests: NULL→NULL, empty→0-count, short text, exact limit, newline-split (3 chunks), hard cut (3 chunks), newline break (2 chunks), NULL count. All pass. | `C/tests/test_textwrap_chunk.c` — all 18 tests |
 Suite: 306/0/0 (265 test files). Gaps: 136. v235
 
+## Phase 164: B08 send_message Depth — Telegram Thread-Not-Found Detection
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P164-01 | Ported Python send_message_tool.py `_is_telegram_thread_not_found()` — `telegram_is_thread_not_found()` performs case-insensitive check for "thread not found" in error text. Supports space/underscore/hyphen separators between "thread" and "not" and "not" and "found". Returns false on NULL/empty input. | `C/src/gateway/platforms/telegram.c` — `telegram_is_thread_not_found()` at ~1223-1250 |
+| P164-02 | Declared in hermes_gateway.h with doc comment. | `C/include/hermes_gateway.h` — lines ~397-399 |
+| P164-03 | Added 12 standalone test assertions: NULL→false, empty→false, exact match, case-insensitive UPPER, mixed case, in sentence context, with underscores, with hyphens, partial "thread_no" false, suffix after "found", unrelated error false, prefix before match. All pass. | `C/tests/test_telegram_thread_not_found.c` — tests 1-12 |
+Suite: 307/0/0 (266 test files). Gaps: 136. v236
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|

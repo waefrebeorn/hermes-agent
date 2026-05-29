@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v235 | Fork diverged — C/ lives only on fork | Suite 306/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 265 (21.0% parity). Phase 163: G03 feishu_comment depth — textwrap_chunk() in libtextwrap. Suite 306/0/0.**
+**v236 | Fork diverged — C/ lives only on fork | Suite 307/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 266 (21.1% parity). Phase 164: B08 send_message depth — Telegram thread-not-found detection. Suite 307/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -175,12 +175,12 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
 || 07 | B07 | terminal | ~981 | ~2409 | 40% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96). foreground/background guidance: detects nohup/disown/setsid/& and suggests background=true (Phase 100). pipe_stdin detection: PTY auto-override for gh auth login --with-token (Phase 134). help/version detection: --help/-h/--version/-v skip guidance early (Phase 135). env assignment detection: KEY=VALUE prefix skips guidance (Phase 137). Long-lived foreground pattern detection: npm/pnpm/yarn/bun run dev|start|serve|watch, docker compose up, next dev, vite, nodemon, uvicorn, gunicorn, python -m http.server (Phase 141). Sudo failure detection: checks output for sudo: a password is required / sudo: no tty present / sudo: a terminal is required and adds sudo_tip field (Phase 142). Workdir validation: allowlist-based safe-path check blocking shell metacharacters (Phase 143). 90-test suite (+14 from v215). | P2 | PARTIAL |
-| 08 | B08 | send_message | ~710 | ~1786 | 40% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99). parse_mode parameter (Markdown/MarkdownV2/HTML/plain) (Phase 106). disable_notification (silent send) for Telegram (Phase 126). Telegram retry with exponential backoff (Phase 132): 3 attempts with 0.5s/1s/2s delay on transient failures, port of Python _telegram_retry_delay + _send_telegram_message_with_retry. General topic thread_id mapping (Phase 158): telegram_message_thread_id_for_send() maps "1" → NULL matching TelegramAdapter._message_thread_id_for_send(). Parse mode fallback (Phase 159): when send fails with non-default parse_mode, retries once with parse_mode=NULL (plain text). telegram_send_with_mode() helper extracted. HTML auto-detection (Phase 160): message_looks_like_html() auto-switches to parse_mode=HTML when message contains HTML tags. | P2 | PARTIAL |
+|| 08 | B08 | send_message | ~710 | ~1786 | 40% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99). parse_mode parameter (Markdown/MarkdownV2/HTML/plain) (Phase 106). disable_notification (silent send) for Telegram (Phase 126). Telegram retry with exponential backoff (Phase 132): 3 attempts with 0.5s/1s/2s delay on transient failures, port of Python _telegram_retry_delay + _send_telegram_message_with_retry. General topic thread_id mapping (Phase 158): telegram_message_thread_id_for_send() maps "1" -> NULL matching TelegramAdapter._message_thread_id_for_send(). Parse mode fallback (Phase 159): when send fails with non-default parse_mode, retries once with parse_mode=NULL (plain text). telegram_send_with_mode() helper extracted. HTML auto-detection (Phase 160): message_looks_like_html() auto-switches to parse_mode=HTML when message contains HTML tags. Telegram thread-not-found detection (Phase 164): telegram_is_thread_not_found() checks errors for "thread not found" via case-insensitive substring match with separator variants (space/underscore/hyphen). 12-test standalone suite. | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 162: B02 vision media-in-tool-results support. Suite 305/0/0 (264 test files).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 164: B08 send_message depth — Telegram thread-not-found detection. Suite 307/0/0 (266 test files).**
 
 ---
 
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 265 | 21.0% | P1 |
+|| 01 | X01 | Test files | 1,262 | 266 | 21.1% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 163: test files 264→265.**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 164: test files 265→266.**
 
 ---
 
@@ -270,15 +270,15 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 163: G03 textwrap_chunk() in libtextwrap |
+|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 164: B08 Telegram thread-not-found detection |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-|| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 158: B08 General topic thread_id mapping (telegram_message_thread_id_for_send) |
+|| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 164: B08 send_message depth — Telegram thread-not-found detection |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 163: G03 feishu_comment depth — textwrap_chunk().** |
+||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 164: B08 send_message depth — Telegram thread-not-found detection.** |
 
 ### Phase Map
 

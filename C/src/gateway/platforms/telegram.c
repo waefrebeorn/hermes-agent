@@ -1220,3 +1220,33 @@ bool telegram_send_update_prompt(http_client_t *http, const char *chat_id,
     json_free(keyboard);
     return ok;
 }
+
+/* Port of Python send_message_tool._is_telegram_thread_not_found().
+ * Returns true if the error text indicates a Telegram thread-not-found failure. */
+bool telegram_is_thread_not_found(const char *error_text) {
+    if (!error_text) return false;
+    /* Case-insensitive check for "thread not found" */
+    const char *p = error_text;
+    while (*p) {
+        if ((*p == 't' || *p == 'T') &&
+            (p[1] == 'h' || p[1] == 'H') &&
+            (p[2] == 'r' || p[2] == 'R') &&
+            (p[3] == 'e' || p[3] == 'E') &&
+            (p[4] == 'a' || p[4] == 'A') &&
+            (p[5] == 'd' || p[5] == 'D') &&
+            (p[6] == ' ' || p[6] == '_' || p[6] == '-') &&
+            (p[7] == 'n' || p[7] == 'N') &&
+            (p[8] == 'o' || p[8] == 'O') &&
+            (p[9] == 't' || p[9] == 'T') &&
+            (p[10] == ' ' || p[10] == '_' || p[10] == '-') &&
+            (p[11] == 'f' || p[11] == 'F') &&
+            (p[12] == 'o' || p[12] == 'O') &&
+            (p[13] == 'u' || p[13] == 'U') &&
+            (p[14] == 'n' || p[14] == 'N') &&
+            (p[15] == 'd' || p[15] == 'D')) {
+            return true;
+        }
+        p++;
+    }
+    return false;
+}

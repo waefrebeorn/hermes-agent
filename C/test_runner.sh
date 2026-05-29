@@ -2408,6 +2408,22 @@ else
     skip "gateway_platforms (T01: compilation failed)"
 fi
 
+# Telegram thread-not-found detection tests (T01)
+if gcc -O2 -Wall -Wextra -o /tmp/hermes_test_tg_tnf "$CDIR/tests/test_telegram_thread_not_found.c" -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_tg_tnf > /dev/null 2>&1; then
+        ok "telegram_thread_not_found (T01: 12 tests)"
+    else
+        echo "  Telegram thread-not-found test output:"
+        /tmp/hermes_test_tg_tnf 2>&1 | sed 's/^/    /'
+        fail "telegram_thread_not_found (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tg_tnf
+else
+    echo "  Telegram thread-not-found test compilation error:"
+    gcc -O2 -Wall -Wextra -o /tmp/hermes_test_tg_tnf "$CDIR/tests/test_telegram_thread_not_found.c" -lm 2>&1 | sed 's/^/    /'
+    skip "telegram_thread_not_found (compilation failed)"
+fi
+
 # Gateway per-platform webhook tests (T01): HMAC + subscription management
 # Needs crypto library for HMAC verification.
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \

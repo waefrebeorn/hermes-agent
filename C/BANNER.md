@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v235)**
+**BANNER — WuBu Slermes C Translation (v236)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v235                                       ║
-║  306/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  WuBu Slermes C v236                                       ║
+║  307/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  136 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 163: textwrap chunk                                  ║
+║  Phase 164: Telegram thread-not-found detection              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v235)
+## Build Metrics (v236)
 
 | Metric | Value |
 |--------|-------|
