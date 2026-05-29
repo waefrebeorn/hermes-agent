@@ -949,7 +949,7 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
     }
     if (effective_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
-                "Authorization: Bearer %s\r\nContent-Type: application/json",
+                "Authorization: Bearer %s\r\nContent-TContent-Type: application/json",
                  effective_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
@@ -1560,7 +1560,7 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
     }
     if (effective_key[0]) {
         snprintf(auth_header, sizeof(auth_header),
-                "Authorization: Bearer %s\r\nContent-Type: application/json",
+                "Authorization: Bearer %s\r\nContent-TContent-Type: application/json",
                  effective_key);
     } else {
         snprintf(auth_header, sizeof(auth_header),
