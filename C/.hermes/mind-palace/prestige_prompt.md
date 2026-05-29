@@ -19,7 +19,7 @@ C11: Auth/OAuth system
 P01: Plugin architecture
 
 ## P2 — Depth & Ecosystem (66 gaps)
-A15, A18, A22: Agent module depth (insights, models_dev, stream_diag)
+A15, A18, A22: Agent module depth (insights, models_dev, stream_diag — PENDING REAUDIT: these were claimed stale by filename matching. Real feature-gap audit needed against upstream v0.15.0 codebase.)
 C01-C17: CLI ecosystem (setup wizard, doctor, profiles, config, model management, gateway CLI, kanban, skills hub, etc.)
 B01-B10: Tool depth (browser 44%, vision 21%, web 40%, mcp_tool 108% LOC, file/feishu ✅ implemented, terminal 53%, send_message 55%, patch 58%+dry_run, session_search 59%)
 G04-G13: Gateway sub-modules (feishu_comment, wecom_crypto, telegram_network, etc.)

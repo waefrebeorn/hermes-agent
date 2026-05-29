@@ -811,8 +811,11 @@ char *agent_run_conversation(agent_state_t *state,
     /* Initialize subdirectory hint tracker */
     subdir_hints_init(NULL);
 
-    /* Add user message */
-    message_t *user_msg = message_new(MSG_USER, user_message);
+    /* Add user message (with surrogate character sanitization) */
+    char *clean_input = sanitize_surrogates(user_message);
+    const char *msg_content = clean_input ? clean_input : (user_message ? user_message : "");
+    message_t *user_msg = message_new(MSG_USER, msg_content);
+    free(clean_input);
     if (!user_msg) return strdup("Error: OOM");
     context_push(state, user_msg);
     /* G09: Count this as a user turn */
