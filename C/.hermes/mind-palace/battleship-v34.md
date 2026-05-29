@@ -14,12 +14,12 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
-| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | line_edit with tab completion + history, termios | REAL GAP | P0 |
+| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search added. Has tab completion + history + bracketed paste. No multi-line edit. | PARTIAL | P0 |
 | 02 | D13 | Bounding box / terminal resize: window resize re-render | SIGWINCH handler + full re-layout | handle_winch exists but no re-layout | REAL GAP | P0 |
 | 03 | D14 | Scaling / wrapping: text reflow on terminal width change | prompt_toolkit auto-wrap + Rich auto-width | Panel has word-wrap; input is fixed-width | REAL GAP | P0 |
 | 04 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
 
-**S0: 4 gaps (all P0)** — down from 18 as of v145 Phase 57. 14 retired: 13 stale claims + 1 implemented (D15 light/dark detection).
+**S0: 4 gaps (3 real, 1 partial) — down from 18 as of v145 Phase 57.**
 
 ---
 
