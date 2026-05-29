@@ -172,7 +172,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 01 | B01 | browser | ~1678 | ~3800 | 44% | autofill, PDF download | P2 | REAL |
 | 02 | B02 | vision | ~296 | ~1421 | 21% | face detection, barcode (OCR/EXIF via Python helper) | P2 | PARTIAL |
 | 03 | B03 | web | ~629 | ~1561 | 40% | cookie jar persistence — ADDED in Phase 68 (text-based file store, auto-save Set-Cookie) | P2 | PARTIAL |
-| 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth wiring (libmcp_oauth exists but not integrated) | P2 | PARTIAL |
+| 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth now integrated — token storage via mcp_oauth_storage, PKCE fields (authorization_url, redirect_uri) parsed from config. Full PKCE auth code flow (callback server, browser open) still unwired | P2 | PARTIAL |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
 | 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder) | P2 | PARTIAL |

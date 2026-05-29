@@ -753,6 +753,19 @@ Suite: 294/0/0 (unchanged). Gaps: 154.
 
 Suite: 294/0/0 (unchanged). Gaps: 153 — B08 and B10 partial gaps retired. B04 OAuth, B08 media groups, B10 FTS5 remain as real/partial gaps.
 
+## Phase 73: libmcp_oauth Integration into mcp_tool (B04) (v152)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P73-01 | mcp_auth_t extended: authorization_url[1024] + redirect_uri[1024] fields for PKCE auth code flow | `include/hermes.h` — mcp_auth_t struct |
+| P73-02 | YAML config parsing for authorization_url + redirect_uri from mcp_servers.<name>.auth.* | `src/tools/mcp_tool.c` — mcp_init_all() config parsing block |
+| P73-03 | mcp_auth_refresh_if_needed() rewritten: token persistence via mcp_oauth_storage_t (libmcp_oauth) with fallback to credential_store | `src/tools/mcp_tool.c` — mcp_auth_refresh_if_needed() |
+| P73-04 | Refresh tokens saved to libmcp_oauth storage as JSON with access_token + expires_at | `src/tools/mcp_tool.c` — refresh save path |
+| P73-05 | #include "mcp_oauth.h" added to mcp_tool.c — libmcp_oauth now compiled into mcp_tool for the first time | `src/tools/mcp_tool.c` — includes |
+| P73-06 | test_runner.sh MCP test updated with mcp_oauth, crypto, base64 include paths + source files | `test_runner.sh` — MCP tool test block |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — B04 now uses libmcp_oauth for token storage. PKCE auth code flow (callback server, browser open) still unwired.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

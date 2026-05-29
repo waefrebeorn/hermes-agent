@@ -614,6 +614,8 @@ typedef struct {
     char  client_id[256];         /* OAuth client ID */
     char  client_secret[512];     /* OAuth client secret */
     char  token_url[1024];        /* OAuth token endpoint */
+    char  authorization_url[1024]; /* OAuth authorization endpoint (for PKCE flow) */
+    char  redirect_uri[1024];      /* Redirect URI for callback server */
     char  scopes[1024];           /* space-separated scopes */
     int   refresh_before_sec;     /* refresh if < N seconds left on expiry */
 } mcp_auth_t;

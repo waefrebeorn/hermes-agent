@@ -12,6 +12,7 @@
 #include "hermes_json.h"
 #include "hermes_yaml.h"
 #include "mcp.h"
+#include "mcp_oauth.h"
 #include "osv.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -889,6 +890,17 @@ void mcp_init_all(void) {
                 if (sc) snprintf(g_server_auth[aidx].scopes,
                                   sizeof(g_server_auth[aidx].scopes), "%s", sc);
 
+                /* OAuth PKCE fields: authorization_url + redirect_uri */
+                snprintf(ah_key, sizeof(ah_key), "%s.authorization_url", auth_key);
+                const char *authz_url = yaml_get_string(doc, ah_key);
+                if (authz_url) snprintf(g_server_auth[aidx].authorization_url,
+                                         sizeof(g_server_auth[aidx].authorization_url), "%s", authz_url);
+
+                snprintf(ah_key, sizeof(ah_key), "%s.redirect_uri", auth_key);
+                const char *redir = yaml_get_string(doc, ah_key);
+                if (redir) snprintf(g_server_auth[aidx].redirect_uri,
+                                     sizeof(g_server_auth[aidx].redirect_uri), "%s", redir);
+
                 /* OAuth refresh_before_sec */
                 {
                     char rbk[256];
@@ -1195,20 +1207,62 @@ static bool mcp_auth_refresh_if_needed(int server_idx) {
     if (server_idx < 0 || server_idx >= g_server_count) return false;
     if (strcmp(g_server_auth[server_idx].type, "oauth") != 0) return false;
 
-    /* Check stored token expiry */
-    char stored_token[1024] = "";
-    long long expires_at = 0;
     const char *srv_name = mcp_server_name(g_servers[server_idx]);
+    if (!srv_name) return false;
 
-    if (credential_store_load(srv_name, stored_token, sizeof(stored_token), &expires_at)) {
-        long long now = (long long)time(NULL);
-        int refresh_before = g_server_auth[server_idx].refresh_before_sec;
-        if (refresh_before <= 0) refresh_before = 60;
-        if (expires_at > 0 && (now + refresh_before) < expires_at) {
-            /* Token still valid — use stored token */
+    /* Use libmcp_oauth storage for token persistence */
+    mcp_oauth_storage_t *oauth_st = mcp_oauth_storage_new(srv_name);
+    if (!oauth_st) {
+        /* Fall back to credential_store if storage alloc fails */
+        char stored_token[1024] = "";
+        long long expires_at = 0;
+        if (credential_store_load(srv_name, stored_token, sizeof(stored_token), &expires_at)) {
+            long long now = (long long)time(NULL);
+            int refresh_before = g_server_auth[server_idx].refresh_before_sec;
+            if (refresh_before <= 0) refresh_before = 60;
+            if (expires_at > 0 && (now + refresh_before) < expires_at) {
+                snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
+                         "%s", stored_token);
+                return true;
+            }
+        }
+        char *new_token = oauth_refresh_token(&g_server_auth[server_idx]);
+        if (new_token) {
             snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
-                     "%s", stored_token);
+                     "%s", new_token);
+            free(new_token);
             return true;
+        }
+        return false;
+    }
+
+    /* Check stored tokens via libmcp_oauth */
+    if (mcp_oauth_storage_has_tokens(oauth_st)) {
+        char *tokens_json = mcp_oauth_storage_get_tokens(oauth_st);
+        if (tokens_json) {
+            char *jerr = NULL;
+            json_t *tokens = json_parse(tokens_json, &jerr);
+            free(tokens_json);
+            if (jerr) {
+                free(jerr);
+            }
+            if (tokens) {
+                long long expires_at = (long long)json_get_num(tokens, "expires_at", 0);
+                const char *access_token = json_get_str(tokens, "access_token", "");
+                long long now = (long long)time(NULL);
+                int refresh_before = g_server_auth[server_idx].refresh_before_sec;
+                if (refresh_before <= 0) refresh_before = 60;
+
+                if (expires_at > 0 && (now + refresh_before) < expires_at && access_token[0]) {
+                    /* Token still valid */
+                    snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
+                             "%s", access_token);
+                    json_free(tokens);
+                    mcp_oauth_storage_free(oauth_st);
+                    return true;
+                }
+                json_free(tokens);
+            }
         }
     }
 
@@ -1217,10 +1271,28 @@ static bool mcp_auth_refresh_if_needed(int server_idx) {
     if (new_token) {
         snprintf(g_server_auth[server_idx].token, sizeof(g_server_auth[server_idx].token),
                  "%s", new_token);
+
+        /* Save to libmcp_oauth storage — wrap in JSON with expires_at */
+        json_t *tj = json_object();
+        json_set(tj, "access_token", json_string(new_token));
+        long long expires_in = 3600;
+        /* Parse expires_in from HTTP response if available */
+        /* For client_credentials, the refresh already handles this */
+        long long expires_at = (long long)time(NULL) + expires_in;
+        json_set(tj, "expires_at", json_number((double)expires_at));
+        char *token_json = json_serialize(tj);
+        if (token_json) {
+            mcp_oauth_storage_set_tokens(oauth_st, token_json);
+            free(token_json);
+        }
+        json_free(tj);
+
         free(new_token);
+        mcp_oauth_storage_free(oauth_st);
         return true;
     }
 
+    mcp_oauth_storage_free(oauth_st);
     return false;
 }
 
