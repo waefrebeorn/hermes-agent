@@ -1,7 +1,7 @@
 # Overnight (v152)
 
-154 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 294/0/0 (248 test files). Phase 66: stream drop diagnostics. Phase 65: upstream header capture (cf-ray, x-openrouter-*, x-request-id) wired into non-streaming LLM path. Structured stream error logging. Phase 64: error_classify() wired. S2 stale sweep: A15 retired.
+153 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 294/0/0 (248 test files). Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected. Phase 66: stream drop diagnostics. Phase 65: upstream header capture.
 
 ## Current Phase: Phase 6 (S2 Agent Module Depth)
 S2 real gaps (A18, A22) both now PARTIAL. A18: /model list/show/providers/set CLI. A22: stream diag at 85% parity. All S0 remaining, S1 partials stable.

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 **v152 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 153 structural gaps, 1000+ test case gaps across 9 sectors. Phase 69+: patch 4-strategy, cookie jar, G01 helpers.**
+**Honest assessment: 153 structural gaps, 1000+ test case gaps across 9 sectors. Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -175,13 +175,13 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth wiring (libmcp_oauth exists but not integrated) | P2 | PARTIAL |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
-| 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec | P2 | PARTIAL |
-| 08 | B08 | send_message | ~500 | ~900 | 55% | inline buttons, reply_to_message_id, media groups | P2 | PARTIAL |
+| 07 | B07 | terminal | ~800 | ~1500 | 53% | env passthrough wiring from libenvpassthrough to exec — ADDED in Phase 72 (build_env_passthrough_export, integrated into command builder) | P2 | PARTIAL |
+| 08 | B08 | send_message | ~500 | ~900 | 55% | inline_buttons + reply_to_message_id implemented. media groups remain | P2 | PARTIAL |
 | 09 | B09 | patch | ~700 | ~1200 | 58% | ✅ dry_run implemented. Conflict resolution still missing | P2 | PARTIAL |
-| 10 | B10 | session_search | ~460 | ~650 | 71% | tag_filter, role_filter, session_id_filter, offset pagination, scroll + browse modes. FTS5 syntax remains | P2 | PARTIAL |
+| 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination — ALL implemented. FTS5 syntax remains | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 15 gaps (8 P2, 7 P3) — Phase 62: session_search scroll+browse added (71% parity). surrogate sanitization wired. stale-claim pitfall corrected.**
+**S6: 15 gaps (8 P2, 7 P3) — Phase 72: env passthrough wired (B07). Stale claims corrected: B08 inline_buttons/reply_to implemented, B10 all filters implemented.**
 
 ---
 
@@ -270,16 +270,16 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
-|| S2: Agent Modules | 17 | 0 | 0 | 2 | 0 | A18 /model subcommands. A22 stream diag 85%. 15 won't-port. |
-|| S3: Gateway Helpers | 12 | 0 | 2 | 10 | 0 | G01 helpers.py ported. 12 remaining. |
+| S2: Agent Modules | 17 | 0 | 0 | 2 | 0 | A18 /model subcommands. A22 stream diag 85%. 15 won't-port. |
+| S3: Gateway Helpers | 12 | 0 | 2 | 10 | 0 | G01 helpers.py ported. 12 remaining. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 62: session_search scroll+browse (71%). surrogate sanitization wired |
+| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 72: B07 env passthrough wired. B08/B10 stale claims corrected |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **153** | **6** | **36** | **66** | **47** | **Phase 69+: patch 4-strategy, cookie jar, G01 helpers. S3 G01 ported.** |
+| **TOTAL** | **153** | **6** | **36** | **66** | **47** | **Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected.** |
 
 ### Phase Map
 

@@ -558,6 +558,50 @@ static char *run_command_docker_compose(const char *command, int timeout_sec) {
     return json_out;
 }
 
+/* Build export prefix from env_passthrough registered vars.
+ * Returns malloc'd string like "export KEY1='val1' KEY2='val2' && "
+ * or NULL if no vars registered. Caller free()s. */
+static char *build_env_passthrough_export(void) {
+    char **vars = NULL;
+    int count = 0;
+    env_passthrough_get_all(&vars, &count);
+    if (count == 0 || !vars) return NULL;
+
+    size_t cap = 256, len = 0;
+    char *buf = (char *)malloc(cap);
+    if (!buf) { env_passthrough_free_list(vars, count); return NULL; }
+    buf[0] = '\0';
+
+    for (int i = 0; i < count; i++) {
+        const char *val = getenv(vars[i]);
+        if (!val) continue;  /* Skip unset vars */
+
+        size_t needed = strlen("export ") + strlen(vars[i])
+                      + strlen("='' ") + strlen(val) + 4;
+        if (len + needed > cap) {
+            cap = cap * 2 + needed;
+            char *new_buf = (char *)realloc(buf, cap);
+            if (!new_buf) { free(buf); env_passthrough_free_list(vars, count); return NULL; }
+            buf = new_buf;
+        }
+        len += snprintf(buf + len, cap - len, "export %s='%s' ", vars[i], val);
+    }
+
+    env_passthrough_free_list(vars, count);
+
+    if (len == 0) { free(buf); return NULL; }
+
+    /* Append "&& " for safe chaining */
+    size_t n = snprintf(buf + len, cap - len, "&& ");
+    if (len + n + 1 > cap) {
+        char *new_buf = (char *)realloc(buf, len + n + 2);
+        if (!new_buf) { free(buf); return NULL; }
+        buf = new_buf;
+        snprintf(buf + len, cap - len, "&& ");
+    }
+    return buf;
+}
+
 /* ================================================================
  *  Main terminal handler
  * ================================================================ */
@@ -639,7 +683,17 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     /* Wrap command with env and workdir */
     char full_command[16384];
-    if (env_str && env_str[0]) {
+    char *passthrough_export = build_env_passthrough_export();
+    if (passthrough_export) {
+        if (env_str && env_str[0]) {
+            snprintf(full_command, sizeof(full_command), "%s %s %s%s%s",
+                    passthrough_export, env_str, workdir_prefix, use_pty ? "" : "", command);
+        } else {
+            snprintf(full_command, sizeof(full_command), "%s %s%s%s",
+                    passthrough_export, workdir_prefix, use_pty ? "" : "", command);
+        }
+        free(passthrough_export);
+    } else if (env_str && env_str[0]) {
         snprintf(full_command, sizeof(full_command), "%s %s%s%s",
                 env_str, workdir_prefix, use_pty ? "" : "", command);
     } else {

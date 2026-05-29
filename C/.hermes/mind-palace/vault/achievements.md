@@ -742,6 +742,17 @@ Suite: 294/0/0 (unchanged). Gaps: 154 (unchanged — A22 reconfirmed as partial 
 
 Suite: 294/0/0 (unchanged). Gaps: 154.
 
+## Phase 72: Terminal Env Passthrough Wiring (v152)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P72-01 | build_env_passthrough_export() — helper that builds `export KEY='val' && ` prefix from env_passthrough registered vars | `src/tools/terminal.c` — static helper before terminal_handler |
+| P72-02 | Env passthrough vars wired into terminal exec path — export prefix prepended to all shell commands (local + PTY), merged with per-request `env` param | `src/tools/terminal.c` — command building block in terminal_handler |
+| P72-03 | Stale claim retired: B08 inline_buttons + reply_to_message_id — already implemented in send_message.c schema + code | `src/tools/send_message.c` — schema has inline_buttons + reply_to_message_id, build_inline_keyboard() implements keyboard |
+| P72-04 | Stale claim retired: B10 tag_filter, role_filter, session_id_filter, offset pagination — already implemented in session_search.c | `src/tools/session_search.c` — schema + handler fully implement all four filters with session_has_tag() helper |
+
+Suite: 294/0/0 (unchanged). Gaps: 153 — B08 and B10 partial gaps retired. B04 OAuth, B08 media groups, B10 FTS5 remain as real/partial gaps.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

@@ -4,7 +4,7 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║  WuBu Slermes C v152                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  154 gaps  │  31MB binary  │  0 warnings                     ║
+║  153 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
 ║  upstream header capture │ structured stream error logging ║
 ╚══════════════════════════════════════════════════════════════╝

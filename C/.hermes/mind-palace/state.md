@@ -2,7 +2,7 @@
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
-Battleship v34 (154 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (153 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -23,6 +23,7 @@ Battleship v34 (154 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 65: Upstream header capture (cf-ray, x-openrouter-*, x-request-id) wired into non-streaming LLM path. Structured stream error logging with provider/model.
 - Phase 66: Stream drop diagnostics — elapsed time, token count, TTFB included in error messages on both streaming paths.
 - Phase 67: Model management CLI — /model list, show, providers, set. A18 ported to PARTIAL.
+- Phase 72: Terminal env passthrough wired (B07 — build_env_passthrough_export, integrated into command builder). Stale claims corrected: B08 inline_buttons/reply_to already implemented, B10 filters already implemented.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -31,4 +32,4 @@ Battleship v34 (154 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 154 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 64: error_classify() wired into non-streaming LLM path. A15 (insights) retired as stale — already ported. Stale-claim pitfall methodology applied.
+Real parity gap is 153 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 72: env passthrough wired (B07). B08/B10 stale claims corrected — inline_buttons/reply_to + all filters already implemented.

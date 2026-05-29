@@ -32,4 +32,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (47 gaps)
 Plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 154 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:65, P3:47**
+**Total: 153 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:65, P3:47**
