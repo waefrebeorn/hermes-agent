@@ -365,6 +365,36 @@ int main(void) {
         free(res);
     }
 
+    /* Test 35: disable_notification=true accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"silent\",\"disable_notification\":true}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("disable_notification=true completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 36: disable_notification=false accepted */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"noisy\",\"disable_notification\":false}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("disable_notification=false completes", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
+    /* Test 37: disable_notification accepted in handler */
+    {
+        char *res = send_message_handler(
+            "{\"target\":\"stdout:x\",\"message\":\"schema\",\"disable_notification\":true}", NULL);
+        char *s = json_get_field(res, "status");
+        TEST("disable_notification accepted in handler", s && strcmp(s, "sent") == 0);
+        free(s);
+        free(res);
+    }
+
     /* Test 34: Very long message doesn't crash */
     {
         char long_msg[4096];

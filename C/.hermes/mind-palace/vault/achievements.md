@@ -1270,3 +1270,29 @@ Suite: 300/0/0 (257 test files). Gaps: 145.
 | P120-03 | Restored accidentally-removed http_pool test | `test_runner.sh` — restored run_lib_test line |
 
 Suite: 299/0/0 (257 test files). Gaps: 145.
+
+## Phase 123: libdotenv Test Expansion
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P123-01 | Comprehensive 30-test suite for libdotenv (parsing, quoting, export, NULL safety, iter, file load, edge cases) — 70→457 LOC | `tests/test_dotenv.c` |
+| P123-02 | Registered in test_runner.sh (M??) | `test_runner.sh` |
+Suite: 300/0/0 (257 test files). Gaps: 145.
+
+## Phase 124: test_tool_init.c Rewrite + Registration
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P124-01 | 13-test suite for tool_init (register, count, get_name, dispatch, duplicate, NULL safety) | `tests/test_tool_init.c` |
+| P124-02 | Registered in test_runner.sh | `test_runner.sh` |
+Suite: 301/0/0 (258 test files). Gaps: 145.
+
+## Phase 125: is_image_size_error — B02 Vision Depth
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P125-01 | Ported `is_image_size_error()` from Python vision_tools — checks error text for image/payload size hints (too large, 413, content_too_large, exceeds). Wired into vision_handler to add resize_hint on delegation failure. | `src/tools/vision.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.
+
+## Phase 126: disable_notification — B08 Send Message Depth
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P126-01 | `disable_notification` (silent send) param added to Telegram message API: telegram_send_message() + telegram_send_message_with_keyboard() signatures, JSON body wiring, send_message.c schema + handler parse + 3 caller updates. 11 caller updates across 3 files. 3 new test assertions (40 total). | `src/tools/send_message.c`, `src/gateway/platforms/telegram.c`, `src/gateway/server.c`, `include/hermes_gateway.h`, `tests/test_send_message.c` |
+Suite: 301/0/0 (258 test files). Gaps: 144.

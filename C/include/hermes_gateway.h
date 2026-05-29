@@ -284,10 +284,10 @@ const char *telegram_get_username(void);
 bool telegram_get_me(http_client_t *http);
 bool telegram_is_mentioned(json_node_t *update);
 bool telegram_is_group(json_node_t *update);
-/* Telegram sendMessage wrapper. Supports parse_mode, thread_id, disable_preview. */
+/* Telegram sendMessage wrapper. Supports parse_mode, thread_id, disable_notification, disable_preview. */
 bool telegram_send_message(http_client_t *http, const char *chat_id,
                             const char *text, const char *parse_mode,
-                            const char *thread_id, bool disable_preview);
+                            const char *thread_id, bool disable_notification, bool disable_preview);
 bool telegram_send_chat_action(http_client_t *http, const char *chat_id,
                                 const char *action);
 json_node_t *telegram_get_updates(http_client_t *http, int offset, int timeout);
@@ -305,7 +305,7 @@ bool telegram_send_message_with_keyboard(http_client_t *http,
                                           const char *parse_mode,
                                           const char *thread_id,
                                           json_node_t *reply_markup,
-                                          bool disable_preview);
+                                          bool disable_notification, bool disable_preview);
 
 /* Edit/delete */
 bool telegram_edit_message_text(http_client_t *http, const char *chat_id,

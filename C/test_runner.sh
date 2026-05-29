@@ -2726,7 +2726,7 @@ if gcc -O2 -Wall -Wextra -DTEST_BUILD -I"$CDIR/include" -I"$CDIR/lib/libjson" -I
     "$CDIR/tests/test_send_message.c" \
     "$CDIR/src/tools/send_message.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_sendmsg -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_sendmsg > /dev/null 2>&1; then ok "send_message_tool (37 tests)"
+    if /tmp/hermes_test_sendmsg > /dev/null 2>&1; then ok "send_message_tool (40 tests)"
     else fail "send_message_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_sendmsg
 else skip "send_message_tool (compilation failed)"
