@@ -1169,6 +1169,17 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P111-02 | _check_foreground_guidance uses stripped command — prevents false-positive on echoed text | `src/tools/terminal.c` — _check_foreground_guidance() |
 | P111-03 | Backslash-escape handling inside double-quoted strings | `src/tools/terminal.c` — _strip_quotes() |
 
+## Phase 112: Gateway Helpers Test Suite
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P112-01 | msg_dedup test: init, is_duplicate, clear, NULL-safety (9 assertions) | `tests/test_helpers.c` |
+| P112-02 | strip_markdown test: plain, bold, code, headings, links, fences (7 assertions) | `tests/test_helpers.c` |
+| P112-03 | redact_phone test: NULL, short, medium, long redaction (5 assertions) | `tests/test_helpers.c` |
+| P112-04 | thread_tracker test: init, mark, has, duplicate, destroy, NULL-safety (8 assertions) | `tests/test_helpers.c` |
+| P112-05 | Bug fix: redact_phone buffer overflow — malloc too small for full output | `src/gateway/helpers.c` |
+
+
+
 
 
 Suite: 298/0/0 (254 test files). Gaps: 145.

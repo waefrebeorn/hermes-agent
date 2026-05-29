@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v186 | Fork diverged — C/ lives only on fork | Suite 298/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 111: terminal _strip_quotes for false-positive-free foreground guidance.**
+**v187 | Fork diverged — C/ lives only on fork | Suite 298/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 112: gateway helpers test suite (29 tests) for false-positive-free foreground guidance.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -194,7 +194,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
 | 05 | X05 | Integration tests (live API) | ~300 | 0 | 0% | P1 |
 | 06 | X06 | Agent loop tests | ~150 | ~30 | 20% | P1 |
-| 07 | X07 | Gateway platform tests | ~100 | ~21 | 21% | P1 |
+| 07 | X07 | Gateway platform tests | ~100 | ~22 | 22% | P1 |
 | 08 | X08 | Conversation loop tests | ~200 | ~10 | 5% | P1 |
 | 09 | X09 | Edge case / regression tests | ~62 | ~3 | 5% | P1 |
 | 10 | X10 | Fuzz / property tests | ~0* | 0 | 0% | P3 |
