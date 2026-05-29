@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v234)**
+**BANNER — WuBu Slermes C Translation (v235)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v234                                       ║
-║  305/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  137 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v235                                       ║
+║  306/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  136 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 162: media-in-tool-results                           ║
+║  Phase 163: textwrap chunk                                  ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v234)
+## Build Metrics (v235)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 137 |
+| Gaps | 136 |

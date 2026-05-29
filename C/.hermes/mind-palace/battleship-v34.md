@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v234 | Fork diverged — C/ lives only on fork | Suite 305/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 137 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 264 (20.9% parity). Phase 162: B02 vision depth — media-in-tool-results support. Suite 305/0/0.**
+**v235 | Fork diverged — C/ lives only on fork | Suite 306/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 136 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 265 (21.0% parity). Phase 163: G03 feishu_comment depth — textwrap_chunk() in libtextwrap. Suite 306/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 264 | 20.9% | P1 |
+| 01 | X01 | Test files | 1,262 | 265 | 21.0% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 162: test files 263→264.**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 163: test files 264→265.**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 161: G07 fallback IP parsing ported |
+|| S3: Gateway Helpers | 8 | 0 | 2 | 6 | 0 | Phase 163: G03 textwrap_chunk() in libtextwrap |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 || S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 158: B08 General topic thread_id mapping (telegram_message_thread_id_for_send) |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **137** | **6** | **36** | **63** | **43** | **Phase 162: B02 vision depth — media-in-tool-results support.** |
+||| **TOTAL** | **136** | **6** | **36** | **63** | **43** | **Phase 163: G03 feishu_comment depth — textwrap_chunk().** |
 
 ### Phase Map
 

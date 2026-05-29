@@ -1476,6 +1476,14 @@ Suite: 304/0/0 (263 test files). Gaps: 137. v233
 | P162-03 | Added 23 standalone test assertions: openrouter/nous/vertex/bedrock/anthropic-vertex/google-vertex (aggregators), anthropic/claude/anthropic-direct (Anthropic), openai/openai-chat/openai-codex/azure-openai (OpenAI), google+gemini-3-flash/gemini+gemini-pro-3/google-gemini+gemini-flash-3 (Gemini 3+), google+gemini-2.5/google+gemini-pro-2/gemini+NULL/google+NULL rejects (Gemini <3), NULL/empty/unknown rejects. | `C/tests/test_vision_supports_media.c` — all 23 tests |
 Suite: 305/0/0 (264 test files). Gaps: 137. v234
 
+## Phase 163: G03 feishu_comment Depth — textwrap_chunk()
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P163-01 | Ported Python feishu_comment.py `_chunk_text()` — `textwrap_chunk()` splits text into chunks at newline boundaries within max_len per chunk. When a chunk would exceed max_len, it scans backwards for the last newline to make a clean break. Falls back to a hard cut at max_len when no newline is found. Leading newlines are stripped between chunks. | `C/lib/libtextwrap/textwrap.c` — `textwrap_chunk()` at ~313-380 |
+| P163-02 | Declared in textwrap.h with doc comment. | `C/lib/libtextwrap/textwrap.h` — lines ~54-60 |
+| P163-03 | Added 18 standalone tests: NULL→NULL, empty→0-count, short text, exact limit, newline-split (3 chunks), hard cut (3 chunks), newline break (2 chunks), NULL count. All pass. | `C/tests/test_textwrap_chunk.c` — all 18 tests |
+Suite: 306/0/0 (265 test files). Gaps: 136. v235
+
 ## Phase 156: G08 signal_rate_limit Depth — Rate Limit Detection & Send Timeout
 | ID | Achievement | Evidence |
 |----|-------------|----------|
