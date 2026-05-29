@@ -1,4 +1,4 @@
-# Overnight (v246)
+# Overnight (v247)
 
-134 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 311/0/0 (270 test files). Phase 174: P176 cron depth — apply_skill_fields.
+133 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 311/0/0 (270 test files). Phase 175: G10 yuanbao_proto PORTED (stale claim verified).

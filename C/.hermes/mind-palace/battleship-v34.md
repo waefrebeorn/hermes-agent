@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v246 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 134 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 174: P176 cron depth — apply_skill_fields. 5 tests. Suite 311/0/0.**
+**v247 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 133 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 175: G10 yuanbao_proto PORTED (stale claim — C has libprotobuf + yuanbao.c encapsulating encode/decode). 134→133 gaps. Suite 311/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -93,12 +93,12 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 || 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Phase 161: telegram_parse_fallback_ips() validates and normalizes IPv4 addresses for Telegram fallback connectivity. Maps private/loopback/link-local/unspecified/non-IPv4. | P2 | PARTIAL — DoH/fallback transport missing, IP parsing ported |
 || 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
 || 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing). Missing: md5_hex (via hash_md5_hex already in libhash), generate_file_id (via uuid_v4), download_url (async HTTP), COS upload (cloud-specific) | P2 | PARTIAL |
-| 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 |
+|| 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 | ✅ PORTED — C has libprotobuf library + yuanbao.c encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req. Both achieve same ends (C: type-specific encoders, Python: generic biz_msg wrapper). |
 | 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 | ✅ PORTED — C has 59-sticker DB, search/send tools |
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 6 gaps (2 P1, 4 P2) — Phase 169: G03 feishu_comment ported (20 tests). G06 wecom_callback, G07 telegram_network, G09 yuanbao_media, G10 yuanbao_proto remain.**
+**S3: 5 gaps (2 P1, 3 P2) — G06 wecom_callback, G07 telegram_network, G09 yuanbao_media remain. G10 yuanbao_proto PORTED (Phase 175 — libprotobuf + C yuanbao.c).**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 6 | 0 | 2 | 4 | 0 | Phase 169: G03 feishu_comment ported (20 tests) |
+|| S3: Gateway Helpers | 5 | 0 | 2 | 3 | 0 | G10 yuanbao_proto PORTED (Phase 175). G06/G07/G09 remain. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 ||| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 167: G04 feishu_comment_rules ported |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|||| **TOTAL** | **134** | **6** | **36** | **61** | **43** | **Phase 169: G03 feishu_comment — truncate + semantic text.** |
+||||| **TOTAL** | **133** | **6** | **36** | **60** | **43** | **Phase 175: G10 yuanbao_proto PORTED (stale claim — C has libprotobuf + yuanbao.c). 134→133 gaps.** |
 
 ### Phase Map
 

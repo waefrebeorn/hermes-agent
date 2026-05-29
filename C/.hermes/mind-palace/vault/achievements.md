@@ -1653,3 +1653,10 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v246
 | P174-01 | Ported Python `cron/jobs.py` `_apply_skill_fields()` — `cron_apply_skill_fields()` deep-copies a cron job JSON object via serialize/parse, normalizes `skill`/`skills` fields into canonical ordered list via `cron_canonical_skills()`, sets `skills` (array) and `skill` (first item or null). Uses libjson serialize/parse for deep copy. | `C/src/cron/cron_extras.c` — `cron_apply_skill_fields()` |
 | P174-02 | Added 5 test assertions: NULL returns empty object, no-skill→skills=[],skill=null, single skill, array dedup, preserves other fields. | `C/tests/test_cron_extras_util.c` — 5 new tests |
 Suite: 311/0/0 (270 test files). Gaps: 134. v246
+
+## Phase 175: G10 yuanbao_proto — PORTED (Stale Claim)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P175-01 | G10 yarnbao_proto.py (1209 LOC) classified as PORTED — C uses libprotobuf library (7 pb_encode/pb_decode functions) + yuanbao.c (encode_conn_msg, decode_conn_msg, encode_send_c2c, encode_auth_bind, encode_ping_req, encode_query_group_info, encode_get_group_member_list). Both achieve equivalent protobuf wire-format encoding/decoding for the Yuanbao WebSocket protocol. Python hand-rolls varint encoding; C delegates to shared libprotobuf. | `C/src/gateway/platforms/yuanbao.c` — encode_conn_msg/decode_conn_msg + msg-specific encoders. `C/lib/libprotobuf/protobuf.h` — 7 varint/delimited/fixed32 encoding functions. Verified via suite compilation (311/0/0). |
+| P175-02 | Gap count reduced: 134→133 gaps. S3 sector: 6→5 gaps. Total: 133 across 9 sectors. | `.hermes/mind-palace/battleship-v34.md` — G10 status updated to ✅ PORTED, summary table updated. |
+Suite: 311/0/0 (270 test files). Gaps: 133. v247
