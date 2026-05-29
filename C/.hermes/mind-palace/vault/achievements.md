@@ -921,6 +921,16 @@ Suite: 294/0/0 (unchanged). Gaps: 151 — A18 PORTED. S2 phase complete.
 
 Suite: 294/0/0 (unchanged). Gaps: 145.
 
+## Phase 91: B07 Terminal force/status/guard (v167)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P91-01 | force param skips sandbox_escape_check when user confirms dangerous command | `src/tools/terminal.c` — force flag check before esc.blocked |
+| P91-02 | Foreground timeout guard: reject explicit timeout > 600s with guidance to use background mode | `src/tools/terminal.c` — timeout_explicit check |
+| P91-03 | status field in result JSON ('success' for exit 0, 'error' otherwise) | `src/tools/terminal.c` — run_command + run_command_pty + handler error paths |
+
+Suite: 294/0/0 (unchanged). Gaps: 145.
+
 ## Phase 67: Model Management CLI — A18 Port (v151)
 
 | ID | Achievement | Evidence |

@@ -1,4 +1,4 @@
-# Plan (v166)
+# Plan (v167)
 
 145 gaps across 9 sectors (battleship v34). Fork diverged
 
