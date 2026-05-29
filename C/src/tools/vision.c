@@ -139,6 +139,74 @@ static const char *detect_image_magic(const char *path) {
     return NULL;
 }
 
+/* Extract image dimensions from file header without Python/PIL.
+ * Returns malloc'd string like "1920x1080" or NULL on failure.
+ * Supports: PNG, JPEG, GIF, BMP, WebP (lossless/lossy). */
+static char *extract_dimensions_native(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    unsigned char buf[64];
+    size_t n = fread(buf, 1, sizeof(buf), f);
+    fclose(f);
+    if (n < 12) return NULL;
+
+    char dims[64] = "";
+    uint32_t w = 0, h = 0;
+
+    if (n >= 24 && buf[0]==0x89 && buf[1]=='P' && buf[2]=='N' && buf[3]=='G') {
+        /* PNG: IHDR at offset 16, width bytes 16-19, height bytes 20-23 */
+        w = ((uint32_t)buf[16] << 24) | ((uint32_t)buf[17] << 16) |
+            ((uint32_t)buf[18] << 8) | buf[19];
+        h = ((uint32_t)buf[20] << 24) | ((uint32_t)buf[21] << 16) |
+            ((uint32_t)buf[22] << 8) | buf[23];
+        snprintf(dims, sizeof(dims), "%ux%u", w, h);
+    } else if (n >= 24 && buf[0]==0xFF && buf[1]==0xD8 && buf[2]==0xFF) {
+        /* JPEG: scan for SOF0 marker (FF C0 or FF C1 or FF C2) */
+        for (size_t i = 2; i < n - 9; i++) {
+            if (buf[i] == 0xFF && (buf[i+1] == 0xC0 || buf[i+1] == 0xC1 ||
+                                   buf[i+1] == 0xC2)) {
+                h = ((uint32_t)buf[i+5] << 8) | buf[i+6];
+                w = ((uint32_t)buf[i+7] << 8) | buf[i+8];
+                snprintf(dims, sizeof(dims), "%ux%u", w, h);
+                break;
+            }
+        }
+    } else if (n >= 10 && buf[0]=='G' && buf[1]=='I' && buf[2]=='F') {
+        /* GIF: logical screen width at 6-7, height at 8-9 (little-endian) */
+        w = (uint32_t)buf[6] | ((uint32_t)buf[7] << 8);
+        h = (uint32_t)buf[8] | ((uint32_t)buf[9] << 8);
+        snprintf(dims, sizeof(dims), "%ux%u", w, h);
+    } else if (n >= 26 && buf[0]=='B' && buf[1]=='M') {
+        /* BMP: width at 18-21, height at 22-25 (little-endian) */
+        w = (uint32_t)buf[18] | ((uint32_t)buf[19] << 8) |
+            ((uint32_t)buf[20] << 16) | ((uint32_t)buf[21] << 24);
+        h = (uint32_t)buf[22] | ((uint32_t)buf[23] << 8) |
+            ((uint32_t)buf[24] << 16) | ((uint32_t)buf[25] << 24);
+        snprintf(dims, sizeof(dims), "%ux%u", w, h);
+    } else if (n >= 30 && buf[0]=='R' && buf[1]=='I' && buf[2]=='F' && buf[3]=='F') {
+        /* WebP: RIFF...WEBP. VP8 (lossy) at offset 26: 19 bits for w/h.
+         * VP8L (lossless) at offset 21: 14 bits for w/h.
+         * VP8X (extended) at offset 24: 24 bits for w/h. */
+        if (n >= 30 && buf[8]=='W' && buf[9]=='E' && buf[10]=='B' && buf[11]=='P') {
+            if (buf[12]=='V' && buf[13]=='P' && buf[14]=='8' && buf[15]==' ') {
+                /* VP8 (lossy) */
+                w = ((uint32_t)(buf[27] & 0x3F) << 8) | buf[26];
+                h = ((uint32_t)(buf[29] & 0x3F) << 8) | buf[28];
+                snprintf(dims, sizeof(dims), "%ux%u", w + 1, h + 1);
+            } else if (buf[12]=='V' && buf[13]=='P' && buf[14]=='8' && buf[15]=='L') {
+                /* VP8L (lossless) */
+                w = ((uint32_t)(buf[21] & 0x3F) << 8) | (buf[20] & 0xFF);
+                h = ((uint32_t)((buf[23] & 0x0F) << 10) | ((uint32_t)buf[22] << 2) |
+                     ((buf[21] & 0xC0) >> 6));
+                snprintf(dims, sizeof(dims), "%ux%u", w + 1, h + 1);
+            }
+        }
+    }
+
+    if (dims[0]) return strdup(dims);
+    return NULL;
+}
+
 char *vision_handler(const char *args_json, const char *task_id) {
     (void)task_id;
     if (!args_json) return strdup("{\"error\":\"No args\"}");
@@ -201,12 +269,16 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 }
                 json_object_set(result, "file_size", json_new_number((double)st.st_size));
 
-                /* Try Python PIL for dimensions */
-                char *dims = run_cmd_firstline(
-                    "python3 -c \"from PIL import Image; "
-                    "i=Image.open('%s'); "
-                    "print(f'{i.size[0]}x{i.size[1]} mod={i.mode}')\" 2>/dev/null",
-                    image_url);
+                /* Native dimension extraction (no Python dependency) */
+                char *dims = extract_dimensions_native(image_url);
+                if (!dims) {
+                    /* Fallback: Python PIL */
+                    dims = run_cmd_firstline(
+                        "python3 -c \"from PIL import Image; "
+                        "i=Image.open('%s'); "
+                        "print(f'{i.size[0]}x{i.size[1]} mod={i.mode}')\" 2>/dev/null",
+                        image_url);
+                }
                 if (dims) {
                     json_object_set(result, "dimensions", json_new_string(dims));
                     free(dims);
