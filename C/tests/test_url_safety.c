@@ -133,6 +133,20 @@ int main(void) {
         free(s);
     }
 
+    /* 9. url_is_network_accessible */
+    TEST("network_access localhost is not accessible",
+         !url_is_network_accessible("127.0.0.1"));
+    TEST("network_access 127.1 not accessible",
+         !url_is_network_accessible("127.0.0.2"));
+    TEST("network_access ::1 not accessible",
+         !url_is_network_accessible("::1"));
+    TEST("network_access public IP accessible",
+         url_is_network_accessible("93.184.216.34"));
+    TEST("network_access NULL returns true (fail closed)",
+         url_is_network_accessible(NULL));
+    TEST("network_access empty returns true (fail closed)",
+         url_is_network_accessible(""));
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

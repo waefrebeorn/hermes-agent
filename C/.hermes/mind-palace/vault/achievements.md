@@ -1419,6 +1419,13 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
 
+## Phase 146: G02 base.py Depth — Network Accessibility
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P146-01 | Ported `is_network_accessible()` from Python gateway/platforms/base.py — `url_is_network_accessible()` checks if a hostname/IP resolves beyond loopback. Handles IPv4 (127.x.x.x), IPv6 (::1), and IPv4-mapped IPv6 (::ffff:127.x.x.x). DNS resolution via getaddrinfo for hostnames; DNS failure fails closed (returns true). | `C/src/tools/url_safety.c` — `url_is_network_accessible()` at ~615-690 |
+| P146-02 | Added 6 test assertions: localhost not accessible, 127.1 block, ::1 block, public IP accessible, NULL fails closed, empty fails closed. URL safety tests 38→44. | `C/tests/test_url_safety.c` — tests 39-44 |
+Suite: 301/0/0 (258 test files). Gaps: 140.
+
 ## Phase 145: G02 base.py Depth — URL Safe-for-Log
 | ID | Achievement | Evidence |
 |----|-------------|----------|

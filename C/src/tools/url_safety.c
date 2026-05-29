@@ -612,6 +612,81 @@ const char *url_has_secret(const char *url) {
 }
 
 /* ================================================================
+ *  Network Accessibility Check
+ * ================================================================ */
+
+/* Check if a hostname/IP would expose the server beyond loopback.
+ * Loopback addresses (127.0.0.1, ::1) are local-only.
+ * Hostnames are resolved via getaddrinfo; DNS failure fails closed (true).
+ * Mirrors Python gateway/platforms/base.py is_network_accessible(). */
+bool url_is_network_accessible(const char *host) {
+    if (!host || !*host) return true; /* fail closed on invalid */
+
+    /* Try IPv4 first */
+    struct in_addr addr4;
+    if (inet_pton(AF_INET, host, &addr4) == 1) {
+        /* Check for 127.0.0.0/8 (all loopback) */
+        return (addr4.s_addr & htonl(0xFF000000)) != htonl(0x7F000000);
+    }
+
+    /* Try IPv6 */
+    struct in6_addr addr6;
+    if (inet_pton(AF_INET6, host, &addr6) == 1) {
+        /* Check for ::1 (loopback) */
+        static const unsigned char loopback[16] =
+            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+        if (memcmp(&addr6, loopback, 16) == 0) return false;
+
+        /* Check for IPv4-mapped IPv6 loopback (::ffff:127.x.x.x) */
+        static const unsigned char ipv4_mapped_prefix[12] =
+            {0,0,0,0,0,0,0,0,0,0,0xFF,0xFF};
+        if (memcmp(&addr6, ipv4_mapped_prefix, 12) == 0) {
+            /* Extract the embedded IPv4 and check loopback */
+            struct in_addr embedded;
+            memcpy(&embedded, ((const unsigned char *)&addr6) + 12, 4);
+            if ((embedded.s_addr & htonl(0xFF000000)) == htonl(0x7F000000))
+                return false;
+        }
+        return true; /* non-loopback IPv6 is network-accessible */
+    }
+
+    /* Resolve hostname via getaddrinfo */
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    struct addrinfo *result = NULL;
+    int rc = getaddrinfo(host, NULL, &hints, &result);
+    if (rc != 0 || !result) {
+        return true; /* DNS failure — fail closed (assume accessible) */
+    }
+
+    bool accessible = false;
+    for (struct addrinfo *rp = result; rp != NULL; rp = rp->ai_next) {
+        if (rp->ai_family == AF_INET) {
+            struct sockaddr_in *sin = (struct sockaddr_in *)rp->ai_addr;
+            if ((sin->sin_addr.s_addr & htonl(0xFF000000)) != htonl(0x7F000000)) {
+                accessible = true;
+                break;
+            }
+        } else if (rp->ai_family == AF_INET6) {
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)rp->ai_addr;
+            /* Check for ::1 (loopback) */
+            static const unsigned char loopback6[16] =
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+            if (memcmp(&sin6->sin6_addr, loopback6, 16) != 0) {
+                accessible = true;
+                break;
+            }
+        }
+    }
+
+    freeaddrinfo(result);
+    return accessible;
+}
+
+/* ================================================================
  *  URL Logging Safety
  * ================================================================ */
 

@@ -91,6 +91,16 @@ const char *url_has_secret(const char *url);
  * Returns malloc'd string (caller must free) or NULL on error. */
 char *url_safe_for_log(const char *url, int max_len);
 
+/* ================================================================
+ *  Network Accessibility
+ * ================================================================ */
+
+/* Check if a hostname/IP would expose the server beyond loopback.
+ * Loopback addresses (127.0.0.1, ::1) are local-only.
+ * Hostnames are resolved via getaddrinfo; DNS failure fails closed (true).
+ * Mirrors Python gateway/platforms/base.py is_network_accessible(). */
+bool url_is_network_accessible(const char *host);
+
 #ifdef __cplusplus
 }
 #endif

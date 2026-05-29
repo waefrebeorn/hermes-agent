@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v218 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 145: url_safe_for_log ported from base.py (url_safety tests 38, +9). Suite 301/0/0.**
+**v219 | Fork diverged — C/ lives only on fork | Suite 301/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 140 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 254 (20.2% parity). Phase 146: url_is_network_accessible ported from base.py (url_safety tests 44, +15). Suite 301/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -85,7 +85,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(). Missing: proxy detection, media caching, network accessibility | P1 | PARTIAL |
+| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(). Missing: proxy detection, media caching | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
