@@ -1,6 +1,6 @@
-# Plan (v144)
+# Plan (v145)
 
-17 gaps across 5 sectors. Fork synced to upstream (0 behind, 0 ahead).
+17 gaps across 5 sectors. Fork diverged — C/ lives only on fork; upstream removed C/.
 
 ## S0: Form-vs-Function (P0) — 2 gaps
 no Python hook, test cheating

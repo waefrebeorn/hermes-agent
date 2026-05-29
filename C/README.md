@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||| Suite:  294/0/0 (249 test files, completes in <60s)
+|||||||||| Suite:  294/0/0 (248 test files, completes in <60s)
 ||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||| Gaps:  17 real parity gaps (2 S0 + 4 S1 + 4 S2 + 6 S3 + 1 S4 drift)
@@ -513,7 +513,7 @@ C/
 │   ├── gateway/      # Gateway adapters
 │   └── deps/         # Core dependencies
 ├── lib/              # 65 self-contained library modules
-├── tests/            # 249 test files
+├── tests/            # 248 test files
 ├── examples/         # Plugin examples
 ├── plugins/          # Plugin source
 ├── .hermes/
@@ -644,13 +644,13 @@ Full schema in `include/hermes_config.h`. Use `/config` in interactive mode to v
 
 The C translation tracks [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). The fork is at [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes).
 
-- **Fork:** 0 commits behind upstream, 0 ahead (C/ + docs)
+- **Fork:** Diverged — upstream deleted C/; C/ lives exclusively on fork
 - **C code:** Tracked in `C/` subdirectory of the slermes fork
 - **History:** Original 277 commits on `c-work` branch → squashed onto upstream main as single commit (`d00d2f1d`)
 
-### Upstream Drift (synced)
+### Upstream Drift
 
-The C code was forked from upstream commit `2517917de` and later synced to 0 behind, 0 ahead. Key drift areas:
+The C code was forked from upstream commit `2517917de` and later rebased onto upstream HEAD. Upstream subsequently deleted C/ entirely — C/ now lives exclusively on the fork. Key drift areas:
 - Provider/API evolution (XAI retry, OAuth, fallback)
 - Agent loop changes (retry buffer, credential pool)
 - Gateway platform updates (Discord thread, Telegram heartbeat)

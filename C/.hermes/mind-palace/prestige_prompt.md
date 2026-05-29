@@ -1,13 +1,13 @@
-# Prestige (v144)
+# Prestige (v145)
 
 ## P0 — Form-vs-Function (2 gaps)
 F04: C can't hook Python
-F05: Test cheating — 249 vs ~17k
+F05: Test cheating — 248 vs ~17k
 
 ## P1 — Pipeline, Cross-Compare, Upstream Drift (9 gaps)
 P02-P05: Plumbing, TUI bugs, linkage, display, general bugs
 A01-A04: AST comparison, test recreation, behavior, schemas
-U07: Test suite gap (~17k vs 249)
+U07: Test suite gap (~17k vs 248)
 
 ## P2 — Product Features (6 gaps)
 Q01-Q06: Multi-turn, session persistence, plugins, skins, gateways, providers

@@ -1,12 +1,12 @@
-# Slermes C (v144)
+# Slermes C (v145)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 249 | C src: 174
-Battleship v33 (17 parity gaps across 5 sectors). Fork synced to upstream (0 behind, 0 ahead).
+Binary: 31M | Warnings: 0 | Test files: 248 | C src: 174
+Battleship v33 (17 parity gaps across 5 sectors). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent cleanly
-- **Git state**: 0 commits behind upstream, 0 ahead
+- **Git state**: Fork diverged — 90 commits ahead of upstream (upstream deleted C/ entirely)
 - **C code**: Tracked in C/ subdirectory, builds independent of Python
 - **Old dev branch**: `c-work` preserved on GitHub (277 original commits)
 

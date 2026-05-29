@@ -533,6 +533,19 @@
   remove (existing entry, non-existent, last entry), free (NULL, loaded)
 - Evidence: commit ffb6aa21a, files src/provider/token_exchange.c
 
+
+## Phase 55: Upstream Rebase + Full Doc Sweep (v145)
+
+- Rebased fork onto upstream HEAD (300140e00) — 39 new upstream commits applied cleanly, 0 conflicts
+- Upstream deleted C/ entirely — C/ is now exclusive to waefrebeorn/slermes fork
+- All 90 C commits rebased cleanly onto latest upstream
+- Build: 0 errors, 0 warnings, suite 294/0/0 (unchanged)
+- Full doc sweep: bumped v144→v145 across all 12 walkway files
+- Fixed stale test file count 249→248 (verified: `find tests -name 'test_*.c' | wc -l`)
+- Fixed fork state across all docs: "0 behind, 0 ahead" → "diverged — C/ only on fork"
+- Extracted slermes-c-json-api and slermes-c-include-patterns skills from memory
+- Memory compacted from 92% → 44%
+
 ## Phase 41: Lifecycle Hook Wiring (v131)
    430|
    431|- Wired hook_invoke() calls into agent_loop.c at 4 lifecycle points
