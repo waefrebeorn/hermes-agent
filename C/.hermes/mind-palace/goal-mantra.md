@@ -9,3 +9,4 @@ EXECUTE. UPDATE docs. PUSH → LOOP.
 No time. The agent does not stop. The vault is the record.
 
 MEMORY DIRECTORY: ~/.hermes/memories/
+VAULT: C/.hermes/mind-palace/vault/achievements.md
