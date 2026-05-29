@@ -61,6 +61,19 @@ bool parse_send_target(const char *target, const char *platform_override, send_t
     /* No override: parse platform from colon-separated target */
     const char *colon = strchr(target, ':');
     if (colon && colon != target) {
+        /* Detect bare Telegram topic: -1001234567890:42 (no platform prefix).
+         * Must check BEFORE generic platform:chat_id parsing since negative
+         * numbers with colons look like platform:chat_id. */
+        if (target[0] == '-' && target[1] >= '0' && target[1] <= '9') {
+            snprintf(out->platform, sizeof(out->platform), "telegram");
+            size_t cid_len = (size_t)(colon - target);
+            if (cid_len < sizeof(out->chat_id)) {
+                memcpy(out->chat_id, target, cid_len);
+                out->chat_id[cid_len] = '\0';
+            }
+            snprintf(out->thread_id, sizeof(out->thread_id), "%s", colon + 1);
+            return true;
+        }
         size_t plen = (size_t)(colon - target);
         if (plen < sizeof(out->platform)) {
             memcpy(out->platform, target, plen);

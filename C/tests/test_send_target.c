@@ -159,6 +159,24 @@ int main(void) {
         TEST("real thread_id", strcmp(t.thread_id, "17585") == 0);
     }
 
+    /* Test 16: Bare Telegram topic format without platform prefix */
+    {
+        send_target_t t;
+        bool ok = parse_send_target("-1001234567890:42", NULL, &t);
+        TEST("bare telegram topic returns true", ok);
+        TEST("bare platform is telegram", strcmp(t.platform, "telegram") == 0);
+        TEST("bare chat_id", strcmp(t.chat_id, "-1001234567890") == 0);
+        TEST("bare thread_id", strcmp(t.thread_id, "42") == 0);
+    }
+
+    /* Test 17: Bare short negative number without colon — not a telegram topic */
+    {
+        send_target_t t;
+        bool ok = parse_send_target("-42", NULL, &t);
+        TEST("bare negative number returns true", ok);
+        TEST("bare negative has no platform (use target directly)", t.platform[0] == '\0');
+    }
+
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All parse_send_target tests PASSED");
     return failures ? 1 : 0;
 }

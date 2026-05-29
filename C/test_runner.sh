@@ -2737,7 +2737,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_send_target.c" \
     "$CDIR/src/tools/send_message.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_sendtarget -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_sendtarget > /dev/null 2>&1; then ok "send_target_parse (17 tests)"
+    if /tmp/hermes_test_sendtarget > /dev/null 2>&1; then ok "send_target_parse (44 tests)"
     else fail "send_target_parse (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_sendtarget
 else skip "send_target_parse (compilation failed)"
