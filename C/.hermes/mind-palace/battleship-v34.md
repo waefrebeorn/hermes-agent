@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v151 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 154 structural gaps, 1000+ test case gaps across 9 sectors. Phase 67: /model subcommands. A18/A22 PARTIAL.**
+**v152 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 153 structural gaps, 1000+ test case gaps across 9 sectors. Phase 69+: patch 4-strategy, cookie jar, G01 helpers.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -85,7 +85,7 @@ S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direc
 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
-| 01 | G01 | helpers.py | ~800 | Shared media/formatting/retry utilities | P1 |
+| 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
 | 02 | G02 | base.py | ~600 | Gateway base class, rate limiting, retry | P1 |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling | P2 |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 |
@@ -99,7 +99,7 @@ S2 stale sweep (Phase 59): 30 of 45 claimed "no C equivalent" modules have direc
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 |
 
-**S3: 13 gaps (3 P1, 10 P2)**
+**S3: 12 gaps (2 P1, 10 P2)**
 
 ---
 
@@ -271,7 +271,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 17 | 0 | 0 | 2 | 0 | A18 /model subcommands. A22 stream diag 85%. 15 won't-port. |
-| S3: Gateway Helpers | 13 | 0 | 3 | 10 | 0 | 13 Python helper sub-modules |
+|| S3: Gateway Helpers | 12 | 0 | 2 | 10 | 0 | G01 helpers.py ported. 12 remaining. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 62: session_search scroll+browse (71%). surrogate sanitization wired |
@@ -279,7 +279,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **154** | **6** | **37** | **66** | **47** | **Phase 67: /model subcommands. A18/A22 now PARTIAL.** |
+|| **TOTAL** | **153** | **6** | **36** | **66** | **47** | **Phase 69+: patch 4-strategy, cookie jar, G01 helpers. S3 G01 ported.** |
 
 ### Phase Map
 

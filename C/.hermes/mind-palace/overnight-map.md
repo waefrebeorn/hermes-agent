@@ -1,4 +1,4 @@
-# Overnight (v151)
+# Overnight (v152)
 
 154 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
 Suite 294/0/0 (248 test files). Phase 66: stream drop diagnostics. Phase 65: upstream header capture (cf-ray, x-openrouter-*, x-request-id) wired into non-streaming LLM path. Structured stream error logging. Phase 64: error_classify() wired. S2 stale sweep: A15 retired.
