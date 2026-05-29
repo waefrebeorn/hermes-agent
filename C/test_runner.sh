@@ -3028,11 +3028,14 @@ if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/l
     "$CDIR/tests/test_sandbox_escape.c" \
     "$CDIR/src/sandbox_escape.c" \
     -o /tmp/hermes_test_sandbox_esc -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_sandbox_esc > /dev/null 2>&1; then ok "sandbox_escape (14 tests)"
+    if /tmp/hermes_test_sandbox_esc > /dev/null 2>&1; then
+        ok "sandbox_escape (31 tests)"
+        rm -f /tmp/hermes_test_sandbox_esc
     else
         echo "  Sandbox escape test output:"
-        /tmp/hermes_test_sandbox_esc 2>&1 | sed 's/^/    /'
+        /tmp/hermes_test_sandbox_esc 2>&1 | sed "s/^/    /"
         fail "sandbox_escape (test binary returned non-zero)"
+        rm -f /tmp/hermes_test_sandbox_esc
     fi
     rm -f /tmp/hermes_test_sandbox_esc
 else
