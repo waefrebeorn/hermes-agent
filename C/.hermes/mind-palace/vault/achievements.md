@@ -856,6 +856,14 @@ Suite: 294/0/0. Test files: 250. Gaps: 148. B02 depth +1% (PNG/JPEG/GIF/BMP/WebP
 
 Suite: 294/0/0. Phase 86: B04 PKCE auth code flow wired. Gaps: 148→147.
 
+## Phase 87: B03 Web Native Extraction (v163)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B03 | Native HTML-to-text extraction for web_extract — `web_extract_native()` fetches URL via http_client, strips HTML via `html_strip_tags()`, trims/collapses whitespace, truncates at 100KB. No Python dependency for basic extraction. Python delegate reserved for custom LLM extraction prompts. web.c 823→905 LOC, parity 42%→58%. | `src/tools/web.c` — web_extract_native() function (lines ~715-780), `lib/libhtml/html.c` — html_strip_tags() |
+
+Suite: 294/0/0. Phase 87: B03 native web_extract. web parity 42%→58%.
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |

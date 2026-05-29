@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v162 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 147 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 86.**
+**v163 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 147 structural gaps, 1000+ test case gaps across 9 sectors. libtooloutput test suite (23 tests). Phase 87.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -170,7 +170,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
 | 01 | B01 | browser | ~1678 | ~3800 | 45% | PDF download via browser_generate_pdf (CDP). autofill still missing (requires Playwright/real browser engine) | P2 | REAL |
 | 02 | B02 | vision | ~374 | ~1421 | 23% | native PNG/JPEG/GIF/BMP/WebP dimension extraction (Phase 85). Still missing: face detection, barcode. OCR/EXIF/colors via Python helper | P2 | PARTIAL |
-| 03 | B03 | web | ~651 | ~1561 | 42% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80) | P2 | PARTIAL |
+| 03 | B03 | web | ~905 | ~1561 | 58% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80). Native HTML-to-text extraction via html_strip_tags — no Python dependency for basic web_extract (Phase 87). Python delegate reserved for custom LLM extraction prompts | P2 | PARTIAL |
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude) — ALL implemented | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 14 gaps (7 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07). Phase 86: PKCE auth code flow wired for OAuth MCP servers (B04).**
+**S6: 14 gaps (7 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07). Phase 86: PKCE auth code flow wired for OAuth MCP servers (B04). Phase 87: native web_extract for B03 (42%→58%).**
 
 ---
 

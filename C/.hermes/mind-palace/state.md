@@ -1,4 +1,4 @@
-# Slermes C (v162)
+# Slermes C (v163)
 
 Suite: 294/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 250 | C src: 175
@@ -38,6 +38,7 @@ Battleship v34 (147 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - Phase 84: send_message test expansion — 6 sanitize_error_text tests (URL params, generic assignment, safe text, NULL, multiple tokens, sig). Battleship B01 stale claim corrected (PDF download exists via browser_generate_pdf/CDP).
 - Phase 85: native image dimension extraction for vision tool (B02 depth). PNG/JPEG/GIF/BMP/WebP header parsing — removes Python PIL dependency for basic dimensions. Fallback to PIL if native fails.
 - Phase 86: B04 PKCE auth code flow wired — mcp_oauth_manager_get_token() in mcp_tool.c. Auth config parsed for HTTP/SSE MCP servers (previously skipped). 148→147 gaps.
+- Phase 87: B03 web native HTML-to-text extraction — web_extract_native() with html_strip_tags, no Python dependency for basic extraction. web.c 823→905 LOC, parity 42%→58%. Python delegate reserved for custom LLM extraction prompts.
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)

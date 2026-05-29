@@ -1,16 +1,16 @@
-# BANNER — WuBu Slermes C Translation (v162)
+# BANNER — WuBu Slermes C Translation (v163)
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v162                                       ║
+║  WuBu Slermes C v163                                       ║
 ║  294/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  147 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  B04 PKCE auth code flow │ Phase 86                       ║
+║  B03 native web_extract │ 147 gaps                          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v162)
+## Build Metrics (v163)
 
 | Metric | Value |
 |--------|-------|
