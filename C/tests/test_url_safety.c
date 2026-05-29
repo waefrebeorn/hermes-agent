@@ -102,6 +102,37 @@ int main(void) {
     /* 7. Allow private */
     url_reset_allow_private();
 
+    /* 8. url_safe_for_log */
+    {
+        char *s;
+        s = url_safe_for_log(NULL, 80);
+        TEST("safe_for_log NULL returns NULL", s == NULL);
+        free(s);
+        s = url_safe_for_log("", 80);
+        TEST("safe_for_log empty returns NULL", s == NULL);
+        s = url_safe_for_log("https://example.com/path/to/file.json", 80);
+        TEST("safe_for_log normal URL path", s && strstr(s, "example.com/.../file.json"));
+        free(s);
+        s = url_safe_for_log("https://user:pass@api.example.com/data", 80);
+        TEST("safe_for_log strips userinfo", s && strstr(s, "api.example.com/.../data") && !strstr(s, "user:pass"));
+        free(s);
+        s = url_safe_for_log("https://example.com", 80);
+        TEST("safe_for_log bare domain", s && strcmp(s, "https://example.com") == 0);
+        free(s);
+        s = url_safe_for_log("just a plain string without protocol", 80);
+        TEST("safe_for_log non-URL string truncated", s != NULL);
+        free(s);
+        s = url_safe_for_log("https://host:8443/path", 80);
+        TEST("safe_for_log preserves port", s && strstr(s, "host:8443"));
+        free(s);
+        s = url_safe_for_log("https://api.openai.com/v1/chat/completions", 30);
+        TEST("safe_for_log truncation", s && strlen(s) <= 30);
+        free(s);
+        s = url_safe_for_log("https://api.example.com/", 80);
+        TEST("safe_for_log trailing slash", s && strstr(s, "example.com"));
+        free(s);
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

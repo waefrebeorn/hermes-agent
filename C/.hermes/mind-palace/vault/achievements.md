@@ -1418,3 +1418,10 @@ Suite: 301/0/0 (258 test files). Gaps: 140.
 | P143-01 | Ported `_validate_workdir()` from Python terminal_tool — allowlist-based safe-path validation that blocks shell metacharacters (;, $, backticks, parens, etc.) in workdir paths. Blocking check (returns error JSON) runs before command execution. | `C/src/tools/terminal.c` — `_validate_workdir()` called in `terminal_handler()` before sandbox escape check |
 | P143-02 | Added 9 test assertions covering safe workdir passthrough, semicolon injection blocked, backtick/$(...) injection blocked. Terminal tests 81→90. | `C/tests/test_terminal.c` — tests 38-40 |
 Suite: 301/0/0 (258 test files). Gaps: 140.
+
+## Phase 145: G02 base.py Depth — URL Safe-for-Log
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P145-01 | Ported `safe_url_for_log()` from Python gateway/platforms/base.py — `url_safe_for_log()` strips userinfo credentials (user:pass@), query parameters, and fragments from URLs for safe logging. Returns condensed "scheme://host/.../basename" format, truncating to max_len with ellipsis. Handles NULL/empty/non-URL inputs safely. | `C/src/tools/url_safety.c` — `url_safe_for_log()` at ~615-710 |
+| P145-02 | Added 9 test assertions: NULL/empty returns NULL, normal URL path condensed, userinfo stripped, bare domain preserved, non-URL string truncated, port preserved, max_len truncation, trailing slash. URL safety tests 29→38. | `C/tests/test_url_safety.c` — tests 30-38 |
+Suite: 301/0/0 (258 test files). Gaps: 140.

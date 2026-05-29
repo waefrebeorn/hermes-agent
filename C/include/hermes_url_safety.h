@@ -79,6 +79,18 @@ bool url_host_matches(const char *url, const char *expected_host);
  * Returns the matched prefix string or NULL if clean. */
 const char *url_has_secret(const char *url);
 
+/* ================================================================
+ *  URL Logging Safety
+ * ================================================================ */
+
+/* Return a URL string safe for logs (no userinfo, query, fragment).
+ * Strips credentials (user:pass@), query parameters, and fragment from the
+ * URL, then truncates to max_len characters. The returned string preserves
+ * the scheme, host, and a condensed path (basename only if possible).
+ * Mirrors Python gateway/platforms/base.py safe_url_for_log().
+ * Returns malloc'd string (caller must free) or NULL on error. */
+char *url_safe_for_log(const char *url, int max_len);
+
 #ifdef __cplusplus
 }
 #endif

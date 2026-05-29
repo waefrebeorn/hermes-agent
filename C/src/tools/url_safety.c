@@ -610,3 +610,95 @@ const char *url_has_secret(const char *url) {
 
     return NULL;
 }
+
+/* ================================================================
+ *  URL Logging Safety
+ * ================================================================ */
+
+/* Return a URL string safe for logs (no userinfo, query, fragment).
+ * Mirrors Python gateway/platforms/base.py safe_url_for_log().
+ * Returns malloc'd string (caller must free) or NULL on empty/error. */
+char *url_safe_for_log(const char *url, int max_len) {
+    if (!url || !*url || max_len <= 0) return NULL;
+
+    /* Find scheme separator "://" */
+    const char *scheme_end = strstr(url, "://");
+    if (!scheme_end || scheme_end == url) {
+        /* Not a proper URL — just truncate raw string */
+        size_t raw_len = strlen(url);
+        size_t out_len = (raw_len < (size_t)max_len) ? raw_len : (size_t)max_len;
+        char *out = (char *)malloc(out_len + 1);
+        if (!out) return NULL;
+        memcpy(out, url, out_len);
+        out[out_len] = '\0';
+        return out;
+    }
+
+    /* Split into scheme and rest */
+    size_t scheme_len = (size_t)(scheme_end - url);
+    const char *rest = scheme_end + 3; /* skip "://" */
+
+    /* Find where the path starts (first '/' after host[:port]) */
+    const char *path_start = strchr(rest, '/');
+    const char *netloc_end = path_start ? path_start : rest + strlen(rest);
+
+    /* Extract netloc (host[:port] potentially with userinfo) */
+    size_t netloc_len = (size_t)(netloc_end - rest);
+    char netloc[512];
+    if (netloc_len >= sizeof(netloc)) netloc_len = sizeof(netloc) - 1;
+    memcpy(netloc, rest, netloc_len);
+    netloc[netloc_len] = '\0';
+
+    /* Strip userinfo: find last '@' in netloc, use whatever's after it */
+    const char *at = strrchr(netloc, '@');
+    const char *clean_netloc = at ? (at + 1) : netloc;
+
+    /* Build safe base: scheme://clean_netloc */
+    char base[1024];
+    int base_len = snprintf(base, sizeof(base), "%.*s://%s",
+                            (int)scheme_len, url, clean_netloc);
+    if (base_len < 0 || (size_t)base_len >= sizeof(base)) {
+        base_len = (int)sizeof(base) - 1;
+        base[base_len] = '\0';
+    }
+
+    /* Build the safe URL with condensed path */
+    char safe[2048];
+    int safe_len;
+
+    if (path_start && *path_start) {
+        /* Get the basename (last path component after '/') */
+        const char *last_slash = strrchr(path_start, '/');
+        const char *basename = last_slash ? (last_slash + 1) : path_start;
+
+        /* Only use /.../basename if basename exists and is not empty */
+        if (basename && *basename && basename != path_start) {
+            safe_len = snprintf(safe, sizeof(safe), "%s/.../%s", base, basename);
+        } else {
+            safe_len = snprintf(safe, sizeof(safe), "%s/...", base);
+        }
+    } else {
+        safe_len = snprintf(safe, sizeof(safe), "%s", base);
+    }
+
+    if (safe_len < 0) return NULL;
+    if ((size_t)safe_len >= sizeof(safe)) {
+        safe_len = (int)sizeof(safe) - 1;
+        safe[safe_len] = '\0';
+    }
+
+    /* Truncate to max_len */
+    size_t out_len = ((size_t)safe_len < (size_t)max_len) ? (size_t)safe_len : (size_t)max_len;
+    if (out_len == 0) return NULL;
+    if (out_len > 3 && out_len < (size_t)safe_len) {
+        /* Add ellipsis when truncated */
+        out_len -= 3;
+    }
+
+    char *out = (char *)malloc(out_len + 1);
+    if (!out) return NULL;
+    memcpy(out, safe, out_len);
+    out[out_len] = '\0';
+
+    return out;
+}

@@ -1401,7 +1401,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/
     "$CDIR/tests/test_url_safety.c" \
     "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_url_safety -lssl -lcrypto -lz -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_url_safety > /dev/null 2>&1; then ok "url_safety (29 tests)"
+    if /tmp/hermes_test_url_safety > /dev/null 2>&1; then ok "url_safety (38 tests)"
     else fail "url_safety (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_url_safety
 else skip "url_safety (compilation failed)"
