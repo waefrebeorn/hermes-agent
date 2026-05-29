@@ -114,6 +114,18 @@ int main(void) {
     }
     json_free(r);
 
+    /* base64_data_url test: valid PNG should return base64-encoded data */
+    r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_vision.png\"}", NULL));
+    TEST("vision valid PNG returns base64_data_url",
+         r && result_get_str(r, "base64_data_url", NULL) != NULL);
+    TEST("vision valid PNG base64_data_url starts with data:image/png;base64,",
+         r && strncmp(result_get_str(r, "base64_data_url", ""), "data:image/png;base64,", 22) == 0);
+    if (r) {
+        const char *b64url = result_get_str(r, "base64_data_url", "");
+        printf("    base64_data_url length: %zu\n", strlen(b64url));
+    }
+    json_free(r);
+
     /* 6. URL-based image (skips local checks) */
     r = parse_result(vision_handler("{\"image_url\":\"https://example.com/test.png\"}", NULL));
     TEST("vision URL image returns image_url",
@@ -218,6 +230,31 @@ int main(void) {
          r && strcmp(result_get_str(r, "detected_format", ""), "png") == 0);
     json_free(r);
     unlink("/tmp/hermes_test_noext");
+
+    /* base64_data_url test: extensionless file detected via magic bytes */
+    {
+        unsigned char png_b64[] = {
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
+            0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41,
+            0x54, 0x08, 0xD7, 0x63, 0x60, 0x60, 0x60, 0x00,
+            0x00, 0x00, 0x04, 0x00, 0x01, 0x27, 0x34, 0x27,
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44,
+            0xAE, 0x42, 0x60, 0x82
+        };
+        fd = open("/tmp/hermes_test_noext_b64", O_CREAT|O_WRONLY, 0644);
+        write_all(fd, png_b64, sizeof(png_b64));
+        close(fd);
+        r = parse_result(vision_handler("{\"image_url\":\"/tmp/hermes_test_noext_b64\"}", NULL));
+        TEST("vision extensionless PNG via magic returns base64_data_url",
+             r && result_get_str(r, "base64_data_url", NULL) != NULL);
+        TEST("vision extensionless PNG base64_data_url starts with data:image/png;base64,",
+             r && strncmp(result_get_str(r, "base64_data_url", ""), "data:image/png;base64,", 22) == 0);
+        json_free(r);
+        unlink("/tmp/hermes_test_noext_b64");
+    }
 
     /* ══════════════════════════════════════════════════
      *  X01: Edge case tests — format magic bytes

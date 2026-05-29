@@ -2582,8 +2582,9 @@ fi &
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_vision.c" \
     "$CDIR/src/tools/vision.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_vision -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_vision > /dev/null 2>&1; then ok "vision_tool (31 tests)"
+    if /tmp/hermes_test_vision > /dev/null 2>&1; then ok "vision_tool (35 tests)"
     else fail "vision_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_vision
 else skip "vision_tool (compilation failed)"

@@ -6,6 +6,7 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_url_safety.h"
+#include "base64.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,6 +141,63 @@ static const char *detect_image_magic(const char *path) {
     return NULL;
 }
 
+/* Map internal format string to MIME type for data URIs */
+static const char *image_format_to_mime(const char *format) {
+    if (!format) return NULL;
+    if (strcmp(format, "png") == 0) return "image/png";
+    if (strcmp(format, "jpeg") == 0) return "image/jpeg";
+    if (strcmp(format, "gif") == 0) return "image/gif";
+    if (strcmp(format, "webp") == 0) return "image/webp";
+    if (strcmp(format, "bmp") == 0) return "image/bmp";
+    if (strcmp(format, "tiff") == 0 || strcmp(format, "tif") == 0) return "image/tiff";
+    if (strcmp(format, "ico") == 0) return "image/x-icon";
+    if (strcmp(format, "svg") == 0) return "image/svg+xml";
+    if (strcmp(format, "avif") == 0) return "image/avif";
+    if (strcmp(format, "heic") == 0) return "image/heic";
+    return NULL;
+}
+
+/* Read entire file into malloc'd buffer. Returns length in *out_len. */
+static unsigned char *read_file_bytes(const char *path, size_t *out_len) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    struct stat st;
+    if (stat(path, &st) != 0) { fclose(f); return NULL; }
+    if (st.st_size > VISION_MAX_FILE_BYTES) { fclose(f); return NULL; }
+    if (st.st_size == 0) { fclose(f); *out_len = 0; return (unsigned char *)strdup(""); }
+    unsigned char *buf = (unsigned char *)malloc((size_t)st.st_size + 1);
+    if (!buf) { fclose(f); return NULL; }
+    size_t n = fread(buf, 1, (size_t)st.st_size, f);
+    fclose(f);
+    buf[n] = '\0';
+    *out_len = n;
+    return buf;
+}
+
+/* Convert local image to base64 data URL: data:image/png;base64,...
+ * Caller must free() the returned string. */
+static char *image_to_base64_data_url(const char *path, const char *format) {
+    size_t file_len = 0;
+    unsigned char *file_data = read_file_bytes(path, &file_len);
+    if (!file_data) return NULL;
+
+    const char *mime = image_format_to_mime(format);
+    if (!mime) { free(file_data); return NULL; }
+
+    char *b64 = base64_encode(file_data, file_len);
+    free(file_data);
+    if (!b64) return NULL;
+
+    /* Build prefix + base64: "data:<mime>;base64,<data>" */
+    size_t prefix_len = strlen(mime) + 17; /* "data:;base64," + null guard */
+    size_t b64_len = strlen(b64);
+    char *data_url = (char *)malloc(prefix_len + b64_len + 1);
+    if (!data_url) { free(b64); return NULL; }
+    snprintf(data_url, prefix_len + b64_len + 1, "data:%s;base64,%s", mime, b64);
+    free(b64);
+    return data_url;
+}
+
 /* Extract image dimensions from file header without Python/PIL.
  * Returns malloc'd string like "1920x1080" or NULL on failure.
  * Supports: PNG, JPEG, GIF, BMP, WebP (lossless/lossy). */
@@ -247,6 +305,24 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 json_object_set(result, "image_url", json_new_string(image_url));
                 if (detail) json_object_set(result, "detail", json_new_string(detail));
                 if (analysis) json_object_set(result, "analysis", json_new_string(analysis));
+
+                /* Base64 data URL for extensionless files detected via magic bytes */
+                {
+                    char *b64_url = image_to_base64_data_url(image_url, magic_format);
+                    if (b64_url) {
+                        json_object_set(result, "base64_data_url", json_new_string(b64_url));
+                        size_t b64len = strlen(b64_url);
+                        if (b64len > 120) {
+                            char preview[128];
+                            snprintf(preview, sizeof(preview),
+                                "data URL available (%zu chars)", b64len);
+                            json_object_set(result, "base64_data_url_info",
+                                json_new_string(preview));
+                        }
+                        free(b64_url);
+                    }
+                }
+
                 /* Continue processing — valid image detected via magic bytes */
             }
         } else if (is_local && st.st_size > VISION_MAX_FILE_BYTES) {
@@ -331,6 +407,32 @@ char *vision_handler(const char *args_json, const char *task_id) {
                 if (dims) {
                     json_object_set(result, "dimensions", json_new_string(dims));
                     free(dims);
+                }
+
+                /* Native base64 data URL for direct provider consumption */
+                {
+                    const char *img_fmt = detect_image_magic(image_url);
+                    if (!img_fmt) img_fmt = has_image_extension(image_url) ?
+                        strrchr(image_url, '.') + 1 : NULL;
+                    if (img_fmt) {
+                        char *b64_url = image_to_base64_data_url(image_url, img_fmt);
+                        if (b64_url) {
+                            /* Truncate in result for display — full URL too large */
+                            json_object_set(result, "base64_data_url",
+                                json_new_string(b64_url));
+                            /* Also add a preview hint */
+                            size_t b64len = strlen(b64_url);
+                            if (b64len > 120) {
+                                char preview[128];
+                                snprintf(preview, sizeof(preview),
+                                    "data URL available (%zu chars, starts with %.60s...)",
+                                    b64len, b64_url);
+                                json_object_set(result, "base64_data_url_info",
+                                    json_new_string(preview));
+                            }
+                            free(b64_url);
+                        }
+                    }
                 }
 
                 /* Color analysis via Python helper */
