@@ -35,6 +35,7 @@ static const char *SCHEMA = "{"
       "\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},"
       "\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\",\"default\":180},"
       "\"pty\":{\"type\":\"boolean\",\"description\":\"Use pseudo-terminal for interactive commands\",\"default\":false},"
+      "\"force\":{\"type\":\"boolean\",\"description\":\"Skip dangerous command check (use after user confirms)\",\"default\":false},"
       "\"env\":{\"type\":\"string\",\"description\":\"Environment variables in KEY=VALUE KEY2=VALUE2 format\"},"
       "\"workdir\":{\"type\":\"string\",\"description\":\"Working directory for the command\"},"
       "\"backend\":{\"type\":\"string\",\"description\":\"Execution backend: local (default), docker, docker-compose, ssh, modal\"},"
@@ -100,6 +101,7 @@ static char *run_command(const char *command, int timeout_sec) {
     json_object_set(result, "exit_code", json_new_number(exit_code));
     json_object_set(result, "output", json_new_string(output));
     json_object_set(result, "command", json_new_string(command));
+    json_object_set(result, "status", json_new_string(exit_code == 0 ? "success" : "error"));
     json_object_set(result, "truncated",
                     json_new_bool(len >= (size_t)tool_output_get_max_bytes() - 25));
 
@@ -213,6 +215,7 @@ static char *run_command_pty(const char *command, int timeout_sec) {
     json_object_set(result, "output", json_new_string(output));
     json_object_set(result, "command", json_new_string(command));
     json_object_set(result, "pty", json_new_bool(true));
+    json_object_set(result, "status", json_new_string(exit_code == 0 ? "success" : "error"));
     json_object_set(result, "truncated",
                     json_new_bool(len >= (size_t)tool_output_get_max_bytes() - 25));
 
@@ -660,13 +663,13 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     (void)task_id;
 
     if (!args_json)
-        return strdup("{\"error\": \"No arguments provided\"}");
+        return strdup("{\"error\": \"No arguments provided\", \"status\": \"error\"}");
 
     char *err = NULL;
     json_node_t *args = json_parse(args_json, &err);
     if (!args) {
         char buf[512];
-        snprintf(buf, sizeof(buf), "{\"error\": \"JSON parse error: %s\"}", err ? err : "unknown");
+        snprintf(buf, sizeof(buf), "{\"error\": \"JSON parse error: %s\", \"status\": \"error\"}", err ? err : "unknown");
         free(err);
         return strdup(buf);
     }
@@ -684,6 +687,24 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     /* F09: PTY mode */
     bool use_pty = json_object_get_bool(args, "pty", false);
+
+    /* F13: Force — skip sandbox escape check (use after user confirms) */
+    bool force = json_object_get_bool(args, "force", false);
+
+    /* Foreground timeout guard: reject foreground commands over 600s
+     * Only when timeout was explicitly provided (not default fallback).
+     * Test binaries with unresolved tool_config_get_int will get garbage
+     * defaults that trigger false positives. */
+    bool timeout_explicit = json_object_get(args, "timeout") != NULL;
+    if (!force && timeout_explicit && timeout > 600) {
+        char err[256];
+        snprintf(err, sizeof(err),
+                 "{\"error\":\"Foreground timeout %d exceeds maximum of 600s. "
+                 "Use background=true with notify_on_complete=true for long-running commands.\","
+                 "\"status\":\"error\"}", timeout);
+        json_free(args);
+        return strdup(err);
+    }
 
     /* F10: Environment isolation — read optional env string (KEY=VALUE KEY2=VALUE2) */
     const char *env_raw = json_object_get_string(args, "env", NULL);
@@ -714,7 +735,7 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     const char *docker_image = docker_buf[0] ? docker_buf : NULL;
 
     if (!command)
-        return strdup("{\"error\": \"Missing required 'command' argument\"}");
+        return strdup("{\"error\": \"Missing required 'command' argument\", \"status\": \"error\"}");
 
     /* Safety checks: workdir validation + disk usage warning */
     const char *wd_warn = _check_workdir(workdir);
@@ -723,10 +744,14 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* O14: Check command for sandbox escape patterns before execution */
     sandbox_escape_result_t esc = sandbox_escape_check(command, -1, "terminal");
     if (esc.blocked) {
-        char err[512];
-        snprintf(err, sizeof(err),
-                 "{\"error\": \"%s\"}", esc.reason);
-        return strdup(err);
+        if (force) {
+            /* Force flag skips sandbox escape check (user confirmed) */
+        } else {
+            char err[512];
+            snprintf(err, sizeof(err),
+                     "{\"error\": \"%s\", \"status\": \"error\"}", esc.reason);
+            return strdup(err);
+        }
     }
 
     /* Build workdir prefix */
