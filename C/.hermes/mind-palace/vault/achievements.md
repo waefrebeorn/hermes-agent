@@ -848,6 +848,14 @@ Suite: 294/0/0. Test files: 250. Gaps: 148. B01 44%→45%.
 
 Suite: 294/0/0. Test files: 250. Gaps: 148. B02 depth +1% (PNG/JPEG/GIF/BMP/WebP dims now native).
 
+## Phase 86: B04 PKCE Auth Code Flow (v162)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B04 | MCP tool PKCE OAuth auth code flow — `mcp_oauth_manager_get_token()` wired into `mcp_auth_refresh_if_needed()`. Callback server, browser launch, token exchange/refresh, mtime-change detection. Auth config parsed for HTTP/SSE servers (previously skipped). url field added to mcp_auth_t struct. | `src/tools/mcp_tool.c` (lines ~1206-1370), `include/hermes.h` (line 622), `lib/libmcp_oauth/mcp_oauth.c` |
+
+Suite: 294/0/0. Phase 86: B04 PKCE auth code flow wired. Gaps: 148→147.
+
 ## Phase 81: yuanbao_tools bug fix + test suite (v157)
 
 | ID | Achievement | Evidence |
