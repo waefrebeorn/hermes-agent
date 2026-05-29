@@ -1,4 +1,4 @@
-# Slermes C (v187)
+# Slermes C (v188)
 
 Suite: 298/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 254 | C src: 175
@@ -64,6 +64,7 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 110: send_message test expansion 23->34 assertions — 8 new tests: disable_link_previews, thread_id, reply_to_message_id, [[as_document]] stripping, media_group (no-crash), inline_buttons, sanitize sk- prefix, very long message. Suite 298/0/0 (v185)
 |- Phase 111: terminal _strip_quotes — quote stripping prevents false-positive foreground guidance matches on echoed text. Fork of Python _strip_quotes(). Suite 298/0/0 (v186)
 |- Phase 112: gateway helpers test suite — 29 assertions covering msg_dedup, strip_markdown, redact_phone, thread_tracker. Bug fix: redact_phone() buffer overflow (malloc too small). Test files 254→255. Suite 299/0/0 (v187)
+|- Phase 113: GHSA-rhgp-j443-p4rf env_passthrough warning — warn when config.yaml attempts to register a blocked provider credential. Suite 299/0/0 (v188)
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)

@@ -1178,6 +1178,13 @@ Suite: 294/0/0 (unchanged). Gaps: 145.
 | P112-04 | thread_tracker test: init, mark, has, duplicate, destroy, NULL-safety (8 assertions) | `tests/test_helpers.c` |
 | P112-05 | Bug fix: redact_phone buffer overflow — malloc too small for full output | `src/gateway/helpers.c` |
 
+## Phase 113: GHSA-rhgp-j443-p4rf Env Passthrough Warning
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P113-01 | Warning logged when config.yaml attempts to register blocked provider credential via env_passthrough | `src/tools/terminal.c` — registry_init_terminal() |
+
+
+
 
 
 
