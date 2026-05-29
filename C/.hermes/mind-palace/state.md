@@ -1,7 +1,7 @@
-# Slermes C (v182)
+# Slermes C (v183)
 
-Suite: 297/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 253 | C src: 175
+Suite: 298/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 254 | C src: 175
 Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -59,6 +59,7 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 105: Threat patterns parity — added 5 missing Python patterns (c2_task_pull, c2_network_connect, exfil_wget, send_to_url, translate_execute). C 30→35 patterns, test coverage 24→36 assertions. — added provider URLs, gateway credentials, infra secrets. GHSA hardening completeness for Docker/SSH/Modal env vars. Test coverage 15→27. Removed stale test_paths.c ref + duplicate cli_paths entry. Suite 297→296, test files 253→252.
 |- Phase 106: parse_mode support in send_message — B08 depth: add parse_mode param (Markdown/MarkdownV2/HTML/plain). 3 test assertions. Suite 296/0/0 (v181).
 |- Phase 107: account_usage test suite — 14 new assertions for account_usage.c: NULL safety on free/render/fetch, unknown provider, empty provider, minimal snapshot rendering, windows rendering. Test files 252→253. Suite 297/0/0 (v182).
+|- Phase 108: budget_tracker test suite — 31 new assertions for budget_tracker.c: init, limits, reporting, warnings, exceeded, remaining, per-turn tools, hard limit, iteration budget, NULL safety. Test files 253→254. Suite 298/0/0 (v183). for account_usage.c: NULL safety on free/render/fetch, unknown provider, empty provider, minimal snapshot rendering, windows rendering. Test files 252→253. Suite 297/0/0 (v182).
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
@@ -67,4 +68,4 @@ Battleship v34 (145 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 ## Honest Assessment
-Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 107: account_usage test suite (14 tests). Suite 297/0/0 (253 test files).
+Real parity gap is 145 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Phase 108: budget_tracker test suite (31 tests). Suite 298/0/0 (254 test files).

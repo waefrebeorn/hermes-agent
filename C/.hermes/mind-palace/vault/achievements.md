@@ -1063,6 +1063,22 @@ Suite: 296/0/0. Test files: 252. Gaps: 145.
 
 Suite: 297/0/0. Test files: 253. Gaps: 145.
 
+## Phase 108: budget_tracker test suite (v183)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P108-01 | budget_tracker_init/budget_tracker_set_limits init and configure state | `tests/test_budget_tracker.c` — tests 1-4 |
+| P108-02 | budget_tracker_report_turn updates all totals (input, output, cost, turns, model) | `tests/test_budget_tracker.c` — tests 5-6 |
+| P108-03 | is_exceeded detects over-limit, remaining returns correct values | `tests/test_budget_tracker.c` — tests 7-9 |
+| P108-04 | get_warning at 80% threshold, no warning under, cleared after first read | `tests/test_budget_tracker.c` — tests 11-13 |
+| P108-05 | Per-turn tool call tracking: set limit, increment, exceed, reset | `tests/test_budget_tracker.c` — tests 14-15 |
+| P108-06 | Hard limit vs grace call mode: is_hard_exceeded vs is_exceeded | `tests/test_budget_tracker.c` — tests 16, 23 |
+| P108-07 | stats_json produces valid JSON, NULL safety for all API functions (15 NULL tests) | `tests/test_budget_tracker.c` — tests 17-18, 22 |
+| P108-08 | reset clears totals preserves limits | `tests/test_budget_tracker.c` — test 19 |
+| P108-09 | Iteration budget: consume/refund/unlimited (0=unlimited) | `tests/test_budget_tracker.c` — tests 20-21 |
+
+Suite: 298/0/0. Test files: 254. Gaps: 145.
+
 ## Phase 101: voice_mode test suite (v176)
 
 | ID | Achievement | Evidence |

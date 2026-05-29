@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v182 | Fork diverged — C/ lives only on fork | Suite 297/0/0 | 85 tools | 98 CLI**
+**v183 | Fork diverged — C/ lives only on fork | Suite 298/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 145 structural gaps, 1000+ test case gaps across 9 sectors. Env passthrough blocklist 23→67 entries. Phase 104.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-| 01 | X01 | Test files | 1,262 | 253 | 20.1% | P1 |
+| 01 | X01 | Test files | 1,262 | 254 | 20.2% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
