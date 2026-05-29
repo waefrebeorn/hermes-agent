@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v155 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 151 structural gaps, 1000+ test case gaps across 9 sectors. A18 models_dev PORTED (HTTP fetch + 3-tier cache). Phase 79.**
+**v156 | Fork diverged — C/ lives only on fork | Suite 294/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 150 structural gaps, 1000+ test case gaps across 9 sectors. B03 web: save-to-file mode added to web_get (save_path param for binary downloads). Phase 80.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -170,7 +170,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 |---|----|------|-------|-----------|--------|-----------------|----------|--------|
 | 01 | B01 | browser | ~1678 | ~3800 | 44% | autofill, PDF download | P2 | REAL |
 | 02 | B02 | vision | ~296 | ~1421 | 21% | face detection, barcode (OCR/EXIF via Python helper) | P2 | PARTIAL |
-| 03 | B03 | web | ~629 | ~1561 | 40% | cookie jar persistence — ADDED in Phase 68 (text-based file store, auto-save Set-Cookie) | P2 | PARTIAL |
+| 03 | B03 | web | ~651 | ~1561 | 42% | cookie jar persistence (Phase 68) + save-to-file mode via save_path param for binary/PDF downloads (Phase 80) | P2 | PARTIAL |
 | 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth now integrated — token storage via mcp_oauth_storage, PKCE fields (authorization_url, redirect_uri) parsed from config. Full PKCE auth code flow (callback server, browser open) still unwired | P2 | PARTIAL |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~460 | ~650 | 71% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude) — ALL implemented | P2 | PARTIAL |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 15 gaps (8 P2, 7 P3) — Phase 72: env passthrough wired (B07). Stale claims corrected: B08 inline_buttons/reply_to implemented, B10 all filters implemented.**
+**S6: 15 gaps (8 P2, 7 P3) — Phase 80: save-to-file mode for web_get (B03 binary/PDF download). Phase 72: env passthrough wired (B07).**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **151** | **6** | **36** | **64** | **47** | **A18 models_dev PORTED (HTTP fetch + 3-tier cache). Phase 79.** |
+||| **TOTAL** | **150** | **6** | **36** | **64** | **46** | **B03 web save-to-file mode (binary/PDF download). Phase 80.** |
 
 ### Phase Map
 

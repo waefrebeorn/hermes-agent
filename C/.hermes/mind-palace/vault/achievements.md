@@ -814,6 +814,14 @@ Suite: 294/0/0 (unchanged). Gaps: 153 — A22 streaming header capture done. Rem
 
 Suite: 294/0/0 (unchanged). Gaps: 152 — A22 PORTED. Remaining S2 gap: A18 models_dev at 60%.
 
+## Phase 80: B03 web_get save-to-file mode (v156)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P80-01 | web_get save_path param — saves response body to file instead of returning inline. Enables binary/PDF download without token waste. | `src/tools/web.c:35-36` (schema), `src/tools/web.c:377-394` (handler) |
+
+Suite: 294/0/0 (unchanged). Gaps: 150 — B03 improved with save-to-file mode.
+
 ## Phase 79: A18 models.dev HTTP Fetch + 3-Tier Cache (v155)
 
 | ID | Achievement | Evidence |

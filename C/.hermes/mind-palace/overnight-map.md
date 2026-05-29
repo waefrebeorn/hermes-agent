@@ -1,7 +1,7 @@
-# Overnight (v155)
+# Overnight (v156)
 
-151 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
-Suite 294/0/0 (248 test files). Phase 79: A18 models_dev PORTED (HTTP fetch + 3-tier cache). S2 all real gaps resolved.
+150 gaps (battleship v34 across 9 sectors). Fork diverged — C/ lives only on fork; upstream removed C/.
+Suite 294/0/0 (248 test files). Phase 80: B03 web save-to-file mode (binary/PDF download).
 
 ## Current Phase: Phase 6 complete — S2 all real gaps PORTED
 A18 models_dev, A22 stream_diag, A15 insights all PORTED. Moving to S6 tool depth.
