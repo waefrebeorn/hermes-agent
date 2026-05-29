@@ -158,6 +158,15 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     memcpy(state->llm.fallback_providers, cfg->provider_cfg.fallback_providers,
            sizeof(state->llm.fallback_providers));
 
+    /* Credential pool: track API key health for rotation hints */
+    {
+        credential_pool_t *pool = credential_pool_create(cfg->provider_cfg.provider);
+        if (pool) {
+            credential_pool_add_key(pool, cfg->provider_cfg.api_key, "primary");
+            state->llm.cred_pool = (void *)pool;
+        }
+    }
+
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)
         state->max_iterations = cfg->agent.max_iterations;
@@ -1094,6 +1103,17 @@ char *agent_run_conversation(agent_state_t *state,
                 /* Free the filtered response so fallback logic triggers */
                 llm_response_free(llm_resp);
                 llm_resp = NULL;
+                break;
+            }
+
+            /* Credential expired → rotate key or trigger fallback */
+            if (llm_resp && llm_resp->credential_expired) {
+                fprintf(stderr, "[credential] Credential expired for %s/%s, "
+                        "triggering fallback.\n",
+                        state->llm.provider, state->llm.model);
+                llm_response_free(llm_resp);
+                llm_resp = NULL;
+                dont_retry = true;
                 break;
             }
 

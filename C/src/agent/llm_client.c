@@ -891,6 +891,14 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                 resp->credential_expired = true;
         }
 
+        /* Report HTTP result to credential pool if configured */
+        if (cfg->cred_pool && http_resp) {
+            credential_pool_t *pool = (credential_pool_t *)cfg->cred_pool;
+            credential_pool_report(pool, 0, http_resp->status,
+                                   resp->output_tokens + resp->input_tokens,
+                                   -1, 0);
+        }
+
         if (!http_resp || http_resp->status < 0) {
             resp->content = strdup("HTTP request failed");
             if (http_resp) http_response_free(http_resp);
