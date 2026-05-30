@@ -1,8 +1,8 @@
-(v375)
+(v376)
 
-325/0/14, 289 test files. All pass. 76 gaps. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart].
+325/0/14, 289 test files. All pass. 75 gaps. Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link.
 
-Phase 311: S5 C13 gateway CLI depth — /gateway command with 5 subcommands: status (show configured platforms), list (all 19), stop (gw_platform_shutdown_all + session save + exit(0)), setup (env var readiness: [ready]/[missing]), restart (save + re-exec via cmd_restart). v375.
+Phase 312: S5 C16 kanban CLI — /kanban command now wired to kanban tools via registry_dispatch(). list prints formatted task table. create/show/complete/block/unblock/link all call through to backend. v376.
 Phase 308: S7 enum edge case expansion — 31 new assertions (17→48), full coverage: out-of-range OBO (value==count), large 21-value enum, empty/partial parse, round-trip all values, macro isolation. v372.
 Phase 307: S7 difflib edge case expansion — 59 new assertions (22→81), full coverage: ratio swap consistency, single char, unicode, whitespace, long identical, substring, unified_diff NULL/empty/both-NULL, large/zero context, single line, trailing newlines, multiple hunks, simple_diff empty/empty, full add/delete, multiple distant changes, long line change. v371.
 Phase 306: S7 glob edge case expansion — 48 new assertions (22→70), full coverage: empty/null patterns, character classes, dotfiles, multi-*, ** at end, **/ alone, cross-/ behavior, regression patterns, glob_find edge cases (empty dir, hidden files, exact path). v370.

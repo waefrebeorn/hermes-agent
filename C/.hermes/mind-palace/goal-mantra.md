@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v375)
+# Goal Mantra — Slermes C (v376)
 
-325/0/14 (289 test files). 76 gaps. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart].
+325/0/14 (289 test files). 75 gaps. Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link.
 
 ## Loop
 

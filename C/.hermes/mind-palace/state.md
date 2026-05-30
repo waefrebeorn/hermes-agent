@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|||5|||||||||||||||||||Battleship v34 (76 gaps across 8 sectors, 1000+ test case gaps). v375. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart] command with 5 subcommands. stop: gw_platform_shutdown_all + session save + exit. setup: platform env var readiness check with [ready]/[missing] indicators. restart: save + re-exec. Suite 325/0/14. C13 PORTED. 77→76 gaps.
+|||5|||||||||||||||||||Battleship v34 (75 gaps across 8 sectors, 1000+ test case gaps). v376. Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link wired to kanban tools via registry_dispatch(). list prints formatted task table. Suite 325/0/14. C16 PORTED. 76→75 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
