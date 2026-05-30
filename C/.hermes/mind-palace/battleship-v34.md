@@ -196,7 +196,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 07 | X07 | Gateway platform tests | ~100 | ~22 | 22% | P1 |
 | 08 | X08 | Conversation loop tests | ~200 | ~10 | 5% | P1 |
 | 09 | X09 | Edge case / regression tests | ~62 | ~3 | 5% | P1 |
-| 10 | X10 | Fuzz / property tests | ~0* | 0 | 0% | P3 |
+|| 10 | X10 | Fuzz / property tests | ~62 | ~5 | 8% | P3 |
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 

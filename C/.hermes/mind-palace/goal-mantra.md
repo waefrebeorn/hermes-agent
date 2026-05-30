@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v380)
+# Goal Mantra — Slermes C (v381)
 
-325/0/14 (289 test files). 72 gaps. Phase 316: S5 C11 auth CLI — /auth [status|providers].
+325/0/14 (289 test files). 72 gaps. Phase 317: S7 X10 fuzz tests — 14 test cases across 6 parser families.
 
 ## Loop
 

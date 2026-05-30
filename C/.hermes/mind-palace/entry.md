@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v380)
+# Entry — Slermes C Parity (v381)
 
-Phase 316: S5 C11 auth CLI — /auth [status|providers]. 72 gaps.
+Phase 317: S7 X10 fuzz tests — 14 test cases across 6 parser families. 72 gaps.

@@ -2,7 +2,7 @@
 
 ||||Suite: 335/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-||||5|||||||||||||||||||Battleship v34 (72 gaps across 8 sectors, 1000+ test case gaps). v380. Phase 316: S5 C11 auth CLI — /auth [status|providers]. Suite 325/0/14. C11 PARTIAL depth. 72 gaps.
+||||5|||||||||||||||||||Battleship v34 (72 gaps across 8 sectors, 1000+ test case gaps). v381. Phase 317: S7 X10 fuzz tests expanded — 14 test cases (JSON, YAML, template, regex, HTML, path, JSON round-trip property tests). Suite 325/0/14. 72 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
