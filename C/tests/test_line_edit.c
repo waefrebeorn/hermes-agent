@@ -396,6 +396,35 @@ static void test_null_safety(void) {
 
     line_edit_cursor_word_backward(NULL);
     TEST("cursor_word_backward(NULL) no crash", 1);
+
+    /* line_edit_get_mode NULL safety */
+    TEST("get_mode(NULL) returns INSERT",
+         line_edit_get_mode(NULL) == LINE_EDIT_MODE_INSERT);
+}
+
+/* ================================================================
+ *  Vi mode tests
+ * ================================================================ */
+static void test_vi_mode(void) {
+    printf("\n--- Vi mode ---\n");
+
+    /* Default mode is INSERT */
+    line_edit_t *le = make_buffer("hello world", 0);
+    TEST_NOT_NULL("create for vi test", le);
+    TEST("default mode = INSERT", line_edit_get_mode(le) == LINE_EDIT_MODE_INSERT);
+
+    /* Set mode to NORMAL and verify getter */
+    le->vi_mode = LINE_EDIT_MODE_NORMAL;
+    TEST("get_mode returns NORMAL", line_edit_get_mode(le) == LINE_EDIT_MODE_NORMAL);
+
+    /* Set mode back to INSERT */
+    le->vi_mode = LINE_EDIT_MODE_INSERT;
+    TEST("get_mode returns INSERT after set", line_edit_get_mode(le) == LINE_EDIT_MODE_INSERT);
+
+    /* vi_saved_line initialized */
+    TEST("vi_saved initialized false", le->vi_saved == false);
+
+    line_edit_free(le);
 }
 
 /* ================================================================
@@ -465,6 +494,8 @@ int main(void) {
     test_transpose();
     test_null_safety();
     test_set_text();
+
+    test_vi_mode();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

@@ -116,6 +116,7 @@ static void line_buf_clear(line_buf_t *lb) {
     lb->cursor = 0;
 }
 
+/* Set buffer content (used by history navigation) */
 static void line_buf_set(line_buf_t *lb, const char *s) {
     size_t slen = strlen(s);
     if (slen >= lb->cap) {
@@ -129,6 +130,11 @@ static void line_buf_set(line_buf_t *lb, const char *s) {
     memcpy(lb->buf, s, slen + 1);
     lb->len = slen;
     lb->cursor = slen;
+}
+
+/* Get current editing mode */
+line_edit_mode_t line_edit_get_mode(const line_edit_t *le) {
+    return le ? le->vi_mode : LINE_EDIT_MODE_INSERT;
 }
 
 /* ------------------------------------------------------------------ */
@@ -319,6 +325,9 @@ line_edit_t *line_edit_create(line_edit_completion_cb complete, void *user_data)
     le->saved_line[0] = '\0';
     le->kill_ring[0] = '\0';
     le->kill_ring_len = 0;
+    le->vi_mode = LINE_EDIT_MODE_INSERT;
+    le->vi_saved = false;
+    le->vi_saved_line[0] = '\0';
     return le;
 }
 
@@ -533,19 +542,24 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
     line_buf_clear(le->buf);
     term_enter_raw();
 
-    /* Print prompt */
+    /* Print prompt with vi mode indicator */
     if (prompt) {
-        printf("%s", prompt);
+        if (le->vi_mode == LINE_EDIT_MODE_NORMAL) {
+            /* Show mode indicator before prompt in NORMAL mode */
+            printf("[NORMAL] %s", prompt);
+        } else {
+            printf("%s", prompt);
+        }
         fflush(stdout);
     }
 
     while (1) {
-        char c;
-        ssize_t n = read(STDIN_FILENO, &c, 1);
-        if (n <= 0) {
+        int ch = getchar();
+        if (ch == EOF) {
             term_exit_raw();
-            return NULL;  /* EOF */
+            return NULL;
         }
+        char c = (char)ch;
 
         if (c == KEY_ENTER) {
             /* Done */
@@ -729,7 +743,20 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         }
 
         if (c == KEY_ESC) {
-            /* Escape sequence — read next two+ bytes */
+            if (le->vi_mode == LINE_EDIT_MODE_INSERT) {
+                /* Switch to NORMAL mode — save undo buffer */
+                strncpy(le->vi_saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+                le->vi_saved_line[LINE_EDIT_MAX_LINE - 1] = '\0';
+                le->vi_saved = true;
+                le->vi_mode = LINE_EDIT_MODE_NORMAL;
+                printf("\r\033[K[NORMAL]");
+                if (prompt) printf("%s", prompt);
+                term_redraw_line(le->buf);
+                fflush(stdout);
+                continue;
+            }
+
+            /* NORMAL mode or already handled: read escape sequence */
             char seq[3];
             if (read(STDIN_FILENO, &seq[0], 1) <= 0) continue;
             if (read(STDIN_FILENO, &seq[1], 1) <= 0) continue;
@@ -897,6 +924,113 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             }
             term_redraw_line(le->buf);
             continue;
+        }
+
+        /* Vi NORMAL mode keybindings */
+        if (le->vi_mode == LINE_EDIT_MODE_NORMAL) {
+            bool handled = true;
+            switch (c) {
+                case 'h': /* left */
+                    if (le->buf->cursor > 0) le->buf->cursor--;
+                    break;
+                case 'l': /* right */
+                    if (le->buf->cursor < le->buf->len) le->buf->cursor++;
+                    break;
+                case 'j': /* down (next history) */
+                {
+                    const char *hist = history_next(le->history);
+                    if (hist) {
+                        line_buf_set(le->buf, hist);
+                    } else if (le->saved_line[0]) {
+                        line_buf_set(le->buf, le->saved_line);
+                    }
+                    break;
+                }
+                case 'k': /* up (prev history) */
+                {
+                    if (le->history->current == le->history->tail)
+                        strncpy(le->saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+                    const char *hist = history_prev(le->history);
+                    if (hist) line_buf_set(le->buf, hist);
+                    break;
+                }
+                case '0': /* go to line start */
+                    le->buf->cursor = 0;
+                    break;
+                case '$': /* go to line end */
+                    le->buf->cursor = le->buf->len;
+                    break;
+                case 'x': /* delete char under cursor */
+                    line_buf_delete_forward(le->buf);
+                    break;
+                case 'X': /* delete char before cursor */
+                    line_buf_delete(le->buf);
+                    break;
+                case 'i': /* insert before cursor */
+                case 'I': /* insert at line start */
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    if (c == 'I') le->buf->cursor = 0;
+                    break;
+                case 'a': /* append after cursor */
+                case 'A': /* append at line end */
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    if (c == 'A') le->buf->cursor = le->buf->len;
+                    else if (le->buf->cursor < le->buf->len) le->buf->cursor++;
+                    break;
+                case 'u': /* undo */
+                    if (le->vi_saved) {
+                        line_buf_set(le->buf, le->vi_saved_line);
+                        le->vi_saved = false;
+                    }
+                    break;
+                case 'd': /* dd — delete line */
+                {
+                    /* Check for second d (dd sequence) */
+                    char next = 'd';
+                    if (read(STDIN_FILENO, &next, 1) <= 0 || next != 'd') {
+                        /* Not dd — do nothing */
+                        if (next > 0 && next != 'd') {
+                            /* Put back via ungetc or just ignore */
+                        }
+                    } else {
+                        /* dd — delete entire line into kill ring */
+                        size_t orig_len = le->buf->len;
+                        if (orig_len > 0) {
+                            size_t to_copy = orig_len < MAX_KILL_RING - 1 ? orig_len : MAX_KILL_RING - 1;
+                            memcpy(le->kill_ring, le->buf->buf, to_copy);
+                            le->kill_ring[to_copy] = '\0';
+                            le->kill_ring_len = to_copy;
+                        }
+                        line_buf_clear(le->buf);
+                    }
+                    break;
+                }
+                case 'p': /* paste after cursor */
+                    if (le->kill_ring_len > 0) {
+                        /* Insert killed text at current position */
+                        for (size_t ki = 0; ki < le->kill_ring_len; ki++)
+                            line_buf_insert(le->buf, le->kill_ring[ki]);
+                    }
+                    break;
+                case 'P': /* paste before cursor */
+                    if (le->kill_ring_len > 0) {
+                        /* Insert killed text at current position (same as 'p' for our model) */
+                        for (size_t ki = 0; ki < le->kill_ring_len; ki++)
+                            line_buf_insert(le->buf, le->kill_ring[ki]);
+                    }
+                    break;
+                default:
+                    handled = false;
+                    break;
+            }
+            if (handled) {
+                /* Redraw with mode indicator */
+                printf("\r\033[K[NORMAL]");
+                if (prompt) printf("%s", prompt);
+                term_redraw_line(le->buf);
+                fflush(stdout);
+                continue;
+            }
         }
 
         /* Printable characters */

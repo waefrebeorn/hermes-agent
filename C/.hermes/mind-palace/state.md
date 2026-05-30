@@ -2,11 +2,12 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). S7 X09 openrouter_depth expansion (12→60 tests). S7 X09 xai_http expansion (15→24 tests). v311. Partial: R10 provider utility functions ported (6 functions). v315.
+Battleship v34 (102 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6 all PORTED — D09 vi mode implemented (minimal vi keybindings). F10 PORTED. S8 R01 adaptive thinking. R10 partial (6 utility functions ported). v316.
 - Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
 - Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 - Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
 - Phase 248: R10 parse_context_limit + parse_available_output_tokens — port of Python model_metadata.parse_context_limit_from_error() and parse_available_output_tokens_from_error(). Error message parsing for context length extraction. 12 test assertions (→118). Suite 335/0/2. v315.
+- Phase 249: S0 D09 vi mode — minimal vi keybindings in line_edit.c. ESC switches INSERT→NORMAL. NORMAL mode: h/j/k/l navigation, 0/$ line start/end, x/X delete, i/I/a/A insert/append, u undo (saved line), dd delete line, p/P paste. [NORMAL] mode indicator in prompt. 6 test assertions in test_line_edit.c (→83). Suite 335/0/2. v316.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

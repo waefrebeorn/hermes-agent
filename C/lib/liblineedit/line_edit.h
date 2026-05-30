@@ -15,6 +15,12 @@
 #define MAX_KILL_RING 65536
 #define MAX_HISTORY 100
 
+/* Editing mode */
+typedef enum {
+    LINE_EDIT_MODE_INSERT = 0,
+    LINE_EDIT_MODE_NORMAL = 1
+} line_edit_mode_t;
+
 /* Forward declarations */
 typedef struct history_t history_t;
 
@@ -39,6 +45,9 @@ typedef struct line_edit_t {
     char saved_line[LINE_EDIT_MAX_LINE];  /* for history navigation */
     char kill_ring[MAX_KILL_RING];        /* for Ctrl-K/Ctrl-Y kill/yank */
     size_t kill_ring_len;
+    line_edit_mode_t vi_mode;             /* INSERT or NORMAL (vi mode) */
+    char vi_saved_line[LINE_EDIT_MAX_LINE]; /* for vi undo */
+    bool vi_saved;                        /* whether vi_saved_line is valid */
 } line_edit_t;
 
 /* Create a line editor instance */
@@ -60,6 +69,9 @@ bool line_edit_load_history(line_edit_t *le, const char *path);
 /* Set buffer text (for pre-populating input, e.g. from type-ahead).
  * Copies text into the editor buffer. Safe to call before line_edit_read(). */
 void line_edit_set_text(line_edit_t *le, const char *text);
+
+/* Get current editing mode. Exposed for testing. */
+line_edit_mode_t line_edit_get_mode(const line_edit_t *le);
 
 /* Emacs-style editing helpers — exposed for testing */
 void line_edit_kill_line(line_edit_t *le);

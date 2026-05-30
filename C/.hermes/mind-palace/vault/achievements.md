@@ -1869,3 +1869,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | X04 | Long base URL truncation: URL > XAI_BASE_URL_MAX truncated to max-1. | `C/tests/test_xai_http.c` — test_base_url_long(). |
 | X05 | State cleanup: setenv/unsetenv leaves no state leakage. | `C/tests/test_xai_http.c` — test_state_cleanup(). |
 | X06 | Test file growth: 15→24 tests (+9, +60%). | `C/tests/test_xai_http.c` — 24 tests. |
+## Phase 17: Display & Visual
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| D09 | Minimal vi mode keybindings in line_edit.c — ESC toggles INSERT↔NORMAL. NORMAL: h/j/k/l navigation, 0/$ line start/end, x delete char, X backspace, i/I/a/A insert/append, u undo, dd delete line, p/P paste. [NORMAL] mode indicator in prompt. | `C/lib/liblineedit/line_edit.c` + `C/lib/liblineedit/line_edit.h` — vi_mode field, line_edit_get_mode(), vi dispatch in line_edit_read(). Tests: `C/tests/test_line_edit.c` — test_vi_mode(), 83 total. |
