@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 300: S7 X09 cli_paths Edge Case Expansion (v363)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | cli_paths test expansion — 43 new assertions (28→71). Zero-size buffer: hermes_get_home(NULL, 0) handled gracefully (no crash). Trailing slash home: SLERMES_HOME=/tmp/test/ with resolve_path("config.yaml") produces // (double slash preserved, not collapsed). Slash-only sub: resolve_path("/") produces //. Dot-dot components: resolve_path("skills/../config.yaml") preserves as-is (no normalization). Empty SLERMES_HOME: falls back to HOME/.slermes. Multiple set/unset cycles: 5 iterations all produce correct paths. Profile special chars: hyphens/underscores preserved. Long profile truncation: 500-char name truncated to 63 chars by internal buffer limit. | `tests/test_cli_paths.c` — 43 new assertions (28→71). Suite 335/0/15. v363. |
 ## Phase 299: S7 X09 session_id Edge Case Expansion (v362)
 | ID | Achievement | Evidence |
 |----|-------------|----------|

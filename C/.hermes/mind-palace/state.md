@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v362. Phase 299: S7 X09 session_id edge case expansion — 5 new assertions (16→21). Session ID: buffer overflow detection (byte 16 preserved), only-one-underscore validation, same-second ID duplication (1s resolution), 20-call stress test. Suite 335/0/15.
+|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v363. Phase 300: S7 X09 cli_paths edge case expansion — 43 new assertions (28→71). CLI paths: zero-size buffer NULL handle, trailing slash home, slash-only sub path, .. components, empty SLERMES_HOME fallback, multiple set/unset cycles, profile special chars, very long profile truncated to 63 chars. Suite 335/0/15.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

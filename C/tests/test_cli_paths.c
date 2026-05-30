@@ -172,6 +172,14 @@ static void test_small_buffer(void) {
     PASS();
 }
 
+static void test_zero_buffer(void) {
+    TEST("hermes_get_home zero buffer (no crash)");
+    setenv("SLERMES_HOME", "/tmp/test_slermes", 1);
+    hermes_get_home(NULL, 0);
+    /* Should not crash */
+    PASS();
+}
+
 static void test_resolve_home_without_trailing_slash(void) {
     TEST("SLERMES_HOME without trailing slash");
     setenv("SLERMES_HOME", "/tmp/test_slermes", 1);
@@ -180,6 +188,49 @@ static void test_resolve_home_without_trailing_slash(void) {
     /* Should NOT double-slash: /tmp/test_slermes//skills/extra */
     ASSERT(strstr(buf, "//") == NULL, "no double slash");
     ASSERT(strcmp(buf, "/tmp/test_slermes/skills/extra") == 0, "wrong path");
+    PASS();
+}
+
+static void test_slermes_home_with_trailing_slash(void) {
+    TEST("SLERMES_HOME with trailing slash");
+    setenv("SLERMES_HOME", "/tmp/test_slermes/", 1);
+    char buf[4096];
+    hermes_get_home(buf, sizeof(buf));
+    ASSERT(strcmp(buf, "/tmp/test_slermes/") == 0, "trailing slash preserved");
+    PASS();
+
+    TEST("resolve with trailing slash in home");
+    hermes_resolve_path("config.yaml", buf, sizeof(buf));
+    ASSERT(strcmp(buf, "/tmp/test_slermes//config.yaml") == 0, "path preserves double slash");
+    PASS();
+}
+
+static void test_resolve_path_with_dotdot(void) {
+    TEST("resolve path with .. components");
+    setenv("SLERMES_HOME", "/tmp/test_slermes", 1);
+    char buf[4096];
+    hermes_resolve_path("skills/../config.yaml", buf, sizeof(buf));
+    ASSERT(strcmp(buf, "/tmp/test_slermes/skills/../config.yaml") == 0,
+           "path preserved as-is (.. not resolved)");
+    PASS();
+}
+
+static void test_resolve_path_slash_only(void) {
+    TEST("resolve path with single slash");
+    setenv("SLERMES_HOME", "/tmp/test_slermes", 1);
+    char buf[4096];
+    hermes_resolve_path("/", buf, sizeof(buf));
+    ASSERT(strcmp(buf, "/tmp/test_slermes//") == 0, "slash sub appended after slash separator");
+    PASS();
+}
+
+static void test_empty_slermes_home(void) {
+    TEST("empty SLERMES_HOME falls back to HOME");
+    setenv("SLERMES_HOME", "", 1);
+    setenv("HOME", "/home/testuser", 1);
+    char buf[4096];
+    hermes_get_home(buf, sizeof(buf));
+    ASSERT(strstr(buf, "/home/testuser/.slermes") != NULL, "fallback to HOME/.slermes");
     PASS();
 }
 
@@ -213,6 +264,38 @@ static void test_profile_does_not_affect_home(void) {
     PASS();
 }
 
+static void test_nested_set_unset_home(void) {
+    TEST("multiple set/unset cycles");
+    char buf[4096];
+    for (int i = 0; i < 5; i++) {
+        char expected[64];
+        snprintf(expected, sizeof(expected), "/tmp/cycle_%d", i);
+        setenv("SLERMES_HOME", expected, 1);
+        hermes_get_home(buf, sizeof(buf));
+        ASSERT(strcmp(buf, expected) == 0, "cycle path mismatch");
+    }
+    PASS();
+}
+
+static void test_profile_special_chars(void) {
+    TEST("profile with hyphens and underscores");
+    hermes_set_profile("my-work_profile-v2");
+    const char *p = hermes_get_profile();
+    ASSERT(p != NULL && strcmp(p, "my-work_profile-v2") == 0, "special chars profile");
+    hermes_set_profile("");
+    PASS();
+
+    TEST("very long profile name truncated to buffer");
+    char long_name[512];
+    memset(long_name, 'x', 500);
+    long_name[500] = '\0';
+    hermes_set_profile(long_name);
+    p = hermes_get_profile();
+    ASSERT(p != NULL && strlen(p) == 63, "long profile truncated to 63 chars");
+    hermes_set_profile("");
+    PASS();
+}
+
 static void test_long_slermes_home(void) {
     TEST("very long SLERMES_HOME path");
     /* Create a path slightly under PATH_MAX */
@@ -237,9 +320,16 @@ int main(void) {
     test_profile();
     test_fallback_home();
     test_small_buffer();
+    test_zero_buffer();
     test_resolve_home_without_trailing_slash();
+    test_slermes_home_with_trailing_slash();
+    test_resolve_path_with_dotdot();
+    test_resolve_path_slash_only();
+    test_empty_slermes_home();
     test_consistency_all_dirs();
     test_profile_does_not_affect_home();
+    test_nested_set_unset_home();
+    test_profile_special_chars();
     test_long_slermes_home();
 
     restore_env();
