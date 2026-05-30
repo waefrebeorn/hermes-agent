@@ -226,6 +226,13 @@ json_t *provider_auth_headers(const char *api_key);
  * Returns -1 on failure (not a valid int, or out of range). */
 int provider_coerce_reasonable_int(const char *value, int minimum, int maximum);
 
+/* Extract the first matching integer from a nested JSON payload.
+ * Port of Python model_metadata._extract_first_int().
+ * Iterates nested JSON objects looking for keys in the NULL-terminated
+ * keys array. Returns the value via provider_coerce_reasonable_int
+ * with default bounds [1024, 10000000], or -1 if not found. */
+int provider_extract_first_int(const json_t *payload, const char **keys);
+
 /* Estimate tokens from text length (~4 chars/token, ceiling division).
  * Port of Python model_metadata.estimate_tokens_rough(). */
 int estimate_tokens_rough(const char *text);

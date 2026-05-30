@@ -13,6 +13,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 || 274 | S8 R10 depth — batch 4 token est (count_image_tokens, message_chars, messages_tokens_rough, request_tokens_rough)
 || 275 | S8 R10 — context probe tiers + get_next_probe_tier
 || 276 | S8 R10 — context cache layer (path/load/save/get/invalidate)
+|| 277 | S8 R10 — provider_extract_first_int() + refactor context/max_completion extractors
 ```
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 ||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)

@@ -46,6 +46,7 @@ static void test_estimate_request_tokens_rough(void);
 static void test_get_next_probe_tier(void);
 static void test_provider_context_cache_path(void);
 static void test_provider_context_cache_save_get_invalidate(void);
+static void test_provider_extract_first_int(void);
 
 int main(void) {
 
@@ -497,6 +498,7 @@ int main(void) {
     test_get_next_probe_tier();
     test_provider_context_cache_path();
     test_provider_context_cache_save_get_invalidate();
+    test_provider_extract_first_int();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -1293,5 +1295,114 @@ static void test_provider_context_cache_save_get_invalidate(void) {
     {
         TEST("invalidate NULL model", provider_context_cache_invalidate(NULL, "url") == 0);
         TEST("invalidate NULL url",   provider_context_cache_invalidate("m", NULL) == 0);
+    }
+}
+
+/* ---- provider_extract_first_int ---- */
+static void test_provider_extract_first_int(void) {
+    printf("\n[R10] provider_extract_first_int:\n");
+
+    const char *keys[] = {"token_count", "num_tokens", NULL};
+
+    /* NULL payload */
+    TEST("null payload", provider_extract_first_int(NULL, keys) == -1);
+
+    /* NULL keys */
+    {
+        json_t *p = json_object();
+        TEST("null keys", provider_extract_first_int(p, NULL) == -1);
+        json_free(p);
+    }
+
+    /* Empty object */
+    {
+        json_t *p = json_object();
+        TEST("empty obj", provider_extract_first_int(p, keys) == -1);
+        json_free(p);
+    }
+
+    /* Direct key match */
+    {
+        json_t *p = json_object();
+        json_set(p, "token_count", json_number(4096));
+        TEST("direct match", provider_extract_first_int(p, keys) == 4096);
+        json_free(p);
+    }
+
+    /* String value numeric */
+    {
+        json_t *p = json_object();
+        json_set(p, "num_tokens", json_string("8192"));
+        TEST("string numeric", provider_extract_first_int(p, keys) == 8192);
+        json_free(p);
+    }
+
+    /* Nested match (one level deep) */
+    {
+        json_t *inner = json_object();
+        json_set(inner, "token_count", json_number(16384));
+        json_t *p = json_object();
+        json_set(p, "model", inner);
+        TEST("nested match", provider_extract_first_int(p, keys) == 16384);
+        json_free(p);
+    }
+
+    /* No matching key */
+    {
+        json_t *p = json_object();
+        json_set(p, "unrelated", json_number(42));
+        TEST("no match", provider_extract_first_int(p, keys) == -1);
+        json_free(p);
+    }
+
+    /* Multiple keys — returns one of them */
+    {
+        json_t *p = json_object();
+        json_set(p, "num_tokens", json_number(4096));
+        json_set(p, "token_count", json_number(8192));
+        int val = provider_extract_first_int(p, keys);
+        TEST("returns one valid value", val == 4096 || val == 8192);
+        json_free(p);
+    }
+
+    /* Value below minimum range */
+    {
+        json_t *p = json_object();
+        json_set(p, "token_count", json_number(1));
+        TEST("below min", provider_extract_first_int(p, keys) == -1);
+        json_free(p);
+    }
+
+    /* Value above maximum range */
+    {
+        json_t *p = json_object();
+        json_set(p, "token_count", json_number(99999999));
+        TEST("above max", provider_extract_first_int(p, keys) == -1);
+        json_free(p);
+    }
+
+    /* String value that isn't a number */
+    {
+        json_t *p = json_object();
+        json_set(p, "token_count", json_string("not-a-number"));
+        TEST("non-numeric string", provider_extract_first_int(p, keys) == -1);
+        json_free(p);
+    }
+
+    /* Case insensitive matching */
+    {
+        json_t *p = json_object();
+        json_set(p, "TOKEN_COUNT", json_number(32000));
+        TEST("case insensitive", provider_extract_first_int(p, keys) == 32000);
+        json_free(p);
+    }
+
+    /* Empty keys array (just {NULL}) */
+    {
+        const char *empty_keys[] = {NULL};
+        json_t *p = json_object();
+        json_set(p, "anything", json_number(100));
+        TEST("empty keys", provider_extract_first_int(p, empty_keys) == -1);
+        json_free(p);
     }
 }
