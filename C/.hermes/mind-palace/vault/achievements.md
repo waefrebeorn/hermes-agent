@@ -1732,4 +1732,4 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 | P191-02 | vision_validate_image_url() ported from Python vision_tools.py _validate_image_url(). Validates format: http/https scheme, network location, host presence. Pure function, testable in isolation. | `C/src/tools/vision.c:289-317` — new public function. `C/include/image_routing.h:112-115` — declaration. |
 | P191-03 | 12-test suite for vision_validate_image_url: valid http, https, port, query, NULL, empty, ftp, no-scheme, no-host, data URI, localhost. | `C/tests/test_vision.c` — 12/12 passed. Test count 35→47. |
 
-Suite: 315/0/0 (273 test files). Gaps: 121. v259
+Suite: 315/0/0 (273 test files). Gaps: 119. v259

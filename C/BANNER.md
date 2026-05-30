@@ -3,8 +3,8 @@
 ```text
 ╔══════════════════════════════════════════════════════════════╗
 ║  WuBu Slermes C v259                                       ║
-║  315 tests · 121 gaps · 85 tools · 98 CLI · 65 libs        ║
-║  121 gaps  │  31MB binary  │  0 warnings                     ║
+║  315 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
 ║  Phase 191: B11-B20 PORTED — vision URL validator          ║
 ╚══════════════════════════════════════════════════════════════╝
