@@ -862,3 +862,89 @@ bool provider_is_local_endpoint(const char *base_url) {
 done:
     return result;
 }
+
+/* Infer provider name from a base URL by matching against known provider hosts.
+ * Port of Python model_metadata._infer_provider_from_url().
+ * Returns malloc'd provider name string, or NULL if unknown. Caller must free(). */
+char *provider_infer_from_url(const char *base_url) {
+    if (!base_url || !*base_url) return NULL;
+
+    /* Normalize */
+    char *normalized = provider_normalize_base_url(base_url);
+    if (!normalized) return NULL;
+
+    /* Add scheme if missing */
+    char url_buf[1024];
+    if (strstr(normalized, "://")) {
+        snprintf(url_buf, sizeof(url_buf), "%s", normalized);
+    } else {
+        snprintf(url_buf, sizeof(url_buf), "https://%s", normalized);
+    }
+    free(normalized);
+
+    /* Extract hostname from the URL */
+    char *host = url_extract_hostname(url_buf);
+    if (!host || !*host) {
+        free(host);
+        return NULL;
+    }
+
+    /* Lowercase the hostname for comparison */
+    for (char *p = host; *p; p++) *p = (char)tolower((unsigned char)*p);
+
+    /* Check each known provider's base_url hostname against our URL */
+    char *result = NULL;
+    for (int i = 0; PROVIDERS[i].provider_name; i++) {
+        const char *prov_base_url = PROVIDERS[i].base_url;
+        if (!prov_base_url || !*prov_base_url) continue;
+
+        /* Extract hostname from provider's base_url */
+        char *prov_host = url_extract_hostname(prov_base_url);
+        if (!prov_host || !*prov_host) {
+            free(prov_host);
+            continue;
+        }
+
+        /* Lowercase the provider hostname */
+        for (char *p = prov_host; *p; p++) *p = (char)tolower((unsigned char)*p);
+
+        /* Check if provider hostname appears in our URL's host */
+        if (strstr(host, prov_host) || strstr(prov_host, host)) {
+            result = strdup(PROVIDERS[i].provider_name);
+            free(prov_host);
+            break;
+        }
+        free(prov_host);
+    }
+
+    /* Check OpenAI-compat aliases that may not be in PROVIDERS table */
+    if (!result) {
+        static const struct { const char *host_part; const char *provider; } aliases[] = {
+            {"api.fireworks.ai", "fireworks"},
+            {"opencode.ai", "opencode-go"},
+            {"api.arcee.ai", "arcee"},
+            {"api.minimax", "minimax"},
+            {"xiaomimimo.com", "xiaomi"},
+            {"api.gmi-serving.com", "gmi"},
+            {"api.novita.ai", "novita"},
+            {"tokenhub.tencentmaas.com", "tencent-tokenhub"},
+            {"api.anthropic.com", "anthropic"},
+            {"api.deepseek.com", "deepseek"},
+            {"generativelanguage.googleapis.com", "gemini"},
+            {"inference-api.nousresearch.com", "nous"},
+            {"chatgpt.com", "openai"},
+            {"localhost", "local"},
+            {"127.0.0.1", "local"},
+            {NULL, NULL}
+        };
+        for (int i = 0; aliases[i].host_part; i++) {
+            if (strstr(host, aliases[i].host_part)) {
+                result = strdup(aliases[i].provider);
+                break;
+            }
+        }
+    }
+
+    free(host);
+    return result;
+}

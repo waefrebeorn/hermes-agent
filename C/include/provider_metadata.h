@@ -170,6 +170,11 @@ char *provider_strip_prefix(const char *model);
  * RFC-1918 private ranges, link-local, and Tailscale CGNAT. */
 bool provider_is_local_endpoint(const char *base_url);
 
+/* Infer provider name from a base URL by matching against known provider hosts.
+ * Port of Python model_metadata._infer_provider_from_url().
+ * Returns malloc'd provider name string, or NULL if unknown. Caller must free(). */
+char *provider_infer_from_url(const char *base_url);
+
 #ifdef __cplusplus
 }
 #endif

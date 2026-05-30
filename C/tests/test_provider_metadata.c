@@ -305,6 +305,49 @@ int main(void) {
     TEST("NULL not local", !provider_is_local_endpoint(NULL));
     TEST("empty not local", !provider_is_local_endpoint(""));
 
+    /* --- Test 10: provider_infer_from_url --- */
+    printf("\n[R10] provider_infer_from_url:\n");
+
+    char *prov;
+
+    prov = provider_infer_from_url("https://api.openai.com/v1/chat");
+    TEST("openai URL -> openai", prov && strcmp(prov, "openai") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://api.anthropic.com/v1");
+    TEST("anthropic URL -> anthropic", prov && strcmp(prov, "anthropic") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://openrouter.ai/api/v1");
+    TEST("openrouter URL -> openrouter", prov && strcmp(prov, "openrouter") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://api.deepseek.com/v1");
+    TEST("deepseek URL -> deepseek", prov && strcmp(prov, "deepseek") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://api.x.ai/v1");
+    TEST("xai URL -> xai", prov && strcmp(prov, "xai") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://api.groq.com/openai/v1");
+    TEST("groq URL -> groq", prov && strcmp(prov, "groq") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://api.fireworks.ai/v1");
+    TEST("fireworks URL -> fireworks", prov && strcmp(prov, "fireworks") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("http://localhost:11434");
+    TEST("localhost -> local", prov && strcmp(prov, "local") == 0);
+    free(prov);
+
+    prov = provider_infer_from_url("https://unknown.example.com");
+    TEST("unknown URL -> NULL", prov == NULL);
+
+    prov = provider_infer_from_url(NULL);
+    TEST("NULL -> NULL", prov == NULL);
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
