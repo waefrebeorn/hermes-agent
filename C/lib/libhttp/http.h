@@ -128,6 +128,12 @@ char *http_url_encode(const char *str);
 /* Set HTTP proxy (CONNECT tunnel for HTTPS). Empty/NULL to clear. */
 void http_client_set_proxy(http_t *h, const char *proxy_url);
 
+/* Check if a hostname matches a NO_PROXY entry.
+ * Supports: *, exact host, .domain suffix, *.wildcard suffix.
+ * Returns true if the host should bypass the proxy.
+ * entry is trimmed/lowercased internally. */
+bool http_no_proxy_match(const char *host, const char *entry);
+
 /* === Connection pool for keep-alive === */
 /* Enable connection pooling. max_connections: 0 = disable, 1-16. idle_timeout_sec: 0 = never expire. */
 void http_client_set_pool(http_t *h, int max_connections, int idle_timeout_sec);

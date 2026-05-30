@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v249 | Fork diverged — C/ lives only on fork | Suite 314/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 181: G06 wecom_callback depth — wecom_xml_extract_tag() + wecom_callback_user_app_key(). 25-test suite. Suite 314/0/0. 129→128 gaps.**
+**v250 | Fork diverged — C/ lives only on fork | Suite 314/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 182: G02 base.py depth — http_no_proxy_match(). 18-test suite. Suite 314/0/0. Gaps unchanged (depth).**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -85,7 +85,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio. Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
+|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio, http_parse_retry_after, http_no_proxy_match() (Phase 182 — NO_PROXY entry matching with wildcard/suffix/exact patterns). Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling — PORTED: textwrap_chunk(), feishu_sanitize_comment_text(), feishu_get_reply_user_id(), feishu_extract_reply_text(), feishu_truncate_text(), feishu_extract_semantic_text(). Missing: async Feishu API functions, prompt builders (won't port — lark_oapi dependent). | P2 | ✅ PORTED — 20 tests (Phase 169) |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||||| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 181: G06 wecom_callback depth. 129→128 gaps.** |
+||| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 182: G02 base.py depth — http_no_proxy_match.** |
 
 ### Phase Map
 

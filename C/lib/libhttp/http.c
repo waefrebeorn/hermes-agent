@@ -305,12 +305,16 @@ http_t *http_new_with_retry(int timeout_sec, int max_retries, int backoff_ms) {
         }
     }
 
-    /* Check NO_PROXY — if it's "*", disable proxy entirely */
+    /* Check NO_PROXY — parse entries and check each one */
     const char *no_proxy = getenv("NO_PROXY");
     if (!no_proxy || !no_proxy[0])
         no_proxy = getenv("no_proxy");
-    if (no_proxy && no_proxy[0] && strcmp(no_proxy, "*") == 0)
-        c->proxy[0] = '\0';
+    if (no_proxy && no_proxy[0]) {
+        /* Simple wildcard check: "*" disables proxy entirely */
+        if (strcmp(no_proxy, "*") == 0) {
+            c->proxy[0] = '\0';
+        }
+    }
 
     return c;
 }
@@ -333,6 +337,92 @@ void http_client_set_proxy(http_t *h, const char *proxy_url) {
         snprintf(h->proxy, sizeof(h->proxy), "%s", proxy_url);
     else
         h->proxy[0] = '\0';
+}
+
+/* Check if a hostname should bypass proxy based on a NO_PROXY entry.
+ * Port of Python gateway/platforms/base.py _no_proxy_entry_matches().
+ * Supports: *, exact host, .domain suffix, *.wildcard suffix.
+ * Does NOT support IP/CIDR matching (Python ipaddress module). */
+bool http_no_proxy_match(const char *host, const char *entry) {
+    if (!host || !entry || !entry[0])
+        return false;
+
+    /* Trim leading/trailing whitespace from entry */
+    const char *start = entry;
+    while (*start == ' ' || *start == '\t' || *start == '\r' || *start == '\n')
+        start++;
+    const char *end = start + strlen(start);
+    while (end > start && (end[-1] == ' ' || end[-1] == '\t' ||
+           end[-1] == '\r' || end[-1] == '\n'))
+        end--;
+
+    size_t entry_len = (size_t)(end - start);
+    if (entry_len == 0) return false;
+
+    /* Wildcard "*" matches everything */
+    if (entry_len == 1 && *start == '*')
+        return true;
+
+    /* Lowercase host and entry for case-insensitive match */
+    char host_lower[512];
+    char entry_lower[512];
+    size_t host_len = strlen(host);
+
+    if (host_len >= sizeof(host_lower) || entry_len >= sizeof(entry_lower))
+        return false;
+
+    for (size_t i = 0; i < host_len; i++)
+        host_lower[i] = (host[i] >= 'A' && host[i] <= 'Z') ? host[i] + 32 : host[i];
+    host_lower[host_len] = '\0';
+
+    for (size_t i = 0; i < entry_len; i++)
+        entry_lower[i] = (start[i] >= 'A' && start[i] <= 'Z') ? start[i] + 32 : start[i];
+    entry_lower[entry_len] = '\0';
+
+    /* *.wildcard suffix match */
+    if (entry_len > 2 && entry_lower[0] == '*' && entry_lower[1] == '.') {
+        const char *suffix = entry_lower + 1; /* ".example.com" */
+        size_t suffix_len = entry_len - 1;
+        /* Match bare domain (e.g. "example.com" matches "*.example.com") */
+        if (host_len == suffix_len - 1) {
+            if (strcmp(host_lower, suffix + 1) == 0)
+                return true;
+        }
+        /* Match subdomain (e.g. "sub.example.com" matches "*.example.com") */
+        if (host_len >= suffix_len) {
+            const char *host_suffix = host_lower + (host_len - suffix_len);
+            if (strcmp(host_suffix, suffix) == 0)
+                return true;
+        }
+        return false;
+    }
+
+    /* .domain suffix match (.example.com matches example.com or sub.example.com) */
+    if (entry_lower[0] == '.') {
+        /* Exact match: host == "example.com" when entry is ".example.com" */
+        if (strcmp(host_lower, entry_lower + 1) == 0)
+            return true;
+        /* Suffix match: host ends with ".example.com" */
+        if (host_len > entry_len) {
+            const char *host_suffix = host_lower + (host_len - entry_len);
+            if (strcmp(host_suffix, entry_lower) == 0)
+                return true;
+        }
+        return false;
+    }
+
+    /* Exact host match */
+    if (strcmp(host_lower, entry_lower) == 0)
+        return true;
+
+    /* Subdomain match: host ends with ".entry" */
+    if (host_len > entry_len + 1) {
+        const char *host_suffix = host_lower + (host_len - entry_len - 1);
+        if (host_suffix[0] == '.' && strcmp(host_suffix + 1, entry_lower) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 /* Forward declaration for decompression function defined below */

@@ -162,6 +162,36 @@ int main(void) {
              http_parse_retry_after("   ") == -1.0);
     }
 
+    /* Test 13-21: http_no_proxy_match */
+    {
+        /* Exact host match */
+        TEST("no_proxy exact match", http_no_proxy_match("example.com", "example.com"));
+        TEST("no_proxy exact mismatch", !http_no_proxy_match("other.com", "example.com"));
+        /* Case insensitive */
+        TEST("no_proxy case insensitive host", http_no_proxy_match("EXAMPLE.COM", "example.com"));
+        TEST("no_proxy case insensitive entry", http_no_proxy_match("example.com", "EXAMPLE.COM"));
+        /* Wildcard */
+        TEST("no_proxy wildcard *", http_no_proxy_match("anything.example.com", "*"));
+        TEST("no_proxy wildcard only", http_no_proxy_match("x", "*"));
+        /* *.wildcard suffix */
+        TEST("no_proxy *.example.com match sub", http_no_proxy_match("sub.example.com", "*.example.com"));
+        TEST("no_proxy *.example.com match exact", http_no_proxy_match("example.com", "*.example.com"));
+        TEST("no_proxy *.example.com reject other", !http_no_proxy_match("other.com", "*.example.com"));
+        /* .domain suffix */
+        TEST("no_proxy .example.com match exact", http_no_proxy_match("example.com", ".example.com"));
+        TEST("no_proxy .example.com match sub", http_no_proxy_match("sub.example.com", ".example.com"));
+        TEST("no_proxy .example.com reject unrelated", !http_no_proxy_match("other.net", ".example.com"));
+        /* Subdomain matching (bare domain) */
+        TEST("no_proxy subdomain match", http_no_proxy_match("sub.example.com", "example.com"));
+        TEST("no_proxy subdomain reject unrelated", !http_no_proxy_match("other.com", "example.com"));
+        /* Edge cases */
+        TEST("no_proxy NULL host", !http_no_proxy_match(NULL, "example.com"));
+        TEST("no_proxy NULL entry", !http_no_proxy_match("example.com", NULL));
+        TEST("no_proxy empty entry", !http_no_proxy_match("example.com", ""));
+        /* Whitespace trimming */
+        TEST("no_proxy whitespace entry", http_no_proxy_match("example.com", " example.com "));
+    }
+
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All HTTP tests PASSED");
     return failures ? 1 : 0;
 }

@@ -1673,3 +1673,10 @@ Suite: 313/0/0 (272 test files). Gaps: 129. v248
 | P181-01 | G06 wecom_callback.py depth — wecom_xml_extract_tag() ported from _build_event() dependency. String-search-based XML tag extractor handling CDATA sections, plain text, whitespace trimming. wecom_callback_user_app_key() ported from _user_app_key(). 25-test suite covering: CDATA extraction, plain tags, event XML, NULL safety, buffer overflow, long values. | `C/include/hermes_wecom_callback.h` — public API. `C/src/gateway/platforms/wecom_callback.c` — implementations. `C/tests/test_wecom_callback.c` — 25/25 passed. |
 | P181-02 | Gap count reduced: 129→128 gaps. S3 sector: G06 upgraded from unstarted to PARTIAL (2/20 functions). Suite 313→314. Test files 272→272 (no new test file count — wecom_crypto tests counted separately). | `.hermes/mind-palace/battleship-v34.md` — G06 updated to PARTIAL, S3 3→2 gaps, TOTAL 129→128. |
 Suite: 314/0/0 (272 test files). Gaps: 128. v249
+## Phase 182: G02 base.py Depth — NO_PROXY Entry Matching (v250)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P182-01 | G02 base.py depth — http_no_proxy_match() ported from _no_proxy_entry_matches(). Supports wildcard `*`, `*.domain.com` suffix, `.domain.com` prefix, exact host, and subdomain matching. Case-insensitive. Whitespace-trimmed. Added to libhttp. Does NOT port IP/CIDR matching (Python ipaddress module). 18-test suite. | `C/lib/libhttp/http.h` — declaration. `C/lib/libhttp/http.c` — implementation (83 LOC). `C/tests/test_http.c` — 18/18 passed. |
+| P182-02 | Depth improvement within existing PARTIAL classification. Gaps unchanged (128). Suite unchanged (314/0/0). | `.hermes/mind-palace/battleship-v34.md` — G02 updated with http_no_proxy_match. |
+Suite: 314/0/0 (272 test files). Gaps: 128. v250

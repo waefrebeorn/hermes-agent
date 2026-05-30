@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v249)**
+**BANNER — WuBu Slermes C Translation (v250)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v249                                       ║
+║  WuBu Slermes C v250                                       ║
 ║  314/0/0 test suite  │  85 tools  │  98 CLI commands        ║
 ║  128 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 181: G06 wecom_callback depth                     ║
+║  Phase 182: G02 no_proxy_match depth                     ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
