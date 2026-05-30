@@ -3,6 +3,7 @@
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
 | 219 | L28 agent init PORTED + tool_delay. S1 complete (0 gaps). | PARTIAL (105 gaps) | PORTED (104 gaps) |
+| S7a | S7 test expansion — test_cli_paths.c 15→21 tests (50 assertions). Edge cases: tiny buffer, trailing slash, consistency, profile independence, long SLERMES_HOME. | — | S7 depth |
 | 217 | L27 prompt builder PORTED + S7 test expansion (22 assertions) | 107 gaps | 106 gaps |
 | 216 | L26 hermes_message_sanitize() — sanitization pipeline (surrogate fix, think-block strip, secret redaction). Wired into agent_loop.c. 35 tests. | 108 gaps | 107 gaps |
 | 215 | L26 estimate_payload_context_tokens() ported — JSON token estimator | 109 gaps | 108 gaps |
