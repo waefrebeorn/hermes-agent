@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 GHSA edge case expansion (env_passthrough 37→91 assertions). v296.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (website 17→38 assertions). v297.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -176,6 +176,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 227: Feishu platform test suite (S7 X01). test_feishu.c — 32 assertions covering state setters (webhook, app_credentials, default_receive_id normal/empty/reset), extractors (get_chat_id/get_text with normal/missing/NULL/unicode/multi-line), poll_messages null/http, setters interaction. Suite 333→334/0/0. Test files 287→288. v294.
 |- Phase 228: Email platform test suite (S7 X01). test_email.c — 51 assertions covering set_from (normal/empty/NULL/long/special), getters (chat_id/text/html/subject/thread_id/message_id/references with normal/missing/empty/NULL/unicode), get_attachments (2-elem array/empty/missing/NULL), setter interaction re-sets. Suite 334→335/0/0. Test files 288→289. v295.
 |- Phase 229: GHSA hardening edge case expansion (S7 X09). test_env_passthrough.c — 37→91 assertions. 54 new assertions covering all 67 blocked vars: hermes-prefixed provider keys, extended provider keys (XAI/DEEPSEEK/TOGETHER/PERPLEXITY/COHERE/FIREWORKS/HELICONE/PARALLEL), AWS creds, gateway credentials (TELEGRAM_HOME_CHANNEL, DISCORD_HOME_CHANNEL, SLACK_HOME_CHANNEL, SIGNAL_*, HASS, GITHUB_APP_*), infra (DOCKER_CERT_PATH, MODAL_TOKEN_SECRET, HERMES_HOME). v296.
+|- Phase 230: Website policy edge case expansion (S7 X09). test_website.c — 17→38 assertions. New edge cases: extract_host (deep subdomain, port, IP, trailing slash, empty, fragment), match_host (fnmatch wildcard behavior, different domain, null/empty patterns), check_access (query params, port, fragment, multiple rules, NULL/empty URL). v297.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)

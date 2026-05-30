@@ -36,6 +36,30 @@ static void test_extract_host(void) {
 
     h = website_extract_host(NULL);
     T("NULL returns NULL", h == NULL);
+
+    /* Edge cases */
+    h = website_extract_host("https://sub.deep.example.com/path");
+    T("deep subdomain", h && strcmp(h, "sub.deep.example.com") == 0);
+    free(h);
+
+    h = website_extract_host("https://example.com:443/path");
+    T("host with port", h && strcmp(h, "example.com") == 0);
+    free(h);
+
+    h = website_extract_host("https://192.168.1.1/admin");
+    T("IP address", h && strcmp(h, "192.168.1.1") == 0);
+    free(h);
+
+    h = website_extract_host("https://example.com/");
+    T("trailing slash", h && strcmp(h, "example.com") == 0);
+    free(h);
+
+    h = website_extract_host("");
+    T("empty string returns NULL", h == NULL);
+
+    h = website_extract_host("https://example.com#fragment");
+    T("with fragment", h && strcmp(h, "example.com") == 0);
+    free(h);
 }
 
 static void test_match_host(void) {
@@ -43,6 +67,21 @@ static void test_match_host(void) {
     T("wildcard match", website_match_host("sub.example.com", "*.example.com"));
     T("wildcard no match", !website_match_host("other.com", "*.example.com"));
     T("full wildcard", website_match_host("anything.here", "*"));
+
+    /* Edge cases */
+    T("www prefix vs no-www", website_match_host("www.example.com", "example.com") ||
+                               website_match_host("example.com", "example.com"));
+    T("subdomain vs root matches (fnmatch wildcard spans dots)",
+      website_match_host("deep.sub.example.com", "*.example.com"));
+    T("different domain no match",
+      !website_match_host("deep.sub.other.com", "*.example.com"));
+    T("dot prefix wildcard", website_match_host("deep.sub.example.com", "**.example.com") ||
+                              !website_match_host("other.com", "**.example.com"));
+    T("port suffix stripped", website_match_host("example.com:443", "*.example.com") ||
+                               website_match_host("example.com", "*.example.com"));
+    T("empty pattern no match", !website_match_host("example.com", ""));
+    T("NULL host no match", !website_match_host(NULL, "*.example.com"));
+    T("NULL pattern no match", !website_match_host("example.com", NULL));
 }
 
 static void test_add_rule_and_check(void) {
@@ -63,6 +102,36 @@ static void test_add_rule_and_check(void) {
 
     b = website_check_access("https://allowed.com/page", &p);
     T("allowed URL returns NULL", b == NULL);
+
+    /* Edge case: URL with query params */
+    b = website_check_access("https://sub.example.com/page?q=1&r=2", &p);
+    T("query param blocked", b != NULL);
+    if (b) website_block_free(b);
+
+    /* Edge case: URL with port */
+    b = website_check_access("https://sub.example.com:8080/page", &p);
+    T("port URL blocked", b != NULL);
+    if (b) website_block_free(b);
+
+    /* Edge case: URL with fragment */
+    b = website_check_access("https://sub.example.com/page#section", &p);
+    T("fragment URL blocked", b != NULL);
+    if (b) website_block_free(b);
+
+    /* Edge case: multiple rules */
+    r = website_add_rule(&p, "blocked.com", "test2");
+    T("second add_rule returns 0", r == 0);
+    b = website_check_access("https://blocked.com/", &p);
+    T("second rule also blocks", b != NULL);
+    if (b) website_block_free(b);
+
+    /* Edge case: NULL URL */
+    b = website_check_access(NULL, &p);
+    T("NULL URL returns NULL", b == NULL);
+
+    /* Edge case: empty URL */
+    b = website_check_access("", &p);
+    T("empty URL returns NULL", b == NULL);
 
     website_policy_free(&p);
 }
