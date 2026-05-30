@@ -237,6 +237,34 @@ int main(void) {
         if (r) { free(r->content); free(r->reasoning); free(r); }
     }
 
+    /* ── google_is_native_base_url ──────────────────────────── */
+    printf("\n--- google_is_native_base_url ---\n");
+    {
+        TEST("native_base_url NULL", !google_is_native_base_url(NULL));
+    }
+    {
+        TEST("native_base_url empty", !google_is_native_base_url(""));
+    }
+    {
+        TEST("native_base_url non-google", !google_is_native_base_url("https://api.openai.com/v1"));
+    }
+    {
+        TEST("native_base_url google default",
+             google_is_native_base_url("https://generativelanguage.googleapis.com/v1beta"));
+    }
+    {
+        TEST("native_base_url google with trailing slash",
+             google_is_native_base_url("https://generativelanguage.googleapis.com/v1beta/"));
+    }
+    {
+        TEST("native_base_url google mixed case",
+             google_is_native_base_url("HTTPS://GENERATIVELANGUAGE.GOOGLEAPIS.COM/V1BETA"));
+    }
+    {
+        TEST("native_base_url openai-compat endpoint",
+             !google_is_native_base_url("https://generativelanguage.googleapis.com/v1beta/openai"));
+    }
+
     /* Print summary */
     printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;

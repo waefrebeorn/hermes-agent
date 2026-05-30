@@ -2060,7 +2060,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (7 tests)"
+    if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (52 tests)"
     else
         echo "  Google depth test output:"
         /tmp/hermes_test_google_depth 2>&1 | sed 's/^/    /'

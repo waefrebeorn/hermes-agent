@@ -1964,3 +1964,9 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | R02c | `bedrock_classify_error()` categorizes Bedrock errors for retry/failover: `context_overflow`, `rate_limit` (ThrottlingException/Too many concurrent requests/ServiceQuotaExceededException), `overloaded` (ModelNotReadyException/ModelTimeoutException/InternalServerException), or `unknown`. | `src/agent/provider_bedrock.c:679-692` — classify function. `tests/test_bedrock_depth.c:322-354` — 9 test assertions (59→68). |
 | R02d | `bedrock_extract_provider_from_arn()` extracts the provider name from a Bedrock model ARN (e.g., `foundation-model/anthropic.claude-v2` → `anthropic`) by locating `foundation-model/` prefix and extracting text up to the first `.`. | `src/agent/provider_bedrock.c:696-704` — function body. `tests/test_bedrock_depth.c:356-375` — 6 test assertions (68→74). |
 | R02e | `bedrock_get_context_length()` provides context window sizes for 18 known Bedrock models via substring matching (longest key wins) with a 128000 default fallback. Covers Anthropic Claude (10 variants), Amazon Nova (3), Meta Llama (3), Mistral, and DeepSeek. | `src/agent/provider_bedrock.c:706-742` — table + function. `tests/test_bedrock_depth.c:377-406` — 8 test assertions (74→82). |
+
+## Phase 264: S8 R04 Gemini Depth — google_is_native_base_url()
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04a | `google_is_native_base_url()` ported from Python `gemini_native_adapter.is_native_gemini_base_url()`. Normalizes URL (lowercase, strip, rstrip /), checks for `generativelanguage.googleapis.com` and absence of `/openai` suffix. | `src/agent/provider_google.c:725-754` — implementation. `include/provider.h:216` — declaration. `tests/test_google_depth.c:242-269` — 7 test assertions (45→52). Suite 335/0/0. v331. |

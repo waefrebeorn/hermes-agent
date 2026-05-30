@@ -16,6 +16,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "provider.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -720,7 +721,42 @@ static void google_free_response(provider_response_t *resp) {
 }
 
 /* ================================================================
- *  Provider Operations Table
+ *  Google provider utility functions — ported from Python
+ *  gemini_native_adapter.py
+ * ================================================================ */
+
+/* Check if a base URL speaks Gemini's native REST API.
+ * Returns true when the URL contains "generativelanguage.googleapis.com"
+ * and does NOT end with "/openai" (OpenAI-compat endpoint). */
+bool google_is_native_base_url(const char *base_url) {
+    if (!base_url || !*base_url) return false;
+
+    /* Normalize: strip, lowercase */
+    char buf[512];
+    size_t len = 0;
+    const char *p = base_url;
+    while (*p && len < sizeof(buf) - 1) {
+        buf[len++] = (char)tolower((unsigned char)*p);
+        p++;
+    }
+    buf[len] = '\0';
+
+    /* Trim trailing whitespace */
+    while (len > 0 && buf[len - 1] == ' ') buf[--len] = '\0';
+    /* Trim trailing slashes */
+    while (len > 0 && buf[len - 1] == '/') buf[--len] = '\0';
+
+    if (len == 0) return false;
+    if (!strstr(buf, "generativelanguage.googleapis.com")) return false;
+
+    /* Check it doesn't end with /openai (the OpenAI-compat endpoint) */
+    if (len >= 7 && strcmp(buf + len - 7, "/openai") == 0) return false;
+
+    return true;
+}
+
+/* ================================================================
+ *  Free response
  * ================================================================ */
 
 const provider_ops_t PROVIDER_OPS_GOOGLE = {

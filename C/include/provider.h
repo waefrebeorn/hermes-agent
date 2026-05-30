@@ -212,6 +212,9 @@ const char *bedrock_classify_error(const char *error_message);
 char *bedrock_extract_provider_from_arn(const char *arn);
 int  bedrock_get_context_length(const char *model_id);
 
+/* Google provider utility functions */
+bool google_is_native_base_url(const char *base_url);
+
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;
 
