@@ -972,6 +972,27 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 case '$': /* go to line end */
                     le->buf->cursor = le->buf->len;
                     break;
+                case '^': /* first non-whitespace */
+                {
+                    size_t pos = 0;
+                    while (pos < le->buf->len && isspace((unsigned char)le->buf->buf[pos]))
+                        pos++;
+                    le->buf->cursor = pos;
+                    break;
+                }
+                case '_': /* last non-whitespace */
+                {
+                    size_t pos = le->buf->len;
+                    while (pos > 0) {
+                        pos--;
+                        if (!isspace((unsigned char)le->buf->buf[pos])) {
+                            pos++;
+                            break;
+                        }
+                    }
+                    le->buf->cursor = pos;
+                    break;
+                }
                 case 'x': /* delete char under cursor */
                     line_buf_delete_forward(le->buf);
                     break;

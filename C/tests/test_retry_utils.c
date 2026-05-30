@@ -92,6 +92,30 @@ int main(void)
     double r8b = hermes_jittered_backoff(-1, 5.0, 120.0, 0.0);
     ASSERT_NEAR(r8b, 5.0, 0.01);
 
+    /* Test 10: Zero max_delay caps at 0 */
+    double r9 = hermes_jittered_backoff(3, 5.0, 0.0, 0.0);
+    ASSERT_NEAR(r9, 0.0, 0.01);
+
+    /* Test 11: Very small base_delay */
+    double r10 = hermes_jittered_backoff(4, 0.001, 120.0, 0.0);
+    ASSERT_NEAR(r10, 0.008, 0.001);
+
+    /* Test 12: Very large max_delay */
+    double r11 = hermes_jittered_backoff(10, 5.0, 999999.0, 0.0);
+    ASSERT_NEAR(r11, 2560.0, 0.1);
+
+    /* Test 13: Jitter ratio > 1.0 still bounded */
+    double r12 = hermes_jittered_backoff(2, 5.0, 120.0, 2.0);
+    double expected_r12 = 10.0;
+    TEST("jitter>1 bounded correctly", r12 >= expected_r12 && r12 <= expected_r12 + 2.0 * expected_r12);
+
+    /* Test 14: Multiple resets */
+    hermes_jittered_backoff_reset();
+    hermes_jittered_backoff_reset();
+    hermes_jittered_backoff_reset();
+    double r13 = hermes_jittered_backoff(3, 10.0, 100.0, 0.0);
+    ASSERT_NEAR(r13, 40.0, 0.01);
+
     printf("retry_utils: %d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;
 }
