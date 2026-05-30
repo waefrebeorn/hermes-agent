@@ -963,6 +963,26 @@ char *gw_prefix_within_utf16_limit(const char *s, size_t limit) {
     return strdup(s);
 }
 
+/* Generic binary search: find largest n such that len_fn(s, n) <= budget.
+ * Port of Python gateway/platforms/base.py _custom_unit_to_cp().
+ * len_fn receives (string, substring_length) and returns unit count.
+ * Returns the codepoint offset (character index), not byte offset.
+ * Returns 0 on invalid input, len on full match. */
+int gw_custom_unit_to_cp(const char *s, int len, int budget,
+                          int (*len_fn)(const char *, int)) {
+    if (!s || len < 0 || budget < 0 || !len_fn) return 0;
+    if (len_fn(s, len) <= budget) return len;
+    int lo = 0, hi = len;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (len_fn(s, mid) <= budget)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    return lo;
+}
+
 /* E44: Retry an API call with exponential backoff on 429/5xx.
  * Returns true if at least one attempt succeeded. */
 bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,

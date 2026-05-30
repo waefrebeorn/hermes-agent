@@ -277,6 +277,13 @@ char *gw_truncate_message(const char *text, size_t max_len);
 size_t gw_utf16_len(const char *s);
 char *gw_prefix_within_utf16_limit(const char *s, size_t limit);
 
+/* Generic binary search: find largest n such that len_fn(s, n) <= budget.
+ * Port of Python gateway/platforms/base.py _custom_unit_to_cp().
+ * len_fn receives (string, substring_length) and returns unit count.
+ * Returns codepoint offset. 0 on invalid input. */
+int gw_custom_unit_to_cp(const char *s, int len, int budget,
+                          int (*len_fn)(const char *, int));
+
 /* E44-E47: Gateway error handling */
 bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx, int max_retries, int base_delay_ms);
 bool gw_refresh_token(int plat_idx);

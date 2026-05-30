@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v254 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 186: B07 terminal depth — terminal_read_shell_token() ported. 12-test suite (102 total). Suite 315/0/0. Gaps unchanged (depth).**
+**v255 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 187: G02 base.py depth — gw_custom_unit_to_cp() ported. 7-test suite (M07: 45 total). Suite 315/0/0. Gaps unchanged (depth).**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -85,7 +85,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio, http_parse_retry_after, http_no_proxy_match(), http_split_host_port() (Phase 184 — host:port parsing with URL/IPv6/host:port/plain), http_no_proxy_entries() (Phase 184 — reads NO_PROXY env var), http_should_bypass_proxy() (Phase 184 — high-level proxy bypass check). Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
+|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio, http_parse_retry_after, http_no_proxy_match(), http_split_host_port() (Phase 184), http_no_proxy_entries() (Phase 184), http_should_bypass_proxy() (Phase 184), gw_custom_unit_to_cp() (Phase 187 — generic budget binary search with custom len_fn). Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling — PORTED: textwrap_chunk(), feishu_sanitize_comment_text(), feishu_get_reply_user_id(), feishu_extract_reply_text(), feishu_truncate_text(), feishu_extract_semantic_text(). Missing: async Feishu API functions, prompt builders (won't port — lark_oapi dependent). | P2 | ✅ PORTED — 20 tests (Phase 169) |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 11 gaps (4 P2, 7 P3) — Phase 186: B07 terminal depth (terminal_read_shell_token). Suite 315/0/0.**
+**S6: 11 gaps (4 P2, 7 P3) — Phase 187: G02 base depth (gw_custom_unit_to_cp). Suite 315/0/0.**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 186: B07 terminal depth — terminal_read_shell_token. Suite 315/0/0.** |
+|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 187: G02 base.py depth — gw_custom_unit_to_cp. Suite 315/0/0.** |
 
 ### Phase Map
 

@@ -320,6 +320,23 @@ int main(void) {
         free(r);
     }
 
+    /*
+     * 6. gw_custom_unit_to_cp
+     */
+    printf("\n--- gw_custom_unit_to_cp ---\n");
+    {
+        /* Simple char-counting len_fn */
+        int count_char(const char *s, int n) { return n; } /* counts characters = returns n */
+
+        TEST("custom full match", gw_custom_unit_to_cp("hello", 5, 5, count_char) == 5);
+        TEST("custom budget 3", gw_custom_unit_to_cp("hello", 5, 3, count_char) == 3);
+        TEST("custom zero budget", gw_custom_unit_to_cp("hello", 5, 0, count_char) == 0);
+        TEST("custom negative budget", gw_custom_unit_to_cp("hello", 5, -1, count_char) == 0);
+        TEST("custom NULL input", gw_custom_unit_to_cp(NULL, 5, 5, count_char) == 0);
+        TEST("custom NULL fn", gw_custom_unit_to_cp("hello", 5, 5, NULL) == 0);
+        TEST("custom empty string", gw_custom_unit_to_cp("", 0, 5, count_char) == 0);
+    }
+
     /* Summary */
     printf("\n=== M07 Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;

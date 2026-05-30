@@ -1713,3 +1713,11 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v253
 | P186-02 | 12-test suite: simple word, stop-at-space, single quotes, double quotes with escaped quote, backslash-escaped space, stop at semicolon, stop at pipe, NULL safety, negative start, start beyond length. Suite 90→102 assertions in test_terminal.c. | `C/tests/test_terminal.c` — 12/12 passed. |
 
 Suite: 315/0/0 (273 test files). Gaps: 128. v254
+## Phase 187: G02 base.py Depth — Generic Budget Binary Search (v255)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P187-01 | G02 base.py depth — gw_custom_unit_to_cp() ported from Python _custom_unit_to_cp(). Generic binary search: finds largest codepoint offset n such that len_fn(s, n) <= budget. Uses function pointer callback for custom unit measurement (e.g. UTF-16 code units). Returns codepoint offset, 0 on invalid input. | `C/include/hermes_gateway.h` — declaration. `C/src/gateway/server.c` — implementation (18 LOC). |
+| P187-02 | 7-test suite added to test_gateway_escape.c: full match, budget 3, zero budget, negative budget, NULL input, NULL fn, empty string. Suite 38→45 in M07. | `C/tests/test_gateway_escape.c` — 7/7 passed. |
+
+Suite: 315/0/0 (273 test files). Gaps: 128. v255
