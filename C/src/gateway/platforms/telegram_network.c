@@ -324,3 +324,50 @@ bool telegram_discover_fallback_ips(const char *hostname,
     *out_count = tmp_count;
     return true;
 }
+
+/* ================================================================
+ *  telegram_rewrite_url_for_ip
+ *  Port of Python _rewrite_request_for_ip().
+ *  Replaces hostname in URL with fallback IP, preserves original host.
+ * ================================================================ */
+
+char *telegram_rewrite_url_for_ip(const char *url, const char *ip)
+{
+    if (!url || !ip || !ip[0]) return NULL;
+
+    /* Find "://" separator */
+    const char *scheme_end = strstr(url, "://");
+    if (!scheme_end) return NULL;
+
+    const char *host_start = scheme_end + 3;
+
+    /* Find end of hostname (next '/' or ':' or end of string) */
+    const char *host_end = host_start;
+    while (*host_end && *host_end != '/' && *host_end != ':' && *host_end != '?')
+        host_end++;
+
+    /* Extract original hostname */
+    size_t host_len = (size_t)(host_end - host_start);
+    char orig_host[256];
+    if (host_len >= sizeof(orig_host)) return NULL;
+    memcpy(orig_host, host_start, host_len);
+    orig_host[host_len] = '\0';
+
+    /* Build new URL: scheme://IP/path */
+    size_t scheme_len = (size_t)(host_start - url);
+    size_t path_len = strlen(host_end);
+    size_t ip_len = strlen(ip);
+
+    /* Format: "URL|orig_host" */
+    size_t total = scheme_len + ip_len + path_len + 1 + host_len + 1;
+    char *result = (char *)xmalloc(total);
+
+    memcpy(result, url, scheme_len);                         /* "https://" */
+    memcpy(result + scheme_len, ip, ip_len);                 /* "1.2.3.4" */
+    memcpy(result + scheme_len + ip_len, host_end, path_len); /* "/path..." */
+    result[scheme_len + ip_len + path_len] = '|';
+    memcpy(result + scheme_len + ip_len + path_len + 1, orig_host, host_len);
+    result[scheme_len + ip_len + path_len + 1 + host_len] = '\0';
+
+    return result;
+}

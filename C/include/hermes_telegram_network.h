@@ -86,6 +86,22 @@ bool telegram_discover_fallback_ips(const char *hostname,
                                      char ***out_ips,
                                      size_t *out_count);
 
+/**
+ * Rewrite a URL to use a fallback IP while preserving the original hostname.
+ * Port of Python _rewrite_request_for_ip().
+ *
+ * Replaces the hostname in the URL with the given IP address.
+ * The original hostname is stored in the returned string as a Host header
+ * value in the format "URL|hostname" for the caller to split.
+ * Returns malloc'd string, caller must free(). NULL on error.
+ *
+ * Example:
+ *   telegram_rewrite_url_for_ip("https://api.telegram.org/bot123/",
+ *                                "149.154.167.220")
+ *   Returns "https://149.154.167.220/bot123/|api.telegram.org"
+ */
+char *telegram_rewrite_url_for_ip(const char *url, const char *ip);
+
 #ifdef __cplusplus
 }
 #endif

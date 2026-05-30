@@ -1107,7 +1107,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_telegram_network -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_telegram_network > /dev/null 2>&1; then ok "telegram_network (G07: 16 tests)"
+    if /tmp/hermes_test_telegram_network > /dev/null 2>&1; then ok "telegram_network (G07: 22 tests)"
     else fail "telegram_network (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_telegram_network

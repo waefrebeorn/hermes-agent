@@ -214,6 +214,74 @@ static void test_parse_doh_null_out_params(void) {
 }
 
 /* ================================================================
+ *  telegram_rewrite_url_for_ip tests
+ * ================================================================ */
+
+static void test_rewrite_null_url(void) {
+    TEST("rewrite null url returns NULL");
+    char *r = telegram_rewrite_url_for_ip(NULL, "1.2.3.4");
+    if (!r) { PASS(); return; }
+    FAIL("expected NULL"); free(r);
+}
+
+static void test_rewrite_null_ip(void) {
+    TEST("rewrite null ip returns NULL");
+    char *r = telegram_rewrite_url_for_ip("https://example.com/path", NULL);
+    if (!r) { PASS(); return; }
+    FAIL("expected NULL"); free(r);
+}
+
+static void test_rewrite_empty_ip(void) {
+    TEST("rewrite empty ip returns NULL");
+    char *r = telegram_rewrite_url_for_ip("https://example.com/path", "");
+    if (!r) { PASS(); return; }
+    FAIL("expected NULL"); free(r);
+}
+
+static void test_rewrite_basic(void) {
+    TEST("rewrite basic URL");
+    char *r = telegram_rewrite_url_for_ip("https://api.telegram.org/bot123/sendMessage",
+                                           "149.154.167.220");
+    if (!r) { FAIL("NULL"); return; }
+    /* Check the format: URL|hostname */
+    const char *sep = strchr(r, '|');
+    if (!sep) { FAIL("no separator"); free(r); return; }
+    /* URL part should have IP */
+    size_t url_len = (size_t)(sep - r);
+    if (strncmp(r, "https://149.154.167.220/bot123/sendMessage", url_len) != 0) {
+        FAIL("wrong URL"); free(r); return;
+    }
+    /* Host part should be original hostname */
+    if (strcmp(sep + 1, "api.telegram.org") != 0) {
+        FAIL("wrong host"); free(r); return;
+    }
+    PASS(); free(r);
+}
+
+static void test_rewrite_no_scheme(void) {
+    TEST("rewrite URL without scheme returns NULL");
+    char *r = telegram_rewrite_url_for_ip("api.telegram.org/path", "1.2.3.4");
+    if (!r) { PASS(); return; }
+    FAIL("expected NULL"); free(r);
+}
+
+static void test_rewrite_with_port(void) {
+    TEST("rewrite URL with port");
+    char *r = telegram_rewrite_url_for_ip("https://api.telegram.org:443/path", "1.2.3.4");
+    if (!r) { FAIL("NULL"); return; }
+    const char *sep = strchr(r, '|');
+    if (!sep) { FAIL("no separator"); free(r); return; }
+    size_t url_len = (size_t)(sep - r);
+    if (strncmp(r, "https://1.2.3.4:443/path", url_len) != 0) {
+        FAIL("wrong URL"); free(r); return;
+    }
+    if (strcmp(sep + 1, "api.telegram.org") != 0) {
+        FAIL("wrong host"); free(r); return;
+    }
+    PASS(); free(r);
+}
+
+/* ================================================================
  *  Main
  * ================================================================ */
 
@@ -237,6 +305,14 @@ int main(void) {
     test_parse_doh_multiple_a();
     test_parse_doh_filters_non_a();
     test_parse_doh_null_out_params();
+
+    printf("=== telegram_rewrite_url_for_ip ===\n");
+    test_rewrite_null_url();
+    test_rewrite_null_ip();
+    test_rewrite_empty_ip();
+    test_rewrite_basic();
+    test_rewrite_no_scheme();
+    test_rewrite_with_port();
 
     printf("\n%d/%d passed\n", passed, tests);
     return passed == tests ? 0 : 1;
