@@ -53,6 +53,63 @@ static void test_scheme_http(void)
     PASS();
 }
 
+static void test_scheme_invalid(void)
+{
+    TEST("scheme invalid falls back to https");
+    setenv("TOOL_GATEWAY_SCHEME", "ftp", 1);
+    const char *s = managed_gw_get_scheme();
+    ASSERT_STR(s, "https", "fallback https");
+    PASS();
+}
+
+/* ─── Auth JSON path ────────────────────────────────── */
+
+static void test_auth_json_path_null_home(void)
+{
+    TEST("auth json path with null home");
+    char buf[512];
+    managed_gw_auth_json_path(NULL, buf, sizeof(buf));
+    /* Falls back to $HOME/.slermes/auth.json */
+    ASSERT(strlen(buf) > 10, "non-empty path");
+    ASSERT(strstr(buf, ".slermes") != NULL, "contains .slermes");
+    PASS();
+}
+
+static void test_auth_json_path_empty_home(void)
+{
+    TEST("auth json path with empty home");
+    char buf[512];
+    managed_gw_auth_json_path("", buf, sizeof(buf));
+    ASSERT(strlen(buf) > 10, "non-empty path");
+    ASSERT(strstr(buf, ".slermes") != NULL, "contains .slermes");
+    PASS();
+}
+
+/* ─── URL builder edge cases ────────────────────────── */
+
+static void test_build_url_null_vendor(void)
+{
+    TEST("build url null vendor returns empty");
+    char buf[512];
+    buf[0] = 'X';
+    managed_gw_build_url(NULL, buf, sizeof(buf));
+    ASSERT(buf[0] == '\0', "empty string");
+    PASS();
+}
+
+static void test_build_url_browser_vendor(void)
+{
+    TEST("build url browser vendor");
+    unsetenv("TOOL_GATEWAY_SCHEME");
+    unsetenv("BROWSER_GATEWAY_URL");
+    unsetenv("TOOL_GATEWAY_DOMAIN");
+    char buf[512];
+    managed_gw_build_url("browser", buf, sizeof(buf));
+    ASSERT(strstr(buf, "browser-gateway") != NULL, "browser gateway");
+    ASSERT(strstr(buf, "nousresearch.com") != NULL, "default domain");
+    PASS();
+}
+
 /* ─── URL builder ───────────────────────────────────────── */
 
 static void test_build_url_default(void)
@@ -163,6 +220,16 @@ static void test_is_ready_false(void)
     PASS();
 }
 
+static void test_resolve_null_config(void)
+{
+    TEST("resolve null config returns false");
+    setenv("NOUS_MANAGED_TOOLS", "true", 1);
+    setenv("TOOL_GATEWAY_USER_TOKEN", "tok", 1);
+    bool ok = managed_gw_resolve("/tmp", "fal", NULL);
+    ASSERT(!ok, "should be false");
+    PASS();
+}
+
 /* ─── Main ──────────────────────────────────────────────── */
 
 int main(void)
@@ -170,14 +237,20 @@ int main(void)
     printf("=== managed_gateway tests ===\n\n");
 
     test_auth_json_path_default();
+    test_auth_json_path_null_home();
+    test_auth_json_path_empty_home();
     test_scheme_default();
     test_scheme_http();
+    test_scheme_invalid();
     test_build_url_default();
     test_build_url_with_env();
     test_build_url_custom_domain();
+    test_build_url_null_vendor();
+    test_build_url_browser_vendor();
     test_resolve_disabled();
     test_resolve_no_vendor();
     test_resolve_no_token();
+    test_resolve_null_config();
     test_resolve_with_env_token();
     test_is_ready_true();
     test_is_ready_false();

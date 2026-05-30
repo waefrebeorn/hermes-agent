@@ -1801,3 +1801,5 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 Suite: 335/0/0 (289 test files). Gaps: 103. v300
 || S7t | S7 depth: FAL common edge case expansion (S7 X09). test_fal_common.c — 15→25 assertions (+10). API key: empty FAL_API_KEY falls through to SLERMES_FAL_KEY, both empty returns NULL. JSON escape: quotes (input length < output), backslash, newline (\n→\\n), tab (\t→\\t), truncation with tiny buffer. Error builders: error_response with plain string message. | tests/test_fal_common.c — 25 assertions. lib/libfal_common/fal_common.c covered. |
 Suite: 335/0/0 (289 test files). Gaps: 103. v301
+|| S7u | S7 depth: Managed gateway edge case expansion (S7 X09). test_managed_gateway.c — 12→18 tests (+6). Auth path: null/empty home falls back to $HOME/.slermes/auth.json. Scheme: invalid scheme (ftp) falls back to https. URL builder: null vendor returns empty, browser vendor builds correctly. Resolve: null config returns false. | tests/test_managed_gateway.c — 18 tests. lib/libmangateway/managed_gateway.c covered. |
+Suite: 335/0/0 (289 test files). Gaps: 103. v302
