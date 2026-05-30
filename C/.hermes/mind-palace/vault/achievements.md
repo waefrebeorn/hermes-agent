@@ -1940,3 +1940,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 ||---|-------------|----------|
 ||| D09o | `o` open line below: moves cursor to end of buffer, inserts `\n`, enters INSERT mode. `O` open line above: moves cursor to start, inserts `\n`, resets cursor to 0, enters INSERT mode. Both add newline separator for multi-line editing. | `lib/liblineedit/line_edit.c:1101-1118` — `o`/`O` dispatch in vi NORMAL mode. Suite 335/0/0. v326. |
+||
+||## Phase 260: S0 D09 Vi Mode Depth — % Match Bracket
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| D09p | `%` jump to matching bracket: when cursor on `(`, `[`, or `{`, scans forward tracking depth of same bracket type until matching close is found. When cursor on `)`, `]`, or `}`, scans backward. Only the specific bracket pair is tracked (nested pairs of other types are transparent). Does nothing when cursor not on a bracket character. | `lib/liblineedit/line_edit.c:1116-1147` — `%` dispatch in vi NORMAL mode. Suite 335/0/0. v327. |

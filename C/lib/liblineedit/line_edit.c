@@ -1113,6 +1113,38 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
                     break;
                 }
+                case '%': /* jump to matching bracket () [] {} */
+                {
+                    if (le->buf->cursor < le->buf->len) {
+                        char c = le->buf->buf[le->buf->cursor];
+                        char open_c, close_c;
+                        int dir;
+                        if (c == '(') { open_c = '('; close_c = ')'; dir = 1; }
+                        else if (c == ')') { open_c = '('; close_c = ')'; dir = -1; }
+                        else if (c == '[') { open_c = '['; close_c = ']'; dir = 1; }
+                        else if (c == ']') { open_c = '['; close_c = ']'; dir = -1; }
+                        else if (c == '{') { open_c = '{'; close_c = '}'; dir = 1; }
+                        else if (c == '}') { open_c = '{'; close_c = '}'; dir = -1; }
+                        else break;
+                        int depth = 1;
+                        size_t pos = le->buf->cursor;
+                        while (depth > 0) {
+                            if (dir > 0) {
+                                pos++;
+                                if (pos >= le->buf->len) break;
+                                if (le->buf->buf[pos] == open_c) depth++;
+                                else if (le->buf->buf[pos] == close_c) depth--;
+                            } else {
+                                if (pos == 0) break;
+                                pos--;
+                                if (le->buf->buf[pos] == open_c) depth--;
+                                else if (le->buf->buf[pos] == close_c) depth++;
+                            }
+                        }
+                        if (depth == 0) le->buf->cursor = pos;
+                    }
+                    break;
+                }
                 case 'r': /* replace char under cursor */
                 {
                     char next;

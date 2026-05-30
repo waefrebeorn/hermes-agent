@@ -2,7 +2,7 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v326.
+||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v327.
 |- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -18,6 +18,7 @@ Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
 ||- Phase 257: S8 R04 Gemini native adapter depth — google_map_finish_reason() maps Google raw finish reasons (STOP/MAX_TOKENS/SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPAM/IMAGE_SAFETY) to OpenAI-compatible format (stop/length/content_filter). google_is_free_tier_quota_error() detects free-tier exhaustion in 429 errors with billing guidance. Blocked content detection for finishReason=SAFETY. 6 test assertions updated for mapped values. Suite 335/0/0. v324.
 ||- Phase 258: S0 D09 vi mode depth — line_edit_yank_line() function for yy/Y yank whole line into kill ring. 13 new assertions (120→133). Suite 335/0/0. v325.
 |- Phase 259: S0 D09 vi mode depth — o/O open line below/above in vi NORMAL mode. Suite 335/0/0. v326.
+|- Phase 260: S0 D09 vi mode depth — % jump to matching bracket/paren/brace. Suite 335/0/0. v327.
 |
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

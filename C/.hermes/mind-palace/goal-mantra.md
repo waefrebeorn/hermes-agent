@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v326)
+# Goal Mantra — Slermes C (v327)
 
-335/0/0 (292 test files). 95 gaps. Phase 259: S0 D09 vi mode depth — o/O open line below/above. 135-test suite.
+335/0/0 (292 test files). 95 gaps. Phase 260: S0 D09 vi mode depth — % match bracket. 136-test suite.
 
 ## Loop
 
