@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v295)
+# Goal Mantra — Slermes C (v296)
 
-335/0/0 (289 test files). 103 gaps. Phase 228: Email test suite (51 assertions). S7 X01 test files 289.
+335/0/0 (289 test files). 103 gaps. Phase 229: GHSA hardening edge case expansion (env_passthrough 37→91 assertions). S7 X09 test expansion.
 
 ## Loop
 

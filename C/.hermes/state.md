@@ -1,4 +1,4 @@
-# STATE — Slermes C Translation (v295)
+# STATE — Slermes C Translation (v296)
 
 > **This file has moved.** The canonical state dashboard is at `mind-palace/state.md`.
 >
