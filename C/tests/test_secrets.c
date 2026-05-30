@@ -73,6 +73,77 @@ int main(void) {
     TEST("non-BSM ref passthrough", result && strcmp(result, "${NOT_BSM:key}") == 0);
     free(result);
 
+    /* --- Additional edge cases --- */
+    printf("\n--- Edge cases ---\n");
+
+    /* Empty BSM key */
+    result = hermes_secrets_resolve_string("${BSM:}", false);
+    TEST("empty BSM key passthrough", result && strcmp(result, "${BSM:}") == 0);
+    free(result);
+
+    /* BSM key with spaces */
+    result = hermes_secrets_resolve_string("${BSM:my key}", false);
+    TEST("BSM key with space passthrough", result && strstr(result, "${BSM:my key}") != NULL);
+    free(result);
+
+    /* BSM ref at very start of string */
+    result = hermes_secrets_resolve_string("${BSM:start} tail", false);
+    TEST("BSM ref at start", result && strstr(result, "${BSM:start}") != NULL && strstr(result, " tail") != NULL);
+    free(result);
+
+    /* BSM ref at very end of string */
+    result = hermes_secrets_resolve_string("head ${BSM:end}", false);
+    TEST("BSM ref at end", result && strstr(result, "head ") != NULL && strstr(result, "${BSM:end}") != NULL);
+    free(result);
+
+    /* Only BSM prefix, no colon */
+    result = hermes_secrets_resolve_string("${BSM}", false);
+    TEST("BSM without colon passthrough", result && strcmp(result, "${BSM}") == 0);
+    free(result);
+
+    /* Very long normal input */
+    {
+        char long_input[2048];
+        memset(long_input, 'x', 2000);
+        long_input[2000] = '\0';
+        result = hermes_secrets_resolve_string(long_input, false);
+        TEST("very long input passthrough", result && strlen(result) == 2000);
+        free(result);
+    }
+
+    /* Very long input with BSM ref */
+    {
+        char long_input[2048];
+        memset(long_input, 'x', 1000);
+        memcpy(long_input + 1000, "${BSM:secret}", 12);
+        memset(long_input + 1012, 'y', 988);
+        long_input[2000] = '\0';
+        result = hermes_secrets_resolve_string(long_input, false);
+        TEST("long input with BSM ref preserves length", result && strlen(result) >= 2000);
+        free(result);
+    }
+
+    /* Null in strict mode returns empty string (same as non-strict) */
+    result = hermes_secrets_resolve_string(NULL, true);
+    TEST("NULL strict mode returns empty", result && strcmp(result, "") == 0);
+    free(result);
+
+    /* Empty string strict mode */
+    result = hermes_secrets_resolve_string("", true);
+    TEST("empty strict mode passthrough", result && strcmp(result, "") == 0);
+    free(result);
+
+    /* BSM key with special characters */
+    result = hermes_secrets_resolve_string("${BSM:my-key_1.0}", false);
+    TEST("BSM special chars key passthrough", result && strstr(result, "${BSM:my-key_1.0}") != NULL);
+    free(result);
+
+    /* Multiple non-adjacent BSM refs with varying spacing */
+    result = hermes_secrets_resolve_string("a${BSM:x}b${BSM:y}c", false);
+    TEST("BSM refs separated by single chars",
+         result && strstr(result, "${BSM:x}") != NULL && strstr(result, "${BSM:y}") != NULL);
+    free(result);
+
     printf("\n=== Results: %d passed, %d failed, %d total ===\n", pass, fail, pass + fail);
     return fail > 0 ? 1 : 0;
 }

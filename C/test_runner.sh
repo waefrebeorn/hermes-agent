@@ -2481,7 +2481,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/secrets.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_secrets -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_secrets > /dev/null 2>&1; then ok "secrets (11 tests, bugfix)"
+    if /tmp/hermes_test_secrets > /dev/null 2>&1; then ok "secrets (22 tests)"
     else fail "secrets (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_secrets
 else skip "secrets (compilation failed)"

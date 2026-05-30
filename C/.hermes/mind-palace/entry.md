@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v366)
+# Entry — Slermes C Parity (v367)
 
-Phase 302: S7 proc test expansion — 36 assertions (15→36). 78 gaps.
+Phase 303: S7 secrets test expansion — 22 assertions (14→22). 78 gaps.

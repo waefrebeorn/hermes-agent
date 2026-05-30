@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v366. Phase 302: S7 X09 proc edge case expansion — 21 new assertions (15→36). Proc: PID 0/invalid/large/null safety, load_avg NULL params, vm>=rss, pid==getpid(), consistency checks, sanity bounds. Suite 335/0/15.
+|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v367. Phase 303: S7 X09 secrets edge case expansion — 8 new assertions (14→22). Secrets: empty BSM key, BSM key with space, BSM at start/end, BSM without colon, very long input, NULL strict mode passthrough, special chars in BSM key, separated refs. Suite 335/0/15.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
