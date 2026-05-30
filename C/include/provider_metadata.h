@@ -333,6 +333,17 @@ int provider_context_cache_get(const char *model, const char *base_url);
  * Returns 1 on success, 0 on failure. */
 int provider_context_cache_invalidate(const char *model, const char *base_url);
 
+/* Add model aliases: if model_id contains "/", also indexes under bare name.
+ * Port of Python model_metadata._add_model_aliases().
+ * Sets cache[model_id] = entry via json_copy. If model_id contains "/",
+ * also sets cache[bare_model] = json_copy(entry) if bare_model not already present. */
+void provider_add_model_aliases(json_t *cache, const char *model_id, json_t *entry);
+
+/* Get a lower context length from a provider error (bounded by current).
+ * Port of Python model_metadata.get_context_length_from_provider_error().
+ * Returns parsed limit only if < current_context_length, or -1 if no limit found. */
+int provider_get_context_length_from_provider_error(const char *error_msg, int current_context_length);
+
 #ifdef __cplusplus
 }
 #endif

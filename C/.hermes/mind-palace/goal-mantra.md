@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v344)
+# Goal Mantra — Slermes C (v345)
 
-335/0/0 (292 test files). 94 gaps. Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite.
+334/0/3 (292 test files). 94 gaps. Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). Provider metadata 332-test suite.
 
 ## Loop
 

@@ -47,6 +47,8 @@ static void test_get_next_probe_tier(void);
 static void test_provider_context_cache_path(void);
 static void test_provider_context_cache_save_get_invalidate(void);
 static void test_provider_extract_first_int(void);
+static void test_provider_add_model_aliases(void);
+static void test_provider_get_context_length_from_provider_error(void);
 
 int main(void) {
 
@@ -499,6 +501,8 @@ int main(void) {
     test_provider_context_cache_path();
     test_provider_context_cache_save_get_invalidate();
     test_provider_extract_first_int();
+    test_provider_add_model_aliases();
+    test_provider_get_context_length_from_provider_error();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -1405,4 +1409,155 @@ static void test_provider_extract_first_int(void) {
         TEST("empty keys", provider_extract_first_int(p, empty_keys) == -1);
         json_free(p);
     }
+}
+
+/* ---- provider_add_model_aliases ---- */
+static void test_provider_add_model_aliases(void) {
+    printf("\n[R10] provider_add_model_aliases:\n");
+
+    /* NULL cache — no crash */
+    {
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(128000));
+        provider_add_model_aliases(NULL, "openai/gpt-4o", entry);
+        json_free(entry);
+        TEST("NULL cache no crash", 1);
+    }
+
+    /* NULL model_id — no crash */
+    {
+        json_t *cache = json_object();
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(128000));
+        provider_add_model_aliases(cache, NULL, entry);
+        json_free(entry);
+        json_free(cache);
+        TEST("NULL model_id no crash", 1);
+    }
+
+    /* Empty model_id — no crash */
+    {
+        json_t *cache = json_object();
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(128000));
+        provider_add_model_aliases(cache, "", entry);
+        json_free(entry);
+        json_free(cache);
+        TEST("empty model_id no crash", 1);
+    }
+
+    /* NULL entry — no crash */
+    {
+        json_t *cache = json_object();
+        provider_add_model_aliases(cache, "openai/gpt-4o", NULL);
+        json_free(cache);
+        TEST("NULL entry no crash", 1);
+    }
+
+    /* No slash — just primary key */
+    {
+        json_t *cache = json_object();
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(128000));
+        provider_add_model_aliases(cache, "gpt-4o", entry);
+
+        json_t *found = json_obj_get(cache, "gpt-4o");
+        TEST("primary key stored", found != NULL);
+        if (found) {
+            json_t *cl = json_obj_get(found, "context_length");
+            TEST("primary value intact", cl && cl->type == JSON_NUMBER && cl->num_val == 128000);
+        }
+
+        json_free(cache);
+    }
+
+    /* Slash present — alias created */
+    {
+        json_t *cache = json_object();
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(256000));
+        provider_add_model_aliases(cache, "openai/gpt-4o", entry);
+
+        json_t *primary = json_obj_get(cache, "openai/gpt-4o");
+        TEST("primary key with prefix", primary != NULL);
+
+        json_t *alias = json_obj_get(cache, "gpt-4o");
+        TEST("alias created for bare name", alias != NULL);
+        if (alias) {
+            json_t *cl = json_obj_get(alias, "context_length");
+            TEST("alias value intact", cl && cl->type == JSON_NUMBER && cl->num_val == 256000);
+        }
+
+        json_free(cache);
+    }
+
+    /* Alias already exists — setdefault semantics */
+    {
+        json_t *cache = json_object();
+        json_t *original_entry = json_object();
+        json_set(original_entry, "context_length", json_number(1));
+        json_set(cache, "gpt-4o", json_copy(original_entry));
+
+        json_t *new_entry = json_object();
+        json_set(new_entry, "context_length", json_number(999999));
+        provider_add_model_aliases(cache, "openai/gpt-4o", new_entry);
+
+        json_t *alias = json_obj_get(cache, "gpt-4o");
+        TEST("alias preserved (setdefault)", alias != NULL);
+        if (alias) {
+            json_t *cl = json_obj_get(alias, "context_length");
+            TEST("original value kept", cl && cl->type == JSON_NUMBER && cl->num_val == 1);
+        }
+
+        json_free(original_entry);
+        json_free(new_entry);
+        json_free(cache);
+    }
+
+    /* Trailing slash only (e.g. "openai/") — no alias for empty string */
+    {
+        json_t *cache = json_object();
+        json_t *entry = json_object();
+        json_set(entry, "context_length", json_number(128000));
+        provider_add_model_aliases(cache, "openai/", entry);
+
+        json_t *primary = json_obj_get(cache, "openai/");
+        TEST("trailing slash primary stored", primary != NULL);
+
+        json_t *alias = json_obj_get(cache, "");
+        TEST("no alias for empty string", alias == NULL);
+
+        json_free(cache);
+    }
+}
+
+/* ---- provider_get_context_length_from_provider_error ---- */
+static void test_provider_get_context_length_from_provider_error(void) {
+    printf("\n[R10] provider_get_context_length_from_provider_error:\n");
+
+    /* NULL error message */
+    TEST("NULL error", provider_get_context_length_from_provider_error(NULL, 128000) == -1);
+
+    /* Empty error message */
+    TEST("empty error", provider_get_context_length_from_provider_error("", 128000) == -1);
+
+    /* Error with context limit lower than current */
+    int result = provider_get_context_length_from_provider_error(
+        "This model's maximum context length is 32000 tokens", 128000);
+    TEST("lower limit returned", result == 32000);
+
+    /* Error with context limit higher than current — no downgrade */
+    result = provider_get_context_length_from_provider_error(
+        "This model's maximum context length is 256000 tokens", 128000);
+    TEST("higher limit ignored", result == -1);
+
+    /* Error with context limit equal to current — no downgrade */
+    result = provider_get_context_length_from_provider_error(
+        "maximum context length is 128000 tokens", 128000);
+    TEST("equal limit ignored", result == -1);
+
+    /* Error with no context limit */
+    result = provider_get_context_length_from_provider_error(
+        "Internal server error", 128000);
+    TEST("no limit in error", result == -1);
 }

@@ -1766,3 +1766,37 @@ int provider_context_cache_invalidate(const char *model, const char *base_url) {
     json_free(cache);
     return 1;
 }
+
+/* ---- provider_add_model_aliases ---- */
+/* Port of Python model_metadata._add_model_aliases().
+ * Sets cache[model_id] = entry (via json_copy for ownership safety).
+ * If model_id contains "/", the bare model part (after first "/") is
+ * also added as an alias — but only if no entry already exists under
+ * that key (setdefault semantics). */
+void provider_add_model_aliases(json_t *cache, const char *model_id, json_t *entry) {
+    if (!cache || !model_id || !*model_id || !entry) return;
+
+    /* Add primary entry */
+    json_set(cache, model_id, json_copy(entry));
+
+    /* Add alias for bare model name (after first "/") */
+    const char *slash = strchr(model_id, '/');
+    if (slash && *(slash + 1)) {
+        const char *bare_model = slash + 1;
+        json_t *existing = json_obj_get(cache, bare_model);
+        if (!existing) {
+            json_set(cache, bare_model, json_copy(entry));
+        }
+    }
+}
+
+/* ---- provider_get_context_length_from_provider_error ---- */
+/* Port of Python model_metadata.get_context_length_from_provider_error().
+ * Returns a provider-reported lower context limit only if it's less than
+ * the current_context_length. Returns -1 if no limit found. */
+int provider_get_context_length_from_provider_error(const char *error_msg, int current_context_length) {
+    int parsed = provider_parse_context_limit_from_error(error_msg);
+    if (parsed < 0) return -1;
+    if (parsed < current_context_length) return parsed;
+    return -1;
+}

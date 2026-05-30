@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v344 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
-|**Honest assessment: 94 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
+| v345 | Fork diverged — C/ lives only on fork | Suite 334/0/3 | 85 tools | 98 CLI**
+|**Honest assessment: 94 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 334/0/3.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -97,7 +97,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit. Suite 335/0/0, test files 289.**
+**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit. Suite 334/0/3, test files 292.**
 
 ---
 
@@ -179,7 +179,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 || 11 | B11-B20 | remaining tools (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.) | varying | varying | — | P2-P3 | ✅ PORTED — all Python tools have C equivalents verified May 2026 |
 
-**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 335/0/0, test files 289.**
+**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 334/0/3, test files 292.**
 
 ---
 
@@ -200,7 +200,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 229: GHSA hardening expansion (env_passthrough 37→91 assertions).**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 278: provider_add_model_aliases + get_context_length_from_provider_error test suites.**
 
 ---
 
@@ -219,9 +219,9 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 | 07 | R07 | codex_responses_adapter.py | 1221 | OpenAI Responses API format conversion. C uses simpler /chat/completions format which works for all supported providers. | P2 | ✅ WON'T PORT — C uses chat completions format, works fine |
 | 08 | R08 | copilot_acp_client.py | 686 | Launches `copilot --acp` subprocess and communicates via ACP. Depends on copilot CLI binary. | P2 | ✅ WON'T PORT — depends on copilot CLI binary |
 | 09 | R09 | plugin_llm.py | 1046 | Plugin LLM facade for plugins to make their own model calls. Python plugin arch. C's plugin system is .so loading only. | P2 | ✅ WON'T PORT — Python plugin architecture |
-||| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — **Phase 274 depth:** 4 token estimation functions ported: estimate_count_image_tokens() (image part counting in messages), estimate_message_chars() (message char count via json_serialize), estimate_messages_tokens_rough() (ceiling division + image cost), estimate_request_tokens_rough() (system+messages+tools). 264-test suite (up from 238). Prior: 20 functions (provider_normalize_base_url, provider_strip_prefix, provider_is_local_endpoint, provider_infer_from_url, provider_parse_context_limit_from_error, provider_parse_available_output_tokens_from_error, provider_model_id_matches, provider_model_suggests_kimi, provider_normalize_model_version, model_grok_supports_reasoning_effort, provider_is_openrouter_base_url, provider_is_custom_endpoint, provider_is_known_base_url, provider_auth_headers, provider_coerce_reasonable_int, estimate_tokens_rough, provider_resolve_requests_verify, provider_extract_context_length, provider_extract_max_completion_tokens, provider_extract_pricing). | P1 | PARTIAL (24/43 = 56%) |
+||| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — **Phase 278 depth:** _add_model_aliases() and get_context_length_from_provider_error() ported. **Phase 277 depth:** provider_extract_first_int() — generic JSON extraction helper. **Phase 276 depth:** context length cache layer. **Phase 275 depth:** CONTEXT_PROBE_TIERS, constants, get_next_probe_tier(). **Phase 274 depth:** 4 token estimation functions. **Phase 273 depth:** provider_extract_pricing(). **Phase 272 depth:** estimate_tokens_rough, provider_resolve_requests_verify, provider_extract_context_length, provider_extract_max_completion_tokens. **Phase 271 depth:** 5 R10 model_metadata functions. Prior: 20 functions (provider_normalize_base_url, provider_strip_prefix, provider_is_local_endpoint, provider_infer_from_url, provider_parse_context_limit_from_error, provider_parse_available_output_tokens_from_error, provider_model_id_matches, provider_model_suggests_kimi, provider_normalize_model_version, model_grok_supports_reasoning_effort, provider_is_openrouter_base_url, provider_is_custom_endpoint, provider_is_known_base_url, provider_auth_headers, provider_coerce_reasonable_int, estimate_tokens_rough, provider_resolve_requests_verify, provider_extract_context_length, provider_extract_max_completion_tokens, provider_extract_pricing). | P1 | PARTIAL (31/43 = 72%) |
 
-**S8: 9→4 gaps after WON'T PORT reclassification (R03,R05-R09). 2 remaining implementable: R02 (PARTIAL), R04 (PARTIAL).**
+**S8: 9→4 gaps after WON'T PORT reclassification (R03,R05-R09). 2 remaining implementable: R02 (PARTIAL), R10 (PARTIAL 72%).**
 
 ---
 
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 3 | 0 | 2 | 1 | 0 | 1 remaining implementable: R02 (PARTIAL). R04 PORTED. R03+R05-R09 WON'T PORT (cloud/Python-arch). |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **94** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R04 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 335/0/0, test files 289.** |
+|||| **TOTAL** | **94** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R04 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 334/0/3, test files 292.** |
 
 ### Phase Map
 
