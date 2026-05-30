@@ -1,9 +1,9 @@
-(v269)
+(v270)
 
 ## Immediate Next
 
-S3 all PORTED. S6 all PORTED. 115 gaps remain across 7 sectors.
-Next: S7 test expansion, or S0 D09/D16 display depth, or S1 partials (L24-L28).
+S3+S6 all PORTED. 115 gaps remain across 7 sectors.
+Next: S7 test expansion, S0 D09/D16 display depth, or S1 partials (L24-L28).
 
 ## Pipeline
 
