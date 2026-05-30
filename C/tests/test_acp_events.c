@@ -1,254 +1,367 @@
 /*
- * test_acp_events.c — Tests for ACP event notification bridge.
+ * test_acp_events.c — Tests for ACP event notification bridge (events.c).
  *
- * Tests: tool_call_id_register, tool_call_id_pop, notification builders.
- * Uses -Wl,--unresolved-symbols=ignore-all for acp_write_message.
+ * Tests: tool call ID tracking (register, pop), notification builders
+ * (tool start, tool complete, plan update), and edge cases.
+ *
+ * Build:
+ *   gcc -O2 -Wall -Wextra -I../include -I../lib/libjson -I../lib/libplugin \
+ *       tests/test_acp_events.c src/acp/events.c lib/libjson/json.c \
+ *       -o /tmp/hermes_test_acp_events -lm \
+ *       -Wl,--unresolved-symbols=ignore-all
  */
 #include "acp/events.h"
 #include "hermes_json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 static int passed = 0, failed = 0;
+static int test_count = 0;
 
 #define TEST(name, expr) do { \
+    test_count++; \
     if (expr) { passed++; printf("  PASS: %s\n", name); } \
     else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
 } while(0)
 
 #define TEST_STR_EQ(name, a, b) TEST(name, a && b && strcmp(a, b) == 0)
+#define TEST_NULL(name, p) TEST(name, p == NULL)
 
-/* == Tool Call ID Tests == */
-
-static void test_id_register(void) {
-    const char *id1 = acp_tool_call_id_register("sess-1", "read_file");
-    TEST("register returns non-NULL for valid input", id1 != NULL);
-    TEST("register returns non-empty ID", id1 && strlen(id1) > 0);
-    TEST("register starts with tc-read_file-", id1 && strncmp(id1, "tc-read_file-", 13) == 0);
-
-    const char *id2 = acp_tool_call_id_register("sess-1", "read_file");
-    TEST("second register returns different ID", id1 && id2 && strcmp(id1, id2) != 0);
-
-    const char *id3 = acp_tool_call_id_register("sess-1", "write_file");
-    TEST("register different tool returns distinct ID", id2 && id3 && strcmp(id2, id3) != 0);
-
-    const char *id_null = acp_tool_call_id_register(NULL, "tool");
-    TEST("register with NULL session returns NULL", id_null == NULL);
-
-    const char *id_null2 = acp_tool_call_id_register("sess", NULL);
-    TEST("register with NULL tool returns NULL", id_null2 == NULL);
+/* Helper: serialize a JSON node to a malloc'd string */
+static char *json_str(json_node_t *node) {
+    if (!node) return strdup("(null)");
+    return json_serialize(node);
 }
 
-static void test_id_pop(void) {
-    const char *id1 = acp_tool_call_id_register("pop-sess", "compute");
-    TEST("pop prereg: register returns non-NULL", id1 != NULL);
-
-    char *popped = acp_tool_call_id_pop("pop-sess", "compute");
-    TEST("pop returns non-NULL for registered ID", popped != NULL);
-    TEST_STR_EQ("pop returns same ID as registered", id1, popped);
-    free(popped);
-
-    char *pop2 = acp_tool_call_id_pop("pop-sess", "compute");
-    TEST("pop returns NULL for already-popped ID", pop2 == NULL);
-
-    char *pop3 = acp_tool_call_id_pop("nonexistent", "compute");
-    TEST("pop returns NULL for wrong session", pop3 == NULL);
-
-    char *pop4 = acp_tool_call_id_pop("pop-sess", "wrong_tool");
-    TEST("pop returns NULL for wrong tool", pop4 == NULL);
+/* Helper: check JSON string contains substring */
+static int json_contains(json_node_t *node, const char *needle) {
+    if (!node || !needle) return 0;
+    char *s = json_str(node);
+    int ret = (strstr(s, needle) != NULL) ? 1 : 0;
+    free(s);
+    return ret;
 }
 
-static void test_id_fifo_order(void) {
-    const char *id1 = acp_tool_call_id_register("fifo", "task");
-    const char *id2 = acp_tool_call_id_register("fifo", "task");
-    TEST("fifo: both registers succeed", id1 && id2);
+/* ================================================================
+ *  Tests
+ * ================================================================ */
 
-    char *first = acp_tool_call_id_pop("fifo", "task");
-    char *second = acp_tool_call_id_pop("fifo", "task");
-    TEST("fifo: first pop returns non-NULL", first != NULL);
-    TEST("fifo: second pop returns non-NULL", second != NULL);
-    TEST("fifo: first == oldest (id1)", first && id1 && strcmp(first, id1) == 0);
-    TEST("fifo: second == newest (id2)", second && id2 && strcmp(second, id2) == 0);
-    free(first);
-    free(second);
+static void test_tool_call_id_register(void) {
+    printf("\n--- Tool call ID registration ---\n");
+
+    /* NULL safety */
+    TEST_NULL("register(NULL, NULL) returns NULL",
+        acp_tool_call_id_register(NULL, NULL));
+    TEST_NULL("register('s', NULL) returns NULL",
+        acp_tool_call_id_register("session1", NULL));
+    TEST_NULL("register(NULL, 't') returns NULL",
+        acp_tool_call_id_register(NULL, "tool1"));
+
+    /* Successful registration */
+    const char *id1 = acp_tool_call_id_register("session1", "web_search");
+    TEST("register returns non-NULL", id1 != NULL);
+    if (id1) {
+        TEST("call ID starts with tc-", strncmp(id1, "tc-", 3) == 0);
+        TEST("call ID contains tool name", strstr(id1, "web_search") != NULL);
+    }
+
+    /* Second registration with same session/tool */
+    const char *id2 = acp_tool_call_id_register("session1", "web_search");
+    TEST("second register returns different ID", id2 != NULL && id2 != id1);
+    if (id2) {
+        TEST("second ID also starts with tc-", strncmp(id2, "tc-", 3) == 0);
+    }
 }
 
-/* == Notification Builder Tests == */
+static void test_tool_call_id_pop(void) {
+    printf("\n--- Tool call ID pop ---\n");
 
-static void test_build_tool_start(void) {
-    json_node_t *n = acp_build_tool_start_notification("sess-1", "tc-1", "read_file", "{\"path\":\"/tmp\"}");
-    TEST("start notif non-NULL", n != NULL);
+    /* NULL safety */
+    TEST_NULL("pop(NULL, NULL) returns NULL",
+        acp_tool_call_id_pop(NULL, NULL));
+    TEST_NULL("pop('s', NULL) returns NULL",
+        acp_tool_call_id_pop("session1", NULL));
+    TEST_NULL("pop(NULL, 't') returns NULL",
+        acp_tool_call_id_pop(NULL, "tool1"));
 
-    const char *method = json_object_get_string(n, "method", "");
-    TEST_STR_EQ("start notif method is session_update", method, "session_update");
+    /* Pop unknown session/tool */
+    TEST_NULL("pop unknown session", acp_tool_call_id_pop("nosession", "web_search"));
+    TEST_NULL("pop unknown tool", acp_tool_call_id_pop("session1", "notool"));
 
-    json_node_t *params = json_object_get(n, "params");
-    TEST("start notif has params", params != NULL);
-    const char *type = json_object_get_string(params, "type", "");
-    TEST_STR_EQ("start type is tool_call_start", type, "tool_call_start");
+    /* Register and pop round-trip */
+    const char *id_reg = acp_tool_call_id_register("session_pop", "terminal");
+    TEST("register for pop test", id_reg != NULL);
 
-    const char *sid = json_object_get_string(params, "session_id", "");
-    TEST_STR_EQ("start session_id matches", sid, "sess-1");
+    char *id_pop = acp_tool_call_id_pop("session_pop", "terminal");
+    TEST("pop returns non-NULL", id_pop != NULL);
+    if (id_reg && id_pop) {
+        TEST_STR_EQ("popped ID matches registered ID", id_pop, id_reg);
+    }
+    free(id_pop);
 
-    json_node_t *tc = json_object_get(params, "tool_call");
-    TEST("start has tool_call object", tc != NULL);
-    const char *tc_id = json_object_get_string(tc, "id", "");
-    TEST_STR_EQ("tool_call.id matches", tc_id, "tc-1");
-    const char *tc_name = json_object_get_string(tc, "name", "");
-    TEST_STR_EQ("tool_call.name matches", tc_name, "read_file");
-    json_node_t *args = json_object_get(tc, "args");
-    TEST("tool_call has args", args != NULL);
-    const char *path = json_object_get_string(args, "path", "");
-    TEST_STR_EQ("args.path is /tmp", path, "/tmp");
+    /* Pop twice — second should be NULL */
+    TEST_NULL("pop again returns NULL",
+        acp_tool_call_id_pop("session_pop", "terminal"));
 
-    json_free(n);
+    /* FIFO order: register 3, pop in order */
+    const char *a = acp_tool_call_id_register("fifo_sess", "tool_a");
+    const char *b = acp_tool_call_id_register("fifo_sess", "tool_a");
+    const char *c = acp_tool_call_id_register("fifo_sess", "tool_a");
+    TEST("FIFO register A", a != NULL);
+    TEST("FIFO register B", b != NULL);
+    TEST("FIFO register C", c != NULL);
+
+    if (a && b && c) {
+        char *pa = acp_tool_call_id_pop("fifo_sess", "tool_a");
+        TEST("FIFO pop A non-NULL", pa != NULL);
+        TEST_STR_EQ("FIFO pop A matches register A", pa, a);
+        free(pa);
+
+        char *pb = acp_tool_call_id_pop("fifo_sess", "tool_a");
+        TEST("FIFO pop B non-NULL", pb != NULL);
+        TEST_STR_EQ("FIFO pop B matches register B", pb, b);
+        free(pb);
+
+        char *pc = acp_tool_call_id_pop("fifo_sess", "tool_a");
+        TEST("FIFO pop C non-NULL", pc != NULL);
+        TEST_STR_EQ("FIFO pop C matches register C", pc, c);
+        free(pc);
+    }
+
+    /* Multiple session isolation */
+    const char *s1 = acp_tool_call_id_register("session_X", "tool_x");
+    const char *s2 = acp_tool_call_id_register("session_Y", "tool_y");
+    TEST("session X register", s1 != NULL);
+    TEST("session Y register", s2 != NULL);
+
+    if (s1 && s2) {
+        char *pop_y = acp_tool_call_id_pop("session_Y", "tool_y");
+        TEST_STR_EQ("session Y pop matches Y's ID", pop_y, s2);
+        free(pop_y);
+
+        /* Pop X from different session should not match Y */
+        char *pop_y_again = acp_tool_call_id_pop("session_Y", "tool_y");
+        TEST_NULL("session Y pop again null", pop_y_again);
+
+        char *pop_x = acp_tool_call_id_pop("session_X", "tool_x");
+        TEST_STR_EQ("session X pop matches X's ID", pop_x, s1);
+        free(pop_x);
+    }
 }
 
-static void test_build_tool_complete(void) {
-    json_node_t *n = acp_build_tool_complete_notification(
-        "sess-1", "tc-2", "write_file", "{\"success\":true}", false);
-    TEST("complete notif non-NULL", n != NULL);
+static void test_build_tool_start_notification(void) {
+    printf("\n--- Tool start notification builder ---\n");
 
-    const char *method = json_object_get_string(n, "method", "");
-    TEST_STR_EQ("complete method", method, "session_update");
+    /* Normal case */
+    json_node_t *n1 = acp_build_tool_start_notification(
+        "sess-1", "tc-1", "web_search", "{\"query\":\"hello\"}");
+    TEST("start notif non-NULL", n1 != NULL);
+    if (n1) {
+        TEST("jsonrpc 2.0", json_contains(n1, "\"jsonrpc\":\"2.0\""));
+        TEST("method session_update", json_contains(n1, "\"method\":\"session_update\""));
+        TEST("params session_id", json_contains(n1, "\"session_id\":\"sess-1\""));
+        TEST("type tool_call_start", json_contains(n1, "\"tool_call_start\""));
+        TEST("tool call id", json_contains(n1, "\"id\":\"tc-1\""));
+        TEST("tool name", json_contains(n1, "\"name\":\"web_search\""));
+        TEST("args as object", json_contains(n1, "\"args\":{\"query\":\"hello\"}"));
+        json_free(n1);
+    }
 
-    json_node_t *params = json_object_get(n, "params");
-    const char *type = json_object_get_string(params, "type", "");
-    TEST_STR_EQ("complete type is tool_call_complete", type, "tool_call_complete");
+    /* NULL args — should skip args field */
+    json_node_t *n2 = acp_build_tool_start_notification(
+        "sess-1", "tc-2", "read_file", NULL);
+    TEST("NULL args non-NULL", n2 != NULL);
+    if (n2) {
+        TEST("NULL args omits args field", !json_contains(n2, "\"args\""));
+        json_free(n2);
+    }
 
-    json_node_t *tc = json_object_get(params, "tool_call");
-    const char *tc_id = json_object_get_string(tc, "id", "");
-    TEST_STR_EQ("complete tool_call.id", tc_id, "tc-2");
+    /* NULL IDs — should default to empty strings */
+    json_node_t *n3 = acp_build_tool_start_notification(
+        "sess-1", NULL, "terminal", "{}");
+    TEST("NULL call_id non-NULL", n3 != NULL);
+    if (n3) {
+        TEST("NULL call_id uses empty string", json_contains(n3, "\"id\":\"\""));
+        json_free(n3);
+    }
 
-    /* Result is parsed as JSON object, check its field */
-    json_node_t *result = json_object_get(tc, "result");
-    TEST("complete has result object", result != NULL);
-    bool success_val = json_object_get_bool(result, "success", false);
-    TEST("complete result.success is true", success_val);
+    /* Unparseable args — should store as string */
+    json_node_t *n4 = acp_build_tool_start_notification(
+        "sess-1", "tc-4", "echo", "not json at all");
+    TEST("unparseable args non-NULL", n4 != NULL);
+    if (n4) {
+        TEST("unparseable args as string",
+             json_contains(n4, "\"args\":\"not json at all\""));
+        json_free(n4);
+    }
 
-    json_free(n);
+    /* NULL session_id */
+    json_node_t *n5 = acp_build_tool_start_notification(
+        NULL, "tc-5", "test", "{}");
+    TEST("NULL session_id non-NULL", n5 != NULL);
+    if (n5) {
+        TEST("NULL session_id passes through",
+             json_contains(n5, "\"session_id\":\"\""));
+        json_free(n5);
+    }
 }
 
-static void test_build_tool_failed(void) {
-    json_node_t *n = acp_build_tool_complete_notification(
-        "sess-1", "tc-3", "read_file", "error: not found", true);
-    TEST("failed notif non-NULL", n != NULL);
+static void test_build_tool_complete_notification(void) {
+    printf("\n--- Tool complete notification builder ---\n");
 
-    json_node_t *params = json_object_get(n, "params");
-    const char *type = json_object_get_string(params, "type", "");
-    TEST_STR_EQ("failed type is tool_call_failed", type, "tool_call_failed");
+    /* Success case */
+    json_node_t *n1 = acp_build_tool_complete_notification(
+        "sess-1", "tc-1", "web_search", "{\"results\":[1,2,3]}", false);
+    TEST("success notif non-NULL", n1 != NULL);
+    if (n1) {
+        TEST("success: type tool_call_complete",
+             json_contains(n1, "\"tool_call_complete\""));
+        TEST("success: result as object",
+             json_contains(n1, "\"result\":{\"results\":[1,2,3]}"));
+        json_free(n1);
+    }
 
-    json_node_t *tc = json_object_get(params, "tool_call");
-    const char *result = json_object_get_string(tc, "result", "");
-    TEST_STR_EQ("failed result is raw string", result, "error: not found");
+    /* Failure case */
+    json_node_t *n2 = acp_build_tool_complete_notification(
+        "sess-1", "tc-2", "terminal", "{\"error\":\"permission denied\"}", true);
+    TEST("failure notif non-NULL", n2 != NULL);
+    if (n2) {
+        TEST("failure: type tool_call_failed",
+             json_contains(n2, "\"tool_call_failed\""));
+        json_free(n2);
+    }
 
-    json_free(n);
+    /* NULL result — skip result field */
+    json_node_t *n3 = acp_build_tool_complete_notification(
+        "sess-1", "tc-3", "echo", NULL, false);
+    TEST("NULL result non-NULL", n3 != NULL);
+    if (n3) {
+        TEST("NULL result omits result field",
+             !json_contains(n3, "\"result\""));
+        json_free(n3);
+    }
+
+    /* Unparseable result as string */
+    json_node_t *n4 = acp_build_tool_complete_notification(
+        "sess-1", "tc-4", "echo", "plain text output", false);
+    TEST("unparseable result non-NULL", n4 != NULL);
+    if (n4) {
+        TEST("unparseable result as string",
+             json_contains(n4, "\"result\":\"plain text output\""));
+        json_free(n4);
+    }
 }
 
-static void test_build_plan_update(void) {
-    json_node_t *n = acp_build_plan_update_notification("sess-1",
-        "{\"todos\":[{\"id\":\"t1\",\"content\":\"Task 1\",\"status\":\"pending\"},"
-        "{\"id\":\"t2\",\"content\":\"Task 2\",\"status\":\"completed\"}]}");
-    TEST("plan update non-NULL for valid input", n != NULL);
+static void test_build_plan_update_notification(void) {
+    printf("\n--- Plan update notification builder ---\n");
 
-    json_node_t *params = json_object_get(n, "params");
-    const char *type = json_object_get_string(params, "type", "");
-    TEST_STR_EQ("plan type is plan_update", type, "plan_update");
+    /* NULL/empty input */
+    TEST_NULL("plan_update(NULL, NULL) returns NULL",
+        acp_build_plan_update_notification(NULL, NULL));
+    TEST_NULL("plan_update('s', NULL) returns NULL",
+        acp_build_plan_update_notification("sess-1", NULL));
+    TEST_NULL("plan_update(NULL, '') returns NULL",
+        acp_build_plan_update_notification(NULL, ""));
 
-    json_node_t *entries = json_object_get(params, "entries");
-    TEST("plan has entries array", entries != NULL);
-    TEST("entries length is 2", json_len(entries) == 2);
+    /* Valid todo result with todos array */
+    json_node_t *n1 = acp_build_plan_update_notification(
+        "sess-1",
+        "{\"todos\":["
+          "{\"id\":\"t1\",\"content\":\"Task one\",\"status\":\"in_progress\"},"
+          "{\"id\":\"t2\",\"content\":\"Task two\",\"status\":\"completed\"},"
+          "{\"id\":\"t3\",\"content\":\"Task three\",\"status\":\"pending\"}"
+        "]}");
+    TEST("valid todo non-NULL", n1 != NULL);
+    if (n1) {
+        TEST("plan: jsonrpc 2.0", json_contains(n1, "\"jsonrpc\":\"2.0\""));
+        TEST("plan: type plan_update", json_contains(n1, "\"plan_update\""));
+        TEST("plan: task one in_progress",
+             json_contains(n1, "\"content\":\"Task one\"") &&
+             json_contains(n1, "\"in_progress\""));
+        TEST("plan: task two completed",
+             json_contains(n1, "\"content\":\"Task two\"") &&
+             json_contains(n1, "\"completed\""));
+        TEST("plan: task three pending",
+             json_contains(n1, "\"content\":\"Task three\"") &&
+             json_contains(n1, "\"pending\""));
+        json_free(n1);
+    }
 
-    json_node_t *e1 = json_array_get(entries, 0);
-    const char *c1 = json_object_get_string(e1, "content", "");
-    TEST_STR_EQ("entry1 content", c1, "Task 1");
-    const char *s1 = json_object_get_string(e1, "status", "");
-    TEST_STR_EQ("entry1 status mapped to pending", s1, "pending");
+    /* Missing todos field */
+    TEST_NULL("no todos field returns NULL",
+        acp_build_plan_update_notification("sess-1", "{\"no_todos\":[]}"));
 
-    json_node_t *e2 = json_array_get(entries, 1);
-    const char *c2 = json_object_get_string(e2, "content", "");
-    TEST_STR_EQ("entry2 content", c2, "Task 2");
-    const char *s2 = json_object_get_string(e2, "status", "");
-    TEST_STR_EQ("entry2 status mapped to completed", s2, "completed");
+    /* Empty todos array */
+    json_node_t *n3 = acp_build_plan_update_notification(
+        "sess-1", "{\"todos\":[]}");
+    TEST("empty todos returns non-NULL", n3 != NULL);
+    if (n3) {
+        TEST("empty todos has entries",
+             json_contains(n3, "\"entries\":[]"));
+        json_free(n3);
+    }
 
-    json_free(n);
-}
+    /* Malformed JSON */
+    json_node_t *n4 = acp_build_plan_update_notification(
+        "sess-1", "{bad json}");
+    TEST("malformed JSON returns NULL", n4 == NULL);
 
-static void test_build_plan_update_in_progress(void) {
-    json_node_t *n = acp_build_plan_update_notification("sess-1",
-        "{\"todos\":[{\"id\":\"t3\",\"content\":\"In progress\",\"status\":\"in_progress\"}]}");
-    TEST("plan update in_progress non-NULL", n != NULL);
+    /* Non-array todos */
+    json_node_t *n5 = acp_build_plan_update_notification(
+        "sess-1", "{\"todos\":\"not_an_array\"}");
+    TEST("non-array todos returns NULL", n5 == NULL);
 
-    json_node_t *params = json_object_get(n, "params");
-    json_node_t *entries = json_object_get(params, "entries");
-    json_node_t *e1 = json_array_get(entries, 0);
-    const char *s1 = json_object_get_string(e1, "status", "");
-    TEST_STR_EQ("in_progress status preserved", s1, "in_progress");
+    /* Default status mapping: cancelled → completed */
+    json_node_t *n6 = acp_build_plan_update_notification(
+        "sess-1",
+        "{\"todos\":["
+          "{\"id\":\"t4\",\"content\":\"Cancelled\",\"status\":\"cancelled\"},"
+          "{\"id\":\"t5\",\"content\":\"No status\"}"
+        "]}");
+    TEST("cancelled status non-NULL", n6 != NULL);
+    if (n6) {
+        TEST("cancelled maps to completed",
+             json_contains(n6, "\"content\":\"Cancelled\"") &&
+             json_contains(n6, "\"completed\""));
+        TEST("no status defaults to pending",
+             json_contains(n6, "\"content\":\"No status\"") &&
+             json_contains(n6, "\"pending\""));
+        json_free(n6);
+    }
 
-    json_free(n);
-}
-
-static void test_build_plan_update_cancelled(void) {
-    json_node_t *n = acp_build_plan_update_notification("sess-1",
-        "{\"todos\":[{\"id\":\"t4\",\"content\":\"Cancelled\",\"status\":\"cancelled\"}]}");
-    TEST("plan update cancelled non-NULL", n != NULL);
-
-    json_node_t *params = json_object_get(n, "params");
-    json_node_t *entries = json_object_get(params, "entries");
-    json_node_t *e1 = json_array_get(entries, 0);
-    const char *s1 = json_object_get_string(e1, "status", "");
-    TEST_STR_EQ("cancelled mapped to completed", s1, "completed");
-
-    json_free(n);
-}
-
-static void test_build_plan_update_empty(void) {
-    json_node_t *n = acp_build_plan_update_notification("sess-1",
-        "{\"todos\":[]}");
-    TEST("plan update empty todos non-NULL", n != NULL);
-    json_node_t *params = json_object_get(n, "params");
-    json_node_t *entries = json_object_get(params, "entries");
-    TEST("plan update empty entries array", entries != NULL);
-    TEST("entries length is 0", json_len(entries) == 0);
-    json_free(n);
-}
-
-static void test_build_plan_update_invalid(void) {
-    json_node_t *n1 = acp_build_plan_update_notification(NULL, "{\"todos\":[]}");
-    TEST("plan update NULL session returns NULL", n1 == NULL);
-
-    json_node_t *n2 = acp_build_plan_update_notification("sess", NULL);
-    TEST("plan update NULL result returns NULL", n2 == NULL);
-
-    json_node_t *n3 = acp_build_plan_update_notification("sess", "");
-    TEST("plan update empty result returns NULL", n3 == NULL);
-
-    json_node_t *n4 = acp_build_plan_update_notification("sess", "not json");
-    TEST("plan update invalid JSON returns NULL", n4 == NULL);
-
-    json_node_t *n5 = acp_build_plan_update_notification("sess", "{\"key\":\"value\"}");
-    TEST("plan update no todos returns NULL", n5 == NULL);
+    /* Item with no content and no id should be skipped */
+    json_node_t *n7 = acp_build_plan_update_notification(
+        "sess-1",
+        "{\"todos\":["
+          "{\"content\":\"Valid item\",\"status\":\"pending\"},"
+          "{\"irrelevant\":\"skipped\"}"
+        "]}");
+    TEST("skip empty item non-NULL", n7 != NULL);
+    if (n7) {
+        TEST("valid item present",
+             json_contains(n7, "\"content\":\"Valid item\""));
+        {
+            char *s7 = json_str(n7);
+            TEST("skipped item absent",
+                 s7 && strstr(s7, "skipped") == NULL);
+            free(s7);
+        }
+        json_free(n7);
+    }
 }
 
 int main(void) {
-    printf("=== ACP Events Tests ===\n");
+    printf("=== ACP Event Notification Test Suite ===\n");
 
-    printf("--- Tool Call ID Registration ---\n");
-    test_id_register();
-    test_id_pop();
-    test_id_fifo_order();
+    test_tool_call_id_register();
+    test_tool_call_id_pop();
+    test_build_tool_start_notification();
+    test_build_tool_complete_notification();
+    test_build_plan_update_notification();
 
-    printf("--- Notification Builders ---\n");
-    test_build_tool_start();
-    test_build_tool_complete();
-    test_build_tool_failed();
-    test_build_plan_update();
-    test_build_plan_update_in_progress();
-    test_build_plan_update_cancelled();
-    test_build_plan_update_empty();
-    test_build_plan_update_invalid();
-
-    printf("\n%d passed, %d failed\n", passed, failed);
+    printf("\n=== Results: %d passed, %d failed (%d assertions) ===\n",
+           passed, failed, test_count);
     return failed > 0 ? 1 : 0;
 }

@@ -96,7 +96,7 @@ json_node_t *acp_build_tool_start_notification(
     json_object_set(notif, "method", json_new_string("session_update"));
 
     json_node_t *params = json_new_object();
-    json_object_set(params, "session_id", json_new_string(session_id));
+    json_object_set(params, "session_id", json_new_string(session_id ? session_id : ""));
     json_object_set(params, "type", json_new_string("tool_call_start"));
 
     json_node_t *tool_call = json_new_object();
@@ -133,7 +133,7 @@ json_node_t *acp_build_tool_complete_notification(
     json_object_set(notif, "method", json_new_string("session_update"));
 
     json_node_t *params = json_new_object();
-    json_object_set(params, "session_id", json_new_string(session_id));
+    json_object_set(params, "session_id", json_new_string(session_id ? session_id : ""));
     json_object_set(params, "type", json_new_string(failed ? "tool_call_failed" : "tool_call_complete"));
 
     json_node_t *tool_call = json_new_object();
@@ -185,7 +185,7 @@ json_node_t *acp_build_plan_update_notification(
     json_object_set(notif, "method", json_new_string("session_update"));
 
     json_node_t *params = json_new_object();
-    json_object_set(params, "session_id", json_new_string(session_id));
+    json_object_set(params, "session_id", json_new_string(session_id ? session_id : ""));
     json_object_set(params, "type", json_new_string("plan_update"));
 
     json_node_t *entries = json_new_array();

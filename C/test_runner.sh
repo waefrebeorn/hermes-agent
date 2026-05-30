@@ -2336,6 +2336,19 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "cli_commands (compilation failed)"
 fi &
 
+# ACP events test (needs events.c + JSON lib)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_acp_events.c" \
+    "$CDIR/src/acp/events.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_acp_events -lm \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_acp_events > /dev/null 2>&1; then ok "acp_events (76 tests)"
+    else fail "acp_events (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_acp_events
+else skip "acp_events (compilation failed)"
+fi &
+
 # CLI dispatch test (T02: tests commands_dispatch, commands_get_all, handlers)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskillusage" \
     -I"$CDIR/lib/libansi" -I"$CDIR/lib/libskin" \
