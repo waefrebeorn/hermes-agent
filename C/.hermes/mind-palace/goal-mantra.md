@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v374)
+# Goal Mantra — Slermes C (v375)
 
-325/0/14 (289 test files). 77 gaps. Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically.
+325/0/14 (289 test files). 76 gaps. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart].
 
 ## Loop
 

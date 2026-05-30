@@ -149,7 +149,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
 || 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — OAuth status in /secrets (Phase 290). Remaining: auth login/flows |
 || 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
-|| 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | PARTIAL — gateway status/list/start (Phase 292). Remaining: setup/stop/restart |
+|| 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | ✅ PORTED — /gateway [status|list|stop|setup|restart] (Phase 292+311). All 5 subcommands implemented: status (shows configured platforms), list (shows all 19), stop (gw_platform_shutdown_all + session save + exit), setup (env var readiness check with [ready]/[missing] indicators), restart (save + re-exec). |
 || C14 | Webhook setup (webhook.py) | ~1000 | P2 | ✅ PORTED — /webhook list/add/remove CLI (Phase 294) |
 ||| 15 | C15 | Platform management (platforms.py) | ~2000 | P2 | ✅ PORTED — /platform pause/resume modifies config.yaml programmatically (Phase 310) |
 || 16 | C16 | Kanban system (kanban.py + 7 files) | ~11000 | P2 | REAL GAP |
@@ -157,7 +157,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 18 | C18 | Voice mode (voice.py) | 846 | P3 | REAL GAP |
 || 19-30 | C19-C30 | Other CLI modules | ~25000 | P2-P3 | REAL GAP |
 
-**S5: 17 gaps (1 P1, 8 P2, 8 P3) — C01+C02+C04+C05+C06+C07+C08+C09+C14+C15 PORTED. C10+C12 WON'T PORT. C11+C13 PARTIAL.**
+**S5: 16 gaps (1 P1, 7 P2, 8 P3) — C01+C02+C04+C05+C06+C07+C08+C09+C13+C14+C15 PORTED. C10+C12 WON'T PORT. C11 PARTIAL.**
 
 ---
 
@@ -271,13 +271,13 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
-| S5: CLI Ecosystem | 25 | 0 | 1 | 12 | 12 | hermes_cli infrastructure — C02/C04/C06/C07/C08/C09 PORTED |
+|| S5: CLI Ecosystem | 24 | 0 | 1 | 11 | 12 | hermes_cli infrastructure — C02/C04/C06/C07/C08/C09/C13/C14/C15 PORTED |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-| **TOTAL** | **77** | **4** | **31** | **31** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→17 (C01+C15 PORTED). Suite 335/0/15.** |
+| **TOTAL** | **76** | **4** | **31** | **30** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→16 (C01+C13+C15 PORTED). Suite 325/0/15.** |
 
 ### Phase Map
 

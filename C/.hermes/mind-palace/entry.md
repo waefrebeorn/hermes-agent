@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v374)
+# Entry — Slermes C Parity (v375)
 
-Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically. 77 gaps.
+Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart]. 76 gaps.

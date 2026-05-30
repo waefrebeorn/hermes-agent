@@ -110,6 +110,7 @@ static void cmd_kanban(const char *args, agent_state_t *state);
 static void cmd_session_search(const char *args, agent_state_t *state);
 static void cmd_session_export(const char *args, agent_state_t *state);
 static void cmd_logs(const char *args, agent_state_t *state);
+static void cmd_gateway(const char *args, agent_state_t *state);
 static void cmd_dump(const char *args, agent_state_t *state);
 static void cmd_send(const char *args, agent_state_t *state);
 static void cmd_webhook(const char *args, agent_state_t *state);
@@ -176,6 +177,7 @@ static const command_def_t COMMANDS[] = {
     {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
     {"/doctor",  NULL,    "Run system diagnostics: /doctor [all|config|env|keys]", cmd_doctor},
     {"/webhook", NULL,    "Manage webhook subscriptions: /webhook [list|add|remove]", cmd_webhook},
+    {"/gateway", NULL,   "Manage gateway: /gateway [status|list|stop|setup|restart]", cmd_gateway},
     {"/completions", NULL, "Generate shell completions: /completions [bash|zsh|fish]", cmd_completions},
     {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
     {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
@@ -2281,6 +2283,110 @@ static void cmd_plugins(const char *args, agent_state_t *state) {
     closedir(d);
     printf("  Total plugins: %d\n", count);
     printf("  Plugin directory: %s\n", plugins_dir);
+}
+
+/* /gateway: Gateway management command with subcommands */
+static void cmd_gateway(const char *args, agent_state_t *state) {
+    if (!args || !args[0]) {
+        printf("Usage: /gateway [status|list|stop|setup|restart]\n");
+        printf("  status   Show gateway connection status\n");
+        printf("  list     List configured platforms\n");
+        printf("  stop     Stop gateway and exit\n");
+        printf("  setup    Configure gateway platforms\n");
+        printf("  restart  Save session and restart\n");
+        return;
+    }
+
+    if (strcmp(args, "status") == 0 || strcmp(args, "list") == 0) {
+        /* Show gateway platform status */
+        hermes_config_t cfg;
+        hermes_config_load(&cfg, NULL);
+        printf("Gateway status:\n");
+        const char *gw = getenv("HERMES_GATEWAY_PLATFORMS");
+        if (gw)
+            printf("  Platforms (env):  %s\n", gw);
+        else if (cfg.gateway_platforms[0])
+            printf("  Platforms (config): %s\n", cfg.gateway_platforms);
+        else
+            printf("  Platforms:        (none configured)\n");
+        printf("  All 19 C platforms compiled in.\n");
+        printf("  Set gateway.platforms in config.yaml to activate.\n");
+        if (strcmp(args, "list") == 0) {
+            printf("\nAvailable platforms:\n");
+            printf("  telegram, discord, slack, matrix, mattermost,\n");
+            printf("  webhook, whatsapp, email, signal, sms,\n");
+            printf("  homeassistant, feishu, wecom, dingtalk, qqbot,\n");
+            printf("  bluebubbles, msgraph_webhook, weixin, yuanbao\n");
+        }
+        return;
+    }
+
+    if (strcmp(args, "stop") == 0) {
+        printf("Stopping gateway...\n");
+        /* Shutdown all gateway platforms */
+        gw_platform_shutdown_all();
+        /* Save session state */
+        if (state->db) {
+            agent_save_session(state);
+            agent_close_db(state);
+        }
+        printf("Gateway stopped. Exiting.\n");
+        exit(0);
+    }
+
+    if (strcmp(args, "setup") == 0) {
+        printf("Gateway setup:\n");
+        printf("\n");
+        printf("  Available platforms and their required env vars:\n");
+        printf("\n");
+        static const char *platforms[][2] = {
+            {"telegram", "TELEGRAM_BOT_TOKEN"},
+            {"discord",  "DISCORD_BOT_TOKEN"},
+            {"slack",    "SLACK_BOT_TOKEN"},
+            {"signal",   "SIGNAL_NUMBER"},
+            {"sms",      "TWILIO_ACCOUNT_SID"},
+            {"matrix",   "MATRIX_HOMESERVER"},
+            {"email",    "EMAIL_HOST"},
+            {"whatsapp", "WHATSAPP_PHONE_NUMBER_ID"},
+            {"feishu",   "FEISHU_APP_ID"},
+            {"wecom",    "WECOM_CORP_ID"},
+            {"dingtalk", "DINGTALK_WEBHOOK_TOKEN"},
+            {"homeassistant", "HASS_TOKEN"},
+            {"mattermost","MATTERMOST_URL"},
+            {"bluebubbles","BLUEBUBBLES_PASSWORD"},
+            {NULL, NULL}
+        };
+        for (int i = 0; platforms[i][0]; i++) {
+            const char *val = getenv(platforms[i][1]);
+            printf("  %-14s %s (%s)\n",
+                   platforms[i][0],
+                   val ? "[ready]" : "[missing]",
+                   platforms[i][1]);
+        }
+        printf("\n");
+        printf("  Current config: ");
+        hermes_config_t cfg;
+        hermes_config_load(&cfg, NULL);
+        if (cfg.gateway_platforms[0])
+            printf("%s\n", cfg.gateway_platforms);
+        else
+            printf("(none)\n");
+        printf("\n");
+        printf("  To enable platforms:\n");
+        printf("    1. Set the required env vars in ~/.hermes/.env\n");
+        printf("    2. Run: /platform resume <platform_name>\n");
+        printf("    3. Run: /gateway restart\n");
+        printf("  Or edit gateway.platforms in config.yaml directly.\n");
+        return;
+    }
+
+    if (strcmp(args, "restart") == 0) {
+        /* Reuse restart logic from /restart */
+        cmd_restart("", state);
+        return;
+    }
+
+    printf("Unknown subcommand: '%s'. Use: /gateway status|list|stop|setup|restart\n", args);
 }
 
 /* /platforms: Show gateway platform status */

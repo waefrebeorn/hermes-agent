@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-||5|||||||||||||||||||Battleship v34 (77 gaps across 8 sectors, 1000+ test case gaps). v374. Phase 310: S5 C15 platform management — /platform pause/resume now modify config.yaml programmatically (hermes_config_set_platforms()). Adds/removes platform name from gateway.platforms comma-separated list. Writes back to ~/.hermes/config.yaml. Suite 325/0/14. C15 PORTED. 78→77 gaps.
+|||5|||||||||||||||||||Battleship v34 (76 gaps across 8 sectors, 1000+ test case gaps). v375. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart] command with 5 subcommands. stop: gw_platform_shutdown_all + session save + exit. setup: platform env var readiness check with [ready]/[missing] indicators. restart: save + re-exec. Suite 325/0/14. C13 PORTED. 77→76 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

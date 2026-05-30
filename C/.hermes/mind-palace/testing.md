@@ -1,8 +1,8 @@
-(v374)
+(v375)
 
-325/0/14, 289 test files. All pass. 77 gaps. Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically.
+325/0/14, 289 test files. All pass. 76 gaps. Phase 311: S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart].
 
-Phase 310: S5 C15 platform enable/disable CLI — /platform pause/resume now modify config.yaml via hermes_config_set_platforms(). Finds gateway: section, adds/removes platform from comma-separated list, writes back. Follows migrate_v0_to_v1() read-edit-write pattern. v374.
+Phase 311: S5 C13 gateway CLI depth — /gateway command with 5 subcommands: status (show configured platforms), list (all 19), stop (gw_platform_shutdown_all + session save + exit(0)), setup (env var readiness: [ready]/[missing]), restart (save + re-exec via cmd_restart). v375.
 Phase 308: S7 enum edge case expansion — 31 new assertions (17→48), full coverage: out-of-range OBO (value==count), large 21-value enum, empty/partial parse, round-trip all values, macro isolation. v372.
 Phase 307: S7 difflib edge case expansion — 59 new assertions (22→81), full coverage: ratio swap consistency, single char, unicode, whitespace, long identical, substring, unified_diff NULL/empty/both-NULL, large/zero context, single line, trailing newlines, multiple hunks, simple_diff empty/empty, full add/delete, multiple distant changes, long line change. v371.
 Phase 306: S7 glob edge case expansion — 48 new assertions (22→70), full coverage: empty/null patterns, character classes, dotfiles, multi-*, ** at end, **/ alone, cross-/ behavior, regression patterns, glob_find edge cases (empty dir, hidden files, exact path). v370.
