@@ -1873,3 +1873,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | D09 | Minimal vi mode keybindings in line_edit.c — ESC toggles INSERT↔NORMAL. NORMAL: h/j/k/l navigation, 0/$ line start/end, x delete char, X backspace, i/I/a/A insert/append, u undo, dd delete line, p/P paste. [NORMAL] mode indicator in prompt. | `C/lib/liblineedit/line_edit.c` + `C/lib/liblineedit/line_edit.h` — vi_mode field, line_edit_get_mode(), vi dispatch in line_edit_read(). Tests: `C/tests/test_line_edit.c` — test_vi_mode(), 83 total. |
+## Phase 18: Stale Claims Corrected
+| ID | Claim | Correction | Evidence |
+|----|-------|------------|----------|
+| F06 | No ACP protocol server — VS Code/Zed/JetBrains integration missing (S10 P2) | C has full ACP server at `src/acp/server.c` (40KB) with JSON-RPC 2.0 over stdio, Content-Length framing. Handles initialize, new/list/load/resume/delete session, tools_list/call, edit_approval, auto-approve, permissions, fork_session, set_session_model/mode/config. Plus events.c, permissions.c, resource.c, edit_approval.c. | `C/src/acp/server.c` (40784 bytes), 712+ lines, 20+ message handlers. `C/tests/test_acp_events.c` (367 lines, 5 test suites, 76 assertions). `C/tests/test_acp_resource.c` (106 lines). |
