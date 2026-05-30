@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v284)
+# Goal Mantra — Slermes C (v286)
 
-326/0/0 (283 test files). 103 gaps. Phase 219+: S1 complete, F10 PORTED (install_safe_stdio), S7 depth (test_cli_paths, test_session_id).
+325/0/0 (280 test files). 103 gaps. Phase 219+: S1 complete, F10 PORTED (install_safe_stdio), S7 depth (test_cli_paths, test_session_id, test_acp_events, test_hermes_signal).
 
 ## Loop
 

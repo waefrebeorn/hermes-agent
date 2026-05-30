@@ -1,8 +1,8 @@
-# Overnight Map — Recent Phases (v284)
+# Overnight Map — Recent Phases (v286)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
-| 219+ | L28 PORTED + tool_delay. S7 depth: test_cli_paths 21 tests, test_session_id 19 tests. F10 PORTED. Suite 326/0/0, 283 test files. | 105 gaps | 103 gaps |
+| 219+ | L28 PORTED + tool_delay. S7 depth: test_cli_paths 21 tests, test_session_id 19 tests, test_acp_events 76 tests, test_hermes_signal 8 tests. F10 PORTED. Suite 325/0/0, 280 test files. | 105 gaps | 103 gaps |
 | 218 | L24 checkpoint/snapshot reclassified PORTED | PARTIAL (106 gaps) | PORTED (105 gaps) |
 | 217 | L27 prompt builder PORTED + S7 test expansion (22 assertions) | 107 gaps | 106 gaps |
 | 216 | L26 hermes_message_sanitize() — sanitization pipeline | 108 gaps | 107 gaps |
