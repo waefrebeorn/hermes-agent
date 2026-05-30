@@ -1,4 +1,4 @@
-(v268)
+(v269)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-320/0/0 (278 test files). 117 gaps. Phase 201: B08 send_message PORTED (100%). S6 all tools PORTED.
-Next: S3 G02/G06 depth, S7 test gaps, or S0 D09/D16 display depth.
+320/0/0 (278 test files). 115 gaps. Phase 202: S3 G02+G06 PORTED. S3+S6 all done.
+Next: S7 test expansion, S0 D09/D16 display depth, or S1 partials.

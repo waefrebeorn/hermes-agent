@@ -1,9 +1,9 @@
-(v268)
+(v269)
 
 ## Immediate Next
 
-S6 all tools PORTED. B08 send_message PORTED (100% portable). 117 gaps remain.
-Next: S3 G02/G06 depth, or S7 test expansion, or S0 D09/D16 display depth.
+S3 all PORTED. S6 all PORTED. 115 gaps remain across 7 sectors.
+Next: S7 test expansion, or S0 D09/D16 display depth, or S1 partials (L24-L28).
 
 ## Pipeline
 

@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v268)**
+**BANNER — WuBu Slermes C Translation (v269)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v268                                          ║
-║  320 tests · 117 gaps · 85 tools · 98 CLI · 65 libs        ║
-║  117 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v269                                          ║
+║  320 tests · 115 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  115 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 201: B08 send_message PORTED (100%). S6 all tools.           ║
+║  Phase 202: S3 G02+G06 PORTED. S3+S6 all done.               ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

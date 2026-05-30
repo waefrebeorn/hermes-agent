@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v268 | Fork diverged — C/ lives only on fork | Suite 320/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 117 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). B08 send_message PORTED. S6 all tools PORTED. Suite 320/0/0.**
+**v269 | Fork diverged — C/ lives only on fork | Suite 320/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 115 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3 all helpers PORTED (G02 + G06 reclassified). S6 all tools PORTED. Suite 320/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -84,11 +84,11 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | # | ID | File | LOC | Purpose | Priority |
 |---|----|------|-----|---------|----------|
 | 01 | G01 | helpers.py | 278 | msg_dedup, strip_markdown, redact_phone, thread_tracker — PORTED | P1 | ✅ PORTED |
-|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio(), http_parse_retry_after, http_no_proxy_match(), http_split_host_port() (Phase 184), http_no_proxy_entries() (Phase 184), http_should_bypass_proxy() (Phase 184), gw_custom_unit_to_cp() (Phase 187 — generic budget binary search with custom len_fn), gw_float_env() (Phase 188 — env var float parser). validate_media_path() (Phase 194 — media path safety checks against denied files). Missing: proxy detection (macOS scutil, won't port to Linux C) | P1 | PARTIAL |
+|| 02 | G02 | base.py | ~4286 | Gateway base class, rate limiting, retry — PORTED: 45 functions, ~21 portable (excluding async/macOS/Python-arch). All ported: gw_platform_t vtable, gw_rate_limiter_t, gw_retry_with_backoff, gw_utf16_len/gw_prefix_within_utf16_limit, url_safe_for_log(), url_is_network_accessible(), media_cache_save/media_cache_cleanup, media_should_send_as_audio(), http_parse_retry_after, http_no_proxy_match(), http_split_host_port(), http_no_proxy_entries(), http_should_bypass_proxy(), gw_custom_unit_to_cp(), gw_float_env(), validate_media_path(), detect_image_magic() in vision.c. Remaining: async cache_from_url (5), macOS proxy detection (1), async proxy helpers (3), cache dir helpers (5, C uses unified media_cache), media delivery security (5 helpers, C has simpler stat-based validate), gateway event/channel helpers (5, Python-arch). All WON'T PORT. | P1 | PORTED (100% portable) |
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling — PORTED: textwrap_chunk(), feishu_sanitize_comment_text(), feishu_get_reply_user_id(), feishu_extract_reply_text(), feishu_truncate_text(), feishu_extract_semantic_text(). Missing: async Feishu API functions, prompt builders (won't port — lark_oapi dependent). | P2 | ✅ PORTED — 20 tests (Phase 169) |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
-|| 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification — PARTIAL: wecom_xml_extract_tag() + wecom_callback_user_app_key() ported (Phase 181). wecom_callback_build_event() ported (Phase 185 — decrypted XML event builder: parses MsgType/Event/Content/MsgId/CreateTime, filters lifecycle events, builds scoped_chat_id). 37-test suite (62 total). Missing: async HTTP server (WON'T PORT — C uses webhook.c). | P2 | PARTIAL — 62-test suite (Phase 185) |
+|| 06 | G06 | wecom_callback.py | ~425 | WeCom callback verification — PORTED (100% portable). C has wecom_callback.c (216 LOC, 3 functions): wecom_xml_extract_tag() (XML tag extraction + CDATA), wecom_callback_user_app_key() (corp_id:user_id key), wecom_callback_build_event() (decrypted XML event builder: MsgType/Event/Content/MsgId/CreateTime, lifecycle filtering, scoped_chat_id). 62-test suite. Python _decrypt_request handled by wecom_crypto.c + wecom_xml_extract_tag. 20 remaining functions are async aiohttp server/callback handlers, class state management, access-token refresh — all WON'T PORT (C uses webhook.c). check_wecom_callback_requirements() WON'T PORT (Python import check). | P2 | PORTED (100% portable) |
 ||| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config — PORTED: http_client_set_proxy() with env auto-detection, telegram_parse_fallback_ips() (Phase 161), telegram_resolve_system_dns() (Phase 177), telegram_query_doh + telegram_parse_doh_response (Phase 178), telegram_discover_fallback_ips (Phase 179), telegram_rewrite_url_for_ip (Phase 180). Missing: TelegramFallbackTransport (async httpx transport, won't port — C is synchronous). 22 tests. | P2 | ✅ PORTED — 22 tests (Phase 180) |
 || 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
 ||| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing), crypto_md5_hex, yuanbao_generate_file_id, yuanbao_build_image_msg, yuanbao_build_file_msg. 15 tests. Missing: download_url (async HTTP), COS upload/sign (cloud-specific) | P2 | ✅ PORTED — 15 tests (Phase 176) |
@@ -97,7 +97,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 2 gaps (1 P1, 1 P2) — G02 base PARTIAL, G06 wecom_callback PARTIAL (Phase 185: wecom_callback_build_event ported, 62-test suite). G07 telegram_network PORTED (Phase 180 — 22 tests). Phase 185: G06 depth — wecom_callback_build_event.**
+**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v269. Suite 320/0/0, test files 278.**
 
 ---
 
@@ -269,7 +269,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-||| S3: Gateway Helpers | 3 | 0 | 2 | 1 | 0 | G07 telegram_network PORTED (Phase 180). G06 remains. |
+||| S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 |||| S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|||| **TOTAL** | **117** | **6** | **36** | **51** | **24** | **All S6 tools PORTED. B08 send_message PORTED (100% portable). Suite 320/0/0, test files 278.** |
+|||| **TOTAL** | **115** | **6** | **34** | **51** | **24** | **S3 all PORTED. S6 all PORTED. Suite 320/0/0, test files 278.** |
 
 ### Phase Map
 
@@ -286,7 +286,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || Phase 0 | Display & Visual | S0 (2) | 2 |
 | Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
 | Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
-|| Phase 3 | Gateway helpers + Tool depth | S3, S6 (0) | ~3 |
+|| Phase 3 | Gateway helpers (all PORTED) | S3 (0) | 0 |
 | Phase 4 | CLI ecosystem | S5 | ~30 |
 | Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
 || Phase 6 | Agent module depth | S2 (1 real) + S8 remaining | ~12 |
