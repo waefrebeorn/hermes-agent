@@ -4,12 +4,12 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||||||| Suite:  335/0/0 (292 test files, completes in <60s)
-||||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-||||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||||||| Gaps:  95 real parity gaps (1000+ test case gaps) across 8 sectors
-|||||||||||Stubs:  0 stubs remain. All entry points verified.
-||||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
+|||||||||||||| Suite:  335/0/0 (292 test files, completes in <60s)
+|||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+|||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||||||| Gaps:  95 real parity gaps (1000+ test case gaps) across 8 sectors
+| Phase 263: S8 R02 — bedrock_is_context_overflow(), bedrock_classify_error(), bedrock_extract_provider_from_arn(), bedrock_get_context_length()
+```
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 ||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
 |||||||||Libraries: 65 C modules — zero external deps beyond libc+libssl

@@ -2,8 +2,8 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v329.
-|- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
+|||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v330.
+||- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
 |- Phase 248: R10 parse_context_limit + parse_available_output_tokens — port of Python model_metadata.parse_context_limit_from_error() and parse_available_output_tokens_from_error(). Error message parsing for context length extraction. 12 test assertions (→118). Suite 335/0/2. v315.
@@ -20,8 +20,9 @@ Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
 |- Phase 259: S0 D09 vi mode depth — o/O open line below/above in vi NORMAL mode. Suite 335/0/0. v326.
 |- Phase 260: S0 D09 vi mode depth — % jump to matching bracket/paren/brace. Suite 335/0/0. v327.
 |- Phase 261: S0 D09 vi mode depth — . repeat last change (x/X/~/'r'/s/D/C/dd). Suite 335/0/0. v328.
-|- Phase 262: S8 R02 Bedrock depth — stop_reason mapping in bedrock_parse_response (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 5 test assertions in test_bedrock_depth.c (45→50). Suite 335/0/0. v329.
-|
+||- Phase 262: S8 R02 Bedrock depth — stop_reason mapping in bedrock_parse_response (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 5 test assertions in test_bedrock_depth.c (45→50). Suite 335/0/0. v329.
+||- Phase 263: S8 R02 Bedrock depth — bedrock_is_context_overflow() + bedrock_classify_error() + bedrock_extract_provider_from_arn() + bedrock_get_context_length() ported from Python bedrock_adapter.py. 32 test assertions in test_bedrock_depth.c (50→82). test_runner.sh updated 14→80. Suite 335/0/0 (1 pre-existing parallel race). v330.
+
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
 - **Git state**: Fork diverged — 90 commits ahead of upstream (upstream deleted C/ entirely)

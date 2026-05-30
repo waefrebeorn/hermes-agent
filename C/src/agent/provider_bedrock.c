@@ -629,6 +629,133 @@ static void bedrock_free_response(provider_response_t *resp) {
     free(resp);
 }
 
+/* ================================================================
+ *  Bedrock utility functions — ported from Python bedrock_adapter.py
+ * ================================================================ */
+
+/* Context overflow patterns — check if error indicates input too long */
+bool bedrock_is_context_overflow(const char *error_message) {
+    if (!error_message) return false;
+
+    /* Pattern 1: ValidationException + input is too long / max input token / input token exceed */
+    bool has_validation = (strstr(error_message, "ValidationException") != NULL ||
+                          strstr(error_message, "validation error") != NULL);
+    if (has_validation) {
+        bool has_too_long = (strstr(error_message, "input is too long") != NULL);
+        bool has_max_input = (strstr(error_message, "max input token") != NULL ||
+                             strstr(error_message, "maximum input token") != NULL);
+        bool has_input_exceed = (strstr(error_message, "input token") != NULL &&
+                                strstr(error_message, "exceed") != NULL);
+        if (has_too_long || has_max_input || has_input_exceed)
+            return true;
+
+        /* Pattern 2: ValidationException + exceeds the maximum/max tokens */
+        bool has_exceed = (strstr(error_message, "exceed") != NULL);
+        bool has_max_tok = (strstr(error_message, "maximum token") != NULL ||
+                           strstr(error_message, "max token") != NULL ||
+                           strstr(error_message, "maximum number of token") != NULL ||
+                           strstr(error_message, "maximum input token") != NULL);
+        if (has_exceed && has_max_tok)
+            return true;
+    }
+
+    /* Pattern 3: ModelStreamErrorException + Input is too long / too many input tokens */
+    bool has_stream_exc = (strstr(error_message, "ModelStreamErrorException") != NULL ||
+                          strstr(error_message, "stream error") != NULL);
+    if (has_stream_exc) {
+        if (strstr(error_message, "Input is too long") != NULL ||
+            strstr(error_message, "too many input token") != NULL)
+            return true;
+    }
+
+    return false;
+}
+
+/* Static patterns for throttling */
+static bool has_throttle_pattern(const char *msg) {
+    return (strstr(msg, "ThrottlingException") != NULL ||
+            strstr(msg, "Too many concurrent requests") != NULL ||
+            strstr(msg, "ServiceQuotaExceededException") != NULL);
+}
+
+/* Static patterns for overload */
+static bool has_overload_pattern(const char *msg) {
+    return (strstr(msg, "ModelNotReadyException") != NULL ||
+            strstr(msg, "ModelTimeoutException") != NULL ||
+            strstr(msg, "InternalServerException") != NULL ||
+            strstr(msg, "ServiceUnavailableException") != NULL);
+}
+
+/* Classify a Bedrock error for retry/failover decisions */
+const char *bedrock_classify_error(const char *error_message) {
+    if (!error_message) return "unknown";
+
+    if (bedrock_is_context_overflow(error_message))
+        return "context_overflow";
+    if (has_throttle_pattern(error_message))
+        return "rate_limit";
+    if (has_overload_pattern(error_message))
+        return "overloaded";
+    return "unknown";
+}
+
+/* Extract provider name from a Bedrock model ARN.
+ * Example: "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2" → "anthropic" */
+char *bedrock_extract_provider_from_arn(const char *arn) {
+    if (!arn) return NULL;
+    const char *prefix = "foundation-model/";
+    const char *start = strstr(arn, prefix);
+    if (!start) return NULL;
+    start += strlen(prefix);
+    const char *dot = strchr(start, '.');
+    if (!dot || dot == start) return NULL;
+    return strndup(start, (size_t)(dot - start));
+}
+
+/* Bedrock model context length table — ported from Python bedrock_adapter.py */
+static const struct {
+    const char *key;
+    int length;
+} BEDROCK_CONTEXT_TABLE[] = {
+    {"anthropic.claude-opus-4-6",      200000},
+    {"anthropic.claude-sonnet-4-6",    200000},
+    {"anthropic.claude-sonnet-4-5",    200000},
+    {"anthropic.claude-haiku-4-5",     200000},
+    {"anthropic.claude-opus-4",        200000},
+    {"anthropic.claude-sonnet-4",      200000},
+    {"anthropic.claude-3-5-sonnet",    200000},
+    {"anthropic.claude-3-5-haiku",     200000},
+    {"anthropic.claude-3-opus",        200000},
+    {"anthropic.claude-3-sonnet",      200000},
+    {"amazon.nova-pro",                300000},
+    {"amazon.nova-lite",               300000},
+    {"amazon.nova-micro",              128000},
+    {"meta.llama4-maverick",           128000},
+    {"meta.llama4-scout",              128000},
+    {"meta.llama3-3-70b-instruct",     128000},
+    {"mistral.mistral-large",          128000},
+    {"deepseek.v3",                    128000},
+    {NULL, 128000} /* sentinel — default */
+};
+
+/* Look up the context window size for a Bedrock model using substring matching.
+ * Longest matching key wins (handles version suffixes like -v1:0). */
+int bedrock_get_context_length(const char *model_id) {
+    if (!model_id) return 128000;
+    size_t best_len = 0;
+    int best_val = 128000;
+    for (int i = 0; BEDROCK_CONTEXT_TABLE[i].key != NULL; i++) {
+        if (strstr(model_id, BEDROCK_CONTEXT_TABLE[i].key)) {
+            size_t klen = strlen(BEDROCK_CONTEXT_TABLE[i].key);
+            if (klen > best_len) {
+                best_len = klen;
+                best_val = BEDROCK_CONTEXT_TABLE[i].length;
+            }
+        }
+    }
+    return best_val;
+}
+
 const provider_ops_t PROVIDER_OPS_BEDROCK = {
     .build_url = bedrock_build_url,
     .build_headers = bedrock_build_headers,

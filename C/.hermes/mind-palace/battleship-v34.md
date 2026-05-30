@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v329 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+| v330 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 95 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -211,7 +211,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 | # | ID | Adapter | LOC | Missing in C | Priority | Status |
 |---|----|---------|-----|-------------|----------|--------|
 | 01 | R01 | anthropic_adapter.py | 2275 | Adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, model-aware max_tokens per model (15-entry table), beta headers (interleaved-thinking + fine-grained-tool-streaming), sampling param forbiddance for Opus 4.7+. Remaining: full client builder, content conversion, OAuth. | P1 | ✅ IMPLEMENTED — adaptive thinking, model-aware features, beta headers. Partially covers "extended thinking" sub-gap. Implementation in provider_anthropic.c:1085 LOC (up from 731). |
-| 02 | R02 | bedrock_adapter.py | 1289 | AWS Bedrock auth, model discovery. C has sigv4 signing + Converse API but simpler model/region handling. **Phase 262 depth:** stop_reason mapping (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 50-test bedrock depth suite. | P1 | PARTIAL |
+| 02 | R02 | bedrock_adapter.py | 1289 | AWS Bedrock auth, model discovery. C has sigv4 signing + Converse API but simpler model/region handling. **Phase 263 depth:** 4 utility functions ported: bedrock_is_context_overflow() (3 pattern groups, case-insensitive strstr), bedrock_classify_error() (context_overflow/rate_limit/overloaded/unknown), bedrock_extract_provider_from_arn() (foundation-model/provider parsing), bedrock_get_context_length() (18-entry substring table, longest match wins). **Phase 262 depth:** stop_reason mapping (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 82-test bedrock depth suite (up from 14). | P1 | PARTIAL |
 | 03 | R03 | google_oauth.py | 1059 | OAuth token exchange, refresh for Google Cloud Code Assist. Only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). No standalone Google provider use. | P1 | ✅ WON'T PORT — tied to cloudcode adapter |
 | 04 | R04 | gemini_native_adapter.py | 971 | Gemini native API format translation (contents[]/parts[]/functionDeclarations). C's provider_google.c covers core flow. **Phase 257 depth:** google_map_finish_reason() mapping (STOP/MAX_TOKENS/SAFETY/BLOCKLIST/etc → stop/length/content_filter). google_is_free_tier_quota_error() detects 429 free-tier exhaustion. Blocked content detection for finishReason=SAFETY. | P1 | PARTIAL |
 | 05 | R05 | gemini_cloudcode_adapter.py | 909 | Google Cloud Code Assist integration — cloud IDE feature. Depends on OAuth PKCE + Google Cloud APIs + httpx. C is standalone binary. | P2 | ✅ WON'T PORT — cloud IDE feature |

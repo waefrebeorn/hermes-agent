@@ -278,6 +278,152 @@ int main(void) {
         if (r) { free(r->content); free(r->reasoning); free(r); }
     }
 
+    /* ── bedrock_is_context_overflow ────────────────────────────── */
+    printf("\n--- bedrock_is_context_overflow ---\n");
+    {
+        TEST("is_context_overflow NULL", !bedrock_is_context_overflow(NULL));
+    }
+    {
+        TEST("is_context_overflow empty", !bedrock_is_context_overflow(""));
+    }
+    {
+        TEST("is_context_overflow unrelated", !bedrock_is_context_overflow("Some random error message"));
+    }
+    {
+        /* Pattern 1: ValidationException + input is too long */
+        const char *msg = "ValidationException: The input is too long for this model";
+        TEST("is_context_overflow pattern1 input too long", bedrock_is_context_overflow(msg));
+    }
+    {
+        /* Pattern 1b: validation error + max input token */
+        const char *msg = "validation error: max input token exceeded";
+        TEST("is_context_overflow pattern1 max input token", bedrock_is_context_overflow(msg));
+    }
+    {
+        /* Pattern 2: ValidationException + exceeds maximum token */
+        const char *msg = "ValidationException: Input exceeds the maximum number of input tokens";
+        TEST("is_context_overflow pattern2 exceeds max token", bedrock_is_context_overflow(msg));
+    }
+    {
+        /* Pattern 3: ModelStreamErrorException */
+        const char *msg = "ModelStreamErrorException: Input is too long for the model";
+        TEST("is_context_overflow pattern3 stream error", bedrock_is_context_overflow(msg));
+    }
+    {
+        /* Pattern 3b: stream error + too many input tokens */
+        const char *msg = "stream error: too many input tokens in request";
+        TEST("is_context_overflow pattern3b too many tokens", bedrock_is_context_overflow(msg));
+    }
+    {
+        /* ThrottlingException is NOT context overflow */
+        const char *msg = "ThrottlingException: Rate exceeded";
+        TEST("is_context_overflow throttling is not overflow", !bedrock_is_context_overflow(msg));
+    }
+
+    /* ── bedrock_classify_error ──────────────────────────────────── */
+    printf("\n--- bedrock_classify_error ---\n");
+    {
+        TEST("classify NULL", strcmp(bedrock_classify_error(NULL), "unknown") == 0);
+    }
+    {
+        TEST("classify context overflow",
+             strcmp(bedrock_classify_error("ValidationException: input is too long"), "context_overflow") == 0);
+    }
+    {
+        TEST("classify rate_limit ThrottlingException",
+             strcmp(bedrock_classify_error("ThrottlingException"), "rate_limit") == 0);
+    }
+    {
+        TEST("classify rate_limit too many concurrent",
+             strcmp(bedrock_classify_error("Too many concurrent requests"), "rate_limit") == 0);
+    }
+    {
+        TEST("classify rate_limit quota",
+             strcmp(bedrock_classify_error("ServiceQuotaExceededException"), "rate_limit") == 0);
+    }
+    {
+        TEST("classify overload ModelNotReady",
+             strcmp(bedrock_classify_error("ModelNotReadyException"), "overloaded") == 0);
+    }
+    {
+        TEST("classify overload ModelTimeout",
+             strcmp(bedrock_classify_error("ModelTimeoutException"), "overloaded") == 0);
+    }
+    {
+        TEST("classify overload InternalServer",
+             strcmp(bedrock_classify_error("InternalServerException"), "overloaded") == 0);
+    }
+    {
+        TEST("classify unknown",
+             strcmp(bedrock_classify_error("Something else entirely"), "unknown") == 0);
+    }
+
+    /* ── bedrock_extract_provider_from_arn ───────────────────────── */
+    printf("\n--- bedrock_extract_provider_from_arn ---\n");
+    {
+        TEST("extract_provider NULL", bedrock_extract_provider_from_arn(NULL) == NULL);
+    }
+    {
+        char *r = bedrock_extract_provider_from_arn("arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2");
+        TEST("extract_provider anthropic", r && strcmp(r, "anthropic") == 0);
+        free(r);
+    }
+    {
+        char *r = bedrock_extract_provider_from_arn("arn:aws:bedrock:us-west-2::foundation-model/meta.llama4-maverick-v1:0");
+        TEST("extract_provider meta", r && strcmp(r, "meta") == 0);
+        free(r);
+    }
+    {
+        char *r = bedrock_extract_provider_from_arn("arn:aws:bedrock:eu-west-1::foundation-model/amazon.nova-pro");
+        TEST("extract_provider amazon", r && strcmp(r, "amazon") == 0);
+        free(r);
+    }
+    {
+        /* No foundation-model/ prefix */
+        TEST("extract_provider no prefix", bedrock_extract_provider_from_arn("some-random-string") == NULL);
+    }
+    {
+        /* Empty after prefix (no dot) */
+        const char *arn = "arn:aws:bedrock::foundation-model/nodot";
+        char *r = bedrock_extract_provider_from_arn(arn);
+        TEST("extract_provider no dot", r == NULL);
+        free(r);
+    }
+
+    /* ── bedrock_get_context_length ─────────────────────────────── */
+    printf("\n--- bedrock_get_context_length ---\n");
+    {
+        TEST("get_context NULL returns default", bedrock_get_context_length(NULL) == 128000);
+    }
+    {
+        TEST("get_context unknown returns default", bedrock_get_context_length("unknown.model") == 128000);
+    }
+    {
+        TEST("get_context claude-sonnet-4-6",
+             bedrock_get_context_length("anthropic.claude-sonnet-4-6-20250514-v1:0") == 200000);
+    }
+    {
+        TEST("get_context claude-opus-4",
+             bedrock_get_context_length("anthropic.claude-opus-4-20250514") == 200000);
+    }
+    {
+        TEST("get_context nova-pro",
+             bedrock_get_context_length("amazon.nova-pro-v1:0") == 300000);
+    }
+    {
+        TEST("get_context nova-micro",
+             bedrock_get_context_length("amazon.nova-micro-v1:0") == 128000);
+    }
+    {
+        /* Longest prefix match: sonnet-4-5 should match before sonnet-4 */
+        TEST("get_context longest prefix match",
+             bedrock_get_context_length("anthropic.claude-sonnet-4-5-v1:0") == 200000);
+    }
+    {
+        TEST("get_context llama4-maverick",
+             bedrock_get_context_length("meta.llama4-maverick-v1:0") == 128000);
+    }
+
     /* Print summary */
     printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;

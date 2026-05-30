@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v329)
+# Goal Mantra — Slermes C (v330)
 
-335/0/0 (292 test files). 95 gaps. Phase 262: S8 R02 Bedrock depth — stop_reason mapping. 50-test bedrock suite.
+335/0/0 (292 test files). 95 gaps. Phase 263: S8 R02 Bedrock depth — is_context_overflow, classify_error, extract_provider_from_arn, get_context_length. 82-test bedrock suite.
 
 ## Loop
 

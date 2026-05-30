@@ -206,6 +206,12 @@ extern const provider_ops_t PROVIDER_OPS_AZURE;
 /* AWS Bedrock Converse API */
 extern const provider_ops_t PROVIDER_OPS_BEDROCK;
 
+/* Bedrock utility functions — ported from Python bedrock_adapter.py */
+bool bedrock_is_context_overflow(const char *error_message);
+const char *bedrock_classify_error(const char *error_message);
+char *bedrock_extract_provider_from_arn(const char *arn);
+int  bedrock_get_context_length(const char *model_id);
+
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;
 
