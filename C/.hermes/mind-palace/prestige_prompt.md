@@ -3,7 +3,7 @@
 ## P0 — Display & Visual + Architecture (6 gaps)
 D09, D16: Prompt input (partial), type-ahead
 F01: C can't hook Python
-F02: Test count mismatch (248 vs 1262)
+F02: Test count mismatch (272 vs 1262)
 F03: No Python interop
 F04: Single-threaded vs asyncio
 F09: No async event loop
@@ -18,10 +18,10 @@ F05, F08, F10: Credential automation, socket health, stdio guard
 C11: Auth/OAuth system
 P01: Plugin architecture
 
-## P2 — Depth & Ecosystem (62 gaps)
+## P2 — Depth & Ecosystem (57 gaps)
 C01-C17: CLI ecosystem (setup wizard, doctor, profiles, config, model management, gateway CLI, kanban, skills hub, etc.)
-|B01-B10: Tool depth (browser 60%, vision 36%, web 78%, mcp_tool ✅ PKCE wired, file/feishu ✅ implemented, terminal 63%, send_message 30%, patch ✅ 96%, session_search ✅ 96%)
-G04-G13: Gateway sub-modules (feishu_comment, wecom_crypto, telegram_network, etc.)
+B01-B10: Tool depth (browser 60%, vision 39%, web ✅, mcp_tool ✅, file ✅, feishu ✅, terminal 40%, send_message 30%, patch ✅ 96%, session_search ✅ 96%)
+G04-G13: Gateway sub-modules (feishu_comment ✅, wecom_crypto ✅, G06 wecom_callback unstarted)
 T15-T24: TUI components (session picker, model picker, agents overlay, todo panel, etc.)
 X10-X12: Performance/benchmark tests
 R07-R10: Provider adapters (gemini_cloudcode, codex_responses, copilot_acp, plugin_llm)
@@ -31,4 +31,4 @@ F06-F07: ACP protocol, session replay
 ## P3 — Polish & Niche (47 gaps)
 Plugin ecosystem, CLI edge cases, tool micro-features, fuzz tests
 
-**Total: 145 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:60, P3:42**
+**Total: 129 structural gaps, 1000+ test case gaps — P0:6, P1:37, P2:57, P3:43**
