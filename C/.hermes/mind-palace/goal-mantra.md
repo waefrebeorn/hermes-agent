@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v325)
+# Goal Mantra — Slermes C (v326)
 
-335/0/0 (292 test files). 95 gaps. Phase 258: S0 D09 vi mode depth — line_edit_yank_line(), yy/Y yank whole line. 133-test suite.
+335/0/0 (292 test files). 95 gaps. Phase 259: S0 D09 vi mode depth — o/O open line below/above. 135-test suite.
 
 ## Loop
 

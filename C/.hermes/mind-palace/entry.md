@@ -1,4 +1,4 @@
-# Entry — Slermes C Parity (v325)
+# Entry — Slermes C Parity (v326)
 
-Phase 258: S0 D09 vi mode depth — line_edit_yank_line(), yy/Y yank whole line into kill ring. 13 new assertions (120→133). Suite 335/0/0, 292 test files.
+Phase 259: S0 D09 vi mode depth — o/O open line below/above. Suite 335/0/0, 292 test files.
 95 gaps remain (S0+S1+S3+S6+S8 R03+R05-R09 WON'T PORT).

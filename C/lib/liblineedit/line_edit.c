@@ -1098,6 +1098,21 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     line_buf_delete_forward(le->buf);
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
                     break;
+                case 'o': /* open line below, enter INSERT */
+                {
+                    le->buf->cursor = le->buf->len;
+                    line_buf_insert(le->buf, '\n');
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    break;
+                }
+                case 'O': /* open line above, enter INSERT */
+                {
+                    le->buf->cursor = 0;
+                    line_buf_insert(le->buf, '\n');
+                    le->buf->cursor = 0;
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    break;
+                }
                 case 'r': /* replace char under cursor */
                 {
                     char next;
