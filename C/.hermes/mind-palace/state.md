@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 333/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 287 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 287 (+1 matrix). v293.
+Suite: 334/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 288 | C src: 180
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 288 (+1 feishu). v294.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -172,7 +172,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 223: Slack platform test suite (S7 X01). test_slack.c — 26 assertions covering slack_set_token (normal, empty, long, special chars), slack_set_channel (normal, empty, dashes, DM), slack_set_signing_secret (NULL, normal, empty, hex), slack_get_chat_id (current, change, NULL update), slack_get_text (normal, empty, missing, no msg, NULL, unicode, multi-line, markdown), setter/getter interaction (multiple sets, re-sets). Suite 329→330/0/0. Test files 283→284. v290.
 |- Phase 224: WeCom platform test suite (S7 X01). test_wecom.c — 50 assertions covering wecom_set_webhook (normal, empty, NULL, reset), wecom_set_app_credentials (normal, empty, reset, all/pair NULL), ring buffer queue/poll (single, multi-FIFO, empty, NULL params), get_chat_id/get_text (normal, missing, NULL, unicode, empty), handle_webhook JSON (FromUserName/MsgType parsing, non-text filtering, missing content), handle_webhook XML fallback (empty body, invalid JSON), edge cases (NULL/empty/invalid JSON bodies), overflow (64-slot, oldest preserved). Suite 330→331/0/0. Test files 284→285. v291.
 |- Phase 225: BlueBubbles platform test suite (S7 X01). test_bluebubbles.c — 54 assertions covering state setters (url, password, poll_guid with NULL/empty), bluebubbles_is_group (NULL, explicit true/false, ;+; group pattern, ;-; DM pattern, both fields), bluebubbles_get_group_id (NULL, DM, chatGuid, guid, chats array fallback, priority), get_chat_id/get_text (normal, missing, NULL, unicode), get_message_guid (NULL, guid, messageGuid, priority, both empty), get_tapback_type (NULL, missing, all 6 add types 2000-2005, remove 3000, negative), get_attachment_path (NULL, no attachments, empty array, single, returns first, missing path field). Suite 331→332/0/0. Test files 285→286. v292.
-|- Phase 226: Matrix platform test suite (S7 X01). test_matrix.c — 35 assertions covering state setters (homeserver, token, room, user_id with normal/empty/reset), set_event_filter (single, multi, whitespace, empty clears, NULL clears, re-set), get_chat_id (normal, no message, message no chat, missing id, NULL), get_text (normal, empty, no text field, no message, NULL, unicode, multi-line), setter interaction (multiple resets of all). Suite 332→333/0/0. Test files 286→287. v293.
+|- Phase 227: Feishu platform test suite (S7 X01). test_feishu.c — 32 assertions covering state setters (webhook, app_credentials, default_receive_id normal/empty/reset), extractors (get_chat_id/get_text with normal/missing/NULL/unicode/multi-line), poll_messages null/http, setters interaction. Suite 333→334/0/0. Test files 287→288. v294.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
