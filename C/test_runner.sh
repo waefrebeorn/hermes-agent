@@ -1148,6 +1148,17 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "yuanbao_media (compilation failed)"
 fi
+# Display word wrap test (display_core.c pure function)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_display_word_wrap.c" \
+    "$CDIR/src/cli/display_core.c" \
+    -o /tmp/hermes_test_wordwrap -lm \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_wordwrap > /dev/null 2>&1; then ok "word_wrap (16 tests)"
+    else fail "word_wrap (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_wordwrap
+else skip "word_wrap (compilation failed)"
+fi &
 # telegram_network utility test (G07: telegram_resolve_system_dns, telegram_parse_doh_response)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_telegram_network.c" \

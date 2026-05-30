@@ -756,7 +756,7 @@ char *display_word_wrap(const char *text, int max_width) {
     if (!text || max_width < 1) return strdup(text ? text : "");
     size_t in_len = strlen(text);
     /* Upper bound: each char could need \n before it */
-    size_t cap = in_len + (in_len / (max_width > 1 ? max_width : 1)) + 1;
+    size_t cap = in_len + (in_len / (max_width > 1 ? max_width : 1)) + 2;
     char *out = (char *)malloc(cap);
     if (!out) return strdup(text);
     size_t pos = 0;

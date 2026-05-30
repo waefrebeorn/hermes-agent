@@ -1,8 +1,8 @@
 ||| Slermes C
 
 Suite: 325/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 280 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). S7 X01 test files 280 (+1 signal). Bugfix: NULL session_id in events.c (3 sites). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Binary: 31M | Warnings: 0 | Test files: 281 | C src: 180
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 281 (+2 signal+wordwrap). v287.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -165,7 +165,8 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 ||- Phase 216: L26 hermes_message_sanitize() ported from Python build_assistant_message() sanitization pipeline. Applies surrogate fix, think-block stripping, and secret redaction to assistant messages before storage. Wired into agent_loop.c after message creation. 35-test suite (new file: agent_message_sanitize.c/h). Suite 324→325/0/0. Test files 281→282. C src 179→180. Battleship 108→107 gaps. S1 L26 depth: 3/3 functions ported — L26 PORTED.
 ||- Phase 217: L27 prompt builder reclassified PORTED. Function-level comparison: Python prompt_builder.py (25 functions) vs C system_prompt.c (15 public functions). All core features ported: identity, memory, skills, tool enforcement, context file loading, threat scanning, platform hints. 10 unported functions are Python skills-manifest system (arch-specific, won't port). Suite 325/0/0 (v284). Battleship 107→106 gaps. S1 L25+L26+L27 PORTED. S7 test expansion: 22 new edge-case tests in test_agent_message_sanitize.c (35→57 assertions). boundary_start bugfix in strip_think_blocks().
 |- Phase 218: ACP events test suite (S7 X01). test_acp_events.c — 76 assertions covering tool call ID tracking (register/pop/NULL safety/FIFO/session isolation), notification builders (tool_start/tool_complete/plan_update with edge cases). Bugfix: 3 NULL session_id sites in events.c (json_new_string(NULL) → json_new_string("")). Suite 325→325/0/0. Test files 279 (+1 acp_events). v285.
-|- Phase 219: Signal helper test suite (J13, S7 X01). test_hermes_signal.c — 8 assertions covering signal_on, signal_default, signal_register_common, signal_safe_write, and NULL safety. Test files 279→280. Suite 325/0/0. v286.
+||- Phase 219: Signal helper test suite (J13, S7 X01). test_hermes_signal.c — 8 assertions covering signal_on, signal_default, signal_register_common, signal_safe_write, and NULL safety. Test files 279→280. Suite 325/0/0. v286.
+|- Phase 220: display_word_wrap test suite + bugfix. test_display_word_wrap.c — 16 assertions covering NULL/empty, exact boundary, word wrapping, existing newline preservation, multi-word, single char width, edge cases. Bugfix: capacity calc OBO in display_word_wrap() dropped trailing words (pos + wlen + 1 >= cap triggered prematurely). Suite 325/0/0. Test files 280→281. v287.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
@@ -173,5 +174,5 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 ||- **P2** (51): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), Plugin system (4), Architecture (2), S2 remaining (5)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 |
-|Real parity gap is 103 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 325/0/0 (280 test files). v286. S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED.
+|Real parity gap is 103 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 325/0/0 (281 test files). v287. S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED.
 |
