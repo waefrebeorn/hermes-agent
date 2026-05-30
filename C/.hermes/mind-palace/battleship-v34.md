@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v276 | Fork diverged — C/ lives only on fork | Suite 322/0/0 | 85 tools | 98 CLI**\\n**Honest assessment: 114 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6 all PORTED. Suite 322/0/0.**
+**v277 | Fork diverged — C/ lives only on fork | Suite 322/0/0 | 85 tools | 98 CLI**\\n**Honest assessment: 113 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6+S0 all PORTED. Suite 322/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -13,10 +13,9 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
-| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). 66-test suite. Vi mode remains. | PARTIAL | P0 |
-| 02 | D16 | Recurrent typing: type-ahead, input buffering during LLM call | prompt_toolkit async input queue + keyboard interrupt | fgets/line_edit blocks during LLM, type-ahead lost | REAL GAP | P0 |
+| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). 77-test suite. Vi mode remains. | PARTIAL | P2 |
 
-**S0: 2 gaps (1 real, 1 partial) — down from 18 as of v145 Phase 57.**
+**S0: 1 gap (D09 vi mode) — all display infrastructure PORTED. D16 type-ahead IMPLEMENTED (Phase 210).**
 
 ---
 
@@ -266,7 +265,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
-| S0: Display & Visual | 1 | 1 | 0 | 0 | 0 | Phase 0 — D09 emacs PARTIAL (vi mode remains), D16 type-ahead real gap |
+| S0: Display & Visual | 1 | 0 | 0 | 1 | 0 | Phase 0 — D09 vi mode remains. D16 type-ahead IMPLEMENTED (Phase 210). |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
@@ -277,7 +276,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-| **TOTAL** | **114** | **5** | **34** | **51** | **24** | **S3 all PORTED. S6 all PORTED. Suite 322/0/0, test files 278.** |
+| **TOTAL** | **113** | **4** | **34** | **52** | **24** | **S0+S3+S6 all PORTED. Suite 322/0/0, test files 278.** |
 
 ### Phase Map
 

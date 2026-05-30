@@ -1,4 +1,4 @@
-(v276)
+(v277)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-322/0/0 (278 test files). 114 gaps. Phase 209: D09 emacs keybindings ported (66-test suite).
-Next: D16 type-ahead, S7 test expansion, or S1 partials.
+322/0/0 (278 test files). 113 gaps. Phase 210: D16 type-ahead reader wired (background stdin capture thread).
+S0+S3+S6 all PORTED. Next: S7 test expansion, S1 partials, or B08 depth.

@@ -57,6 +57,10 @@ bool line_edit_save_history(line_edit_t *le, const char *path);
 /* Load history from file */
 bool line_edit_load_history(line_edit_t *le, const char *path);
 
+/* Set buffer text (for pre-populating input, e.g. from type-ahead).
+ * Copies text into the editor buffer. Safe to call before line_edit_read(). */
+void line_edit_set_text(line_edit_t *le, const char *text);
+
 /* Emacs-style editing helpers — exposed for testing */
 void line_edit_kill_line(line_edit_t *le);
 void line_edit_yank(line_edit_t *le);

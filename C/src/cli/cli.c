@@ -19,6 +19,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
+#include <fcntl.h>
 
 /* ================================================================
  *  State
@@ -73,6 +75,39 @@ static char **cli_complete(const char *partial, void *user_data) {
 }
 
 static cli_state_t g_cli;
+
+/* Type-ahead buffer — captures keystrokes during LLM call */
+#define TYPE_AHEAD_BUF_SIZE 8192
+static char g_type_ahead_buf[TYPE_AHEAD_BUF_SIZE];
+static size_t g_type_ahead_len;
+static pthread_t g_type_ahead_thread;
+static volatile bool g_type_ahead_running;
+
+/* Type-ahead reader thread: captures stdin keystrokes during LLM call.
+   Runs in non-blocking mode so it can be stopped cleanly. */
+static void *type_ahead_reader(void *arg) {
+    (void)arg;
+    if (!isatty(STDIN_FILENO)) return NULL;
+    /* Set stdin to non-blocking */
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+    while (g_type_ahead_running) {
+        char c;
+        ssize_t n = read(STDIN_FILENO, &c, 1);
+        if (n > 0) {
+            /* Store captured char */
+            if (g_type_ahead_len < TYPE_AHEAD_BUF_SIZE - 1) {
+                g_type_ahead_buf[g_type_ahead_len++] = c;
+                g_type_ahead_buf[g_type_ahead_len] = '\0';
+            }
+        }
+        /* 50ms poll interval — fast enough to not miss keystrokes */
+        usleep(50000);
+    }
+    /* Restore original blocking mode */
+    fcntl(STDIN_FILENO, F_SETFL, flags);
+    return NULL;
+}
 
 /* ================================================================
  *  Skin integration
@@ -888,6 +923,14 @@ start_interactive:
         snprintf(prompt, sizeof(prompt), "\n%s ", prompt_symbol);
 
         /* Multi-line support: read initial line, then continue if backslash-ending */
+
+        /* D16: Inject type-ahead buffer captured during LLM call */
+        if (g_type_ahead_len > 0 && g_le) {
+            line_edit_set_text(g_le, g_type_ahead_buf);
+            g_type_ahead_len = 0;
+            g_type_ahead_buf[0] = '\0';
+        }
+
         char *line = line_edit_read(g_le, prompt);
         if (!line) break;  /* EOF/Ctrl-D/Ctrl-C */
         strncpy(input, line, sizeof(input) - 1);
@@ -973,7 +1016,22 @@ start_interactive:
         /* Run agent — show spinner until first token arrives */
         if (g_cli.interactive)
             display_kawaii_start(&g_cli.spinner, "thinking", true);
+
+        /* Start type-ahead reader to capture keystrokes during LLM call */
+        if (g_cli.interactive && isatty(STDIN_FILENO)) {
+            g_type_ahead_len = 0;
+            g_type_ahead_running = true;
+            g_type_ahead_buf[0] = '\0';
+            pthread_create(&g_type_ahead_thread, NULL, type_ahead_reader, NULL);
+        }
+
         char *resp = agent_chat(&g_cli.agent, input);
+
+        /* Stop type-ahead reader and collect buffered input */
+        if (g_cli.interactive && isatty(STDIN_FILENO)) {
+            g_type_ahead_running = false;
+            pthread_join(g_type_ahead_thread, NULL);
+        }
         if (resp) {
             /* In streaming mode, content was already printed by callback.
              * Only print final newline and handle errors. */

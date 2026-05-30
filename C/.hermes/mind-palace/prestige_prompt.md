@@ -1,7 +1,7 @@
-# Prestige (v276)
+# Prestige (v277)
 
-## P0 — Display & Visual + Architecture (6 gaps)
-D09, D16: Prompt input (partial), type-ahead
+## P0 — Architecture (4 gaps)
+F01: C can't hook Python, F02: Test count mismatch, F03: No Python interop, F09: No async event loop
 F01: C can't hook Python
 F02: Test count mismatch (272 vs 1262)
 F03: No Python interop

@@ -1,15 +1,19 @@
-(v276)
+(v277)
 
 ## Immediate Next
 
-S3+S6 all PORTED. 114 gaps remain across 7 sectors.
-Next: D16 type-ahead (P0), S7 test expansion, or S1 partials (L24-L28).
+S0+S3+S6 all PORTED. 113 gaps remain across 7 sectors.
+Next: S7 test expansion, S1 partials (L24-L28), or B08 send_message remaining depth.
 
 ## Pipeline
 
+S0 D16 type-ahead (P0):
+- Background thread captures stdin during agent_chat() ✅ (Phase 210)
+- Injected via line_edit_set_text() before next prompt
+
 S0 D09 depth (line_edit):
-- Emacs keybindings PORTED ✅ (Phase 209, 66 tests)
-- Vi mode remains — pending
+- Emacs keybindings PORTED ✅ (Phase 209, 77 tests)
+- Vi mode remains — pending (P2)
 
 S6 B08 depth (send_message):
 - validate_media_path() ported ✅ (Phase 194)
@@ -23,8 +27,9 @@ S7 test coverage (278/1262 test files = 22.0%):
 - Phase 203-204: 21 new edge case assertions
 - Phase 207: 26-test tool_error_sanitize suite
 - Phase 208: 35-test tool_coerce suite
-- Phase 209: 66-test line_edit emacs suite
+- Phase 209: 77-test line_edit suite
+- Phase 210: type-ahead reader wired into CLI
 
 ## Future
 
-D16 type-ahead, B08 send_message remaining depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
+B08 send_message remaining depth, S7 test expansion, S1 partials (L24-L28), S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.

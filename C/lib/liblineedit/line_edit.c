@@ -330,6 +330,12 @@ void line_edit_free(line_edit_t *le) {
     free(le);
 }
 
+/* Set buffer text for pre-populating input (e.g. from type-ahead) */
+void line_edit_set_text(line_edit_t *le, const char *text) {
+    if (!le || !text) return;
+    line_buf_set(le->buf, text);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Word motion helpers                                               */
 /* ------------------------------------------------------------------ */

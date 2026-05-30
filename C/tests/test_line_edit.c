@@ -398,6 +398,61 @@ static void test_null_safety(void) {
     TEST("cursor_word_backward(NULL) no crash", 1);
 }
 
+/* ================================================================
+ *  9. set_text
+ * ================================================================ */
+static void test_set_text(void) {
+    printf("\n--- set_text ---\n");
+
+    /* Normal set */
+    line_edit_t *le = line_edit_create(dummy_complete, NULL);
+    TEST_NOT_NULL("create for set_text", le);
+    if (le) {
+        line_edit_set_text(le, "hello world");
+        TEST_STR_EQ("set_text sets buffer content",
+                    le->buf->buf, "hello world");
+        TEST("set_text cursor at end",
+             le->buf->cursor == 11);
+        line_edit_free(le);
+    }
+
+    /* NULL text (no crash) */
+    le = line_edit_create(dummy_complete, NULL);
+    TEST_NOT_NULL("create for null text test", le);
+    if (le) {
+        line_edit_set_text(le, NULL);
+        TEST("set_text(NULL) leaves buffer empty",
+             le->buf->len == 0);
+        line_edit_free(le);
+    }
+
+    /* NULL editor (no crash) */
+    line_edit_set_text(NULL, "test");
+    TEST("set_text on NULL editor no crash", 1);
+
+    /* Overwrite existing content */
+    le = line_edit_create(dummy_complete, NULL);
+    TEST_NOT_NULL("create for overwrite test", le);
+    if (le) {
+        line_edit_set_text(le, "first");
+        line_edit_set_text(le, "second");
+        TEST_STR_EQ("set_text overwrites existing content",
+                    le->buf->buf, "second");
+        line_edit_free(le);
+    }
+
+    /* Empty string */
+    le = line_edit_create(dummy_complete, NULL);
+    TEST_NOT_NULL("create for empty string test", le);
+    if (le) {
+        line_edit_set_text(le, "");
+        TEST_STR_EQ("set_text empty string", le->buf->buf, "");
+        TEST("set_text empty string cursor at 0",
+             le->buf->cursor == 0);
+        line_edit_free(le);
+    }
+}
+
 int main(void) {
     printf("=== Line Editor Test Suite ===\n");
 
@@ -409,6 +464,7 @@ int main(void) {
     test_kill_word_forward();
     test_transpose();
     test_null_safety();
+    test_set_text();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
