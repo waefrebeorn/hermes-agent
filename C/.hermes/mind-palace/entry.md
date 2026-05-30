@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v378)
+# Entry — Slermes C Parity (v379)
 
-Phase 314: S5 C03 memory CLI — /memory [status|providers|setup]. 73 gaps.
+Phase 315: S5 C18 voice CLI — /voice [on|off|tts|status|config|key]. 72 gaps.

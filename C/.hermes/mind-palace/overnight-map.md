@@ -1,8 +1,8 @@
-# Overnight Map — Recent Phases (v378)
+# Overnight Map — Recent Phases (v379)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
-| 314 | S5 C03 memory CLI — /memory [status|providers|setup]. status: loads config.yaml and displays memory provider, char_limit, user_char_limit, ttl_days, auto_save. providers: lists 5 known memory providers. setup <provider>: prints manual config.yaml edit instructions. C03 PORTED. 74→73 gaps. | `src/cli/commands.c` — cmd_memory() (+83 LOC). Suite 325/0/14. v378. | 74 gaps | 73 gaps |
+| 315 | S5 C18 voice CLI — /voice [on|off|tts|status|config|key]. Enhanced with config display, record key formatting (Ctrl+B), TTS provider status. 6 subcommands. C18 PORTED. 73→72 gaps. | `src/cli/commands.c` — cmd_voice() enhanced (180 LOC). Suite 325/0/14. v379. | 73 gaps | 72 gaps |
 | 313 | S5 C17 skills hub CLI — /skills-hub [list|search|show|sync] wired to skills_hub.c API. list prints catalog summary + first 50 skills. search finds by query substring (name/title/desc/category/tags/slug). show displays full skill details. sync clears cache and re-fetches. Type renamed hub_skill_meta_t to avoid collision with hermes.h's skill_meta_t. C17 PORTED. 75→74 gaps. | `src/cli/commands.c` — cmd_skills_hub() (95 LOC). `include/hermes_skills_hub.h` — hub_skill_meta_t rename. Suite 325/0/14. v377. |
 | 312 | S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link wired to kanban tools via registry_dispatch(). list prints formatted task table with id/status/assignee/title columns. create dispatches kanban_create with assignee=cli. complete/block/unblock/link all call through to backend. C16 PORTED. 76→75 gaps. | `src/cli/commands.c` — cmd_kanban() rewritten (168 LOC). Suite 325/0/14. v376. |
 | 311 | S5 C13 gateway CLI — /gateway [status|list|stop|setup|restart] command with 5 subcommands. stop: gw_platform_shutdown_all + session save + exit(0). setup: platform env var readiness check with [ready]/[missing] indicators. restart: save + re-exec. C13 PORTED. 77→76 gaps. | `src/cli/commands.c` — cmd_gateway() + /gateway command registration (87 LOC). Suite 325/0/14. v375. |

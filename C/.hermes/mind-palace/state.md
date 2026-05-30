@@ -2,7 +2,7 @@
 
 ||||Suite: 335/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|||5|||||||||||||||||||Battleship v34 (73 gaps across 8 sectors, 1000+ test case gaps). v378. Phase 314: S5 C03 memory CLI — /memory [status|providers|setup]. Suite 325/0/14. C03 PORTED. 74→73 gaps.
+||||5|||||||||||||||||||Battleship v34 (72 gaps across 8 sectors, 1000+ test case gaps). v379. Phase 315: S5 C18 voice CLI — /voice [on|off|tts|status|config|key]. Suite 325/0/14. C18 PORTED. 73→72 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

@@ -4120,25 +4120,139 @@ static void cmd_debug(const char *args, agent_state_t *state) {
     printf("\n--- End Debug Report ---\n");
 }
 
-/* /voice: Toggle voice input/output mode (on|off|tts|status) */
+/* /voice: Toggle voice input/output mode (on|off|tts|status|config|key) */
 static int g_voice_mode = 0;
 static void cmd_voice(const char *args, agent_state_t *state) {
-    (void)state;
-    if (!args || !args[0] || strcmp(args, "status") == 0) {
-        printf("Voice mode: %s\n", g_voice_mode ? "ENABLED" : "DISABLED");
-        printf("  Usage: /voice [on|off|tts|status]\n");
+    if (!args || !args[0]) {
+        printf("Voice CLI — mode and configuration\n");
+        printf("Usage: /voice status          — Show voice mode + config\n");
+        printf("       /voice on              — Enable voice input/output\n");
+        printf("       /voice off             — Disable voice mode\n");
+        printf("       /voice tts             — Enable TTS output mode\n");
+        printf("       /voice config          — Show voice config settings\n");
+        printf("       /voice key <binding>   — Set record key (e.g. ctrl+b)\n");
         return;
     }
-    if (strcmp(args, "on") == 0 || strcmp(args, "tts") == 0) {
+    const char *sub = args;
+    while (*sub == ' ') sub++;
+
+    if (strcmp(sub, "status") == 0 || strcmp(sub, "st") == 0) {
+        printf("Voice mode: %s\n", g_voice_mode ? "ENABLED" : "DISABLED");
+        hermes_config_t cfg;
+        char home_dir[1024];
+        memset(home_dir, 0, sizeof(home_dir));
+        if (state->hermes_home[0]) {
+            snprintf(home_dir, sizeof(home_dir), "%s", state->hermes_home);
+        } else {
+            const char *home_env = getenv("SLERMES_HOME");
+            if (!home_env) home_env = getenv("HOME");
+            if (home_env) {
+                snprintf(home_dir, sizeof(home_dir), "%s/.slermes", home_env);
+                if (access(home_dir, F_OK) != 0)
+                    snprintf(home_dir, sizeof(home_dir), "%s/.hermes", home_env);
+            }
+        }
+        if (home_dir[0] && access(home_dir, F_OK) == 0 && hermes_config_load(&cfg, home_dir)) {
+            printf("\nVoice config:\n");
+            show_cfg_val("record_key", "str", cfg.voice.record_key);
+            char key_buf[64] = "Ctrl+B"; /* Default display */
+            if (cfg.voice.record_key[0]) {
+                /* Format key binding: "ctrl+b" -> "Ctrl+B" */
+                if (strncmp(cfg.voice.record_key, "c-", 2) == 0)
+                    snprintf(key_buf, sizeof(key_buf), "Ctrl+%c", toupper((unsigned char)cfg.voice.record_key[2]));
+                else if (strncmp(cfg.voice.record_key, "a-", 2) == 0)
+                    snprintf(key_buf, sizeof(key_buf), "Alt+%c", toupper((unsigned char)cfg.voice.record_key[2]));
+            }
+            printf("  record_key_formatted: %s\n", key_buf);
+            show_cfg_val_int("max_recording_seconds", cfg.voice.max_recording_seconds);
+            show_cfg_val_bool("auto_tts", cfg.voice.auto_tts);
+            show_cfg_val_bool("beep_enabled", cfg.voice.beep_enabled);
+            show_cfg_val_int("silence_threshold", cfg.voice.silence_threshold);
+            show_cfg_val_float("silence_duration", cfg.voice.silence_duration);
+            printf("\nTTS provider:\n");
+            show_cfg_val("provider", "str", cfg.tts.provider);
+        } else {
+            printf("(config not loaded)\n");
+        }
+        return;
+    }
+    if (strcmp(sub, "on") == 0) {
         g_voice_mode = 1;
         printf("Voice mode ENABLED. voice_listen/voice_speak tools are available.\n");
-    } else if (strcmp(args, "off") == 0) {
+        return;
+    }
+    if (strcmp(sub, "tts") == 0) {
+        g_voice_mode = 1;
+        printf("Voice (TTS) mode ENABLED. voice_speak tool available.\n");
+        return;
+    }
+    if (strcmp(sub, "off") == 0) {
         g_voice_mode = 0;
         printf("Voice mode DISABLED.\n");
-    } else {
-        printf("Unknown argument: %s\n", args);
-        printf("  Usage: /voice [on|off|tts|status]\n");
+        return;
     }
+    if (strcmp(sub, "config") == 0) {
+        hermes_config_t cfg;
+        char home_dir[1024];
+        memset(home_dir, 0, sizeof(home_dir));
+        if (state->hermes_home[0]) {
+            snprintf(home_dir, sizeof(home_dir), "%s", state->hermes_home);
+        } else {
+            const char *home_env = getenv("SLERMES_HOME");
+            if (!home_env) home_env = getenv("HOME");
+            if (home_env) {
+                snprintf(home_dir, sizeof(home_dir), "%s/.slermes", home_env);
+                if (access(home_dir, F_OK) != 0)
+                    snprintf(home_dir, sizeof(home_dir), "%s/.hermes", home_env);
+            }
+        }
+        if (home_dir[0] && access(home_dir, F_OK) == 0 && hermes_config_load(&cfg, home_dir)) {
+            show_section_voice(&cfg);
+        } else {
+            printf("Error: Could not load config\n");
+        }
+        return;
+    }
+    if (strncmp(sub, "key ", 4) == 0) {
+        const char *binding = sub + 4;
+        while (*binding == ' ') binding++;
+        if (!*binding) {
+            printf("Usage: /voice key <binding>\n");
+            printf("  Example: /voice key ctrl+b\n");
+            printf("  Format: ctrl+<key> or alt+<key>\n");
+            return;
+        }
+        hermes_config_t cfg;
+        char home_dir[1024];
+        memset(home_dir, 0, sizeof(home_dir));
+        if (state->hermes_home[0]) {
+            snprintf(home_dir, sizeof(home_dir), "%s", state->hermes_home);
+        } else {
+            const char *home_env = getenv("SLERMES_HOME");
+            if (!home_env) home_env = getenv("HOME");
+            if (home_env) {
+                snprintf(home_dir, sizeof(home_dir), "%s/.slermes", home_env);
+                if (access(home_dir, F_OK) != 0)
+                    snprintf(home_dir, sizeof(home_dir), "%s/.hermes", home_env);
+            }
+        }
+        if (!home_dir[0] || access(home_dir, F_OK) != 0) {
+            printf("Error: Cannot determine Hermes home\n");
+            return;
+        }
+        if (hermes_config_load(&cfg, home_dir)) {
+            printf("To set voice record key to '%s':\n", binding);
+            printf("  Edit ~/.slermes/config.yaml:\n");
+            printf("    voice:\n");
+            printf("      record_key: %s\n", binding);
+        } else {
+            printf("Error: Could not load config\n");
+        }
+        return;
+    }
+
+    printf("Unknown argument: %s\n", sub);
+    printf("Usage: /voice [on|off|tts|status|config|key <binding>]\n");
 }
 
 /* /steer: Inject a message after the next tool call */
