@@ -72,6 +72,50 @@ static void test_strip_multiline(void) {
     free(r);
 }
 
+static void test_strip_code_fence(void) {
+    char *r = hermes_markdown_strip("text\n```\ncode block\n```\nmore text");
+    T("code fence content", r && contains(r, "code block"));
+    T("code fence markers removed", r && !contains(r, "```"));
+    free(r);
+}
+
+static void test_strip_image(void) {
+    char *r = hermes_markdown_strip("text ![alt](img.png) more");
+    T("image alt text preserved", r && contains(r, "alt"));
+    T("image URL removed", r && !contains(r, "img.png"));
+    free(r);
+}
+
+static void test_strip_strikethrough(void) {
+    char *r = hermes_markdown_strip("this is ~~strikethrough~~ text");
+    T("strikethrough content preserved", r && contains(r, "strikethrough"));
+    free(r);
+}
+
+static void test_strip_blockquote(void) {
+    char *r = hermes_markdown_strip("> quoted text\n> more quote");
+    T("blockquote text preserved", r && contains(r, "quoted text"));
+    free(r);
+}
+
+static void test_strip_horizontal_rule(void) {
+    char *r = hermes_markdown_strip("before\n---\nafter");
+    T("horizontal rule preserves text", r && contains(r, "before") && contains(r, "after"));
+    free(r);
+}
+
+static void test_strip_inline_html(void) {
+    char *r = hermes_markdown_strip("text <b>bold</b> <i>italic</i> end");
+    T("inline HTML content preserved", r && contains(r, "bold") && contains(r, "italic"));
+    free(r);
+}
+
+static void test_strip_nested_formatting(void) {
+    char *r = hermes_markdown_strip("**bold and *italic* inside**");
+    T("nested formatting content preserved", r && contains(r, "bold") && contains(r, "italic"));
+    free(r);
+}
+
 /* ---- hermes_markdown_render ---- */
 static void test_render_null(void) {
     char *r = hermes_markdown_render(NULL, 80);
@@ -112,15 +156,58 @@ static void test_render_term_width(void) {
     free(r30); free(r100);
 }
 
+static void test_render_code_block(void) {
+    char *r = hermes_markdown_render("text\n```\ncode\n```\nend", 80);
+    T("render code block non-NULL", r != NULL);
+    T("render code block has content", r && contains(r, "code"));
+    free(r);
+}
+
+static void test_render_long_text(void) {
+    char long_text[256];
+    snprintf(long_text, sizeof(long_text), "%s",
+        "This is a very long line of text that should wrap at the specified terminal width for proper display in a terminal environment.");
+    char *r = hermes_markdown_render(long_text, 40);
+    T("render long text non-NULL", r != NULL);
+    T("render long text preserves words", r && contains(r, "terminal"));
+    free(r);
+}
+
+static void test_render_narrow(void) {
+    char *r = hermes_markdown_render("hello world", 5);
+    T("render narrow terminal non-NULL", r != NULL);
+    T("render narrow has content", r && strlen(r) > 0);
+    free(r);
+}
+
+static void test_render_very_wide(void) {
+    char *r = hermes_markdown_render("hello world", 999);
+    T("render very wide terminal non-NULL", r != NULL);
+    T("render very wide preserves text", r && contains(r, "hello world"));
+    free(r);
+}
+
+static void test_render_negative_width(void) {
+    char *r = hermes_markdown_render("hello", -1);
+    T("render negative width non-NULL", r != NULL);
+    T("render negative width has content", r && strlen(r) > 0);
+    free(r);
+}
+
 int main(void) {
     printf("=== Markdown Render Tests ===\n");
     printf("\n--- hermes_markdown_strip ---\n");
     test_strip_null(); test_strip_empty(); test_strip_plain_text();
     test_strip_bold(); test_strip_italic(); test_strip_code();
     test_strip_headers(); test_strip_link(); test_strip_multiline();
+    test_strip_code_fence(); test_strip_image(); test_strip_strikethrough();
+    test_strip_blockquote(); test_strip_horizontal_rule();
+    test_strip_inline_html(); test_strip_nested_formatting();
     printf("\n--- hermes_markdown_render ---\n");
     test_render_null(); test_render_empty(); test_render_plain_text();
     test_render_bold(); test_render_header(); test_render_term_width();
+    test_render_code_block(); test_render_long_text();
+    test_render_narrow(); test_render_very_wide(); test_render_negative_width();
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0;
 }
