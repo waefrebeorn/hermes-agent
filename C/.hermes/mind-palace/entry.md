@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v381)
+# Entry — Slermes C Parity (v382)
 
-Phase 317: S7 X10 fuzz tests — 14 test cases across 6 parser families. 72 gaps.
+Phase 318: T13 model picker overlay — interactive model selection via /model in TUI. 68 gaps.

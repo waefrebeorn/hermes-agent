@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v381)
+# Goal Mantra — Slermes C (v382)
 
-325/0/14 (289 test files). 72 gaps. Phase 317: S7 X10 fuzz tests — 14 test cases across 6 parser families.
+325/0/15 (289 test files). 68 gaps. Phase 318: T13 model picker overlay in TUI — interactive model selection via /model.
 
 ## Loop
 
