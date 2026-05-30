@@ -1885,3 +1885,13 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |----|-------|------------|----------|
 | F06 | No ACP protocol server — VS Code/Zed/JetBrains integration missing (S10 P2) | C has full ACP server at `src/acp/server.c` (40KB) with JSON-RPC 2.0 over stdio, Content-Length framing. Handles initialize, new/list/load/resume/delete session, tools_list/call, edit_approval, auto-approve, permissions, fork_session, set_session_model/mode/config. Plus events.c, permissions.c, resource.c, edit_approval.c. | `C/src/acp/server.c` (40784 bytes), 712+ lines, 20+ message handlers. `C/tests/test_acp_events.c` (367 lines, 5 test suites, 76 assertions). `C/tests/test_acp_resource.c` (106 lines). |
 || F08 | Raw socket health check — TCP keepalive / zombie socket recovery (S10 P1) | **WON'T PORT.** Python's async httpx needs SO_KEEPALIVE because epoll_wait hangs on CLOSE-WAIT sockets. C's sync libhttp detects dead connections immediately on next read/write (+ connection pool idle-timeout cleanup). No benefit to porting. | Python: `_build_keepalive_http_client()` (run_agent.py:2739) sets SO_KEEPALIVE/TCP_KEEPIDLE=30/TCP_KEEPINTVL=10/TCP_KEEPCNT=3. `cleanup_dead_connections()` (agent_runtime_helpers.py:2099) probes pool with MSG_PEEK. C: libhttp pool idle-timeout in `http.c:1599`. |
+|## Phase 252: S0 D09 — Vi Mode Word Motion + Delete/Change/Substitute (v319)
+|| ID | Achievement | Evidence |
+||----|-------------|----------|
+|| D09b | line_edit_cursor_word_end() — moves cursor to end of current/next word. Port of vi `e`/`E` motion. | `C/lib/liblineedit/line_edit.c:382` — 7 test assertions in test_line_edit.c. |
+|| D09c | w/W — word forward (line_edit_cursor_word_forward) wired into vi NORMAL dispatch. | `C/lib/liblineedit/line_edit.c` line 1045 |
+|| D09d | b/B — word backward (line_edit_cursor_word_backward) wired into vi NORMAL dispatch. | line 1048 |
+|| D09e | D — delete to end of line (line_edit_kill_line) wired into vi NORMAL dispatch. | line 1057 |
+|| D09f | C — change to end of line (kill + insert mode) wired into vi NORMAL dispatch. | line 1060 |
+|| D09g | s — substitute char (delete forward + insert mode) wired into vi NORMAL dispatch. | line 1065 |
+|| D09h | Test file growth: 83→93 assertions (+10 word_end edge cases). | `C/tests/test_line_edit.c` — 93/0/0. |

@@ -80,5 +80,6 @@ void line_edit_kill_word_forward(line_edit_t *le);
 void line_edit_transpose_chars(line_edit_t *le);
 void line_edit_cursor_word_forward(line_edit_t *le);
 void line_edit_cursor_word_backward(line_edit_t *le);
+void line_edit_cursor_word_end(line_edit_t *le);
 
 #endif /* HERMES_LINE_EDIT_H */

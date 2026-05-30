@@ -379,6 +379,18 @@ void line_edit_cursor_word_backward(line_edit_t *le) {
         lb->cursor++;
 }
 
+/* Move cursor to end of current/next word */
+void line_edit_cursor_word_end(line_edit_t *le) {
+    if (!le) return;
+    line_buf_t *lb = le->buf;
+    if (lb->cursor >= lb->len) return;
+    /* Skip current word */
+    while (lb->cursor < lb->len && !isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor++;
+    /* If we landed on a space, step back to end of word */
+    if (lb->cursor > 0) lb->cursor--;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Emacs-style kill/yank                                             */
 /* ------------------------------------------------------------------ */
@@ -1018,6 +1030,29 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         for (size_t ki = 0; ki < le->kill_ring_len; ki++)
                             line_buf_insert(le->buf, le->kill_ring[ki]);
                     }
+                    break;
+                case 'w': /* word forward */
+                case 'W':
+                    line_edit_cursor_word_forward(le);
+                    break;
+                case 'b': /* word backward */
+                case 'B':
+                    line_edit_cursor_word_backward(le);
+                    break;
+                case 'e': /* word end */
+                case 'E':
+                    line_edit_cursor_word_end(le);
+                    break;
+                case 'D': /* delete to end of line */
+                    line_edit_kill_line(le);
+                    break;
+                case 'C': /* change to end of line */
+                    line_edit_kill_line(le);
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    break;
+                case 's': /* substitute char (delete + insert) */
+                    line_buf_delete_forward(le->buf);
+                    le->vi_mode = LINE_EDIT_MODE_INSERT;
                     break;
                 default:
                     handled = false;

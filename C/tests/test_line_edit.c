@@ -205,6 +205,55 @@ static void test_word_motion(void) {
         TEST("word_backward at 0 stays at 0", le->buf->cursor == 0);
         line_edit_free(le);
     }
+
+    /* cursor_word_end tests */
+    /* word_end on empty buffer */
+    le = make_buffer("", 0);
+    TEST_NOT_NULL("empty buffer for word_end", le);
+    if (le) {
+        line_edit_cursor_word_end(le);
+        TEST("word_end on empty stays at 0", le->buf->cursor == 0);
+        line_edit_free(le);
+    }
+
+    /* word_end: "hello world", cursor at 0 */
+    le = make_buffer("hello world", 0);
+    TEST_NOT_NULL("\"hello world\" at 0 for word_end", le);
+    if (le) {
+        line_edit_cursor_word_end(le);
+        TEST("word_end from 0 -> end of 'hello' (cursor 4)",
+             le->buf->cursor == 4);
+        line_edit_free(le);
+    }
+
+    /* word_end: "hello world", cursor at 6 (start of "world") */
+    le = make_buffer("hello world", 6);
+    TEST_NOT_NULL("\"hello world\" at 6 for word_end", le);
+    if (le) {
+        line_edit_cursor_word_end(le);
+        TEST("word_end from 6 -> end of 'world' (cursor 10)",
+             le->buf->cursor == 10);
+        line_edit_free(le);
+    }
+
+    /* word_end: single word, cursor at 0 */
+    le = make_buffer("hello", 0);
+    TEST_NOT_NULL("\"hello\" at 0 for word_end", le);
+    if (le) {
+        line_edit_cursor_word_end(le);
+        TEST("word_end single word -> end (cursor 4)",
+             le->buf->cursor == 4);
+        line_edit_free(le);
+    }
+
+    /* word_end: cursor at end of line */
+    le = make_buffer("hello", 5);
+    TEST_NOT_NULL("\"hello\" at 5 for word_end", le);
+    if (le) {
+        line_edit_cursor_word_end(le);
+        TEST("word_end at end stays at end", le->buf->cursor == 5);
+        line_edit_free(le);
+    }
 }
 
 /* ================================================================

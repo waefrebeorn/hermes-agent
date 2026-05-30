@@ -2,15 +2,15 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (100 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01 adaptive thinking. R10 partial (9 functions ported). v318.
-- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
-- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
-- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
-- Phase 248: R10 parse_context_limit + parse_available_output_tokens — port of Python model_metadata.parse_context_limit_from_error() and parse_available_output_tokens_from_error(). Error message parsing for context length extraction. 12 test assertions (→118). Suite 335/0/2. v315.
-|- Phase 249: S0 D09 vi mode — minimal vi keybindings in line_edit.c. ESC switches INSERT→NORMAL. NORMAL mode: h/j/k/l navigation, 0/$ line start/end, x/X delete, i/I/a/A insert/append, u undo (saved line), dd delete line, p/P paste. [NORMAL] mode indicator in prompt. 6 test assertions in test_line_edit.c (→83). Suite 335/0/2. v316.
-|- Phase 250: S10 F06 vaulted as stale — C has full ACP protocol server (src/acp/server.c + 4 modules). 102→101 gaps. v317.
-|- Phase 251: S8 R10 depth — provider_model_id_matches(), provider_model_suggests_kimi(), provider_normalize_model_version() ported from Python model_metadata.py. 23 test assertions (→141). Test binary 141/0/0. Suite 335/0/2. 101→100 gaps. v318.
-|
+|Battleship v34 (100 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01 adaptive thinking. R10 partial (9 functions ported). v319.
+|- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
+|- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
+|- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
+|- Phase 248: R10 parse_context_limit + parse_available_output_tokens — port of Python model_metadata.parse_context_limit_from_error() and parse_available_output_tokens_from_error(). Error message parsing for context length extraction. 12 test assertions (→118). Suite 335/0/2. v315.
+||- Phase 249: S0 D09 vi mode — minimal vi keybindings in line_edit.c. ESC switches INSERT→NORMAL. NORMAL mode: h/j/k/l navigation, 0/$ line start/end, x/X delete, i/I/a/A insert/append, u undo (saved line), dd delete line, p/P paste. [NORMAL] mode indicator in prompt. 6 test assertions in test_line_edit.c (→83). Suite 335/0/2. v316.
+||- Phase 250: S10 F06 vaulted as stale — C has full ACP protocol server (src/acp/server.c + 4 modules). 102→101 gaps. v317.
+||- Phase 251: S8 R10 depth — provider_model_id_matches(), provider_model_suggests_kimi(), provider_normalize_model_version() ported from Python model_metadata.py. 23 test assertions (→141). Test binary 141/0/0. Suite 335/0/2. 101→100 gaps. v318.
+||- Phase 252: S0 D09 vi mode — line_edit_cursor_word_end(), w/W/b/B/e/E word navigation, D delete-to-end, C change-to-end, s substitute. Wired into vi NORMAL dispatch. 10 new test assertions (→93). Suite 335/0/2. v319.
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
 - **Git state**: Fork diverged — 90 commits ahead of upstream (upstream deleted C/ entirely)
