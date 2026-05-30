@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v379)
+# Entry — Slermes C Parity (v380)
 
-Phase 315: S5 C18 voice CLI — /voice [on|off|tts|status|config|key]. 72 gaps.
+Phase 316: S5 C11 auth CLI — /auth [status|providers]. 72 gaps.

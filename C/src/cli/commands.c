@@ -80,6 +80,7 @@ static void cmd_skills(const char *args, agent_state_t *state);
 static void cmd_cron(const char *args, agent_state_t *state);
 static void cmd_fast(const char *args, agent_state_t *state);
 static void cmd_secrets(const char *args, agent_state_t *state);
+static void cmd_auth(const char *args, agent_state_t *state);
 static void cmd_completions(const char *args, agent_state_t *state);
 static void cmd_reload(const char *args, agent_state_t *state);
 static void cmd_doctor(const char *args, agent_state_t *state);
@@ -179,6 +180,7 @@ static const command_def_t COMMANDS[] = {
     {"/toolsets",NULL,    "List available toolsets",                    cmd_toolsets},
     {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
     {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
+    {"/auth",   NULL,      "Provider auth status: /auth [status|providers]", cmd_auth},
     {"/doctor",  NULL,    "Run system diagnostics: /doctor [all|config|env|keys]", cmd_doctor},
     {"/webhook", NULL,    "Manage webhook subscriptions: /webhook [list|add|remove]", cmd_webhook},
     {"/memory",  NULL,    "Memory setup: /memory [status|providers|setup]",  cmd_memory},
@@ -4912,6 +4914,115 @@ static void cmd_secrets(const char *args, agent_state_t *state) {
     } else {
         printf("Unknown subcommand '%s'. Use: list, get, sync, status\n", subcmd);
     }
+}
+
+/* /auth: Provider auth status overview */
+static void cmd_auth(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Auth credential status.\n");
+        printf("Usage: /auth status              — Show all provider credential status\n");
+        printf("       /auth providers            — List known auth providers\n");
+        return;
+    }
+    const char *sub = args;
+    while (*sub == ' ') sub++;
+
+    if (strcmp(sub, "status") == 0 || strcmp(sub, "st") == 0) {
+        printf("=== Provider Credential Status ===\n\n");
+        /* Check API key env vars */
+        typedef struct { const char *provider; const char *env_var; const char *desc; } cred_check_t;
+        cred_check_t checks[] = {
+            {"OpenAI",    "OPENAI_API_KEY",       "ChatGPT/OpenAI models"},
+            {"Anthropic", "ANTHROPIC_API_KEY",     "Claude models"},
+            {"Anthropic", "ANTHROPIC_TOKEN",       "Claude OAuth setup token"},
+            {"OpenRouter", "OPENROUTER_API_KEY",   "OpenRouter aggregation"},
+            {"DeepSeek",  "DEEPSEEK_API_KEY",      "DeepSeek models"},
+            {"Google",    "GOOGLE_API_KEY",        "Gemini models"},
+            {"xAI",       "XAI_API_KEY",           "Grok models"},
+            {"Azure",     "AZURE_API_KEY",         "Azure OpenAI"},
+            {"AWS",       "AWS_ACCESS_KEY_ID",     "AWS Bedrock (w/ AWS_SECRET_ACCESS_KEY)"},
+            {"Nous",      "NOUS_API_KEY",          "NousResearch inference"},
+            {"HF",        "HF_TOKEN",              "Hugging Face models"},
+            {"Groq",      "GROQ_API_KEY",          "Groq inference"},
+            {"Together",  "TOGETHER_API_KEY",      "Together AI"},
+            {"Perplexity","PERPLEXITY_API_KEY",    "Perplexity models"},
+            {"Cohere",    "COHERE_API_KEY",        "Cohere models"},
+            {"Fireworks", "FIREWORKS_API_KEY",     "Fireworks AI"},
+            {"Mistral",   "MISTRAL_API_KEY",       "Mistral models"},
+            {NULL, NULL, NULL}
+        };
+        int count = 0;
+        for (int i = 0; checks[i].provider; i++) {
+            const char *val = getenv(checks[i].env_var);
+            bool present = (val && val[0]);
+            if (present) {
+                size_t vlen = strlen(val);
+                printf("  %-14s  %-30s  ✓ (%zu chars)\n",
+                       checks[i].provider, checks[i].env_var, vlen);
+                count++;
+            }
+        }
+        if (count == 0)
+            printf("  No API key credentials found in environment.\n");
+        printf("\n  Total: %d credential(s) detected\n", count);
+
+        /* OAuth status */
+        printf("\n=== OAuth / Token Status ===\n");
+        const char *cc_oauth = getenv("CLAUDE_CODE_OAUTH_TOKEN");
+        printf("  Claude Code OAuth: %s\n",
+               (cc_oauth && *cc_oauth) ? "configured" : "not set");
+        const char *bws = getenv("BWS_ACCESS_TOKEN");
+        if (!bws) bws = getenv("SLERMES_BWS_TOKEN");
+        printf("  Bitwarden (BSM):  %s\n", (bws && *bws) ? "configured" : "not set");
+
+        /* Check if .env exists */
+        printf("\n=== Config Status ===\n");
+        const char *home = state->hermes_home[0] ? state->hermes_home : NULL;
+        if (!home) home = getenv("SLERMES_HOME");
+        if (!home) {
+            home = getenv("HOME");
+            printf("  Config home:     %s\n", home ? home : "(not found)");
+        } else {
+            printf("  Config home:     %s\n", home);
+        }
+        char env_path[1024];
+        snprintf(env_path, sizeof(env_path), "%s/.env", home ? home : "");
+        printf("  .env file:       %s\n",
+               (home && access(env_path, F_OK) == 0) ? "present" : "not found");
+        char cfg_path[1024];
+        snprintf(cfg_path, sizeof(cfg_path), "%s/config.yaml", home ? home : "");
+        printf("  config.yaml:     %s\n",
+               (home && access(cfg_path, F_OK) == 0) ? "present" : "not found");
+
+        printf("\n  For details, use: /secrets status\n");
+        printf("  For auth login flows, use the Python CLI: hermes auth login\n");
+        return;
+    }
+
+    if (strcmp(sub, "providers") == 0) {
+        printf("Known auth providers:\n");
+        printf("  openai        API key ($OPENAI_API_KEY)\n");
+        printf("  anthropic     API key ($ANTHROPIC_API_KEY) or OAuth ($ANTHROPIC_TOKEN)\n");
+        printf("  openrouter    API key ($OPENROUTER_API_KEY)\n");
+        printf("  deepseek      API key ($DEEPSEEK_API_KEY)\n");
+        printf("  google        API key ($GOOGLE_API_KEY)\n");
+        printf("  xai           API key ($XAI_API_KEY) or OAuth (xAI OAuth flow)\n");
+        printf("  azure         API key ($AZURE_API_KEY)\n");
+        printf("  bedrock       AWS credentials ($AWS_ACCESS_KEY_ID + secret)\n");
+        printf("  nous          API key ($NOUS_API_KEY) or OAuth (device code flow)\n");
+        printf("  groq          API key ($GROQ_API_KEY)\n");
+        printf("  together       API key ($TOGETHER_API_KEY)\n");
+        printf("  mistral       API key ($MISTRAL_API_KEY)\n");
+        printf("  fireworks     API key ($FIREWORKS_API_KEY)\n");
+        printf("  perplexity    API key ($PERPLEXITY_API_KEY)\n");
+        printf("  cohere        API key ($COHERE_API_KEY)\n");
+        printf("\nTo add credentials: set the env var in .env or use the Python CLI.\n");
+        return;
+    }
+
+    printf("Unknown subcommand: '%s'\n", sub);
+    printf("Usage: /auth status | providers\n");
 }
 
 /* ================================================================

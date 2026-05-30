@@ -147,7 +147,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 | ✅ PORTED — /model set (same as C07) |
 || 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 | ✅ PORTED — /model list (same as C07) |
 || 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
-|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — OAuth status in /secrets (Phase 290). Remaining: auth login/flows |
+|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers] (Phase 316) + OAuth status in /secrets (Phase 290). auth status checks 17 provider env vars, OAuth tokens, .env/config presence. auth providers lists 15 known providers with credential hints. Remaining: interactive auth login/flows (callback server, device code, token refresh) |
 || 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
 || 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | ✅ PORTED — /gateway [status|list|stop|setup|restart] (Phase 292+311). All 5 subcommands implemented: status (shows configured platforms), list (shows all 19), stop (gw_platform_shutdown_all + session save + exit), setup (env var readiness check with [ready]/[missing] indicators), restart (save + re-exec). |
 || C14 | Webhook setup (webhook.py) | ~1000 | P2 | ✅ PORTED — /webhook list/add/remove CLI (Phase 294) |

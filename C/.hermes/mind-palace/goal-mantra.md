@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v379)
+# Goal Mantra — Slermes C (v380)
 
-325/0/14 (289 test files). 72 gaps. Phase 315: S5 C18 voice CLI — /voice [on|off|tts|status|config|key].
+325/0/14 (289 test files). 72 gaps. Phase 316: S5 C11 auth CLI — /auth [status|providers].
 
 ## Loop
 
