@@ -140,7 +140,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 | 01 | C01 | Setup wizard (setup.py) | ~2000 | P2 |
 | 02 | C02 | Doctor diagnostics (doctor.py) | ~1500 | P2 |
 | 03 | C03 | Memory setup (memory_setup.py) | ~500 | P3 |
-| 04 | C04 | Profile management (profiles.py) | ~1000 | P2 |
+|| 04 | C04 | Profile management (profiles.py) | ~1000 | P2 |
 | 05 | C05 | Config editor (config.py) | ~800 | P2 |
 || 06 | C06 | Env loader (env_loader.py) | ~200 | P2 |
 | 07 | C07 | Model management (models.py) | ~2000 | P2 |
