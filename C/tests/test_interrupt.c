@@ -101,6 +101,60 @@ static int test_redundant_set(void) {
     return 1;
 }
 
+static int test_clear_non_existent(void) {
+    interrupt_clear_all();
+    interrupt_set(false, 999);  /* clearing non-existent thread */
+    ASSERT(interrupt_count() == 0, "Count should be 0");
+    return 1;
+}
+
+static int test_set_clear_set_cycle(void) {
+    interrupt_clear_all();
+    interrupt_set(true, 0);
+    interrupt_set(false, 0);
+    interrupt_set(true, 0);
+    ASSERT(interrupt_count() == 1, "Count should be 1 after set->clear->set");
+    ASSERT(interrupt_is_interrupted() == true, "Should be interrupted");
+    interrupt_set(false, 0);
+    return 1;
+}
+
+static int test_clear_all_twice(void) {
+    interrupt_clear_all();
+    interrupt_set(true, 0);
+    interrupt_clear_all();
+    interrupt_clear_all();  /* redundant */
+    ASSERT(interrupt_count() == 0, "Count should be 0");
+    ASSERT(interrupt_is_interrupted() == false, "Should not be interrupted");
+    return 1;
+}
+
+static int test_max_capacity(void) {
+    interrupt_clear_all();
+    /* Fill to max */
+    for (int i = 1; i <= INTERRUPT_MAX_THREADS; i++)
+        interrupt_set(true, (unsigned long)i);
+    ASSERT(interrupt_count() == INTERRUPT_MAX_THREADS, "Count should hit max");
+    /* Try to add one more (should be no-op) */
+    interrupt_set(true, (unsigned long)(INTERRUPT_MAX_THREADS + 1));
+    ASSERT(interrupt_count() == INTERRUPT_MAX_THREADS, "Count should not exceed max");
+    /* Clear all */
+    interrupt_clear_all();
+    ASSERT(interrupt_count() == 0, "Count should be 0 after clear");
+    return 1;
+}
+
+static int test_self_not_interrupted_when_others_are(void) {
+    interrupt_clear_all();
+    interrupt_set(true, 100);
+    interrupt_set(true, 200);
+    /* Current thread should NOT be interrupted */
+    ASSERT(interrupt_is_interrupted() == false, "Self not interrupted");
+    ASSERT(interrupt_count() == 2, "Count should be 2");
+    interrupt_clear_all();
+    return 1;
+}
+
 int main(void) {
     printf("=== interrupt tests ===\n\n");
 
@@ -112,6 +166,11 @@ int main(void) {
     TEST(specific_thread_zero_means_self);
     TEST(multiple_interrupted_threads);
     TEST(redundant_set);
+    TEST(clear_non_existent);
+    TEST(set_clear_set_cycle);
+    TEST(clear_all_twice);
+    TEST(max_capacity);
+    TEST(self_not_interrupted_when_others_are);
 
     printf("\n%s\n", tests_failed > 0 ? "SOME TESTS FAILED" : "ALL TESTS PASSED");
     printf("Results: %d/%d passed, %d failed, %d total (sum %d)\n",

@@ -1803,3 +1803,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v300
 Suite: 335/0/0 (289 test files). Gaps: 103. v301
 || S7u | S7 depth: Managed gateway edge case expansion (S7 X09). test_managed_gateway.c — 12→18 tests (+6). Auth path: null/empty home falls back to $HOME/.slermes/auth.json. Scheme: invalid scheme (ftp) falls back to https. URL builder: null vendor returns empty, browser vendor builds correctly. Resolve: null config returns false. | tests/test_managed_gateway.c — 18 tests. lib/libmangateway/managed_gateway.c covered. |
 Suite: 335/0/0 (289 test files). Gaps: 103. v302
+|| S7v | S7 depth: Interrupt edge case expansion (S7 X09). test_interrupt.c — 8→13 tests (+5). Clear non-existent thread is no-op (count unchanged). set-clear-set cycle yields correct count. clear_all twice is idempotent. Max capacity (64 threads) reached, overflow is no-op. Self thread not interrupted when only other threads are. | tests/test_interrupt.c — 13 tests, ~27 assertions. lib/libinterrupt/interrupt.c covered. |
+Suite: 335/0/0 (289 test files). Gaps: 103. v303

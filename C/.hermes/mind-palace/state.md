@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (managed_gateway 12→18 tests). v302.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (interrupt 8→13 tests). v303.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -182,6 +182,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 233: Tool output edge case expansion (S7 X09). test_tool_output.c — 24→38 assertions. New edge cases: max_line_length getter default+override, all-three env var interaction, strtol trailing-garbage/whitespace rejection, simultaneous byte+line exceed with overridden limits. v300.
 |- Phase 234: FAL common edge case expansion (S7 X09). test_fal_common.c — 15→25 assertions. New edge cases: empty API key fallthrough, both empty keys, JSON escape quotes/backslash/newline/tab/truncation, error_response plain message. v301.
 |- Phase 235: Managed gateway edge case expansion (S7 X09). test_managed_gateway.c — 12→18 tests. New: auth path null/empty home fallback, scheme invalid fallback, build url null vendor, build url browser vendor, resolve null config. v302.
+|- Phase 236: Interrupt edge case expansion (S7 X09). test_interrupt.c — 8→13 tests. New: clear non-existent thread (no-op), set-clear-set cycle, clear_all twice (redundant), max capacity (64 threads + overflow no-op), self not interrupted when others are. v303.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
