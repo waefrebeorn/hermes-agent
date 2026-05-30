@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-||5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v373. Phase 309: S7 X09 video_mime edge case expansion — 44 new assertions (14→58). Coverage: 15 case variants (.Mp4, .WEBM, .Mov, .AvI, .MKV, .MPEG), 7 multiple-dot edge cases (.tar.mp4, .mp4.bak, .video, ., ..), 9 path edge cases (empty, /, space, underscore, hyphen, parent dir, long name, numbers), 4 extension length (1/2/3/15 char), 8 non-video formats (.jpg/.jpeg/.gif/.bmp/.txt/.pdf/.zip/.html). Updated test_runner.sh count 14→58. Suite 325/0/14.
+||5|||||||||||||||||||Battleship v34 (77 gaps across 8 sectors, 1000+ test case gaps). v374. Phase 310: S5 C15 platform management — /platform pause/resume now modify config.yaml programmatically (hermes_config_set_platforms()). Adds/removes platform name from gateway.platforms comma-separated list. Writes back to ~/.hermes/config.yaml. Suite 325/0/14. C15 PORTED. 78→77 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

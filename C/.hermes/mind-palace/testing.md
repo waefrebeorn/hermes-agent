@@ -1,8 +1,8 @@
-(v373)
+(v374)
 
-325/0/14, 289 test files. All pass. 78 gaps. Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58).
+325/0/14, 289 test files. All pass. 77 gaps. Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically.
 
-Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58), full coverage: 15 case variants, 7 multi-dot edges, 9 path edges, 4 extension lengths, 8 non-video formats. test_runner count 14→58. v373.
+Phase 310: S5 C15 platform enable/disable CLI — /platform pause/resume now modify config.yaml via hermes_config_set_platforms(). Finds gateway: section, adds/removes platform from comma-separated list, writes back. Follows migrate_v0_to_v1() read-edit-write pattern. v374.
 Phase 308: S7 enum edge case expansion — 31 new assertions (17→48), full coverage: out-of-range OBO (value==count), large 21-value enum, empty/partial parse, round-trip all values, macro isolation. v372.
 Phase 307: S7 difflib edge case expansion — 59 new assertions (22→81), full coverage: ratio swap consistency, single char, unicode, whitespace, long identical, substring, unified_diff NULL/empty/both-NULL, large/zero context, single line, trailing newlines, multiple hunks, simple_diff empty/empty, full add/delete, multiple distant changes, long line change. v371.
 Phase 306: S7 glob edge case expansion — 48 new assertions (22→70), full coverage: empty/null patterns, character classes, dotfiles, multi-*, ** at end, **/ alone, cross-/ behavior, regression patterns, glob_find edge cases (empty dir, hidden files, exact path). v370.

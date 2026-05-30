@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v373)
+# Goal Mantra — Slermes C (v374)
 
-325/0/14 (289 test files). 78 gaps. Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58).
+325/0/14 (289 test files). 77 gaps. Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically.
 
 ## Loop
 

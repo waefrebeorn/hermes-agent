@@ -1030,6 +1030,12 @@ typedef struct {
 bool hermes_config_load(hermes_config_t *cfg, const char *config_dir);
 bool hermes_config_load_env(hermes_config_t *cfg);
 
+/* S5 C15: Set gateway.platforms in config.yaml and cfg struct.
+ * platforms is a comma-separated list (e.g. "telegram,discord").
+ * Empty string clears the config key.
+ * Returns true on success. */
+bool hermes_config_set_platforms(hermes_config_t *cfg, const char *platforms);
+
 /* P15: Config validation — returns true if valid, logs warnings for issues */
 typedef struct {
     char key[128];

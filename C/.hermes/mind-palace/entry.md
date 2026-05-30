@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v373)
+# Entry — Slermes C Parity (v374)
 
-Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58). 78 gaps.
+Phase 310: S5 C15 platform enable/disable — /platform pause/resume modifies config.yaml programmatically. 77 gaps.

@@ -2940,15 +2940,75 @@ static void cmd_platform(const char *args, agent_state_t *state) {
         while (*pname == ' ') pname++;
         if (!pname[0])
             printf("Usage: /platform pause <platform_name>\n");
-        else
-            printf("Platform pause: restart hermes to disable. Remove '%s' from gateway.platforms in config.yaml.\n", pname);
+        else {
+            /* Read current platforms from config, remove the named platform */
+            hermes_config_t cfg;
+            hermes_config_load(&cfg, NULL);
+            char new_platforms[256] = "";
+            const char *src = cfg.gateway_platforms;
+            if (src && src[0]) {
+                char tmp[256];
+                snprintf(tmp, sizeof(tmp), "%s", src);
+                char *tok = strtok(tmp, ",");
+                int first = 1;
+                while (tok) {
+                    /* Remove leading/trailing whitespace from token */
+                    while (*tok == ' ') tok++;
+                    char *end = tok + strlen(tok);
+                    while (end > tok && *(end-1) == ' ') end--;
+                    *end = '\0';
+                    if (strcasecmp(tok, pname) != 0) {
+                        if (!first) strncat(new_platforms, ",", sizeof(new_platforms) - strlen(new_platforms) - 1);
+                        strncat(new_platforms, tok, sizeof(new_platforms) - strlen(new_platforms) - 1);
+                        first = 0;
+                    }
+                    tok = strtok(NULL, ",");
+                }
+            }
+            if (hermes_config_set_platforms(&cfg, new_platforms[0] ? new_platforms : NULL)) {
+                printf("Platform '%s' disabled (removed from gateway.platforms).\n", pname);
+                printf("  Run /restart or restart slermes for the change to take effect.\n");
+            } else {
+                printf("Error: Could not update config.yaml.\n");
+            }
+        }
     } else if (strncmp(args, "resume", 6) == 0) {
         const char *pname = args + 6;
         while (*pname == ' ') pname++;
         if (!pname[0])
             printf("Usage: /platform resume <platform_name>\n");
-        else
-            printf("Platform resume: restart hermes to enable. Add '%s' to gateway.platforms in config.yaml.\n", pname);
+        else {
+            /* Read current platforms, add the named platform if not already present */
+            hermes_config_t cfg;
+            hermes_config_load(&cfg, NULL);
+            char new_platforms[256] = "";
+            int found = 0;
+            if (cfg.gateway_platforms[0]) {
+                snprintf(new_platforms, sizeof(new_platforms), "%s", cfg.gateway_platforms);
+                /* Check if already present */
+                char tmp[256];
+                snprintf(tmp, sizeof(tmp), "%s", cfg.gateway_platforms);
+                char *tok = strtok(tmp, ",");
+                while (tok) {
+                    while (*tok == ' ') tok++;
+                    if (strcasecmp(tok, pname) == 0) { found = 1; break; }
+                    tok = strtok(NULL, ",");
+                }
+            }
+            if (found) {
+                printf("Platform '%s' is already enabled.\n", pname);
+            } else {
+                if (new_platforms[0])
+                    strncat(new_platforms, ",", sizeof(new_platforms) - strlen(new_platforms) - 1);
+                strncat(new_platforms, pname, sizeof(new_platforms) - strlen(new_platforms) - 1);
+                if (hermes_config_set_platforms(&cfg, new_platforms)) {
+                    printf("Platform '%s' enabled (added to gateway.platforms).\n", pname);
+                    printf("  Run /restart or restart slermes for the change to take effect.\n");
+                } else {
+                    printf("Error: Could not update config.yaml.\n");
+                }
+            }
+        }
     } else {
         printf("Unknown: %s. Use: list\n", args);
     }
