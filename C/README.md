@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||||||| Suite:  320/0/0 (278 test files, completes in <60s)
+|||||||||||||| Suite:  322/0/0 (278 test files, completes in <60s)
 |||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 |||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||||||| Gaps:  115 real parity gaps (1000+ test case gaps) across 9 sectors
@@ -33,8 +33,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 - [LLM Providers (10)](#llm-providers-10)
 - [Plugins (10 .c)](#plugins-10-c)
 - [Libraries (65 Units)](#libraries-65-units)
-- [CLI Commands (98 CLI, Real)](#cli-commands-80-slash-real)
-- [Battleship Roadmap (215+ Gaps)](#battleship-roadmap-1000-gaps)
+- [CLI Commands (98 CLI, Real)](#cli-commands-98-cli-real)
+- [Battleship Roadmap (1000+ Gaps)](#battleship-roadmap-1000-gaps)
 - [Verified Stubs (All Resolved)](#verified-stubs-all-resolved)
 - [Bugfix History](#bugfix-history)
 - [Project Structure](#project-structure)
@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 303/0/0
+bash test_runner.sh        # 322/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -457,7 +457,7 @@ Libraries are compiled directly into the binary. Each is a self-contained module
 
 ---
 
-## CLI Commands (80)
+## CLI Commands (98 CLI, Real)
 
 All real, tab complete + history. The CLI uses a central command registry (`cli/commands.c`) with alias resolution and subcommand dispatch.
 
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 140 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. Phase 142: sudo failure detection in terminal. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 115 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 
@@ -547,8 +547,8 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-| Library tests | 305/0/0 | All pass, ~60s |
-| Test files | 272 | C files in tests/ |
+| Library tests | 322/0/0 | All pass, ~60s |
+| Test files | 278 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |
 | Provider depth | 54+ | OpenAI, Anthropic, Google, DeepSeek, Azure, Bedrock |

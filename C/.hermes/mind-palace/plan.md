@@ -1,4 +1,4 @@
-(v272)
+(v275)
 
 ## Immediate Next
 
@@ -22,12 +22,15 @@ S6 B08 depth (send_message):
 - Home channel resolution — pending
 
 S3:
-- G02 base.py remaining (validate_media_path done Phase 194)
-- G06 wecom_callback remaining
+- G02 base.py PORTED ✅ (Phase 202)
+- G06 wecom_callback PORTED ✅ (Phase 202)
 
 S7 test coverage (278/1262 test files = 22.0%):
 - Phases 195-200: 6 test suites added (59 new tests) ✅
+- Phase 203-204: 21 new edge case assertions
+- Phase 207: 26-test tool_error_sanitize suite
+- Phase 208: 35-test tool_coerce suite
 
 ## Future
 
-B08 send_message remaining depth, S3 G02/G06 depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
+B08 send_message remaining depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.

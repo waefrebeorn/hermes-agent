@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v275 | Fork diverged — C/ lives only on fork | Suite 322/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 115 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6 all PORTED. Suite 320/0/0.**
+**v275 | Fork diverged — C/ lives only on fork | Suite 322/0/0 | 85 tools | 98 CLI**\\n**Honest assessment: 115 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6 all PORTED. Suite 322/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -97,7 +97,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v271. Suite 320/0/0, test files 278.**
+**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v271. Suite 322/0/0, test files 278.**
 
 ---
 
@@ -179,7 +179,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 || 11 | B11-B20 | remaining tools (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.) | varying | varying | — | P2-P3 | ✅ PORTED — all Python tools have C equivalents verified May 2026 |
 
-**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 320/0/0, test files 278.**
+**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 322/0/0, test files 278.**
 
 ---
 
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|||| **TOTAL** | **115** | **6** | **34** | **51** | **24** | **S3 all PORTED. S6 all PORTED. Suite 320/0/0, test files 278.** |
+||||| **TOTAL** | **115** | **6** | **34** | **51** | **24** | **S3 all PORTED. S6 all PORTED. Suite 322/0/0, test files 278.** |
 
 ### Phase Map
 

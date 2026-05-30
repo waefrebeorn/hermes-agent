@@ -1,9 +1,9 @@
-# Slermes C — Roadmap (v91 — 2026-06-02)
+# Slermes C — Roadmap (v275)
 
 > Canonical phase order and navigation at `mind-palace/overnight-map.md`.
-> Battleship: v19 (33 gaps, Triple DA audit). See `mind-palace/battleship-v19.md`.
+> Battleship: v34 (115 gaps). See `mind-palace/battleship-v34.md`.
 
 ## Current Focus
-1. **P0: Form-Not-Function fixes** — `--bogus`, multi-line pipe, `--session` arg
-2. **P2: 7 missing tools** — discord, discord_admin, 5 Yuanbao tools
-3. **P2: 13 tool depth gaps** — largest: mcp_tool, tts, browser, terminal, transcribe
+1. **P0: 115 gaps remaining** — display depth, test expansion, partials
+2. **All S3+S6 PORTED** — base helpers and all tools verified
+3. **Suite: 322/0/0** — 278 test files, 31M binary
