@@ -794,6 +794,16 @@ typedef struct {
 } approvals_config_t;
 
 /* ================================================================
+ *  Approval API — dangerous command detection
+ * ================================================================ */
+
+/* Check if a terminal command matches dangerous patterns */
+bool approval_is_terminal_dangerous(const char *command);
+
+/* Normalize a command before pattern matching (strip ANSI, null bytes) */
+char *approval_normalize_command(const char *command);
+
+/* ================================================================
  *  Small Gateway/Platform Configs
  * ================================================================ */
 typedef struct {

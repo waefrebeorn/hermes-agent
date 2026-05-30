@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v257)**
+**BANNER — WuBu Slermes C Translation (v258)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v257                                       ║
+║  WuBu Slermes C v258                                       ║
 ║  315 tests · 128 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  128 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 189: approval_normalize_command — ANSI strip       ║
+║  Phase 190: Terminal approval — block dangerous cmds      ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v257)
+## Build Metrics (v258)
 
 | Metric | Value |
 |--------|-------|

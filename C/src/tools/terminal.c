@@ -1176,6 +1176,24 @@ char *terminal_handler(const char *args_json, const char *task_id) {
         return strdup(err);
     }
 
+    /* Approval security check: block dangerous commands unless force=true */
+    if (!force && command_buf[0]) {
+        char *normalized = approval_normalize_command(command_buf);
+        if (normalized) {
+            bool dangerous = approval_is_terminal_dangerous(normalized);
+            free(normalized);
+            if (dangerous) {
+                char err[1024];
+                snprintf(err, sizeof(err),
+                         "{\"error\":\"BLOCKED: command matches dangerous pattern. "
+                         "Set force=true to bypass (requires user confirmation).\","
+                         "\"status\":\"error\",\"blocked\":true}");
+                json_free(args);
+                return strdup(err);
+            }
+        }
+    }
+
     /* F10: Environment isolation — read optional env string (KEY=VALUE KEY2=VALUE2) */
     const char *env_raw = json_object_get_string(args, "env", NULL);
     char env_buf[4096] = "";

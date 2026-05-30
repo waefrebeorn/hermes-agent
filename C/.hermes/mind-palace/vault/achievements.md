@@ -1725,5 +1725,8 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 | P189-02 | approval_is_terminal_dangerous() now normalizes input before matching. ANSI-escaped dangerous commands (e.g. `\033[31mrm -rf /\033[0m`) correctly detected as dangerous. | `C/src/tools/approval.c` — integrated normalization into existing function. |
 | P189-03 | 5-test suite: NULL normalize, clean passthrough, ANSI strip, ANSI dangerous detection. T02 test count 38→43. | `C/tests/test_approve.c` — 5/5 passed. |
 | P189-04 | Fixed 2 pre-existing test compilation failures: approval_system and allowlist tests now include libansi/ansi_strip.c dependency. | `C/test_runner.sh` — both tests restored (23 + 34 assertions). |
+| P190-01 | Terminal security integration — approval_is_terminal_dangerous() wired into terminal_handler(). Blocks dangerous commands with `{\"error\":\"BLOCKED: ...\",\"blocked\":true}` unless force=true. | `C/src/tools/terminal.c` — approval check before env isolation. `C/include/hermes.h` — public API declarations. |
+| P190-02 | Fixed over-broad `> /dev/` dangerous pattern that blocked benign redirects to `/dev/null`. Replaced with Python-matching block device patterns: sd, nvme, hd, mmcblk, vd, xvd. | `C/src/tools/approval.c` — DANGEROUS_TERMINAL_PATTERNS updated. |
+| P190-03 | Test runner: terminal_tool test now links approval.o + ansi_strip.c with --Wl,--unresolved-symbols=ignore-all. | `C/test_runner.sh` — 3 compilation lines updated. |
 
-Suite: 315/0/0 (273 test files). Gaps: 128. v257
+Suite: 315/0/0 (273 test files). Gaps: 128. v258

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v257 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 189: approval_normalize_command() ported (ANSI strip + null byte removal before dangerous-pattern matching). 5-test suite (T02: 43 total). Suite 315/0/0. Gaps unchanged (depth).**
+**v258 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 190: Terminal security integration — approval check wired into terminal_handler. Dangerous commands blocked. Block device patterns fixed. Suite 315/0/0. Gaps unchanged (depth).**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 11 gaps (4 P2, 7 P3) — Phase 189: approval_normalize_command depth. Suite 315/0/0.**
+**S6: 11 gaps (4 P2, 7 P3) — Phase 190: Terminal approval integration. Suite 315/0/0.**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 189: approval_normalize_command. Suite 315/0/0.** |
+|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 190: Terminal security integration — approval check. Suite 315/0/0.** |
 
 ### Phase Map
 

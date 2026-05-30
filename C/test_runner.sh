@@ -3006,9 +3006,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "web_tool (compilation failed)"
 fi &
 
-# Terminal tool test (M29 — needs terminal.c + tool_config + vault + sandbox_escape + tool_output + crypto)
+# Terminal tool test (M29 — needs terminal.c + tool_config + vault + sandbox_escape + tool_output + crypto + approval + ansi_strip)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     -I"$CDIR/lib/libtooloutput" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libenvpassthrough" \
+    -I"$CDIR/lib/libansi" \
     "$CDIR/tests/test_terminal.c" \
     "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" "$CDIR/src/tools/registry.c" \
     "$CDIR/src/sandbox_escape.c" \
@@ -3017,7 +3018,9 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libcrypto/crypto.c" \
     "$CDIR/lib/libtooloutput/tool_output.c" \
     "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
-    -o /tmp/hermes_test_terminal -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
+    "$CDIR/src/tools/approval.c" \
+    "$CDIR/lib/libansi/ansi_strip.c" \
+    -o /tmp/hermes_test_terminal -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (102 tests)"
     else fail "terminal_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_terminal

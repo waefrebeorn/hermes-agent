@@ -29,7 +29,8 @@ void audit_log_security(const char *category, const char *action,
 static const char *DANGEROUS_TERMINAL_PATTERNS[] = {
     "rm -rf", "rm -r /", "rm -rf /", "rm -fr /",
     "mkfs", "format", "dd if=", "dd of=",
-    "> /dev/", "> /dev/sd", "> /dev/nvme",
+    "> /dev/sd", "> /dev/nvme", "> /dev/hd",
+    "> /dev/mmcblk", "> /dev/vd", "> /dev/xvd",
     "chmod 777 /", "chown -R",
     "wget ", "curl ", /* External downloads */
     "sudo ", "su ",
