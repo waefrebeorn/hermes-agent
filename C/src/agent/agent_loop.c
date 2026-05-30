@@ -99,6 +99,9 @@ void agent_init(agent_state_t *state) {
     /* L10: Skill nudge defaults — 15 iterations between nudges, disabled by default */
     state->skill_nudge_interval = 0;
     state->iters_since_skill = 0;
+
+    /* L28: Tool delay default — 1.0 second between tool iterations */
+    state->tool_delay = 1.0f;
 }
 
 /* P99: Initialize agent infrastructure from configuration.
@@ -170,6 +173,10 @@ void agent_configure_from_config(agent_state_t *state, const hermes_config_t *cf
     /* Max iterations from agent config */
     if (cfg->agent.max_iterations > 0)
         state->max_iterations = cfg->agent.max_iterations;
+
+    /* L28: Tool delay from agent config */
+    if (cfg->agent.tool_delay >= 0)
+        state->tool_delay = cfg->agent.tool_delay;
 
     /* Compress enabled */
     state->compress_enabled = cfg->compress_enabled;

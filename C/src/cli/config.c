@@ -385,6 +385,7 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     cfg->agent.quiet_mode = false;
     cfg->agent.compress_threshold = 0.38f;
     cfg->agent.compress_tail_messages = 0;  /* 0 = use state default of 2 */
+    cfg->agent.tool_delay = 1.0f;  /* L28: 1s default delay between tool iterations */
     cfg->agent.api_max_retries = 3;
     cfg->agent.clarify_timeout = 300;
     snprintf(cfg->agent.image_input_mode, sizeof(cfg->agent.image_input_mode), "auto");
@@ -1085,6 +1086,12 @@ bool hermes_config_load(hermes_config_t *cfg, const char *config_dir) {
     if (moa_m) snprintf(cfg->agent.moa_model, sizeof(cfg->agent.moa_model), "%s", moa_m);
     const char *moa_s = yaml_get_string(doc, "agent.mixture_of_agents.strategy");
     if (moa_s) snprintf(cfg->agent.moa_strategy, sizeof(cfg->agent.moa_strategy), "%s", moa_s);
+
+    /* L28: Tool delay between tool call iterations */
+    {
+        const char *td = yaml_get_string(doc, "agent.tool_delay");
+        if (td) cfg->agent.tool_delay = (float)atof(td);
+    }
 
     /* Display section */
     const char *skin = yaml_get_string(doc, "display.skin");

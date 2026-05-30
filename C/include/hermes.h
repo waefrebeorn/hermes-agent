@@ -354,6 +354,9 @@ typedef struct {
     /* L10: Skill nudge — periodic suggestion after N tool iterations */
     int  skill_nudge_interval;   /* iterations between nudges (0=disabled) */
     int  iters_since_skill;      /* tool iterations since last skill nudge */
+
+    /* L28: Tool delay — seconds to sleep between tool call iterations */
+    float tool_delay;            /* delay in seconds (0=disabled) */
 } agent_state_t;
 
 /* Interrupt type constants (interrupt_type field) */
@@ -453,6 +456,7 @@ typedef struct {
     int   compress_tail_messages;  /* compression.tail_messages: tail messages to keep */
     char  reasoning_effort[32];    /* agent.reasoning_effort: low/medium/high */
     int   api_max_retries;         /* agent.api_max_retries: API call retries */
+    float tool_delay;              /* agent.tool_delay: sec between tool iteration turns */
     int   clarify_timeout;         /* agent.clarify_timeout: seconds before auto-deny */
     char  image_input_mode[16];    /* agent.image_input_mode: auto|native|text */
     char  skill_search_paths[1024]; /* agent.skill_search_paths: comma-sep custom skill dirs */

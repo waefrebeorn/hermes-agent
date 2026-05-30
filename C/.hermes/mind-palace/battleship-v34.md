@@ -1,6 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v284 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 105 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27 PORTED. Suite 325/0/0.**
+**v284 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 104 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. Suite 325/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -22,7 +23,7 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 ## S1: Conversation Loop — Plumbing Gaps (P1)
 
 Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all plumbing features except 5 partial depth items.
-14 stale + 3 done (L14/L03/L09/L10). All 5 REAL claims retired as stale. 5 PARTIAL remain (L24-L28).
+14 stale + 3 done (L14/L03/L09/L10). All 5 REAL claims retired as stale. All 5 PARTIAL claims (L24-L28) now PORTED — S1 complete.
 
 | # | ID | Feature | Python | C | Priority | Status |
 |---|----|---------|--------|---|----------|--------|
@@ -30,9 +31,9 @@ Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all 
 || 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | hermes_repair_message_sequence() + sanitize_tool_call_arguments() + repair_tool_call() ported (Phases 211-213). 52-test suite. L25 all 3 portable functions done. | P1 | PORTED ✅ |
 | 03 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler. **tool_call_args_truncate() + estimate_payload_context_tokens() + hermes_message_sanitize() ported** (Phases 214-216, 74 tests). build_assistant_message() sanitization pipeline (surrogate fix, think-block strip, secret redaction) implemented as hermes_message_sanitize(). | P1 | PORTED ✅ |
 | 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | system_prompt.c (1273 LOC) covers core identity, memory, skills, tool enforcement, context file loading (SOUL.md/AGENTS.md/CLAUDE.md/.cursorrules), threat scanning, platform hints. Python's dynamic skills manifest system (snapshot caching, frontmatter parsing, condition matching) is arch-specific (C has simpler skill system). 15/25 functions ported (all portable ones). | P1 | PORTED ✅ |
-| 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
+| 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() + tool_delay (state->tool_delay, 1.0s default, usleep between iterations). All core init features ported: model/provider/creds, tools, compression, checkpoints, budget, session, toolset filtering, fallback, guardrails, prefill, steer, memory/skill nudges, background review, reasoning, service tier. Missing fields are Python-arch-specific (callbacks, print_fn, save_trajectories). | P1 | PORTED ✅ |
 
-**S1: 1 gap (L28) — 19 stale + 5 done + 4 PORTED (L24+L25+L26+L27). No remaining real gaps.**
+**S1: 0 gaps — 19 stale + 5 done + 5 PORTED (L24+L25+L26+L27+L28). All S1 gaps resolved. S1 complete.**
 
 ---
 
@@ -266,7 +267,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 1 | 0 | 0 | 1 | 0 | Phase 0 — D09 vi mode remains. D16 type-ahead IMPLEMENTED (Phase 210). |
-|| S1: Conversation Loop Plumbing | 1 | 0 | 0 | 1 | 0 | All 28 real gaps stale-retired or implemented. 1 partial (L28). L24+L25+L26+L27 PORTED. S1 all ported except L28. |
+|| S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
@@ -276,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **105** | **4** | **34** | **50** | **24** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27 PORTED. Suite 325/0/0, test files 282.** |
+|| **TOTAL** | **104** | **4** | **34** | **49** | **24** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. Suite 325/0/0, test files 282.** |
 
 ### Phase Map
 
