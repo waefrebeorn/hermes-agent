@@ -21,6 +21,116 @@
 #include <string.h>
 
 /* ================================================================
+ *  Model-aware helpers
+ * ================================================================ */
+
+/* Substring patterns for model version detection */
+static const char *ADAPTIVE_SUBSTRINGS[] = {"4-6", "4.6", "4-7", "4.7", "4-8", "4.8", NULL};
+static const char *XHIGH_EFFORT_SUBSTRINGS[] = {"4-7", "4.7", "4-8", "4.8", NULL};
+static const char *NO_SAMPLING_SUBSTRINGS[] = {"4-7", "4.7", "4-8", "4.8", NULL};
+static const char *FAST_MODE_SUBSTRINGS[] = {"opus-4-6", "opus-4.6", NULL};
+
+/* Normalize model name: replace '.' with '-' for matching */
+static void normalize_model_key(const char *model, char *out, size_t out_size) {
+    if (!model || !*model) { out[0] = '\0'; return; }
+    const char *slash = strrchr(model, '/');
+    if (slash) model = slash + 1;  /* strip provider prefix */
+    size_t i, j = 0;
+    for (i = 0; model[i] && j < out_size - 1; i++) {
+        if (model[i] == '.')
+            out[j++] = '-';
+        else
+            out[j++] = model[i];
+    }
+    out[j] = '\0';
+}
+
+static bool model_contains_any(const char *model, const char **patterns) {
+    if (!model || !*model) return false;
+    char normalized[128];
+    normalize_model_key(model, normalized, sizeof(normalized));
+    for (int i = 0; patterns[i]; i++) {
+        if (strstr(normalized, patterns[i]))
+            return true;
+    }
+    return false;
+}
+
+/* Claude 4.6+ models support adaptive thinking (type="adaptive" + output_config.effort) */
+static bool supports_adaptive_thinking(const char *model) {
+    return model_contains_any(model, ADAPTIVE_SUBSTRINGS);
+}
+
+/* Opus 4.7+ models accept the "xhigh" effort level */
+static bool supports_xhigh_effort(const char *model) {
+    return model_contains_any(model, XHIGH_EFFORT_SUBSTRINGS);
+}
+
+/* Opus 4.7+ models reject temperature/top_p/top_k (any non-null value → 400) */
+static bool forbids_sampling_params(const char *model) {
+    return model_contains_any(model, NO_SAMPLING_SUBSTRINGS);
+}
+
+/* Opus 4.6 supports fast mode (speed="fast" + beta header) */
+__attribute__((unused)) static bool supports_fast_mode(const char *model) {
+    return model_contains_any(model, FAST_MODE_SUBSTRINGS);
+}
+
+/* Adventure effort → adaptive effort mapping.
+ * Low/medium/high/xhigh/max preserved; minimal→low; others→medium. */
+static const char *map_to_adaptive_effort(const char *effort) {
+    if (!effort || !*effort) return "medium";
+    if (strcmp(effort, "low") == 0)     return "low";
+    if (strcmp(effort, "medium") == 0)   return "medium";
+    if (strcmp(effort, "high") == 0)     return "high";
+    if (strcmp(effort, "xhigh") == 0)    return "xhigh";
+    if (strcmp(effort, "max") == 0)      return "max";
+    if (strcmp(effort, "minimal") == 0)  return "low";
+    return "medium";
+}
+
+/* Model-specific max output token limits */
+static int get_anthropic_max_output(const char *model) {
+    if (!model || !*model) return 128000;
+    char normalized[128];
+    normalize_model_key(model, normalized, sizeof(normalized));
+
+    /* Table sorted by longest key first for longest-prefix match */
+    struct { const char *key; int limit; } limits[] = {
+        {"claude-opus-4-8",      128000},
+        {"claude-opus-4-7",      128000},
+        {"claude-opus-4-6",      128000},
+        {"claude-sonnet-4-6",     64000},
+        {"claude-opus-4-5",       64000},
+        {"claude-sonnet-4-5",     64000},
+        {"claude-haiku-4-5",      64000},
+        {"claude-opus-4",         32000},
+        {"claude-sonnet-4",       64000},
+        {"claude-3-7-sonnet",    128000},
+        {"claude-3-5-sonnet",      8192},
+        {"claude-3-5-haiku",       8192},
+        {"claude-3-opus",          4096},
+        {"claude-3-sonnet",        4096},
+        {"claude-3-haiku",         4096},
+        {"minimax",              131072},
+        {"qwen3",                 65536},
+        {NULL, 0}
+    };
+    int best = 128000;
+    size_t best_len = 0;
+    for (int i = 0; limits[i].key; i++) {
+        if (strstr(normalized, limits[i].key)) {
+            size_t klen = strlen(limits[i].key);
+            if (klen > best_len) {
+                best_len = klen;
+                best = limits[i].limit;
+            }
+        }
+    }
+    return best;
+}
+
+/* ================================================================
  *  URL building
  * ================================================================ */
 
@@ -49,29 +159,44 @@ static char *anthropic_build_url(const provider_t *p, const char *base_url) {
  * ================================================================ */
 
 static char *anthropic_build_headers(const provider_t *p, const char *api_key) {
-    char *cached = NULL;
-    if (p && provider_get_system_cached(p))
-        cached = "anthropic-beta: ephemeral-cache-2025-05-20\r\n";
+    (void)api_key;
+    /* Collect beta headers */
+    char betas[512] = "";
+    size_t pos = 0;
 
-    char *headers = (char *)malloc(1024);
+    /* Prompt caching beta */
+    if (p && provider_get_system_cached(p)) {
+        pos += snprintf(betas + pos, sizeof(betas) - pos,
+                        "anthropic-beta: ephemeral-cache-2025-05-20");
+    }
+
+    /* Interleaved thinking — always safe on native Anthropic */
+    pos += snprintf(betas + pos, sizeof(betas) - pos,
+                    "%s%s",
+                    pos > 0 ? "\r\n" : "anthropic-beta: ",
+                    "interleaved-thinking-2025-05-14");
+
+    /* Fine-grained tool streaming — needed for tool-using requests.
+     * We always send it; Anthropic ignores it on non-tool requests. */
+    pos += snprintf(betas + pos, sizeof(betas) - pos,
+                    "\r\nanthropic-beta: fine-grained-tool-streaming-2025-05-14");
+
+    char *headers = (char *)malloc(1536);
     if (!headers) return NULL;
 
-    if (api_key && *api_key) {
-        snprintf(headers, 1024,
-            "x-api-key: %s\r\n"
-            "anthropic-version: 2023-06-01\r\n"
-            "%s"
-            "Content-Type: application/json\r\n"
-            "Accept: application/json",
-            api_key, cached ? cached : "");
-    } else {
-        snprintf(headers, 1024,
-            "anthropic-version: 2023-06-01\r\n"
-            "%s"
-            "Content-Type: application/json\r\n"
-            "Accept: application/json",
-            cached ? cached : "");
-    }
+    const char *key_header = "";
+    if (api_key && *api_key)
+        key_header = "x-api-key: ";
+
+    snprintf(headers, 1536,
+        "%s%s\r\n"
+        "anthropic-version: 2023-06-01\r\n"
+        "%s"
+        "Content-Type: application/json\r\n"
+        "Accept: application/json",
+        key_header, api_key ? api_key : "",
+        betas);
+
     return headers;
 }
 
@@ -128,13 +253,22 @@ static char *anthropic_build_request_body(const provider_t *p,
     json_set(root, "model", json_string(
         p->model[0] ? p->model : "claude-sonnet-4-20250514"));
 
-    /* LLM params from config */
-    int max_tok = p->config.max_tokens > 0 ? p->config.max_tokens : 4096;
+    /* LLM params from config — skip temperature/top_p on 4.7+ that reject them */
+    bool is_adaptive = supports_adaptive_thinking(p->model);
+    bool skip_sampling = forbids_sampling_params(p->model);
+
+    /* max_tokens with model-aware output ceiling */
+    int max_tok = p->config.max_tokens > 0
+        ? p->config.max_tokens
+        : get_anthropic_max_output(p->model);
     json_set(root, "max_tokens", json_number(max_tok));
-    if (p->config.temperature >= 0.0f)
-        json_set(root, "temperature", json_number(p->config.temperature));
-    if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
-        json_set(root, "top_p", json_number(p->config.top_p));
+
+    if (!skip_sampling) {
+        if (p->config.temperature >= 0.0f)
+            json_set(root, "temperature", json_number(p->config.temperature));
+        if (p->config.top_p > 0.0f && p->config.top_p < 1.0f)
+            json_set(root, "top_p", json_number(p->config.top_p));
+    }
     if (p->config.stop_count > 0) {
         json_t *stop_arr = json_array();
         for (int i = 0; i < p->config.stop_count && i < HERMES_STOP_SEQUENCES_MAX; i++)
@@ -171,6 +305,51 @@ static char *anthropic_build_request_body(const provider_t *p,
     if (!p->config.parallel_tool_calls)
         json_set(root, "disable_parallel_tool_use", json_bool(true));
 
+    /* S8 R01: Anthropic extended thinking — adaptive vs classic */
+    if (p->config.reasoning_effort[0] && strcmp(p->config.reasoning_effort, "none") != 0) {
+        const char *effort = p->config.reasoning_effort;
+
+        if (is_adaptive) {
+            /* Claude 4.6+ uses adaptive thinking with output_config.effort */
+            json_t *thinking = json_object();
+            json_set(thinking, "type", json_string("adaptive"));
+            /* display: "summarized" keeps reasoning blocks populated for Hermes CLI */
+            json_set(thinking, "display", json_string("summarized"));
+            json_set(root, "thinking", thinking);
+
+            /* Map effort */
+            const char *adaptive_effort = map_to_adaptive_effort(effort);
+            /* Downgrade xhigh→max on models that don't support xhigh (pre-4.7) */
+            if (strcmp(adaptive_effort, "xhigh") == 0 && !supports_xhigh_effort(p->model))
+                adaptive_effort = "max";
+
+            json_t *output_config = json_object();
+            json_set(output_config, "effort", json_string(adaptive_effort));
+            json_set(root, "output_config", output_config);
+        } else {
+            /* Classic thinking with budget_tokens for pre-4.6 models */
+            int budget = 0;
+            if (strcmp(effort, "low") == 0)        budget = 8192;
+            else if (strcmp(effort, "medium") == 0) budget = 16384;
+            else if (strcmp(effort, "high") == 0)   budget = 32768;
+            else budget = atoi(effort); /* direct number */
+            if (budget >= 1024) {
+                json_t *thinking = json_object();
+                json_set(thinking, "type", json_string("enabled"));
+                json_set(thinking, "budget_tokens", json_number(budget));
+                json_set(root, "thinking", thinking);
+
+                /* Anthropic requires temperature=1 when thinking is enabled on classic models */
+                if (!skip_sampling)
+                    json_set(root, "temperature", json_number(1.0f));
+
+                /* Ensure max_tokens >= budget + 4096 for thinking to have room */
+                if (max_tok < budget + 4096)
+                    json_set(root, "max_tokens", json_number(budget + 4096));
+            }
+        }
+    }
+
     /* Stream flag */
     if (streaming)
         json_set(root, "stream", json_bool(true));
@@ -186,22 +365,6 @@ static char *anthropic_build_request_body(const provider_t *p,
             }
         }
         json_free(eb);
-    }
-
-    /* B26: Anthropic thinking blocks — extended reasoning */
-    if (p->config.reasoning_effort[0]) {
-        int budget = 0;
-        const char *effort = p->config.reasoning_effort;
-        if (strcmp(effort, "low") == 0)        budget = 8192;
-        else if (strcmp(effort, "medium") == 0) budget = 16384;
-        else if (strcmp(effort, "high") == 0)   budget = 32768;
-        else budget = atoi(effort); /* direct number */
-        if (budget >= 1024) {
-            json_t *thinking = json_object();
-            json_set(thinking, "type", json_string("enabled"));
-            json_set(thinking, "budget_tokens", json_number(budget));
-            json_set(root, "thinking", thinking);
-        }
     }
 
     /* Tools (convert from OpenAI format to Anthropic format) */

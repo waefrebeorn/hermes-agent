@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v305 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+**v306 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 103 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -210,7 +210,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total).
 
 | # | ID | Adapter | LOC | Missing in C | Priority |
 |---|----|---------|-----|-------------|----------|
-| 01 | R01 | anthropic_adapter.py | 2275 | Streaming variants, extended thinking, prompt caching | P1 |
+||| 01 | R01 | anthropic_adapter.py | 2275 | Adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, model-aware max_tokens per model (15-entry table), beta headers (interleaved-thinking + fine-grained-tool-streaming), sampling param forbiddance for Opus 4.7+. Remaining: full client builder, content conversion, OAuth. | P1 | ✅ IMPLEMENTED — adaptive thinking, model-aware features, beta headers. Partially covers "extended thinking" sub-gap. Implementation in provider_anthropic.c:1085 LOC (up from 731). |
 | 02 | R02 | bedrock_adapter.py | 1289 | AWS Bedrock auth, model discovery | P1 |
 | 03 | R03 | google_oauth.py | 1059 | OAuth token exchange, refresh | P1 |
 | 04 | R04 | gemini_native_adapter.py | 971 | Gemini native API features, safety | P1 |
@@ -274,21 +274,21 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
-| S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
+| S8: Provider Adapters | 9 | 0 | 6 | 3 | 0 | Adapter layer missing (9,700 LOC). R01 PARTIAL — adaptive thinking, model-aware features, beta headers implemented. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 9 | 4 | 3 | 2 | 0 | Form-vs-function. F10 PORTED (install_safe_stdio). |
-|| **TOTAL** | **103** | **4** | **34** | **49** | **23** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0, test files 289.** |
+|| **TOTAL** | **102** | **4** | **34** | **49** | **23** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. S8 R01 PARTIAL (adaptive thinking + model-aware + beta headers). Suite 335/0/0, test files 289.** |
 
 ### Phase Map
 
 | Phase | Focus | Sectors | Gap Count |
-|-------|-------|---------|-----------|
+||-------|-------|---------|-----------|
 || Phase 0 | Display & Visual | S0 (2) | 2 |
-| Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
-| Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
+|| Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
+|| Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
 || Phase 3 | Gateway helpers (all PORTED) | S3 (0) | 0 |
-| Phase 4 | CLI ecosystem | S5 | ~30 |
-| Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
+|| Phase 4 | CLI ecosystem | S5 | ~30 |
+|| Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
 || Phase 6 | Agent module depth | S2 (1 real) + S8 remaining | ~12 |
 
 ---

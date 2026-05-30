@@ -1809,3 +1809,14 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v303
 Suite: 335/0/0 (289 test files). Gaps: 103. v304
 || S7x | S7 depth: MCP tool edge case expansion (S7 X09). test_mcp_tool.c — 4→10 tests (24 assertions). mcp_call_handler: missing fields returns error, unknown server returns error, bad JSON returns error. mcp_resource_read_handler: missing fields returns error. mcp_prompt_get_handler: missing fields returns error. mcp_auth_handler: empty args defaults to status action with servers list. | tests/test_mcp_tool.c — 10 tests, ~24 assertions. src/tools/mcp_tool.c covered. |
 Suite: 335/0/0 (289 test files). Gaps: 103. v305
+
+## Phase 239: S8 R01 Anthropic Adaptive Thinking + Model-Aware Features (v306)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R01-01 | Adaptive thinking: Claude 4.6+ models use `thinking.type: "adaptive"` + `output_config.effort` with `display: "summarized"`; pre-4.6 uses classic `thinking.type: "enabled" + budget_tokens`. xhigh effort downgraded to max on pre-4.7 models. Temperature=1 forced for classic thinking mode; max_tokens padded to budget+4096. | `C/src/agent/provider_anthropic.c` — `supports_adaptive_thinking()`, `supports_xhigh_effort()`, updated thinking block (lines 191-250). |
+| R01-02 | Model-aware max_tokens: 15-entry output limit table (Opus 4.8→128K, Sonnet 4.6→64K, Haiku 3.5→8K, minimax→131K, qwen3→64K). Longest-prefix match via `normalize_model_key()`. Falls back to 128K default. | `C/src/agent/provider_anthropic.c` — `get_anthropic_max_output()` (87-120), called from `anthropic_build_request_body()` line 132. |
+| R01-03 | Sampling param forbiddance: Opus 4.7+ models skip temperature/top_p (rejects with 400 on any non-null value). Detected via substring matching (4-7, 4.7, 4-8, 4.8). | `C/src/agent/provider_anthropic.c` — `forbids_sampling_params()` (63-65), guarded in request builder (lines 134-137). |
+| R01-04 | Beta headers: `interleaved-thinking-2025-05-14` + `fine-grained-tool-streaming-2025-05-14` always set. `ephemeral-cache-2025-05-20` conditional on system caching. Three beta headers composed in 512-byte buffer. | `C/src/agent/provider_anthropic.c` — `anthropic_build_headers()` (136-155). |
+| R01-05 | Model version detection: `normalize_model_key()` strips provider prefix (`anthropic/`), normalizes dots to hyphens (`4.6`→`4-6`) for substring matching. Used by all 4 helper predicates. | `C/src/agent/provider_anthropic.c` — `normalize_model_key()` (43-54), `model_contains_any()` (56-68). |
+| R01-06 | Test suite: 27 assertions for normalize_model_key (5 tests), model_contains_any (9 tests), build_url (5 tests), headers (3 tests). Full suite 335/0/2. | `C/tests/test_provider_anthropic.c` — 22 new test assertions. |
+| R01-07 | Provider LOC growth: 731→1085 LOC (+354, +48%). All existing functionality preserved. | `wc -l C/src/agent/provider_anthropic.c` — 1085 lines. |

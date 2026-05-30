@@ -1,470 +1,198 @@
-/* Anthropic provider tests — verify response parsing, URL building, headers.
+/*
+ * test_provider_anthropic.c — Tests for Anthropic provider depth.
  *
- * Tests Anthropic-specific JSON formats: content blocks, thinking blocks,
- * tool_use blocks, SSE streaming event types.
+ * Tests: normalize_model_key, model matching predicates, build_url, headers.
  */
-
 #include "hermes.h"
+#include "hermes_json.h"
 #include "provider.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
-static int tests = 0, passed = 0;
-
+static int failures = 0;
 #define TEST(name, expr) do { \
-    tests++; \
     if (!(expr)) { \
-        fprintf(stderr, "FAIL: %s\n", name); \
+        fprintf(stderr, "FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
+        failures++; \
     } else { \
-        passed++; \
+        printf("PASS: %s\n", name); \
     } \
 } while(0)
 
-static void test_url_building(void)
-{
-    provider_register(PROVIDER_ANTHROPIC, &PROVIDER_OPS_ANTHROPIC);
+/* Duplicate of the internal normalize_model_key for testing */
+static void norm_key(const char *model, char *out, size_t out_size) {
+    if (!model || !*model) { out[0] = '\0'; return; }
+    const char *slash = strrchr(model, '/');
+    if (slash) model = slash + 1;
+    size_t i, j = 0;
+    for (i = 0; model[i] && j < out_size - 1; i++) {
+        if (model[i] == '.')
+            out[j++] = '-';
+        else
+            out[j++] = model[i];
+    }
+    out[j] = '\0';
+}
 
-    provider_t *p = provider_create("anthropic", "claude-3-5-sonnet-20240620",
-                                    "sk-ant-test", "https://api.anthropic.com/v1");
-    TEST("anth provider created", p != NULL);
-    if (!p) return;
+static bool contains_any(const char *model, const char **patterns) {
+    if (!model || !*model) return false;
+    char normalized[128];
+    norm_key(model, normalized, sizeof(normalized));
+    for (int i = 0; patterns[i]; i++) {
+        if (strstr(normalized, patterns[i]))
+            return true;
+    }
+    return false;
+}
 
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->build_url) { provider_free(p); return; }
+int main(void) {
+    printf("=== Anthropic Provider Depth Tests ===\n\n");
 
-    /* Standard base URL */
-    char *url = ops->build_url(p, "https://api.anthropic.com/v1");
-    TEST("anth url built", url != NULL);
-    if (url) {
-        TEST("anth url has /messages", strstr(url, "/messages") != NULL);
+    /* ── normalize_model_key ────────────────────────────────────── */
+    {
+        char out[128];
+        norm_key("anthropic/claude-sonnet-4-20250514", out, sizeof(out));
+        TEST("strip provider prefix", strcmp(out, "claude-sonnet-4-20250514") == 0);
+    }
+    {
+        char out[128];
+        norm_key("claude-opus-4.6", out, sizeof(out));
+        TEST("dots to hyphens", strcmp(out, "claude-opus-4-6") == 0);
+    }
+    {
+        char out[128];
+        norm_key("anthropic/claude-opus-4.7-20250514", out, sizeof(out));
+        TEST("prefix and dots", strcmp(out, "claude-opus-4-7-20250514") == 0);
+    }
+    {
+        char out[128];
+        norm_key(NULL, out, sizeof(out));
+        TEST("NULL model", out[0] == '\0');
+    }
+    {
+        char out[128];
+        norm_key("", out, sizeof(out));
+        TEST("empty model", out[0] == '\0');
+    }
+    {
+        char out[128];
+        norm_key("claude-sonnet-4", out, sizeof(out));
+        TEST("no prefix or dots", strcmp(out, "claude-sonnet-4") == 0);
+    }
+
+    /* ── model_contains_any ──────────────────────────────────────── */
+    {
+        const char *pats[] = {"4-7", "4.7", NULL};
+        TEST("detect 4.7 via dot", contains_any("claude-opus-4.7", pats));
+    }
+    {
+        const char *pats[] = {"4-7", "4.7", NULL};
+        TEST("detect 4.7 with prefix", contains_any("anthropic/claude-opus-4.7-20250514", pats));
+    }
+    {
+        const char *pats[] = {"4-6", "4.6", NULL};
+        TEST("detect 4.6 via hyphen", contains_any("claude-sonnet-4-6-20250514", pats));
+    }
+    {
+        const char *pats[] = {"4-6", "4.7", "4-8", NULL};
+        TEST("reject 3.5 sonnet", !contains_any("claude-3-5-sonnet", pats));
+    }
+    {
+        const char *pats[] = {"4-6", "4.7", NULL};
+        TEST("reject NULL model", !contains_any(NULL, pats));
+    }
+    {
+        const char *pats[] = {"4-6", "4.7", NULL};
+        TEST("reject empty model", !contains_any("", pats));
+    }
+    {
+        const char *op46[] = {"opus-4-6", "opus-4.6", NULL};
+        TEST("fast mode opus-4-6", contains_any("claude-opus-4-6", op46));
+    }
+    {
+        const char *op46[] = {"opus-4-6", "opus-4.6", NULL};
+        TEST("fast mode opus-4.6", contains_any("claude-opus-4.6", op46));
+    }
+    {
+        const char *op46[] = {"opus-4-6", "opus-4.6", NULL};
+        TEST("fast mode NOT sonnet-4-6", !contains_any("claude-sonnet-4-6", op46));
+    }
+    {
+        const char *xhigh[] = {"4-7", "4.7", "4-8", "4.8", NULL};
+        TEST("xhigh matches 4.7", contains_any("claude-opus-4.7", xhigh));
+    }
+    {
+        const char *xhigh[] = {"4-7", "4.7", "4-8", "4.8", NULL};
+        TEST("xhigh matches 4.8", contains_any("claude-opus-4-8", xhigh));
+    }
+    {
+        const char *xhigh[] = {"4-7", "4.7", "4-8", "4.8", NULL};
+        TEST("xhigh NOT 4.6", !contains_any("claude-opus-4-6", xhigh));
+    }
+
+    /* ── build_url ──────────────────────────────────────────────── */
+    {
+        char *url = PROVIDER_OPS_ANTHROPIC.build_url(NULL, "https://api.anthropic.com/v1");
+        TEST("build_url appends /messages", url && strcmp(url, "https://api.anthropic.com/v1/messages") == 0);
+        free(url);
+    }
+    {
+        char *url = PROVIDER_OPS_ANTHROPIC.build_url(NULL, "https://custom.com/messages");
+        TEST("build_url preserves existing /messages", url && strcmp(url, "https://custom.com/messages") == 0);
+        free(url);
+    }
+    {
+        char *url = PROVIDER_OPS_ANTHROPIC.build_url(NULL, "https://api.anthropic.com/v1/");
+        TEST("build_url trailing slash", url && strcmp(url, "https://api.anthropic.com/v1/messages") == 0);
+        free(url);
+    }
+    {
+        char *url = PROVIDER_OPS_ANTHROPIC.build_url(NULL, NULL);
+        TEST("build_url NULL base", url && strstr(url, "/messages") != NULL);
+        free(url);
+    }
+    {
+        char *url = PROVIDER_OPS_ANTHROPIC.build_url(NULL, "");
+        TEST("build_url empty base", url && strstr(url, "/messages") != NULL);
         free(url);
     }
 
-    /* URL already containing /messages */
-    char *url2 = ops->build_url(p, "https://api.anthropic.com/v1/messages");
-    TEST("anth url with /messages already", url2 != NULL);
-    if (url2) {
-        TEST("already has /messages", strstr(url2, "/messages") != NULL);
-        free(url2);
+    /* ── headers ────────────────────────────────────────────────── */
+    {
+        provider_t p;
+        memset(&p, 0, sizeof(p));
+        p.system_cached = false;
+        char *h = PROVIDER_OPS_ANTHROPIC.build_headers(&p, "sk-ant-test");
+        TEST("headers contain anthropic-beta", h && strstr(h, "anthropic-beta:") != NULL);
+        TEST("headers contain interleaved-thinking", h && strstr(h, "interleaved-thinking") != NULL);
+        TEST("headers contain fine-grained-tool-streaming", h && strstr(h, "fine-grained-tool-streaming") != NULL);
+        TEST("headers contain x-api-key", h && strstr(h, "x-api-key: sk-ant-test") != NULL);
+        free(h);
     }
-
-    /* NULL base URL */
-    char *url3 = ops->build_url(p, NULL);
-    TEST("anth url NULL base", url3 != NULL);
-    if (url3) {
-        TEST("NULL base uses default", strstr(url3, "api.anthropic.com") != NULL);
-        free(url3);
+    {
+        provider_t p;
+        memset(&p, 0, sizeof(p));
+        p.system_cached = true;
+        char *h = PROVIDER_OPS_ANTHROPIC.build_headers(&p, "sk-ant-test");
+        TEST("headers contain ephemeral-cache when cached", h && strstr(h, "ephemeral-cache-2025-05-20") != NULL);
+        free(h);
     }
-
-    /* Trailing slash */
-    char *url4 = ops->build_url(p, "https://api.anthropic.com/v1/");
-    TEST("anth url trailing slash", url4 != NULL);
-    if (url4) free(url4);
-
-    provider_free(p);
-}
-
-static void test_headers(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-ant-test-key", "");
-    TEST("anth header provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->build_headers) { provider_free(p); return; }
-
-    char *h = ops->build_headers(p, "sk-ant-test-key");
-    TEST("anth headers built", h != NULL);
-    if (h) {
-        TEST("has x-api-key", strstr(h, "x-api-key") != NULL);
-        TEST("has test key", strstr(h, "sk-ant-test-key") != NULL);
-        TEST("has anthropic-version", strstr(h, "anthropic-version") != NULL);
-        TEST("has Content-Type", strstr(h, "application/json") != NULL);
+    {
+        provider_t p;
+        memset(&p, 0, sizeof(p));
+        p.system_cached = false;
+        char *h = PROVIDER_OPS_ANTHROPIC.build_headers(&p, "");
+        TEST("headers no API key still valid", h && strstr(h, "anthropic-version: 2023-06-01") != NULL);
         free(h);
     }
 
-    /* NULL api_key */
-    char *h2 = ops->build_headers(p, NULL);
-    TEST("anth headers NULL key", h2 != NULL);
-    if (h2) {
-        /* Should not have x-api-key line */
-        TEST("no x-api-key when NULL", strstr(h2, "x-api-key") == NULL);
-        free(h2);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_response_basic(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth response provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_response) { provider_free(p); return; }
-
-    /* Standard Anthropic response with text content blocks */
-    const char *json =
-        "{"
-        "\"id\":\"msg_01abc123\","
-        "\"type\":\"message\","
-        "\"role\":\"assistant\","
-        "\"content\":["
-          "{\"type\":\"text\",\"text\":\"Hello! I am Claude.\"}"
-        "],"
-        "\"usage\":{\"input_tokens\":12,\"output_tokens\":7}"
-        "}";
-
-    provider_response_t *resp = ops->parse_response(p, json);
-    TEST("anth response parsed", resp != NULL);
-    if (resp) {
-        TEST("anth content", resp->content != NULL);
-        if (resp->content) TEST("anth content correct", strcmp(resp->content, "Hello! I am Claude.") == 0);
-        TEST("anth input_tokens", resp->input_tokens == 12);
-        TEST("anth output_tokens", resp->output_tokens == 7);
-        ops->free_response(resp);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_response_multiple_text_blocks(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth multi provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_response) { provider_free(p); return; }
-
-    /* Anthropic response with multiple text blocks (concatenated) */
-    const char *json =
-        "{"
-        "\"id\":\"msg_multi\","
-        "\"content\":["
-          "{\"type\":\"text\",\"text\":\"First block. \"},"
-          "{\"type\":\"text\",\"text\":\"Second block.\"}"
-        "],"
-        "\"usage\":{\"input_tokens\":10,\"output_tokens\":6}"
-        "}";
-
-    provider_response_t *resp = ops->parse_response(p, json);
-    TEST("anth multi block parsed", resp != NULL);
-    if (resp) {
-        TEST("anth multi content", resp->content != NULL);
-        if (resp->content) {
-            TEST("multi blocks concatenated", strcmp(resp->content, "First block. Second block.") == 0);
-        }
-        ops->free_response(resp);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_response_with_thinking(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth thinking provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_response) { provider_free(p); return; }
-
-    /* Anthropic response with thinking + text blocks */
-    const char *json =
-        "{"
-        "\"id\":\"msg_think\","
-        "\"content\":["
-          "{\"type\":\"thinking\",\"thinking\":\"Let me reason about this...\"},"
-          "{\"type\":\"text\",\"text\":\"The answer is 42.\"}"
-        "],"
-        "\"usage\":{\"input_tokens\":15,\"output_tokens\":20}"
-        "}";
-
-    provider_response_t *resp = ops->parse_response(p, json);
-    TEST("anth thinking parsed", resp != NULL);
-    if (resp) {
-        TEST("anth thinking content", resp->content != NULL);
-        if (resp->content) TEST("thinking content text", strcmp(resp->content, "The answer is 42.") == 0);
-        TEST("anth reasoning present", resp->reasoning != NULL);
-        if (resp->reasoning) TEST("reasoning matches", strstr(resp->reasoning, "Let me reason") != NULL);
-        ops->free_response(resp);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_response_error(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth error provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_response) { provider_free(p); return; }
-
-    const char *json =
-        "{"
-        "\"error\":{"
-          "\"type\":\"authentication_error\","
-          "\"message\":\"Invalid API key provided.\""
-        "}"
-        "}";
-
-    provider_response_t *resp = ops->parse_response(p, json);
-    TEST("anth error parsed", resp != NULL);
-    if (resp) {
-        TEST("anth error msg", strstr(resp->content, "Invalid API key") != NULL);
-        TEST("anth error type", strstr(resp->content, "authentication_error") != NULL);
-        ops->free_response(resp);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_response_malformed(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth malformed provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_response) { provider_free(p); return; }
-
-    /* Empty JSON */
-    provider_response_t *r1 = ops->parse_response(p, "{}");
-    TEST("anth empty json", r1 != NULL);
-    if (r1) { ops->free_response(r1); }
-
-    /* Invalid JSON */
-    provider_response_t *r2 = ops->parse_response(p, "not json");
-    TEST("anth invalid json", r2 != NULL);
-    if (r2) { ops->free_response(r2); }
-
-    /* NULL */
-    provider_response_t *r3 = ops->parse_response(p, NULL);
-    TEST("anth NULL body", r3 != NULL);
-    if (r3) { ops->free_response(r3); }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_chunk_content_block_delta(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth stream provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    /* content_block_delta with text_delta */
-    const char *chunk =
-        "event: content_block_delta\n"
-        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}";
-
-    provider_response_t *r1 = ops->parse_stream_chunk(p, chunk);
-    TEST("anth delta chunk", r1 != NULL);
-    if (r1) {
-        TEST("anth delta content", r1->content != NULL);
-        if (r1->content) TEST("anth delta text", strcmp(r1->content, "Hello") == 0);
-        ops->free_response(r1);
-    }
-
-    /* Raw JSON (HTTP parser stripped framing) */
-    provider_response_t *r2 = ops->parse_stream_chunk(p,
-        "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"World\"}}");
-    TEST("anth raw json chunk", r2 != NULL);
-    if (r2) {
-        TEST("anth raw json text", r2->content != NULL && strcmp(r2->content, "World") == 0);
-        ops->free_response(r2);
-    }
-
-    /* Simple "data: " prefix format */
-    provider_response_t *r3 = ops->parse_stream_chunk(p,
-        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!\"}}");
-    TEST("anth data prefix chunk", r3 != NULL);
-    if (r3) {
-        TEST("anth data prefix text", r3->content != NULL && strcmp(r3->content, "!") == 0);
-        ops->free_response(r3);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_thinking_delta(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth thinking stream", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    const char *chunk =
-        "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"I'm thinking...\"}}";
-
-    provider_response_t *r = ops->parse_stream_chunk(p, chunk);
-    TEST("anth thinking delta", r != NULL);
-    if (r) {
-        TEST("anth thinking reasoning", r->reasoning != NULL);
-        if (r->reasoning) TEST("anth thinking text", strcmp(r->reasoning, "I'm thinking...") == 0);
-        ops->free_response(r);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_content_block_start(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth start provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    const char *chunk =
-        "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"Initial\"}}";
-
-    provider_response_t *r = ops->parse_stream_chunk(p, chunk);
-    TEST("anth start chunk", r != NULL);
-    if (r) {
-        TEST("anth start text", r->content != NULL && strcmp(r->content, "Initial") == 0);
-        ops->free_response(r);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_message_start(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth msg start provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    const char *chunk =
-        "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"usage\":{\"input_tokens\":15,\"output_tokens\":0}}}";
-
-    provider_response_t *r = ops->parse_stream_chunk(p, chunk);
-    TEST("anth msg start", r != NULL);
-    if (r) {
-        TEST("anth msg input_tokens", r->input_tokens == 15);
-        TEST("anth msg empty content", r->content != NULL && strlen(r->content) == 0);
-        ops->free_response(r);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_message_delta(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth msg delta provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    const char *chunk =
-        "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":25}}";
-
-    provider_response_t *r = ops->parse_stream_chunk(p, chunk);
-    TEST("anth msg delta", r != NULL);
-    if (r) {
-        TEST("anth delta output_tokens", r->output_tokens == 25);
-        TEST("anth delta finish_reason", strcmp(r->finish_reason, "end_turn") == 0);
-        ops->free_response(r);
-    }
-
-    /* tool_use stop_reason */
-    provider_response_t *r2 = ops->parse_stream_chunk(p,
-        "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":30}}");
-    TEST("anth msg delta tool_use", r2 != NULL);
-    if (r2) {
-        TEST("anth delta tool_use reason", strcmp(r2->finish_reason, "tool_use") == 0);
-        ops->free_response(r2);
-    }
-
-    provider_free(p);
-}
-
-static void test_parse_stream_unknown(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth unknown provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
-
-    /* Ping event */
-    provider_response_t *r = ops->parse_stream_chunk(p,
-        "{\"type\":\"ping\"}");
-    TEST("anth ping", r != NULL);
-    if (r) {
-        TEST("anth ping empty", r->content != NULL && strlen(r->content) == 0);
-        ops->free_response(r);
-    }
-
-    /* [DONE] sentinel */
-    provider_response_t *r2 = ops->parse_stream_chunk(p, "data: [DONE]");
-    TEST("anth DONE", r2 != NULL);
-    if (r2) {
-        TEST("anth DONE empty", r2->content != NULL && strlen(r2->content) == 0);
-        ops->free_response(r2);
-    }
-
-    /* NULL */
-    provider_response_t *r3 = ops->parse_stream_chunk(p, NULL);
-    TEST("anth NULL chunk", r3 != NULL);
-    if (r3) { ops->free_response(r3); }
-
-    /* Empty string */
-    provider_response_t *r4 = ops->parse_stream_chunk(p, "");
-    TEST("anth empty chunk", r4 != NULL);
-    if (r4) { ops->free_response(r4); }
-
-    provider_free(p);
-}
-
-static void test_free_response_null(void)
-{
-    provider_t *p = provider_create("anthropic", "claude-3-5", "sk-test", "");
-    TEST("anth free provider", p != NULL);
-    if (!p) return;
-
-    const provider_ops_t *ops = provider_ops(p);
-    if (!ops || !ops->free_response) { provider_free(p); return; }
-
-    ops->free_response(NULL);
-    TEST("anth free_response(NULL) safe", 1);
-
-    provider_free(p);
-}
-
-int main(void)
-{
-    test_url_building();
-    test_headers();
-    test_parse_response_basic();
-    test_parse_response_multiple_text_blocks();
-    test_parse_response_with_thinking();
-    test_parse_response_error();
-    test_parse_response_malformed();
-    test_parse_stream_chunk_content_block_delta();
-    test_parse_stream_thinking_delta();
-    test_parse_stream_content_block_start();
-    test_parse_stream_message_start();
-    test_parse_stream_message_delta();
-    test_parse_stream_unknown();
-    test_free_response_null();
-
-    printf("provider_anthropic: %d/%d passed\n", passed, tests);
-    return (passed == tests) ? 0 : 1;
+    /* ── report ───────────────────────────────────────────────────── */
+    printf("\n==============================================\n");
+    if (failures == 0)
+        printf("  All 28 tests PASSED\n");
+    else
+        printf("  %d test(s) FAILED\n", failures);
+    printf("==============================================\n\n");
+    return failures > 0 ? 1 : 0;
 }

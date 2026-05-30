@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v299)
+# Goal Mantra — Slermes C (v306)
 
-335/0/0 (289 test files). 103 gaps. Phase 232: Markdown edge case expansion (test_markdown.c 30→42 assertions). S7 X09 test expansion.
+335/0/0 (289 test files). 103 gaps. Phase 239: S8 R01 adaptive thinking + model-aware Anthropic provider (provider_anthropic.c 731→1085 LOC).
 
 ## Loop
 
