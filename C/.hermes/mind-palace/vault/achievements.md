@@ -1705,3 +1705,11 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v252
 | P185-02 | 37-test suite (62 total): text message parsing, subscribe event, NULL inputs, invalid XML, enter_agent lifecycle, unknown msg_type rejection. | `C/tests/test_wecom_callback.c` — 62/62 passed. |
 
 Suite: 315/0/0 (273 test files). Gaps: 128. v253
+## Phase 186: B07 Terminal Depth — Shell Token Reader (v254)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P186-01 | B07 terminal depth — terminal_read_shell_token() ported from Python _read_shell_token(). Reads one shell token from command string starting at given position, preserving single/double quotes, backslash escaping, and stopping at shell metacharacters (space ; &#124; &amp; ( )). Returns malloc'd token with end position. | `C/src/tools/terminal.c` — implementation (68 LOC, non-static for test access). |
+| P186-02 | 12-test suite: simple word, stop-at-space, single quotes, double quotes with escaped quote, backslash-escaped space, stop at semicolon, stop at pipe, NULL safety, negative start, start beyond length. Suite 90→102 assertions in test_terminal.c. | `C/tests/test_terminal.c` — 12/12 passed. |
+
+Suite: 315/0/0 (273 test files). Gaps: 128. v254

@@ -3018,7 +3018,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libtooloutput/tool_output.c" \
     "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
     -o /tmp/hermes_test_terminal -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (90 tests)"
+    if /tmp/hermes_test_terminal > /dev/null 2>&1; then ok "terminal_tool (102 tests)"
     else fail "terminal_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_terminal
 else skip "terminal_tool (compilation failed)"

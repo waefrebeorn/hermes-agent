@@ -881,6 +881,75 @@ static char *_strip_quotes(const char *command) {
     return result;
 }
 
+/* Read one shell token from a command string, preserving quotes/escapes.
+ * Port of Python terminal_tool._read_shell_token().
+ * Reads token starting at *start. On success, sets *end to position after token
+ * and returns a malloc'd copy of the token. Caller must free().
+ * Returns NULL on error. */
+char *terminal_read_shell_token(const char *command, int start, int *end) {
+    if (!command || start < 0 || !end)
+        return NULL;
+
+    int n = (int)strlen(command);
+    int i = start;
+    *end = start;
+
+    /* Empty input */
+    if (i >= n) return NULL;
+
+    /* Count maximum token length for allocation */
+    int token_start = i;
+
+    while (i < n) {
+        char ch = command[i];
+        if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||
+            ch == ';' || ch == '|' || ch == '&' || ch == '(' || ch == ')')
+            break;
+
+        if (ch == '\'') {
+            i++;
+            while (i < n && command[i] != '\'') i++;
+            if (i < n) i++; /* skip closing quote */
+            continue;
+        }
+
+        if (ch == '"') {
+            i++;
+            while (i < n) {
+                char inner = command[i];
+                if (inner == '\\' && i + 1 < n) {
+                    i += 2;
+                    continue;
+                }
+                if (inner == '"') {
+                    i++;
+                    break;
+                }
+                i++;
+            }
+            continue;
+        }
+
+        if (ch == '\\' && i + 1 < n) {
+            i += 2;
+            continue;
+        }
+
+        i++;
+    }
+
+    int token_len = i - token_start;
+    if (token_len <= 0) return NULL;
+
+    char *token = (char *)malloc((size_t)token_len + 1);
+    if (!token) return NULL;
+    memcpy(token, command + token_start, (size_t)token_len);
+    token[token_len] = '\0';
+
+    *end = i;
+    return token;
+}
+
 /* Check command for shell-level background wrappers and suggest background=true.
  * Mirrors Python terminal_tool._foreground_background_guidance(). */
 static const char *_check_foreground_guidance(const char *command) {

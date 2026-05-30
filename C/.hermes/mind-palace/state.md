@@ -1,4 +1,4 @@
-|| Slermes C (v253)
+|| Slermes C (v254)
 
 Suite: 315/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 273 | C src: 178
@@ -123,6 +123,7 @@ Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 124||- Phase 183: B07 terminal depth — terminal_sudo_nopasswd_works() ported from _sudo_nopasswd_works(). Probes sudo -n true via popen, checks TERMINAL_ENV guard. 3-test suite. Suite 315/0/0 (v251). 128→128 gaps (depth).
 ||- Phase 184: G02 base.py depth — http_split_host_port(), http_no_proxy_entries(), http_should_bypass_proxy() ported from base.py _split_host_port(), _no_proxy_entries(), should_bypass_proxy(). Host:port parsing with URL, IPv6, host:port, and plain host support. NO_PROXY env var reader. High-level proxy bypass check combining both. 27-test suite. Suite 315/0/0 (v252). 128→128 gaps (depth).
 |- Phase 185: G06 wecom_callback depth — wecom_callback_build_event() ported from Python _build_event(). Parses decrypted WeCom callback XML into event fields (MsgType, Event, FromUserName, ToUserName, Content, MsgId, CreateTime). Filters lifecycle events (enter_agent, subscribe). Builds scoped_chat_id via corp_id:user_id. Generates msg_id from MsgId or user_id:CreateTime fallback. 37-test suite (62 total). Suite 315/0/0 (v253). 128→128 gaps (depth).
+|- Phase 186: B07 terminal depth — terminal_read_shell_token() ported from Python _read_shell_token(). Reads one shell token from command string preserving quotes/escapes. Handles single/double quotes, backslash escaping, stops at shell metacharacters (;|&()). 12-test suite (102 total). Suite 315/0/0 (v254). 128→128 gaps (depth).
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).

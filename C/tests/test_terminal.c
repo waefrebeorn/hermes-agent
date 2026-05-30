@@ -20,6 +20,8 @@
 
 /* Forward declaration from terminal.c */
 char *terminal_handler(const char *args_json, const char *task_id);
+/* Shell token reader utility */
+char *terminal_read_shell_token(const char *command, int start, int *end);
 
 static int passed = 0, failed = 0;
 
@@ -463,6 +465,61 @@ int main(void) {
             TEST("backtick workdir mentions blocked", json_contains(res, "Blocked"));
         }
         free(res);
+    }
+
+    /* Test 41-50: terminal_read_shell_token */
+    {
+        int end = 0;
+        char *tok = NULL;
+
+        /* Simple word */
+        tok = terminal_read_shell_token("hello", 0, &end);
+        TEST("read_shell_token simple word", tok != NULL && strcmp(tok, "hello") == 0);
+        TEST("read_shell_token simple end", end == 5);
+        free(tok);
+
+        /* Word followed by space */
+        tok = terminal_read_shell_token("hello world", 0, &end);
+        TEST("read_shell_token stop at space", tok != NULL && strcmp(tok, "hello") == 0);
+        TEST("read_shell_token after space", end == 5);
+        free(tok);
+
+        /* Single-quoted string */
+        tok = terminal_read_shell_token("'hello world'", 0, &end);
+        TEST("read_shell_token single quotes", tok != NULL && strcmp(tok, "'hello world'") == 0);
+        free(tok);
+
+        /* Double-quoted string with backslash */
+        tok = terminal_read_shell_token("\"hello\\\" world\"", 0, &end);
+        TEST("read_shell_token double quotes", tok != NULL && strcmp(tok, "\"hello\\\" world\"") == 0);
+        free(tok);
+
+        /* Token with escaped char */
+        tok = terminal_read_shell_token("hello\\ world", 0, &end);
+        TEST("read_shell_token backslash", tok != NULL && strcmp(tok, "hello\\ world") == 0);
+        free(tok);
+
+        /* Stop at semicolon */
+        tok = terminal_read_shell_token("cmd;", 0, &end);
+        TEST("read_shell_token stop at ;", tok != NULL && strcmp(tok, "cmd") == 0);
+        free(tok);
+
+        /* Stop at pipe */
+        tok = terminal_read_shell_token("first|second", 0, &end);
+        TEST("read_shell_token stop at |", tok != NULL && strcmp(tok, "first") == 0);
+        free(tok);
+
+        /* NULL safety */
+        tok = terminal_read_shell_token(NULL, 0, &end);
+        TEST("read_shell_token NULL cmd", tok == NULL);
+
+        /* Negative start */
+        tok = terminal_read_shell_token("hello", -1, &end);
+        TEST("read_shell_token negative start", tok == NULL);
+
+        /* Start beyond length */
+        tok = terminal_read_shell_token("hi", 10, &end);
+        TEST("read_shell_token beyond end", tok == NULL);
     }
 
     /* Summary */
