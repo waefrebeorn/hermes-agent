@@ -4291,6 +4291,24 @@ static void cmd_secrets(const char *args, agent_state_t *state) {
             pclose(fp);
         }
 
+        /* Check for Anthropic OAuth tokens (port of Python anthropic_adapter.py) */
+        printf("\nAnthropic OAuth status:\n");
+        const char *ant_key = getenv("ANTHROPIC_API_KEY");
+        const char *ant_token = getenv("ANTHROPIC_TOKEN");
+        const char *cc_oauth = getenv("CLAUDE_CODE_OAUTH_TOKEN");
+        bool has_api_key = (ant_key && *ant_key);
+        bool has_setup_token = (ant_token && anthropic_is_oauth_token(ant_token));
+        bool has_cc_oauth = (cc_oauth && *cc_oauth);
+
+        printf("  API key:        %s\n", has_api_key ? "✓" : "not set");
+        printf("  Setup token:    %s%s\n",
+               has_setup_token ? "✓" : "not set",
+               has_setup_token ? "" : " (sk-ant-oat* or managed key)");
+        printf("  CC OAuth token: %s\n",
+               has_cc_oauth ? "✓ (from CLAUDE_CODE_OAUTH_TOKEN)" : "not set");
+        printf("  Total:          %d credential(s) detected\n",
+               (int)has_api_key + (int)(ant_token && *ant_token) + (int)has_cc_oauth);
+
     } else if (strcmp(subcmd, "list") == 0) {
         const char *token = getenv("BWS_ACCESS_TOKEN");
         if (!token) token = getenv("SLERMES_BWS_TOKEN");
