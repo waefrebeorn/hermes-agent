@@ -1,7 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v284 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 106 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED. Suite 325/0/0.**
+**v284 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 105 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27 PORTED. Suite 325/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -27,13 +26,13 @@ Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all 
 
 | # | ID | Feature | Python | C | Priority | Status |
 |---|----|---------|--------|---|----------|--------|
-| 01 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
+|| 01 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | agent_snapshot_take/restore per tool iteration (agent_loop.c:1625/1650) + checkpoint.c (10 funcs: init/free/save/restore/list/count/autosave/limits/diff/branch-restore). More features than Python's undo_last() array-truncation. | P2 | PORTED ✅ |
 || 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | hermes_repair_message_sequence() + sanitize_tool_call_arguments() + repair_tool_call() ported (Phases 211-213). 52-test suite. L25 all 3 portable functions done. | P1 | PORTED ✅ |
 | 03 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler. **tool_call_args_truncate() + estimate_payload_context_tokens() + hermes_message_sanitize() ported** (Phases 214-216, 74 tests). build_assistant_message() sanitization pipeline (surrogate fix, think-block strip, secret redaction) implemented as hermes_message_sanitize(). | P1 | PORTED ✅ |
 | 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | system_prompt.c (1273 LOC) covers core identity, memory, skills, tool enforcement, context file loading (SOUL.md/AGENTS.md/CLAUDE.md/.cursorrules), threat scanning, platform hints. Python's dynamic skills manifest system (snapshot caching, frontmatter parsing, condition matching) is arch-specific (C has simpler skill system). 15/25 functions ported (all portable ones). | P1 | PORTED ✅ |
 | 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
 
-**S1: 2 gaps (all partial: L24, L28) — 19 stale + 5 done + 3 PORTED (L25+L26+L27). No remaining real gaps.**
+**S1: 1 gap (L28) — 19 stale + 5 done + 4 PORTED (L24+L25+L26+L27). No remaining real gaps.**
 
 ---
 
@@ -97,7 +96,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v271. Suite 322/0/0, test files 278.**
+**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit. Suite 325/0/0, test files 282.**
 
 ---
 
@@ -179,7 +178,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 || 11 | B11-B20 | remaining tools (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.) | varying | varying | — | P2-P3 | ✅ PORTED — all Python tools have C equivalents verified May 2026 |
 
-**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 322/0/0, test files 278.**
+**S6: 0 gaps — all tools PORTED (B01-B10 all implemented). Suite 325/0/0, test files 282.**
 
 ---
 
@@ -267,7 +266,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 1 | 0 | 0 | 1 | 0 | Phase 0 — D09 vi mode remains. D16 type-ahead IMPLEMENTED (Phase 210). |
-|| S1: Conversation Loop Plumbing | 2 | 0 | 0 | 2 | 0 | All 28 real gaps stale-retired or implemented. 2 partials (L24, L28). L25+L26+L27 PORTED. L27 prompt builder reclassified (Phase 217). |
+|| S1: Conversation Loop Plumbing | 1 | 0 | 0 | 1 | 0 | All 28 real gaps stale-retired or implemented. 1 partial (L28). L24+L25+L26+L27 PORTED. S1 all ported except L28. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
@@ -277,7 +276,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **106** | **4** | **34** | **51** | **24** | **S0+S3+S6 all PORTED. L25+L26+L27 PORTED. Suite 325/0/0, test files 282.** |
+|| **TOTAL** | **105** | **4** | **34** | **50** | **24** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27 PORTED. Suite 325/0/0, test files 282.** |
 
 ### Phase Map
 

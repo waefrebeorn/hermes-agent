@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 322/0/0
+bash test_runner.sh        # 325/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -547,7 +547,7 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-| Library tests | 322/0/0 | All pass, ~60s |
+| Library tests | 325/0/0 | All pass, ~60s |
 | Test files | 278 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |

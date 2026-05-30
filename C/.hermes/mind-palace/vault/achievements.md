@@ -15,7 +15,7 @@
 ## Phase 2: Agent Core
 | ID | Achievement | Evidence |
 |----|-------------|----------|
-| A01 | Agent conversation loop (agent_loop.c, 1532 LOC) | Compiles, tested via suite |
+| A01 | Agent conversation loop (agent_loop.c, 1711 LOC) | Compiles, tested via suite |
 | A02 | LLM API client (llm_client.c, 1569 LOC) | All 10 providers |
 | A03 | Provider infrastructure: OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, LMStudio | `src/agent/provider_*.c` |
 | A04 | Provider metadata + fallback routing + credential pool | Integration tested |
@@ -1766,4 +1766,5 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 
 | P217-01 | L27 prompt builder reclassified PORTED. Function-level comparison: Python prompt_builder.py (25 functions, 1451 LOC) vs C system_prompt.c (15 public functions, 1273 LOC). Core features all ported: identity, memory, skills, tool enforcement, context file loading (SOUL.md/AGENTS.md/CLAUDE.md/.cursorrules), threat scanning (context_scan_content), platform hints. Unported functions are Python-arch-specific (skills manifest system: snapshot caching, frontmatter parsing, condition matching — C has simpler skill system). | `C/src/agent/system_prompt.c` — 1273 LOC covering all portable features. `C/include/hermes_system_prompt.h` — declarations. `C/tests/test_system_prompt.c` — 57 assertions. |
 | P217-02 | S7 test expansion — 22 new edge-case assertions in test_agent_message_sanitize.c. Added: orphan/stray tag handling (close-only, open-only, ws after close, prose mention stripped, multiple stray, <function> Gemma-style), combinations (think+secret+surrogate mixed, multiple tool-call blocks, think+secret in separate tool-call, reasoning with embedded think blocks preserved). Fixed boundary_start bug in strip_think_blocks(). Assertions 35→57. | `C/tests/test_agent_message_sanitize.c` — 57/57 passed. `C/src/agent/agent_message_sanitize.c` — boundary_start reset fix. |
-Suite: 325/0/0 (282 test files). Gaps: 106. v284
+| P218-01 | L24 checkpoint/snapshot reclassified PORTED. C has agent_snapshot_take() (agent_loop.c:1625) called before every tool iteration, agent_snapshot_restore() (line 1650), plus checkpoint.c (10 functions: init/free/save/restore/list/count/autosave/limits/diff/branch-restore). Python's equivalent is cli.py:7021 undo_last() — simple array truncation. C has MORE features. | Evidence: agent_loop.c:1625/1650, checkpoint.c (10 funcs), test_checkpoint.c (245-line suite). |
+Suite: 325/0/0 (282 test files). Gaps: 105. v284

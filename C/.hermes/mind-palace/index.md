@@ -1,19 +1,14 @@
-(v284)
+# Slermes C — Index (v284)
 
-# Slermes C — Walkway Index
+S0+S1+S3+S6 all PORTED. 105 gaps across 9 sectors. Phase 218: L24 checkpoint/snapshot reclassified PORTED.
 
-S0+S3+S6 all PORTED. 106 gaps across 9 sectors. Phase 217: L26 hermes_message_sanitize() ported.
-Suite 325/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs. C src: 180 files.
+## Walkway Files
 
-| File | Purpose |
-|------|---------|
-| [state.md](state.md) | Session state and progress timeline |
-| [battleship-v34.md](battleship-v34.md) | Canonical gap list (106 gaps) |
-| [goal-mantra.md](goal-mantra.md) | Standing goal and core loop |
-| [plan.md](plan.md) | Immediate next and pipeline |
-| [entry.md](entry.md) | Entry point summary |
-| [testing.md](testing.md) | Test suite status |
-| [overnight-map.md](overnight-map.md) | Overnight sync plan |
-| [vault/](vault) | Achievement archive |
-
-Use methodology: compare function-level APIs, not file names.
+| File | Description |
+|------|-------------|
+| [battleship-v34.md](battleship-v34.md) | Canonical gap list (105 gaps) |
+| [state.md](state.md) | Current state dashboard |
+| [vault/achievements.md](vault/achievements.md) | Completed milestones archive |
+| [plan.md](plan.md) | Next gap targets |
+| [goal-mantra.md](goal-mantra.md) | Mission statement + loop discipline |
+| [overnight-map.md](overnight-map.md) | Recent phase log |

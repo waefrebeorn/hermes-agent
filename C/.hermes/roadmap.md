@@ -1,9 +1,10 @@
-# Slermes C — Roadmap (v275)
+# Slermes C — Roadmap (v284)
 
-> Canonical phase order and navigation at `mind-palace/overnight-map.md`.
-> Battleship: v34 (115 gaps). See `mind-palace/battleship-v34.md`.
+> Battleship: v34 (105 gaps). See `mind-palace/battleship-v34.md`.
 
-## Current Focus
-1. **P0: 115 gaps remaining** — display depth, test expansion, partials
-2. **All S3+S6 PORTED** — base helpers and all tools verified
-3. **Suite: 322/0/0** — 278 test files, 31M binary
+## Phase Plan
+
+1. **P0: 105 gaps remaining** — display depth, test expansion, partials
+2. **Phase 2:** Agent plumbing + Provider adapters + TUI backend
+3. **Suite: 325/0/0** — 282 test files, 31M binary
+4. **S0+S1+S3+S6 PORTED** — L24+L25+L26+L27 PORTED, D09 vi mode remains
