@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v377)
+# Entry — Slermes C Parity (v378)
 
-Phase 313: S5 C17 skills hub CLI — /skills-hub [list|search|show|sync]. 74 gaps.
+Phase 314: S5 C03 memory CLI — /memory [status|providers|setup]. 73 gaps.

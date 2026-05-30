@@ -1,7 +1,8 @@
-(v377)
+(v378)
 
-325/0/14, 289 test files. All pass. 74 gaps. Phase 313: S5 C17 skills hub CLI — /skills-hub [list|search|show|sync].
+325/0/14, 289 test files. All pass. 73 gaps. Phase 314: S5 C03 memory CLI — /memory [status|providers|setup].
 
+Phase 314: S5 C03 memory CLI — /memory [status|providers|setup]. status: loads config.yaml and displays memory provider, char_limit, user_char_limit, ttl_days, auto_save. providers: lists 5 known memory providers (built-in, honcho, mem0, supermemory, hindsight). setup <provider>: prints manual config.yaml edit instructions. C03 PORTED. v378.
 Phase 313: S5 C17 skills hub CLI — /skills-hub with 4 subcommands wired to skills_hub.c API. list shows catalog summary + first 50 skills. search finds by query substring (name/title/desc/category/tags/slug). show displays full skill details. sync clears cache and re-fetches. Type renamed from skill_meta_t to hub_skill_meta_t to avoid collision with hermes.h. v377.
 Phase 308: S7 enum edge case expansion — 31 new assertions (17→48), full coverage: out-of-range OBO (value==count), large 21-value enum, empty/partial parse, round-trip all values, macro isolation. v372.
 Phase 307: S7 difflib edge case expansion — 59 new assertions (22→81), full coverage: ratio swap consistency, single char, unicode, whitespace, long identical, substring, unified_diff NULL/empty/both-NULL, large/zero context, single line, trailing newlines, multiple hunks, simple_diff empty/empty, full add/delete, multiple distant changes, long line change. v371.
@@ -15,4 +16,4 @@ Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/
 Phase 271: S8 R02+R10 depth — batch 10 functions. 104 new assertions. Suite 335/0/0. v338.
 Phase 270: S8 R04 Gemini depth — batch 3 functions. 36 new assertions (130→166). Suite 335/0/0. v337.
 Phase 269: S8 R04 Gemini depth — tool_choice + thinking_config. 29 new assertions (101→130). Suite 335/0/0. v336.
-Coverage: 292/1262 test files (23.1%). 94 structural gaps remain.
+Coverage: 292/1262 test files (23.1%). 73 structural gaps remain.
