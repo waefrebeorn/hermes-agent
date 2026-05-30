@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 /* models.dev fetch constants */
 #define MODELS_DEV_URL       "https://models.dev/api.json"
@@ -725,4 +726,139 @@ char *provider_strip_prefix(const char *model) {
 
     /* No prefix detected — return copy */
     return strdup(model);
+}
+
+/* Check if a URL points to a local or private endpoint.
+ * Port of Python model_metadata.is_local_endpoint().
+ * Recognises loopback, container DNS (host.docker.internal),
+ * RFC-1918 private ranges, link-local, and Tailscale CGNAT.
+ * Returns true if the host is local/private. */
+bool provider_is_local_endpoint(const char *base_url) {
+    if (!base_url || !*base_url) return false;
+
+    /* Normalize */
+    char *normalized = provider_normalize_base_url(base_url);
+    if (!normalized) return false;
+
+    /* Add scheme if missing */
+    char url_buf[1024];
+    if (strstr(normalized, "://")) {
+        snprintf(url_buf, sizeof(url_buf), "%s", normalized);
+    } else {
+        snprintf(url_buf, sizeof(url_buf), "http://%s", normalized);
+    }
+    free(normalized);
+
+    /* Extract hostname — handle IPv6 literal URLs separately */
+    char host_buf[256];
+    const char *host = NULL;
+
+    /* Check for IPv6 bracketed address */
+    const char *scheme_end = strstr(url_buf, "://");
+    if (scheme_end) {
+        const char *host_start = scheme_end + 3;
+        if (*host_start == '[') {
+            /* IPv6 literal: extract between brackets */
+            const char *close_bracket = strchr(host_start + 1, ']');
+            if (close_bracket) {
+                size_t ipv6_len = (size_t)(close_bracket - host_start - 1);
+                if (ipv6_len < sizeof(host_buf) - 1) {
+                    memcpy(host_buf, host_start + 1, ipv6_len);
+                    host_buf[ipv6_len] = '\0';
+                    host = host_buf;
+                }
+            }
+        }
+    }
+
+    /* Fallback: use url_extract_hostname for non-IPv6 */
+    if (!host) {
+        char *h = url_extract_hostname(url_buf);
+        if (!h || !*h) return false;
+        snprintf(host_buf, sizeof(host_buf), "%s", h);
+        host = host_buf;
+        free(h);
+    }
+
+    if (!host || !*host) return false;
+
+    bool result = false;
+
+    /* Check known local hosts */
+    static const char *local_hosts[] = {
+        "localhost", "127.0.0.1", "::1", "0.0.0.0", "127.0.1.1", NULL
+    };
+    for (int i = 0; local_hosts[i]; i++) {
+        if (strcasecmp(host, local_hosts[i]) == 0) {
+            result = true;
+            goto done;
+        }
+    }
+
+    /* Check container DNS suffixes */
+    static const char *container_suffixes[] = {
+        "host.docker.internal", "host.podman.internal",
+        "host.lima.internal", ".host.docker.internal",
+        ".host.podman.internal", ".host.lima.internal", NULL
+    };
+    size_t hlen = strlen(host);
+    for (int i = 0; container_suffixes[i]; i++) {
+        size_t slen = strlen(container_suffixes[i]);
+        if (hlen >= slen && strcasecmp(host + hlen - slen, container_suffixes[i]) == 0) {
+            result = true;
+            goto done;
+        }
+    }
+
+    /* Check IP ranges */
+    struct in_addr addr4;
+    if (inet_pton(AF_INET, host, &addr4) == 1) {
+        unsigned long ip = ntohl(addr4.s_addr);
+        /* 127.0.0.0/8 — loopback */
+        if ((ip & 0xFF000000) == 0x7F000000) { result = true; goto done; }
+        /* 10.0.0.0/8 — RFC-1918 */
+        if ((ip & 0xFF000000) == 0x0A000000) { result = true; goto done; }
+        /* 172.16.0.0/12 — RFC-1918 */
+        if ((ip & 0xFFF00000) == 0xAC100000) { result = true; goto done; }
+        /* 192.168.0.0/16 — RFC-1918 */
+        if ((ip & 0xFFFF0000) == 0xC0A80000) { result = true; goto done; }
+        /* 169.254.0.0/16 — link-local */
+        if ((ip & 0xFFFF0000) == 0xA9FE0000) { result = true; goto done; }
+        /* 100.64.0.0/10 — Tailscale CGNAT (RFC 6598) */
+        if ((ip & 0xFFC00000) == 0x64400000) { result = true; goto done; }
+        /* 0.0.0.0/8 — current network */
+        if ((ip & 0xFF000000) == 0x00000000) { result = true; goto done; }
+    }
+
+    /* Check IPv6 loopback and private */
+    struct in6_addr addr6;
+    if (inet_pton(AF_INET6, host, &addr6) == 1) {
+        static const unsigned char loopback[16] =
+            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+        static const unsigned char ipv4_mapped_prefix[12] =
+            {0,0,0,0,0,0,0,0,0,0,0xFF,0xFF};
+        if (memcmp(&addr6, loopback, 16) == 0) { result = true; goto done; }
+        /* IPv4-mapped IPv6 — extract embedded IPv4 and recheck */
+        if (memcmp(&addr6, ipv4_mapped_prefix, 12) == 0) {
+            struct in_addr embedded;
+            memcpy(&embedded, ((const unsigned char *)&addr6) + 12, 4);
+            unsigned long ip = ntohl(embedded.s_addr);
+            if ((ip & 0xFF000000) == 0x7F000000) { result = true; goto done; }
+            if ((ip & 0xFF000000) == 0x0A000000) { result = true; goto done; }
+            if ((ip & 0xFFF00000) == 0xAC100000) { result = true; goto done; }
+            if ((ip & 0xFFFF0000) == 0xC0A80000) { result = true; goto done; }
+            if ((ip & 0xFFFF0000) == 0xA9FE0000) { result = true; goto done; }
+            if ((ip & 0xFFC00000) == 0x64400000) { result = true; goto done; }
+        }
+        /* Unique local address (fc00::/7) */
+        if (((const unsigned char *)&addr6)[0] & 0x02) { /* fec0::/10 not fc00::/7; check fd00::/8 */
+            if (((const unsigned char *)&addr6)[0] == 0xfd) { result = true; goto done; }
+        }
+        /* Link-local (fe80::/10) */
+        if (((const unsigned char *)&addr6)[0] == 0xfe &&
+            (((const unsigned char *)&addr6)[1] & 0xc0) == 0x80) { result = true; goto done; }
+    }
+
+done:
+    return result;
 }

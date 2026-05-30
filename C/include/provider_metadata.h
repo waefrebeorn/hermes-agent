@@ -164,6 +164,12 @@ char *provider_normalize_base_url(const char *base_url);
  * Returns malloc'd string, caller must free(). */
 char *provider_strip_prefix(const char *model);
 
+/* Check if a URL points to a local or private endpoint.
+ * Port of Python model_metadata.is_local_endpoint().
+ * Recognises loopback, container DNS (host.docker.internal),
+ * RFC-1918 private ranges, link-local, and Tailscale CGNAT. */
+bool provider_is_local_endpoint(const char *base_url);
+
 #ifdef __cplusplus
 }
 #endif

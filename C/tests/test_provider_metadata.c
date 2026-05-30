@@ -277,6 +277,34 @@ int main(void) {
     TEST("strip http URL unchanged", url && strncmp(url, "http", 4) == 0);
     free(url);
 
+    /* --- Test 9: provider_is_local_endpoint --- */
+    printf("\n[R10] provider_is_local_endpoint:\n");
+
+    TEST("localhost is local", provider_is_local_endpoint("http://localhost:11434"));
+    TEST("127.0.0.1 is local", provider_is_local_endpoint("http://127.0.0.1:8080"));
+    TEST("::1 is local", provider_is_local_endpoint("http://[::1]:11434"));
+    TEST("0.0.0.0 is local", provider_is_local_endpoint("http://0.0.0.0"));
+    TEST("host.docker.internal is local",
+         provider_is_local_endpoint("http://host.docker.internal:11434"));
+    TEST("10.0.0.1 is local", provider_is_local_endpoint("http://10.0.0.1"));
+    TEST("172.16.0.1 is local", provider_is_local_endpoint("http://172.16.0.1"));
+    TEST("172.31.255.255 is local", provider_is_local_endpoint("http://172.31.255.255"));
+    TEST("192.168.1.1 is local", provider_is_local_endpoint("http://192.168.1.1"));
+    TEST("100.64.0.1 is local (Tailscale)",
+         provider_is_local_endpoint("http://100.64.0.1"));
+    TEST("100.127.255.255 is local (Tailscale)",
+         provider_is_local_endpoint("http://100.127.255.255"));
+    TEST("169.254.1.1 is local (link-local)",
+         provider_is_local_endpoint("http://169.254.1.1"));
+    TEST("172.15.0.1 NOT local", !provider_is_local_endpoint("http://172.15.0.1"));
+    TEST("172.32.0.1 NOT local", !provider_is_local_endpoint("http://172.32.0.1"));
+    TEST("192.167.1.1 NOT local", !provider_is_local_endpoint("http://192.167.1.1"));
+    TEST("100.63.0.1 NOT local", !provider_is_local_endpoint("http://100.63.0.1"));
+    TEST("100.128.0.1 NOT local", !provider_is_local_endpoint("http://100.128.0.1"));
+    TEST("8.8.8.8 NOT local", !provider_is_local_endpoint("http://8.8.8.8"));
+    TEST("NULL not local", !provider_is_local_endpoint(NULL));
+    TEST("empty not local", !provider_is_local_endpoint(""));
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
