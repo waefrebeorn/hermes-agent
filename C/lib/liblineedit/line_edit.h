@@ -12,13 +12,34 @@
 
 /* Maximum input line length */
 #define LINE_EDIT_MAX_LINE 65536
+#define MAX_KILL_RING 65536
+#define MAX_HISTORY 100
 
-/* Line editor state */
-typedef struct line_edit_t line_edit_t;
+/* Forward declarations */
+typedef struct history_t history_t;
+
+/* Line buffer — internal but exposed for unit testing */
+typedef struct {
+    char *buf;
+    size_t len;
+    size_t cap;
+    size_t cursor;    /* cursor position in buf (0 = start) */
+} line_buf_t;
 
 /* Completion callback: given partial word, return NULL-terminated list of matches.
  * Each match is a heap-allocated string; the caller frees them and the array. */
 typedef char **(*line_edit_completion_cb)(const char *partial, void *user_data);
+
+/* Line editor state */
+typedef struct line_edit_t {
+    line_buf_t *buf;
+    history_t *history;
+    line_edit_completion_cb complete;
+    void *user_data;
+    char saved_line[LINE_EDIT_MAX_LINE];  /* for history navigation */
+    char kill_ring[MAX_KILL_RING];        /* for Ctrl-K/Ctrl-Y kill/yank */
+    size_t kill_ring_len;
+} line_edit_t;
 
 /* Create a line editor instance */
 line_edit_t *line_edit_create(line_edit_completion_cb complete, void *user_data);
@@ -35,5 +56,13 @@ bool line_edit_save_history(line_edit_t *le, const char *path);
 
 /* Load history from file */
 bool line_edit_load_history(line_edit_t *le, const char *path);
+
+/* Emacs-style editing helpers — exposed for testing */
+void line_edit_kill_line(line_edit_t *le);
+void line_edit_yank(line_edit_t *le);
+void line_edit_kill_word_forward(line_edit_t *le);
+void line_edit_transpose_chars(line_edit_t *le);
+void line_edit_cursor_word_forward(line_edit_t *le);
+void line_edit_cursor_word_backward(line_edit_t *le);
 
 #endif /* HERMES_LINE_EDIT_H */

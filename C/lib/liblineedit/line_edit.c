@@ -8,6 +8,8 @@
  * - History (up/down arrows, up to 100 entries)
  * - Tab completion via callback
  * - In-memory history with file save/load
+ * - Emacs-style keybindings: Ctrl-A/E (line start/end), Ctrl-K/Y (kill/yank),
+ *   Ctrl-L (clear screen), Ctrl-T (transpose), Alt-F/B/D (word nav/kill)
  */
 
 #include "line_edit.h"
@@ -24,7 +26,7 @@
 /*  Constants                                                         */
 /* ------------------------------------------------------------------ */
 
-#define MAX_HISTORY 100
+
 #define TAB_BUF_SIZE 8192
 
 /* Escape sequences */
@@ -38,22 +40,24 @@
 #define KEY_TAB      9
 #define KEY_BACKSPACE 127
 #define KEY_ENTER     '\n'
+#define KEY_CTRL_A     1
+#define KEY_CTRL_B     2
 #define KEY_CTRL_C     3
 #define KEY_CTRL_D     4
-#define KEY_CTRL_R    18
+#define KEY_CTRL_E     5
+#define KEY_CTRL_F     6
+#define KEY_CTRL_K    11
+#define KEY_CTRL_L    12
+#define KEY_CTRL_T    20
 #define KEY_CTRL_U    21
 #define KEY_CTRL_W    23
+#define KEY_CTRL_Y    25
+#define KEY_ESC       27
+#define KEY_CTRL_R    18
 
 /* ------------------------------------------------------------------ */
-/*  Line buffer                                                       */
+/*  Line buffer — static helpers                                      */
 /* ------------------------------------------------------------------ */
-
-typedef struct {
-    char *buf;
-    size_t len;
-    size_t cap;
-    size_t cursor;    /* cursor position in buf (0 = start) */
-} line_buf_t;
 
 static line_buf_t *line_buf_create(void) {
     line_buf_t *lb = calloc(1, sizeof(line_buf_t));
@@ -199,6 +203,20 @@ static void term_redraw_line(const line_buf_t *lb) {
     fflush(stdout);
 }
 
+/* Clear screen and redraw prompt + current buffer */
+static void term_clear_screen(const char *prompt, const line_buf_t *lb) {
+    /* Clear screen and move cursor home */
+    printf("\033[2J\033[H");
+    if (prompt) printf("%s", prompt);
+    if (lb && lb->len > 0) {
+        printf("%s", lb->buf);
+        size_t move_back = lb->len - lb->cursor;
+        if (move_back > 0)
+            printf("\033[%zuD", move_back);
+    }
+    fflush(stdout);
+}
+
 /* ------------------------------------------------------------------ */
 /*  History                                                            */
 /* ------------------------------------------------------------------ */
@@ -209,7 +227,7 @@ typedef struct hist_entry {
     struct hist_entry *next;
 } hist_entry_t;
 
-typedef struct {
+typedef struct history_t {
     hist_entry_t *head;
     hist_entry_t *tail;
     hist_entry_t *current;  /* for navigation */
@@ -289,14 +307,6 @@ static void history_reset_pos(history_t *h) {
 /*  Line editor state                                                 */
 /* ------------------------------------------------------------------ */
 
-struct line_edit_t {
-    line_buf_t *buf;
-    history_t *history;
-    line_edit_completion_cb complete;
-    void *user_data;
-    char saved_line[LINE_EDIT_MAX_LINE];  /* for history navigation */
-};
-
 line_edit_t *line_edit_create(line_edit_completion_cb complete, void *user_data) {
     line_edit_t *le = calloc(1, sizeof(line_edit_t));
     if (!le) return NULL;
@@ -307,6 +317,8 @@ line_edit_t *line_edit_create(line_edit_completion_cb complete, void *user_data)
     le->complete = complete;
     le->user_data = user_data;
     le->saved_line[0] = '\0';
+    le->kill_ring[0] = '\0';
+    le->kill_ring_len = 0;
     return le;
 }
 
@@ -316,6 +328,120 @@ void line_edit_free(line_edit_t *le) {
     line_buf_free(le->buf);
     history_free(le->history);
     free(le);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Word motion helpers                                               */
+/* ------------------------------------------------------------------ */
+
+/* Move cursor forward to end of next word */
+void line_edit_cursor_word_forward(line_edit_t *le) {
+    if (!le) return;
+    line_buf_t *lb = le->buf;
+    if (lb->cursor >= lb->len) return;
+    /* Skip current word */
+    while (lb->cursor < lb->len && !isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor++;
+    /* Skip whitespace */
+    while (lb->cursor < lb->len && isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor++;
+}
+
+/* Move cursor backward to start of current/previous word */
+void line_edit_cursor_word_backward(line_edit_t *le) {
+    if (!le) return;
+    line_buf_t *lb = le->buf;
+    if (lb->cursor == 0) return;
+    /* Skip whitespace before cursor */
+    lb->cursor--;
+    while (lb->cursor > 0 && isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor--;
+    /* Skip word chars */
+    while (lb->cursor > 0 && !isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor--;
+    /* If we stopped on a non-space, cursor is at start of word */
+    if (lb->cursor > 0 && isspace((unsigned char)lb->buf[lb->cursor]))
+        lb->cursor++;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Emacs-style kill/yank                                             */
+/* ------------------------------------------------------------------ */
+
+/* Kill from cursor to end of line, saving killed text */
+void line_edit_kill_line(line_edit_t *le) {
+    if (!le) return;
+    if (le->buf->cursor >= le->buf->len) return;
+    size_t remain = le->buf->len - le->buf->cursor;
+    if (remain >= MAX_KILL_RING) remain = MAX_KILL_RING - 1;
+    memcpy(le->kill_ring, le->buf->buf + le->buf->cursor, remain);
+    le->kill_ring[remain] = '\0';
+    le->kill_ring_len = remain;
+    /* Truncate buffer at cursor */
+    le->buf->buf[le->buf->cursor] = '\0';
+    le->buf->len = le->buf->cursor;
+}
+
+/* Yank (paste) killed text at cursor */
+void line_edit_yank(line_edit_t *le) {
+    if (!le) return;
+    if (le->kill_ring_len == 0) return;
+    for (size_t i = 0; i < le->kill_ring_len; i++)
+        if (!line_buf_insert(le->buf, le->kill_ring[i]))
+            break;
+}
+
+/* Kill from cursor to end of current/next word */
+void line_edit_kill_word_forward(line_edit_t *le) {
+    if (!le) return;
+    if (le->buf->cursor >= le->buf->len) return;
+
+    /* Find end of word */
+    size_t end = le->buf->cursor;
+    /* Skip whitespace */
+    while (end < le->buf->len && isspace((unsigned char)le->buf->buf[end]))
+        end++;
+    /* Find end of word chars */
+    while (end < le->buf->len && !isspace((unsigned char)le->buf->buf[end]))
+        end++;
+
+    size_t kill_len = end - le->buf->cursor;
+    if (kill_len == 0) return;
+    if (kill_len >= MAX_KILL_RING) kill_len = MAX_KILL_RING - 1;
+
+    memcpy(le->kill_ring, le->buf->buf + le->buf->cursor, kill_len);
+    le->kill_ring[kill_len] = '\0';
+    le->kill_ring_len = kill_len;
+
+    /* Remove the text */
+    memmove(le->buf->buf + le->buf->cursor,
+            le->buf->buf + le->buf->cursor + kill_len,
+            le->buf->len - le->buf->cursor - kill_len + 1);
+    le->buf->len -= kill_len;
+}
+
+/* Transpose characters at cursor */
+void line_edit_transpose_chars(line_edit_t *le) {
+    if (!le) return;
+    if (le->buf->len < 2) return;
+    size_t p1, p2;
+    if (le->buf->cursor == 0 && le->buf->len >= 2) {
+        /* At start: swap first two chars */
+        p1 = 0; p2 = 1;
+    } else if (le->buf->cursor == le->buf->len) {
+        /* At end: swap last two chars, move cursor to end */
+        p1 = le->buf->len - 2;
+        p2 = le->buf->len - 1;
+    } else {
+        /* Middle: swap cursor-1 and cursor, advance cursor */
+        p1 = le->buf->cursor - 1;
+        p2 = le->buf->cursor;
+    }
+    char tmp = le->buf->buf[p1];
+    le->buf->buf[p1] = le->buf->buf[p2];
+    le->buf->buf[p2] = tmp;
+    if (le->buf->cursor > 0)
+        le->buf->cursor = p2 + 1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -502,7 +628,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     continue;
                 }
 
-                if (sc == 0x1b || sc == 7) {
+                if (sc == KEY_ESC || sc == 7) {
                     line_buf_set(le->buf, saved_search);
                     term_redraw_line(le->buf);
                     break;
@@ -529,19 +655,81 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             continue;
         }
 
+        /* --- Emacs-style keybindings --- */
+
+        /* Ctrl-A: beginning of line */
+        if (c == KEY_CTRL_A) {
+            le->buf->cursor = 0;
+            term_redraw_line(le->buf);
+            continue;
+        }
+
+        /* Ctrl-B: backward one character */
+        if (c == KEY_CTRL_B) {
+            if (le->buf->cursor > 0) {
+                le->buf->cursor--;
+                term_redraw_line(le->buf);
+            }
+            continue;
+        }
+
+        /* Ctrl-E: end of line */
+        if (c == KEY_CTRL_E) {
+            le->buf->cursor = le->buf->len;
+            term_redraw_line(le->buf);
+            continue;
+        }
+
+        /* Ctrl-F: forward one character */
+        if (c == KEY_CTRL_F) {
+            if (le->buf->cursor < le->buf->len) {
+                le->buf->cursor++;
+                term_redraw_line(le->buf);
+            }
+            continue;
+        }
+
+        /* Ctrl-K: kill to end of line */
+        if (c == KEY_CTRL_K) {
+            line_edit_kill_line(le);
+            term_redraw_line(le->buf);
+            continue;
+        }
+
+        /* Ctrl-L: clear screen / redraw */
+        if (c == KEY_CTRL_L) {
+            term_clear_screen(prompt, le->buf);
+            continue;
+        }
+
+        /* Ctrl-T: transpose characters */
+        if (c == KEY_CTRL_T) {
+            line_edit_transpose_chars(le);
+            term_redraw_line(le->buf);
+            continue;
+        }
+
+        /* Ctrl-Y: yank (paste killed text) */
+        if (c == KEY_CTRL_Y) {
+            line_edit_yank(le);
+            term_redraw_line(le->buf);
+            continue;
+        }
+
         if (c == KEY_BACKSPACE) {
             line_buf_delete(le->buf);
             term_redraw_line(le->buf);
             continue;
         }
 
-        if (c == 0x1b) {
-            /* Escape sequence */
+        if (c == KEY_ESC) {
+            /* Escape sequence — read next two+ bytes */
             char seq[3];
             if (read(STDIN_FILENO, &seq[0], 1) <= 0) continue;
             if (read(STDIN_FILENO, &seq[1], 1) <= 0) continue;
 
             if (seq[0] == '[') {
+                /* CSI sequence */
                 /* Check for bracketed paste \e[200~ (start) / \e[201~ (end) */
                 if (seq[1] == '2' || seq[1] == '2') {
                     char rest[4];
@@ -552,14 +740,14 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             char pc;
                             ssize_t pr = read(STDIN_FILENO, &pc, 1);
                             if (pr <= 0) break;
-                            if (pc == 0x1b) {
+                            if (pc == KEY_ESC) {
                                 char pseq[5];
                                 if (read(STDIN_FILENO, pseq, 5) > 0 &&
                                     pseq[0] == '[' && pseq[1] == '2' &&
                                     pseq[2] == '0' && pseq[3] == '1' && pseq[4] == '~')
                                     break; /* \e[201~ — paste end */
                                 /* Not paste end — re-insert ESC + sequence as literal */
-                                line_buf_insert(le->buf, 0x1b);
+                                line_buf_insert(le->buf, KEY_ESC);
                                 for (int pi = 0; pi < 5; pi++)
                                     line_buf_insert(le->buf, (unsigned char)pseq[pi]);
                                 continue;
@@ -632,6 +820,27 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         break;
                 }
             }
+
+            /* Alt-letter / Meta keybindings: ESC followed by a char */
+
+            /* Alt+F (forward word) */
+            if (seq[0] == 'f' && seq[1] < 32) {
+                line_edit_cursor_word_forward(le);
+                term_redraw_line(le->buf);
+            }
+
+            /* Alt+B (backward word) */
+            if (seq[0] == 'b' && seq[1] < 32) {
+                line_edit_cursor_word_backward(le);
+                term_redraw_line(le->buf);
+            }
+
+            /* Alt+D (kill word forward) */
+            if (seq[0] == 'd' && seq[1] < 32) {
+                line_edit_kill_word_forward(le);
+                term_redraw_line(le->buf);
+            }
+
             /* Alt+Enter (ESC \r) — insert literal newline */
             if (seq[0] == '\r') {
                 line_buf_insert(le->buf, '\n');
@@ -640,7 +849,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             continue;
         }
 
-        /* Regular character — Ctrl+U (kill line), Ctrl+W (kill word) */
+        /* Ctrl-U (kill line / clear to start) */
         if (c == KEY_CTRL_U) {
             line_buf_clear(le->buf);
             printf("\r\033[K");
@@ -649,12 +858,37 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             continue;
         }
 
+        /* Ctrl-W (kill word backward) */
         if (c == KEY_CTRL_W) {
             /* Delete word backward */
             while (le->buf->cursor > 0 && isspace((unsigned char)le->buf->buf[le->buf->cursor - 1]))
                 line_buf_delete(le->buf);
             while (le->buf->cursor > 0 && !isspace((unsigned char)le->buf->buf[le->buf->cursor - 1]))
                 line_buf_delete(le->buf);
+            term_redraw_line(le->buf);
+            continue;
+        }
+
+        /* Ctrl-P: previous history (like up arrow) */
+        if (c == 16) {
+            if (le->history->current == le->history->tail)
+                strncpy(le->saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+            const char *hist = history_prev(le->history);
+            if (hist) {
+                line_buf_set(le->buf, hist);
+                term_redraw_line(le->buf);
+            }
+            continue;
+        }
+
+        /* Ctrl-N: next history (like down arrow) */
+        if (c == 14) {
+            const char *hist = history_next(le->history);
+            if (hist) {
+                line_buf_set(le->buf, hist);
+            } else if (le->saved_line[0]) {
+                line_buf_set(le->buf, le->saved_line);
+            }
             term_redraw_line(le->buf);
             continue;
         }

@@ -1,4 +1,4 @@
-(v275)
+(v276)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-322/0/0 (278 test files). 115 gaps. Phase 208: tool_coerce_number/boolean ported (model_tools depth).
-Next: S7 test expansion, S0 D09/D16 display depth, or S1 partials.
+322/0/0 (278 test files). 114 gaps. Phase 209: D09 emacs keybindings ported (66-test suite).
+Next: D16 type-ahead, S7 test expansion, or S1 partials.
