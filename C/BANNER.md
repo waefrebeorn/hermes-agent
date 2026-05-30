@@ -1,8 +1,8 @@
-**BANNER — WuBu Slermes C Translation (v260)**
+**BANNER — WuBu Slermes C Translation (v261)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v260                                       ║
+║  WuBu Slermes C v261                                          ║
 ║  315 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║

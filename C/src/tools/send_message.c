@@ -7,6 +7,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "hermes_gateway.h"
+#include "hermes_file_safety.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,7 +171,35 @@ char *sanitize_error_text(const char *text) {
     return buf;
 }
 
-static const char *SCHEMA = "{"
+/* B08/G02: Validate media path against denied paths before sending.
+ * Returns NULL if the path is allowed, or an error message string
+ * (caller must free) if blocked. Port of Python base.py
+ * validate_media_delivery_path() — prevents credential exfiltration
+ * via MEDIA:/etc/passwd, MEDIA:~/.ssh/id_rsa, etc. */
+char *validate_media_path(const char *path) {
+    if (!path || !path[0]) return NULL;
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        char *err;
+        asprintf(&err, "Media file not found: %s", path);
+        return err;
+    }
+    if (!S_ISREG(st.st_mode)) {
+        char *err;
+        asprintf(&err, "Media path is not a regular file: %s", path);
+        return err;
+    }
+    if (file_is_write_denied(path)) {
+        char *err;
+        asprintf(&err, "Access denied: '%s' is on the denied path list and cannot be sent as media.", path);
+        return err;
+    }
+    char *blocked = file_get_read_block_error(path);
+    if (blocked) return blocked;
+    return NULL;
+}
+
+static const char *SCHEMA = "{\""
     "\"type\":\"object\","
     "\"properties\":{"
       "\"action\":{\"type\":\"string\",\"description\":\"Action: 'send' (default) or 'list' (show available platforms)\"},"
@@ -473,6 +502,36 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                 actual_message = "";
             }
         }
+
+        /* B08/G02: Validate media paths against denied paths before sending.
+         * Checks media_path and media_group items for credential exfiltration
+         * via file_is_write_denied() + file_get_read_block_error(). */
+#ifndef TEST_BUILD
+        char *media_err = NULL;
+        if (actual_media && !media_err) {
+            media_err = validate_media_path(actual_media);
+        }
+        if (media_group && media_group->type == JSON_ARRAY && !media_err) {
+            size_t mg_count = json_len(media_group);
+            for (size_t mi = 0; mi < mg_count && !media_err; mi++) {
+                json_node_t *item = json_array_get(media_group, mi);
+                if (item && item->type == JSON_STRING && item->str_val) {
+                    media_err = validate_media_path(item->str_val);
+                }
+            }
+        }
+        if (media_err) {
+            json_object_set(result, "error", json_new_string(media_err));
+            json_object_set(result, "status", json_new_string("error"));
+            free(media_err);
+            char *json_out = json_serialize(result);
+            json_free(result);
+            json_free(args);
+            free(cleaned_msg);
+            if (actual_media && actual_media != media_path) free((void *)actual_media);
+            return json_out;
+        }
+#endif
 
         if (platform && strcmp(platform, "stdout") == 0) {
             printf("%s\n", actual_message ? actual_message : "");

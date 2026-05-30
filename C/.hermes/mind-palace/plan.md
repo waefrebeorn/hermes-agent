@@ -1,24 +1,31 @@
-(v260)
-# Plan — Slermes C Translation
-119 gaps across 9 sectors (battleship v34). Fork diverged
+(v261)
 
-## Phase 0: Display & Visual (S0, P0) — 2 gaps
-Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping
+## Immediate Next
 
-## Phase 1: Conversation Loop + Provider Adapters + TUI + Tests (25 gaps)
-5 conversation loop partials (L24-L28), provider adapter layer (6), TUI gateway server + core components (14), test coverage campaign
+B08 media path security — send_message.c validate_media_path() done (Phase 194).
 
-## Phase 2: CLI Ecosystem + Tool Depth + Gateway Helpers + TUI Components (60 gaps)
-CLI ecosystem (17), Tool depth (4), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), miscellaneous
+## Pipeline
 
-## Phase 3: Gateway Helpers + Tool Depth (S3, S6, P2) — ~32 gaps
-13 gateway sub-modules, 10 tool depth improvements
+S6 B08 depth (send_message):
+- validate_media_path() ported from Python base.py validate_media_delivery_path() ✅ (Phase 194)
+- Slack DM resolution (U... → D...) — pending
+- Smart message chunking for long messages — pending
+- Home channel resolution — pending
 
-## Phase 4: CLI Ecosystem (S5, P2) — ~30 gaps
-Setup wizard, doctor, config, models, auth, kanban, skills hub, voice mode, etc.
+S6 B07 depth (terminal):
+- _rewrite_compound_background — pending
+- _rewrite_real_sudo_invocations — pending
+- _prompt_for_sudo_password — won't port (interactive CLI)
+- check_terminal_requirements — pending
 
-## Phase 5: Plugin System + Architecture (S9, S10, P2-P3) — ~30 gaps
-Plugin architecture + lifecycle, memory/kanban/observability plugins, architecture gaps (Python interop, async, ACP, replay)
+S3:
+- G02 base.py remaining (validate_media_path done Phase 194)
+- G06 wecom_callback remaining
 
-## Phase 6: Agent Module Depth (S2, S8, P2) — ~13 gaps
-Insights, models_dev, stream_diag, remaining provider adapters
+S7 test coverage (272/1262 test files = 21.6%):
+- Write validation tests for validate_media_path
+- Expand coverage on untested modules
+
+## Future
+
+S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.

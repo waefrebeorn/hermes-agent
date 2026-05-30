@@ -1,16 +1,19 @@
-(v260)
+(v261)
 
-The grid is the work. The walkway is the path. The vault is the record. The repo is the banner.
+## Standing Goal
 
-READ walkway (state → battleship → prestige → plan → vault → goal → payout)
-READ methodology (references/upstream-feature-gap-methodology.md) every session
-VERIFY claims by comparing FEATURE SETS, not file names — function-level API dump both sides
-PICK lowest undone cell. No choices. No questions. Only next.
-IMPLEMENT. BUILD. SUITE. DOC SWEEP all walkways version-bumped.
-VAULT resolved gaps with file:line evidence. REMOVE from battleship.
-BARNACLE HUNT stale numbers across every .md + README + BANNER.
-COMMIT. PUSH. No time. AI is time-irrelevant. Work until done.
-The next session picks up where this one left off.
+Zero-out the battleship. Close every structural gap. Push C to full parity with Python's feature surface.
 
-MEMORY DIRECTORY: ~/.hermes/memories/
-VAULT: C/.hermes/mind-palace/vault/achievements.md
+## Core Loop
+
+Read state → battleship → prestige → plan → vault → goal → payout.
+Read methodology. Compare function-level APIs, not file names.
+Pick next undone cell. Verify claim against source first.
+Implement. Build. Suite. Doc sweep all walkways version-bumped.
+Barnacle hunt stale numbers. Vault resolved gaps. Remove from battleship.
+Commit. Push. Repeat. No choices. No questions.
+
+## Current
+
+315/0/0. 119 gaps. Phase 194: media path validation via file_safety in send_message.c.
+Next: S6 B08/B07 depth, S3 G02/G06 depth, S7 test gaps.
