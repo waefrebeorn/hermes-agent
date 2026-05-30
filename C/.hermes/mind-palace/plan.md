@@ -1,6 +1,6 @@
-# Plan — Next Phase (v350)
+# Plan — Next Phase (v351)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 92 gaps.
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 92 gaps. S0 D09 vi search (/ ? n N) implemented.
 
 **Next gap targets:**
 

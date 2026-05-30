@@ -810,6 +810,128 @@ static void test_set_text(void) {
     }
 }
 
+/* ---- vi search helper tests ---- */
+static void test_vi_search(void) {
+    printf("\n--- vi search (/ ? n N) ---\n");
+
+    /* Forward search — pattern found after cursor */
+    {
+        line_edit_t *le = make_buffer("hello world hello", 0);
+        TEST_NOT_NULL("fwd search buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "world", 5, true);
+            TEST("forward search after cursor", le->buf->cursor == 6);
+            line_edit_free(le);
+        }
+    }
+
+    /* Forward search — wrap to start */
+    {
+        line_edit_t *le = make_buffer("aaa bbb aaa", 8);
+        TEST_NOT_NULL("fwd wrap buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "aaa", 3, true);
+            TEST("forward search wrap to start", le->buf->cursor == 0);
+            line_edit_free(le);
+        }
+    }
+
+    /* Forward search — not found */
+    {
+        line_edit_t *le = make_buffer("hello", 0);
+        TEST_NOT_NULL("fwd not found buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "xyz", 3, true);
+            TEST("forward search not found stays", le->buf->cursor == 0);
+            line_edit_free(le);
+        }
+    }
+
+    /* Backward search — found before cursor */
+    {
+        line_edit_t *le = make_buffer("aaa bbb aaa", 12);
+        TEST_NOT_NULL("bwd search buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "bbb", 3, false);
+            TEST("backward search before cursor", le->buf->cursor == 4);
+            line_edit_free(le);
+        }
+    }
+
+    /* Backward search — not found */
+    {
+        line_edit_t *le = make_buffer("hello", 3);
+        TEST_NOT_NULL("bwd not found buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "xyz", 3, false);
+            TEST("backward search not found stays", le->buf->cursor == 3);
+            line_edit_free(le);
+        }
+    }
+
+    /* NULL safety */
+    {
+        /* Calling with NULL should not crash */
+        line_edit_search_internal(NULL, "hello", 5, true);
+        TEST("NULL line_edit safe", true);
+    }
+
+    /* Backward search wrap from end */
+    {
+        line_edit_t *le = make_buffer("hello world hello", 0);
+        TEST_NOT_NULL("bwd wrap buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "world", 5, false);
+            TEST("backward search wrap from end", le->buf->cursor == 6);
+            line_edit_free(le);
+        }
+    }
+
+    /* Pattern at exact cursor position — forward search skips current */
+    {
+        line_edit_t *le = make_buffer("aa bb aa", 0);
+        TEST_NOT_NULL("skip current buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "aa", 2, true);
+            TEST("forward skips current match", le->buf->cursor == 6);
+            line_edit_free(le);
+        }
+    }
+
+    /* Multiple same-word — find next occurrence */
+    {
+        line_edit_t *le = make_buffer("foo bar foo baz foo", 4);
+        TEST_NOT_NULL("next occurrence buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "foo", 3, true);
+            TEST("forward find next occurrence", le->buf->cursor == 8);
+            line_edit_free(le);
+        }
+    }
+
+    /* Empty pattern — no-op */
+    {
+        line_edit_t *le = make_buffer("hello", 0);
+        TEST_NOT_NULL("empty pattern buffer", le);
+        if (le) {
+            line_edit_search_internal(le, "", 0, true);
+            TEST("empty pattern no-op", le->buf->cursor == 0);
+            line_edit_free(le);
+        }
+    }
+
+    /* Empty buffer — no-op */
+    {
+        line_edit_t *le = make_buffer("", 0);
+        TEST_NOT_NULL("empty buffer for search", le);
+        if (le) {
+            line_edit_search_internal(le, "hello", 5, true);
+            TEST("empty buffer no-op", le->buf->cursor == 0);
+            line_edit_free(le);
+        }
+    }
+}
+
 int main(void) {
     printf("=== Line Editor Test Suite ===\n");
 
@@ -825,6 +947,7 @@ int main(void) {
     test_set_text();
 
     test_vi_mode();
+    test_vi_search();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

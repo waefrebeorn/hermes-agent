@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v350)
+# Entry — Slermes C Parity (v351)
 
-Phase 283: R02 PORTED — bedrock_convert_messages_to_converse + bedrock_normalize_converse_response. Suite 334/0/3. 92 gaps.
+Phase 284: S0 D09 vi search — / ? n N implemented. Suite 334/0/4. 92 gaps.

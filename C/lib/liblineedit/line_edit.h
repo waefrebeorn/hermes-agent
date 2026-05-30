@@ -53,6 +53,9 @@ typedef struct line_edit_t {
     bool vi_last_find_till;               /* last find was till (t/T), not find (f/F) */
     char vi_last_change_op;               /* last change op for '.' repeat (0=none) */
     char vi_last_change_param;            /* param for last change op (e.g. 'r' replacement char) */
+    char vi_search_pattern[LINE_EDIT_MAX_LINE]; /* pattern for / and ? search */
+    size_t vi_search_pattern_len;         /* length of search pattern */
+    bool vi_last_search_forward;          /* direction of last search (for n/N repeat) */
 } line_edit_t;
 
 /* Create a line editor instance */
@@ -87,5 +90,13 @@ void line_edit_transpose_chars(line_edit_t *le);
 void line_edit_cursor_word_forward(line_edit_t *le);
 void line_edit_cursor_word_backward(line_edit_t *le);
 void line_edit_cursor_word_end(line_edit_t *le);
+
+/* Vi forward/backward search helper. Exposed for testing.
+ * Searches for pattern in buffer starting from cursor.
+ * forward=true: forward from cursor+1, wraps to start.
+ * forward=false: backward from cursor-1, wraps to end.
+ * Moves cursor to match start if found. */
+void line_edit_search_internal(line_edit_t *le, const char *pattern,
+                                size_t pat_len, bool forward);
 
 #endif /* HERMES_LINE_EDIT_H */

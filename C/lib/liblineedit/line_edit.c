@@ -560,6 +560,62 @@ static void do_tab_complete(line_edit_t *le) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Vi search helper                                                   */
+/* ------------------------------------------------------------------ */
+
+/* Searches for pattern in buffer starting from cursor.
+ * forward=true: forward from cursor+1, wraps to start.
+ * forward=false: backward from cursor-1, wraps to end.
+ * Moves cursor to match start if found. */
+void line_edit_search_internal(line_edit_t *le, const char *pattern,
+                                       size_t pat_len, bool forward) {
+    if (!le || !pattern || pat_len == 0) return;
+    line_buf_t *lb = le->buf;
+    if (lb->len == 0) return;
+
+    if (forward) {
+        /* Search from cursor+1 to end */
+        if (le->buf->cursor + 1 < le->buf->len) {
+            char *found = strstr(lb->buf + le->buf->cursor + 1, pattern);
+            if (found) {
+                le->buf->cursor = (size_t)(found - lb->buf);
+                return;
+            }
+        }
+        /* Wrap: search from start up to cursor */
+        size_t limit = le->buf->cursor < lb->len ? le->buf->cursor + pat_len : lb->len;
+        size_t scan_end = limit > pat_len ? limit - pat_len : 0;
+        for (size_t i = 0; i + pat_len <= scan_end; i++) {
+            if (strncmp(lb->buf + i, pattern, pat_len) == 0) {
+                le->buf->cursor = i;
+                return;
+            }
+        }
+    } else {
+        /* Backward: scan from cursor-1 down to start */
+        size_t start = le->buf->cursor;
+        for (size_t i = start; i > 0; i--) {
+            size_t check_start = i - 1;
+            if (check_start + pat_len <= lb->len &&
+                strncmp(lb->buf + check_start, pattern, pat_len) == 0) {
+                le->buf->cursor = check_start;
+                return;
+            }
+        }
+        /* Wrap: scan from end back to cursor */
+        for (size_t i = lb->len; i > start + 1; i--) {
+            size_t check_start = i - pat_len;
+            if (check_start < lb->len &&
+                strncmp(lb->buf + check_start, pattern, pat_len) == 0 &&
+                check_start + pat_len <= lb->len) {
+                le->buf->cursor = check_start;
+                return;
+            }
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Read a line                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -1300,6 +1356,79 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                                 }
                             }
                         }
+                    }
+                    break;
+                }
+                case '/':  /* search forward */
+                case '?':  /* search backward */
+                {
+                    bool forward = (c == '/');
+                    /* Show search prompt */
+                    printf("\r\033[K%s", forward ? "/" : "?");
+                    fflush(stdout);
+
+                    /* Read search pattern character by character */
+                    char pattern[LINE_EDIT_MAX_LINE] = {0};
+                    size_t pat_len = 0;
+                    char ch;
+                    while (read(STDIN_FILENO, &ch, 1) > 0) {
+                        if (ch == '\n' || ch == '\r') {
+                            break;  /* Execute search */
+                        }
+                        if (ch == 27) { /* ESC */
+                            char esc_seq[2];
+                            /* Check for escape sequence (arrow keys etc.) */
+                            if (read(STDIN_FILENO, esc_seq, 1) == 1 && esc_seq[0] == '[') {
+                                /* Arrow key — cancel and consume rest */
+                                read(STDIN_FILENO, esc_seq, 1);
+                                pattern[0] = '\0';
+                                pat_len = 0;
+                            } else {
+                                /* Bare ESC — cancel search */
+                                pattern[0] = '\0';
+                                pat_len = 0;
+                            }
+                            break;
+                        }
+                        if (ch == KEY_BACKSPACE || ch == 8) {
+                            if (pat_len > 0) {
+                                pat_len--;
+                                pattern[pat_len] = '\0';
+                                printf("\b \b");
+                                fflush(stdout);
+                            }
+                            continue;
+                        }
+                        if (ch >= 32 && ch <= 126 && pat_len < LINE_EDIT_MAX_LINE - 1) {
+                            pattern[pat_len++] = ch;
+                            pattern[pat_len] = '\0';
+                            putchar(ch);
+                            fflush(stdout);
+                        }
+                    }
+
+                    /* Store pattern and execute search */
+                    if (pat_len > 0) {
+                        memcpy(le->vi_search_pattern, pattern, pat_len + 1);
+                        le->vi_search_pattern_len = pat_len;
+                        le->vi_last_search_forward = forward;
+                        line_edit_search_internal(le, pattern, pat_len, forward);
+                    }
+                    break;
+                }
+                case 'n': /* repeat last search in same direction */
+                {
+                    if (le->vi_search_pattern_len > 0) {
+                        line_edit_search_internal(le, le->vi_search_pattern,
+                            le->vi_search_pattern_len, le->vi_last_search_forward);
+                    }
+                    break;
+                }
+                case 'N': /* repeat last search in opposite direction */
+                {
+                    if (le->vi_search_pattern_len > 0) {
+                        line_edit_search_internal(le, le->vi_search_pattern,
+                            le->vi_search_pattern_len, !le->vi_last_search_forward);
                     }
                     break;
                 }

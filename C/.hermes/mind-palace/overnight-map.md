@@ -20,3 +20,4 @@
 | 281 | S8 R10 — provider_query_local_context_length() — multi-endpoint context probing. R10 PORTED (35/43=81%). 4 new assertions (339→343). Suite 334/0/3. v348. | 94 gaps | 93 gaps |
 | 282 | S7 X09 edge case expansion — 23 bedrock utility edge cases (is_context_overflow, classify_error, extract_provider, get_context_length). Suite 334/0/3. v349. | 93 gaps | 93 gaps |
 | 283 | S8 R02 PORTED — bedrock_convert_messages_to_converse() + bedrock_normalize_converse_response() ported. R02 all 14 portable functions done (100%). Suite 334/0/3. v350. | 93 gaps | 92 gaps |
+| 284 | S0 D09 vi search — / ? forward/backward search, n/N repeat, wrap-around. line_edit_search_internal(). 11 new assertions (137→148). Suite 334/0/4. v351. | 92 gaps | 92 gaps |

@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v350)
+# Goal Mantra — Slermes C (v351)
 
-334/0/3 (292 test files). 92 gaps. Phase 283: R02 PORTED — bedrock_convert_messages_to_converse + bedrock_normalize_converse_response.
+334/0/4 (292 test files). 92 gaps. Phase 284: S0 D09 vi search — / ? n N forward/backward search with wrap-around.
 
 ## Loop
 
