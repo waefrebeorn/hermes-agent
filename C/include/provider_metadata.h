@@ -285,6 +285,22 @@ int estimate_request_tokens_rough(const json_t *messages,
                                    const char *system_prompt,
                                    const json_t *tools);
 
+/* ---- Context probe tiers ---- */
+
+/* Probe tiers for context length discovery: start at 256K and step down. */
+#define CONTEXT_PROBE_TIER_COUNT 6
+extern const int CONTEXT_PROBE_TIERS[CONTEXT_PROBE_TIER_COUNT];
+
+/* Default context length when no detection method succeeds (256K). */
+#define DEFAULT_FALLBACK_CONTEXT CONTEXT_PROBE_TIERS[0]
+
+/* Minimum context length required to run Hermes Agent (64K). */
+#define MINIMUM_CONTEXT_LENGTH 64000
+
+/* Return the next lower probe tier, or -1 if already at minimum.
+ * Port of Python model_metadata.get_next_probe_tier(). */
+int get_next_probe_tier(int current_length);
+
 #ifdef __cplusplus
 }
 #endif

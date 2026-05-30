@@ -43,6 +43,7 @@ static void test_estimate_count_image_tokens(void);
 static void test_estimate_message_chars(void);
 static void test_estimate_messages_tokens_rough(void);
 static void test_estimate_request_tokens_rough(void);
+static void test_get_next_probe_tier(void);
 
 int main(void) {
 
@@ -491,6 +492,7 @@ int main(void) {
     test_estimate_message_chars();
     test_estimate_messages_tokens_rough();
     test_estimate_request_tokens_rough();
+    test_get_next_probe_tier();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -1184,4 +1186,38 @@ static void test_estimate_request_tokens_rough(void) {
         TEST("empty sys < with sys", t1 < t2);
         json_free(msgs);
     }
+}
+
+/* ---- get_next_probe_tier ---- */
+static void test_get_next_probe_tier(void) {
+    printf("\n[R10] get_next_probe_tier:\n");
+
+    /* Test CONTEXT_PROBE_TIERS array */
+    TEST("tier[0] == 256000", CONTEXT_PROBE_TIERS[0] == 256000);
+    TEST("tier[1] == 128000", CONTEXT_PROBE_TIERS[1] == 128000);
+    TEST("tier[2] == 64000",  CONTEXT_PROBE_TIERS[2] == 64000);
+    TEST("tier[3] == 32000",  CONTEXT_PROBE_TIERS[3] == 32000);
+    TEST("tier[4] == 16000",  CONTEXT_PROBE_TIERS[4] == 16000);
+    TEST("tier[5] == 8000",   CONTEXT_PROBE_TIERS[5] == 8000);
+    TEST("tier count == 6",   CONTEXT_PROBE_TIER_COUNT == 6);
+
+    /* Test DEFAULT_FALLBACK_CONTEXT */
+    TEST("default fallback == 256000", DEFAULT_FALLBACK_CONTEXT == 256000);
+
+    /* Test MINIMUM_CONTEXT_LENGTH */
+    TEST("minimum == 64000", MINIMUM_CONTEXT_LENGTH == 64000);
+
+    /* Test get_next_probe_tier */
+    TEST("above 256K -> 256000",  get_next_probe_tier(300000) == 256000);
+    TEST("above 128K -> 128000",  get_next_probe_tier(200000) == 128000);
+    TEST("above 64K -> 64000",    get_next_probe_tier(100000) == 64000);
+    TEST("above 32K -> 32000",    get_next_probe_tier(50000)  == 32000);
+    TEST("above 16K -> 16000",    get_next_probe_tier(30000)  == 16000);
+    TEST("above 8K -> 8000",      get_next_probe_tier(12000)  == 8000);
+    TEST("at 8K -> -1 (min)",     get_next_probe_tier(8000)   == -1);
+    TEST("below 8K -> -1",        get_next_probe_tier(4000)   == -1);
+    TEST("at 256K -> 128000",     get_next_probe_tier(256000) == 128000);
+    TEST("negative -> -1",        get_next_probe_tier(-1)     == -1);
+    TEST("zero -> -1",            get_next_probe_tier(0)      == -1);
+    TEST("256001 -> 256000",      get_next_probe_tier(256001) == 256000);
 }

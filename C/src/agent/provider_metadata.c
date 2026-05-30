@@ -1620,3 +1620,26 @@ int estimate_request_tokens_rough(const json_t *messages,
     }
     return total;
 }
+
+/* ---- Context probe tiers ---- */
+
+/* Port of Python model_metadata.CONTEXT_PROBE_TIERS. */
+const int CONTEXT_PROBE_TIERS[CONTEXT_PROBE_TIER_COUNT] = {
+    256000,
+    128000,
+    64000,
+    32000,
+    16000,
+    8000,
+};
+
+/* ---- get_next_probe_tier ---- */
+/* Port of Python model_metadata.get_next_probe_tier().
+ * Returns the next lower probe tier, or -1 if already at minimum. */
+int get_next_probe_tier(int current_length) {
+    for (int i = 0; i < CONTEXT_PROBE_TIER_COUNT; i++) {
+        if (CONTEXT_PROBE_TIERS[i] < current_length)
+            return CONTEXT_PROBE_TIERS[i];
+    }
+    return -1;
+}

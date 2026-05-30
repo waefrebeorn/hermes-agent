@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v341)
+# Goal Mantra — Slermes C (v342)
 
-335/0/0 (292 test files). 94 gaps. Phase 274: S8 R10 depth — 4 token estimation functions. Provider metadata 264-test suite.
+335/0/0 (292 test files). 94 gaps. Phase 275: S8 R10 depth — context probe tiers + get_next_probe_tier. Provider metadata 285-test suite.
 
 ## Loop
 
