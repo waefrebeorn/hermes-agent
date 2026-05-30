@@ -1,8 +1,8 @@
-# Prestige (v282)
+# Prestige (v283)
 
 ## P0 — Architecture (4 gaps)
 F01: C can't hook Python
-F02: Test count mismatch (279 vs ~1262)
+F02: Test count mismatch (282 vs ~1262)
 F03: No Python interop
 F09: No async event loop
 

@@ -1334,6 +1334,10 @@ retry_done:
         message_t *assistant_msg = message_new_assistant_with_toolcalls(
             llm_resp->content, llm_resp->tool_calls, llm_resp->tool_calls_count,
             llm_resp->reasoning, llm_resp->encrypted_content);
+        /* L26: Sanitize assistant message (surrogate fix, think-block
+         * stripping, secret redaction) before storage. Port of Python's
+         * build_assistant_message() sanitization steps. */
+        hermes_message_sanitize(assistant_msg);
         context_push(state, assistant_msg);
 
         /* P87: Parallel tool dispatch — execute independent tools concurrently */

@@ -1,7 +1,7 @@
-(v282)
+(v283)
 
-324/0/0, 281 test files. All pass. Gap: 281 C vs ~1262 Python.
+325/0/0, 282 test files. All pass. Gap: 282 C vs ~1262 Python.
 
+Phase 216: L26 hermes_message_sanitize() ported — sanitization pipeline (surrogates, think blocks, secrets). 35 tests.
 Phase 215: L26 estimate_payload_context_tokens() ported — JSON API payload token estimator. 10 tests.
-Phase 214: L26 tool_call_args_truncate() ported — 29-test suite.
-Coverage: 281/1262 test files (22.3%). 10 new token estimation tests across Phase 215.
+Coverage: 282/1262 test files (22.3%). 35 new sanitization tests across Phase 216.

@@ -190,6 +190,11 @@ char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 int hermes_repair_message_sequence(message_t *messages, int *count);
 int hermes_sanitize_tool_call_arguments(message_t *messages, int *count);
 
+/* === Message sanitization (agent_message_sanitize.c) ===
+ * Post-response sanitization pipeline: surrogate fix, think-block
+ * stripping, secret redaction. Port of build_assistant_message() internals. */
+bool hermes_message_sanitize(message_t *msg);
+
 #ifdef __cplusplus
 }
 #endif

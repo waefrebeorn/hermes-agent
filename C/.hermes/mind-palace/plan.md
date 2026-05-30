@@ -1,8 +1,8 @@
-(v282)
+(v283)
 
 ## Immediate Next
 
-S0+S3+S6 all PORTED. 108 gaps remain across 7 sectors.
+S0+S3+S6 all PORTED. S1 L25+L26 PORTED. 107 gaps remain across 7 sectors.
 Next: S7 test expansion, S1 depth (L24/L27/L28), or B08 send_message remaining depth.
 
 ## Pipeline
@@ -10,7 +10,8 @@ Next: S7 test expansion, S1 depth (L24/L27/L28), or B08 send_message remaining d
 S1 L26 depth (chat_completion_helpers):
 - tool_call_args_truncate() ported ✅ (Phase 214, 29 tests)
 - estimate_payload_context_tokens() ported ✅ (Phase 215, 10 tests)
-- build_assistant_message() — pending
+- hermes_message_sanitize() ported ✅ (Phase 216, 35 tests)
+- L26 all 3 portable functions PORTED ✅
 
 S1 L25 depth (agent_runtime_helpers):
 - hermes_repair_message_sequence() ported ✅ (Phase 211, 17 tests)
@@ -30,7 +31,7 @@ S6 B08 depth (send_message):
 
 S7 test coverage (281/1262 test files = 22.3%):
 - Phase 214: 29-test tool_call_args_truncate suite
-- Suite now 324/0/0
+- Suite now 325/0/0
 
 ## Future
 
