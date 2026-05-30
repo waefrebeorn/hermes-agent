@@ -1,4 +1,4 @@
-(v281)
+(v282)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-324/0/0 (281 test files). 109 gaps. Phase 214: L26 tool_call_args_truncate() ported (29-test suite).
-S0+S3+S6 all PORTED. S1 L25 PORTED, L26 tool_call_args_truncate() added. Next: S7 test expansion or S1 depth.
+324/0/0 (281 test files). 108 gaps. Phase 215: L26 estimate_payload_context_tokens() ported (10 tests).
+S0+S3+S6 all PORTED. S1 L25 PORTED, L26 depth: tool_call_args_truncate + estimate_payload_context_tokens. Next: S7 test expansion or S1 depth.

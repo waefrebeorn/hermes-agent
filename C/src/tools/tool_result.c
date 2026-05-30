@@ -1,7 +1,8 @@
 /*
  * tool_result.c — Tool result classification + truncation helpers.
- * Port of Python agent/tool_result_classification.py (26 lines)
- * and agent/context_compressor._truncate_tool_call_args_json().
+ * Port of Python agent/tool_result_classification.py (26 lines),
+ * agent/context_compressor._truncate_tool_call_args_json(),
+ * and agent/chat_completion_helpers.estimate_request_context_tokens().
  */
 
 #include "hermes_tool_result.h"
@@ -145,4 +146,113 @@ char *tool_call_args_truncate(const char *args, size_t head_chars) {
     char *result = json_serialize(truncated);
     json_free(truncated);
     return result;
+}
+
+/* ================================================================
+ *  Payload context token estimation
+ *  Port of Python agent/chat_completion_helpers.estimate_request_context_tokens()
+ * ================================================================ */
+
+/* Count characters in a JSON value recursively — string lengths + serialized
+ * overhead for non-string types. */
+static size_t json_count_chars(const json_t *node) {
+    if (!node) return 0;
+
+    switch (node->type) {
+        case JSON_NULL:
+            return 4; /* strlen("null") */
+
+        case JSON_BOOL:
+            return node->bool_val ? 4 : 5; /* "true"/"false" */
+
+        case JSON_NUMBER: {
+            char buf[64];
+            int n = snprintf(buf, sizeof(buf), "%.17g", node->num_val);
+            return (n > 0) ? (size_t)n : 8;
+        }
+
+        case JSON_STRING:
+            return node->str_val ? strlen(node->str_val) : 0;
+
+        case JSON_ARRAY: {
+            size_t total = 0;
+            for (size_t i = 0; i < node->c.count; i++)
+                total += json_count_chars(node->c.items[i]);
+            return total;
+        }
+
+        case JSON_OBJECT: {
+            size_t total = 0;
+            for (size_t i = 0; i < node->c.count; i++) {
+                /* Key name */
+                total += node->c.keys[i] ? strlen(node->c.keys[i]) : 0;
+                /* Value */
+                total += json_count_chars(node->c.items[i]);
+            }
+            return total;
+        }
+
+        default:
+            return 0;
+    }
+}
+
+size_t estimate_payload_context_tokens(const char *payload_json) {
+    if (!payload_json || !payload_json[0])
+        return 0;
+
+    char *err = NULL;
+    json_t *parsed = json_parse(payload_json, &err);
+    if (!parsed || err) {
+        json_free(parsed);
+        free(err);
+        /* Not valid JSON — count raw chars / 4 as fallback */
+        return strlen(payload_json) / 4;
+    }
+
+    size_t total_chars = 0;
+
+    if (parsed->type == JSON_ARRAY) {
+        /* Bare list -> treat as Chat Completions messages */
+        total_chars = json_count_chars(parsed);
+        json_free(parsed);
+        return total_chars / 4;
+    }
+
+    if (parsed->type == JSON_OBJECT) {
+        /* Check for Chat Completions shape (has "messages") */
+        json_t *messages = json_obj_get(parsed, "messages");
+        if (messages) {
+            total_chars = json_count_chars(messages);
+            json_t *tools = json_obj_get(parsed, "tools");
+            if (tools)
+                total_chars += json_count_chars(tools);
+            json_free(parsed);
+            return total_chars / 4;
+        }
+
+        /* Check for Responses API shape (has "input") */
+        json_t *input = json_obj_get(parsed, "input");
+        if (input) {
+            total_chars = json_count_chars(input);
+            json_t *instructions = json_obj_get(parsed, "instructions");
+            if (instructions)
+                total_chars += json_count_chars(instructions);
+            json_t *tools = json_obj_get(parsed, "tools");
+            if (tools)
+                total_chars += json_count_chars(tools);
+            json_free(parsed);
+            return total_chars / 4;
+        }
+
+        /* Any other dict — sum all values */
+        total_chars = json_count_chars(parsed);
+        json_free(parsed);
+        return total_chars / 4;
+    }
+
+    /* Scalar value */
+    total_chars = json_count_chars(parsed);
+    json_free(parsed);
+    return total_chars / 4;
 }

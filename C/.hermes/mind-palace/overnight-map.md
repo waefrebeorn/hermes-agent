@@ -1,7 +1,7 @@
-# Overnight (v281)
+# Overnight (v282)
 
-Phase 214: L26 tool_call_args_truncate() — JSON arg string truncation preserving validity. Recursive tree walk shrinks long string values, re-serializes. 29 tests. 110→109 gaps.
-Phase 213: L25 repair_tool_call() — tool name normalization pipeline. 11 tests. 111→110 gaps.
+Phase 215: L26 estimate_payload_context_tokens() — JSON API payload token estimator. Counts chars in Chat Completions/Responses API shapes, /4 for tokens. 10 tests. 109→108 gaps.
+Phase 214: L26 tool_call_args_truncate() — JSON arg string truncation preserving validity. 29 tests. 110→109 gaps.
 Phase 210: D16 type-ahead — background stdin reader thread, line_edit_set_text() API. 114→113 gaps. S0 all PORTED.
 Phase 209: D09 emacs keybindings ported in line_edit.c — Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D. 66-test suite. 115→114 gaps.
 Phase 208: tool_coerce_number() + tool_coerce_boolean() ported from Python model_tools. 35 tests. S0 model_tools depth.

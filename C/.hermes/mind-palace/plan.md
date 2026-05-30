@@ -1,15 +1,15 @@
-(v281)
+(v282)
 
 ## Immediate Next
 
-S0+S3+S6 all PORTED. 109 gaps remain across 7 sectors.
+S0+S3+S6 all PORTED. 108 gaps remain across 7 sectors.
 Next: S7 test expansion, S1 depth (L24/L27/L28), or B08 send_message remaining depth.
 
 ## Pipeline
 
 S1 L26 depth (chat_completion_helpers):
 - tool_call_args_truncate() ported ✅ (Phase 214, 29 tests)
-- estimate_request_context_tokens() — pending
+- estimate_payload_context_tokens() ported ✅ (Phase 215, 10 tests)
 - build_assistant_message() — pending
 
 S1 L25 depth (agent_runtime_helpers):
