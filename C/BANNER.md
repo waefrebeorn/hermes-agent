@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v273)**
+**BANNER — WuBu Slermes C Translation (v274)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v273                                          ║
-║  320 tests · 115 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  WuBu Slermes C v274                                          ║
+║  321 tests · 115 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  115 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 206: agent_get_continuation_prompt() ported — S1 L26 part.  ║
+║  Phase 207: tool_error_sanitize() ported — model_tools.    ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v273)
+## Build Metrics (v274)
 
 | Metric | Value |
 |--------|-------|
