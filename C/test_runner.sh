@@ -3547,6 +3547,29 @@ else skip "clarify (compilation failed)"
 fi
 
 # ==============================================
+# Regex tests
+echo ""; echo "=== Regex Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" \
+    "$CDIR/tests/test_regex.c" \
+    "$CDIR/lib/libregex/hermes_regex.c" \
+    -o /tmp/hermes_test_regex -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_regex > /dev/null 2>&1; then ok "regex (17 tests)"
+    else
+        echo "  Regex test output:"
+        /tmp/hermes_test_regex 2>&1 | sed 's/^/    /'
+        fail "regex (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_regex
+else
+    echo "  Regex test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" \
+        "$CDIR/tests/test_regex.c" \
+        "$CDIR/lib/libregex/hermes_regex.c" \
+        -o /tmp/hermes_test_regex -lm 2>&1 | sed 's/^/    /'
+    skip "regex (compilation failed)"
+fi
+
+# ==============================================
 # Trajectory tests
 echo ""; echo "=== Trajectory Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \

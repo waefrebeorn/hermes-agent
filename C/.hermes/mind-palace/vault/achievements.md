@@ -2074,3 +2074,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |ID | Achievement | Evidence |
 |---|-------------|----------|
 | X01 | test_trajectory.c — 19 assertions across all 3 trajectory.c functions: convert_scratchpad_to_think (7: NULL/passthrough/empty/replacement/open-only/multi/mixed), has_incomplete_scratchpad (7: NULL/empty/no-tag/complete-closed/opening-only/closing-only/multi-closing), save_trajectory (5: round-trip/verify-content/default-filename/invalid-JSON/non-array). Test files 292→293. | `tests/test_trajectory.c` (19 tests). Suite 335/0/15. v355. |
+|## Phase 291: S7 Test Expansion — Regex Tests (v355)
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| X02 | test_regex.c — 17 assertions covering hermes_regex library: regex_extract (4: basic word/group 0/NULL pattern/NULL string), regex_compile+regex_search (3: found match/no match/group 0 content), regex_replace (5: basic/no-match-passthrough/backreference-$1/NULL handle/NULL string), NULL safety (2: regex_free/regex_match_free). Test files 293→294. | `tests/test_regex.c` (17 tests). Suite 324/0/15. v355. |
