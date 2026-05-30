@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v261 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 119 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 194: media path validation via file_safety. Suite 315/0/0.**
+**v262 | Fork diverged — C/ lives only on fork | Suite 316/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 119 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 274 (21.7% parity). Phase 195: media_validation test suite (11 tests). Suite 316/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 || 11 | B11-B20 | remaining tools (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.) | varying | varying | — | P2-P3 | ✅ PORTED — all Python tools have C equivalents verified May 2026 |
 
-**S6: 2 gaps (2 P2) — Phase 192: B01 browser + B02 vision stale claims verified PORTED. S6 4→2 gaps. Suite 315/0/0.**
+**S6: 2 gaps (2 P2) — Phase 195: media_validation test suite (11 tests). Suite 316/0/0.**
 
 ---
 
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-|| 01 | X01 | Test files | 1,262 | 272 | 21.6% | P1 |
+|| 01 | X01 | Test files | 1,262 | 274 | 21.7% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -273,12 +273,12 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 ||| S3: Gateway Helpers | 3 | 0 | 2 | 1 | 0 | G07 telegram_network PORTED (Phase 180). G06 remains. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-||| S6: Tool Depth | 2 | 0 | 0 | 2 | 0 | Phase 192: B01 browser + B02 vision verified PORTED. S6 4→2 gaps (B07 terminal, B08 send_message remain). |
+||| S6: Tool Depth | 2 | 0 | 0 | 2 | 0 | Phase 195: media_validation test suite (11 tests). B07 terminal, B08 send_message remain. |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **119** | **6** | **36** | **53** | **24** | **Phase 194: media path validation via file_safety. S6 B08 depth. Suite 315/0/0.** |
+|| **TOTAL** | **119** | **6** | **36** | **53** | **24** | **Phase 195: media_validation test suite (11 tests). Suite 316/0/0, test files 274.** |
 
 ### Phase Map
 

@@ -1,4 +1,6 @@
-(v260)
+(v262)
 
-315/0/0, 273 test files. All pass. Gap: 273 C vs ~17k Python.
-Phase 191: B11-B20 stale claim verified PORTED. vision_validate_image_url() ported. S6 gaps 11→4. Suite 315/0/0.
+316/0/0, 274 test files. All pass. Gap: 274 C vs ~17k Python.
+
+Phase 195: media_validation test suite (11 tests). validate_media_path() tested.
+Coverage: 274/1262 test files (21.7%). 11 new assertions.

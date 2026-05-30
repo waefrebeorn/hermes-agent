@@ -1,7 +1,19 @@
-(v260)
+(v262)
 
-# Index — Slermes C Mind Palace
+# Slermes C — Walkway Index
 
-Battleship v34 — 119 gaps across 9 sectors. Phase 193: reply_to_message_id wired through Telegram send path.
-Suite 315/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
-Fork diverged from upstream.
+Battleship v34 — 119 gaps across 9 sectors. Phase 195: media_validation test suite (11 tests).
+Suite 316/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
+
+| File | Purpose |
+|------|---------|
+| [state.md](state.md) | Session state and progress timeline |
+| [battleship-v34.md](battleship-v34.md) | Canonical gap list (119 gaps) |
+| [goal-mantra.md](goal-mantra.md) | Standing goal and core loop |
+| [plan.md](plan.md) | Immediate next and pipeline |
+| [entry.md](entry.md) | Entry point summary |
+| [testing.md](testing.md) | Test suite status |
+| [overnight-map.md](overnight-map.md) | Overnight sync plan |
+| [vault/](vault) | Achievement archive |
+
+Use methodology: compare function-level APIs, not file names.
