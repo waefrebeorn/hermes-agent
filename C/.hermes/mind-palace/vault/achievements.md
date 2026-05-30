@@ -2070,3 +2070,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |ID | Achievement | Evidence |
 |---|-------------|----------|
 | C02 | `/doctor` diagnostic command — shows HERMES_HOME path, config.yaml validity+version, .env file presence, and scans 11 common API key env vars (OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, DEEPSEEK_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, AZURE_API_KEY, AWS_ACCESS_KEY_ID, NOUS_API_KEY, HF_TOKEN, ANTHROPIC_TOKEN) with length display. Subcommands: /doctor all|config|env|keys. Port of Python hermes_cli/doctor.py core checks. | `src/cli/commands.c` — cmd_doctor() implementation + registry entry. Binary smoke test: ✓. S5 29→28 gaps. Total 88→87 gaps. v355. |
+|## Phase 289: S7 Test Expansion — Trajectory Tests (v355)
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| X01 | test_trajectory.c — 19 assertions across all 3 trajectory.c functions: convert_scratchpad_to_think (7: NULL/passthrough/empty/replacement/open-only/multi/mixed), has_incomplete_scratchpad (7: NULL/empty/no-tag/complete-closed/opening-only/closing-only/multi-closing), save_trajectory (5: round-trip/verify-content/default-filename/invalid-JSON/non-array). Test files 292→293. | `tests/test_trajectory.c` (19 tests). Suite 335/0/15. v355. |

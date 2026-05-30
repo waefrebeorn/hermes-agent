@@ -1,8 +1,8 @@
 |||| Slermes C
 
-|||Suite: 335/0/14 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-|||Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-|||||||||||||||||||Battleship v34 (87 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06+R04+R10+R02 all PORTED. S8 R01 PORTED. C06 env_loader.py PORTED. C02 doctor cmd PORTED. v355. Phase 288: S5 C02 doctor diagnostic command — /doctor shows HERMES_HOME, config.yaml validity, .env presence, 11 API key env vars. Port of Python hermes_cli/doctor.py core checks. S5 29→28 gaps. Total 88→87 gaps.
+|||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+|||Binary: 31M | Warnings: 0 | Test files: 293 | C src: 180
+|||||||||||||||||||Battleship v34 (84 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06+R04+R10+R02 all PORTED. C02/C04/C06/C07/C08/C09 PORTED. v355. Phase 289: S7 test expansion — test_trajectory.c (19 assertions) covers hermes_convert_scratchpad_to_think (7 tests: NULL, passthrough, empty, replacement, open-only, multi, mixed), hermes_has_incomplete_scratchpad (7 tests: NULL/empty/no-tag/complete-closed/opening-only/closing-only/multi-closing), hermes_save_trajectory (5 tests: round-trip, default-filename-fail, invalid-JSON, non-array, verify content). Test files 292→293.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

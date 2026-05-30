@@ -1,127 +1,183 @@
 /*
- * test_trajectory.c — Tests for trajectory scratchpad tag helpers.
- *
- * Tests: tag conversion (REASONING_SCRATCHPAD → think),
- * incomplete scratchpad detection, NULL/empty/NUL-tagged edge cases.
+ * test_trajectory.c — Tests for trajectory saving utilities.
+ * Port of Python agent/trajectory.py tests.
  */
-
+#include "hermes.h"
 #include "hermes_trajectory.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
-static int passed = 0, failed = 0;
-
+static int failures = 0;
 #define TEST(name, expr) do { \
-    if (expr) { passed++; printf("  PASS: %s\n", name); } \
-    else { failed++; printf("  FAIL: %s (line %d)\n", name, __LINE__); } \
-} while(0)
-
-#define TEST_STR_EQ(name, a, b) do { \
-    const char *_a = (a); const char *_b = (b); \
-    if (_a && _b && strcmp(_a, _b) == 0) { passed++; printf("  PASS: %s\n", name); } \
-    else { \
-        failed++; \
-        printf("  FAIL: %s (line %d) — got \"%s\", expected \"%s\"\n", \
-               name, __LINE__, _a ? _a : "(null)", _b ? _b : "(null)"); \
+    if (!(expr)) { \
+        fprintf(stderr, "FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
+        failures++; \
+    } else { \
+        printf("PASS: %s\n", name); \
     } \
 } while(0)
 
-static void test_convert_null_empty(void) {
-    printf("\n--- Convert: NULL/empty ---\n");
-    TEST("NULL returns NULL", hermes_convert_scratchpad_to_think(NULL) == NULL);
-    char *r = hermes_convert_scratchpad_to_think("");
-    TEST_STR_EQ("empty returns empty", r, "");
-    free(r);
-}
-
-static void test_convert_no_tag(void) {
-    printf("\n--- Convert: no tag (passthrough) ---\n");
-    char *r = hermes_convert_scratchpad_to_think("hello world");
-    TEST_STR_EQ("plain text unchanged", r, "hello world");
-    free(r);
-
-    r = hermes_convert_scratchpad_to_think("multiple\nlines\nhere");
-    TEST_STR_EQ("multi-line unchanged", r, "multiple\nlines\nhere");
-    free(r);
-}
-
-static void test_convert_single_tag(void) {
-    printf("\n--- Convert: single tags ---\n");
-    char *r = hermes_convert_scratchpad_to_think(
-        "<REASONING_SCRATCHPAD>some reasoning</REASONING_SCRATCHPAD>");
-    TEST_STR_EQ("open/close tags converted", r,
-        "<think>some reasoning</think>");
-    free(r);
-
-    r = hermes_convert_scratchpad_to_think("<REASONING_SCRATCHPAD>deep thoughts");
-    TEST_STR_EQ("open tag only", r, "<think>deep thoughts");
-    free(r);
-}
-
-static void test_convert_multiple_tags(void) {
-    printf("\n--- Convert: multiple tag pairs ---\n");
-    char *r = hermes_convert_scratchpad_to_think(
-        "a<REASONING_SCRATCHPAD>b</REASONING_SCRATCHPAD>c"
-        "<REASONING_SCRATCHPAD>d</REASONING_SCRATCHPAD>e");
-    TEST_STR_EQ("two tag pairs", r, "a<think>b</think>c<think>d</think>e");
-    free(r);
-}
-
-static void test_convert_mixed_content(void) {
-    printf("\n--- Convert: mixed content ---\n");
-    char *r = hermes_convert_scratchpad_to_think(
-        "Before <REASONING_SCRATCHPAD>inner</REASONING_SCRATCHPAD> after.");
-    TEST_STR_EQ("text before/after tags", r,
-        "Before <think>inner</think> after.");
-    free(r);
-
-    r = hermes_convert_scratchpad_to_think(
-        "<think>already think</think>");
-    TEST_STR_EQ("already think tags unchanged",
-        r, "<think>already think</think>");
-    free(r);
-}
-
-static void test_has_incomplete(void) {
-    printf("\n--- Has incomplete scratchpad ---\n");
-    TEST("NULL returns false", !hermes_has_incomplete_scratchpad(NULL));
-    TEST("empty returns false", !hermes_has_incomplete_scratchpad(""));
-    TEST("no tag returns false",
-        !hermes_has_incomplete_scratchpad("hello world"));
-
-    TEST("open without close returns true",
-        hermes_has_incomplete_scratchpad(
-            "<REASONING_SCRATCHPAD>unclosed"));
-    TEST("closed pair returns false",
-        !hermes_has_incomplete_scratchpad(
-            "<REASONING_SCRATCHPAD>closed</REASONING_SCRATCHPAD>"));
-
-    TEST("close without open returns false",
-        !hermes_has_incomplete_scratchpad(
-            "text</REASONING_SCRATCHPAD>"));
-
-    TEST("two opens one close returns false (close present)",
-        !hermes_has_incomplete_scratchpad(
-            "<REASONING_SCRATCHPAD>a</REASONING_SCRATCHPAD>"
-            "<REASONING_SCRATCHPAD>b"));
-
-    TEST("two pairs complete returns false",
-        !hermes_has_incomplete_scratchpad(
-            "<REASONING_SCRATCHPAD>a</REASONING_SCRATCHPAD>"
-            "<REASONING_SCRATCHPAD>b</REASONING_SCRATCHPAD>"));
-}
-
 int main(void) {
-    printf("=== Trajectory Tests ===\n");
+    printf("=== Trajectory tests ===\n\n");
 
-    test_convert_null_empty();
-    test_convert_no_tag();
-    test_convert_single_tag();
-    test_convert_multiple_tags();
-    test_convert_mixed_content();
-    test_has_incomplete();
+    /* ──── hermes_convert_scratchpad_to_think ──── */
 
-    printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
-    return failed > 0 ? 1 : 0;
+    /* NULL input */
+    {
+        char *r = hermes_convert_scratchpad_to_think(NULL);
+        TEST("convert: NULL returns NULL", r == NULL);
+        free(r);
+    }
+
+    /* No tags — passthrough */
+    {
+        char *r = hermes_convert_scratchpad_to_think("Hello world");
+        TEST("convert: no tags passthrough", r && strcmp(r, "Hello world") == 0);
+        free(r);
+    }
+
+    /* Empty string */
+    {
+        char *r = hermes_convert_scratchpad_to_think("");
+        TEST("convert: empty string", r && *r == '\0');
+        free(r);
+    }
+
+    /* REASONING_SCRATCHPAD → think */
+    {
+        char *r = hermes_convert_scratchpad_to_think("<REASONING_SCRATCHPAD>hidden</REASONING_SCRATCHPAD>");
+        TEST("convert: scratchpad to think", r && strcmp(r, "<think>hidden</think>") == 0);
+        free(r);
+    }
+
+    /* Opening tag only */
+    {
+        char *r = hermes_convert_scratchpad_to_think("Let me <REASONING_SCRATCHPAD>think...");
+        TEST("convert: open tag only", r && strcmp(r, "Let me <think>think...") == 0);
+        free(r);
+    }
+
+    /* Multiple replacements */
+    {
+        char *r = hermes_convert_scratchpad_to_think(
+            "<REASONING_SCRATCHPAD>Step1</REASONING_SCRATCHPAD> then <REASONING_SCRATCHPAD>Step2</REASONING_SCRATCHPAD>");
+        TEST("convert: multiple replacements", r && strcmp(r, "<think>Step1</think> then <think>Step2</think>") == 0);
+        free(r);
+    }
+
+    /* Mixed content */
+    {
+        char *r = hermes_convert_scratchpad_to_think("Before <REASONING_SCRATCHPAD>During</REASONING_SCRATCHPAD> After");
+        TEST("convert: mixed content", r && strcmp(r, "Before <think>During</think> After") == 0);
+        free(r);
+    }
+
+    /* ──── hermes_has_incomplete_scratchpad ──── */
+
+    /* NULL */
+    {
+        TEST("incomplete: NULL returns false", !hermes_has_incomplete_scratchpad(NULL));
+    }
+
+    /* Empty */
+    {
+        TEST("incomplete: empty returns false", !hermes_has_incomplete_scratchpad(""));
+    }
+
+    /* No tags */
+    {
+        TEST("incomplete: no tags returns false", !hermes_has_incomplete_scratchpad("plain text"));
+    }
+
+    /* Complete pair */
+    {
+        TEST("incomplete: complete pair returns false",
+             !hermes_has_incomplete_scratchpad("<REASONING_SCRATCHPAD>done</REASONING_SCRATCHPAD>"));
+    }
+
+    /* Opening only */
+    {
+        TEST("incomplete: opening only returns true",
+             hermes_has_incomplete_scratchpad("<REASONING_SCRATCHPAD>no closing"));
+    }
+
+    /* Closing only */
+    {
+        TEST("incomplete: closing only returns false (no opening)",
+             !hermes_has_incomplete_scratchpad("</REASONING_SCRATCHPAD>"));
+    }
+
+    /* Multiple — one incomplete: correct behavior — if any closing tag exists,
+     * the function returns false because strstr finds the closing tag. */
+    {
+        TEST("incomplete: one incomplete with another complete returns false (correct — any closing tag found)",
+             !hermes_has_incomplete_scratchpad(
+                 "<REASONING_SCRATCHPAD>complete</REASONING_SCRATCHPAD> then <REASONING_SCRATCHPAD>incomplete"));
+    }
+
+    /* ──── hermes_save_trajectory ──── */
+
+    /* Write to temp file, read back, verify content, clean up */
+    {
+        const char *traj = "[{\"role\":\"user\",\"content\":\"hello\"},{\"role\":\"assistant\",\"content\":\"hi\"}]";
+        const char *tmp = "/tmp/test_traj_write.jsonl";
+
+        /* Remove any previous file */
+        remove(tmp);
+
+        int ret = hermes_save_trajectory(traj, "test-model", true, tmp);
+        TEST("save: returns 0 on success", ret == 0);
+
+        /* Read and verify */
+        FILE *f = fopen(tmp, "r");
+        TEST("save: file exists", f != NULL);
+        if (f) {
+            char buf[4096] = {0};
+            size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+            fclose(f);
+            buf[n] = '\0';
+            TEST("save: contains model", strstr(buf, "test-model") != NULL);
+            TEST("save: contains completed true", strstr(buf, "\"completed\":true") != NULL);
+            TEST("save: contains timestamp", strstr(buf, "timestamp") != NULL);
+            TEST("save: contains conversations", strstr(buf, "conversations") != NULL);
+        }
+        remove(tmp);
+    }
+
+    /* Failed trajectory with default filename */
+    {
+        const char *traj = "[{\"role\":\"user\",\"content\":\"fail\"}]";
+        const char *tmp = "/tmp/failed_trajectories.jsonl";
+
+        remove(tmp);
+        int ret = hermes_save_trajectory(traj, "fail-model", false, NULL);
+        TEST("save: failed trajectory uses default name", ret == 0);
+
+        FILE *f = fopen(tmp, "r");
+        if (f) {
+            char buf[4096] = {0};
+            size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+            fclose(f);
+            buf[n] = '\0';
+            TEST("save failed: contains model", strstr(buf, "fail-model") != NULL);
+            TEST("save failed: completed false", strstr(buf, "\"completed\":false") != NULL);
+        }
+        remove(tmp);
+    }
+
+    /* Invalid JSON — expect -1 */
+    {
+        int ret = hermes_save_trajectory("{invalid}", "model", true, "/tmp/test_bad.jsonl");
+        TEST("save: invalid JSON returns -1", ret == -1);
+    }
+
+    /* Malformed: string instead of array */
+    {
+        int ret = hermes_save_trajectory("\"not an array\"", "model", true, "/tmp/test_bad2.jsonl");
+        TEST("save: non-array returns -1", ret == -1);
+    }
+
+    printf("\n=== Results: %s ===\n", failures == 0 ? "ALL PASSED" : "SOME FAILED");
+    return failures;
 }

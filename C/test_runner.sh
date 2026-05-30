@@ -3547,6 +3547,30 @@ else skip "clarify (compilation failed)"
 fi
 
 # ==============================================
+# Trajectory tests
+echo ""; echo "=== Trajectory Tests ==="
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_trajectory.c" \
+    "$CDIR/src/agent/trajectory.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_traj -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_traj > /dev/null 2>&1; then ok "trajectory (19 tests)"
+    else
+        echo "  Trajectory test output:"
+        /tmp/hermes_test_traj 2>&1 | sed 's/^/    /'
+        fail "trajectory (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_traj
+else
+    echo "  Trajectory test compilation error:"
+    gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+        "$CDIR/tests/test_trajectory.c" \
+        "$CDIR/src/agent/trajectory.c" \
+        "$CDIR/lib/libjson/json.c" \
+        -o /tmp/hermes_test_traj -lm 2>&1 | sed 's/^/    /'
+    skip "trajectory (compilation failed)"
+fi
+
 # File Sync Tests (D08)
 # ==============================================
 echo ""; echo "=== File Sync Tests ==="
