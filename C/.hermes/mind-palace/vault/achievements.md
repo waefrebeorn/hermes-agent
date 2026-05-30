@@ -1807,3 +1807,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v302
 Suite: 335/0/0 (289 test files). Gaps: 103. v303
 || S7w | S7 depth: File state edge case expansion (S7 X09). test_file_state.c — 10→13 tests (+3). Disabled env var: HERMES_DISABLE_FILE_STATE_GUARD=1 makes fs_is_disabled return true. Known reads: agent with no reads returns count=0. NULL path: fs_record_read with NULL path does not add entry. | tests/test_file_state.c — 13 tests. lib/libfilestate/file_state.c covered. |
 Suite: 335/0/0 (289 test files). Gaps: 103. v304
+|| S7x | S7 depth: MCP tool edge case expansion (S7 X09). test_mcp_tool.c — 4→10 tests (24 assertions). mcp_call_handler: missing fields returns error, unknown server returns error, bad JSON returns error. mcp_resource_read_handler: missing fields returns error. mcp_prompt_get_handler: missing fields returns error. mcp_auth_handler: empty args defaults to status action with servers list. | tests/test_mcp_tool.c — 10 tests, ~24 assertions. src/tools/mcp_tool.c covered. |
+Suite: 335/0/0 (289 test files). Gaps: 103. v305

@@ -120,7 +120,55 @@ int main(void) {
         json_free(res);
     }
 
-    /* Test 4: mcp_prompt_list_handler with no servers */
+    /* Test 4: mcp_call_handler with missing fields */
+    {
+        char *res = mcp_call_handler("{}", "");
+        ASSERT(res != NULL, "call handler returns non-NULL");
+        ASSERT_CONTAINS(res, "server and tool fields required", "call handler requires fields");
+        json_free(res);
+    }
+
+    /* Test 5: mcp_call_handler with unknown server */
+    {
+        char *res = mcp_call_handler("{\"server\":\"nope\",\"tool\":\"x\"}", "");
+        ASSERT(res != NULL, "call handler returns non-NULL");
+        ASSERT_CONTAINS(res, "Unknown MCP server", "call handler reports unknown server");
+        json_free(res);
+    }
+
+    /* Test 6: mcp_call_handler with bad JSON */
+    {
+        char *res = mcp_call_handler("not json", "");
+        ASSERT(res != NULL, "call handler returns non-NULL");
+        ASSERT_CONTAINS(res, "Invalid JSON", "call handler rejects bad JSON");
+        json_free(res);
+    }
+
+    /* Test 7: mcp_resource_read_handler with missing fields */
+    {
+        char *res = mcp_resource_read_handler("{}", "");
+        ASSERT(res != NULL, "resource read returns non-NULL");
+        ASSERT_CONTAINS(res, "server and uri fields required", "resource read requires fields");
+        json_free(res);
+    }
+
+    /* Test 8: mcp_prompt_get_handler with missing fields */
+    {
+        char *res = mcp_prompt_get_handler("{}", "");
+        ASSERT(res != NULL, "prompt get returns non-NULL");
+        ASSERT_CONTAINS(res, "server and name fields required", "prompt get requires fields");
+        json_free(res);
+    }
+
+    /* Test 9: mcp_auth_handler with empty args defaults to status */
+    {
+        char *res = mcp_auth_handler("{}", "");
+        ASSERT(res != NULL, "auth handler returns non-NULL");
+        ASSERT_CONTAINS(res, "servers", "auth handler defaults to status action");
+        json_free(res);
+    }
+
+    /* Test 10: mcp_prompt_list_handler with no servers */
     {
         char *res = mcp_prompt_list_handler("{}", "");
         ASSERT(res != NULL, "prompt list returns non-NULL");
