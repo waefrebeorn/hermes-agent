@@ -178,6 +178,19 @@ char *context_truncate_content(const char *content, const char *name, int max_ch
  * must free) or NULL on error. */
 char *context_strip_frontmatter(const char *content);
 
+/* ================================================================
+ *  Continuation prompt (port of conversation_loop._get_continuation_prompt)
+ * ================================================================ */
+
+/* Build a continuation prompt when the previous response was truncated.
+ * is_partial_stub: true if a network/stream error cut the response.
+ * dropped_tools_json: optional JSON array of tool names that were dropped
+ *   due to size limits (pass NULL if none).
+ * Returns a malloc'd string (caller must free) or NULL on error.
+ * Port of Python conversation_loop._get_continuation_prompt(). */
+char *agent_get_continuation_prompt(bool is_partial_stub,
+                                     const char *dropped_tools_json);
+
 #ifdef __cplusplus
 }
 #endif

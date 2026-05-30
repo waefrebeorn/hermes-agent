@@ -1200,3 +1200,74 @@ char *system_prompt_build(const system_prompt_config_t *cfg) {
     free(volatile_part);
     return result;
 }
+
+/* ================================================================
+ *  Continuation prompt (ported from conversation_loop._get_continuation_prompt)
+ * ================================================================ */
+
+char *agent_get_continuation_prompt(bool is_partial_stub,
+                                     const char *dropped_tools_json)
+{
+    if (is_partial_stub && dropped_tools_json && *dropped_tools_json) {
+        /* Parse dropped_tools as JSON array, extract first 3 names */
+        char *parse_err = NULL;
+        json_node_t *arr = json_parse(dropped_tools_json, &parse_err);
+        int count = 0;
+        char tool_list[256] = {0};
+
+        if (arr && !parse_err && arr->type == JSON_ARRAY) {
+            int len = json_len(arr);
+            if (len < 0) len = 0;
+            int max_tools = len < 3 ? len : 3;
+            for (int i = 0; i < max_tools; i++) {
+                json_node_t *item = json_array_get(arr, i);
+                const char *name = NULL;
+                if (item && item->type == JSON_STRING)
+                    name = item->str_val;
+                if (name) {
+                    if (count > 0) strcat(tool_list, ", ");
+                    strncat(tool_list, name,
+                            sizeof(tool_list) - strlen(tool_list) - 1);
+                    count++;
+                }
+            }
+        }
+        free(parse_err);
+        json_free(arr);
+
+        if (count > 0) {
+            /* Both partial stub AND dropped tools */
+            char result[1024];
+            snprintf(result, sizeof(result),
+                "[System: Your previous tool call "
+                "(%s) was too large and "
+                "the stream timed out before it "
+                "could be delivered. Do NOT retry "
+                "the same tool call with the same "
+                "large content. Instead, break the "
+                "content into multiple smaller tool "
+                "calls (e.g. use multiple patch calls "
+                "or write smaller files). Each tool "
+                "call's arguments must be under ~8K "
+                "tokens to avoid stream timeouts.]",
+                tool_list);
+            return strdup(result);
+        }
+    }
+
+    if (is_partial_stub) {
+        return strdup(
+            "[System: The previous response was cut off by a "
+            "network error mid-stream. Continue exactly where "
+            "you left off. Do not restart or repeat prior text. "
+            "Finish the answer directly.]"
+        );
+    }
+
+    /* Default: output length limit exceeded */
+    return strdup(
+        "[System: Your previous response was truncated by the output "
+        "length limit. Continue exactly where you left off. Do not "
+        "restart or repeat prior text. Finish the answer directly.]"
+    );
+}

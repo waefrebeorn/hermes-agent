@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v272)**
+**BANNER — WuBu Slermes C Translation (v273)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v272                                          ║
+║  WuBu Slermes C v273                                          ║
 ║  320 tests · 115 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  115 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 205: strip_yaml_frontmatter() ported — prompt builder.     ║
+║  Phase 206: agent_get_continuation_prompt() ported — S1 L26 part.  ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v260)
+## Build Metrics (v273)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 121 |
+| Gaps | 115 |
