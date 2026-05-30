@@ -811,6 +811,75 @@ char *google_coerce_content_to_text(const json_t *content) {
     return strdup("");
 }
 
+/* Port of Python gemini_native_adapter._tool_call_extra_signature().
+ * Extracts thought signature from tool_call.extra_content.google(.thought_signature)
+ * or tool_call.extra_content.thought_signature. Returns malloc'd string or NULL. */
+char *google_tool_call_extra_signature(const json_t *tool_call) {
+    if (!tool_call) return NULL;
+    json_t *extra = json_obj_get(tool_call, "extra_content");
+    if (!extra) return NULL;
+
+    json_t *google = json_obj_get(extra, "google");
+    if (!google) google = json_obj_get(extra, "thought_signature");
+    if (!google) return NULL;
+
+    if (google->type == JSON_OBJECT) {
+        json_t *sig = json_obj_get(google, "thought_signature");
+        if (!sig) sig = json_obj_get(google, "thoughtSignature");
+        if (sig && sig->type == JSON_STRING && sig->str_val && sig->str_val[0])
+            return strdup(sig->str_val);
+    } else if (google->type == JSON_STRING && google->str_val && google->str_val[0]) {
+        return strdup(google->str_val);
+    }
+    return NULL;
+}
+
+/* Port of Python gemini_native_adapter._translate_tool_call_to_gemini().
+ * Translates an OpenAI-format tool_call to a Gemini functionCall part.
+ * Returns a json_t object: {functionCall: {name, args}} with optional thoughtSignature. */
+json_t *google_translate_tool_call(const json_t *tool_call) {
+    json_t *fc = json_object();
+    json_t *fn = NULL;
+    const char *name = "";
+    const char *args_raw = "";
+
+    if (tool_call) {
+        fn = json_obj_get(tool_call, "function");
+        if (fn) {
+            name = json_get_str(fn, "name", "");
+            args_raw = json_get_str(fn, "arguments", "");
+        }
+    }
+
+    json_set(fc, "name", json_string(name));
+
+    /* Parse arguments as JSON — use args_raw already extracted above */
+    if (args_raw && *args_raw) {
+        char *err = NULL;
+        json_t *args = json_parse(args_raw, &err);
+        if (args) {
+            json_set(fc, "args", args);
+        } else {
+            json_set(fc, "args", json_object());
+            free(err);
+        }
+    } else {
+        json_set(fc, "args", json_object());
+    }
+
+    json_t *result = json_object();
+    json_set(result, "functionCall", fc);
+
+    /* Optional thought signature */
+    char *sig = google_tool_call_extra_signature(tool_call);
+    if (sig) {
+        json_set(result, "thoughtSignature", json_string(sig));
+        free(sig);
+    }
+
+    return result;
+}
+
 /* ================================================================
  *  Free response
  * ================================================================ */

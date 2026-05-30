@@ -8,7 +8,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 |||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||||| Gaps:  95 real parity gaps (1000+ test case gaps) across 8 sectors
-| Phase 265: S8 R04 — google_coerce_content_to_text() ported from gemini_native_adapter.py
+| Phase 266: S8 R04 — google_tool_call_extra_signature() + google_translate_tool_call() ported from gemini_native_adapter.py
 ```
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 ||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)

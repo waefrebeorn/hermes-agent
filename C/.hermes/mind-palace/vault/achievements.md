@@ -1976,3 +1976,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | R04b | `google_coerce_content_to_text()` ported from Python `gemini_native_adapter._coerce_content_to_text()`. Extracts text from Gemini message content: NULL/JSON_NULL → "", string → copy, array → iterate parts joining strings and `type=="text"` object text fields with `\n`. | `src/agent/provider_google.c:758-813` — implementation. `include/provider.h:215` — declaration. `tests/test_google_depth.c:271-346` — 8 test assertions (52→60). Suite 335/0/0. v332. |
+
+## Phase 266: S8 R04 Gemini Depth — google_tool_call_extra_signature + google_translate_tool_call
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04c | `google_tool_call_extra_signature()` ported from Python `gemini_native_adapter._tool_call_extra_signature()`. Extracts thought signature from tool_call JSON via `extra_content.google.thought_signature` or `extra_content.thought_signature`. | `src/agent/provider_google.c:814-830` — implementation. `include/provider.h:216` — declaration. `tests/test_google_depth.c:349-393` — 6 test assertions (60→66). |
+| R04d | `google_translate_tool_call()` ported from Python `gemini_native_adapter._translate_tool_call_to_gemini()`. Translates OpenAI tool_call (`{function: {name, arguments}}`) to Gemini functionCall part (`{functionCall: {name, args}}`) with optional `thoughtSignature`. Handles NULL, empty args, and malformed JSON gracefully. | `src/agent/provider_google.c:835-880` — implementation. `include/provider.h:217` — declaration. `tests/test_google_depth.c:395-434` — 7 test assertions (66→73). Suite 335/0/0. v333. |

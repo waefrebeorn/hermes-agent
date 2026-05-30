@@ -344,6 +344,135 @@ int main(void) {
         json_free(n);
     }
 
+    /* ── google_tool_call_extra_signature ─────────────────────── */
+    printf("\n--- google_tool_call_extra_signature ---\n");
+    {
+        TEST("extra_sig NULL", google_tool_call_extra_signature(NULL) == NULL);
+    }
+    {
+        /* No extra_content */
+        json_t *tc = json_object();
+        json_set(tc, "function", json_object());
+        json_set(json_obj_get(tc, "function"), "name", json_string("test_fn"));
+        json_set(json_obj_get(tc, "function"), "arguments", json_string("{}"));
+        TEST("extra_sig no extra_content", google_tool_call_extra_signature(tc) == NULL);
+        json_free(tc);
+    }
+    {
+        /* extra_content.google.thought_signature */
+        json_t *tc = json_object();
+        json_t *extra = json_object();
+        json_t *google = json_object();
+        json_set(google, "thought_signature", json_string("abc123"));
+        json_set(extra, "google", google);
+        json_set(tc, "extra_content", extra);
+        char *sig = google_tool_call_extra_signature(tc);
+        TEST("extra_sig google.thought_signature", sig && strcmp(sig, "abc123") == 0);
+        free(sig);
+        json_free(tc);
+    }
+    {
+        /* extra_content.google.thoughtSignature (camelCase variant) */
+        json_t *tc = json_object();
+        json_t *extra = json_object();
+        json_t *google = json_object();
+        json_set(google, "thoughtSignature", json_string("sig456"));
+        json_set(extra, "google", google);
+        json_set(tc, "extra_content", extra);
+        char *sig = google_tool_call_extra_signature(tc);
+        TEST("extra_sig camelCase", sig && strcmp(sig, "sig456") == 0);
+        free(sig);
+        json_free(tc);
+    }
+    {
+        /* extra_content.thought_signature (string shortcut) */
+        json_t *tc = json_object();
+        json_t *extra = json_object();
+        json_set(extra, "thought_signature", json_string("direct_sig"));
+        json_set(tc, "extra_content", extra);
+        char *sig = google_tool_call_extra_signature(tc);
+        TEST("extra_sig direct thought_signature", sig && strcmp(sig, "direct_sig") == 0);
+        free(sig);
+        json_free(tc);
+    }
+    {
+        /* Empty string in thought_signature should return NULL */
+        json_t *tc = json_object();
+        json_t *extra = json_object();
+        json_set(extra, "thought_signature", json_string(""));
+        json_set(tc, "extra_content", extra);
+        TEST("extra_sig empty string", google_tool_call_extra_signature(tc) == NULL);
+        json_free(tc);
+    }
+
+    /* ── google_translate_tool_call ───────────────────────────── */
+    printf("\n--- google_translate_tool_call ---\n");
+    {
+        json_t *r = google_translate_tool_call(NULL);
+        json_t *fc = json_obj_get(r, "functionCall");
+        TEST("translate NULL returns object with functionCall", fc != NULL);
+        json_free(r);
+    }
+    {
+        /* Basic tool call */
+        json_t *tc = json_object();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("get_weather"));
+        json_set(fn, "arguments", json_string("{\"city\": \"London\"}"));
+        json_set(tc, "function", fn);
+        json_set(tc, "id", json_string("call_123"));
+        json_set(tc, "type", json_string("function"));
+
+        json_t *r = google_translate_tool_call(tc);
+        json_t *fc = json_obj_get(r, "functionCall");
+        TEST("translate has functionCall", fc != NULL);
+        if (fc) {
+            TEST("translate name", strcmp(json_get_str(fc, "name", ""), "get_weather") == 0);
+            json_t *args = json_obj_get(fc, "args");
+            TEST("translate args exists", args != NULL);
+            if (args) {
+                TEST("translate args.city", strcmp(json_get_str(args, "city", ""), "London") == 0);
+            }
+        }
+        json_free(r);
+        json_free(tc);
+    }
+    {
+        /* Tool call with thought signature */
+        json_t *tc = json_object();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("search"));
+        json_set(fn, "arguments", json_string("{}"));
+        json_set(tc, "function", fn);
+        json_t *extra = json_object();
+        json_set(extra, "thought_signature", json_string("sig789"));
+        json_set(tc, "extra_content", extra);
+
+        json_t *r = google_translate_tool_call(tc);
+        TEST("translate with thoughtSignature",
+             strcmp(json_get_str(r, "thoughtSignature", ""), "sig789") == 0);
+        json_free(r);
+        json_free(tc);
+    }
+    {
+        /* Empty arguments */
+        json_t *tc = json_object();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("no_args"));
+        json_set(fn, "arguments", json_string(""));
+        json_set(tc, "function", fn);
+
+        json_t *r = google_translate_tool_call(tc);
+        json_t *fc = json_obj_get(r, "functionCall");
+        TEST("translate empty args", fc != NULL);
+        if (fc) {
+            json_t *args = json_obj_get(fc, "args");
+            TEST("translate empty args is object", args != NULL && args->type == JSON_OBJECT);
+        }
+        json_free(r);
+        json_free(tc);
+    }
+
     /* Print summary */
     printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
