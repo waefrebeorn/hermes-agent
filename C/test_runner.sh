@@ -2575,7 +2575,7 @@ fi
 # Video MIME type detection tests
 if gcc -O2 -Wall -Wextra -o /tmp/hermes_test_vm "$CDIR/tests/test_video_mime.c" -lm > /dev/null 2>&1; then
     if /tmp/hermes_test_vm > /dev/null 2>&1; then
-        ok "video_mime_detection (T01: 14 tests)"
+        ok "video_mime_detection (T01: 58 tests)"
     else
         echo "  Video MIME test output:"
         /tmp/hermes_test_vm 2>&1 | sed 's/^/    /'

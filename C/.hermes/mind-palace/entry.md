@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v372)
+# Entry — Slermes C Parity (v373)
 
-Phase 308: S7 enum edge case expansion — 31 new assertions (17→48). 78 gaps.
+Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58). 78 gaps.

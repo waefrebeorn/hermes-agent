@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v372)
+# Goal Mantra — Slermes C (v373)
 
-325/0/14 (289 test files). 78 gaps. Phase 308: S7 enum edge case expansion — 31 new assertions (17→48).
+325/0/14 (289 test files). 78 gaps. Phase 309: S7 video_mime edge case expansion — 44 new assertions (14→58).
 
 ## Loop
 

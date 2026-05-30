@@ -1,7 +1,7 @@
 /*
  * test_video_mime.c — Tests for video MIME type detection.
+ * Expanded: edge cases for extension parsing, case variants, special chars.
  * Standalone — no deps beyond stdlib.
- * Compile: gcc -O2 -Wall -Wextra -o /tmp/t_vm test_video_mime.c -lm
  */
 #include <stdio.h>
 #include <string.h>
@@ -47,49 +47,80 @@ static int failures = 0;
 int main(void) {
     printf("=== Video MIME Type Detection Tests ===\n");
 
-    /* Test 1: NULL path returns NULL */
+    /* Basic tests */
     TEST_MIME("NULL path", NULL, NULL);
-
-    /* Test 2: Empty string (no dot) returns NULL */
     TEST_MIME("no extension", "video", NULL);
-
-    /* Test 3: .mp4 extension */
     TEST_MIME(".mp4", "video.mp4", "video/mp4");
-
-    /* Test 4: .MP4 uppercase extension */
     TEST_MIME(".MP4 uppercase", "video.MP4", "video/mp4");
-
-    /* Test 5: .webm extension */
     TEST_MIME(".webm", "video.webm", "video/webm");
-
-    /* Test 6: .mov extension */
     TEST_MIME(".mov", "video.mov", "video/mov");
-
-    /* Test 7: .avi extension (maps to video/mp4) */
     TEST_MIME(".avi -> mp4", "video.avi", "video/mp4");
-
-    /* Test 8: .mkv extension (maps to video/mp4) */
     TEST_MIME(".mkv -> mp4", "video.mkv", "video/mp4");
-
-    /* Test 9: .mpeg extension */
     TEST_MIME(".mpeg", "video.mpeg", "video/mpeg");
-
-    /* Test 10: .mpg extension */
     TEST_MIME(".mpg", "video.mpg", "video/mpeg");
-
-    /* Test 11: .png extension (not a video format) returns NULL */
     TEST_MIME(".png not video", "image.png", NULL);
-
-    /* Test 12: Full path with directory */
     TEST_MIME("full path", "/tmp/videos/my_clip.mp4", "video/mp4");
-
-    /* Test 13: Dot in directory name (should use last dot) */
     TEST_MIME("dot in dirname", "/tmp/v1.0/output.mov", "video/mov");
-
-    /* Test 14: No extension, just a dot */
     TEST_MIME("trailing dot", "video.", NULL);
 
-    /* Summary */
+    /* ── Case variant edge cases ── */
+    printf("\n--- Case variants ---\n");
+    TEST_MIME(".Mp4 camel", "video.Mp4", "video/mp4");
+    TEST_MIME(".MP4 all caps", "video.MP4", "video/mp4");
+    TEST_MIME(".mP4 mixed", "video.mP4", "video/mp4");
+    TEST_MIME(".WebM", "video.WebM", "video/webm");
+    TEST_MIME(".WEBM", "video.WEBM", "video/webm");
+    TEST_MIME(".Mov", "video.Mov", "video/mov");
+    TEST_MIME(".MOV", "video.MOV", "video/mov");
+    TEST_MIME(".AvI", "video.AvI", "video/mp4");
+    TEST_MIME(".AVI", "video.AVI", "video/mp4");
+    TEST_MIME(".Mkv", "video.Mkv", "video/mp4");
+    TEST_MIME(".MKV", "video.MKV", "video/mp4");
+    TEST_MIME(".Mpeg", "video.Mpeg", "video/mpeg");
+    TEST_MIME(".MPEG", "video.MPEG", "video/mpeg");
+    TEST_MIME(".Mpg", "video.Mpg", "video/mpeg");
+    TEST_MIME(".MPG", "video.MPG", "video/mpeg");
+
+    /* ── Edge case: multiple dots ── */
+    printf("\n--- Multiple dots ---\n");
+    TEST_MIME("double extension .tar.mp4", "video.tar.mp4", "video/mp4");
+    TEST_MIME("double extension .mp4.bak", "video.mp4.bak", NULL);
+    TEST_MIME("hidden file .video.mp4", ".video.mp4", "video/mp4");
+    TEST_MIME("hidden no ext .video", ".video", NULL);
+    TEST_MIME("just dot .", ".", NULL);
+    TEST_MIME("double dot ..", "..", NULL);
+    TEST_MIME("multiple dots .a.b.c.mp4", "file.a.b.c.mp4", "video/mp4");
+
+    /* ── Path edge cases ── */
+    printf("\n--- Path edge cases ---\n");
+    TEST_MIME("empty string", "", NULL);
+    TEST_MIME("just slash", "/", NULL);
+    TEST_MIME("no dot absolute", "/tmp/video", NULL);
+    TEST_MIME("space in path", "/tmp/my video.mp4", "video/mp4");
+    TEST_MIME("underscore in path", "/tmp/my_video_file.mp4", "video/mp4");
+    TEST_MIME("hyphen in path", "/tmp/my-video-2024.mp4", "video/mp4");
+    TEST_MIME("parent dir reference", "../video.mp4", "video/mp4");
+    TEST_MIME("very long name", "/tmp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp4", "video/mp4");
+    TEST_MIME("numbers in name", "video123.mp4", "video/mp4");
+
+    /* ── Extension length edge cases ── */
+    printf("\n--- Extension length ---\n");
+    TEST_MIME("single char .m", "video.m", NULL);
+    TEST_MIME("two char .m4", "video.m4", NULL);
+    TEST_MIME("three char exact .m4v", "video.m4v", NULL);
+    TEST_MIME("fifteen char .abcdefghijklmno", "video.abcdefghijklmno", NULL);
+
+    /* ── Non-video formats ── */
+    printf("\n--- Non-video formats ---\n");
+    TEST_MIME(".jpg not video", "photo.jpg", NULL);
+    TEST_MIME(".jpeg not video", "photo.jpeg", NULL);
+    TEST_MIME(".gif not video", "anim.gif", NULL);
+    TEST_MIME(".bmp not video", "img.bmp", NULL);
+    TEST_MIME(".txt not video", "notes.txt", NULL);
+    TEST_MIME(".pdf not video", "doc.pdf", NULL);
+    TEST_MIME(".zip not video", "archive.zip", NULL);
+    TEST_MIME(".html not video", "page.html", NULL);
+
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All video MIME detection tests PASSED");
     return failures;
 }
