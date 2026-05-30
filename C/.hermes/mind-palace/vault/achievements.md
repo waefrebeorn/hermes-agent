@@ -1719,5 +1719,7 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 |----|-------------|----------|
 | P187-01 | G02 base.py depth — gw_custom_unit_to_cp() ported from Python _custom_unit_to_cp(). Generic binary search: finds largest codepoint offset n such that len_fn(s, n) <= budget. Uses function pointer callback for custom unit measurement (e.g. UTF-16 code units). Returns codepoint offset, 0 on invalid input. | `C/include/hermes_gateway.h` — declaration. `C/src/gateway/server.c` — implementation (18 LOC). |
 | P187-02 | 7-test suite added to test_gateway_escape.c: full match, budget 3, zero budget, negative budget, NULL input, NULL fn, empty string. Suite 38→45 in M07. | `C/tests/test_gateway_escape.c` — 7/7 passed. |
+| P188-01 | G02 base.py depth — gw_float_env() ported from Python _float_env(). Reads env var, parses as double with strtod, returns default on missing/invalid input. NULL-safe. | `C/include/hermes_gateway.h` — declaration. `C/src/gateway/server.c` — implementation (12 LOC). |
+| P188-02 | 2-test suite for gw_float_env(): NULL name default, missing env default. M07: 47 total. | `C/tests/test_gateway_escape.c` — 2/2 passed. |
 
-Suite: 315/0/0 (273 test files). Gaps: 128. v255
+Suite: 315/0/0 (273 test files). Gaps: 128. v256

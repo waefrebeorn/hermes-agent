@@ -983,6 +983,22 @@ int gw_custom_unit_to_cp(const char *s, int len, int budget,
     return lo;
 }
 
+/* Port of Python gateway/platforms/base.py _float_env().
+ * Reads an environment variable and parses it as a double.
+ * Returns default_value on missing, empty, or unparseable input. */
+double gw_float_env(const char *name, double default_value) {
+    if (!name) return default_value;
+    const char *raw = getenv(name);
+    if (!raw || *raw == '\0') return default_value;
+    char *end = NULL;
+    double val = strtod(raw, &end);
+    /* strtod stores pointer to first unparsed char in end;
+     * if end == raw then no digits were parsed.
+     * Allow trailing '0'/' ' from truncated env values. */
+    if (end == raw) return default_value;
+    return val;
+}
+
 /* E44: Retry an API call with exponential backoff on 429/5xx.
  * Returns true if at least one attempt succeeded. */
 bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx,

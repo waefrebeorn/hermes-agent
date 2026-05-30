@@ -284,6 +284,11 @@ char *gw_prefix_within_utf16_limit(const char *s, size_t limit);
 int gw_custom_unit_to_cp(const char *s, int len, int budget,
                           int (*len_fn)(const char *, int));
 
+/* Port of Python gateway/platforms/base.py _float_env().
+ * Reads an environment variable and parses it as a double.
+ * Returns default_value on missing, empty, or unparseable input. */
+double gw_float_env(const char *name, double default_value);
+
 /* E44-E47: Gateway error handling */
 bool gw_retry_with_backoff(bool (*api_call)(void *ctx), void *ctx, int max_retries, int base_delay_ms);
 bool gw_refresh_token(int plat_idx);

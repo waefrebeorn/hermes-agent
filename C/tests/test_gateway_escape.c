@@ -337,6 +337,15 @@ int main(void) {
         TEST("custom empty string", gw_custom_unit_to_cp("", 0, 5, count_char) == 0);
     }
 
+    /*
+     * 7. gw_float_env
+     */
+    printf("\n--- gw_float_env ---\n");
+    {
+        TEST("NULL name returns default", gw_float_env(NULL, 3.14) == 3.14);
+        TEST("missing env returns default", gw_float_env("GW_FLOAT_ENV_NONEXISTENT", 1.5) == 1.5);
+    }
+
     /* Summary */
     printf("\n=== M07 Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
