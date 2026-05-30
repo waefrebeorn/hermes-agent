@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v258)**
+**BANNER — WuBu Slermes C Translation (v259)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v258                                       ║
-║  315 tests · 128 gaps · 85 tools · 98 CLI · 65 libs        ║
-║  128 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v259                                       ║
+║  315 tests · 121 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  121 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 190: Terminal approval — block dangerous cmds      ║
+║  Phase 191: B11-B20 PORTED — vision URL validator          ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v258)
+## Build Metrics (v259)
 
 | Metric | Value |
 |--------|-------|
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 128 |
+| Gaps | 121 |

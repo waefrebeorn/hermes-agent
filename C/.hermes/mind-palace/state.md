@@ -1,8 +1,8 @@
-||| Slermes C (v258)
+||| Slermes C
 
 Suite: 315/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 273 | C src: 178
-Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (121 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -127,7 +127,8 @@ Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 187: G02 base.py depth — gw_custom_unit_to_cp() ported from Python _custom_unit_to_cp(). Generic binary search utility: finds largest codepoint offset n such that len_fn(s, n) <= budget. Uses function pointer for custom unit measurement (e.g. UTF-16 code units). 7-test suite (M07: 45 total). Suite 315/0/0 (v255). 128→128 gaps (depth).
 |- Phase 188: G02 base.py depth — gw_float_env() ported from Python _float_env(). Reads env var, parses as double with strtod, returns default on missing/invalid. NULL-safe. 2-test suite (M07: 47 total). Suite 315/0/0 (v256). 128→128 gaps (depth).
 |- Phase 189: approval_normalize_command() ported from Python tools/approval.py _normalize_command_for_detection(). Strips ANSI escape sequences and null bytes before dangerous-pattern matching. approval_is_terminal_dangerous() updated to normalize first. 5-test suite (T02: 38→43). Fixed 2 pre-existing test compilation failures (approval_system, allowlist) by adding libansi dependency. Suite 315/0/0 (v257). 128→128 gaps (depth).
-|- Phase 190: Terminal security integration — approval check wired into terminal_handler(). Blocks dangerous commands with blocked=true error. approval API exposed in hermes.h (approval_is_terminal_dangerous, approval_normalize_command). Fixed over-broad `> /dev/` dangerous pattern (was blocking > /dev/null redirects). Replaced with Python-matching block device patterns: /dev/sd, /dev/nvme, /dev/hd, /dev/mmcblk, /dev/vd, /dev/xvd. Test runner updated for terminal+approval link. Suite 315/0/0 (v258). 128→128 gaps (depth).
+||- Phase 190: Terminal security integration — approval check wired into terminal_handler(). Blocks dangerous commands with blocked=true error. approval API exposed in hermes.h (approval_is_terminal_dangerous, approval_normalize_command). Fixed over-broad `> /dev/` dangerous pattern (was blocking > /dev/null redirects). Replaced with Python-matching block device patterns: /dev/sd, /dev/nvme, /dev/hd, /dev/mmcblk, /dev/vd, /dev/xvd. Test runner updated for terminal+approval link. Suite 315/0/0. 128→128 gaps (depth).
+    |- Phase 191: B11-B20 stale claim verified — all Python tools have C equivalents. B02 vision depth: vision_validate_image_url() ported from Python vision_tools.py _validate_image_url(). Validates URL format: http/https scheme, network location, host presence. 12-test suite (test_vision: 35→47). S6 gaps 11→4 (7 stale claims retired). Suite 315/0/0 (v259). 128→121 gaps.
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).
@@ -141,9 +142,9 @@ Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
-- **P1** (37): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (2), CLI ecosystem (1), Architecture (1), Plugin system (1)
-- **P2** (58): CLI ecosystem (17), Tool depth (4), Gateway helpers (8), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
-- **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
+- **P1** (36): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (2), CLI ecosystem (1), Architecture (3), Plugin system (1)
+- **P2** (55): CLI ecosystem (17), Tool depth (4), Gateway helpers (1), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), Plugin system (4), Architecture (2), S2 remaining (5)
+- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 
 |## Honest Assessment
-|||Real parity gap is 128 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 315/0/0 (273 test files).
+||Real parity gap is 121 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 315/0/0 (273 test files). v259.

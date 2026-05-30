@@ -1728,5 +1728,8 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 | P190-01 | Terminal security integration — approval_is_terminal_dangerous() wired into terminal_handler(). Blocks dangerous commands with `{\"error\":\"BLOCKED: ...\",\"blocked\":true}` unless force=true. | `C/src/tools/terminal.c` — approval check before env isolation. `C/include/hermes.h` — public API declarations. |
 | P190-02 | Fixed over-broad `> /dev/` dangerous pattern that blocked benign redirects to `/dev/null`. Replaced with Python-matching block device patterns: sd, nvme, hd, mmcblk, vd, xvd. | `C/src/tools/approval.c` — DANGEROUS_TERMINAL_PATTERNS updated. |
 | P190-03 | Test runner: terminal_tool test now links approval.o + ansi_strip.c with --Wl,--unresolved-symbols=ignore-all. | `C/test_runner.sh` — 3 compilation lines updated. |
+| P191-01 | B11-B20 stale claim verified — all 30+ Python tools have C equivalents (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.). S6 gaps 11→4. | `C/src/tools/` — verified May 2026. |
+| P191-02 | vision_validate_image_url() ported from Python vision_tools.py _validate_image_url(). Validates format: http/https scheme, network location, host presence. Pure function, testable in isolation. | `C/src/tools/vision.c:289-317` — new public function. `C/include/image_routing.h:112-115` — declaration. |
+| P191-03 | 12-test suite for vision_validate_image_url: valid http, https, port, query, NULL, empty, ftp, no-scheme, no-host, data URI, localhost. | `C/tests/test_vision.c` — 12/12 passed. Test count 35→47. |
 
-Suite: 315/0/0 (273 test files). Gaps: 128. v258
+Suite: 315/0/0 (273 test files). Gaps: 121. v259

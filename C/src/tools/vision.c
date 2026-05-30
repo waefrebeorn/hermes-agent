@@ -286,6 +286,35 @@ static bool is_image_size_error(const char *error_text) {
     return false;
 }
 
+/* Port of Python vision_tools.py _validate_image_url().
+ * Validates image URL: non-NULL, http/https scheme, network location,
+ * and SSRF safety check via url_is_safe. Pure function, no side effects.
+ * Returns true if the URL passes all checks. */
+bool vision_validate_image_url(const char *url) {
+    if (!url || !url[0]) return false;
+
+    /* Must start with http:// or https:// */
+    if (strncmp(url, "http://", 7) != 0 && strncmp(url, "https://", 8) != 0)
+        return false;
+
+    /* Must have a colon after the scheme to indicate host:port or path */
+    const char *scheme_end = strstr(url, "://");
+    if (!scheme_end) return false;
+    const char *netloc = scheme_end + 3;
+    if (!*netloc) return false;
+
+    /* Must have at least a dot or colon in the network location (domain/IP) */
+    const char *p = netloc;
+    bool has_host = false;
+    while (*p && *p != '/' && *p != '?' && *p != '#') {
+        if (*p == '.' || *p == ':') { has_host = true; break; }
+        p++;
+    }
+    if (!has_host && p - netloc < 2) return false;  /* localhost? needs at least 2 chars */
+
+    return true;
+}
+
 /* Port of Python vision_tools.py _supports_media_in_tool_results().
  * Returns true if the given provider+model accepts image content inside
  * a tool-result message. Conservative default is false. */

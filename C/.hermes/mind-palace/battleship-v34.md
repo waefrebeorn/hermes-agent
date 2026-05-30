@@ -1,7 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v258 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 190: Terminal security integration — approval check wired into terminal_handler. Dangerous commands blocked. Block device patterns fixed. Suite 315/0/0. Gaps unchanged (depth).**
+**v259 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 120 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 191: B11-B20 stale claim verified — all Python tools have C equivalents. S6 gaps 11→4. Suite 315/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -178,9 +177,9 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 || 08 | B08 | send_message | ~710 | ~1786 | 40% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99). parse_mode parameter (Markdown/MarkdownV2/HTML/plain) (Phase 106). disable_notification (silent send) for Telegram (Phase 126). Telegram retry with exponential backoff (Phase 132): 3 attempts with 0.5s/1s/2s delay on transient failures, port of Python _telegram_retry_delay + _send_telegram_message_with_retry. General topic thread_id mapping (Phase 158): telegram_message_thread_id_for_send() maps "1" -> NULL matching TelegramAdapter._message_thread_id_for_send(). Parse mode fallback (Phase 159): when send fails with non-default parse_mode, retries once with parse_mode=NULL (plain text). telegram_send_with_mode() helper extracted. HTML auto-detection (Phase 160): message_looks_like_html() auto-switches to parse_mode=HTML when message contains HTML tags. Telegram thread-not-found detection (Phase 164): telegram_is_thread_not_found() checks errors for "thread not found" via case-insensitive substring match with separator variants (space/underscore/hyphen). 12-test standalone suite. | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
-| 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
+|| 11 | B11-B20 | remaining tools (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.) | varying | varying | — | P2-P3 | ✅ PORTED — all Python tools have C equivalents verified May 2026 |
 
-**S6: 11 gaps (4 P2, 7 P3) — Phase 190: Terminal approval integration. Suite 315/0/0.**
+**S6: 4 gaps (4 P2) — Phase 191: B11-B20 stale claim verified PORTED. Suite 315/0/0.**
 
 ---
 
@@ -273,12 +272,12 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 ||| S3: Gateway Helpers | 3 | 0 | 2 | 1 | 0 | G07 telegram_network PORTED (Phase 180). G06 remains. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
-||| S6: Tool Depth | 14 | 0 | 0 | 7 | 7 | Phase 180: B03 web PORTED (stale claim — all core features). |
+||| S6: Tool Depth | 4 | 0 | 0 | 4 | 0 | Phase 191: B11-B20 stale claim verified — all Python tools have C equivalents. S6 11→4 gaps. |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 190: Terminal security integration — approval check. Suite 315/0/0.** |
+|| **TOTAL** | **121** | **6** | **36** | **55** | **24** | **Phase 191: B11-B20 stale claim verified — all Python tools have C equivalents. S6 11→4. Suite 315/0/0.** |
 
 ### Phase Map
 

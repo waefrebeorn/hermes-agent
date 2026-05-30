@@ -401,6 +401,34 @@ int main(void) {
         unlink("/tmp/hermes_test_magic_jpg.bin");
     }
 
+    /* ── vision_validate_image_url tests ── */
+
+    /* Valid HTTP URL */
+    TEST("validate_image_url valid http",
+         vision_validate_image_url("http://example.com/image.png") == true);
+    TEST("validate_image_url valid https",
+         vision_validate_image_url("https://cdn.example.com/path/to/img.jpg") == true);
+    TEST("validate_image_url with port",
+         vision_validate_image_url("https://example.com:8080/image.png") == true);
+    TEST("validate_image_url with query",
+         vision_validate_image_url("https://example.com/image.jpg?w=800&q=75") == true);
+
+    /* Invalid URLs */
+    TEST("validate_image_url NULL returns false",
+         vision_validate_image_url(NULL) == false);
+    TEST("validate_image_url empty returns false",
+         vision_validate_image_url("") == false);
+    TEST("validate_image_url ftp returns false",
+         vision_validate_image_url("ftp://example.com/image.png") == false);
+    TEST("validate_image_url no scheme returns false",
+         vision_validate_image_url("/path/to/image.png") == false);
+    TEST("validate_image_url no host returns false",
+         vision_validate_image_url("http://") == false);
+    TEST("validate_image_url data URI returns false",
+         vision_validate_image_url("data:image/png;base64,abc123") == false);
+    TEST("validate_image_url no path no dot",
+         vision_validate_image_url("http://localhost") == true);  /* localhost passes host check */
+
     /* Cleanup */
     unlink("/tmp/hermes_test_vision.bin");
     unlink("/tmp/hermes_test_vision.png");

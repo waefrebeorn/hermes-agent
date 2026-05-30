@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v34.md` — Canonical gap list (128 gaps across 9 sectors, 1000+ test case gaps)
+- `battleship-v34.md` — Canonical gap list (121 gaps across 9 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
