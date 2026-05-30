@@ -944,6 +944,58 @@ json_t *google_translate_tool_result(const json_t *message, const json_t *tool_n
     return result;
 }
 
+/* Port of Python gemini_native_adapter._translate_tools_to_gemini().
+ * Translates OpenAI-format tool definitions array to Gemini
+ * functionDeclarations array.
+ * Input: [{"type": "function", "function": {"name": "...", ...}}]
+ * Output: [{"functionDeclarations": [{"name": "...", ...}]}]
+ * Returns empty array [] if no valid tools found.
+ * Caller must json_free() the result. */
+json_t *google_translate_tools_to_gemini(const json_t *tools) {
+    if (!tools || tools->type != JSON_ARRAY)
+        return json_array();
+
+    json_t *declarations = json_array();
+
+    for (size_t i = 0; i < tools->c.count; i++) {
+        json_t *tool = tools->c.items[i];
+        if (!tool || tool->type != JSON_OBJECT) continue;
+
+        /* Extract {function: {name, description, parameters}} */
+        json_t *fn = json_obj_get(tool, "function");
+        if (!fn || fn->type != JSON_OBJECT) continue;
+
+        const char *name = json_get_str(fn, "name", NULL);
+        if (!name || !*name) continue;
+
+        json_t *decl = json_object();
+        json_set(decl, "name", json_string(name));
+
+        /* Optional description */
+        const char *desc = json_get_str(fn, "description", NULL);
+        if (desc && *desc)
+            json_set(decl, "description", json_string(desc));
+
+        /* Optional parameters — deep copy to avoid ownership issues */
+        json_t *params = json_obj_get(fn, "parameters");
+        if (params && params->type == JSON_OBJECT)
+            json_set(decl, "parameters", json_copy(params));
+
+        json_append(declarations, decl);
+    }
+
+    if (declarations->c.count == 0) {
+        json_free(declarations);
+        return json_array();
+    }
+
+    json_t *wrapper = json_object();
+    json_set(wrapper, "functionDeclarations", declarations);
+    json_t *result = json_array();
+    json_append(result, wrapper);
+    return result;
+}
+
 /* ================================================================
  *  Free response
  * ================================================================ */

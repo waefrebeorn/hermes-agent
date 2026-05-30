@@ -607,10 +607,152 @@ static int test_translate_tool_result(void) {
     return f;
 }
 
+/* ── google_translate_tools_to_gemini ──────────────────── */
+static int test_translate_tools_to_gemini(void) {
+    int f = 0;
+    json_t *r;
+
+    printf("\n--- google_translate_tools_to_gemini ---\n");
+
+    /* 1. NULL tools */
+    r = google_translate_tools_to_gemini(NULL);
+    TEST("tt NULL returns empty array", r && r->type == JSON_ARRAY && r->c.count == 0);
+    json_free(r);
+
+    /* 2. Empty tools array */
+    r = google_translate_tools_to_gemini(json_array());
+    TEST("tt empty returns empty array", r && r->type == JSON_ARRAY && r->c.count == 0);
+    json_free(r);
+
+    /* 3. Single tool with name only */
+    {
+        json_t *tools = json_array();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("get_weather"));
+        json_t *tool = json_object();
+        json_set(tool, "type", json_string("function"));
+        json_set(tool, "function", fn);
+        json_append(tools, tool);
+
+        r = google_translate_tools_to_gemini(tools);
+        TEST("tt single tool has result", r && r->type == JSON_ARRAY && r->c.count == 1);
+        if (r && r->c.count > 0) {
+            json_t *wrapper = r->c.items[0];
+            json_t *decls = json_obj_get(wrapper, "functionDeclarations");
+            TEST("tt has functionDeclarations", decls && decls->type == JSON_ARRAY);
+            if (decls && decls->c.count > 0) {
+                json_t *decl = decls->c.items[0];
+                TEST("tt decl name = get_weather",
+                     strcmp(json_get_str(decl, "name", ""), "get_weather") == 0);
+                TEST("tt decl no description",
+                     json_obj_get(decl, "description") == NULL);
+            }
+        }
+        json_free(r);
+        json_free(tools);
+    }
+
+    /* 4. Tool with description + parameters */
+    {
+        json_t *tools = json_array();
+        json_t *params = json_object();
+        json_set(params, "type", json_string("object"));
+        json_t *props = json_object();
+        json_t *loc = json_object();
+        json_set(loc, "type", json_string("string"));
+        json_set(props, "location", loc);
+        json_set(params, "properties", props);
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("search"));
+        json_set(fn, "description", json_string("Search the web"));
+        json_set(fn, "parameters", params);
+        json_t *tool = json_object();
+        json_set(tool, "type", json_string("function"));
+        json_set(tool, "function", fn);
+        json_append(tools, tool);
+
+        r = google_translate_tools_to_gemini(tools);
+        TEST("tt full tool has result", r && r->c.count > 0);
+        if (r && r->c.count > 0) {
+            json_t *wrapper = r->c.items[0];
+            json_t *decls = json_obj_get(wrapper, "functionDeclarations");
+            if (decls && decls->c.count > 0) {
+                json_t *decl = decls->c.items[0];
+                TEST("tt decl name = search",
+                     strcmp(json_get_str(decl, "name", ""), "search") == 0);
+                TEST("tt decl has description",
+                     strcmp(json_get_str(decl, "description", ""), "Search the web") == 0);
+                json_t *p = json_obj_get(decl, "parameters");
+                TEST("tt decl has parameters", p != NULL);
+                if (p) {
+                    TEST("tt decl params.type = object",
+                         strcmp(json_get_str(p, "type", ""), "object") == 0);
+                }
+            }
+        }
+        json_free(r);
+        json_free(tools);
+    }
+
+    /* 5. Multiple tools */
+    {
+        json_t *tools = json_array();
+        json_t *fn1 = json_object();
+        json_set(fn1, "name", json_string("tool_a"));
+        json_t *t1 = json_object();
+        json_set(t1, "type", json_string("function"));
+        json_set(t1, "function", fn1);
+        json_append(tools, t1);
+        json_t *fn2 = json_object();
+        json_set(fn2, "name", json_string("tool_b"));
+        json_t *t2 = json_object();
+        json_set(t2, "type", json_string("function"));
+        json_set(t2, "function", fn2);
+        json_append(tools, t2);
+
+        r = google_translate_tools_to_gemini(tools);
+        TEST("tt multi tool has result", r && r->c.count > 0);
+        if (r && r->c.count > 0) {
+            json_t *decls = json_obj_get(r->c.items[0], "functionDeclarations");
+            TEST("tt multi has 2 declarations", decls && decls->c.count == 2);
+        }
+        json_free(r);
+        json_free(tools);
+    }
+
+    /* 6. Tool with no name → skipped */
+    {
+        json_t *tools = json_array();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string(""));  /* empty name */
+        json_t *tool = json_object();
+        json_set(tool, "function", fn);
+        json_append(tools, tool);
+
+        r = google_translate_tools_to_gemini(tools);
+        TEST("tt empty name skipped", r && r->type == JSON_ARRAY && r->c.count == 0);
+        json_free(r);
+        json_free(tools);
+    }
+
+    /* 7. Not an array */
+    {
+        json_t *not_array = json_object();
+        json_set(not_array, "type", json_string("function"));
+        r = google_translate_tools_to_gemini(not_array);
+        TEST("tt non-array returns empty", r && r->type == JSON_ARRAY && r->c.count == 0);
+        json_free(r);
+        json_free(not_array);
+    }
+
+    return f;
+}
+
 int main(void) {
     int total_fail = 0;
     total_fail += test_original_suite();
     total_fail += test_translate_tool_result();
+    total_fail += test_translate_tools_to_gemini();
     printf("\n=== Overall: %s ===\n", total_fail ? "SOME FAILED" : "ALL PASSED");
     return total_fail ? 1 : 0;
 }

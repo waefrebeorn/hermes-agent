@@ -1988,4 +1988,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 
 | ID | Achievement | Evidence |
 |----|-------------|----------|
-| R04e | `google_translate_tool_result()` ported from Python `gemini_native_adapter._translate_tool_result_to_gemini()`. Translates tool-result message to Gemini functionResponse part (`{functionResponse: {name, response}}`). Name resolution: `message.name` > `tool_name_by_call_id[tool_call_id]` > `tool_call_id` > `"tool"`. Content: coerces to text, tries JSON parse (dict→direct, otherwise wraps as `{"output": "..."}`). Handles NULL message, empty content, JSON arrays all gracefully. | `src/agent/provider_google.c:883-952` — implementation. `include/provider.h:218` — declaration. `tests/test_google_depth.c:482-615` — 13 test assertions (73→86). Suite 335/0/0. v334. |
+|| R04e | `google_translate_tool_result()` ported from Python `gemini_native_adapter._translate_tool_result_to_gemini()`. Translates tool-result message to Gemini functionResponse part (`{functionResponse: {name, response}}`). Name resolution: `message.name` > `tool_name_by_call_id[tool_call_id]` > `tool_call_id` > `"tool"`. Content: coerces to text, tries JSON parse (dict→direct, otherwise wraps as `{"output": "..."}`). Handles NULL message, empty content, JSON arrays all gracefully. | `src/agent/provider_google.c:883-952` — implementation. `include/provider.h:218` — declaration. `tests/test_google_depth.c:482-615` — 13 test assertions (73→86). Suite 335/0/0. v334. |
+
+## Phase 268: S8 R04 Gemini Depth — google_translate_tools_to_gemini
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04f | `google_translate_tools_to_gemini()` ported from Python `gemini_native_adapter._translate_tools_to_gemini()`. Translates OpenAI tool definitions array (`[{type: "function", function: {name, description?, parameters?}}]`) to Gemini functionDeclarations array (`[{functionDeclarations: [{name, description?, parameters?}]}]`). Parameters deep-copied via `json_copy()`. Empty name entries skipped. Returns `[]` for NULL, non-array, or empty/empty-result inputs. | `src/agent/provider_google.c:949-1001` — implementation. `include/provider.h:219` — declaration. `tests/test_google_depth.c:620-752` — 15 test assertions (86→101). test_runner.sh updated for 101 tests. Suite 335/0/0. v335. |
