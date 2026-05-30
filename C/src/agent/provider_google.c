@@ -880,6 +880,70 @@ json_t *google_translate_tool_call(const json_t *tool_call) {
     return result;
 }
 
+/* Port of Python gemini_native_adapter._translate_tool_result_to_gemini().
+ * Translates a tool-result message (role="tool" or "function") to a Gemini
+ * functionResponse part.
+ * @param message JSON object with tool_call_id, name, content keys
+ * @param tool_name_by_call_id Optional JSON object mapping call_id→name (may be NULL)
+ * Returns json_t: {functionResponse: {name: "...", response: {...}}}
+ * Caller must json_free() the result. */
+json_t *google_translate_tool_result(const json_t *message, const json_t *tool_name_by_call_id) {
+    json_t *fr = json_object();
+
+    /* Tool name resolution: message.name > tool_name_by_call_id[tool_call_id] > tool_call_id > "tool" */
+    const char *name = NULL;
+    if (message) name = json_get_str(message, "name", NULL);
+
+    if (!name || !*name) {
+        const char *tool_call_id = message ? json_get_str(message, "tool_call_id", NULL) : NULL;
+        if (tool_call_id && *tool_call_id && tool_name_by_call_id) {
+            json_t *mapped = json_obj_get(tool_name_by_call_id, tool_call_id);
+            if (mapped && mapped->type == JSON_STRING && mapped->str_val && mapped->str_val[0])
+                name = mapped->str_val;
+            else
+                name = tool_call_id;
+        } else {
+            name = (tool_call_id && *tool_call_id) ? tool_call_id : "tool";
+        }
+    }
+    json_set(fr, "name", json_string(name));
+
+    /* Content: coerce to text, then try JSON parse */
+    json_t *content_json = message ? json_obj_get(message, "content") : NULL;
+    char *text = google_coerce_content_to_text(content_json);
+
+    json_t *response = NULL;
+    if (text && *text) {
+        /* Skip leading whitespace to check for JSON object/array start */
+        const char *p = text;
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+        if (*p == '{' || *p == '[') {
+            char *err = NULL;
+            json_t *parsed = json_parse(text, &err);
+            if (parsed) {
+                if (parsed->type == JSON_OBJECT)
+                    response = parsed;
+                else
+                    json_free(parsed); /* non-dict JSON → fall through to text wrap */
+            } else {
+                free(err);
+            }
+        }
+    }
+
+    if (!response) {
+        response = json_object();
+        json_set(response, "output", json_string(text ? text : ""));
+    }
+
+    json_set(fr, "response", response);
+    free(text);
+
+    json_t *result = json_object();
+    json_set(result, "functionResponse", fr);
+    return result;
+}
+
 /* ================================================================
  *  Free response
  * ================================================================ */

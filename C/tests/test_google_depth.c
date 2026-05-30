@@ -27,7 +27,7 @@ static const message_t sys_msg = {.role = MSG_SYSTEM, .content = (char*)"Be help
 static const message_t *msgs1[] = {&user_msg};
 static const message_t *msgs_with_sys[] = {&sys_msg, &user_msg};
 
-int main(void) {
+static int test_original_suite(void) {
     printf("=== B30-B34: Google provider depth ===\n\n");
 
     /* ── build_url edge cases ────────────────────────────────────── */
@@ -474,6 +474,143 @@ int main(void) {
     }
 
     /* Print summary */
-    printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
-    return failures ? 1 : 0;
+    printf("\n=== Original tests: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
+    return failures;
+}
+
+/* ── google_translate_tool_result ───────────────────────── */
+static int test_translate_tool_result(void) {
+    int f = 0;
+    json_t *r, *fr, *resp;
+
+    printf("\n--- google_translate_tool_result ---\n");
+
+    /* 1. NULL message */
+    r = google_translate_tool_result(NULL, NULL);
+    fr = json_obj_get(r, "functionResponse");
+    TEST("tr NULL has functionResponse", fr != NULL);
+    if (fr) {
+        TEST("tr NULL name = tool", strcmp(json_get_str(fr, "name", ""), "tool") == 0);
+        resp = json_obj_get(fr, "response");
+        if (resp) {
+            TEST("tr NULL response.output empty", strcmp(json_get_str(resp, "output", ""), "") == 0);
+        } else { f++; fprintf(stderr, "FAIL: tr NULL response missing\n"); }
+    } else { f++; fprintf(stderr, "FAIL: tr NULL functionResponse missing\n"); }
+    json_free(r);
+
+    /* 2. Basic tool result with name + content */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "name", json_string("get_weather"));
+        json_set(msg, "tool_call_id", json_string("call_001"));
+        json_set(msg, "content", json_string("{\"temp\": 72, \"condition\": \"sunny\"}"));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        TEST("tr basic has functionResponse", fr != NULL);
+        if (fr) {
+            TEST("tr basic name = get_weather", strcmp(json_get_str(fr, "name", ""), "get_weather") == 0);
+            resp = json_obj_get(fr, "response");
+            if (resp) {
+                TEST("tr basic response.temp = 72", json_get_num(resp, "temp", 0) == 72);
+                TEST("tr basic response.condition = sunny", strcmp(json_get_str(resp, "condition", ""), "sunny") == 0);
+            } else { f++; fprintf(stderr, "FAIL: tr basic response missing\n"); }
+        } else { f++; fprintf(stderr, "FAIL: tr basic functionResponse missing\n"); }
+        json_free(r);
+        json_free(msg);
+    }
+
+    /* 3. No name → tool_call_id fallback */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "tool_call_id", json_string("call_002"));
+        json_set(msg, "content", json_string("result text"));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        TEST("tr no name uses tool_call_id", fr && strcmp(json_get_str(fr, "name", ""), "call_002") == 0);
+        json_free(r);
+        json_free(msg);
+    }
+
+    /* 4. No name, no tool_call_id → "tool" fallback */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "content", json_string("result"));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        TEST("tr all fallback = tool", fr && strcmp(json_get_str(fr, "name", ""), "tool") == 0);
+        json_free(r);
+        json_free(msg);
+    }
+
+    /* 5. tool_name_by_call_id mapping */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "tool_call_id", json_string("call_003"));
+        json_set(msg, "content", json_string("data"));
+
+        json_t *name_map = json_object();
+        json_set(name_map, "call_003", json_string("web_search_from_map"));
+
+        r = google_translate_tool_result(msg, name_map);
+        fr = json_obj_get(r, "functionResponse");
+        TEST("tr mapping uses mapped name", fr && strcmp(json_get_str(fr, "name", ""), "web_search_from_map") == 0);
+        json_free(r);
+        json_free(msg);
+        json_free(name_map);
+    }
+
+    /* 6. Plain text content → wrapped as {"output": "..."} */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "name", json_string("some_tool"));
+        json_set(msg, "content", json_string("This is plain text result"));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        resp = json_obj_get(fr, "response");
+        TEST("tr plain text wrapped in output", resp && strcmp(json_get_str(resp, "output", ""), "This is plain text result") == 0);
+        json_free(r);
+        json_free(msg);
+    }
+
+    /* 7. JSON array content → wrapped (not dict) */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "name", json_string("list_tool"));
+        json_set(msg, "content", json_string("[\"a\", \"b\", \"c\"]"));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        resp = json_obj_get(fr, "response");
+        TEST("tr array wrapped in output", resp && strcmp(json_get_str(resp, "output", ""), "[\"a\", \"b\", \"c\"]") == 0);
+        json_free(r);
+        json_free(msg);
+    }
+
+    /* 8. Empty content */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "name", json_string("empty_tool"));
+        json_set(msg, "content", json_string(""));
+
+        r = google_translate_tool_result(msg, NULL);
+        fr = json_obj_get(r, "functionResponse");
+        resp = json_obj_get(fr, "response");
+        TEST("tr empty content", resp && strcmp(json_get_str(resp, "output", ""), "") == 0);
+        json_free(r);
+        json_free(msg);
+    }
+
+    return f;
+}
+
+int main(void) {
+    int total_fail = 0;
+    total_fail += test_original_suite();
+    total_fail += test_translate_tool_result();
+    printf("\n=== Overall: %s ===\n", total_fail ? "SOME FAILED" : "ALL PASSED");
+    return total_fail ? 1 : 0;
 }

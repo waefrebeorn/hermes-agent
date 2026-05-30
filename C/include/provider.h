@@ -217,6 +217,7 @@ bool google_is_native_base_url(const char *base_url);
 char *google_coerce_content_to_text(const json_t *content);
 char *google_tool_call_extra_signature(const json_t *tool_call);
 json_t *google_translate_tool_call(const json_t *tool_call);
+json_t *google_translate_tool_result(const json_t *message, const json_t *tool_name_by_call_id);
 
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;
