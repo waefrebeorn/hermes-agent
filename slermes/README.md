@@ -26,7 +26,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||Providers: 10 .c modules + metadata (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot)
 |```
 
-> **Symlink note:** `README.md` → `C/README.md`. The canonical README lives at `C/README.md`. Edit that file; the root follows automatically.
+> **Symlink note:** The root `README.md` is the Python Hermes Agent README.
+> This `slermes/README.md` is the canonical Slermes C README. Edit this file.
 >
 > **History:** The C translation was developed over 277 commits on the [`c-work`](https://github.com/waefrebeorn/slermes/tree/c-work) branch, then squashed onto updated upstream main at commit `d00d2f1d`. See the `c-work` branch for full granular history.
 
@@ -59,7 +60,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ## Quick Start
 
 ```bash
-cd C/
+cd slermes/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
 bash test_runner.sh        # 335/0/0
@@ -75,7 +76,7 @@ make tui && ./hermes-tui                # ncurses TUI (experimental)
 ### Docker
 
 ```bash
-docker build -t hermes-c -f C/Dockerfile .
+docker build -t hermes-c -f slermes/Dockerfile .
 docker run --rm hermes-c --help
 # ~20MB slim image (bookworm-slim, static-linked)
 ```
@@ -510,8 +511,8 @@ All bugs discovered through DA audits and runtime testing.
 
 ## Project Structure
 
-```
-C/
+```text
+slermes/
 ├── include/          # 70 header files
 │   ├── hermes.h      # Master header (1084 lines)
 │   └── hermes_*.h    # Subsystem headers
@@ -653,13 +654,13 @@ Full schema in `include/hermes_config.h`. Use `/config` in interactive mode to v
 
 The C translation tracks [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). The fork is at [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes).
 
-- **Fork:** Diverged — upstream deleted C/; C/ lives exclusively on fork
-- **C code:** Tracked in `C/` subdirectory of the slermes fork
+- **Fork:** Diverged — upstream deleted slermes/; slermes/ lives exclusively on fork
+- **C code:** Tracked in `slermes/` subdirectory of the slermes fork
 - **History:** Original 277 commits on `c-work` branch → squashed onto upstream main as single commit (`d00d2f1d`)
 
 ### Upstream Drift
 
-The C code was forked from upstream commit `2517917de` and later rebased onto upstream HEAD. Upstream subsequently deleted C/ entirely — C/ now lives exclusively on the fork. Key drift areas:
+The C code was forked from upstream commit `2517917de` and later rebased onto upstream HEAD. Upstream subsequently deleted the entire `C/` directory (all C source code) — the `slermes/` subdirectory now lives exclusively on the fork. Key drift areas:
 - Provider/API evolution (XAI retry, OAuth, fallback)
 - Agent loop changes (retry buffer, credential pool)
 - Gateway platform updates (Discord thread, Telegram heartbeat)

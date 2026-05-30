@@ -48,8 +48,8 @@
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
-- **Git state**: Fork diverged — 90 commits ahead of upstream (upstream deleted C/ entirely)
-- **C code**: Tracked in C/ subdirectory, builds independent of Python
+- **Git state**: Fork diverged — 435 commits ahead of upstream (upstream deleted slermes/ entirely)
+- **C code**: Tracked in slermes/ subdirectory, builds independent of Python
 - **Old dev branch**: `c-work` preserved on GitHub (277 original commits)
 
 ## Progress This Session
