@@ -4,10 +4,10 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||||| Suite:  311/0/0 (270 test files, completes in <60s)
-|||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-|||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||||||||| Gaps:  135 real parity gaps (1000+ test case gaps) across 9 sectors
+|||||||||||| Suite:  312/0/0 (271 test files, completes in <60s)
+||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+||||||||||||||| Gaps:  132 real parity gaps (1000+ test case gaps) across 9 sectors
 |||||||||||Stubs:  0 stubs remain. All entry points verified.
 ||||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
@@ -513,7 +513,7 @@ C/
 │   ├── gateway/      # Gateway adapters
 │   └── deps/         # Core dependencies
 ├── lib/              # 65 self-contained library modules
-├── tests/            # 248 test files
+| ├── tests/            # 271 test files
 ├── examples/         # Plugin examples
 ├── plugins/          # Plugin source
 ├── .hermes/
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v34.md` — Canonical gap list (133 gaps across 9 sectors, 1000+ test case gaps)
+- `battleship-v34.md` — Canonical gap list (132 gaps across 9 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
@@ -548,7 +548,7 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 | Suite | Count | Notes |
 |-------|-------|-------|
 | Library tests | 305/0/0 | All pass, ~60s |
-| Test files | 264 | C files in tests/ |
+| Test files | 271 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |
 | Provider depth | 54+ | OpenAI, Anthropic, Google, DeepSeek, Azure, Bedrock |

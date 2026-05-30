@@ -508,3 +508,30 @@ unsigned char *crypto_aes_decrypt(const unsigned char *input, size_t input_len,
 
     return plaintext;
 }
+
+/* ================================================================
+ *  MD5 (hex string)
+ * ================================================================ */
+
+char *crypto_md5_hex(const unsigned char *data, size_t len)
+{
+    unsigned char md5_out[16];
+    unsigned int md5_len = 0;
+
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    if (!ctx) return NULL;
+
+    int ok = 0;
+    do {
+        if (EVP_DigestInit_ex(ctx, EVP_md5(), NULL) != 1) break;
+        if (EVP_DigestUpdate(ctx, data, len) != 1) break;
+        if (EVP_DigestFinal_ex(ctx, md5_out, &md5_len) != 1) break;
+        ok = 1;
+    } while (0);
+
+    EVP_MD_CTX_free(ctx);
+
+    if (!ok) return NULL;
+
+    return crypto_hex_encode(md5_out, 16);
+}

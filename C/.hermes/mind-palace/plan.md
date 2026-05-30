@@ -1,6 +1,6 @@
-(v247) (v247)
+(v248) (v248)
 # Plan — Slermes C Translation
-133 gaps across 9 sectors (battleship v34). Fork diverged
+132 gaps across 9 sectors (battleship v34). Fork diverged
 
 ## Phase 0: Display & Visual (S0, P0) — 2 gaps
 Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping
@@ -11,7 +11,7 @@ Prompt input depth, type-ahead, bounding box re-layout, input scaling/wrapping
 ## Phase 2: CLI Ecosystem + Tool Depth + Gateway Helpers + TUI Components (60 gaps)
 CLI ecosystem (17), Tool depth (4), Gateway helpers (10), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), miscellaneous
 
-## Phase 3: Gateway Helpers + Tool Depth (S3, S6, P2) — ~33 gaps
+## Phase 3: Gateway Helpers + Tool Depth (S3, S6, P2) — ~32 gaps
 13 gateway sub-modules, 10 tool depth improvements
 
 ## Phase 4: CLI Ecosystem (S5, P2) — ~30 gaps

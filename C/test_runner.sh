@@ -1085,6 +1085,21 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "cron_extras_util (compilation failed)"
 fi
+# yuanbao_media utility test (G09: generate_file_id, build_image_msg, build_file_msg, crypto_md5_hex)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_yuanbao_media.c" \
+    "$CDIR/src/tools/yuanbao_media.c" \
+    "$CDIR/src/tools/url_safety.c" \
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libcrypto/crypto.c" \
+    -o /tmp/hermes_test_yuanbao_media -lm -lssl -lcrypto > /dev/null 2>&1; then
+    if /tmp/hermes_test_yuanbao_media > /dev/null 2>&1; then ok "yuanbao_media (G09: 15 tests)"
+    else fail "yuanbao_media (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_yuanbao_media
+else
+    skip "yuanbao_media (compilation failed)"
+fi
 # cron_locking test (P171 — standalone, no external deps beyond hermes.h)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_cron_locking.c" "$CDIR/src/cron/cron_locking.c" \

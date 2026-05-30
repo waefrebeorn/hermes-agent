@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v247 | Fork diverged — C/ lives only on fork | Suite 311/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 133 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 270 (21.4% parity). Phase 175: G10 yuanbao_proto PORTED (stale claim — C has libprotobuf + yuanbao.c encapsulating encode/decode). 134→133 gaps. Suite 311/0/0.**
+**v248 | Fork diverged — C/ lives only on fork | Suite 312/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 132 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 271 (21.5% parity). Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex, generate_file_id, build_image_msg, build_file_msg ported. 133→132 gaps. Suite 312/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -92,13 +92,13 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
 || 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config. C has http_client_set_proxy() with env auto-detection (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY) + NO_PROXY support. Phase 161: telegram_parse_fallback_ips() validates and normalizes IPv4 addresses for Telegram fallback connectivity. Maps private/loopback/link-local/unspecified/non-IPv4. | P2 | PARTIAL — DoH/fallback transport missing, IP parsing ported |
 || 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
-|| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing). Missing: md5_hex (via hash_md5_hex already in libhash), generate_file_id (via uuid_v4), download_url (async HTTP), COS upload (cloud-specific) | P2 | PARTIAL |
+||| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing), crypto_md5_hex, yuanbao_generate_file_id, yuanbao_build_image_msg, yuanbao_build_file_msg. 15 tests. Missing: download_url (async HTTP), COS upload/sign (cloud-specific) | P2 | ✅ PORTED — 15 tests (Phase 176) |
 || 10 | G10 | yuanbao_proto.py | ~300 | Yuanbao protobuf messages | P2 | ✅ PORTED — C has libprotobuf library + yuanbao.c encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req. Both achieve same ends (C: type-specific encoders, Python: generic biz_msg wrapper). |
 | 11 | G11 | yuanbao_sticker.py | ~200 | Yuanbao sticker handling | P2 | ✅ PORTED — C has 59-sticker DB, search/send tools |
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 5 gaps (2 P1, 3 P2) — G06 wecom_callback, G07 telegram_network, G09 yuanbao_media remain. G10 yuanbao_proto PORTED (Phase 175 — libprotobuf + C yuanbao.c).**
+**S3: 4 gaps (2 P1, 2 P2) — G06 wecom_callback, G07 telegram_network remain. G09 yuanbao_media PORTED (Phase 176 — 15 tests). G10 yuanbao_proto PORTED (Phase 175).**
 
 ---
 
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 12 gaps (5 P2, 7 P3) — Phase 167: G04 feishu_comment_rules ported. Suite 310/0/0 (269 test files).**
+**S6: 12 gaps (5 P2, 7 P3) — Phase 176: G09 yuanbao_media ported. Suite 312/0/0 (271 test files).**
 
 ---
 
@@ -188,7 +188,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-|| 01 | X01 | Test files | 1,262 | 268 | 21.2% | P1 |
+|| 01 | X01 | Test files | 1,262 | 271 | 21.5% | P1 |
 | 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
@@ -201,7 +201,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 165: test files 267→268.**
+**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 176: test files 270→271, suite 311→312.**
 
 ---
 
@@ -270,7 +270,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S0: Display & Visual | 2 | 2 | 0 | 0 | 0 | Phase 0 — D13/D14 done; 15 stale claims retired |
 | S1: Conversation Loop Plumbing | 5 | 0 | 0 | 5 | 0 | All 28 real gaps stale-retired or implemented in Phase 57-58. 5 partials (L24-L28) remain |
 || S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
-|| S3: Gateway Helpers | 5 | 0 | 2 | 3 | 0 | G10 yuanbao_proto PORTED (Phase 175). G06/G07/G09 remain. |
+||| S3: Gateway Helpers | 4 | 0 | 2 | 2 | 0 | G09 yuanbao_media PORTED (Phase 176). G06/G07 remain. |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 ||| S6: Tool Depth | 15 | 0 | 0 | 8 | 7 | Phase 167: G04 feishu_comment_rules ported |
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||||| **TOTAL** | **133** | **6** | **36** | **60** | **43** | **Phase 175: G10 yuanbao_proto PORTED (stale claim — C has libprotobuf + yuanbao.c). 134→133 gaps.** |
+||||| **TOTAL** | **132** | **6** | **36** | **59** | **43** | **Phase 176: G09 yuanbao_media PORTED. 133→132 gaps.** |
 
 ### Phase Map
 
@@ -287,7 +287,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || Phase 0 | Display & Visual | S0 (2) | 2 |
 | Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
 | Phase 2 | Test coverage campaign | S7 | 20* (1000+ tests) |
-| Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~33 |
+| Phase 3 | Gateway helpers + Tool depth | S3, S6 | ~32 |
 | Phase 4 | CLI ecosystem | S5 | ~30 |
 | Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
 || Phase 6 | Agent module depth | S2 (1 real) + S8 remaining | ~12 |

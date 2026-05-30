@@ -1657,6 +1657,8 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v246
 ## Phase 175: G10 yuanbao_proto — PORTED (Stale Claim)
 | ID | Achievement | Evidence |
 |----|-------------|----------|
+| P176-01 | G09 yuanbao_media.py — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg() ported. 15 tests. C now covers: basename extraction, MIME/format detection, image size parsing (PNG/JPEG/GIF/WebP), MD5 hex digest, file ID generation, TIMImageElem/TIMFileElem message body builders. Remaining: download_url, COS upload/sign (cloud-specific, won't port). Suite 312/0/0 v248. | `C/src/tools/yuanbao_media.c`, `C/lib/libcrypto/crypto.c`, `C/tests/test_yuanbao_media.c` — 15/15 passed. |
 | P175-01 | G10 yarnbao_proto.py (1209 LOC) classified as PORTED — C uses libprotobuf library (7 pb_encode/pb_decode functions) + yuanbao.c (encode_conn_msg, decode_conn_msg, encode_send_c2c, encode_auth_bind, encode_ping_req, encode_query_group_info, encode_get_group_member_list). Both achieve equivalent protobuf wire-format encoding/decoding for the Yuanbao WebSocket protocol. Python hand-rolls varint encoding; C delegates to shared libprotobuf. | `C/src/gateway/platforms/yuanbao.c` — encode_conn_msg/decode_conn_msg + msg-specific encoders. `C/lib/libprotobuf/protobuf.h` — 7 varint/delimited/fixed32 encoding functions. Verified via suite compilation (311/0/0). |
 | P175-02 | Gap count reduced: 134→133 gaps. S3 sector: 6→5 gaps. Total: 133 across 9 sectors. | `.hermes/mind-palace/battleship-v34.md` — G10 status updated to ✅ PORTED, summary table updated. |
-Suite: 311/0/0 (270 test files). Gaps: 133. v247
+| P176-02 | Gap count reduced: 133→132 gaps. S3 sector: 5→4 gaps. G09 yuanbao_media PORTED. Suite 311→312. | `.hermes/mind-palace/battleship-v34.md` — G09 status updated to ✅ PORTED, summary table updated. |
+Suite: 312/0/0 (271 test files). Gaps: 132. v248

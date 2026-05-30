@@ -1,4 +1,4 @@
-(v247) (v247)
+(v248) (v248)
 
-311/0/0, 270 test files. All pass. Gap: 270 C vs ~17k Python.
-Phase 175: G10 yuanbao_proto PORTED (stale claim verified)
+312/0/0, 271 test files. All pass. Gap: 271 C vs ~17k Python.
+Phase 176: G09 yuanbao_media PORTED (crypto_md5_hex, generate_file_id, build_image_msg, build_file_msg)

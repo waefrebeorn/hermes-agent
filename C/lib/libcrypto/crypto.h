@@ -70,6 +70,10 @@ char *crypto_jwt_encode(const char *secret, const char *payload_json);
 /* Decode and verify JWT with HS256. Returns NULL on fail. Caller free(). */
 char *crypto_jwt_decode(const char *secret, const char *token, char **error);
 
+/* === MD5 (hex string) === */
+/* Compute MD5 hash, return as malloc'd hex string (33 bytes). */
+char *crypto_md5_hex(const unsigned char *data, size_t len);
+
 /* === Random === */
 /* Fill buffer with cryptographically secure random bytes. */
 bool crypto_random_bytes(unsigned char *buf, size_t len);
