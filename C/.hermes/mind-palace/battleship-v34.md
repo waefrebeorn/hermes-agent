@@ -137,7 +137,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 
 || # | ID | Module | LOC | Priority | Status |
 |---|---|----|--------|-----|--------|
-|| 01 | C01 | Setup wizard (setup.py) | ~2000 | P2 | REAL GAP |
+|| 01 | C01 | Setup wizard (setup.py) | ~2000 | P2 | ✅ PORTED — `slermes setup` interactive wizard (hermes_config_setup_interactive in config.c) |
 || 02 | C02 | Doctor diagnostics (doctor.py) | ~1500 | P2 | ✅ PORTED — /doctor command (Phase 288) |
 || 03 | C03 | Memory setup (memory_setup.py) | ~500 | P3 | REAL GAP |
 ||| 04 | C04 | Profile management (profiles.py) | ~1000 | P2 | ✅ PORTED — /config profile list/use/create/clone/delete |
@@ -157,7 +157,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 18 | C18 | Voice mode (voice.py) | 846 | P3 | REAL GAP |
 || 19-30 | C19-C30 | Other CLI modules | ~25000 | P2-P3 | REAL GAP |
 
-**S5: 19 gaps (1 P1, 10 P2, 8 P3) — C02+C04+C05+C06+C07+C08+C09+C14 PORTED. C10+C12 WON'T PORT. C11+C13 PARTIAL.**
+**S5: 18 gaps (1 P1, 9 P2, 8 P3) — C01+C02+C04+C05+C06+C07+C08+C09+C14 PORTED. C10+C12 WON'T PORT. C11+C13 PARTIAL.**
 
 ---
 
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-| **TOTAL** | **79** | **4** | **31** | **33** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 20→19 (C14 webhook CLI PORTED). Suite 324/0/16, test files 289.** |
+| **TOTAL** | **78** | **4** | **31** | **32** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→18 (C01 setup PORTED, C15 depth). Suite 324/0/16.** |
 
 ### Phase Map
 

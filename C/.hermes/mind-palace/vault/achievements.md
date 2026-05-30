@@ -2090,4 +2090,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C14 | Webhook subscription CLI — `/webhook list` shows active subscriptions with endpoint, retries, backoff, headers. `/webhook add <url> [secret]` adds subscription with 3 retries/1s backoff. `/webhook remove <id>` removes by index. Port of Python hermes_cli/webhook.py (subscribe/list/remove). | `src/cli/commands.c` — cmd_webhook() implementation + `/webhook` registry entry. `src/cli/commands.c` — #include hermes_gateway.h. Binary smoke: ✓ `/webhook`, `/webhook list`, `/webhook add`. Suite 324/0/16. v357. |
+|## Phase 295: S5 C01 Setup Wizard — Stale Claim Retired (v357)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
 | C05 | Config editor — C has `/config validate/diff/export/migrate/groups/schema/show/get/set`. Python config.py has same core features. | `src/cli/commands.c` — cmd_config() with validate (~1442), diff (~1455), export (~1478), migrate (~1483), groups (~1494), schema (~1499), profile subcommands (~1510), show/get/set (~1700-). |

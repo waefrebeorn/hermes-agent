@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v357)
+# Goal Mantra — Slermes C (v358)
 
-324/0/16 (294 test files). 79 gaps. Phase 294: C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps.
+324/0/16 (294 test files). 78 gaps. Phase 295: C01 setup wizard retired (slermes setup exists). /platforms enhanced with config display + -v credential check.
 
 ## Loop
 

@@ -2285,17 +2285,53 @@ static void cmd_plugins(const char *args, agent_state_t *state) {
 
 /* /platforms: Show gateway platform status */
 static void cmd_platforms(const char *args, agent_state_t *state) {
-    (void)args; (void)state;
-    printf("Gateway platforms (configured via config.yaml gateway.platforms):\n");
+    (void)state;
+    bool verbose = (args && (strcmp(args, "-v") == 0 || strcmp(args, "verbose") == 0));
+    bool list_only = (args && strcmp(args, "list") == 0);
+    (void)list_only;
+
+    printf("Gateway platforms:\n");
     const char *gw = getenv("HERMES_GATEWAY_PLATFORMS");
-    if (gw)
-        printf("  Env: %s\n", gw);
-    else if (state->hermes_home[0]) {
-        char cfg_path[512];
-        snprintf(cfg_path, sizeof(cfg_path), "%s/config.yaml", state->hermes_home);
-        printf("  See: %s [gateway.platforms]\n", cfg_path);
+    if (gw) {
+        printf("  Configured: %s\n", gw);
+    } else {
+        hermes_config_t cfg;
+        if (hermes_config_load(&cfg, NULL) && cfg.gateway_platforms[0])
+            printf("  Configured: %s\n", cfg.gateway_platforms);
+        else
+            printf("  Configured: telegram (default)\n");
     }
-    printf("  Available: telegram, discord, slack, matrix, mattermost, webhook, whatsapp\n");
+
+    if (verbose) {
+        printf("\nCredentials check:\n");
+        static const char *check[][3] = {
+            {"telegram", "TELEGRAM_BOT_TOKEN",           "Polling"},
+            {"discord",  "DISCORD_BOT_TOKEN",            "Gateway"},
+            {"slack",    "SLACK_BOT_TOKEN",              "Events API"},
+            {"signal",   "SIGNAL_NUMBER",                "dbus CLI"},
+            {"sms",      "TWILIO_ACCOUNT_SID",           "Twilio SMS"},
+            {"matrix",   "MATRIX_HOMESERVER",            "CS API"},
+            {"email",    "EMAIL_HOST",                   "IMAP/SMTP"},
+            {"whatsapp", "WHATSAPP_PHONE_NUMBER_ID",     "Cloud API"},
+            {"feishu",   "FEISHU_APP_ID",                "Lark bot"},
+            {"wecom",    "WECOM_CORP_ID",                "WeChat Work"},
+            {"dingtalk", "DINGTALK_WEBHOOK_TOKEN",       "DingTalk"},
+            {"homeassistant", "HASS_TOKEN",               "HA API"},
+            {"mattermost","MATTERMOST_URL",               "Webhooks"},
+            {"bluebubbles","BLUEBUBBLES_PASSWORD",       "iMessage"},
+            {NULL, NULL, NULL}
+        };
+        for (int i = 0; check[i][0]; i++) {
+            const char *val = getenv(check[i][1]);
+            printf("  %-12s %s %-16s %s\n",
+                   check[i][0], val ? "✅" : "❌",
+                   val ? "(found)" : "(missing)",
+                   check[i][2]);
+        }
+    }
+
+    printf("\nAll 20 platform types available. Use -v for credential check.\n");
+    printf("Config: gateway.platforms in config.yaml or $HERMES_GATEWAY_PLATFORMS\n");
 }
 
 /* /redraw: Force a full UI repaint */

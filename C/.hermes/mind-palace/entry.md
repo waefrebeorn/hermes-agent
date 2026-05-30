@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v357)
+# Entry — Slermes C Parity (v358)
 
-Phase 294: S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. 79 gaps total.
+Phase 295: C01 stale retired. /platforms enhanced. S5 19→18 gaps. 78 gaps total.

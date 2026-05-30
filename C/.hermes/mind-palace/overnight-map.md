@@ -33,3 +33,4 @@
 | 285 | S0 D09 vi visual mode — v/V enter visual mode, x/d/y delete/yank selection, ESC/v exit. Reverse video highlighting. 13 new assertions (148→161). Suite 334/0/3. v352. | 92 gaps | 92 gaps |
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
+| 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
