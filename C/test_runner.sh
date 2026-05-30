@@ -1869,7 +1869,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (195 tests)"
+    if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (172 tests)"
     else
         echo "  Bedrock depth test output:"
         /tmp/hermes_test_br_depth 2>&1 | sed 's/^/    /'

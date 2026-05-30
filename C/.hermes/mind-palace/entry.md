@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v348)
+# Entry — Slermes C Parity (v349)
 
-Phase 281: S8 R10 — provider_query_local_context_length() ported. Multi-endpoint context probing orchestrator. R10 reclassified PARTIAL→PORTED (35/43 = 81%). 93 gaps remain.
+Phase 282: S7 edge case expansion — 23 bedrock utility edge cases. Suite 334/0/3. 93 gaps.

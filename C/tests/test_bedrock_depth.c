@@ -30,6 +30,7 @@ static void test_has_credentials(void);
 static void test_resolve_region(void);
 static void test_convert_tools_to_converse(void);
 static void test_convert_content_to_converse(void);
+static void test_bedrock_edge_cases(void);
 
 /* Test data */
 static const message_t user_msg = {.role = MSG_USER, .content = (char*)"hello"};
@@ -445,6 +446,7 @@ int main(void) {
     test_resolve_region();
     test_convert_tools_to_converse();
     test_convert_content_to_converse();
+    test_bedrock_edge_cases();
 
     printf("\n=== Overall: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
@@ -794,4 +796,57 @@ static void test_convert_content_to_converse(void) {
         json_free(blocks);
         json_free(arr);
     }
+}
+
+/* ---- Edge case expansion for R02 utility functions ---- */
+static void test_bedrock_edge_cases(void) {
+    printf("\n[R02] Edge case expansion:\n");
+
+    /* bedrock_is_context_overflow — NULL/empty safety */
+    TEST("overflow NULL", !bedrock_is_context_overflow(NULL));
+    TEST("overflow empty", !bedrock_is_context_overflow(""));
+
+    /* bedrock_is_context_overflow — Bedrock-specific patterns */
+    TEST("overflow validation + too long", bedrock_is_context_overflow("ValidationException: input is too long"));
+    TEST("overflow validation + max input", bedrock_is_context_overflow("ValidationException: max input token"));
+    TEST("overflow validation + exceed tokens", bedrock_is_context_overflow("ValidationException: exceeds the maximum number of tokens"));
+    TEST("overflow stream + too long", bedrock_is_context_overflow("ModelStreamErrorException: Input is too long"));
+    TEST("overflow no match", !bedrock_is_context_overflow("SomeOtherError: something else"));
+
+    /* bedrock_classify_error — NULL/empty */
+    TEST("classify NULL", strcmp(bedrock_classify_error(NULL), "unknown") == 0);
+    TEST("classify empty", strcmp(bedrock_classify_error(""), "unknown") == 0);
+
+    /* bedrock_classify_error — category detection */
+    TEST("classify rate_limit", strcmp(bedrock_classify_error("ThrottlingException: retry"), "rate_limit") == 0);
+    TEST("classify overloaded", strcmp(bedrock_classify_error("ModelNotReadyException: model loading"), "overloaded") == 0);
+    TEST("classify context_overflow", strcmp(bedrock_classify_error("ValidationException: input is too long"), "context_overflow") == 0);
+    TEST("classify unknown", strcmp(bedrock_classify_error("random error"), "unknown") == 0);
+
+    /* bedrock_extract_provider_from_arn — edge cases */
+    const char *arn;
+    arn = bedrock_extract_provider_from_arn("arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet");
+    TEST("arn provider anthropic", arn && strcmp(arn, "anthropic") == 0);
+    arn = bedrock_extract_provider_from_arn("arn:aws:bedrock:eu-west-1::foundation-model/meta.llama3-70b");
+    TEST("arn provider meta", arn && strcmp(arn, "meta") == 0);
+    arn = bedrock_extract_provider_from_arn("arn:aws:bedrock:us-west-2::foundation-model/cohere.command-r");
+    TEST("arn provider cohere", arn && strcmp(arn, "cohere") == 0);
+    arn = bedrock_extract_provider_from_arn("not-an-arn");
+    TEST("arn invalid", arn == NULL);
+    arn = bedrock_extract_provider_from_arn("");
+    TEST("arn empty", arn == NULL);
+
+    /* bedrock_get_context_length — known models */
+    int ctx = bedrock_get_context_length("anthropic.claude-3-sonnet");
+    TEST("context sonnet known", ctx > 0);
+    ctx = bedrock_get_context_length("meta.llama3-70b-instruct-v1:0");
+    TEST("context llama known", ctx > 0);
+
+    /* Unknown/edge cases return default (128000) */
+    ctx = bedrock_get_context_length("unknown.model.v1");
+    TEST("context unknown returns default", ctx == 128000);
+    ctx = bedrock_get_context_length(NULL);
+    TEST("context NULL returns default", ctx == 128000);
+    ctx = bedrock_get_context_length("");
+    TEST("context empty returns default", ctx == 128000);
 }
