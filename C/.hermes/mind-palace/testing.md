@@ -1,10 +1,9 @@
 (v356)
 
-323/0/16, 289 test files. All pass. Gap: 289 C vs ~1262 Python (22.9% parity).
+323/0/16, 289 test files. All pass. 80 gaps. C04+C05 stale claims retired.
 
-Phase 292: S5 C13 Gateway CLI subcommands — gateway status + list + start. Suite 323/0/16. v356.
-Phase 291: S7 test expansion — test_regex.c (17 assertions). Suite 324/0/15. v355.
-Phase 290: C11 OAuth status in /secrets. Suite 324/0/15. v355.
+Phase 293: C04+C05 stale claims retired. S5 25→20 gaps. 80 gaps. v356.
+Phase 292: S5 C13 Gateway CLI subcommands — gateway status + list + start. v356.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.

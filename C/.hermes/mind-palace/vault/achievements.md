@@ -2082,3 +2082,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C13 | Gateway CLI subcommands — `gateway status` shows configured platforms (config + env), credential key check (6 platforms), and ready message. `gateway list` shows all 20 available platform types with descriptions (Telegram, Discord, Slack, Matrix, Mattermost, Webhook, WhatsApp, Email, Signal, Home Assistant, SMS, API Server, Feishu, WeCom, DingTalk, QQ Bot, BlueBubbles, MS Graph, Weixin, Yuanbao). `gateway start` runs gateway normally. Subcommand dispatch parses before `--platform` flags. | `src/gateway/server.c` — cmd_gateway_status(), cmd_gateway_list(), subcommand dispatch prior to initialization. Binary smoke test: ✓ `./slermes gateway list` shows 20 platforms. ✓ `./slermes gateway status` shows config/env/creds. Suite 323/0/16. v356. |
+|## Phase 293: S5 C04 Profiles + C05 Config — Stale Claims Retired (v356)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| C04 | Profile management — C has `/config profile list/use/create/clone/delete` via cmd_config() in commands.c. Full feature parity with Python profiles.py. | `src/cli/commands.c` — profile subcommand dispatch (profile use at ~1510, profile list at ~1512, profile clone at ~1537, profile delete at ~1605). |
+| C05 | Config editor — C has `/config validate/diff/export/migrate/groups/schema/show/get/set`. Python config.py has same core features. | `src/cli/commands.c` — cmd_config() with validate (~1442), diff (~1455), export (~1478), migrate (~1483), groups (~1494), schema (~1499), profile subcommands (~1510), show/get/set (~1700-). |

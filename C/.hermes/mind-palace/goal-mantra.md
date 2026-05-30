@@ -1,6 +1,6 @@
 # Goal Mantra — Slermes C (v356)
 
-324/0/16 (294 test files). 84 gaps. Phase 292: S5 C13 Gateway CLI subcommands — gateway status + list + start.
+324/0/16 (294 test files). 80 gaps. Phase 293: C04+C05 stale claims retired — profile mgmt + config editor PORTED. C10+C12 WON'T PORT. S5 25→20 gaps.
 
 ## Loop
 

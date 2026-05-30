@@ -135,29 +135,29 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 
 Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 
-| # | ID | Module | LOC | Priority |
-|---|----|--------|-----|----------|
-| 01 | C01 | Setup wizard (setup.py) | ~2000 | P2 |
-| 02 | C02 | Doctor diagnostics (doctor.py) | ~1500 | P2 |
-| 03 | C03 | Memory setup (memory_setup.py) | ~500 | P3 |
-|| 04 | C04 | Profile management (profiles.py) | ~1000 | P2 |
-| 05 | C05 | Config editor (config.py) | ~800 | P2 |
-|| 06 | C06 | Env loader (env_loader.py) | ~200 | P2 |
-| 07 | C07 | Model management (models.py) | ~2000 | P2 |
-| 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 |
-| 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 |
-| 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 |
-| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 |
-| 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 |
-| 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 |
-| 14 | C14 | Webhook setup (webhook.py) | ~1000 | P2 |
-| 15 | C15 | Platform management (platforms.py) | ~2000 | P2 |
-| 16 | C16 | Kanban system (kanban.py + 7 files) | ~11000 | P2 |
-| 17 | C17 | Skills hub (skills_hub.py) | ~1500 | P2 |
-| 18 | C18 | Voice mode (voice.py) | 846 | P3 |
-| 19 | C19-C30 | Other CLI modules | ~25000 | P2-P3 |
+|| # | ID | Module | LOC | Priority | Status |
+|---|---|----|--------|-----|--------|
+|| 01 | C01 | Setup wizard (setup.py) | ~2000 | P2 | REAL GAP |
+|| 02 | C02 | Doctor diagnostics (doctor.py) | ~1500 | P2 | ✅ PORTED — /doctor command (Phase 288) |
+|| 03 | C03 | Memory setup (memory_setup.py) | ~500 | P3 | REAL GAP |
+||| 04 | C04 | Profile management (profiles.py) | ~1000 | P2 | ✅ PORTED — /config profile list/use/create/clone/delete |
+|| 05 | C05 | Config editor (config.py) | ~800 | P2 | ✅ PORTED — /config validate/diff/export/migrate/groups/schema/show/get/set |
+||| 06 | C06 | Env loader (env_loader.py) | ~200 | P2 | ✅ PORTED — load_slermes_env() in main.c (Phase 287c) |
+|| 07 | C07 | Model management (models.py) | ~2000 | P2 | ✅ PORTED — /model list/show/providers/set (Phase 67) |
+|| 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 | ✅ PORTED — /model set (same as C07) |
+|| 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 | ✅ PORTED — /model list (same as C07) |
+|| 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
+|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — OAuth status in /secrets (Phase 290). Remaining: auth login/flows |
+|| 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
+|| 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | PARTIAL — gateway status/list/start (Phase 292). Remaining: setup/stop/restart |
+|| 14 | C14 | Webhook setup (webhook.py) | ~1000 | P2 | REAL GAP |
+|| 15 | C15 | Platform management (platforms.py) | ~2000 | P2 | REAL GAP |
+|| 16 | C16 | Kanban system (kanban.py + 7 files) | ~11000 | P2 | REAL GAP |
+|| 17 | C17 | Skills hub (skills_hub.py) | ~1500 | P2 | REAL GAP |
+|| 18 | C18 | Voice mode (voice.py) | 846 | P3 | REAL GAP |
+|| 19-30 | C19-C30 | Other CLI modules | ~25000 | P2-P3 | REAL GAP |
 
-**S5: 25 gaps (1 P1, 12 P2, 12 P3) — C02+C04+C06+C07+C08+C09 PORTED**
+**S5: 20 gaps (1 P1, 11 P2, 8 P3) — C02+C04+C05+C06+C07+C08+C09 PORTED. C10+C12 WON'T PORT. C11+C13 PARTIAL.**
 
 ---
 
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **84** | **4** | **31** | **36** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07+F10 VAULTED/PORTED. C02+C04+C06+C07+C08+C09+C13 depth. Suite 323/0/16, test files 289.** |
+| **TOTAL** | **80** | **4** | **31** | **33** | **22** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 25→20 (C04/C05 PORTED, C10/C12 WON'T PORT). Suite 323/0/16, test files 289.** |
 
 ### Phase Map
 

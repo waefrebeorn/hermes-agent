@@ -7,8 +7,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||||||||||| Suite:  323/0/16 (289 test files, completes in <60s)
 |||||||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||||||||| Gaps:  84 parity gaps (1000+ test case gaps) across 8 sectors
-||||||||| Phase 292: S5 C13 Gateway CLI subcommands — status + list + start!
+|||||||||||||||||| Gaps:  80 parity gaps (1000+ test case gaps) across 8 sectors
+||||||||| Phase 293: C04/C05 stale claims retired — S5 25→20 gaps. Total 84→80.
 ||||||||| Phase 272: S8 R02+R10 — batch 5 utility functions (convert_tools_to_converse, estimate_tokens_rough, resolve_verify, extract context/max_tokens)
 ||| 274 | S8 R10 depth — batch 4 token est (count_image_tokens, message_chars, messages_tokens_rough, request_tokens_rough)
 ||| 275 | S8 R10 — context probe tiers + get_next_probe_tier

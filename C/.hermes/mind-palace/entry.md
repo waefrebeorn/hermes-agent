@@ -1,3 +1,3 @@
 # Entry — Slermes C Parity (v356)
 
-Phase 292: S5 C13 Gateway CLI subcommands — gateway status + list + start. Suite 323/0/16. 84 gaps.
+Phase 293: C04+C05 stale claims retired. S5 25→20 gaps. 80 gaps total.

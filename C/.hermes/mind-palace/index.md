@@ -1,6 +1,6 @@
 # Slermes C — Index (v356)
 
-S0+S1+S3+S6+R02+R04+R10 all PORTED. F10 PORTED. 84 gaps across 8 sectors. Suite 323/0/16, 289 test files.
+S0+S1+S3+S6+R02+R04+R10 all PORTED. F10 PORTED. 80 gaps across 8 sectors. Suite 323/0/16, 289 test files.
 
 ## Walkway Files
 

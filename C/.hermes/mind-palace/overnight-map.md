@@ -31,4 +31,4 @@
 | 283 | S8 R02 PORTED — bedrock_convert_messages_to_converse() + bedrock_normalize_converse_response() ported. R02 all 14 portable functions done (100%). Suite 334/0/3. v350. | 93 gaps | 92 gaps |
 | 284 | S0 D09 vi search — / ? forward/backward search, n/N repeat, wrap-around. line_edit_search_internal(). 11 new assertions (137→148). Suite 334/0/4. v351. | 92 gaps | 92 gaps |
 | 285 | S0 D09 vi visual mode — v/V enter visual mode, x/d/y delete/yank selection, ESC/v exit. Reverse video highlighting. 13 new assertions (148→161). Suite 334/0/3. v352. | 92 gaps | 92 gaps |
-| 286 | S0 D09 vi count prefixes — digits 1-9 accumulate count for h/l/j/k/w/b/e/x/X/s/~ commands. Multi-digit. 8 new assertions (161→169). Suite 334/0/3. v353. S0 D09 PORTED. | 92 gaps | 92 gaps |
+|| 293 | S5 stale sweep — C04 PORTED (/config profile list/use/create/clone/delete), C05 PORTED (/config validate/diff/export/migrate/groups/schema), C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
