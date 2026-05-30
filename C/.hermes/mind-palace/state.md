@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-5|||||||||||||||||||Battleship v34 (80 gaps across 8 sectors, 1000+ test case gaps). v356. Phase 293: C04+C05 stale claims retired — profile management (/config profile list/use/create/clone/delete) and config editor (/config validate/diff/export/migrate/groups/schema) verified PORTED. C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80.
+5|||||||||||||||||||Battleship v34 (80 gaps across 8 sectors, 1000+ test case gaps). v357. Phase 294: S5 C14 webhook CLI — /webhook list/add/remove. C14 PORTED. Suite 324/0/16.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

@@ -5,6 +5,7 @@
 
 #include "hermes.h"
 #include "hermes_secrets.h"
+#include "hermes_gateway.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,6 +112,7 @@ static void cmd_session_export(const char *args, agent_state_t *state);
 static void cmd_logs(const char *args, agent_state_t *state);
 static void cmd_dump(const char *args, agent_state_t *state);
 static void cmd_send(const char *args, agent_state_t *state);
+static void cmd_webhook(const char *args, agent_state_t *state);
 
 /* Forward declaration for send_message_handler from tools/send_message.c */
 extern char *send_message_handler(const char *args_json, const char *task_id);
@@ -173,6 +175,7 @@ static const command_def_t COMMANDS[] = {
     {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
     {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
     {"/doctor",  NULL,    "Run system diagnostics: /doctor [all|config|env|keys]", cmd_doctor},
+    {"/webhook", NULL,    "Manage webhook subscriptions: /webhook [list|add|remove]", cmd_webhook},
     {"/completions", NULL, "Generate shell completions: /completions [bash|zsh|fish]", cmd_completions},
     {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
     {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
@@ -4830,4 +4833,84 @@ static void cmd_doctor(const char *args, agent_state_t *state) {
     }
 
     printf("\n=== Diagnostics complete ===\n");
+}
+
+/* ── Webhook subscription management ──────────────────────────── */
+static void cmd_webhook(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Webhook subscription management.\n");
+        printf("Usage: /webhook list\n");
+        printf("       /webhook add <url> [secret]\n");
+        printf("       /webhook remove <id>\n");
+        return;
+    }
+
+    if (strcmp(args, "list") == 0 || strcmp(args, "ls") == 0) {
+        int count = webhook_subscription_count();
+        if (count == 0) {
+            printf("No webhook subscriptions. Add one with /webhook add <url> [secret]\n");
+            return;
+        }
+        printf("Webhook subscriptions (%d):\n", count);
+        webhook_subscription_t subs[64];
+        int n = webhook_subscription_list(subs, 64);
+        for (int i = 0; i < n; i++) {
+            printf("  #%d: %s\n", i, subs[i].endpoint);
+            if (subs[i].max_retries > 0)
+                printf("      retries=%d backoff=%dms\n",
+                       subs[i].max_retries, subs[i].backoff_ms);
+            if (subs[i].header_count > 0) {
+                printf("      headers: ");
+                for (int j = 0; j < subs[i].header_count; j++)
+                    printf("%s=%s ", subs[i].headers[j].key, subs[i].headers[j].value);
+                printf("\n");
+            }
+        }
+        return;
+    }
+
+    if (strncmp(args, "add ", 4) == 0) {
+        const char *url = args + 4;
+        const char *secret = NULL;
+        char url_only[1024] = {0};
+        const char *sp = strchr(url, ' ');
+        if (sp) {
+            size_t ulen = (size_t)(sp - url);
+            if (ulen >= sizeof(url_only)) ulen = sizeof(url_only) - 1;
+            memcpy(url_only, url, ulen);
+            url_only[ulen] = '\0';
+            secret = sp + 1;
+            if (!*secret) secret = NULL;
+        } else {
+            snprintf(url_only, sizeof(url_only), "%s", url);
+        }
+
+        if (!url_only[0]) {
+            printf("Error: URL required. Usage: /webhook add <url> [secret]\n");
+            return;
+        }
+
+        int idx = webhook_subscription_add(url_only, secret, 3, 1000);
+        if (idx >= 0) {
+            printf("Subscription #%d added for %s\n", idx, url_only);
+            if (secret) printf("  Secret: %s\n", secret);
+        } else {
+            printf("Error: Failed to add subscription (max %d reached?)\n", WEBHOOK_SUBS_MAX);
+        }
+        return;
+    }
+
+    if (strncmp(args, "remove ", 7) == 0) {
+        int idx = atoi(args + 7);
+        if (webhook_subscription_remove(idx)) {
+            printf("Subscription #%d removed.\n", idx);
+        } else {
+            printf("Error: Subscription #%d not found.\n", idx);
+        }
+        return;
+    }
+
+    printf("Unknown subcommand: %s\n", args);
+    printf("Usage: /webhook list | add <url> [secret] | remove <id>\n");
 }

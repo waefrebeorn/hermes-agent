@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v356)
+# Goal Mantra — Slermes C (v357)
 
-324/0/16 (294 test files). 80 gaps. Phase 293: C04+C05 stale claims retired — profile mgmt + config editor PORTED. C10+C12 WON'T PORT. S5 25→20 gaps.
+324/0/16 (294 test files). 79 gaps. Phase 294: C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps.
 
 ## Loop
 
