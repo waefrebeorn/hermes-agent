@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v270 | Fork diverged — C/ lives only on fork | Suite 320/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 115 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6 all PORTED. Suite 320/0/0.**
+**v271 | Fork diverged — C/ lives only on fork | Suite 320/0/0 | 85 tools | 98 CLI**\n**Honest assessment: 115 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 278 (22.0% parity). S3+S6 all PORTED. Suite 320/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -97,7 +97,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v270. Suite 320/0/0, test files 278.**
+**S3: 0 gaps — all gateway helper files PORTED (G01-G13). G02 base.py and G06 wecom_callback.py reclassified PORTED (100% portable) via function-level API audit v271. Suite 320/0/0, test files 278.**
 
 ---
 

@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v270)**
+**BANNER — WuBu Slermes C Translation (v271)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v270                                          ║
+║  WuBu Slermes C v271                                          ║
 ║  320 tests · 115 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  115 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 203: S7 test expansion — 11 sanitize edge case tests.    ║
+║  Phase 204: S7 test expansion — 10 title edge case tests.   ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
