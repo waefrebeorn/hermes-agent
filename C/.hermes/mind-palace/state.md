@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 325/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 281 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 281 (+2 signal+wordwrap). v287.
+Suite: 328/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 282 | C src: 180
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 282 (+1 mattermost). v288.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -167,6 +167,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 218: ACP events test suite (S7 X01). test_acp_events.c — 76 assertions covering tool call ID tracking (register/pop/NULL safety/FIFO/session isolation), notification builders (tool_start/tool_complete/plan_update with edge cases). Bugfix: 3 NULL session_id sites in events.c (json_new_string(NULL) → json_new_string("")). Suite 325→325/0/0. Test files 279 (+1 acp_events). v285.
 ||- Phase 219: Signal helper test suite (J13, S7 X01). test_hermes_signal.c — 8 assertions covering signal_on, signal_default, signal_register_common, signal_safe_write, and NULL safety. Test files 279→280. Suite 325/0/0. v286.
 |- Phase 220: display_word_wrap test suite + bugfix. test_display_word_wrap.c — 16 assertions covering NULL/empty, exact boundary, word wrapping, existing newline preservation, multi-word, single char width, edge cases. Bugfix: capacity calc OBO in display_word_wrap() dropped trailing words (pos + wlen + 1 >= cap triggered prematurely). Suite 325/0/0. Test files 280→281. v287.
+|- Phase 221: Mattermost platform test suite (S7 X01). test_mattermost.c — 28 assertions covering mattermost_set_url (trailing slash, path, IP, empty, multiple slashes), mattermost_set_token (normal, empty, long truncation, special chars), mattermost_set_channel (normal, empty, dashes, long truncation), mattermost_get_chat_id (current channel, change reflection, NULL update), mattermost_get_text (normal, empty, missing field, no message, NULL, unicode, multi-line), set/get interaction. Suite 325→328/0/0. Test files 281→282. v288.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
