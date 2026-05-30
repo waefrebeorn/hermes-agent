@@ -1,4 +1,4 @@
-(v271)
+(v272)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-320/0/0 (278 test files). 115 gaps. Phase 204: S7 test expansion (10 title assertions).
+320/0/0 (278 test files). 115 gaps. Phase 205: strip_yaml_frontmatter() ported (S1 L27 depth).
 Next: S7 test expansion, S0 D09/D16 display depth, or S1 partials.

@@ -26,6 +26,11 @@ char *html_unescape(const char *text);
 /** html_strip_tags(text) — Remove all HTML tags, leaving text content. Caller free(). */
 char *html_strip_tags(const char *text);
 
+/** strip_yaml_frontmatter(content) — Remove YAML frontmatter (--- delimited).
+ *  Port of Python agent/prompt_builder.py _strip_yaml_frontmatter().
+ *  Caller free(). Returns NULL on NULL input. */
+char *strip_yaml_frontmatter(const char *content);
+
 #ifdef __cplusplus
 }
 #endif

@@ -163,3 +163,31 @@ char *html_strip_tags(const char *text) {
     out[o] = '\0';
     return out;
 }
+
+/* Strip YAML frontmatter (--- delimited) from content.
+ * Port of Python agent/prompt_builder.py _strip_yaml_frontmatter().
+ * If content starts with "---", finds closing "\n---" and returns content after it.
+ * Returns copy of content unchanged if no frontmatter found.
+ * Caller must free the returned string. Returns NULL on NULL input. */
+char *strip_yaml_frontmatter(const char *content) {
+    if (!content) return NULL;
+
+    /* Check if starts with --- */
+    if (strncmp(content, "---", 3) != 0)
+        return strdup(content);
+
+    /* Find closing \n--- */
+    const char *end = strstr(content + 3, "\n---");
+    if (!end)
+        return strdup(content);
+
+    /* Skip past closing --- and trailing newlines */
+    const char *body = end + 4;
+    while (*body == '\n') body++;
+
+    /* If body is empty (only frontmatter), return original */
+    if (!*body)
+        return strdup(content);
+
+    return strdup(body);
+}

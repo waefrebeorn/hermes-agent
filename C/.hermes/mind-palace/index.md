@@ -1,8 +1,8 @@
-(v271)
+(v272)
 
 # Slermes C — Walkway Index
 
-Battleship v34 — 115 gaps across 9 sectors. Phase 204: S7 test expansion (10 title assertions).
+Battleship v34 — 115 gaps across 9 sectors. Phase 205: strip_yaml_frontmatter() ported (prompt builder depth).
 Suite 320/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
 
 | File | Purpose |

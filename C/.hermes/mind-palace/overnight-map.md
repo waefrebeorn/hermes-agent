@@ -1,5 +1,5 @@
-# Overnight (v271)
+# Overnight (v272)
 
-Phase 204: S7 test expansion — 10 new title edge case assertions (exclamation/question, only-code-block, non-ASCII, very long input, tab/control, trailing ellipsis, multi-sentence). Assertions 12→22.
+Phase 205: strip_yaml_frontmatter() ported from Python agent/prompt_builder.py to lib/libhtml. 7 test assertions added. S1 L27 prompt builder depth.
 
 Next: S7 test expansion, S0 D09/D16 display depth, or S1 partials (L24-L28).

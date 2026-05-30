@@ -75,6 +75,32 @@ int main(void) {
     free(got);
 
     got = html_strip_tags("");
+    TEST("strip empty", got && strcmp(got, "") == 0);
+    free(got);
+
+    /* YAML frontmatter */
+    got = strip_yaml_frontmatter(NULL);
+    TEST("frontmatter NULL", got == NULL);
+
+    got = strip_yaml_frontmatter("Hello world");
+    TEST("frontmatter no ---", got && strcmp(got, "Hello world") == 0);
+    free(got);
+
+    got = strip_yaml_frontmatter("---\ntitle: Doc\n---\n# Body\nContent.");
+    TEST("frontmatter stripped", got && strcmp(got, "# Body\nContent.") == 0);
+    free(got);
+
+    got = strip_yaml_frontmatter("---\nkey: val\n---");
+    TEST("frontmatter only returns original", got && strcmp(got, "---\nkey: val\n---") == 0);
+    free(got);
+
+    got = strip_yaml_frontmatter("---\nunclosed");
+    TEST("frontmatter unclosed returns original", got && strcmp(got, "---\nunclosed") == 0);
+    free(got);
+
+    got = strip_yaml_frontmatter("---\nkey: val\n---\n\n\nBody after blanks.");
+    TEST("frontmatter trailing newlines stripped", got && strcmp(got, "Body after blanks.") == 0);
+    free(got);
 
     fprintf(stderr, "html: %d/%d passed\n", passed, total);
     return (passed == total) ? 0 : 1;
