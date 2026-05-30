@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v339)
+# Goal Mantra — Slermes C (v340)
 
-335/0/0 (292 test files). 94 gaps. Phase 272: S8 R02+R10 depth — tools_to_converse + token estimation + requests_verify + context extraction. Provider metadata 219-test suite, bedrock depth 160-test suite.
+335/0/0 (292 test files). 94 gaps. Phase 273: S8 R02+R10 depth — content_to_converse + pricing extraction. Provider metadata 238-test suite, bedrock depth 195-test suite.
 
 ## Loop
 

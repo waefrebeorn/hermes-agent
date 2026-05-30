@@ -29,6 +29,7 @@ static void test_resolve_auth_env_var(void);
 static void test_has_credentials(void);
 static void test_resolve_region(void);
 static void test_convert_tools_to_converse(void);
+static void test_convert_content_to_converse(void);
 
 /* Test data */
 static const message_t user_msg = {.role = MSG_USER, .content = (char*)"hello"};
@@ -443,6 +444,7 @@ int main(void) {
     test_has_credentials();
     test_resolve_region();
     test_convert_tools_to_converse();
+    test_convert_content_to_converse();
 
     printf("\n=== Overall: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
@@ -657,5 +659,139 @@ static void test_convert_tools_to_converse(void) {
         }
         json_free(r);
         json_free(tools);
+    }
+}
+
+/* ---- bedrock_convert_content_to_converse ---- */
+static void test_convert_content_to_converse(void) {
+    printf("\n[R02] bedrock_convert_content_to_converse:\n");
+    json_t *blocks;
+
+    /* NULL content */
+    blocks = bedrock_convert_content_to_converse(NULL);
+    TEST("null returns array", blocks != NULL && blocks->type == JSON_ARRAY);
+    TEST("null has one block", blocks && blocks->c.count == 1);
+    if (blocks && blocks->c.count > 0) {
+        const char *t = json_get_str(blocks->c.items[0], "text", "");
+        TEST("null yields space", t && strcmp(t, " ") == 0);
+    }
+    json_free(blocks);
+
+    /* JSON_NULL */
+    blocks = bedrock_convert_content_to_converse(json_null());
+    TEST("json_null has block", blocks && blocks->c.count == 1);
+    json_free(blocks);
+
+    /* Plain string */
+    {
+        json_t *s = json_string("Hello world");
+        blocks = bedrock_convert_content_to_converse(s);
+        TEST("string has block", blocks && blocks->c.count == 1);
+        if (blocks && blocks->c.count > 0) {
+            const char *t = json_get_str(blocks->c.items[0], "text", "");
+            TEST("text preserved", t && strcmp(t, "Hello world") == 0);
+        }
+        json_free(blocks);
+        json_free(s);
+    }
+
+    /* Empty string → space */
+    {
+        json_t *s = json_string("");
+        blocks = bedrock_convert_content_to_converse(s);
+        TEST("empty becomes space", blocks && blocks->c.count == 1);
+        if (blocks && blocks->c.count > 0) {
+            const char *t = json_get_str(blocks->c.items[0], "text", "");
+            TEST("space text", t && strcmp(t, " ") == 0);
+        }
+        json_free(blocks);
+        json_free(s);
+    }
+
+    /* Content array with text parts */
+    {
+        json_t *part1 = json_object();
+        json_set(part1, "type", json_string("text"));
+        json_set(part1, "text", json_string("First part"));
+        json_t *part2 = json_object();
+        json_set(part2, "type", json_string("text"));
+        json_set(part2, "text", json_string("Second part"));
+        json_t *arr = json_array();
+        json_append(arr, part1);
+        json_append(arr, part2);
+
+        blocks = bedrock_convert_content_to_converse(arr);
+        TEST("array 2 parts", blocks && blocks->c.count == 2);
+        if (blocks && blocks->c.count == 2) {
+            const char *t1 = json_get_str(blocks->c.items[0], "text", "");
+            TEST("first text", t1 && strcmp(t1, "First part") == 0);
+            const char *t2 = json_get_str(blocks->c.items[1], "text", "");
+            TEST("second text", t2 && strcmp(t2, "Second part") == 0);
+        }
+        json_free(blocks);
+        json_free(arr);
+    }
+
+    /* Image with data: URI */
+    {
+        json_t *url_obj = json_object();
+        json_set(url_obj, "url", json_string("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="));
+        json_t *part = json_object();
+        json_set(part, "type", json_string("image_url"));
+        json_set(part, "image_url", url_obj);
+        json_t *arr = json_array();
+        json_append(arr, part);
+
+        blocks = bedrock_convert_content_to_converse(arr);
+        TEST("image has block", blocks && blocks->c.count == 1);
+        if (blocks && blocks->c.count > 0) {
+            json_t *img = json_obj_get(blocks->c.items[0], "image");
+            TEST("has image object", img != NULL);
+            if (img) {
+                const char *fmt = json_get_str(img, "format", "");
+                TEST("png format", fmt && strcmp(fmt, "png") == 0);
+                json_t *src = json_obj_get(img, "source");
+                TEST("has source", src != NULL);
+                if (src) {
+                    const char *bytes = json_get_str(src, "bytes", "");
+                    TEST("has bytes", bytes && strstr(bytes, "iVBOR") != NULL);
+                }
+            }
+        }
+        json_free(blocks);
+        json_free(arr);
+    }
+
+    /* Remote URL image → text reference */
+    {
+        json_t *url_obj = json_object();
+        json_set(url_obj, "url", json_string("https://example.com/image.jpg"));
+        json_t *part = json_object();
+        json_set(part, "type", json_string("image_url"));
+        json_set(part, "image_url", url_obj);
+        json_t *arr = json_array();
+        json_append(arr, part);
+
+        blocks = bedrock_convert_content_to_converse(arr);
+        TEST("remote url has block", blocks && blocks->c.count == 1);
+        if (blocks && blocks->c.count > 0) {
+            const char *t = json_get_str(blocks->c.items[0], "text", "");
+            TEST("text reference", t && strstr(t, "[Image:") != NULL);
+        }
+        json_free(blocks);
+        json_free(arr);
+    }
+
+    /* Empty array → fallback space */
+    {
+        json_t *arr = json_array();
+        blocks = bedrock_convert_content_to_converse(arr);
+        TEST("empty array space", blocks && blocks->c.count == 1);
+        if (blocks && blocks->c.count > 0) {
+            const char *t = json_get_str(blocks->c.items[0], "text", "");
+            TEST("fallback space", t && strcmp(t, " ") == 0);
+        }
+        json_free(blocks);
+        json_free(arr);
     }
 }

@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v339 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+| v340 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
 |**Honest assessment: 94 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.

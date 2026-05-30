@@ -1385,3 +1385,132 @@ int provider_extract_max_completion_tokens(const json_t *payload) {
     }
     return -1;
 }
+
+/* ---- provider_extract_pricing ---- */
+/* Port of Python model_metadata._extract_pricing().
+ * Extracts pricing from model metadata payload.
+ * First checks for novita-specific keys, then iterates nested dicts
+ * using alias maps for prompt/completion/request/cache_read/cache_write. */
+json_t *provider_extract_pricing(const json_t *payload) {
+    if (!payload || payload->type != JSON_OBJECT) return NULL;
+
+    /* First check for novita-specific pricing keys */
+    json_t *novita_input = json_obj_get(payload, "input_token_price_per_m");
+    json_t *novita_output = json_obj_get(payload, "output_token_price_per_m");
+    if (novita_input || novita_output) {
+        json_t *pricing = json_object();
+        if (novita_input && novita_input->type == JSON_NUMBER) {
+            /* Convert: input_token_price_per_m / 10_000 / 1_000_000 */
+            double val = novita_input->num_val / 10000000000.0;
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%.12g", val);
+            json_set(pricing, "prompt", json_string(buf));
+        }
+        if (novita_output && novita_output->type == JSON_NUMBER) {
+            double val = novita_output->num_val / 10000000000.0;
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%.12g", val);
+            json_set(pricing, "completion", json_string(buf));
+        }
+        return pricing;
+    }
+
+    /* Alias maps for pricing keys */
+    typedef struct {
+        const char *target;
+        const char *aliases[6];
+    } pricing_alias_group_t;
+
+    pricing_alias_group_t groups[] = {
+        {"prompt",     {"prompt", "input", "input_cost_per_token", "prompt_token_cost", NULL}},
+        {"completion", {"completion", "output", "output_cost_per_token", "completion_token_cost", NULL}},
+        {"request",    {"request", "request_cost", NULL}},
+        {"cache_read", {"cache_read", "cached_prompt", "input_cache_read", "cache_read_cost_per_token", NULL}},
+        {"cache_write",{"cache_write", "cache_creation", "input_cache_write", "cache_write_cost_per_token", NULL}},
+    };
+    int num_groups = sizeof(groups) / sizeof(groups[0]);
+
+    /* Iterate over nested dicts in the payload recursively */
+    /* We use a simple 2-level recursion: payload and any immediate child dicts */
+    const json_t *dicts[32];
+    int num_dicts = 0;
+    dicts[num_dicts++] = payload;
+
+    /* Add first-level child dicts */
+    for (size_t i = 0; i < payload->c.count && num_dicts < 32; i++) {
+        if (payload->c.items[i]->type == JSON_OBJECT)
+            dicts[num_dicts++] = payload->c.items[i];
+    }
+
+    for (int d = 0; d < num_dicts; d++) {
+        const json_t *mapping = dicts[d];
+
+        /* Quick check: does this dict have ANY pricing-related keys? */
+        bool has_pricing_key = false;
+        for (size_t i = 0; i < mapping->c.count && !has_pricing_key; i++) {
+            const char *key = mapping->c.keys ? mapping->c.keys[i] : "";
+            if (!key) continue;
+            size_t klen = strlen(key);
+            char *klower = malloc(klen + 1);
+            if (!klower) continue;
+            for (size_t j = 0; j < klen; j++)
+                klower[j] = tolower((unsigned char)key[j]);
+            klower[klen] = '\0';
+            for (int g = 0; g < num_groups && !has_pricing_key; g++) {
+                for (int a = 0; groups[g].aliases[a]; a++) {
+                    if (strcmp(klower, groups[g].aliases[a]) == 0) {
+                        has_pricing_key = true;
+                        break;
+                    }
+                }
+            }
+            free(klower);
+        }
+
+        if (!has_pricing_key) continue;
+
+        /* Build pricing dict from this mapping */
+        json_t *pricing = json_object();
+        int found = 0;
+
+        for (int g = 0; g < num_groups; g++) {
+            for (int a = 0; groups[g].aliases[a]; a++) {
+                for (size_t i = 0; i < mapping->c.count; i++) {
+                    const char *key = mapping->c.keys ? mapping->c.keys[i] : "";
+                    if (!key) continue;
+                    size_t klen = strlen(key);
+                    char *klower = malloc(klen + 1);
+                    if (!klower) continue;
+                    for (size_t j = 0; j < klen; j++)
+                        klower[j] = tolower((unsigned char)key[j]);
+                    klower[klen] = '\0';
+                    bool match = (strcmp(klower, groups[g].aliases[a]) == 0);
+                    free(klower);
+                    if (!match) continue;
+
+                    json_t *val = mapping->c.items[i];
+                    if (val->type == JSON_NULL) continue;
+                    if (val->type == JSON_STRING && (!val->str_val || !*val->str_val))
+                        continue;
+                    if (val->type == JSON_NUMBER) {
+                        char buf[64];
+                        snprintf(buf, sizeof(buf), "%.12g", val->num_val);
+                        json_set(pricing, groups[g].target, json_string(buf));
+                    } else if (val->type == JSON_STRING) {
+                        json_set(pricing, groups[g].target, json_string(val->str_val));
+                    } else {
+                        /* Other types: skip */
+                        continue;
+                    }
+                    found++;
+                    break;
+                }
+            }
+        }
+
+        if (found > 0) return pricing;
+        json_free(pricing);
+    }
+
+    return NULL;
+}

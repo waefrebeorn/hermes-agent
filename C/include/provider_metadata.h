@@ -250,6 +250,13 @@ int provider_extract_context_length(const json_t *payload);
  * Returns the value or -1 if not found. */
 int provider_extract_max_completion_tokens(const json_t *payload);
 
+/* Extract pricing from a model metadata payload JSON object.
+ * Port of Python model_metadata._extract_pricing().
+ * Checks for novita-specific keys first, then iterates nested dicts
+ * using alias maps for prompt/completion/request/cache_read/cache_write.
+ * Returns json_t* dict (caller must free) or NULL on empty/no pricing. */
+json_t *provider_extract_pricing(const json_t *payload);
+
 #ifdef __cplusplus
 }
 #endif

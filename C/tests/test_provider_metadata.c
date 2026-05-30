@@ -38,6 +38,7 @@ static void test_estimate_tokens_rough(void);
 static void test_provider_resolve_requests_verify(void);
 static void test_provider_extract_context_length(void);
 static void test_provider_extract_max_completion_tokens(void);
+static void test_provider_extract_pricing(void);
 
 int main(void) {
 
@@ -481,6 +482,7 @@ int main(void) {
     test_provider_resolve_requests_verify();
     test_provider_extract_context_length();
     test_provider_extract_max_completion_tokens();
+    test_provider_extract_pricing();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -727,6 +729,143 @@ static void test_provider_extract_max_completion_tokens(void) {
     {
         json_t *p = json_object();
         TEST("empty object", provider_extract_max_completion_tokens(p) == -1);
+        json_free(p);
+    }
+}
+
+/* ---- provider_extract_pricing ---- */
+static void test_provider_extract_pricing(void) {
+    printf("\n[R10] provider_extract_pricing:\n");
+    json_t *pricing;
+
+    /* NULL payload */
+    pricing = provider_extract_pricing(NULL);
+    TEST("null payload", pricing == NULL);
+
+    /* Empty object */
+    {
+        json_t *p = json_object();
+        pricing = provider_extract_pricing(p);
+        TEST("empty object", pricing == NULL);
+        json_free(p);
+    }
+
+    /* Novita pricing */
+    {
+        json_t *p = json_object();
+        json_set(p, "input_token_price_per_m", json_number(150));
+        json_set(p, "output_token_price_per_m", json_number(600));
+        pricing = provider_extract_pricing(p);
+        TEST("novita non-null", pricing != NULL);
+        if (pricing) {
+            const char *prompt = json_get_str(pricing, "prompt", "");
+            const char *completion = json_get_str(pricing, "completion", "");
+            TEST("novita prompt", prompt && strlen(prompt) > 0);
+            TEST("novita completion", completion && strlen(completion) > 0);
+        }
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Standard prompt pricing via alias map */
+    {
+        json_t *pricing_obj = json_object();
+        json_set(pricing_obj, "prompt", json_number(0.000003));
+        json_t *p = json_object();
+        json_set(p, "pricing", pricing_obj);
+
+        pricing = provider_extract_pricing(p);
+        TEST("standard prompt", pricing != NULL);
+        if (pricing) {
+            const char *prompt = json_get_str(pricing, "prompt", "");
+            TEST("has prompt", prompt && strlen(prompt) > 0);
+        }
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Input alias */
+    {
+        json_t *p = json_object();
+        json_set(p, "input", json_number(2.5e-6));
+        pricing = provider_extract_pricing(p);
+        TEST("input alias", pricing != NULL);
+        if (pricing) {
+            const char *prompt = json_get_str(pricing, "prompt", "");
+            TEST("input -> prompt", prompt && strlen(prompt) > 0);
+        }
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Completion via output alias */
+    {
+        json_t *p = json_object();
+        json_set(p, "output", json_number(1.0e-5));
+        pricing = provider_extract_pricing(p);
+        TEST("output alias", pricing != NULL);
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Both prompt and completion */
+    {
+        json_t *p = json_object();
+        json_set(p, "prompt", json_number(3e-6));
+        json_set(p, "completion", json_number(1.5e-5));
+        pricing = provider_extract_pricing(p);
+        TEST("both pricing", pricing != NULL);
+        if (pricing) {
+            const char *prompt = json_get_str(pricing, "prompt", "");
+            const char *completion = json_get_str(pricing, "completion", "");
+            TEST("has both prompt", prompt && strlen(prompt) > 0);
+            TEST("has both completion", completion && strlen(completion) > 0);
+        }
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Nested pricing (in sub-object) */
+    {
+        json_t *inner = json_object();
+        json_set(inner, "prompt", json_number(5e-7));
+        json_set(inner, "completion", json_number(2e-6));
+        json_t *p = json_object();
+        json_set(p, "costs", inner);
+        pricing = provider_extract_pricing(p);
+        TEST("nested pricing", pricing != NULL);
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* NULL values should be skipped */
+    {
+        json_t *p = json_object();
+        json_set(p, "prompt", json_null());
+        json_set(p, "completion", json_number(1.0e-5));
+        pricing = provider_extract_pricing(p);
+        TEST("skip null prompt", pricing != NULL);
+        if (pricing) {
+            const char *completion = json_get_str(pricing, "completion", "");
+            TEST("has completion only", completion && strlen(completion) > 0);
+            const char *prompt = json_get_str(pricing, "prompt", "__missing__");
+            TEST("prompt absent", prompt && strcmp(prompt, "__missing__") == 0);
+        }
+        json_free(pricing);
+        json_free(p);
+    }
+
+    /* Cache-related pricing */
+    {
+        json_t *p = json_object();
+        json_set(p, "cache_read", json_number(1.0e-6));
+        pricing = provider_extract_pricing(p);
+        TEST("cache_read", pricing != NULL);
+        if (pricing) {
+            const char *cr = json_get_str(pricing, "cache_read", "");
+            TEST("has cache_read", cr && strlen(cr) > 0);
+        }
+        json_free(pricing);
         json_free(p);
     }
 }

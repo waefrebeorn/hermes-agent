@@ -1,4 +1,4 @@
-# Overnight Map — Recent Phases (v339)
+# Overnight Map — Recent Phases (v340)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
@@ -9,3 +9,4 @@
 | 270 | S8 R04 depth — extract + build_contents. 36 new assertions (130→166). Suite 335/0/0. v337. | 94 gaps | 94 gaps |
 | 271 | S8 R02+R10 depth — batch 10 functions (5 R02 bedrock + 5 R10 model_metadata). 104 new assertions. Suite 335/0/0. v338. | 94 gaps | 94 gaps |
 | 272 | S8 R02+R10 depth — batch 5 functions (convert_tools, estimate_tokens, resolve_verify, extract context/max_tokens). 54 new assertions. Suite 335/0/0. v339. | 94 gaps | 94 gaps |
+| 273 | S8 R02+R10 depth — batch 2 functions (convert_content_to_converse, extract_pricing). ~54 new assertions. Suite 335/0/0. v340. | 94 gaps | 94 gaps |

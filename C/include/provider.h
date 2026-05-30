@@ -217,6 +217,7 @@ const char *bedrock_resolve_auth_env_var(void);
 bool bedrock_has_credentials(void);
 const char *bedrock_resolve_region(void);
 json_t *bedrock_convert_tools_to_converse(const json_t *tools);
+json_t *bedrock_convert_content_to_converse(const json_t *content);
 
 /* Google provider utility functions */
 bool google_is_native_base_url(const char *base_url);

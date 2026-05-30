@@ -892,6 +892,125 @@ json_t *bedrock_convert_tools_to_converse(const json_t *tools) {
     return result;
 }
 
+/* ---- bedrock_convert_content_to_converse ---- */
+/* Port of Python bedrock_adapter._convert_content_to_converse().
+ * Converts OpenAI message content to Bedrock Converse content blocks.
+ * Handles: NULL→[{"text":" "}], plain string→[{"text":"..."}],
+ * content arrays with text/image_url parts, data: URI base64 images. */
+json_t *bedrock_convert_content_to_converse(const json_t *content) {
+    json_t *blocks = json_array();
+    if (!blocks) return NULL;
+
+    /* NULL or JSON_NULL → single space text block */
+    if (!content || content->type == JSON_NULL) {
+        json_t *block = json_object();
+        json_set(block, "text", json_string(" "));
+        json_append(blocks, block);
+        return blocks;
+    }
+
+    /* Plain string → text block */
+    if (content->type == JSON_STRING) {
+        const char *text = content->str_val ? content->str_val : "";
+        /* Skip leading whitespace for empty-check */
+        while (*text == ' ' || *text == '\t' || *text == '\n') text++;
+        json_t *block = json_object();
+        json_set(block, "text", json_string(*text ? content->str_val : " "));
+        json_append(blocks, block);
+        return blocks;
+    }
+
+    /* JSON array → iterate parts */
+    if (content->type == JSON_ARRAY) {
+        for (size_t i = 0; i < content->c.count; i++) {
+            json_t *part = content->c.items[i];
+            if (!part) continue;
+
+            /* Plain string inside array */
+            if (part->type == JSON_STRING) {
+                json_t *block = json_object();
+                json_set(block, "text", json_string(part->str_val ? part->str_val : " "));
+                json_append(blocks, block);
+                continue;
+            }
+
+            if (part->type != JSON_OBJECT) continue;
+
+            const char *part_type = json_get_str(part, "type", "");
+
+            if (strcmp(part_type, "text") == 0) {
+                const char *text = json_get_str(part, "text", "");
+                if (!text || !*text) text = " ";
+                json_t *block = json_object();
+                json_set(block, "text", json_string(text));
+                json_append(blocks, block);
+
+            } else if (strcmp(part_type, "image_url") == 0) {
+                json_t *image_url_obj = json_obj_get(part, "image_url");
+                const char *url = image_url_obj ?
+                    json_get_str(image_url_obj, "url", "") : "";
+
+                if (url && strncmp(url, "data:", 5) == 0) {
+                    /* Parse data: URI: data:image/jpeg;base64,/9j/... */
+                    const char *comma = strchr(url, ',');
+                    const char *header = url + 5; /* skip "data:" */
+                    const char *data = comma ? comma + 1 : "";
+                    size_t header_len = comma ? (size_t)(comma - url - 5) : 0;
+
+                    /* Extract MIME type from header */
+                    const char *mime_type = "image/jpeg";
+                    char mime_buf[64] = "";
+                    if (header_len > 0 && header_len < sizeof(mime_buf)) {
+                        memcpy(mime_buf, header, header_len);
+                        mime_buf[header_len] = '\0';
+                        /* Split on ';' to get the MIME type */
+                        char *semi = strchr(mime_buf, ';');
+                        if (semi) *semi = '\0';
+                        if (mime_buf[0]) mime_type = mime_buf;
+                    }
+
+                    /* Extract format from MIME type (part after '/') */
+                    const char *format = strchr(mime_type, '/');
+                    format = format ? format + 1 : "jpeg";
+
+                    json_t *source = json_object();
+                    json_set(source, "bytes", json_string(data));
+
+                    json_t *image = json_object();
+                    json_set(image, "format", json_string(format));
+                    json_set(image, "source", source);
+
+                    json_t *block = json_object();
+                    json_set(block, "image", image);
+                    json_append(blocks, block);
+                } else {
+                    /* Remote URL → text reference */
+                    char ref[1024];
+                    snprintf(ref, sizeof(ref), "[Image: %s]", url ? url : "");
+                    json_t *block = json_object();
+                    json_set(block, "text", json_string(ref));
+                    json_append(blocks, block);
+                }
+            }
+        }
+
+        /* If no blocks were added, return [{"text":" "}] */
+        if (blocks->c.count == 0) {
+            json_t *block = json_object();
+            json_set(block, "text", json_string(" "));
+            json_append(blocks, block);
+        }
+        return blocks;
+    }
+
+    /* Fallback: convert to string representation */
+    /* For non-string/non-array content, return [{"text": " "}] */
+    json_t *block = json_object();
+    json_set(block, "text", json_string(" "));
+    json_append(blocks, block);
+    return blocks;
+}
+
 const provider_ops_t PROVIDER_OPS_BEDROCK = {
     .build_url = bedrock_build_url,
     .build_headers = bedrock_build_headers,
