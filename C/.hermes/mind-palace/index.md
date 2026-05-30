@@ -1,8 +1,8 @@
-(v266)
+(v267)
 
 # Slermes C — Walkway Index
 
-Battleship v34 — 119 gaps across 9 sectors. Phase 199: terminal_prompt_for_sudo_password() ported (5 tests).
+Battleship v34 — 119 gaps across 9 sectors. Phase 200: sudo password piped into PTY master fd for sudo -S.
 Suite 320/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
 
 | File | Purpose |

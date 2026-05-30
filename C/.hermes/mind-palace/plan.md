@@ -1,9 +1,9 @@
-(v266)
+(v267)
 
 ## Immediate Next
 
-S6 B07 terminal depth — terminal_prompt_for_sudo_password() ported (Phase 199, 5 tests).
-Next: PTY stdin pipe for sudo password, remaining B08 send_message depth, or S7 test expansion.
+S6 B07 terminal depth — sudo password piped into PTY master fd for sudo -S (Phase 200).
+Next: B08 send_message remaining depth, S3 G02/G06 depth, or S7 test expansion.
 
 ## Pipeline
 
@@ -12,7 +12,7 @@ S6 B07 depth (terminal):
 - terminal_rewrite_compound_background() ported ✅ (Phase 197, 12 tests)
 - _transform_sudo() wired into terminal_handler() ✅ (Phase 198, 7 tests)
 - terminal_prompt_for_sudo_password() ported ✅ (Phase 199, 5 tests)
-- PTY stdin pipe for sudo password — pending (write password to master_fd)
+- PTY stdin pipe for sudo password ✅ (Phase 200 — write password to master_fd)
 
 S6 B08 depth (send_message):
 - validate_media_path() ported ✅ (Phase 194)
@@ -26,12 +26,8 @@ S3:
 - G06 wecom_callback remaining
 
 S7 test coverage (278/1262 test files = 22.0%):
-- Phase 195: media_validation test suite (11 tests) ✅
-- Phase 196: terminal_sudo_rewrite (24 tests) ✅
-- Phase 197: terminal_compound_background (12 tests) ✅
-- Phase 198: transform_sudo wiring (7 tests) ✅
-- Phase 199: sudo_password_prompt (5 tests) ✅
+- Phases 195-200: 6 test suites added (59 new tests) ✅
 
 ## Future
 
-S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
+B08 send_message remaining depth, S3 G02/G06 depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
