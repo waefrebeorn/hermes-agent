@@ -5,6 +5,9 @@
 # IDE
 # Temp
 # Test binaries
+# Stray compilation artifacts
+-lm
+
 *.a
 *.o
 *.out

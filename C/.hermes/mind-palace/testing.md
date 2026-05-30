@@ -1,7 +1,8 @@
-(v366)
+(v368)
 
-335/0/15, 289 test files. All pass. 78 gaps. Phase 302: S7 proc test expansion — 21 new edge case assertions (15→36).
+325/0/14, 289 test files. All pass. 78 gaps. Phase 304: S7 YAML edge case expansion — 53 new assertions (6→59).
 
+Phase 304: S7 YAML edge case expansion — 53 new assertions (6→59), full API coverage: lists, map_keys, to_json_string, multi-doc, file, NULL safety, boolean variants, negatives, nesting, comments. v368.
 Phase 302: S7 proc edge case expansion — PID 0/invalid/large, NULL safety, load_avg NULL params, vm>=rss, pid==getpid(), consistency, sanity bounds. v366.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).

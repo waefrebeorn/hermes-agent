@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v367)
+# Entry — Slermes C Parity (v368)
 
-Phase 303: S7 secrets test expansion — 22 assertions (14→22). 78 gaps.
+Phase 304: S7 YAML edge case expansion — 59 assertions (6→59). 78 gaps.

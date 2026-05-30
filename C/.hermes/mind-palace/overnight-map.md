@@ -34,4 +34,5 @@
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
 | 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
-| 302 | S7 X09 proc edge case expansion — 21 new assertions (15→36). PID 0/invalid/large, NULL safety, load_avg NULL params, vm>=rss, pid==getpid(), consistency, sanity bounds. Suite 335/0/15. v366. |
+| 303 | S7 X09 secrets edge case expansion — 8 new assertions (14→22). Secrets: empty BSM key, BSM key with space, BSM at start/end, BSM without colon, very long input, NULL strict mode passthrough, special chars in BSM key, separated refs. Suite 335/0/15. v367. |
+| 304 | S7 X09 YAML edge case expansion — 53 new assertions (6→59). Full API coverage: lists (count/get), map_keys, to_json_string, multi-document, file parsing, NULL safety, boolean variants (yes/no/on/off), negative integers, deep nesting, empty/whitespace docs, comments, quoted values. Suite 325/0/14. v368. |
