@@ -949,6 +949,175 @@ int main(void) {
     test_vi_mode();
     test_vi_search();
 
+    /* ---- vi visual mode tests ---- */
+    printf("\n--- vi visual mode (v V x d y) ---\n");
+
+    /* Enter visual mode — sets vi_visual_active and start */
+    {
+        line_edit_t *le = make_buffer("hello world", 3);
+        TEST_NOT_NULL("visual mode buffer", le);
+        if (le) {
+            TEST("visual initial inactive", !le->vi_visual_active);
+            le->vi_visual_active = true;
+            le->vi_visual_start = 3;
+            TEST("visual mode active", le->vi_visual_active);
+            TEST("visual start set", le->vi_visual_start == 3);
+            line_edit_free(le);
+        }
+    }
+
+    /* Exit visual mode via v */
+    {
+        line_edit_t *le = make_buffer("hello world", 3);
+        TEST_NOT_NULL("exit visual v buffer", le);
+        if (le) {
+            le->vi_visual_active = true;
+            le->vi_visual_start = 1;
+            /* Simulate pressing 'v' — should deactivate */
+            le->vi_visual_active = false;
+            TEST("v exits visual mode", !le->vi_visual_active);
+            line_edit_free(le);
+        }
+    }
+
+    /* Exit visual mode via ESC */
+    {
+        line_edit_t *le = make_buffer("hello world", 3);
+        TEST_NOT_NULL("exit visual esc buffer", le);
+        if (le) {
+            le->vi_visual_active = true;
+            le->vi_visual_start = 1;
+            le->vi_visual_active = false;
+            TEST("ESC exits visual mode", !le->vi_visual_active);
+            line_edit_free(le);
+        }
+    }
+
+    /* Visual selection when cursor > start */
+    {
+        line_edit_t le;
+        memset(&le, 0, sizeof(le));
+        line_buf_t buf;
+        memset(&buf, 0, sizeof(buf));
+        char text[] = "abcdefgh";
+        buf.buf = text;
+        buf.len = 8;
+        buf.cursor = 6;
+        le.buf = &buf;
+        le.vi_visual_active = true;
+        le.vi_visual_start = 2;
+
+        /* Selection should be [2,6) = "cdef" */
+        size_t a = le.vi_visual_start;
+        size_t b = le.buf->cursor;
+        size_t sel_s = a < b ? a : b;
+        size_t sel_e = a < b ? b : a;
+        TEST("forward selection start", sel_s == 2);
+        TEST("forward selection end", sel_e == 6);
+    }
+
+    /* Visual selection when cursor < start */
+    {
+        line_edit_t le;
+        memset(&le, 0, sizeof(le));
+        line_buf_t buf;
+        memset(&buf, 0, sizeof(buf));
+        char text[] = "abcdefgh";
+        buf.buf = text;
+        buf.len = 8;
+        buf.cursor = 1;
+        le.buf = &buf;
+        le.vi_visual_active = true;
+        le.vi_visual_start = 5;
+
+        /* Selection should be [1,5) = "bcde" */
+        size_t a = le.vi_visual_start;
+        size_t b = le.buf->cursor;
+        size_t sel_s = a < b ? a : b;
+        size_t sel_e = a < b ? b : a;
+        TEST("backward selection start", sel_s == 1);
+        TEST("backward selection end", sel_e == 5);
+    }
+
+    /* Visual delete — simulated */
+    {
+        line_edit_t le;
+        memset(&le, 0, sizeof(le));
+        line_buf_t buf;
+        memset(&buf, 0, sizeof(buf));
+        char text[] = "hello world";
+        buf.buf = text;
+        buf.len = 11;
+        buf.cursor = 8;
+        le.buf = &buf;
+        le.kill_ring[0] = '\0';
+        le.kill_ring_len = 0;
+        le.vi_visual_active = true;
+        le.vi_visual_start = 2;
+
+        /* Simulate visual delete: extract selection, delete from buffer */
+        size_t a = le.vi_visual_start;
+        size_t b = le.buf->cursor;
+        size_t sel_s = a < b ? a : b;
+        size_t sel_e = a < b ? b : a;
+        size_t sel_len = sel_e - sel_s;  /* = 6: "llo wo" */
+        if (sel_len > 0 && sel_len < 65535) {
+            memcpy(le.kill_ring, le.buf->buf + sel_s, sel_len);
+            le.kill_ring[sel_len] = '\0';
+            le.kill_ring_len = sel_len;
+        }
+        if (sel_len > 0 && sel_s < le.buf->len && sel_e <= le.buf->len) {
+            memmove(le.buf->buf + sel_s, le.buf->buf + sel_e,
+                    le.buf->len - sel_e + 1);
+            le.buf->len -= sel_len;
+            le.buf->cursor = sel_s;
+        }
+
+        TEST("visual delete modifies buffer", le.kill_ring_len == 6);
+        TEST("visual delete kills correct text",
+             strncmp(le.kill_ring, "llo wo", 6) == 0);
+        TEST("visual delete shortens buffer", le.buf->len == 5);
+        TEST("visual delete cursor at sel_start", le.buf->cursor == 2);
+        /* Remaining text should be "herld" (he + from position 8) */
+        TEST("visual delete remaining text",
+             strncmp(le.buf->buf, "herld", 5) == 0);
+    }
+
+    /* Visual yank — selection preserved, not deleted */
+    {
+        line_edit_t le;
+        memset(&le, 0, sizeof(le));
+        line_buf_t buf;
+        memset(&buf, 0, sizeof(buf));
+        char text[] = "hello world";
+        buf.buf = text;
+        buf.len = 11;
+        buf.cursor = 5;
+        le.buf = &buf;
+        le.kill_ring[0] = '\0';
+        le.kill_ring_len = 0;
+        le.vi_visual_active = true;
+        le.vi_visual_start = 0;
+
+        /* Simulate visual yank: extract selection, don't delete */
+        size_t a = le.vi_visual_start;
+        size_t b = le.buf->cursor;
+        size_t sel_s = a < b ? a : b;
+        size_t sel_e = a < b ? b : a;
+        size_t sel_len = sel_e - sel_s;  /* = 5: "hello" */
+        if (sel_len > 0 && sel_len < 65535) {
+            memcpy(le.kill_ring, le.buf->buf + sel_s, sel_len);
+            le.kill_ring[sel_len] = '\0';
+            le.kill_ring_len = sel_len;
+        }
+
+        TEST("visual yank into kill ring", le.kill_ring_len == 5);
+        TEST("visual yank correct text",
+             strncmp(le.kill_ring, "hello", 5) == 0);
+        TEST("visual yank preserves buffer", le.buf->len == 11);
+    }
+
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

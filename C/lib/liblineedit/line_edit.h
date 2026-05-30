@@ -56,6 +56,8 @@ typedef struct line_edit_t {
     char vi_search_pattern[LINE_EDIT_MAX_LINE]; /* pattern for / and ? search */
     size_t vi_search_pattern_len;         /* length of search pattern */
     bool vi_last_search_forward;          /* direction of last search (for n/N repeat) */
+    bool vi_visual_active;                /* visual mode active (v/V) */
+    size_t vi_visual_start;               /* cursor position when visual mode started */
 } line_edit_t;
 
 /* Create a line editor instance */

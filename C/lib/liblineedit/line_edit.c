@@ -169,19 +169,35 @@ static void term_exit_raw(void) {
 }
 
 /* Redraw current line after cursor position — with horizontal scrolling */
-static void term_redraw_line(const line_buf_t *lb) {
+static void term_redraw_line(const line_edit_t *le) {
+    const line_buf_t *lb = le->buf;
     /* Get terminal width */
     struct winsize ws;
     int term_w = 80;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 10)
         term_w = ws.ws_col;
 
+    /* Determine visual selection bounds */
+    int sel_start = -1, sel_end = -1;
+    if (le->vi_visual_active) {
+        size_t a = le->vi_visual_start;
+        size_t b = le->buf->cursor;
+        sel_start = (int)(a < b ? a : b);
+        sel_end   = (int)(a < b ? b : a);
+    }
+
     /* Reserve margin for scroll indicator */
     int margin = 3;  /* "> " prefix when scrolled */
 
     /* If buffer fits, simple redraw */
     if ((int)lb->len + margin <= term_w) {
-        printf("\r\033[K%s", lb->buf);
+        printf("\r\033[K");
+        for (int i = 0; i < (int)lb->len; i++) {
+            if (i >= sel_start && i < sel_end)
+                printf("\033[7m%c\033[27m", lb->buf[i]);
+            else
+                putchar(lb->buf[i]);
+        }
         size_t move_back = lb->len - lb->cursor;
         if (move_back > 0)
             printf("\033[%zuD", move_back);
@@ -189,7 +205,7 @@ static void term_redraw_line(const line_buf_t *lb) {
         return;
     }
 
-    /* Buffer wider than terminal — horizontal scroll */
+    /* Buffer wider than terminal - horizontal scroll */
     int view_w = term_w - margin;
     int cursor_vis = (int)lb->cursor;
     int scroll_offset = cursor_vis - view_w / 2;
@@ -199,7 +215,13 @@ static void term_redraw_line(const line_buf_t *lb) {
     if (scroll_offset < 0) scroll_offset = 0;
 
     printf("\r\033[K> ");
-    printf("%.*s", view_w, lb->buf + scroll_offset);
+    for (int i = 0; i < view_w && scroll_offset + i < (int)lb->len; i++) {
+        int idx = scroll_offset + i;
+        if (idx >= sel_start && idx < sel_end)
+            printf("\033[7m%c\033[27m", lb->buf[idx]);
+        else
+            putchar(lb->buf[idx]);
+    }
     int vis_cursor = cursor_vis - scroll_offset;
     int trailing = view_w - vis_cursor;
     if (trailing > 1)
@@ -540,7 +562,7 @@ static void do_tab_complete(line_edit_t *le) {
             line_buf_insert(le->buf, completion[i]);
         /* Add space */
         line_buf_insert(le->buf, ' ');
-        term_redraw_line(le->buf);
+        term_redraw_line(le);
     } else {
         /* Multiple matches — show them */
         printf("\n");
@@ -550,7 +572,7 @@ static void do_tab_complete(line_edit_t *le) {
             if (++col >= 3) { printf("\n"); col = 0; }
         }
         if (col > 0) printf("\n");
-        term_redraw_line(le->buf);
+        term_redraw_line(le);
     }
 
     /* Free matches */
@@ -629,7 +651,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
     if (prompt) {
         if (le->vi_mode == LINE_EDIT_MODE_NORMAL) {
             /* Show mode indicator before prompt in NORMAL mode */
-            printf("[NORMAL] %s", prompt);
+            printf("%s %s", le->vi_visual_active ? "[VISUAL]" : "[NORMAL]", prompt);
         } else {
             printf("%s", prompt);
         }
@@ -717,10 +739,10 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 if (sc == KEY_ENTER) {
                     if (match) {
                         line_buf_set(le->buf, match);
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                     } else {
                         line_buf_set(le->buf, saved_search);
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                     }
                     break;
                 }
@@ -733,7 +755,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
 
                 if (sc == KEY_ESC || sc == 7) {
                     line_buf_set(le->buf, saved_search);
-                    term_redraw_line(le->buf);
+                    term_redraw_line(le);
                     break;
                 }
 
@@ -763,7 +785,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         /* Ctrl-A: beginning of line */
         if (c == KEY_CTRL_A) {
             le->buf->cursor = 0;
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
@@ -771,7 +793,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         if (c == KEY_CTRL_B) {
             if (le->buf->cursor > 0) {
                 le->buf->cursor--;
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
             continue;
         }
@@ -779,7 +801,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         /* Ctrl-E: end of line */
         if (c == KEY_CTRL_E) {
             le->buf->cursor = le->buf->len;
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
@@ -787,7 +809,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         if (c == KEY_CTRL_F) {
             if (le->buf->cursor < le->buf->len) {
                 le->buf->cursor++;
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
             continue;
         }
@@ -795,7 +817,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         /* Ctrl-K: kill to end of line */
         if (c == KEY_CTRL_K) {
             line_edit_kill_line(le);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
@@ -808,20 +830,20 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         /* Ctrl-T: transpose characters */
         if (c == KEY_CTRL_T) {
             line_edit_transpose_chars(le);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
         /* Ctrl-Y: yank (paste killed text) */
         if (c == KEY_CTRL_Y) {
             line_edit_yank(le);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
         if (c == KEY_BACKSPACE) {
             line_buf_delete(le->buf);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
@@ -832,9 +854,9 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 le->vi_saved_line[LINE_EDIT_MAX_LINE - 1] = '\0';
                 le->vi_saved = true;
                 le->vi_mode = LINE_EDIT_MODE_NORMAL;
-                printf("\r\033[K[NORMAL]");
+            printf("\r\033[K%s", le->vi_visual_active ? "[VISUAL]" : "[NORMAL]");
                 if (prompt) printf("%s", prompt);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
                 fflush(stdout);
                 continue;
             }
@@ -896,7 +918,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         const char *hist = history_prev(le->history);
                         if (hist) {
                             line_buf_set(le->buf, hist);
-                            term_redraw_line(le->buf);
+                            term_redraw_line(le);
                         }
                         break;
                     }
@@ -907,32 +929,32 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         } else if (le->saved_line[0]) {
                             line_buf_set(le->buf, le->saved_line);
                         }
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                         break;
                     }
                     case KEY_RIGHT:
                         if (le->buf->cursor < le->buf->len) {
                             le->buf->cursor++;
-                            term_redraw_line(le->buf);
+                            term_redraw_line(le);
                         }
                         break;
                     case KEY_LEFT:
                         if (le->buf->cursor > 0) {
                             le->buf->cursor--;
-                            term_redraw_line(le->buf);
+                            term_redraw_line(le);
                         }
                         break;
                     case KEY_HOME:
                         le->buf->cursor = 0;
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                         break;
                     case KEY_END:
                         le->buf->cursor = le->buf->len;
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                         break;
                     case KEY_DELETE:
                         line_buf_delete_forward(le->buf);
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                         break;
                 }
             }
@@ -942,25 +964,25 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             /* Alt+F (forward word) */
             if (seq[0] == 'f' && seq[1] < 32) {
                 line_edit_cursor_word_forward(le);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
 
             /* Alt+B (backward word) */
             if (seq[0] == 'b' && seq[1] < 32) {
                 line_edit_cursor_word_backward(le);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
 
             /* Alt+D (kill word forward) */
             if (seq[0] == 'd' && seq[1] < 32) {
                 line_edit_kill_word_forward(le);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
 
             /* Alt+Enter (ESC \r) — insert literal newline */
             if (seq[0] == '\r') {
                 line_buf_insert(le->buf, '\n');
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
             continue;
         }
@@ -981,7 +1003,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 line_buf_delete(le->buf);
             while (le->buf->cursor > 0 && !isspace((unsigned char)le->buf->buf[le->buf->cursor - 1]))
                 line_buf_delete(le->buf);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
@@ -992,7 +1014,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             const char *hist = history_prev(le->history);
             if (hist) {
                 line_buf_set(le->buf, hist);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
             }
             continue;
         }
@@ -1005,13 +1027,56 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             } else if (le->saved_line[0]) {
                 line_buf_set(le->buf, le->saved_line);
             }
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
             continue;
         }
 
         /* Vi NORMAL mode keybindings */
         if (le->vi_mode == LINE_EDIT_MODE_NORMAL) {
             bool handled = true;
+
+            /* Visual mode: intercept v/V/ESC/x/d/y before NORMAL dispatch */
+            if (le->vi_visual_active) {
+                if (c == 'v' || c == 'V' || c == 27) {
+                    /* Exit visual mode */
+                    le->vi_visual_active = false;
+                } else if (c == 'x' || c == 'd') {
+                    /* Delete selection into kill ring */
+                    size_t a = le->vi_visual_start;
+                    size_t b = le->buf->cursor;
+                    size_t sel_s = a < b ? a : b;
+                    size_t sel_e = a < b ? b : a;
+                    size_t sel_len = sel_e - sel_s;
+                    if (sel_len > 0 && sel_len < MAX_KILL_RING - 1) {
+                        memcpy(le->kill_ring, le->buf->buf + sel_s, sel_len);
+                        le->kill_ring[sel_len] = '\0';
+                        le->kill_ring_len = sel_len;
+                    }
+                    /* Delete selection from buffer */
+                    if (sel_len > 0) {
+                        memmove(le->buf->buf + sel_s, le->buf->buf + sel_e,
+                                le->buf->len - sel_e + 1);
+                        le->buf->len -= sel_len;
+                        le->buf->cursor = sel_s;
+                    }
+                    le->vi_visual_active = false;
+                } else if (c == 'y') {
+                    /* Yank selection into kill ring */
+                    size_t a = le->vi_visual_start;
+                    size_t b = le->buf->cursor;
+                    size_t sel_s = a < b ? a : b;
+                    size_t sel_e = a < b ? b : a;
+                    size_t sel_len = sel_e - sel_s;
+                    if (sel_len > 0 && sel_len < MAX_KILL_RING - 1) {
+                        memcpy(le->kill_ring, le->buf->buf + sel_s, sel_len);
+                        le->kill_ring[sel_len] = '\0';
+                        le->kill_ring_len = sel_len;
+                    }
+                    le->vi_visual_active = false;
+                }
+                /* For all other keys (movement), fall through to switch below */
+            }
+
             switch (c) {
                 case 'h': /* left */
                     if (le->buf->cursor > 0) le->buf->cursor--;
@@ -1088,6 +1153,11 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         line_buf_set(le->buf, le->vi_saved_line);
                         le->vi_saved = false;
                     }
+                    break;
+                case 'v': /* visual mode (character-wise) */
+                case 'V': /* visual mode (line-wise, same behavior for now) */
+                    le->vi_visual_active = true;
+                    le->vi_visual_start = le->buf->cursor;
                     break;
                 case 'd': /* dd — delete line */
                 {
@@ -1250,7 +1320,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                                 break;
                             }
                         }
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                     }
                     break;
                 }
@@ -1262,7 +1332,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             le->buf->buf[le->buf->cursor] = next;
                             le->vi_last_change_op = 'r';
                             le->vi_last_change_param = next;
-                            term_redraw_line(le->buf);
+                            term_redraw_line(le);
                         }
                     }
                     break;
@@ -1275,7 +1345,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         else if (uc >= 'A' && uc <= 'Z')
                             le->buf->buf[le->buf->cursor] = uc + 32;
                         le->vi_last_change_op = '~';
-                        term_redraw_line(le->buf);
+                        term_redraw_line(le);
                     }
                     break;
                 case 'f': /* find char forward */
@@ -1438,9 +1508,9 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             }
             if (handled) {
                 /* Redraw with mode indicator */
-                printf("\r\033[K[NORMAL]");
+            printf("\r\033[K%s", le->vi_visual_active ? "[VISUAL]" : "[NORMAL]");
                 if (prompt) printf("%s", prompt);
-                term_redraw_line(le->buf);
+                term_redraw_line(le);
                 fflush(stdout);
                 continue;
             }
@@ -1449,7 +1519,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         /* Printable characters */
         if (c >= 32 && c <= 126) {
             line_buf_insert(le->buf, c);
-            term_redraw_line(le->buf);
+            term_redraw_line(le);
         }
     }
 
