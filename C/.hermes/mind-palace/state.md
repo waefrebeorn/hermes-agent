@@ -1,7 +1,7 @@
 ||| Slermes C
 
-Suite: 319/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 277 | C src: 178
+Suite: 320/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 278 | C src: 178
 Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -135,7 +135,8 @@ Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |    |- Phase 195: S7 test gap — test_media_validation.c (11 tests) for validate_media_path(). Tests: NULL, empty, non-existent file, directory, valid file, .env denied, MCP token denied. File_safety_set_test_paths used for denied-path testing. Suite 316/0/0 (v264). Test files 273→274.
 |    |- Phase 196: B07 terminal depth — terminal_rewrite_sudo() ported from Python _rewrite_real_sudo_invocations(). Rewrites bare 'sudo' command words to 'sudo -S -p ""' for piped password input. Handles env assignments, comments, operators (&&, ||, ;;, ;, |, &), parens. 24-test suite. Suite 317/0/0 (v263). Test files 274→275.
 ||    |- Phase 197: B07 terminal depth — terminal_rewrite_compound_background() ported from Python _rewrite_compound_background(). Wraps A && B & to A && { B & } to prevent subshell-wait bug. Handles paren/brace depth, &> redirect, comments, quoted strings, 12-test suite. Suite 318/0/0 (v264). Test files 275→276.
-||    |- Phase 198: B07 terminal depth — _transform_sudo() wired into terminal_handler(). terminal_rewrite_sudo() was dead code (defined but never called). Now invoked in terminal_handler() command pipeline: rewrites sudo to sudo -S '' for SUDO_PASSWORD env, returns original for passwordless sudo (sudo -n) or no-sudo commands. 7-test suite (test_transform_sudo.c). Suite 319/0/0 (v265). Test files 276→277.
+|||    |- Phase 198: B07 terminal depth — _transform_sudo() wired into terminal_handler(). terminal_rewrite_sudo() was dead code (defined but never called). Now invoked in terminal_handler() command pipeline: rewrites sudo to sudo -S '' for SUDO_PASSWORD env, returns original for passwordless sudo (sudo -n) or no-sudo commands. 7-test suite (test_transform_sudo.c). Suite 319/0/0 (v265). Test files 276→277.
+|||    |- Phase 199: B07 terminal depth — terminal_prompt_for_sudo_password() ported from Python _prompt_for_sudo_password(). Interactive /dev/tty password prompt with echo disabled (termios), timeout via poll(), box-drawing UI. _transform_sudo() updated to call prompt when HERMES_INTERACTIVE=1 and no SUDO_PASSWORD env. 5-test suite (test_sudo_prompt.c). Suite 320/0/0 (v266). Test files 277→278.
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).
@@ -154,4 +155,4 @@ Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 
 ||## Honest Assessment
-||||Real parity gap is 121 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 319/0/0 (277 test files). v265.
+||||Real parity gap is 121 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 320/0/0 (278 test files). v266.

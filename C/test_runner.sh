@@ -3106,6 +3106,21 @@ if gcc -O2 -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-format-tr
 else skip "terminal_compound_background (compilation failed)"
 fi
 
+# Terminal sudo prompt test (B07 depth — interactive password prompt)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libtooloutput" -I"$CDIR/lib/libenvpassthrough" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libansi" \
+    "$CDIR/tests/test_sudo_prompt.c" \
+    "$CDIR/src/tools/terminal.c" \
+    -o /tmp/hermes_test_sudo_prompt -lm -lssl -lcrypto -lz \
+    -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_sudo_prompt > /dev/null 2>&1; then ok "terminal_sudo_prompt (5 tests)"
+    else fail "terminal_sudo_prompt (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_sudo_prompt
+else skip "terminal_sudo_prompt (compilation failed)"
+fi
+
 # Terminal transform_sudo wiring test (B07 depth — sudo rewrite pipeline)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" \
     -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libtooloutput" -I"$CDIR/lib/libenvpassthrough" \

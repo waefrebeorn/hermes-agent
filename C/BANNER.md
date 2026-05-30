@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v265)**
+**BANNER — WuBu Slermes C Translation (v266)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v265                                          ║
-║  319 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  WuBu Slermes C v266                                          ║
+║  320 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 198: _transform_sudo() wired into terminal_handler()  ║
+║  Phase 199: terminal_prompt_for_sudo_password() ported      ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

@@ -696,6 +696,14 @@ typedef struct {
  * Only checks the "local" backend (non-local = false). */
 bool terminal_sudo_nopasswd_works(void);
 
+/* Interactive sudo password prompt.
+ * Port of Python terminal_tool._prompt_for_sudo_password().
+ * Opens /dev/tty, disables echo, reads password with timeout.
+ * Returns malloc'd password string (caller frees) or NULL on skip/timeout/error.
+ * Only works when HERMES_INTERACTIVE=1.
+ * Pass timeout_seconds=0 for default 45s timeout. */
+char *terminal_prompt_for_sudo_password(int timeout_seconds);
+
 typedef struct {
     char  provider[32];            /* tts.provider: edge/elevenlabs/openai/xai/mistral/neutts/piper */
     char  edge_voice[64];          /* tts.edge.voice */

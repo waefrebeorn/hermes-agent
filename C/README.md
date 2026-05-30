@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||||||| Suite:  319/0/0 (277 test files, completes in <60s)
+||||||||||||| Suite:  320/0/0 (278 test files, completes in <60s)
 |||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 |||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||||||| Gaps:  119 real parity gaps (1000+ test case gaps) across 9 sectors

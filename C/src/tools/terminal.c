@@ -20,6 +20,9 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <termios.h>
+#include <poll.h>
+#include <fcntl.h>
 #ifdef __linux__
 #include <sys/vfs.h>
 #endif
@@ -817,6 +820,104 @@ bool terminal_sudo_nopasswd_works(void) {
     return status == 0;
 }
 
+/* Interactive sudo password prompt.
+ * Port of Python terminal_tool._prompt_for_sudo_password().
+ * Opens /dev/tty, disables echo, reads password with timeout via poll().
+ * Returns malloc'd password string (caller must free) or NULL on timeout/skip/error.
+ * Only works in interactive mode (HERMES_INTERACTIVE=1). */
+char *terminal_prompt_for_sudo_password(int timeout_seconds) {
+    const char *interactive = getenv("HERMES_INTERACTIVE");
+    if (!interactive || strcmp(interactive, "1") != 0)
+        return NULL;
+
+    int tty_fd = open("/dev/tty", O_RDWR);
+    if (tty_fd < 0) return NULL;
+
+    struct termios old_attrs, new_attrs;
+    if (tcgetattr(tty_fd, &old_attrs) < 0) { close(tty_fd); return NULL; }
+
+    /* Disable echo + canonical mode for read-char-at-a-time */
+    new_attrs = old_attrs;
+    new_attrs.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON);
+    new_attrs.c_cc[VMIN] = 1;
+    new_attrs.c_cc[VTIME] = 0;
+    if (tcsetattr(tty_fd, TCSAFLUSH, &new_attrs) < 0) { close(tty_fd); return NULL; }
+
+    /* Print prompt UI */
+    dprintf(tty_fd,
+        "\n"
+        "\xe2\x94\x8c\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        " SUDO PASSWORD REQUIRED "
+        "\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        "\xe2\x94\x90\n"
+        "\xe2\x94\x82  Enter password below (input is hidden), or:            \xe2\x94\x82\n"
+        "\xe2\x94\x82    \xe2\x80\xa2 Press Enter to skip (command fails gracefully)     \xe2\x94\x82\n"
+        "\xe2\x94\x82    \xe2\x80\xa2 Wait %ds to auto-skip                           \xe2\x94\x82\n"
+        "\xe2\x94\x94\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        "\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        "\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        "\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
+        "\xe2\x94\x98\n\n",
+        timeout_seconds);
+
+    dprintf(tty_fd, "  Password (hidden): ");
+
+    /* Read password with timeout */
+    size_t cap = 128, len = 0;
+    char *password = (char *)malloc(cap);
+    if (!password) { tcsetattr(tty_fd, TCSAFLUSH, &old_attrs); close(tty_fd); return NULL; }
+    password[0] = '\0';
+
+    struct pollfd pfd;
+    pfd.fd = tty_fd;
+    pfd.events = POLLIN;
+    int remaining_ms = (timeout_seconds > 0 ? timeout_seconds : 45) * 1000;
+
+    while (remaining_ms > 0) {
+        int ret = poll(&pfd, 1, remaining_ms);
+        if (ret <= 0) break; /* timeout or error */
+
+        unsigned char ch;
+        ssize_t n = read(tty_fd, &ch, 1);
+        if (n != 1) break;
+
+        if (ch == '\n' || ch == '\r') break;
+        if (ch == 0x03) { /* Ctrl-C */
+            free(password);
+            password = NULL;
+            goto restore;
+        }
+        if (ch == 0x7f || ch == 0x08) { /* Backspace */
+            if (len > 0) { len--; password[len] = '\0'; }
+            continue;
+        }
+
+        if (len + 2 > cap) {
+            cap *= 2;
+            char *tmp = (char *)realloc(password, cap);
+            if (!tmp) { free(password); password = NULL; goto restore; }
+            password = tmp;
+        }
+        password[len++] = (char)ch;
+        password[len] = '\0';
+    }
+
+    /* Newline after hidden input — password[0] is the password */
+    dprintf(tty_fd, "\n");
+    if (password && password[0]) {
+        dprintf(tty_fd, "  \xe2\x9c\x93 Password received\n\n");
+    } else {
+        dprintf(tty_fd, "  \xe2\x8f\xad Skipped - continuing without sudo\n\n");
+        /* Return empty string so caller can distinguish skip from error */
+        if (password) password[0] = '\0';
+    }
+
+restore:
+    tcsetattr(tty_fd, TCSAFLUSH, &old_attrs);
+    close(tty_fd);
+    return password; /* malloc'd, caller frees, or NULL on cancel */
+}
+
 /* Check if token looks like a shell env assignment (KEY=VALUE).
  * Port of Python terminal_tool._looks_like_env_assignment(). */
 static bool looks_like_env_assignment(const char *token) {
@@ -964,9 +1065,15 @@ char *terminal_rewrite_sudo(const char *command, bool *found) {
  * Port of Python terminal_tool._transform_sudo_command().
  * Returns malloc'd string: rewritten command if sudo found and password available,
  * or original command if no sudo or passwordless sudo works.
- * Caller must free(). */
-static char *_transform_sudo(const char *command) {
-    if (!command || !command[0]) return NULL;
+ * If out_password is non-NULL and a password was obtained, sets *out_password
+ * to a malloc'd password string (caller must free).
+ * Caller must free() the returned command string. */
+static char *_transform_sudo(const char *command, char **out_password) {
+    if (!command || !command[0]) {
+        if (out_password) *out_password = NULL;
+        return NULL;
+    }
+    if (out_password) *out_password = NULL;
 
     bool found = false;
     char *rewritten = terminal_rewrite_sudo(command, &found);
@@ -984,19 +1091,29 @@ static char *_transform_sudo(const char *command) {
         return strdup(command);
     }
 
-    /* SUDO_PASSWORD env var available — rewrite is correct for stdin pipe.
-     * Note: current C backends use popen() which doesn't support stdin piping.
-     * This will work when backends are updated to fork/exec with pipe(). */
+    /* Check SUDO_PASSWORD env var first */
     const char *sudo_password = getenv("SUDO_PASSWORD");
     if (sudo_password && sudo_password[0]) {
+        /* Rewritten command is correct for stdin pipe
+         * Note: current popen() backends can't pipe stdin.
+         * Use pty=true for forkpty-based execution which supports stdin writes. */
+        if (out_password) *out_password = strdup(sudo_password);
         return rewritten;
     }
 
-    /* Interactive mode: prompt for password (future).
-     * For now, just return original command — will fail gracefully with
-     * "sudo: a password is required" which _inject_sudo_failure catches. */
-    free(rewritten);
-    return strdup(command);
+    /* Interactive mode: prompt for password */
+    {
+        char *prompt = terminal_prompt_for_sudo_password(45);
+        if (prompt && prompt[0]) {
+            /* Password obtained — use rewritten command */
+            if (out_password) *out_password = prompt;
+            return rewritten;
+        }
+        /* Skipped or timeout — return original command */
+        free(prompt);
+        free(rewritten);
+        return strdup(command);
+    }
 }
 
 /* B07: Rewrite A && B & (or A || B &) to A && { B & } at depth 0.
@@ -1529,10 +1646,11 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     /* B07: Transform sudo commands for piped password support.
      * Calls _transform_sudo() which handles SUDO_PASSWORD env var,
-     * passwordless sudo detection, and command rewrite.
+     * passwordless sudo detection, interactive prompt, and command rewrite.
      * The result replaces the command pointer for downstream use. */
     {
-        char *transformed = _transform_sudo(command);
+        char *sudo_password = NULL;
+        char *transformed = _transform_sudo(command, &sudo_password);
         if (transformed) {
             if (strcmp(transformed, command) != 0) {
                 /* Transformation changed the command — copy into command_buf */
@@ -1544,6 +1662,8 @@ char *terminal_handler(const char *args_json, const char *task_id) {
             }
             free(transformed);
         }
+        /* sudo_password is stored here for backend stdin piping (future) */
+        if (sudo_password) free(sudo_password);
     }
 
     /* Build workdir prefix */
