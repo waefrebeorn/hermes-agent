@@ -1,8 +1,8 @@
-# Slermes C (v248)
+| Slermes C (v249)
 
-Suite: 313/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Suite: 314/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 272 | C src: 178
-Battleship v34 (129 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -117,7 +117,8 @@ Battleship v34 (129 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 172: P176 cron depth — schedule display + ensure dirs. cron_schedule_display_for_job() port of _schedule_display_for_job() — extracts display string from job JSON, checks schedule_display → schedule dict keys (display/value/expr/run_at) → string schedule → "?". cron_ensure_dirs() port of ensure_dirs() — mkdir -p ~/.hermes/cron/ + ~/.hermes/cron/output/ with secure perms. 9 tests. Suite 311/0/0 (v247).
 ||- Phase 173: P176 cron depth — job ID validation + workdir normalization. cron_validate_job_id() port of _job_output_dir() — rejects empty, ".", "..", "/", "\\", absolute paths, drive letters. cron_job_output_dir() builds safe "{home}/cron/output/{id}" path. cron_normalize_workdir() port of _normalize_workdir() — expands ~, rejects relative paths, validates existence + is_dir. 17 tests. Suite 311/0/0 (v247).
 ||- Phase 174: P176 cron depth — apply_skill_fields. cron_apply_skill_fields() port of _apply_skill_fields() — deep-copies job JSON, normalizes skill/skills into canonical list, sets both fields. 5 tests. Suite 311/0/0 (v247).
-|||- Phase 180: G07 telegram_network PORTED — telegram_query_doh(), telegram_parse_doh_response(), telegram_discover_fallback_ips(), telegram_rewrite_url_for_ip(). 22 tests. Suite 313/0/0 (v248). 131→130 gaps.
+121|- Phase 180: G07 telegram_network PORTED — telegram_query_doh(), telegram_parse_doh_response(), telegram_discover_fallback_ips(), telegram_rewrite_url_for_ip(). 22 tests. Suite 313/0/0 (v248). 131→130 gaps.
+122||- Phase 181: G06 wecom_callback depth — wecom_xml_extract_tag() + wecom_callback_user_app_key(). 25-test suite. Suite 314/0/0 (v249). 129→128 gaps.
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).
@@ -132,8 +133,8 @@ Battleship v34 (129 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ## Critical Gaps
 - **P0** (6): Display & Visual (2) + Form-vs-Function/Architecture (4)
 - **P1** (37): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (2), CLI ecosystem (1), Architecture (1), Plugin system (1)
-- **P2** (59): CLI ecosystem (17), Tool depth (4), Gateway helpers (9), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
+- **P2** (58): CLI ecosystem (17), Tool depth (4), Gateway helpers (8), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), etc.
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-||Real parity gap is 129 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 313/0/0 (272 test files).
+|||Real parity gap is 128 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 314/0/0 (272 test files).

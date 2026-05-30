@@ -1666,3 +1666,10 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v246
 | P180-01 | G07 telegram_network PORTED — telegram_query_doh() (DoH HTTP GET), telegram_parse_doh_response() (JSON A-record parsing), telegram_discover_fallback_ips() (orchestration + seed fallback), telegram_rewrite_url_for_ip() (URL host replacement). 22 test assertions. Suite 313/0/0 v248. | `C/src/gateway/platforms/telegram_network.c` — 4 new functions. `C/tests/test_telegram_network.c` — 22/22 passed. |
 | P180-02 | Gap count reduced: 131→130 gaps. S3 sector: 4→3 gaps. G07 upgraded PARTIAL→✅ PORTED (7/8 functions, 87.5%). Remaining: TelegramFallbackTransport (async httpx, won't port to sync C). | `.hermes/mind-palace/battleship-v34.md` — G07 ✅ PORTED, S3 4→3, TOTAL 131→130. |
 Suite: 313/0/0 (272 test files). Gaps: 129. v248
+## Phase 181: G06 wecom_callback Depth — XML Tag Extraction + User App Key (v249)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P181-01 | G06 wecom_callback.py depth — wecom_xml_extract_tag() ported from _build_event() dependency. String-search-based XML tag extractor handling CDATA sections, plain text, whitespace trimming. wecom_callback_user_app_key() ported from _user_app_key(). 25-test suite covering: CDATA extraction, plain tags, event XML, NULL safety, buffer overflow, long values. | `C/include/hermes_wecom_callback.h` — public API. `C/src/gateway/platforms/wecom_callback.c` — implementations. `C/tests/test_wecom_callback.c` — 25/25 passed. |
+| P181-02 | Gap count reduced: 129→128 gaps. S3 sector: G06 upgraded from unstarted to PARTIAL (2/20 functions). Suite 313→314. Test files 272→272 (no new test file count — wecom_crypto tests counted separately). | `.hermes/mind-palace/battleship-v34.md` — G06 updated to PARTIAL, S3 3→2 gaps, TOTAL 129→128. |
+Suite: 314/0/0 (272 test files). Gaps: 128. v249

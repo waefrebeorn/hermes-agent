@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v248)**
+**BANNER — WuBu Slermes C Translation (v249)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v248                                       ║
-║  313/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  129 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v249                                       ║
+║  314/0/0 test suite  │  85 tools  │  98 CLI commands        ║
+║  128 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 180: G07 + B03 PORTED                            ║
+║  Phase 181: G06 wecom_callback depth                     ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -14,7 +14,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Test suite | 303/0/0 |
+| Test suite | 314/0/0 |
 | Tools | 85 |
 | CLI commands | 98 |
 | Gateway platforms | 19 |
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 129 |
+| Gaps | 128 |

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v248 | Fork diverged — C/ lives only on fork | Suite 313/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 129 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 180: G07 telegram_network PORTED. B03 web PORTED (stale claim — all core features ported, arch-specific infra won't port). 130→129 gaps. Suite 313/0/0.**
+**v249 | Fork diverged — C/ lives only on fork | Suite 314/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 181: G06 wecom_callback depth — wecom_xml_extract_tag() + wecom_callback_user_app_key(). 25-test suite. Suite 314/0/0. 129→128 gaps.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -89,7 +89,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 03 | G03 | feishu_comment.py | ~400 | Feishu comment handling — PORTED: textwrap_chunk(), feishu_sanitize_comment_text(), feishu_get_reply_user_id(), feishu_extract_reply_text(), feishu_truncate_text(), feishu_extract_semantic_text(). Missing: async Feishu API functions, prompt builders (won't port — lark_oapi dependent). | P2 | ✅ PORTED — 20 tests (Phase 169) |
 | 04 | G04 | feishu_comment_rules.py | ~300 | Feishu comment moderation rules | P2 | ✅ PORTED — C has feishu_comment_rules.c + 56 tests (Phase 167) |
 | 05 | G05 | wecom_crypto.py | ~350 | WeCom message encryption | P2 | ✅ PORTED — C has wecom_crypto.c + 28 tests |
-| 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification | P2 |
+| 06 | G06 | wecom_callback.py | ~300 | WeCom callback verification — PARTIAL: wecom_xml_extract_tag() + wecom_callback_user_app_key() ported (2/20 functions, 25 tests). Crypto already ported (G05). Access token + send already in wecom.c. Missing: _build_event XML parsing (needs wecom_xml_extract_tag — dependency now ported), _normalize_apps config parsing, async HTTP server (WON'T PORT — C uses webhook.c). | P2 | PARTIAL — 25-test suite (Phase 181) |
 ||| 07 | G07 | telegram_network.py | ~450 | Telegram proxy/network config — PORTED: http_client_set_proxy() with env auto-detection, telegram_parse_fallback_ips() (Phase 161), telegram_resolve_system_dns() (Phase 177), telegram_query_doh + telegram_parse_doh_response (Phase 178), telegram_discover_fallback_ips (Phase 179), telegram_rewrite_url_for_ip (Phase 180). Missing: TelegramFallbackTransport (async httpx transport, won't port — C is synchronous). 22 tests. | P2 | ✅ PORTED — 22 tests (Phase 180) |
 || 08 | G08 | signal_rate_limit.py | ~200 | Signal rate limiting — PORTED: datetime_format_duration (Phase 147), signal_is_rate_limit_error (Phase 156), signal_send_timeout (Phase 156), signal_extract_retry_after + signal_parse_retry_after_message (Phase 157 — parses retryAfterSeconds from structured JSON error.data.response.results[*] and "Retry after N seconds" text). Missing: SignalAttachmentScheduler (asyncio, won't port) | P2 | ✅ PORTED |
 ||| 09 | G09 | yuanbao_media.py | ~350 | Yuanbao media attachments — PORTED: url_extract_basename, url_guess_mime_type, url_is_image_extension, url_get_image_format, url_parse_image_size (PNG/JPEG/GIF/WebP dimension parsing), crypto_md5_hex, yuanbao_generate_file_id, yuanbao_build_image_msg, yuanbao_build_file_msg. 15 tests. Missing: download_url (async HTTP), COS upload/sign (cloud-specific) | P2 | ✅ PORTED — 15 tests (Phase 176) |
@@ -98,7 +98,7 @@ No remaining real implementable gaps. All S2 real gaps are PORTED (A15, A22) or 
 | 12 | G12 | api_server.py | ~500 | REST API server for HTTP gateway | P1 | ✅ PORTED — C has api_server.c (1224 LOC) |
 | 13 | G13 | _http_client_limits.py | ~200 | HTTP client connection limits | P2 | ✅ PORTED — C has http_client_set_pool() |
 
-**S3: 3 gaps (2 P1, 1 P2) — G06 wecom_callback remains. G07 telegram_network PORTED (Phase 180 — 22 tests). G09/G10 PORTED.**
+**S3: 2 gaps (1 P1, 1 P2) — G02 base PARTIAL, G06 wecom_callback PARTIAL (Phase 181: XML tag extraction + user_app_key ported, 25 tests). G07 telegram_network PORTED (Phase 180 — 22 tests).**
 
 ---
 
@@ -180,7 +180,7 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 11 gaps (4 P2, 7 P3) — Phase 180: G07 ported, B03 web PORTED (stale claim). Suite 313/0/0 (272 test files).**
+**S6: 11 gaps (4 P2, 7 P3) — Phase 181: G06 wecom_callback depth (XML tag extraction + user_app_key). Suite 314/0/0 (272 test files).**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||||| **TOTAL** | **129** | **6** | **36** | **57** | **43** | **Phase 180: G07 telegram_network PORTED + B03 web PORTED. 130→129 gaps.** |
+||||| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 181: G06 wecom_callback depth. 129→128 gaps.** |
 
 ### Phase Map
 
