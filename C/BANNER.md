@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v256)**
+**BANNER — WuBu Slermes C Translation (v257)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v256                                       ║
+║  WuBu Slermes C v257                                       ║
 ║  315 tests · 128 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  128 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 188: G02 base.py depth — gw_float_env             ║
+║  Phase 189: approval_normalize_command — ANSI strip       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v256)
+## Build Metrics (v257)
 
 | Metric | Value |
 |--------|-------|

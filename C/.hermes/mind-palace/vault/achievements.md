@@ -1721,5 +1721,9 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 | P187-02 | 7-test suite added to test_gateway_escape.c: full match, budget 3, zero budget, negative budget, NULL input, NULL fn, empty string. Suite 38→45 in M07. | `C/tests/test_gateway_escape.c` — 7/7 passed. |
 | P188-01 | G02 base.py depth — gw_float_env() ported from Python _float_env(). Reads env var, parses as double with strtod, returns default on missing/invalid input. NULL-safe. | `C/include/hermes_gateway.h` — declaration. `C/src/gateway/server.c` — implementation (12 LOC). |
 | P188-02 | 2-test suite for gw_float_env(): NULL name default, missing env default. M07: 47 total. | `C/tests/test_gateway_escape.c` — 2/2 passed. |
+| P189-01 | approval_normalize_command() ported from Python tools/approval.py _normalize_command_for_detection(). Strips ANSI escape sequences (via ansi_strip_buf) and removes null bytes before dangerous-pattern matching. Skips Unicode NFKC normalization (requires ICU — not available in C). | `C/src/tools/approval.c` — implementation with fast-path `ansi_has_escape` check. |
+| P189-02 | approval_is_terminal_dangerous() now normalizes input before matching. ANSI-escaped dangerous commands (e.g. `\033[31mrm -rf /\033[0m`) correctly detected as dangerous. | `C/src/tools/approval.c` — integrated normalization into existing function. |
+| P189-03 | 5-test suite: NULL normalize, clean passthrough, ANSI strip, ANSI dangerous detection. T02 test count 38→43. | `C/tests/test_approve.c` — 5/5 passed. |
+| P189-04 | Fixed 2 pre-existing test compilation failures: approval_system and allowlist tests now include libansi/ansi_strip.c dependency. | `C/test_runner.sh` — both tests restored (23 + 34 assertions). |
 
-Suite: 315/0/0 (273 test files). Gaps: 128. v256
+Suite: 315/0/0 (273 test files). Gaps: 128. v257

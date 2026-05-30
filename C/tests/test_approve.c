@@ -15,6 +15,7 @@ extern bool approval_is_terminal_dangerous(const char *command);
 extern bool approval_is_path_dangerous(const char *path);
 extern bool approval_is_path_traversal(const char *path);
 extern bool approval_is_url_dangerous(const char *url);
+extern char *approval_normalize_command(const char *command);
 
 static int passed = 0, failed = 0;
 
@@ -143,6 +144,30 @@ int main(void) {
 
     TEST("null url is not dangerous",
         !approval_is_url_dangerous(NULL));
+
+    /* === ANSI normalization === */
+
+    {
+        char *n = approval_normalize_command(NULL);
+        TEST("normalize NULL returns NULL", n == NULL);
+    }
+
+    {
+        char *n = approval_normalize_command("ls -la");
+        TEST("normalize clean cmd unchanged", n && strcmp(n, "ls -la") == 0);
+        free(n);
+    }
+
+    {
+        /* ANSI red: \033[31mrm -rf /\033[0m */
+        char *n = approval_normalize_command("\033[31mrm -rf /\033[0m");
+        TEST("normalize ANSI stripped", n && strcmp(n, "rm -rf /") == 0);
+        free(n);
+    }
+
+    /* ANSI-escaped dangerous commands should still be detected */
+    TEST("rm with ANSI is dangerous",
+        approval_is_terminal_dangerous("\033[31mrm -rf /\033[0m"));
 
     /* === Summary === */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);

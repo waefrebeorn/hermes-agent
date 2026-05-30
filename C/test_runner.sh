@@ -1290,7 +1290,7 @@ run_lib_test "context" "tests/test_context.c" "include" "$CDIR/src/agent/context
 echo ""; echo "=== Tool API Helpers Tests (P51) ==="
 run_lib_test "api_helpers" "tests/test_api_helpers.c" "include" "$CDIR/src/tools/api_helpers.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
 echo ""; echo "=== Approval Security Tests (T02) ==="
-run_lib_test "approve" "tests/test_approve.c" "include" "$CDIR/src/tools/approval.c $CDIR/lib/libjson/json.c -I$CDIR/lib/libjson -I$CDIR/lib/libhttp -I$CDIR/lib/libfilestate -I$CDIR/lib/librateguard -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv -I$CDIR/lib/libyaml -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libbinary -I$CDIR/lib/libbrowser -I$CDIR/lib/libdebug -I$CDIR/lib/libosv -I$CDIR/lib/libwebsite -Wl,--unresolved-symbols=ignore-all"
+run_lib_test "approve" "tests/test_approve.c" "include" "$CDIR/src/tools/approval.c $CDIR/lib/libjson/json.c $CDIR/lib/libansi/ansi_strip.c -I$CDIR/lib/libjson -I$CDIR/lib/libhttp -I$CDIR/lib/libfilestate -I$CDIR/lib/librateguard -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv -I$CDIR/lib/libyaml -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libbinary -I$CDIR/lib/libbrowser -I$CDIR/lib/libdebug -I$CDIR/lib/libosv -I$CDIR/lib/libwebsite -I$CDIR/lib/libansi -Wl,--unresolved-symbols=ignore-all"
 echo ""; echo "=== Session Title Tests ==="
 run_lib_test "title" "tests/test_title.c" "include" "$CDIR/src/agent/title.c -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all"
 echo ""; echo "=== Think Scrubber Tests ==="
@@ -2675,10 +2675,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "url_safety (compilation failed)"
 fi &
 
-# Command allowlist test (needs approval.c + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+# Command allowlist test (needs approval.c + json lib + ansi_strip)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libansi" \
     "$CDIR/tests/test_allowlist.c" \
-    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libansi/ansi_strip.c" \
     -o /tmp/hermes_test_al -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_al > /dev/null 2>&1; then ok "allowlist (34 tests)"
     else fail "allowlist (test binary returned non-zero)"; fi
@@ -2837,10 +2837,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else skip "process_tool (compilation failed)"
 fi &
 
-# Approval system test (needs approval.c + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+# Approval system test (needs approval.c + json lib + ansi_strip)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libansi" \
     "$CDIR/tests/test_approval.c" \
-    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libansi/ansi_strip.c" \
     -o /tmp/hermes_test_app -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_app > /dev/null 2>&1; then ok "approval_system (23 tests)"
     else fail "approval_system (test binary returned non-zero)"; fi

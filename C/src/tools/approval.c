@@ -8,6 +8,7 @@
 #include "hermes_json.h"
 #include "hermes_url_safety.h"
 #include "hermes_tirith.h"
+#include "ansi_strip.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -210,9 +211,47 @@ static bool matches_any(const char *str, const char **patterns) {
     return false;
 }
 
-/* Check if a terminal command is dangerous */
+/* Normalize a command string before dangerous-pattern matching.
+ * Strips ANSI escape sequences and null bytes.
+ * Port of Python tools/approval.py _normalize_command_for_detection().
+ * Returns a malloc'd normalized copy, or NULL on failure. */
+char *approval_normalize_command(const char *command) {
+    if (!command) return NULL;
+
+    /* Step 1: Strip ANSI escape sequences via stack-allocated buffer.
+     * ansi_strip_buf writes in-place if buf == text, so we use a separate buf. */
+    size_t len = strlen(command);
+    char *buf = (char *)malloc(len + 1);
+    if (!buf) return NULL;
+
+    if (ansi_has_escape(command)) {
+        ansi_strip_buf(command, buf, len + 1);
+    } else {
+        memcpy(buf, command, len + 1);
+    }
+
+    /* Step 2: Strip null bytes in-place. */
+    char *dst = buf;
+    for (const char *src = buf; *src; src++) {
+        if (*src != '\0') {
+            *dst++ = *src;
+        }
+    }
+    *dst = '\0';
+
+    /* Note: Unicode NFKC normalization (Python step 3) requires ICU — skipped in C. */
+
+    return buf;
+}
+
+/* Check if a terminal command is dangerous. Normalizes first. */
 bool approval_is_terminal_dangerous(const char *command) {
-    return matches_any(command, DANGEROUS_TERMINAL_PATTERNS);
+    if (!command) return false;
+    char *normalized = approval_normalize_command(command);
+    if (!normalized) return matches_any(command, DANGEROUS_TERMINAL_PATTERNS);
+    bool result = matches_any(normalized, DANGEROUS_TERMINAL_PATTERNS);
+    free(normalized);
+    return result;
 }
 
 /* Check if a file path is dangerous */
