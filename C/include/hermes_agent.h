@@ -185,6 +185,9 @@ bool agent_snapshot_restore(agent_state_t *state);
 /* === Title (title.c) === */
 char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 
+/* === Message sequence repair (agent_message_repair.c) === */
+int hermes_repair_message_sequence(message_t *messages, int *count);
+
 #ifdef __cplusplus
 }
 #endif

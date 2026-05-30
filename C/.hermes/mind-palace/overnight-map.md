@@ -1,8 +1,8 @@
-# Overnight (v277)
+# Overnight (v278)
 
+Phase 211: L25 hermes_repair_message_sequence() ported from Python agent_runtime_helpers. 17-test suite. Suite 323/0/0. 113→112 gaps.
 Phase 210: D16 type-ahead — background stdin reader thread, line_edit_set_text() API. 114→113 gaps. S0 all PORTED.
 Phase 209: D09 emacs keybindings ported in line_edit.c — Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D. 66-test suite. 115→114 gaps.
 Phase 208: tool_coerce_number() + tool_coerce_boolean() ported from Python model_tools. 35 tests. S0 model_tools depth.
-Phase 207: tool_error_sanitize() ported from Python model_tools._sanitize_tool_error(). Strips XML/CDATA/code fences. 26 tests.
 
 Next: S7 test expansion, S1 partials (L24-L28), or B08 send_message remaining depth.

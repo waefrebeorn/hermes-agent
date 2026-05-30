@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 322/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 278 | C src: 178
-Battleship v34 (113 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Suite: 323/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 279 | C src: 179
+Battleship v34 (112 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -143,6 +143,7 @@ Battleship v34 (113 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |||    |- Phase 208: tool_coerce_number() + tool_coerce_boolean() ported from Python model_tools._coerce_number() / _coerce_boolean(). Coerces string tool args to typed values (int, float, bool). 35-test suite in test_tool_coerce.c. Suite 322/0/0 (v275). Test files 279→280.
 |||    |- Phase 209: D09 emacs keybindings in line_edit.c — Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D word nav/kill, kill-ring yank, transpose chars, clear screen redraw. line_edit_t struct exposed in header for testability. 66-test suite (11→66). Suite 322/0/0 (v276). Test files 278→278. Battleship 115→114 gaps.
 |||    |- Phase 210: D16 type-ahead reader — background thread captures stdin keystrokes during agent_chat(). Non-blocking stdin via fcntl(O_NONBLOCK), 50ms poll interval, buffered into g_type_ahead_buf. Injected into line_edit via line_edit_set_text() before next prompt. line_edit_set_text() API added. 11 test assertions (77 total). Suite 322/0/0 (v277). Battleship 114→113 gaps. S0 2→1 gaps.
+|||    |- Phase 211: L25 message sequence repair — hermes_repair_message_sequence() ported from Python agent_runtime_helpers.py. Pass 1: drops stray tool messages (no matching assistant tool_call_id). Pass 2: merges consecutive user messages. 17-test suite. Suite 323/0/0 (v278). Test files 278→279. C src 178→179. Battleship 113→112 gaps. S1 L25 REAL→PARTIAL.
     |- Phase 204: S7 test expansion — 10 new edge case assertions in test_title.c. Added: exclamation/question marks, only-code-block (no text → New Session), non-ASCII bytes dropped gracefully, very long input (40-80 char truncation), tab/control chars, trailing ellipsis trim, multiple sentences (no break on mid-text period). Assertions 12→22. Suite 320/0/0 (v271).
     |- Phase 203: S7 test expansion — 11 new edge case assertions in test_sanitize.c. Added: nested JSON repair (nested object/array, multi trailing comma, unclosed nested, mixed excess closers, escaped quotes, unicode content), sanitize_surrogates edge cases (3-byte UTF-8, 4-byte UTF-8 emoji, long text), hermes_sanitize_output edge cases (URL token redaction, SSH key path). Assertions 24→35. Suite 320/0/0 (v270).
     |- Phase 202: S3 G02 base.py + G06 wecom_callback.py reclassified PORTED. Function-level API audit: base.py (4286 LOC, 45 functions, ~21 portable — all ported: gw_utf16_len, gw_float_env, http_no_proxy_match, http_split_host_port, http_no_proxy_entries, http_should_bypass_proxy, http_parse_retry_after, url_safe_for_log, url_is_network_accessible, media_cache_save/cleanup, media_should_send_as_audio, gw_custom_unit_to_cp, validate_media_path, detect_image_magic). Remaining 24 WON'T PORT (async cache_from_url, macOS proxy, async proxy, cache dirs, media delivery security helpers, gateway event/channel helpers — all C-arch-different). wecom_callback.py (425 LOC, 20 functions, 3 portable — all ported: wecom_xml_extract_tag, wecom_callback_user_app_key, wecom_callback_build_event). Remaining 17 WON'T PORT (async aiohttp server, class state, token refresh). S3 2→0 gaps. 117→115 gaps. Suite 320/0/0 (v269).
@@ -165,4 +166,4 @@ Battleship v34 (113 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 
 ||||## Honest Assessment
-||||||Real parity gap is 113 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 322/0/0 (278 test files). v277. S3 all helpers PORTED. S6 all tools PORTED. S0 all gaps resolved (D09 emacs PARTIAL, D16 type-ahead IMPLEMENTED).
+||||||Real parity gap is 112 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 323/0/0 (279 test files). v278. S0+S3+S6 all PORTED. S1 L25 PARTIAL (message sequence repair ported).

@@ -1,6 +1,6 @@
-(v277)
+(v278)
 
-322/0/0, 278 test files. All pass. Gap: 278 C vs ~17k Python.
+323/0/0, 279 test files. All pass. Gap: 279 C vs ~1262 Python.
 
 Phase 208: tool_coerce_number/boolean ported from Python model_tools (35 tests). S0 depth.
 Phase 207: tool_error_sanitize() ported from Python model_tools. Strips XML/CDATA/code fences. 26 tests.

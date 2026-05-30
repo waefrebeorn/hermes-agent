@@ -1,4 +1,4 @@
-(v277)
+(v278)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-322/0/0 (278 test files). 113 gaps. Phase 210: D16 type-ahead reader wired (background stdin capture thread).
-S0+S3+S6 all PORTED. Next: S7 test expansion, S1 partials, or B08 depth.
+323/0/0 (279 test files). 112 gaps. Phase 211: L25 message repair sequence ported (17-test suite).
+S0+S3+S6 all PORTED. S1 L25 REAL→PARTIAL. Next: S7 test expansion, S1 partials, or B08 depth.

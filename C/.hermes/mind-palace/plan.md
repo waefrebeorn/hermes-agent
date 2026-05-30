@@ -1,15 +1,16 @@
-(v277)
+(v278)
 
 ## Immediate Next
 
-S0+S3+S6 all PORTED. 113 gaps remain across 7 sectors.
+S0+S3+S6 all PORTED. 112 gaps remain across 7 sectors.
 Next: S7 test expansion, S1 partials (L24-L28), or B08 send_message remaining depth.
 
 ## Pipeline
 
-S0 D16 type-ahead (P0):
-- Background thread captures stdin during agent_chat() ✅ (Phase 210)
-- Injected via line_edit_set_text() before next prompt
+S1 L25 depth (agent_runtime_helpers):
+- hermes_repair_message_sequence() ported ✅ (Phase 211, 17 tests)
+- sanitize_tool_call_arguments() — pending
+- repair_tool_call() — pending
 
 S0 D09 depth (line_edit):
 - Emacs keybindings PORTED ✅ (Phase 209, 77 tests)
@@ -22,14 +23,10 @@ S6 B08 depth (send_message):
 - Smart message chunking — pending
 - Home channel resolution — pending
 
-S7 test coverage (278/1262 test files = 22.0%):
-- Phases 195-200: 6 test suites added (59 new tests) ✅
-- Phase 203-204: 21 new edge case assertions
-- Phase 207: 26-test tool_error_sanitize suite
-- Phase 208: 35-test tool_coerce suite
-- Phase 209: 77-test line_edit suite
-- Phase 210: type-ahead reader wired into CLI
+S7 test coverage (279/1262 test files = 22.1%):
+- Phase 211: 17-test agent_message_repair suite
+- Suite now 323/0/0
 
 ## Future
 
-B08 send_message remaining depth, S7 test expansion, S1 partials (L24-L28), S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
+S1 partials depth, B08 send_message remaining depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
