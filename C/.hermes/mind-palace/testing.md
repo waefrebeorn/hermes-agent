@@ -1,6 +1,7 @@
-(v263)
+(v264)
 
-317/0/0, 275 test files. All pass. Gap: 275 C vs ~17k Python.
+318/0/0, 276 test files. All pass. Gap: 276 C vs ~17k Python.
 
-Phase 196: terminal_rewrite_sudo() (24 tests). B07 depth: sudo rewriting for piped password.
-Coverage: 275/1262 test files (21.8%). 24 new assertions.
+Phase 197: terminal_rewrite_compound_background() (12 tests). B07 depth.
+Phase 196: terminal_rewrite_sudo() (24 tests). B07 depth.
+Coverage: 276/1262 test files (21.9%). 36 new assertions across Phases 196-197.

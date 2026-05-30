@@ -1738,4 +1738,4 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 || P195-01 | S7 test gap — test_media_validation.c (11 tests) for validate_media_path(). Covers NULL, empty path, non-existent file, directory, valid file, .env denied (hermes control), MCP token denied. Uses file_safety_set_test_paths() to test denied-path detection without real credential files. | `C/tests/test_media_validation.c` — 11/11 passed. `C/test_runner.sh` — wired into test suite. |
 || P196-01 | B07 terminal depth — terminal_rewrite_sudo() ported from Python _rewrite_real_sudo_invocations(). Rewrites bare 'sudo' to 'sudo -S -p ""' for piped password. Handles env assignments, comments, compound/single operators. 24-test suite. | `C/src/tools/terminal.c:822-960` — terminal_rewrite_sudo() + looks_like_env_assignment(). `C/tests/test_terminal_sudo.c` — 24/24 passed. |
 
-Suite: 317/0/0 (275 test files). Gaps: 119. v263
+Suite: 318/0/0 (275 test files). Gaps: 119. v264

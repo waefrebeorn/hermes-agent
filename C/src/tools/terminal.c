@@ -960,6 +960,98 @@ char *terminal_rewrite_sudo(const char *command, bool *found) {
     return out;
 }
 
+/* B07: Rewrite A && B & (or A || B &) to A && { B & } at depth 0.
+ * Bash parses A && B & as a subshell fork for the whole compound, making
+ * the subshell wait for B to finish. Wrapping in braces runs B as a simple
+ * backgrounded child that exits immediately. Port of Python
+ * terminal_tool._rewrite_compound_background().
+ * Returns malloc'd string; caller must free(). */
+char *terminal_rewrite_compound_background(const char *command) {
+    if (!command || !command[0]) return strdup(command ? command : "");
+
+    /* First pass: walk the command to find rewrites.
+     * Max rewrites: one per background operator. */
+    typedef struct { int chain_end; int amp_pos; } rewrite_t;
+    rewrite_t rewrites[64];
+    int rewrite_count = 0;
+    int n = (int)strlen(command);
+    int i = 0, paren_depth = 0, brace_depth = 0, last_chain_op_end = -1;
+
+    while (i < n) {
+        char ch = command[i];
+        if (ch == '\n' && paren_depth == 0 && brace_depth == 0) { last_chain_op_end = -1; i++; continue; }
+        if (ch == ' ' || ch == '\t' || ch == '\r') { i++; continue; }
+        if (ch == '#') { while (i < n && command[i] != '\n') i++; continue; }
+        if (ch == '\\' && i + 1 < n) { i += 2; continue; }
+        if (ch == '\'' || ch == '"') { int e = 0; free(terminal_read_shell_token(command, i, &e)); i = (e > i) ? e : i + 1; continue; }
+        if (ch == '(') { paren_depth++; i++; continue; }
+        if (ch == ')') { paren_depth = (paren_depth > 0) ? paren_depth - 1 : 0; i++; continue; }
+        if (ch == '{' && i + 1 < n && (command[i+1] == ' ' || command[i+1] == '\t' || command[i+1] == '\n' || command[i+1] == '\r')) { brace_depth++; i++; continue; }
+        if (ch == '}' && brace_depth > 0) { brace_depth--; last_chain_op_end = -1; i++; continue; }
+        if (paren_depth > 0 || brace_depth > 0) { i++; continue; }
+
+        if ((ch == '&' && i + 1 < n && command[i+1] == '&') || (ch == '|' && i + 1 < n && command[i+1] == '|')) { last_chain_op_end = i + 2; i += 2; continue; }
+        if (ch == ';' || ch == '|') { last_chain_op_end = -1; i++; continue; }
+
+        if (ch == '&') {
+            if (i + 1 < n && command[i+1] == '>') { i += 2; continue; }
+            int j = i - 1; while (j >= 0 && (command[j] == ' ' || command[j] == '\t')) j--;
+            if (j >= 0 && (command[j] == '>' || command[j] == '<')) { i++; continue; }
+            if (last_chain_op_end >= 0 && rewrite_count < 64) {
+                rewrites[rewrite_count].chain_end = last_chain_op_end;
+                rewrites[rewrite_count].amp_pos = i;
+                rewrite_count++;
+            }
+            last_chain_op_end = -1; i++; continue;
+        }
+
+        int e = 0; free(terminal_read_shell_token(command, i, &e)); i = (e > i) ? e : i + 1;
+    }
+
+    if (rewrite_count == 0) return strdup(command);
+
+    /* Apply rewrites right-to-left. Each rewrite:
+     *   result = result[:insert_pos] + "{ " + result[insert_pos:amp_pos] + " & }" + result[amp_pos+1:]
+     * where insert_pos = chain_end with trailing whitespace skipped.
+     * Right-to-left order ensures outer rewrite indices are valid (they are left of inner's changes). */
+    char *result = strdup(command);
+    if (!result) return NULL;
+
+    for (int r = rewrite_count - 1; r >= 0; r--) {
+        int chain_end = rewrites[r].chain_end;
+        int amp_pos = rewrites[r].amp_pos;
+
+        int insert_pos = chain_end;
+        while (insert_pos < amp_pos && (result[insert_pos] == ' ' || result[insert_pos] == '\t'))
+            insert_pos++;
+
+        /* Build: result[:insert_pos] + "{ " + result[insert_pos:amp_pos] + " & }" + result[amp_pos+1:] */
+        int result_len = (int)strlen(result);
+        int prefix_len = insert_pos;
+        int mid_len = amp_pos - insert_pos;
+        int suffix_len = result_len - (amp_pos + 1);
+        if (suffix_len < 0) suffix_len = 0;
+
+        /* New length = prefix + 2 + mid + 4 + suffix */
+        int new_len = prefix_len + 2 + mid_len + 4 + suffix_len;
+        char *new_result = (char *)malloc((size_t)new_len + 1);
+        if (!new_result) { free(result); return strdup(command); }
+
+        int pos = 0;
+        memcpy(new_result + pos, result, (size_t)prefix_len); pos += prefix_len;
+        memcpy(new_result + pos, "{ ", 2); pos += 2;
+        if (mid_len > 0) { memcpy(new_result + pos, result + insert_pos, (size_t)mid_len); pos += mid_len; }
+        memcpy(new_result + pos, " & }", 4); pos += 4;
+        if (suffix_len > 0) { memcpy(new_result + pos, result + amp_pos + 1, (size_t)suffix_len); pos += suffix_len; }
+        new_result[pos] = '\0';
+
+        free(result);
+        result = new_result;
+    }
+
+    return result;
+}
+
 /* Inject exit_code_interpretation field into result JSON */
 static char *_inject_interpretation(const char *result_json, const char *command) {
     if (!result_json) return NULL;

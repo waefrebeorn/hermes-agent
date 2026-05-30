@@ -1,7 +1,7 @@
 ||| Slermes C
 
-Suite: 317/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 275 | C src: 178
+Suite: 318/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 276 | C src: 178
 Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -132,8 +132,9 @@ Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
     |- Phase 192: B01 browser + B02 vision stale claims verified PORTED. All user-facing browser features (navigate, snapshot, click, type, scroll, press, get_images, CDP, console, dialog, supervisor, vision, PDF) confirmed ported. All core vision features (magic byte detection, dimension extraction, base64, video MIME, URL validation) confirmed ported. S6 gaps 4→2. Suite 315/0/0 (v260). 121→119 gaps.
     |    |- Phase 193: reply_to_message_id wired through Telegram send path. Previously parsed but only used in CLI fallback — now passed to Telegram API directly via telegram_send_message() and telegram_send_message_with_keyboard(). Added reply_to_message_id parameter to both gateway functions + telegram_send_with_mode() in send_message.c. 6 callers updated in telegram.c, 3 in server.c. Suite 315/0/0 (v260). 119→119 gaps (depth).
     |    |- Phase 194: B08/G02 media path security — send_message.c now validates media_path and media_group items against file safety denylist (file_is_write_denied + file_get_read_block_error) before sending. Prevents credential exfiltration via MEDIA:/etc/passwd, MEDIA:~/.ssh/id_rsa, etc. validate_media_path() port of Python base.py validate_media_delivery_path(). Suite 315/0/0 (v261). 119→119 gaps (depth).
-|    |- Phase 195: S7 test gap — test_media_validation.c (11 tests) for validate_media_path(). Tests: NULL, empty, non-existent file, directory, valid file, .env denied, MCP token denied. File_safety_set_test_paths used for denied-path testing. Suite 316/0/0 (v262). Test files 273→274.
-|    |- Phase 196: B07 terminal depth — terminal_rewrite_sudo() ported from Python _rewrite_real_sudo_invocations(). Rewrites bare 'sudo' command words to 'sudo -S -p \"\"' for piped password input. Handles env assignments, comments, operators (&&, ||, ;;, ;, |, &), parens. 24-test suite. Suite 317/0/0 (v263). Test files 274→275.
+|    |- Phase 195: S7 test gap — test_media_validation.c (11 tests) for validate_media_path(). Tests: NULL, empty, non-existent file, directory, valid file, .env denied, MCP token denied. File_safety_set_test_paths used for denied-path testing. Suite 316/0/0 (v264). Test files 273→274.
+|    |- Phase 196: B07 terminal depth — terminal_rewrite_sudo() ported from Python _rewrite_real_sudo_invocations(). Rewrites bare 'sudo' command words to 'sudo -S -p ""' for piped password input. Handles env assignments, comments, operators (&&, ||, ;;, ;, |, &), parens. 24-test suite. Suite 317/0/0 (v263). Test files 274→275.
+|    |- Phase 197: B07 terminal depth — terminal_rewrite_compound_background() ported from Python _rewrite_compound_background(). Wraps A && B & to A && { B & } to prevent subshell-wait bug. Handles paren/brace depth, &> redirect, comments, quoted strings, 12-test suite. Suite 318/0/0 (v264). Test files 275→276.
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).
@@ -152,4 +153,4 @@ Battleship v34 (119 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 
 ||## Honest Assessment
-|||Real parity gap is 121 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 317/0/0 (275 test files). v263.
+|||Real parity gap is 121 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 318/0/0 (276 test files). v264.

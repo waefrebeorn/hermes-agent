@@ -3080,6 +3080,32 @@ if gcc -O2 -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-format-tr
 else skip "terminal_sudo_rewrite (compilation failed)"
 fi
 
+# Terminal compound background rewrite tests (B07 depth)
+if gcc -O2 -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-format-truncation \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libplugin" \
+    -I"$CDIR/lib/libdb" -I"$CDIR/lib/libenvpassthrough" -I"$CDIR/lib/libcrypto" \
+    -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libpath" -I"$CDIR/lib/libtooloutput" \
+    -I"$CDIR/lib/libinterrupt" -I"$CDIR/lib/libcredential" -I"$CDIR/lib/libtooldispatch" \
+    -I"$CDIR/lib/libregex" -I"$CDIR/lib/libhash" -I"$CDIR/lib/libhtml" \
+    -I"$CDIR/lib/libdatetime" -I"$CDIR/lib/libsignal" -I"$CDIR/lib/libmcp" \
+    -I"$CDIR/lib/librateguard" -I"$CDIR/lib/libratelimit" -I"$CDIR/lib/libtextwrap" \
+    -I"$CDIR/lib/libglob" -I"$CDIR/lib/libansi" -I"$CDIR/lib/libmcp_oauth" \
+    -I"$CDIR/lib/libuuid" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libwebsocket" \
+    -I"$CDIR/lib/libcron" -I"$CDIR/lib/libxai_http" -I"$CDIR/lib/libdotenv" \
+    -I"$CDIR/lib/liblineedit" -I"$CDIR/lib/libproc" -I"$CDIR/lib/libfile_sync" \
+    -I"$CDIR/lib/libbudgetconfig" -I"$CDIR/lib/libthreatpatterns" \
+    -I"$CDIR/lib/libcredentialfiles" -I"$CDIR/lib/libskillaudit" \
+    -I"$CDIR/lib/libslashconfirm" -I"$CDIR/lib/libmsgraph" \
+    -I"$CDIR/lib/libncurses/include" -I"$CDIR/lib/libfilestate" \
+    "$CDIR/tests/test_terminal_compound.c" \
+    "$CDIR/src/tools/terminal.c" \
+    -o /tmp/hermes_test_compound -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_compound > /dev/null 2>&1; then ok "terminal_compound_background (12 tests)"
+    else fail "terminal_compound_background (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_compound
+else skip "terminal_compound_background (compilation failed)"
+fi
+
 # Clarify tool test (M40 — needs clarify.c + json, stdin for response)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_clarify.c" \
