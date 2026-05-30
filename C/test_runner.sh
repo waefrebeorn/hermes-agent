@@ -1377,7 +1377,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/lib/libansi/ansi.c" "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libskin/skin.c" \
     -o /tmp/hermes_test_display -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_display > /dev/null 2>&1; then ok "display (24 tests)"
+    if /tmp/hermes_test_display > /dev/null 2>&1; then ok "display (39 tests)"
     else fail "display (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_display
 else skip "display (compilation failed)"

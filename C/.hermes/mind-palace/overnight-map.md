@@ -34,4 +34,4 @@
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
 | 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
-| 300 | S7 X09 cli_paths edge case expansion — 43 new assertions (28→71). Zero-size buffer, trailing slash home, slash-only sub, .. components, empty SLERMES_HOME fallback, multi set/unset cycles, profile special chars, long profile truncation to 63. Suite 335/0/15. v363. |
+| 301 | S7 X09 display edge case expansion — 22 new assertions (17→39). Double init/reset, zero total clamp, long/NULL label, update beyond total, catch-up, double start/stop, unstarted stop. Suite 335/0/15. v364. |

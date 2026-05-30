@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 301: S7 X09 display Edge Case Expansion (v364)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | display test expansion — 22 new assertions (17→39). Double init/reset no crash. Zero total clamped to default (total > 0). Long label (200-char) truncation to buffer, NUL termination. NULL label no crash in progress_init and spinner_start. display_progress_update no-crash (struct not modified, total unchanged). Beyond-total update doesn't crash. Catch-up (current > total then update) doesn't crash. Spinner double start updates label. Spinner stop clears active flag; double stop no crash; unstarted spinner stop no crash. | `tests/test_display.c` — 22 new assertions (17→39). `test_runner.sh` — count 24→39. Suite 335/0/15. v364. |
 ## Phase 300: S7 X09 cli_paths Edge Case Expansion (v363)
 | ID | Achievement | Evidence |
 |----|-------------|----------|

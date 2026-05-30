@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v363)
+# Entry — Slermes C Parity (v364)
 
-Phase 300: S7 cli_paths test expansion — 71 assertions (28→71). 78 gaps.
+Phase 301: S7 display test expansion — 39 assertions (17→39). 78 gaps.

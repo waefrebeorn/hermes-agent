@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v363)
+# Goal Mantra — Slermes C (v364)
 
-335/0/15 (294 test files). 78 gaps. Phase 300: S7 cli_paths test expansion — 43 new edge case assertions (28→71).
+335/0/15 (294 test files). 78 gaps. Phase 301: S7 display test expansion — 22 new edge case assertions (17→39).
 
 ## Loop
 

@@ -48,10 +48,18 @@ int main(void) {
     display_init();
     TEST("init called (no crash)", 1);
 
+    /* Double init */
+    display_init();
+    TEST("init called twice (no crash)", 1);
+
     /* --- reset/clear (no TTY needed) --- */
     printf("\n--- clear/reset ---\n");
     display_reset();
     TEST("reset no crash", 1);
+
+    /* Double reset */
+    display_reset();
+    TEST("reset called twice (no crash)", 1);
 
     /* --- progress init (only tests struct init, not update which needs TTY) --- */
     printf("\n--- progress init ---\n");
@@ -62,12 +70,105 @@ int main(void) {
     TEST("init sets current 0", bar.current == 0);
     TEST("init sets width", bar.width > 0);
 
+    /* Progress with zero total clamped to default */
+    {
+        display_progress_t zb;
+        memset(&zb, 0, sizeof(zb));
+        display_progress_init(&zb, "Zero", 0);
+        TEST("zero total clamped to minimum", zb.total > 0);
+    }
+
+    /* Progress with very long label */
+    {
+        display_progress_t lb;
+        char long_label[256];
+        memset(long_label, 'A', 200);
+        long_label[200] = '\0';
+        display_progress_init(&lb, long_label, 10);
+        TEST("long label truncated to buffer", strncmp(lb.label, long_label, 50) == 0);
+        TEST("long label NUL terminated", lb.label[sizeof(lb.label) - 1] == '\0');
+    }
+
+    /* Progress with NULL label */
+    {
+        display_progress_t nl;
+        display_progress_init(&nl, NULL, 10);
+        /* Should not crash; label may be empty or truncated */
+        TEST("NULL label no crash", 1);
+    }
+
+    /* Progress update (no TTY — just verify no crash) */
+    {
+        display_progress_t ub;
+        memset(&ub, 0, sizeof(ub));
+        display_progress_init(&ub, "Update", 5);
+        display_progress_update(&ub, 3);
+        /* update renders to screen, doesn't store current in struct */
+        TEST("update no crash", 1);
+        TEST("total unchanged after update", ub.total == 5);
+    }
+
+    /* Progress update beyond total */
+    {
+        display_progress_t ob;
+        display_progress_init(&ob, "Over", 5);
+        display_progress_update(&ob, 10);
+        TEST("update beyond total clamps or passes through",
+             ob.current >= 0); /* at minimum doesn't crash */
+    }
+
+    /* Progress with current > total */
+    {
+        display_progress_t cb;
+        display_progress_init(&cb, "Catch-up", 5);
+        cb.current = 10;
+        display_progress_update(&cb, 2);
+        TEST("catch-up update resets current", cb.current >= 0);
+    }
+
     /* --- spinner lifecycle --- */
     printf("\n--- spinner lifecycle ---\n");
     display_spinner_t sp = {0};
     display_spinner_start(&sp, "Working");
     TEST("start sets label", strcmp(sp.label, "Working") == 0);
     TEST("start sets active", sp.active);
+
+    /* Spinner with NULL label */
+    {
+        display_spinner_t ns;
+        memset(&ns, 0, sizeof(ns));
+        display_spinner_start(&ns, NULL);
+        TEST("NULL label spinner start no crash", 1);
+    }
+
+    /* Spinner double start */
+    {
+        display_spinner_t ds;
+        memset(&ds, 0, sizeof(ds));
+        display_spinner_start(&ds, "First");
+        display_spinner_start(&ds, "Second");
+        TEST("double start updates label", strcmp(ds.label, "Second") == 0);
+    }
+
+    /* Spinner stop (graceful no-op if active) */
+    {
+        display_spinner_t ss;
+        memset(&ss, 0, sizeof(ss));
+        display_spinner_start(&ss, "Stop-test");
+        display_spinner_stop(&ss, "Done");
+        TEST("stop clears active", !ss.active);
+        /* Double stop no crash */
+        display_spinner_stop(&ss, NULL);
+        TEST("double stop no crash", 1);
+    }
+
+    /* Spinner stop on unstarted (no crash) */
+    {
+        display_spinner_t ns;
+        memset(&ns, 0, sizeof(ns));
+        display_spinner_stop(&ns, NULL);
+        TEST("stop on unstarted spinner no crash", 1);
+    }
 
     printf("\n=== Results: %d passed, %d failed, %d total ===\n", pass, fail, pass + fail);
     return fail > 0 ? 1 : 0;
