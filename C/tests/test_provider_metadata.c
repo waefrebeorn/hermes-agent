@@ -214,6 +214,69 @@ int main(void) {
              model_supports_vision("anything-here", &pcfg));
     }
 
+    /* --- Test 7: provider_normalize_base_url --- */
+    printf("\n[R10] provider_normalize_base_url:\n");
+
+    char *url;
+    url = provider_normalize_base_url("https://api.openai.com/v1/");
+    TEST("normalize strips trailing slash", url && strcmp(url, "https://api.openai.com/v1") == 0);
+    free(url);
+
+    url = provider_normalize_base_url("https://api.openai.com");
+    TEST("normalize no slash unchanged", url && strcmp(url, "https://api.openai.com") == 0);
+    free(url);
+
+    url = provider_normalize_base_url("  http://localhost:11434  ");
+    TEST("normalize strips whitespace", url && strcmp(url, "http://localhost:11434") == 0);
+    free(url);
+
+    url = provider_normalize_base_url("");
+    TEST("normalize empty returns NULL", url == NULL);
+
+    url = provider_normalize_base_url(NULL);
+    TEST("normalize NULL returns NULL", url == NULL);
+
+    /* --- Test 8: provider_strip_prefix --- */
+    printf("\n[R10] provider_strip_prefix:\n");
+
+    url = provider_strip_prefix("openrouter/gpt-4");
+    TEST("strip slash prefix", url && strcmp(url, "gpt-4") == 0);
+    free(url);
+
+    url = provider_strip_prefix("anthropic/claude-sonnet-4");
+    TEST("strip anthropic slash", url && strcmp(url, "claude-sonnet-4") == 0);
+    free(url);
+
+    url = provider_strip_prefix("gpt-4o");
+    TEST("no prefix unchanged", url && strcmp(url, "gpt-4o") == 0);
+    free(url);
+
+    url = provider_strip_prefix("qwen3.5:27b");
+    TEST("model:tag preserved", url && strcmp(url, "qwen3.5:27b") == 0);
+    free(url);
+
+    url = provider_strip_prefix("deepseek:latest");
+    TEST("model:latest preserved", url && strcmp(url, "deepseek:latest") == 0);
+    free(url);
+
+    url = provider_strip_prefix("openrouter:gpt-4");
+    TEST("strip colon prefix", url && strcmp(url, "gpt-4") == 0);
+    free(url);
+
+    url = provider_strip_prefix("nous:hermes-3");
+    TEST("strip nous colon", url && strcmp(url, "hermes-3") == 0);
+    free(url);
+
+    url = provider_strip_prefix(NULL);
+    TEST("strip NULL returns NULL", url == NULL);
+
+    url = provider_strip_prefix("");
+    TEST("strip empty returns NULL", url == NULL);
+
+    url = provider_strip_prefix("http://localhost:11434/v1/chat/completions");
+    TEST("strip http URL unchanged", url && strncmp(url, "http", 4) == 0);
+    free(url);
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

@@ -648,3 +648,81 @@ char *models_dev_list_json(void) {
     json_free(arr);
     return result;
 }
+
+/* ================================================================
+ *  R10: Provider utility functions — ported from model_metadata.py
+ * ================================================================ */
+
+/* Normalize a base URL: strip whitespace and trailing slash.
+ * Port of Python _normalize_base_url().
+ * Returns malloc'd string, caller must free(). */
+char *provider_normalize_base_url(const char *base_url) {
+    if (!base_url || !*base_url) return NULL;
+
+    /* Skip leading whitespace */
+    const char *start = base_url;
+    while (*start && isspace((unsigned char)*start)) start++;
+    if (!*start) return NULL;
+
+    /* Find end (before trailing whitespace) */
+    const char *end = start + strlen(start) - 1;
+    while (end > start && isspace((unsigned char)*end)) end--;
+
+    /* Strip trailing slash */
+    if (*end == '/') end--;
+
+    size_t len = (size_t)(end - start + 1);
+    char *result = malloc(len + 1);
+    if (!result) return NULL;
+    memcpy(result, start, len);
+    result[len] = '\0';
+    return result;
+}
+
+/* Strip a recognized provider prefix from a model name.
+ * Handles "provider/" prefix format: "openrouter/gpt-4" → "gpt-4".
+ * Handles "provider:" prefix format: "openrouter:gpt-4" → "gpt-4".
+ * Preserves model:tag format like "qwen3.5:27b" (not a provider prefix).
+ * Returns malloc'd string, caller must free(). Returns NULL on error. */
+char *provider_strip_prefix(const char *model) {
+    if (!model || !*model) return NULL;
+
+    /* Skip if starts with http (URL, not model name) */
+    if (strncmp(model, "http", 4) == 0)
+        return strdup(model);
+
+    /* Check for "provider/" format (last slash) */
+    const char *slash = strrchr(model, '/');
+    if (slash && slash != model) {
+        /* Check if prefix looks like a provider name (no dots, no digits at start) */
+        size_t prefix_len = (size_t)(slash - model);
+        if (prefix_len > 0 && prefix_len < 64) {
+            return strdup(slash + 1);
+        }
+    }
+
+    /* Check for "provider:" format (first colon, but not model:tag) */
+    const char *colon = strchr(model, ':');
+    if (colon && colon != model) {
+        size_t prefix_len = (size_t)(colon - model);
+        if (prefix_len > 0 && prefix_len < 64) {
+            /* Check if suffix looks like a tag (e.g. "7b", "latest", "q4_0") */
+            const char *suffix = colon + 1;
+            /* Simple heuristic: if suffix starts with a digit or is short, it's a tag */
+            bool looks_like_tag = false;
+            if (isdigit((unsigned char)*suffix))
+                looks_like_tag = true;
+            else if (strncmp(suffix, "latest", 6) == 0 ||
+                     strncmp(suffix, "stable", 6) == 0 ||
+                     strncmp(suffix, "instruct", 8) == 0 ||
+                     strncmp(suffix, "text", 4) == 0)
+                looks_like_tag = true;
+
+            if (!looks_like_tag)
+                return strdup(suffix);
+        }
+    }
+
+    /* No prefix detected — return copy */
+    return strdup(model);
+}

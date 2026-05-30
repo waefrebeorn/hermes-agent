@@ -149,6 +149,21 @@ int models_dev_lookup_context(const char *provider, const char *model);
  * model_metadata_list_json). Returns malloc'd string, caller must free(). */
 char *models_dev_list_json(void);
 
+/* ================================================================
+ *  R10: Provider utility functions — ported from model_metadata.py
+ * ================================================================ */
+
+/* Normalize a base URL: strip whitespace and trailing slash.
+ * Port of Python _normalize_base_url().
+ * Returns malloc'd string, caller must free(). */
+char *provider_normalize_base_url(const char *base_url);
+
+/* Strip a recognized provider prefix from a model name.
+ * Handles "provider/" and "provider:" prefix formats.
+ * Preserves model:tag format (e.g. "qwen3.5:27b").
+ * Returns malloc'd string, caller must free(). */
+char *provider_strip_prefix(const char *model);
+
 #ifdef __cplusplus
 }
 #endif

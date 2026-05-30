@@ -1,8 +1,9 @@
 ||| Slermes C
 
-Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). S7 X09 openrouter_depth expansion (12→60 tests). S7 X09 xai_http expansion (15→24 tests). v311.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). S7 X09 openrouter_depth expansion (12→60 tests). S7 X09 xai_http expansion (15→24 tests). v311. Partial: R10 provider utility functions ported (provider_normalize_base_url + provider_strip_prefix).
+- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
