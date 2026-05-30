@@ -842,6 +842,56 @@ const char *bedrock_resolve_region(void) {
     return "us-east-1";
 }
 
+/* ---- bedrock_convert_tools_to_converse ---- */
+/* Port of Python bedrock_adapter.convert_tools_to_converse().
+ * Converts OpenAI-format tool definitions array to Bedrock Converse
+ * toolSpec format: {function: {name, description, parameters}}
+ * becomes {toolSpec: {name, description, inputSchema: {json: params}}}.
+ * Returns json_t* array suitable for toolConfig.tools. Caller must free(). */
+json_t *bedrock_convert_tools_to_converse(const json_t *tools) {
+    if (!tools || tools->type != JSON_ARRAY || tools->c.count == 0)
+        return json_array();
+
+    json_t *result = json_array();
+    if (!result) return NULL;
+
+    for (size_t i = 0; i < tools->c.count; i++) {
+        json_t *t = tools->c.items[i];
+        if (!t || t->type != JSON_OBJECT) continue;
+
+        /* Extract function sub-object */
+        json_t *fn = json_obj_get(t, "function");
+        if (!fn || fn->type != JSON_OBJECT) continue;
+
+        const char *name = json_get_str(fn, "name", "");
+        const char *description = json_get_str(fn, "description", "");
+        json_t *parameters = json_obj_get(fn, "parameters");
+
+        /* Build toolSpec */
+        json_t *input_schema = json_object();
+        json_t *inner_json = NULL;
+        if (parameters && parameters->type == JSON_OBJECT) {
+            inner_json = json_copy(parameters);
+        } else {
+            inner_json = json_object();
+            json_set(inner_json, "type", json_string("object"));
+            json_set(inner_json, "properties", json_object());
+        }
+        json_set(input_schema, "json", inner_json);
+
+        json_t *tool_spec = json_object();
+        json_set(tool_spec, "name", json_string(name));
+        if (description && *description)
+            json_set(tool_spec, "description", json_string(description));
+        json_set(tool_spec, "inputSchema", input_schema);
+
+        json_t *wrapper = json_object();
+        json_set(wrapper, "toolSpec", tool_spec);
+        json_append(result, wrapper);
+    }
+    return result;
+}
+
 const provider_ops_t PROVIDER_OPS_BEDROCK = {
     .build_url = bedrock_build_url,
     .build_headers = bedrock_build_headers,

@@ -28,6 +28,7 @@ static void test_supports_tool_use(void);
 static void test_resolve_auth_env_var(void);
 static void test_has_credentials(void);
 static void test_resolve_region(void);
+static void test_convert_tools_to_converse(void);
 
 /* Test data */
 static const message_t user_msg = {.role = MSG_USER, .content = (char*)"hello"};
@@ -441,6 +442,7 @@ int main(void) {
     test_resolve_auth_env_var();
     test_has_credentials();
     test_resolve_region();
+    test_convert_tools_to_converse();
 
     printf("\n=== Overall: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
@@ -575,4 +577,85 @@ static void test_resolve_region(void) {
     unsetenv("AWS_DEFAULT_REGION");
     if (saved_region) setenv("AWS_REGION", saved_region, 1);
     if (saved_def) setenv("AWS_DEFAULT_REGION", saved_def, 1);
+}
+
+/* ---- bedrock_convert_tools_to_converse ---- */
+static void test_convert_tools_to_converse(void) {
+    printf("\n[R02] bedrock_convert_tools_to_converse:\n");
+
+    /* Test NULL/empty */
+    {
+        json_t *r = bedrock_convert_tools_to_converse(NULL);
+        TEST("null tools returns array", r != NULL && r->type == JSON_ARRAY && r->c.count == 0);
+        json_free(r);
+    }
+    {
+        json_t *arr = json_array();
+        json_t *r = bedrock_convert_tools_to_converse(arr);
+        TEST("empty array", r != NULL && r->type == JSON_ARRAY && r->c.count == 0);
+        json_free(r);
+        json_free(arr);
+    }
+
+    /* Test single tool */
+    {
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("get_weather"));
+        json_set(fn, "description", json_string("Get weather for a location"));
+        json_t *params = json_object();
+        json_set(params, "type", json_string("object"));
+        json_set(fn, "parameters", json_copy(params));
+        json_free(params);
+
+        json_t *tool = json_object();
+        json_set(tool, "type", json_string("function"));
+        json_set(tool, "function", fn);
+
+        json_t *tools = json_array();
+        json_append(tools, tool);
+
+        json_t *r = bedrock_convert_tools_to_converse(tools);
+        TEST("single tool returns array", r != NULL && r->type == JSON_ARRAY);
+        TEST("one tool spec", r->c.count == 1);
+        if (r && r->c.count > 0) {
+            json_t *ts = r->c.items[0];
+            json_t *spec = json_obj_get(ts, "toolSpec");
+            TEST("has toolSpec", spec != NULL && spec->type == JSON_OBJECT);
+            if (spec) {
+                const char *n = json_get_str(spec, "name", "");
+                TEST("name preserved", n && strcmp(n, "get_weather") == 0);
+                const char *d = json_get_str(spec, "description", "");
+                TEST("description preserved", d && strcmp(d, "Get weather for a location") == 0);
+                json_t *schema = json_obj_get(spec, "inputSchema");
+                TEST("has inputSchema", schema != NULL);
+                if (schema) {
+                    json_t *inner = json_obj_get(schema, "json");
+                    TEST("inputSchema has json", inner != NULL && inner->type == JSON_OBJECT);
+                }
+            }
+        }
+        json_free(r);
+        json_free(tools);
+    }
+
+    /* Test tool without description */
+    {
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("search_web"));
+        json_t *tool = json_object();
+        json_set(tool, "type", json_string("function"));
+        json_set(tool, "function", fn);
+        json_t *tools = json_array();
+        json_append(tools, tool);
+
+        json_t *r = bedrock_convert_tools_to_converse(tools);
+        TEST("no description", r != NULL && r->c.count == 1);
+        if (r && r->c.count > 0) {
+            json_t *spec = json_obj_get(r->c.items[0], "toolSpec");
+            const char *d = json_get_str(spec, "description", "__missing__");
+            TEST("description omitted", d && strcmp(d, "__missing__") == 0);
+        }
+        json_free(r);
+        json_free(tools);
+    }
 }

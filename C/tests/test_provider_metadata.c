@@ -34,6 +34,10 @@ static void test_provider_is_custom_endpoint(void);
 static void test_provider_is_known_base_url(void);
 static void test_provider_auth_headers(void);
 static void test_provider_coerce_reasonable_int(void);
+static void test_estimate_tokens_rough(void);
+static void test_provider_resolve_requests_verify(void);
+static void test_provider_extract_context_length(void);
+static void test_provider_extract_max_completion_tokens(void);
 
 int main(void) {
 
@@ -473,6 +477,10 @@ int main(void) {
     test_provider_is_known_base_url();
     test_provider_auth_headers();
     test_provider_coerce_reasonable_int();
+    test_estimate_tokens_rough();
+    test_provider_resolve_requests_verify();
+    test_provider_extract_context_length();
+    test_provider_extract_max_completion_tokens();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -562,4 +570,163 @@ static void test_provider_coerce_reasonable_int(void) {
     TEST("not a number",    provider_coerce_reasonable_int("abc", 0, 10000) == -1);
     TEST("bool false",      provider_coerce_reasonable_int("false", 0, 10000) == -1);
     TEST("leading spaces",  provider_coerce_reasonable_int("  16384", 1024, 10000000) == 16384);
+}
+
+/* ---- estimate_tokens_rough ---- */
+static void test_estimate_tokens_rough(void) {
+    printf("\n[R10] estimate_tokens_rough:\n");
+    TEST("null",      estimate_tokens_rough(NULL) == 0);
+    TEST("empty",     estimate_tokens_rough("") == 0);
+    TEST("1 char",    estimate_tokens_rough("a") == 1);
+    TEST("4 chars",   estimate_tokens_rough("abcd") == 1);
+    TEST("5 chars",   estimate_tokens_rough("abcde") == 2);
+    TEST("100 chars", estimate_tokens_rough("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") == 25);
+    TEST("3 chars",   estimate_tokens_rough("abc") == 1);
+    TEST("7 chars",   estimate_tokens_rough("abcdefg") == 2);
+    TEST("8 chars",   estimate_tokens_rough("abcdefgh") == 2);
+    TEST("1024 chars", estimate_tokens_rough("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") == 130);
+}
+
+/* ---- provider_resolve_requests_verify ---- */
+static void test_provider_resolve_requests_verify(void) {
+    printf("\n[R10] provider_resolve_requests_verify:\n");
+    const char *saved = getenv("HERMES_VERIFY_SSL");
+
+    unsetenv("HERMES_VERIFY_SSL");
+    TEST("default verify", provider_resolve_requests_verify() == 1);
+
+    setenv("HERMES_VERIFY_SSL", "0", 1);
+    TEST("0 disables", provider_resolve_requests_verify() == 0);
+    setenv("HERMES_VERIFY_SSL", "false", 1);
+    TEST("false disables", provider_resolve_requests_verify() == 0);
+    setenv("HERMES_VERIFY_SSL", "no", 1);
+    TEST("no disables", provider_resolve_requests_verify() == 0);
+    setenv("HERMES_VERIFY_SSL", "off", 1);
+    TEST("off disables", provider_resolve_requests_verify() == 0);
+
+    setenv("HERMES_VERIFY_SSL", "1", 1);
+    TEST("1 enables", provider_resolve_requests_verify() == 1);
+    setenv("HERMES_VERIFY_SSL", "true", 1);
+    TEST("true enables", provider_resolve_requests_verify() == 1);
+    setenv("HERMES_VERIFY_SSL", "yes", 1);
+    TEST("yes enables", provider_resolve_requests_verify() == 1);
+    setenv("HERMES_VERIFY_SSL", "on", 1);
+    TEST("on enables", provider_resolve_requests_verify() == 1);
+
+    setenv("HERMES_VERIFY_SSL", "/etc/ssl/certs/ca-certificates.crt", 1);
+    TEST("custom path", provider_resolve_requests_verify() == -1);
+    const char *p = provider_requests_verify_path();
+    TEST("path returned", p != NULL);
+    TEST("path matches", p && strcmp(p, "/etc/ssl/certs/ca-certificates.crt") == 0);
+
+    /* Restore */
+    if (saved) setenv("HERMES_VERIFY_SSL", saved, 1);
+    else unsetenv("HERMES_VERIFY_SSL");
+}
+
+/* ---- provider_extract_context_length ---- */
+static void test_provider_extract_context_length(void) {
+    printf("\n[R10] provider_extract_context_length:\n");
+    TEST("null payload", provider_extract_context_length(NULL) == -1);
+
+    /* Simple payload with context_length */
+    {
+        json_t *p = json_object();
+        json_set(p, "context_length", json_number(128000));
+        int n = provider_extract_context_length(p);
+        TEST("context_length 128000", n == 128000);
+        json_free(p);
+    }
+
+    /* context_window */
+    {
+        json_t *p = json_object();
+        json_set(p, "context_window", json_number(65536));
+        TEST("context_window 65536", provider_extract_context_length(p) == 65536);
+        json_free(p);
+    }
+
+    /* max_position_embeddings */
+    {
+        json_t *p = json_object();
+        json_set(p, "max_position_embeddings", json_number(4096));
+        TEST("max_position_embeddings", provider_extract_context_length(p) == 4096);
+        json_free(p);
+    }
+
+    /* Nested payload */
+    {
+        json_t *inner = json_object();
+        json_set(inner, "n_ctx", json_number(8192));
+        json_t *p = json_object();
+        json_set(p, "config", inner);
+        TEST("nested n_ctx", provider_extract_context_length(p) == 8192);
+        json_free(p);
+    }
+
+    /* Too small (below 1024 minimum) */
+    {
+        json_t *p = json_object();
+        json_set(p, "context_length", json_number(127));
+        TEST("too small returns -1", provider_extract_context_length(p) == -1);
+        json_free(p);
+    }
+
+    /* No matching key */
+    {
+        json_t *p = json_object();
+        json_set(p, "name", json_string("gpt-4o"));
+        TEST("no matching key", provider_extract_context_length(p) == -1);
+        json_free(p);
+    }
+
+    /* Empty object */
+    {
+        json_t *p = json_object();
+        TEST("empty object", provider_extract_context_length(p) == -1);
+        json_free(p);
+    }
+}
+
+/* ---- provider_extract_max_completion_tokens ---- */
+static void test_provider_extract_max_completion_tokens(void) {
+    printf("\n[R10] provider_extract_max_completion_tokens:\n");
+    TEST("null payload", provider_extract_max_completion_tokens(NULL) == -1);
+
+    {
+        json_t *p = json_object();
+        json_set(p, "max_completion_tokens", json_number(16384));
+        TEST("max_completion_tokens 16384",
+             provider_extract_max_completion_tokens(p) == 16384);
+        json_free(p);
+    }
+
+    {
+        json_t *p = json_object();
+        json_set(p, "max_output_tokens", json_number(8192));
+        TEST("max_output_tokens 8192",
+             provider_extract_max_completion_tokens(p) == 8192);
+        json_free(p);
+    }
+
+    {
+        json_t *p = json_object();
+        json_set(p, "max_tokens", json_number(4096));
+        TEST("max_tokens 4096",
+             provider_extract_max_completion_tokens(p) == 4096);
+        json_free(p);
+    }
+
+    {
+        json_t *p = json_object();
+        json_set(p, "unknown_key", json_number(5000));
+        TEST("no matching key", provider_extract_max_completion_tokens(p) == -1);
+        json_free(p);
+    }
+
+    {
+        json_t *p = json_object();
+        TEST("empty object", provider_extract_max_completion_tokens(p) == -1);
+        json_free(p);
+    }
 }

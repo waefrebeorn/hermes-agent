@@ -226,6 +226,30 @@ json_t *provider_auth_headers(const char *api_key);
  * Returns -1 on failure (not a valid int, or out of range). */
 int provider_coerce_reasonable_int(const char *value, int minimum, int maximum);
 
+/* Estimate tokens from text length (~4 chars/token, ceiling division).
+ * Port of Python model_metadata.estimate_tokens_rough(). */
+int estimate_tokens_rough(const char *text);
+
+/* Resolve HERMES_VERIFY_SSL env var for HTTP client verification.
+ * Port of Python model_metadata._resolve_requests_verify().
+ * Returns 1 (verify), 0 (skip verify), or -1 (custom CA bundle path). */
+int provider_resolve_requests_verify(void);
+
+/* Return custom CA bundle path from HERMES_VERIFY_SSL env var, or NULL. */
+const char *provider_requests_verify_path(void);
+
+/* Extract context length from a model metadata payload JSON object.
+ * Port of Python model_metadata._extract_context_length().
+ * Searches nested dicts for known context-length keys.
+ * Returns the value or -1 if not found. */
+int provider_extract_context_length(const json_t *payload);
+
+/* Extract max completion tokens from a model metadata payload JSON object.
+ * Port of Python model_metadata._extract_max_completion_tokens().
+ * Searches nested dicts for known max-completion-token keys.
+ * Returns the value or -1 if not found. */
+int provider_extract_max_completion_tokens(const json_t *payload);
+
 #ifdef __cplusplus
 }
 #endif

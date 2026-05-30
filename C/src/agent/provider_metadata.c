@@ -1230,3 +1230,158 @@ int provider_coerce_reasonable_int(const char *value, int minimum, int maximum) 
     if (val < (long)minimum || val > (long)maximum) return -1;
     return (int)val;
 }
+
+/* ---- estimate_tokens_rough ---- */
+/* Port of Python model_metadata.estimate_tokens_rough().
+ * Rough token estimate using ceiling division: (len + 3) / 4. */
+int estimate_tokens_rough(const char *text) {
+    if (!text) return 0;
+    size_t len = strlen(text);
+    return (int)((len + 3) / 4);
+}
+
+/* ---- provider_resolve_requests_verify ---- */
+/* Port of Python model_metadata._resolve_requests_verify().
+ * Returns 1 for verify, 0 for skip verify, -1 for custom CA path. */
+int provider_resolve_requests_verify(void) {
+    const char *value = getenv("HERMES_VERIFY_SSL");
+    if (!value || !*value) return 1; /* Default: verify */
+    /* Lowercase the value for comparison */
+    size_t len = strlen(value);
+    char *lower = malloc(len + 1);
+    if (!lower) return 1;
+    for (size_t i = 0; i < len; i++)
+        lower[i] = tolower((unsigned char)value[i]);
+    lower[len] = '\0';
+    int result;
+    if (strcmp(lower, "0") == 0 || strcmp(lower, "false") == 0 ||
+        strcmp(lower, "no") == 0 || strcmp(lower, "off") == 0) {
+        result = 0;
+    } else if (strcmp(lower, "1") == 0 || strcmp(lower, "true") == 0 ||
+               strcmp(lower, "yes") == 0 || strcmp(lower, "on") == 0) {
+        result = 1;
+    } else {
+        result = -1; /* Custom CA bundle path */
+    }
+    free(lower);
+    return result;
+}
+
+/* ---- provider_requests_verify_path ---- */
+/* Return the custom CA bundle path from HERMES_VERIFY_SSL, or NULL if
+ * the env var is a boolean keyword or not set. */
+const char *provider_requests_verify_path(void) {
+    if (provider_resolve_requests_verify() != -1) return NULL;
+    return getenv("HERMES_VERIFY_SSL");
+}
+
+/* ---- provider_extract_context_length ---- */
+/* Port of Python model_metadata._extract_context_length().
+ * Iterates nested JSON objects looking for known context-length keys.
+ * Uses provider_coerce_reasonable_int for value validation. */
+int provider_extract_context_length(const json_t *payload) {
+    if (!payload) return -1;
+    const char *keys[] = {
+        "context_length", "context_window", "context_size",
+        "max_context_length", "max_position_embeddings", "max_model_len",
+        "max_input_tokens", "max_sequence_length", "max_seq_len",
+        "n_ctx_train", "n_ctx", "ctx_size", NULL
+    };
+    /* Walk the JSON tree looking for matching keys */
+    /* Simple flat + one-level deep scan */
+    if (payload->type == JSON_OBJECT) {
+        for (size_t i = 0; i < payload->c.count; i++) {
+            const char *key = payload->c.keys ? payload->c.keys[i] : "";
+            if (!key) continue;
+            size_t klen = strlen(key);
+            char *klower = malloc(klen + 1);
+            if (!klower) continue;
+            for (size_t j = 0; j < klen; j++)
+                klower[j] = tolower((unsigned char)key[j]);
+            klower[klen] = '\0';
+            for (int k = 0; keys[k]; k++) {
+                if (strcmp(klower, keys[k]) == 0) {
+                    json_t *val = payload->c.items[i];
+                    if (val->type == JSON_NUMBER) {
+                        int n = (int)val->num_val;
+                        free(klower);
+                        if (n >= 1024 && n <= 10000000) return n;
+                        goto next_key_outer;
+                    }
+                    if (val->type == JSON_STRING) {
+                        char buf[64];
+                        snprintf(buf, sizeof(buf), "%s", val->str_val);
+                        free(klower);
+                        int n = provider_coerce_reasonable_int(buf, 1024, 10000000);
+                        if (n >= 1024) return n;
+                        goto next_key_outer;
+                    }
+                    free(klower);
+                    goto next_key_outer;
+                }
+            }
+            /* Recursively check nested objects */
+            if (payload->c.items[i]->type == JSON_OBJECT) {
+                int n = provider_extract_context_length(payload->c.items[i]);
+                free(klower);
+                if (n >= 0) return n;
+            } else {
+                free(klower);
+            }
+            next_key_outer:;
+        }
+    }
+    return -1;
+}
+
+/* ---- provider_extract_max_completion_tokens ---- */
+/* Port of Python model_metadata._extract_max_completion_tokens().
+ * Iterates nested JSON objects looking for max-completion-token keys. */
+int provider_extract_max_completion_tokens(const json_t *payload) {
+    if (!payload) return -1;
+    const char *keys[] = {
+        "max_completion_tokens", "max_output_tokens", "max_tokens", NULL
+    };
+    if (payload->type == JSON_OBJECT) {
+        for (size_t i = 0; i < payload->c.count; i++) {
+            const char *key = payload->c.keys ? payload->c.keys[i] : "";
+            if (!key) continue;
+            size_t klen = strlen(key);
+            char *klower = malloc(klen + 1);
+            if (!klower) continue;
+            for (size_t j = 0; j < klen; j++)
+                klower[j] = tolower((unsigned char)key[j]);
+            klower[klen] = '\0';
+            for (int k = 0; keys[k]; k++) {
+                if (strcmp(klower, keys[k]) == 0) {
+                    json_t *val = payload->c.items[i];
+                    if (val->type == JSON_NUMBER) {
+                        int n = (int)val->num_val;
+                        free(klower);
+                        if (n >= 1024 && n <= 10000000) return n;
+                        goto next_key_mct;
+                    }
+                    if (val->type == JSON_STRING) {
+                        char buf[64];
+                        snprintf(buf, sizeof(buf), "%s", val->str_val);
+                        free(klower);
+                        int n = provider_coerce_reasonable_int(buf, 1024, 10000000);
+                        if (n >= 1024) return n;
+                        goto next_key_mct;
+                    }
+                    free(klower);
+                    goto next_key_mct;
+                }
+            }
+            if (payload->c.items[i]->type == JSON_OBJECT) {
+                int n = provider_extract_max_completion_tokens(payload->c.items[i]);
+                free(klower);
+                if (n >= 0) return n;
+            } else {
+                free(klower);
+            }
+            next_key_mct:;
+        }
+    }
+    return -1;
+}
