@@ -180,6 +180,26 @@ else
     fail "wecom_callback (compilation failed)"
 fi
 
+echo ""; echo "=== Terminal Sudo Tests ==="
+if gcc -O2 -Wall -Wextra -Wl,--unresolved-symbols=ignore-all \
+    -I"$CDIR/include" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libtooloutput" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libbase64" \
+    -I"$CDIR/lib/libenvpassthrough" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libpath" \
+    -I"$CDIR/lib/libdatetime" -I"$CDIR/lib/libtoolbackend" -I"$CDIR/lib/libproc" \
+    -I"$CDIR/lib/libregex" -I"$CDIR/lib/liblineedit" -I"$CDIR/lib/libmangateway" \
+    -I"$CDIR/lib/libratelimit" \
+    "$CDIR/tests/test_terminal_sudo.c" "$CDIR/src/tools/terminal.c" \
+    -o /tmp/hermes_test_terminal_sudo -lssl -lcrypto -lz -lm 2>/dev/null && [[ -x /tmp/hermes_test_terminal_sudo ]]; then
+    if /tmp/hermes_test_terminal_sudo > /dev/null 2>&1; then
+        ok "terminal_sudo (3 tests)"
+    else
+        fail "terminal_sudo (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_terminal_sudo
+else
+    fail "terminal_sudo (compilation failed)"
+fi
+
 echo ""; echo "=== Markdown Render Tests ==="
 if gcc -O2 -Wall -Wextra -Wno-format-truncation \
     -I"$CDIR/include" \

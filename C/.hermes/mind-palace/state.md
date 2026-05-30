@@ -1,7 +1,7 @@
-| Slermes C (v250)
+| Slermes C (v251)
 
-Suite: 314/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 272 | C src: 178
+Suite: 315/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 273 | C src: 178
 Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -120,6 +120,7 @@ Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 121|- Phase 180: G07 telegram_network PORTED — telegram_query_doh(), telegram_parse_doh_response(), telegram_discover_fallback_ips(), telegram_rewrite_url_for_ip(). 22 tests. Suite 313/0/0 (v248). 131→130 gaps.
 122||- Phase 181: G06 wecom_callback depth — wecom_xml_extract_tag() + wecom_callback_user_app_key(). 25-test suite. Suite 314/0/0 (v249). 129→128 gaps.
 123||- Phase 182: G02 base.py depth — http_no_proxy_match() ported from _no_proxy_entry_matches(). NO_PROXY entry matching with wildcard, suffix, and exact host patterns. Added to libhttp. 18 test assertions. Suite 314/0/0 (v250). 128→128 gaps (depth).
+124||- Phase 183: B07 terminal depth — terminal_sudo_nopasswd_works() ported from _sudo_nopasswd_works(). Probes sudo -n true via popen, checks TERMINAL_ENV guard. 3-test suite. Suite 315/0/0 (v251). 128→128 gaps (depth).
 |||- Phase 177: G07 telegram_network depth — telegram_resolve_system_dns(). 7 tests. Suite 313/0/0 (v248).
 ||- Phase 176: G09 yuanbao_media PORTED — crypto_md5_hex(), yuanbao_generate_file_id(), yuanbao_build_image_msg(), yuanbao_build_file_msg(). 15 tests. Suite 312/0/0 (v248).
 ||- Phase 175: G10 yuanbao_proto PORTED — stale claim verified. C has libprotobuf + yuanbao.c (encode_conn_msg/decode_conn_msg/encode_send_c2c/encode_auth_bind/encode_ping_req/encode_query_group_info/encode_get_group_member_list) covering all Yuanbao protobuf wire-format needs. 134→133 gaps. Suite 311/0/0 (v247).
@@ -138,4 +139,4 @@ Battleship v34 (128 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 - **P3** (47): Plugin system (15), CLI ecosystem (12), Tool depth (7), Tests (8), TUI (4), S8 remaining (1)
 
 |## Honest Assessment
-|||Real parity gap is 128 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 314/0/0 (272 test files).
+|||Real parity gap is 128 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 315/0/0 (273 test files).

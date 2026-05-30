@@ -1680,3 +1680,10 @@ Suite: 314/0/0 (272 test files). Gaps: 128. v249
 | P182-01 | G02 base.py depth — http_no_proxy_match() ported from _no_proxy_entry_matches(). Supports wildcard `*`, `*.domain.com` suffix, `.domain.com` prefix, exact host, and subdomain matching. Case-insensitive. Whitespace-trimmed. Added to libhttp. Does NOT port IP/CIDR matching (Python ipaddress module). 18-test suite. | `C/lib/libhttp/http.h` — declaration. `C/lib/libhttp/http.c` — implementation (83 LOC). `C/tests/test_http.c` — 18/18 passed. |
 | P182-02 | Depth improvement within existing PARTIAL classification. Gaps unchanged (128). Suite unchanged (314/0/0). | `.hermes/mind-palace/battleship-v34.md` — G02 updated with http_no_proxy_match. |
 Suite: 314/0/0 (272 test files). Gaps: 128. v250
+## Phase 183: B07 Terminal Depth — Sudo Nopasswd Probe (v251)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P183-01 | B07 terminal depth — terminal_sudo_nopasswd_works() ported from Python terminal_tool._sudo_nopasswd_works(). Probes sudo -n true via popen, checks TERMINAL_ENV guard. Returns true when local sudo works without password prompt. No caching. 3-test suite. | `C/include/hermes.h` — declaration. `C/src/tools/terminal.c` — implementation (16 LOC after _inject_sudo_failure). `C/tests/test_terminal_sudo.c` — 3/3 passed. |
+| P183-02 | Depth improvement within existing PARTIAL classification. Gaps unchanged (128). Suite 314→315. Test files 272→273. | `.hermes/mind-palace/battleship-v34.md` — B07 updated with terminal_sudo_nopasswd_works. |
+Suite: 315/0/0 (273 test files). Gaps: 128. v251

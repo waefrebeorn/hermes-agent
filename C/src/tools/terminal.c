@@ -799,6 +799,24 @@ static void _inject_sudo_failure(json_t *rj, const char *command) {
     }
 }
 
+/* Check if sudo -n works without a password prompt.
+ * Port of Python terminal_tool._sudo_nopasswd_works().
+ * Returns true when local sudo works without prompting.
+ * Only checks the local backend; Docker/SSH/etc return false.
+ * No process-level cache — re-probes every call. */
+bool terminal_sudo_nopasswd_works(void) {
+    /* Only check for local backend */
+    const char *env = getenv("TERMINAL_ENV");
+    if (env && env[0] && strcasecmp(env, "local") != 0)
+        return false;
+
+    /* Run sudo -n true with 3s timeout via popen */
+    FILE *fp = popen("sudo -n true 2>/dev/null", "r");
+    if (!fp) return false;
+    int status = pclose(fp);
+    return status == 0;
+}
+
 /* Inject exit_code_interpretation field into result JSON */
 static char *_inject_interpretation(const char *result_json, const char *command) {
     if (!result_json) return NULL;

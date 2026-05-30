@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v250 | Fork diverged — C/ lives only on fork | Suite 314/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 182: G02 base.py depth — http_no_proxy_match(). 18-test suite. Suite 314/0/0. Gaps unchanged (depth).**
+**v251 | Fork diverged — C/ lives only on fork | Suite 315/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 128 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 272 (21.6% parity). Phase 183: B07 terminal depth — terminal_sudo_nopasswd_works(). 3-test suite. Suite 315/0/0. Gaps unchanged (depth).**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -174,13 +174,13 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 || 04 | B04 | mcp_tool | ~3875 | ~3584 | 108% | OAuth: libmcp_oauth manager integration — mcp_oauth_manager_get_token() with PKCE auth code flow (callback server, browser open, token exchange/refresh, mtime-change detection). Auth config parsed for HTTP/SSE servers too | P2 | ✅ IMPLEMENTED |
 | 05 | B05 | file | ~3000 | ~1220 | 246% | ALL features implemented (glob, fswatch, diff, hex, symlink all verified) | P2 | ✅ IMPLEMENTED |
 | 06 | B06 | feishu_tools | ~210 | ~872 | 24% | Both doc_read + drive_list exist — matches Python feature set | P2 | ✅ IMPLEMENTED |
-|| 07 | B07 | terminal | ~981 | ~2409 | 40% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96). foreground/background guidance: detects nohup/disown/setsid/& and suggests background=true (Phase 100). pipe_stdin detection: PTY auto-override for gh auth login --with-token (Phase 134). help/version detection: --help/-h/--version/-v skip guidance early (Phase 135). env assignment detection: KEY=VALUE prefix skips guidance (Phase 137). Long-lived foreground pattern detection: npm/pnpm/yarn/bun run dev|start|serve|watch, docker compose up, next dev, vite, nodemon, uvicorn, gunicorn, python -m http.server (Phase 141). Sudo failure detection: checks output for sudo: a password is required / sudo: no tty present / sudo: a terminal is required and adds sudo_tip field (Phase 142). Workdir validation: allowlist-based safe-path check blocking shell metacharacters (Phase 143). 90-test suite (+14 from v215). | P2 | PARTIAL |
+||| 07 | B07 | terminal | ~981 | ~2409 | 40% | env passthrough wiring from libenvpassthrough to exec (Phase 72). workdir validation + disk usage warning (Phase 88). force param + foreground timeout guard + status field (Phase 91). exit code interpretation: human-readable messages per command (grep/diff/find/git/curl), injected into all backend results (Phase 96). foreground/background guidance: detects nohup/disown/setsid/& and suggests background=true (Phase 100). pipe_stdin detection: PTY auto-override for gh auth login --with-token (Phase 134). help/version detection: --help/-h/--version/-v skip guidance early (Phase 135). env assignment detection: KEY=VALUE prefix skips guidance (Phase 137). Long-lived foreground pattern detection: npm/pnpm/yarn/bun run dev|start|serve|watch, docker compose up, next dev, vite, nodemon, uvicorn, gunicorn, python -m http.server (Phase 141). Sudo failure detection: checks output for sudo: a password is required / sudo: no tty present / sudo: a terminal is required and adds sudo_tip field (Phase 142). Workdir validation: allowlist-based safe-path check blocking shell metacharacters (Phase 143). Sudo nopasswd probe: terminal_sudo_nopasswd_works() checks if sudo -n works without prompt (Phase 183). 90-test suite (+14 from v215). | P2 | PARTIAL |
 || 08 | B08 | send_message | ~710 | ~1786 | 40% | inline_buttons + reply_to_message_id implemented. media_group array support added. error redaction: secrets sanitized from error messages. thread_id support. [[as_document]] directive. disable_link_previews for Telegram link suppression (Phase 97). action=list returns available platforms (Phase 99). parse_mode parameter (Markdown/MarkdownV2/HTML/plain) (Phase 106). disable_notification (silent send) for Telegram (Phase 126). Telegram retry with exponential backoff (Phase 132): 3 attempts with 0.5s/1s/2s delay on transient failures, port of Python _telegram_retry_delay + _send_telegram_message_with_retry. General topic thread_id mapping (Phase 158): telegram_message_thread_id_for_send() maps "1" -> NULL matching TelegramAdapter._message_thread_id_for_send(). Parse mode fallback (Phase 159): when send fails with non-default parse_mode, retries once with parse_mode=NULL (plain text). telegram_send_with_mode() helper extracted. HTML auto-detection (Phase 160): message_looks_like_html() auto-switches to parse_mode=HTML when message contains HTML tags. Telegram thread-not-found detection (Phase 164): telegram_is_thread_not_found() checks errors for "thread not found" via case-insensitive substring match with separator variants (space/underscore/hyphen). 12-test standalone suite. | P2 | PARTIAL |
 | 09 | B09 | patch | ~1154 | ~1200 | 96% | ✅ dry_run, V4A multi-file patch mode, 9 fuzzy matching strategies, conflict resolution (snippet JSON), replace_all — ALL parity features implemented | P2 | ✅ IMPLEMENTED |
 | 10 | B10 | session_search | ~621 | ~650 | 96% | scroll + browse modes, tag_filter, role_filter, session_id_filter, offset pagination, FTS5 query syntax (AND, quotes, -exclude), session_search single-shape discovery/scroll/browse API — ALL implemented | P2 | ✅ IMPLEMENTED |
 | 11 | B11-B20 | remaining tools | ~50-80% | varying | partial | Various | P2-P3 | STALE — needs verification |
 
-**S6: 11 gaps (4 P2, 7 P3) — Phase 181: G06 wecom_callback depth (XML tag extraction + user_app_key). Suite 314/0/0 (272 test files).**
+**S6: 11 gaps (4 P2, 7 P3) — Phase 183: B07 terminal depth (sudo_nopasswd_works). Suite 315/0/0.**
 
 ---
 
@@ -278,7 +278,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-||| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 182: G02 base.py depth — http_no_proxy_match.** |
+|| **TOTAL** | **128** | **6** | **36** | **58** | **43** | **Phase 183: B07 terminal depth — terminal_sudo_nopasswd_works.** |
 
 ### Phase Map
 

@@ -691,6 +691,11 @@ typedef struct {
     bool  docker_run_as_host_user; /* terminal.docker_run_as_host_user */
 } terminal_config_t;
 
+/* Check if sudo -n works without a password prompt.
+ * Returns true when local sudo works without prompting.
+ * Only checks the "local" backend (non-local = false). */
+bool terminal_sudo_nopasswd_works(void);
+
 typedef struct {
     char  provider[32];            /* tts.provider: edge/elevenlabs/openai/xai/mistral/neutts/piper */
     char  edge_voice[64];          /* tts.edge.voice */
