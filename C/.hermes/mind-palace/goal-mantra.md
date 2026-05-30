@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v322)
+# Goal Mantra — Slermes C (v323)
 
-335/0/0 (289 test files). 96 gaps. Phase 255: S0 D09 vi mode depth — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
+335/0/0 (289 test files). 95 gaps. Phase 256: S8 R03 reclassified WON'T PORT — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
 
 ## Loop
 

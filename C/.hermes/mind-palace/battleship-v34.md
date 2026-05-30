@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v322 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 96 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
+| v323 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 95 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -212,7 +212,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 |---|----|---------|-----|-------------|----------|--------|
 | 01 | R01 | anthropic_adapter.py | 2275 | Adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, model-aware max_tokens per model (15-entry table), beta headers (interleaved-thinking + fine-grained-tool-streaming), sampling param forbiddance for Opus 4.7+. Remaining: full client builder, content conversion, OAuth. | P1 | ✅ IMPLEMENTED — adaptive thinking, model-aware features, beta headers. Partially covers "extended thinking" sub-gap. Implementation in provider_anthropic.c:1085 LOC (up from 731). |
 | 02 | R02 | bedrock_adapter.py | 1289 | AWS Bedrock auth, model discovery. C has sigv4 signing + Converse API but simpler model/region handling. | P1 | PARTIAL |
-| 03 | R03 | google_oauth.py | 1059 | OAuth token exchange, refresh for Google APIs. C's google provider uses API key only. | P1 | REAL GAP |
+| 03 | R03 | google_oauth.py | 1059 | OAuth token exchange, refresh for Google Cloud Code Assist. Only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). No standalone Google provider use. | P1 | ✅ WON'T PORT — tied to cloudcode adapter |
 | 04 | R04 | gemini_native_adapter.py | 971 | Gemini native API format translation (contents[]/parts[]/functionDeclarations). C's provider_google.c covers core flow but is simpler. | P1 | PARTIAL |
 | 05 | R05 | gemini_cloudcode_adapter.py | 909 | Google Cloud Code Assist integration — cloud IDE feature. Depends on OAuth PKCE + Google Cloud APIs + httpx. C is standalone binary. | P2 | ✅ WON'T PORT — cloud IDE feature |
 | 06 | R06 | azure_identity_adapter.py | 555 | Azure managed identity / OAuth2 token acquisition. C uses direct api-key: header auth which works for Azure OpenAI. | P1 | ✅ WON'T PORT — alternative auth mechanism, C uses direct API key |
@@ -221,7 +221,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 | 09 | R09 | plugin_llm.py | 1046 | Plugin LLM facade for plugins to make their own model calls. Python plugin arch. C's plugin system is .so loading only. | P2 | ✅ WON'T PORT — Python plugin architecture |
 | 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — 9 functions ported (provider_normalize_base_url, provider_strip_prefix, provider_is_local_endpoint, provider_infer_from_url, provider_parse_context_limit_from_error, provider_parse_available_output_tokens_from_error, provider_model_id_matches, provider_model_suggests_kimi, provider_normalize_model_version). 141-test suite. | P1 | PARTIAL (9/43 = 21%) |
 
-**S8: 9→5 gaps after WON'T PORT reclassification (R05-R09). 3 real implementable: R02 (PARTIAL), R03 (REAL), R04 (PARTIAL).**
+**S8: 9→4 gaps after WON'T PORT reclassification (R03,R05-R09). 2 remaining implementable: R02 (PARTIAL), R04 (PARTIAL).**
 
 ---
 
@@ -274,10 +274,10 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
-| S8: Provider Adapters | 5 | 0 | 4 | 1 | 0 | 3 real implementable gaps (R02 PARTIAL, R03 REAL, R04 PARTIAL). R05-R09 WON'T PORT (cloud/Python-arch). |
+| S8: Provider Adapters | 4 | 0 | 3 | 1 | 0 | 2 remaining implementable: R02 (PARTIAL), R04 (PARTIAL). R03+R05-R09 WON'T PORT (cloud/Python-arch). |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **96** | **4** | **32** | **44** | **23** | **S0+S1+S3+S6 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R05-R09 WON'T PORT. Suite 335/0/0, test files 289.** |
+||| **TOTAL** | **95** | **4** | **31** | **44** | **23** | **S0+S1+S3+S6 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 335/0/0, test files 289.** |
 
 ### Phase Map
 

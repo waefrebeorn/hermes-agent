@@ -1921,3 +1921,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 |||---|-------------|----------|
 ||| D09d | Added 8 vi NORMAL keybindings: r (replace char), ~ (toggle case), f/F/t/T find/till motions, ;/, repeat. Extended line_edit_t struct with vi_last_find_char, vi_last_find_forward, vi_last_find_till fields. 27 new test assertions (93→120). | `lib/liblineedit/line_edit.c` — r/~ cases at line 1078-1097, f/F/t/T cases at line 1098-1130, ;/, cases at line 1131-1197. `lib/liblineedit/line_edit.h` — 3 new struct fields at line 52-54. Suite 335/0/0. v322. |
+||
+||## Phase 256: S8 R03 Reclassified WON'T PORT
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| R03 | google_oauth.py (1059 LOC) reclassified WON'T PORT. Verified: only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). Implements PKCE OAuth for Google Cloud Code Assist backend. No standalone Google provider use — C's Google provider uses x-goog-api-key header. | `agent/google_oauth.py` — `from agent import google_oauth` only in `agent/gemini_cloudcode_adapter.py:40`. `C/src/agent/provider_google.c:60-65` — uses x-goog-api-key header. S8 5→4 gaps, total 96→95 gaps. v323. |

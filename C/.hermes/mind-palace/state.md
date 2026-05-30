@@ -2,7 +2,7 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-||Battleship v34 (96 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R05-R09 WON'T PORT. R01+R10 PARTIAL. v322.
+||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. v323.
 |- Phase 245: R10 provider utility functions — provider_normalize_base_url() + provider_strip_prefix() ported from Python model_metadata.py. 16 test assertions in test_provider_metadata.c (→76). Suite 335/0/2. v312.
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -13,7 +13,8 @@ Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
 |||- Phase 252: S0 D09 vi mode — line_edit_cursor_word_end(), w/W/b/B/e/E word navigation, D delete-to-end, C change-to-end, s substitute. Wired into vi NORMAL dispatch. 10 new test assertions (→93). Suite 335/0/2. v319.
 |||- Phase 253: S0 D09 vi mode — ^ (first non-whitespace) and _ (last non-whitespace) wired into vi NORMAL dispatch. S7 X09 — retry_utils edge case expansion: zero max_delay, very small base, large max, jitter>1, multiple resets. 5 new assertions (17→22). Suite 335/0/2. v320.
 ||||- Phase 254: S8 WON'T PORT sweep — R05 (gemini_cloudcode) cloud IDE, R06 (azure_identity) alt auth, R07 (codex_responses) alt API format, R08 (copilot_acp) dep on CLI, R09 (plugin_llm) Python arch. All 5 reclassified WON'T PORT. S8 9→5 gaps. Total 100→96 gaps. v321.
-||- Phase 255: S0 D09 vi mode depth — r (replace char), ~ (toggle case), f/F/t/T find/till with ;/, repeat. 8 new keybindings wired into vi NORMAL dispatch. line_edit_t struct extended with vi_last_find_char, vi_last_find_forward, vi_last_find_till fields. 27 new test assertions (93→120). Suite 335/0/0. v322.
+|||- Phase 255: S0 D09 vi mode depth — r (replace char), ~ (toggle case), f/F/t/T find/till with ;/, repeat. 8 new keybindings wired into vi NORMAL dispatch. line_edit_t struct extended with vi_last_find_char, vi_last_find_forward, vi_last_find_till fields. 27 new test assertions (93→120). Suite 335/0/0. v322.
+||- Phase 256: S8 R03 reclassified WON'T PORT. Verified: google_oauth.py only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). No standalone Google provider use. S8 5→4 gaps. Total 96→95 gaps. v323.
 |
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -205,9 +206,9 @@ Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
-||- **P1** (32): TUI ecosystem (14), Test coverage (9), Provider adapters (5), Gateway helpers (0), CLI ecosystem (1), Architecture (1), Plugin system (1), S10 F08 WON'T PORT (1)
+||| **P1** (31): TUI ecosystem (14), Test coverage (9), Provider adapters (3), CLI ecosystem (1), Architecture (1), Plugin system (1), S10 F08 WON'T PORT (1), S8 R03 WON'T PORT (1)
 ||- **P2** (47): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (0), Tests (3), S8 remaining (3), Plugin system (4), Architecture (1), S2 remaining (5), S10 F06 VAULTED (1), S8 R05/R07/R08/R09 WON'T PORT (4)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 ||
-||Real parity gap is 96 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 335/0/0 (289 test files). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F06 VAULTED, F10 PORTED. S10 + R05-R09 all WON'T PORT. S8 3 real gaps remain (R02,R03,R04).
+||Real parity gap is 95 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 335/0/0 (289 test files). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F06 VAULTED, F10 PORTED. S10 + R03+R05-R09 all WON'T PORT. S8 2 real gaps remain (R02,R04).
 |
