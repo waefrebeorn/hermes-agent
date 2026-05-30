@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v327 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+| v328 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
 **Honest assessment: 95 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
@@ -14,7 +14,7 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
-|| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). **Vi mode PARTIAL** — ESC→NORMAL, h/j/k/l, 0/$, ^/_, x/X, i/I/a/A, u undo, dd, p/P, **w/W/b/B/e/E** word nav, D/C/s delete/change/substitute, **r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat**, **yy/Y yank whole line** (Phase 258), **o/O open line below/above** (Phase 259), **% jump to matching bracket** (Phase 260). 136-test suite. | PARTIAL | P2 |
+|| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). **Vi mode PARTIAL** — ESC→NORMAL, h/j/k/l, 0/$, ^/_, x/X, i/I/a/A, u undo, dd, p/P, **w/W/b/B/e/E** word nav, D/C/s delete/change/substitute, **r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat**, **yy/Y yank whole line** (Phase 258), **o/O open line below/above** (Phase 259), **% jump to matching bracket** (Phase 260), **. repeat last change** (Phase 261). 137-test suite. | PARTIAL | P2 |
 
 **S0: 1 gap (D09 vi mode) — all display infrastructure PORTED. D16 type-ahead IMPLEMENTED (Phase 210).**
 

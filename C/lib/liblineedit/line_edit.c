@@ -328,6 +328,11 @@ line_edit_t *line_edit_create(line_edit_completion_cb complete, void *user_data)
     le->vi_mode = LINE_EDIT_MODE_INSERT;
     le->vi_saved = false;
     le->vi_saved_line[0] = '\0';
+    le->vi_last_find_char = 0;
+    le->vi_last_find_forward = false;
+    le->vi_last_find_till = false;
+    le->vi_last_change_op = 0;
+    le->vi_last_change_param = 0;
     return le;
 }
 
@@ -1005,9 +1010,11 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 }
                 case 'x': /* delete char under cursor */
                     line_buf_delete_forward(le->buf);
+                    le->vi_last_change_op = 'x';
                     break;
                 case 'X': /* delete char before cursor */
                     line_buf_delete(le->buf);
+                    le->vi_last_change_op = 'X';
                     break;
                 case 'i': /* insert before cursor */
                 case 'I': /* insert at line start */
@@ -1045,6 +1052,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             le->kill_ring_len = to_copy;
                         }
                         line_buf_clear(le->buf);
+                        le->vi_last_change_op = 'd';
                     }
                     break;
                 }
@@ -1089,14 +1097,17 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     break;
                 case 'D': /* delete to end of line */
                     line_edit_kill_line(le);
+                    le->vi_last_change_op = 'D';
                     break;
                 case 'C': /* change to end of line */
                     line_edit_kill_line(le);
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    le->vi_last_change_op = 'C';
                     break;
                 case 's': /* substitute char (delete + insert) */
                     line_buf_delete_forward(le->buf);
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
+                    le->vi_last_change_op = 's';
                     break;
                 case 'o': /* open line below, enter INSERT */
                 {
@@ -1145,12 +1156,56 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     }
                     break;
                 }
+                case '.': /* repeat last change */
+                {
+                    if (le->vi_last_change_op) {
+                        switch (le->vi_last_change_op) {
+                            case 'x': line_buf_delete_forward(le->buf); break;
+                            case 'X': line_buf_delete(le->buf); break;
+                            case '~':
+                                if (le->buf->cursor < le->buf->len) {
+                                    unsigned char uc = (unsigned char)le->buf->buf[le->buf->cursor];
+                                    if (uc >= 'a' && uc <= 'z')
+                                        le->buf->buf[le->buf->cursor] = uc - 32;
+                                    else if (uc >= 'A' && uc <= 'Z')
+                                        le->buf->buf[le->buf->cursor] = uc + 32;
+                                }
+                                break;
+                            case 'r':
+                                if (le->buf->cursor < le->buf->len && le->vi_last_change_param >= 32)
+                                    le->buf->buf[le->buf->cursor] = le->vi_last_change_param;
+                                break;
+                            case 's':
+                                line_buf_delete_forward(le->buf);
+                                le->vi_mode = LINE_EDIT_MODE_INSERT;
+                                break;
+                            case 'D': line_edit_kill_line(le); break;
+                            case 'C': line_edit_kill_line(le); le->vi_mode = LINE_EDIT_MODE_INSERT; break;
+                            case 'd': /* dd — delete whole line */
+                            {
+                                size_t orig_len = le->buf->len;
+                                if (orig_len > 0) {
+                                    size_t to_copy = orig_len < MAX_KILL_RING - 1 ? orig_len : MAX_KILL_RING - 1;
+                                    memcpy(le->kill_ring, le->buf->buf, to_copy);
+                                    le->kill_ring[to_copy] = '\0';
+                                    le->kill_ring_len = to_copy;
+                                }
+                                line_buf_clear(le->buf);
+                                break;
+                            }
+                        }
+                        term_redraw_line(le->buf);
+                    }
+                    break;
+                }
                 case 'r': /* replace char under cursor */
                 {
                     char next;
                     if (read(STDIN_FILENO, &next, 1) > 0 && next >= 32 && next <= 126) {
                         if (le->buf->cursor < le->buf->len) {
                             le->buf->buf[le->buf->cursor] = next;
+                            le->vi_last_change_op = 'r';
+                            le->vi_last_change_param = next;
                             term_redraw_line(le->buf);
                         }
                     }
@@ -1163,7 +1218,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             le->buf->buf[le->buf->cursor] = uc - 32;
                         else if (uc >= 'A' && uc <= 'Z')
                             le->buf->buf[le->buf->cursor] = uc + 32;
-                        /* cursor stays on the character (like vim ~) */
+                        le->vi_last_change_op = '~';
                         term_redraw_line(le->buf);
                     }
                     break;

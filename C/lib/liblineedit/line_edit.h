@@ -51,6 +51,8 @@ typedef struct line_edit_t {
     char vi_last_find_char;               /* last f/F/t/T target char */
     bool vi_last_find_forward;            /* last find direction (true=forward) */
     bool vi_last_find_till;               /* last find was till (t/T), not find (f/F) */
+    char vi_last_change_op;               /* last change op for '.' repeat (0=none) */
+    char vi_last_change_param;            /* param for last change op (e.g. 'r' replacement char) */
 } line_edit_t;
 
 /* Create a line editor instance */

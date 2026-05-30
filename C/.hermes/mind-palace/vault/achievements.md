@@ -1945,3 +1945,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 ||---|-------------|----------|
 ||| D09p | `%` jump to matching bracket: when cursor on `(`, `[`, or `{`, scans forward tracking depth of same bracket type until matching close is found. When cursor on `)`, `]`, or `}`, scans backward. Only the specific bracket pair is tracked (nested pairs of other types are transparent). Does nothing when cursor not on a bracket character. | `lib/liblineedit/line_edit.c:1116-1147` — `%` dispatch in vi NORMAL mode. Suite 335/0/0. v327. |
+||
+||## Phase 261: S0 D09 Vi Mode Depth — . Repeat Last Change
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| D09q | `.` repeats the last single-command vi change operation: `x` (delete char), `X` (delete before), `~` (toggle case), `r` (replace with stored param), `s` (substitute), `D` (delete to end), `C` (change to end), `d` (dd delete line). Tracks via `vi_last_change_op` + `vi_last_change_param` in line_edit_t struct. Replays the operation at current cursor position. Does nothing if no prior change (`vi_last_change_op == 0`). | `lib/liblineedit/line_edit.h:54-55` — struct fields. `lib/liblineedit/line_edit.c:331,335-336` — init to 0. `lib/liblineedit/line_edit.c:1013-1198+1204-1220` — recording at each change site. `lib/liblineedit/line_edit.c:1195-1237` — `.` dispatch switch. `tests/test_line_edit.c:532-535` — 2 init assertions (135→137). Suite 335/0/0. v328. |

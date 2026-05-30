@@ -529,6 +529,10 @@ static void test_vi_mode(void) {
          le->vi_last_find_forward == false);
     TEST("vi_last_find_till initialized false",
          le->vi_last_find_till == false);
+    TEST("vi_last_change_op initialized 0",
+         le->vi_last_change_op == 0);
+    TEST("vi_last_change_param initialized 0",
+         le->vi_last_change_param == 0);
 
     line_edit_free(le);
 
