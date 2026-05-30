@@ -1,6 +1,6 @@
-# Testing — Slermes C (v382)
+# Testing — Slermes C (v383)
 
-325/0/15, 289 test files. All pass. 68 gaps. Phase 318: T13 model picker overlay in TUI.
+325/0/14, 289 test files. All pass. 68 gaps. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75).
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 319: X09 approval edge case expansion — 56 new assertions (19→75). Covers approval_is_terminal_dangerous (25 patterns), approval_normalize_command (ANSI/edge cases), approval_is_path_dangerous (12 paths), approval_is_path_traversal (7 patterns). Suite 325/0/14. v383.

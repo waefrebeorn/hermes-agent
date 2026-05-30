@@ -1,6 +1,6 @@
 |||| Slermes C
 
-||||Suite: 325/0/15 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+||||Suite: 325/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
 // Battleship v34 (68 gaps across 8 sectors, 1000+ test case gaps). v383. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75). Covers approval_is_terminal_dangerous (25 patterns), approval_normalize_command (ANSI/edge cases), approval_is_path_dangerous (12 paths), approval_is_path_traversal (7 patterns). Suite 325/0/14. 68 gaps.
 |||||||- Phase 245:
