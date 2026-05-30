@@ -1767,6 +1767,115 @@ int provider_context_cache_invalidate(const char *model, const char *base_url) {
     return 1;
 }
 
+/* ---- provider_detect_local_server_type ---- */
+/* Port of Python model_metadata.detect_local_server_type().
+ * Probes known local inference endpoints via HTTP GET and
+ * returns the detected server type, or NULL if undetermined. */
+char *provider_detect_local_server_type(const char *base_url, const char *api_key) {
+    if (!base_url || !*base_url) return NULL;
+
+    /* Normalize URL */
+    char *normalized = provider_normalize_base_url(base_url);
+    if (!normalized) return NULL;
+
+    /* Strip /v1 suffix for probing */
+    char server_url[512];
+    size_t nlen = strlen(normalized);
+    if (nlen >= 3 && strcmp(normalized + nlen - 3, "/v1") == 0) {
+        memcpy(server_url, normalized, nlen - 3);
+        server_url[nlen - 3] = '\0';
+    } else {
+        snprintf(server_url, sizeof(server_url), "%s", normalized);
+    }
+    free(normalized);
+
+    /* Build Authorization header string */
+    char *headers_str = NULL;
+    if (api_key && *api_key) {
+        json_t *hdr = provider_auth_headers(api_key);
+        if (hdr) {
+            const char *auth_val = json_get_str(hdr, "Authorization", NULL);
+            if (auth_val) {
+                size_t hlen = strlen(auth_val) + 32;
+                headers_str = malloc(hlen);
+                if (headers_str)
+                    snprintf(headers_str, hlen, "Authorization: %s", auth_val);
+            }
+            json_free(hdr);
+        }
+    }
+
+    /* Create HTTP client with 2s timeout */
+    http_t *h = http_new(2);
+    const char *result = NULL;
+    char probe_url[1024];
+    http_resp_t *r = NULL;
+
+    /* LM Studio: GET {server_url}/api/v1/models */
+    snprintf(probe_url, sizeof(probe_url), "%s/api/v1/models", server_url);
+    r = http_get(h, probe_url, headers_str);
+    if (r && r->status == 200) {
+        result = "lm-studio";
+        http_resp_free(r);
+        r = NULL;
+        goto done;
+    }
+    http_resp_free(r);
+    r = NULL;
+
+    /* Ollama: GET {server_url}/api/tags → check for "models" in body */
+    snprintf(probe_url, sizeof(probe_url), "%s/api/tags", server_url);
+    r = http_get(h, probe_url, headers_str);
+    if (r && r->status == 200 && r->body && strstr(r->body, "models")) {
+        result = "ollama";
+        http_resp_free(r);
+        r = NULL;
+        goto done;
+    }
+    http_resp_free(r);
+    r = NULL;
+
+    /* llama.cpp: GET {server_url}/v1/props (fallback /props) */
+    snprintf(probe_url, sizeof(probe_url), "%s/v1/props", server_url);
+    r = http_get(h, probe_url, headers_str);
+    if (!r || r->status != 200) {
+        http_resp_free(r);
+        r = NULL;
+        snprintf(probe_url, sizeof(probe_url), "%s/props", server_url);
+        r = http_get(h, probe_url, headers_str);
+    }
+    if (r && r->status == 200 && r->body && strstr(r->body, "default_generation_settings")) {
+        result = "llamacpp";
+        http_resp_free(r);
+        r = NULL;
+        goto done;
+    }
+    http_resp_free(r);
+    r = NULL;
+
+    /* vLLM: GET {server_url}/version → check for "version" in JSON response */
+    snprintf(probe_url, sizeof(probe_url), "%s/version", server_url);
+    r = http_get(h, probe_url, headers_str);
+    if (r && r->status == 200 && r->body) {
+        json_t *vdata = json_parse(r->body, NULL);
+        if (vdata && vdata->type == JSON_OBJECT) {
+            json_t *ver = json_obj_get(vdata, "version");
+            if (ver && ver->type == JSON_STRING) {
+                result = "vllm";
+            }
+        }
+        json_free(vdata);
+    }
+    http_resp_free(r);
+
+done:
+    http_free(h);
+    free(headers_str);
+
+    if (result) return strdup(result);
+    return NULL;
+}
+
 /* ---- provider_add_model_aliases ---- */
 /* Port of Python model_metadata._add_model_aliases().
  * Sets cache[model_id] = entry (via json_copy for ownership safety).

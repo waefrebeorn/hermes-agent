@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v345)
+# Goal Mantra — Slermes C (v346)
 
-334/0/3 (292 test files). 94 gaps. Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). Provider metadata 332-test suite.
+334/0/3 (292 test files). 94 gaps. Phase 279: S8 R10 depth — provider_detect_local_server_type() — probes LM Studio/Ollama/llama.cpp/vLLM endpoints. Provider metadata 335-test suite.
 
 ## Loop
 

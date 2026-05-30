@@ -332,6 +332,14 @@ int provider_context_cache_get(const char *model, const char *base_url);
  * Port of Python model_metadata._invalidate_cached_context_length().
  * Returns 1 on success, 0 on failure. */
 int provider_context_cache_invalidate(const char *model, const char *base_url);
+/* Detect which local server is running at a base URL by probing known endpoints.
+ * Port of Python model_metadata.detect_local_server_type().
+ * Probes: LM Studio (/api/v1/models), Ollama (/api/tags with "models" check),
+ * llama.cpp (/v1/props or /props with "default_generation_settings"),
+ * vLLM (/version with JSON "version" field).
+ * Returns malloc'd server type string ("lm-studio", "ollama", "llamacpp", "vllm")
+ * or NULL if undetermined. Caller must free(). */
+char *provider_detect_local_server_type(const char *base_url, const char *api_key);
 
 /* Add model aliases: if model_id contains "/", also indexes under bare name.
  * Port of Python model_metadata._add_model_aliases().

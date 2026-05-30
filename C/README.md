@@ -15,6 +15,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ||| 276 | S8 R10 — context cache layer (path/load/save/get/invalidate)
 ||| 277 | S8 R10 — provider_extract_first_int() + refactor context/max_completion extractors
 ||| 278 | S8 R10 — provider_add_model_aliases() + get_context_length_from_provider_error()
+||| 279 | S8 R10 — provider_detect_local_server_type() — probes local inference endpoints
 ```
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 ||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)

@@ -47,6 +47,7 @@ static void test_get_next_probe_tier(void);
 static void test_provider_context_cache_path(void);
 static void test_provider_context_cache_save_get_invalidate(void);
 static void test_provider_extract_first_int(void);
+static void test_provider_detect_local_server_type(void);
 static void test_provider_add_model_aliases(void);
 static void test_provider_get_context_length_from_provider_error(void);
 
@@ -501,6 +502,7 @@ int main(void) {
     test_provider_context_cache_path();
     test_provider_context_cache_save_get_invalidate();
     test_provider_extract_first_int();
+    test_provider_detect_local_server_type();
     test_provider_add_model_aliases();
     test_provider_get_context_length_from_provider_error();
 
@@ -1409,6 +1411,28 @@ static void test_provider_extract_first_int(void) {
         TEST("empty keys", provider_extract_first_int(p, empty_keys) == -1);
         json_free(p);
     }
+}
+
+/* ---- provider_detect_local_server_type ---- */
+static void test_provider_detect_local_server_type(void) {
+    printf("\n[R10] provider_detect_local_server_type:\n");
+
+    char *result;
+
+    /* NULL base_url — no crash */
+    result = provider_detect_local_server_type(NULL, NULL);
+    TEST("NULL base_url returns NULL", result == NULL);
+    free(result);
+
+    /* Empty base_url — no crash */
+    result = provider_detect_local_server_type("", NULL);
+    TEST("empty base_url returns NULL", result == NULL);
+    free(result);
+
+    /* Invalid URL — no crash, returns NULL (HTTP probe fails) */
+    result = provider_detect_local_server_type("http://127.0.0.1:1", NULL);
+    TEST("unreachable endpoint returns NULL", result == NULL);
+    free(result);
 }
 
 /* ---- provider_add_model_aliases ---- */

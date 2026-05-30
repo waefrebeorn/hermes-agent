@@ -1,7 +1,8 @@
-(v345)
+(v346)
 
 334/0/3, 292 test files. All pass. Gap: 292 C vs ~1262 Python (23.1% parity).
 
+Phase 279: S8 R10 depth — provider_detect_local_server_type() — HTTP-based local inference endpoint detection. 3 new assertions (332→335). Suite 334/0/3. v346.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.
