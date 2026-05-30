@@ -2,11 +2,11 @@
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v369                                          ║
+║  WuBu Slermes C v370                                          ║
 ║  335 tests · 78 gaps · 85 tools · 98 CLI · 65 libs         ║
 ║  78 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                      ║
-║  Phase 305: S7 template edge exp — 26 new assertions!       ║
+║  Phase 306: S7 glob edge exp — 48 new assertions!           ║
 ║  S0+S1+S3+S6+F10+F06+R04+R10+R02 PORTED. 78 gaps remain.        ║
 ╚══════════════════════════════════════════════════════════════╝
 ```

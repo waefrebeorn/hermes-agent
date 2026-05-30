@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v369)
+# Entry — Slermes C Parity (v370)
 
-Phase 305: S7 template edge case expansion — 26 new assertions (9→35). 78 gaps.
+Phase 306: S7 glob edge case expansion — 48 new assertions (22→70). 78 gaps.
