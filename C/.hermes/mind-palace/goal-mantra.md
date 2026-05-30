@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v371)
+# Goal Mantra — Slermes C (v372)
 
-325/0/14 (289 test files). 78 gaps. Phase 307: S7 difflib edge case expansion — 59 new assertions (22→81).
+325/0/14 (289 test files). 78 gaps. Phase 308: S7 enum edge case expansion — 31 new assertions (17→48).
 
 ## Loop
 
