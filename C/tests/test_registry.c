@@ -136,6 +136,80 @@ int main(void) {
     TEST("registry_get count matches", reg && reg->count == registry_get_count());
     TEST("registry_count non-zero", registry_count() > 0);
 
+    /* 12. Tool name repair — exact match returns copy */
+    {
+        char *r = registry_repair_tool_name("test_tool");
+        TEST("repair exact name match", r && strcmp(r, "test_tool") == 0);
+        free(r);
+    }
+
+    /* 13. Repair with hyphens -> underscores */
+    {
+        char *r = registry_repair_tool_name("test-tool");
+        TEST("repair hyphens to underscores", r && strcmp(r, "test_tool") == 0);
+        free(r);
+    }
+
+    /* 14. Repair with spaces -> underscores */
+    {
+        char *r = registry_repair_tool_name("test tool");
+        TEST("repair spaces to underscores", r && strcmp(r, "test_tool") == 0);
+        free(r);
+    }
+
+    /* 15. Repair CamelCase -> snake_case */
+    registry_register("camel_case_tool", "camel test", "{}", test_handler);
+    {
+        char *r = registry_repair_tool_name("CamelCaseTool");
+        TEST("repair CamelCase to snake_case", r && strcmp(r, "camel_case_tool") == 0);
+        free(r);
+    }
+
+    /* 16. Repair _tool suffix strip */
+    {
+        char *r = registry_repair_tool_name("camel_case_tool_tool");
+        TEST("repair _tool suffix strip (double)", r && strcmp(r, "camel_case_tool") == 0);
+        free(r);
+    }
+
+    /* 17. Repair -tool suffix strip */
+    {
+        char *r = registry_repair_tool_name("test_tool-tool");
+        TEST("repair -tool suffix strip", r && strcmp(r, "test_tool") == 0);
+        free(r);
+    }
+
+    /* 18. Classic #14784: BrowserClick_tool -> browser_click */
+    registry_register("browser_click", "Click browser", "{}", test_handler);
+    {
+        char *r = registry_repair_tool_name("BrowserClick_tool");
+        TEST("repair BrowserClick_tool -> browser_click (gh#14784)",
+             r && strcmp(r, "browser_click") == 0);
+        free(r);
+    }
+
+    /* 19. NULL name returns NULL */
+    TEST("repair NULL returns NULL", registry_repair_tool_name(NULL) == NULL);
+
+    /* 20. Empty name returns NULL */
+    TEST("repair empty returns NULL", registry_repair_tool_name("") == NULL);
+
+    /* 21. Dispatch with repairable name dispatches successfully */
+    {
+        char *result = registry_dispatch("TEST-TOOL", "{}", NULL);
+        TEST("dispatch repairable name (TEST-TOOL -> test_tool)",
+             result && strstr(result, "\"ok\"") != NULL);
+        free(result);
+    }
+
+    /* 22. Dispatch with CamelCase name dispatches successfully */
+    {
+        char *result = registry_dispatch("TestTool", "{}", NULL);
+        TEST("dispatch CamelCase (TestTool -> test_tool)",
+             result && strstr(result, "\"ok\"") != NULL);
+        free(result);
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

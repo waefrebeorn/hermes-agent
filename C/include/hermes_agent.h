@@ -33,6 +33,7 @@ bool registry_register_ex(const char *name, const char *description,
                           char *(*handler)(const char *args_json, const char *task_id));
 void registry_set_available(const char *name, bool available);
 tool_t *registry_find(const char *name);
+char *registry_repair_tool_name(const char *tool_name);
 char *registry_dispatch(const char *name, const char *args_json,
                         const char *task_id);
 tool_registry_t *registry_get(void);
