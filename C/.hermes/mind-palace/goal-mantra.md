@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v368)
+# Goal Mantra — Slermes C (v369)
 
-325/0/14 (289 test files). 78 gaps. Phase 304: S7 YAML edge case expansion — 53 new assertions (6→59).
+325/0/14 (289 test files). 78 gaps. Phase 305: S7 template edge case expansion — 26 new assertions (9→35).
 
 ## Loop
 

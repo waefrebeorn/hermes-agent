@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-||5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v368. Phase 304: S7 X09 YAML edge case expansion — 53 new assertions (6→59). API coverage: lists (count/get), map_keys, to_json_string, multi-document, file parsing, NULL safety, boolean variants (yes/no/on/off), negative integers, deep nesting, empty/whitespace docs, comments, quoted values. Stray compilation artifact `-lm` removed. Suite 325/0/14.\n     6|||||- Phase 245:
+||5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v369. Phase 305: S7 X09 template edge case expansion — 26 new assertions (9→35). Coverage: plain text passthrough, empty template, NULL compile error, default values (fallback when missing, value when present), for loop (3-item array, empty list), if (true/false), if/else, nested for-in-if, NULL safety (render/free/variables), missing var empty, multi-context renders, variables introspection with 0 vars, static passthrough via template_quick. Suite 325/0/14.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

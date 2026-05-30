@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v368)
+# Entry — Slermes C Parity (v369)
 
-Phase 304: S7 YAML edge case expansion — 59 assertions (6→59). 78 gaps.
+Phase 305: S7 template edge case expansion — 26 new assertions (9→35). 78 gaps.
