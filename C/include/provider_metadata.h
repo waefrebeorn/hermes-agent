@@ -257,6 +257,34 @@ int provider_extract_max_completion_tokens(const json_t *payload);
  * Returns json_t* dict (caller must free) or NULL on empty/no pricing. */
 json_t *provider_extract_pricing(const json_t *payload);
 
+/* ---- Message token estimation helpers ---- */
+
+/* Count image-like content parts in a message JSON object.
+ * Port of Python model_metadata._count_image_tokens().
+ * Checks content array, _anthropic_content_blocks, and _multimodal
+ * for {type: image|image_url|input_image} parts.
+ * Returns count * cost_per_image. */
+int estimate_count_image_tokens(const json_t *msg, int cost_per_image);
+
+/* Estimate char count of a message JSON object, excluding base64 image data.
+ * Port of Python model_metadata._estimate_message_chars().
+ * Counts all stringified fields except image content parts
+ * (replaced with "[stripped]" placeholder for char counting). */
+int estimate_message_chars(const json_t *msg);
+
+/* Rough token estimate for a message array (pre-flight only).
+ * Port of Python model_metadata.estimate_messages_tokens_rough().
+ * Sums estimate_message_chars per message + _count_image_tokens.
+ * Uses ceiling division: (total_chars + 3) / 4. */
+int estimate_messages_tokens_rough(const json_t *messages);
+
+/* Rough token estimate for a full chat-completions request.
+ * Port of Python model_metadata.estimate_request_tokens_rough().
+ * Includes system prompt, messages, and tool schemas. */
+int estimate_request_tokens_rough(const json_t *messages,
+                                   const char *system_prompt,
+                                   const json_t *tools);
+
 #ifdef __cplusplus
 }
 #endif

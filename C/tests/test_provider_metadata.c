@@ -39,6 +39,10 @@ static void test_provider_resolve_requests_verify(void);
 static void test_provider_extract_context_length(void);
 static void test_provider_extract_max_completion_tokens(void);
 static void test_provider_extract_pricing(void);
+static void test_estimate_count_image_tokens(void);
+static void test_estimate_message_chars(void);
+static void test_estimate_messages_tokens_rough(void);
+static void test_estimate_request_tokens_rough(void);
 
 int main(void) {
 
@@ -483,6 +487,10 @@ int main(void) {
     test_provider_extract_context_length();
     test_provider_extract_max_completion_tokens();
     test_provider_extract_pricing();
+    test_estimate_count_image_tokens();
+    test_estimate_message_chars();
+    test_estimate_messages_tokens_rough();
+    test_estimate_request_tokens_rough();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -867,5 +875,313 @@ static void test_provider_extract_pricing(void) {
         }
         json_free(pricing);
         json_free(p);
+    }
+}
+
+/* ---- estimate_count_image_tokens ---- */
+static void test_estimate_count_image_tokens(void) {
+    printf("\n[R10] estimate_count_image_tokens:\n");
+
+    /* NULL/empty */
+    TEST("null msg",      estimate_count_image_tokens(NULL, 1500) == 0);
+
+    /* No content field */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        TEST("no content", estimate_count_image_tokens(msg, 1500) == 0);
+        json_free(msg);
+    }
+
+    /* String content (not array) */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("hello"));
+        TEST("string content", estimate_count_image_tokens(msg, 1500) == 0);
+        json_free(msg);
+    }
+
+    /* Empty content array */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_array());
+        TEST("empty array", estimate_count_image_tokens(msg, 1500) == 0);
+        json_free(msg);
+    }
+
+    /* Single image */
+    {
+        json_t *msg = json_object();
+        json_t *content = json_array();
+        json_t *part = json_object();
+        json_set(part, "type", json_string("image"));
+        json_set(part, "source", json_string("data:..."));
+        json_append(content, part);
+        json_set(msg, "content", content);
+        TEST("1 image", estimate_count_image_tokens(msg, 1500) == 1500);
+        json_free(msg);
+    }
+
+    /* Multiple images */
+    {
+        json_t *msg = json_object();
+        json_t *content = json_array();
+        json_t *p1 = json_object();
+        json_set(p1, "type", json_string("image_url"));
+        json_set(p1, "url", json_string("http://example.com/img1.png"));
+        json_append(content, p1);
+        json_t *p2 = json_object();
+        json_set(p2, "type", json_string("image_url"));
+        json_set(p2, "url", json_string("http://example.com/img2.jpg"));
+        json_append(content, p2);
+        json_t *p3 = json_object();
+        json_set(p3, "type", json_string("text"));
+        json_set(p3, "text", json_string("not an image"));
+        json_append(content, p3);
+        json_set(msg, "content", content);
+        TEST("2 images + text", estimate_count_image_tokens(msg, 1500) == 3000);
+        json_free(msg);
+    }
+
+    /* input_image type */
+    {
+        json_t *msg = json_object();
+        json_t *content = json_array();
+        json_t *part = json_object();
+        json_set(part, "type", json_string("input_image"));
+        json_set(part, "data", json_string("base64..."));
+        json_append(content, part);
+        json_set(msg, "content", content);
+        TEST("input_image type", estimate_count_image_tokens(msg, 1500) == 1500);
+        json_free(msg);
+    }
+
+    /* _anthropic_content_blocks */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("assistant"));
+        json_t *blocks = json_array();
+        json_t *img = json_object();
+        json_set(img, "type", json_string("image"));
+        json_set(img, "source", json_string("base64..."));
+        json_append(blocks, img);
+        json_set(msg, "_anthropic_content_blocks", blocks);
+        TEST("anthropic blocks", estimate_count_image_tokens(msg, 1500) == 1500);
+        json_free(msg);
+    }
+}
+
+/* ---- estimate_message_chars ---- */
+static void test_estimate_message_chars(void) {
+    printf("\n[R10] estimate_message_chars:\n");
+
+    TEST("null msg", estimate_message_chars(NULL) == 0);
+
+    /* Simple message */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("Hello, world!"));
+        int chars = estimate_message_chars(msg);
+        TEST("simple msg > 0", chars > 0);
+        TEST("at least field names", chars >= 30);
+        json_free(msg);
+    }
+
+    /* Empty object */
+    {
+        json_t *msg = json_object();
+        int chars = estimate_message_chars(msg);
+        TEST("empty obj > 0", chars == 2);  /* {} */
+        json_free(msg);
+    }
+
+    /* Message with image content (char count includes image placeholders) */
+    {
+        json_t *msg = json_object();
+        json_t *content = json_array();
+        json_t *text_part = json_object();
+        json_set(text_part, "type", json_string("text"));
+        json_set(text_part, "text", json_string("What's in this image?"));
+        json_append(content, text_part);
+        json_t *img_part = json_object();
+        json_set(img_part, "type", json_string("image_url"));
+        json_set(img_part, "url", json_string("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA="));
+        json_append(content, img_part);
+        json_set(msg, "content", content);
+        json_set(msg, "role", json_string("user"));
+        int chars = estimate_message_chars(msg);
+        TEST("msg with image > 0", chars > 0);
+        json_free(msg);
+    }
+
+    /* String content (not array) */
+    {
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("assistant"));
+        json_set(msg, "content", json_string("Short reply"));
+        int chars = estimate_message_chars(msg);
+        TEST("string content > 0", chars > 0);
+        json_free(msg);
+    }
+}
+
+/* ---- estimate_messages_tokens_rough ---- */
+static void test_estimate_messages_tokens_rough(void) {
+    printf("\n[R10] estimate_messages_tokens_rough:\n");
+
+    TEST("null messages",  estimate_messages_tokens_rough(NULL) == 0);
+
+    /* Empty array */
+    {
+        json_t *msgs = json_array();
+        TEST("empty array", estimate_messages_tokens_rough(msgs) == 0);
+        json_free(msgs);
+    }
+
+    /* Single text message */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("Hi"));
+        json_append(msgs, msg);
+        int tokens = estimate_messages_tokens_rough(msgs);
+        TEST("1 msg > 0", tokens > 0);
+        json_free(msgs);
+    }
+
+    /* Multiple messages */
+    {
+        json_t *msgs = json_array();
+        json_t *m1 = json_object();
+        json_set(m1, "role", json_string("system"));
+        json_set(m1, "content", json_string("You are a helpful assistant."));
+        json_append(msgs, m1);
+        json_t *m2 = json_object();
+        json_set(m2, "role", json_string("user"));
+        json_set(m2, "content", json_string("Hello! How are you?"));
+        json_append(msgs, m2);
+        json_t *m3 = json_object();
+        json_set(m3, "role", json_string("assistant"));
+        json_set(m3, "content", json_string("I'm doing well, thank you!"));
+        json_append(msgs, m3);
+        int tokens = estimate_messages_tokens_rough(msgs);
+        TEST("3 msgs > 0", tokens > 0);
+        json_free(msgs);
+    }
+
+    /* Message with image (should add image tokens) */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_t *content = json_array();
+        json_t *img = json_object();
+        json_set(img, "type", json_string("image_url"));
+        json_set(img, "url", json_string("data:image/png;base64,aaaa"));
+        json_append(content, img);
+        json_set(msg, "content", content);
+        json_append(msgs, msg);
+        int tokens = estimate_messages_tokens_rough(msgs);
+        TEST("1 image msg > 1500", tokens > 1500);
+        json_free(msgs);
+    }
+
+    /* Two images */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_t *content = json_array();
+        json_t *i1 = json_object();
+        json_set(i1, "type", json_string("image"));
+        json_set(i1, "source", json_string("img1"));
+        json_append(content, i1);
+        json_t *i2 = json_object();
+        json_set(i2, "type", json_string("image"));
+        json_set(i2, "source", json_string("img2"));
+        json_append(content, i2);
+        json_set(msg, "content", content);
+        json_append(msgs, msg);
+        int tokens = estimate_messages_tokens_rough(msgs);
+        TEST("2 images msg > 3000", tokens > 3000);
+        json_free(msgs);
+    }
+}
+
+/* ---- estimate_request_tokens_rough ---- */
+static void test_estimate_request_tokens_rough(void) {
+    printf("\n[R10] estimate_request_tokens_rough:\n");
+
+    /* All NULL */
+    TEST("all null", estimate_request_tokens_rough(NULL, NULL, NULL) == 0);
+
+    /* Only system prompt */
+    {
+        int tokens = estimate_request_tokens_rough(NULL, "Hello", NULL);
+        TEST("system only", tokens > 0);
+    }
+
+    /* Only messages */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("Hi"));
+        json_append(msgs, msg);
+        int tokens = estimate_request_tokens_rough(msgs, NULL, NULL);
+        TEST("msgs only", tokens > 0);
+        json_free(msgs);
+    }
+
+    /* System + messages */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("Test message here"));
+        json_append(msgs, msg);
+        int tokens = estimate_request_tokens_rough(msgs, "You are an AI.", NULL);
+        TEST("system + msgs", tokens > 0);
+        json_free(msgs);
+    }
+
+    /* System + messages + tools */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("Use a tool"));
+        json_append(msgs, msg);
+
+        json_t *tools = json_array();
+        json_t *tool = json_object();
+        json_set(tool, "type", json_string("function"));
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("test_tool"));
+        json_set(fn, "description", json_string("A test tool"));
+        json_set(tool, "function", fn);
+        json_append(tools, tool);
+
+        int tokens = estimate_request_tokens_rough(msgs, "System", tools);
+        TEST("all three", tokens > 0);
+        json_free(msgs);
+        json_free(tools);
+    }
+
+    /* Empty system prompt */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("test"));
+        json_append(msgs, msg);
+        int t1 = estimate_request_tokens_rough(msgs, "", NULL);
+        int t2 = estimate_request_tokens_rough(msgs, "system prompt here", NULL);
+        TEST("empty sys < with sys", t1 < t2);
+        json_free(msgs);
     }
 }

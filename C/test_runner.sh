@@ -1813,7 +1813,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_provider_metadata.c" \
     "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_provmeta -lssl -lcrypto -ldl -lpthread -lz -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_provmeta > /dev/null 2>&1; then ok "provider_metadata (238 tests)"
+    if /tmp/hermes_test_provmeta > /dev/null 2>&1; then ok "provider_metadata (264 tests)"
     else fail "provider_metadata (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_provmeta
 else skip "provider_metadata (compilation failed)"

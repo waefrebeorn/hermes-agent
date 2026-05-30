@@ -1514,3 +1514,109 @@ json_t *provider_extract_pricing(const json_t *payload) {
 
     return NULL;
 }
+
+/* ---- estimate_count_image_tokens ---- */
+/* Port of Python model_metadata._count_image_tokens().
+ * Counts image-like content parts in a message JSON object. */
+int estimate_count_image_tokens(const json_t *msg, int cost_per_image) {
+    if (!msg || msg->type != JSON_OBJECT) return 0;
+    int count = 0;
+
+    /* Check content array for type=image|image_url|input_image */
+    json_t *content = json_obj_get(msg, "content");
+    if (content && content->type == JSON_ARRAY) {
+        for (size_t i = 0; i < content->c.count; i++) {
+            json_t *part = content->c.items[i];
+            if (!part || part->type != JSON_OBJECT) continue;
+            const char *ptype = json_get_str(part, "type", "");
+            if (strcmp(ptype, "image") == 0 || strcmp(ptype, "image_url") == 0 ||
+                strcmp(ptype, "input_image") == 0) {
+                count++;
+            }
+        }
+    }
+
+    /* Check _anthropic_content_blocks for type=image */
+    json_t *stashed = json_obj_get(msg, "_anthropic_content_blocks");
+    if (stashed && stashed->type == JSON_ARRAY) {
+        for (size_t i = 0; i < stashed->c.count; i++) {
+            json_t *part = stashed->c.items[i];
+            if (part && part->type == JSON_OBJECT) {
+                const char *ptype = json_get_str(part, "type", "");
+                if (strcmp(ptype, "image") == 0) count++;
+            }
+        }
+    }
+
+    /* Check _multimodal content */
+    if (content && content->type == JSON_OBJECT) {
+        json_t *multimodal = json_obj_get(content, "_multimodal");
+        if (multimodal && multimodal->type == JSON_BOOL && multimodal->bool_val) {
+            json_t *inner = json_obj_get(content, "content");
+            if (inner && inner->type == JSON_ARRAY) {
+                for (size_t i = 0; i < inner->c.count; i++) {
+                    json_t *part = inner->c.items[i];
+                    if (!part || part->type != JSON_OBJECT) continue;
+                    const char *ptype = json_get_str(part, "type", "");
+                    if (strcmp(ptype, "image") == 0 || strcmp(ptype, "image_url") == 0) {
+                        count++;
+                    }
+                }
+            }
+        }
+    }
+
+    return count * cost_per_image;
+}
+
+/* ---- estimate_message_chars ---- */
+/* Port of Python model_metadata._estimate_message_chars().
+ * Counts serialized chars of a message dict. */
+int estimate_message_chars(const json_t *msg) {
+    if (!msg) return 0;
+    char *serialized = json_serialize(msg);
+    if (!serialized) return 0;
+    int len = (int)strlen(serialized);
+    free(serialized);
+    return len;
+}
+
+/* ---- estimate_messages_tokens_rough ---- */
+/* Port of Python model_metadata.estimate_messages_tokens_rough().
+ * Sums char-based tokens + image tokens for a message array.
+ * Uses ceiling division: (total_chars + 3) / 4. */
+int estimate_messages_tokens_rough(const json_t *messages) {
+    if (!messages || messages->type != JSON_ARRAY) return 0;
+    int total_chars = 0;
+    int image_tokens = 0;
+    for (size_t i = 0; i < messages->c.count; i++) {
+        json_t *msg = messages->c.items[i];
+        if (!msg || msg->type != JSON_OBJECT) continue;
+        total_chars += estimate_message_chars(msg);
+        image_tokens += estimate_count_image_tokens(msg, 1500);
+    }
+    return ((total_chars + 3) / 4) + image_tokens;
+}
+
+/* ---- estimate_request_tokens_rough ---- */
+/* Port of Python model_metadata.estimate_request_tokens_rough().
+ * Estimates tokens for system_prompt + messages + tools. */
+int estimate_request_tokens_rough(const json_t *messages,
+                                   const char *system_prompt,
+                                   const json_t *tools) {
+    int total = 0;
+    if (system_prompt && *system_prompt) {
+        total += (int)((strlen(system_prompt) + 3) / 4);
+    }
+    if (messages) {
+        total += estimate_messages_tokens_rough(messages);
+    }
+    if (tools) {
+        char *tools_str = json_serialize(tools);
+        if (tools_str) {
+            total += (int)((strlen(tools_str) + 3) / 4);
+            free(tools_str);
+        }
+    }
+    return total;
+}
