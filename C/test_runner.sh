@@ -1100,6 +1100,18 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "yuanbao_media (compilation failed)"
 fi
+# telegram_network utility test (G07: telegram_resolve_system_dns)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
+    "$CDIR/tests/test_telegram_network.c" \
+    "$CDIR/src/gateway/platforms/telegram_network.c" \
+    -o /tmp/hermes_test_telegram_network -lm > /dev/null 2>&1; then
+    if /tmp/hermes_test_telegram_network > /dev/null 2>&1; then ok "telegram_network (G07: 7 tests)"
+    else fail "telegram_network (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_telegram_network
+else
+    skip "telegram_network (compilation failed)"
+fi
 # cron_locking test (P171 — standalone, no external deps beyond hermes.h)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_cron_locking.c" "$CDIR/src/cron/cron_locking.c" \
