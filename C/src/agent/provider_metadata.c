@@ -1909,3 +1909,155 @@ int provider_get_context_length_from_provider_error(const char *error_msg, int c
     if (parsed < current_context_length) return parsed;
     return -1;
 }
+
+/* ---- Internal: POST to Ollama /api/show and return parsed values ---- */
+/* Returns bitmask: bit 0 = model_info had context_length (sets *model_info_ctx),
+ *           bit 1 = parameters had num_ctx (sets *num_ctx_val),
+ *           or 0 on failure. */
+static int ollama_query_api_show_internal(const char *model, const char *base_url,
+                                           const char *api_key,
+                                           int *model_info_ctx, int *num_ctx_val) {
+    if (!model || !*model || !base_url || !*base_url) return 0;
+
+    /* Normalize URL, strip /v1 */
+    char *normalized = provider_normalize_base_url(base_url);
+    if (!normalized) return 0;
+
+    char server_url[512];
+    size_t nlen = strlen(normalized);
+    if (nlen >= 3 && strcmp(normalized + nlen - 3, "/v1") == 0) {
+        memcpy(server_url, normalized, nlen - 3);
+        server_url[nlen - 3] = '\0';
+    } else {
+        snprintf(server_url, sizeof(server_url), "%s", normalized);
+    }
+    free(normalized);
+
+    /* Build POST body: {"name": model} */
+    json_t *body = json_object();
+    json_set(body, "name", json_string(model));
+    char *body_str = json_serialize(body);
+    json_free(body);
+    if (!body_str) return 0;
+
+    /* Build auth header */
+    char *auth_header = NULL;
+    if (api_key && *api_key) {
+        size_t hlen = strlen(api_key) + 32;
+        auth_header = malloc(hlen);
+        if (auth_header)
+            snprintf(auth_header, hlen, "Authorization: Bearer %s", api_key);
+    }
+
+    /* POST to /api/show */
+    char probe_url[1024];
+    snprintf(probe_url, sizeof(probe_url), "%s/api/show", server_url);
+
+    http_t *h = http_new(5);
+    http_resp_t *resp = http_post_json_auth(h, probe_url, body_str, auth_header);
+    free(body_str);
+    free(auth_header);
+
+    if (!resp || resp->status != 200 || !resp->body) {
+        http_resp_free(resp);
+        http_free(h);
+        return 0;
+    }
+
+    int result = 0;
+    if (model_info_ctx) *model_info_ctx = -1;
+    if (num_ctx_val) *num_ctx_val = -1;
+
+    json_t *data = json_parse(resp->body, NULL);
+    if (data && data->type == JSON_OBJECT) {
+        /* Check model_info.*.context_length (GGUF training max) */
+        json_t *model_info = json_obj_get(data, "model_info");
+        if (model_info && model_info->type == JSON_OBJECT) {
+            for (size_t i = 0; i < model_info->c.count; i++) {
+                if (model_info->c.keys[i] && strstr(model_info->c.keys[i], "context_length")) {
+                    json_t *val = model_info->c.items[i];
+                    if (val && val->type == JSON_NUMBER) {
+                        int ctx = (int)val->num_val;
+                        if (ctx >= 1024) {
+                            if (model_info_ctx) *model_info_ctx = ctx;
+                            result |= 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Check num_ctx from Modelfile parameters */
+        const char *params = json_get_str(data, "parameters", NULL);
+        if (params && *params && strstr(params, "num_ctx")) {
+            char *params_copy = strdup(params);
+            if (params_copy) {
+                char *line = strtok(params_copy, "\n");
+                while (line) {
+                    if (strstr(line, "num_ctx")) {
+                        char *last = NULL;
+                        char *tok = strtok(line, " \t");
+                        while (tok) { last = tok; tok = strtok(NULL, " \t"); }
+                        if (last) {
+                            char *end = NULL;
+                            long val = strtol(last, &end, 10);
+                            if (*end == '\0' && val >= 1024) {
+                                if (num_ctx_val) *num_ctx_val = (int)val;
+                                result |= 2;
+                                break;
+                            }
+                        }
+                    }
+                    line = strtok(NULL, "\n");
+                }
+                free(params_copy);
+            }
+        }
+    }
+
+    json_free(data);
+    http_resp_free(resp);
+    http_free(h);
+    return result;
+}
+
+/* ---- provider_query_ollama_api_show ---- */
+/* Port of Python model_metadata._query_ollama_api_show().
+ * Provider-agnostic: POSTs to /api/show, parses response.
+ * Resolution: model_info.*.context_length > num_ctx. */
+int provider_query_ollama_api_show(const char *model, const char *base_url, const char *api_key) {
+    int model_ctx = -1, num_ctx = -1;
+    int flags = ollama_query_api_show_internal(model, base_url, api_key, &model_ctx, &num_ctx);
+    if (flags & 1) return model_ctx;   /* Prefer model_info context_length */
+    if (flags & 2) return num_ctx;     /* Fall back to num_ctx */
+    return -1;
+}
+
+/* ---- provider_query_ollama_num_ctx ---- */
+/* Port of Python model_metadata.query_ollama_num_ctx().
+ * Strips provider prefix, verifies server is Ollama, then queries.
+ * Resolution: num_ctx > model_info context_length. */
+int provider_query_ollama_num_ctx(const char *model, const char *base_url, const char *api_key) {
+    if (!model || !*model || !base_url || !*base_url) return -1;
+
+    /* First, verify this is an Ollama server */
+    char *server_type = provider_detect_local_server_type(base_url, api_key);
+    if (!server_type || strcmp(server_type, "ollama") != 0) {
+        free(server_type);
+        return -1;
+    }
+    free(server_type);
+
+    /* Strip provider prefix from model name */
+    char *bare_model = provider_strip_prefix(model);
+    if (!bare_model) return -1;
+
+    int model_ctx = -1, num_ctx = -1;
+    int flags = ollama_query_api_show_internal(bare_model, base_url, api_key, &model_ctx, &num_ctx);
+    free(bare_model);
+
+    if (flags & 2) return num_ctx;     /* Prefer num_ctx (user override) */
+    if (flags & 1) return model_ctx;   /* Fall back to model_info */
+    return -1;
+}

@@ -2,7 +2,7 @@
 
 |Suite: 334/0/3 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||||||||||||Battleship v34 (94 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R02+R10 PARTIAL, R04 PORTED, R03+R05-R09 WON'T PORT. v346. Phase 279: R10 provider_detect_local_server_type() — probes local inference endpoints (LM Studio/Ollama/llama.cpp/vLLM) via HTTP.
+||||||||||||||Battleship v34 (94 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R02+R10 PARTIAL, R04 PORTED, R03+R05-R09 WON'T PORT. v347. Phase 280: R10 Ollama context query — provider_query_ollama_api_show() + provider_query_ollama_num_ctx().
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -38,6 +38,7 @@
 |||- Phase 277: S8 R10 depth — provider_extract_first_int() ported from Python model_metadata._extract_first_int(). Generic nested JSON extraction helper. Refactored provider_extract_context_length() and provider_extract_max_completion_tokens() to use it. 13 new assertions (300→313). Suite 334/0/4. v344.
 |- Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error() ported from Python model_metadata._add_model_aliases() and get_context_length_from_provider_error(). provider_add_model_aliases() creates bare model aliases for prefixed model IDs (e.g. "openai/gpt-4o" → "gpt-4o") with setdefault semantics. provider_get_context_length_from_provider_error() returns a provider-reported context limit only if lower than current (prevents spurious downgrades). 19 new assertions (313→332). Suite 334/0/3. v345.
 |- Phase 279: S8 R10 depth — provider_detect_local_server_type() ported from Python model_metadata.detect_local_server_type(). Probes known local inference endpoints via HTTP GET: LM Studio (/api/v1/models), Ollama (/api/tags with "models" check), llama.cpp (/v1/props or /props with "default_generation_settings"), vLLM (/version with JSON "version" field). Returns malloc'd server type string or NULL. 3 test assertions (332→335). Suite 334/0/3. v346.
+|- Phase 280: S8 R10 depth — provider_query_ollama_api_show() + provider_query_ollama_num_ctx() ported from Python model_metadata._query_ollama_api_show() and query_ollama_num_ctx(). Ollama context query via POST /api/show with JSON body {"name": model}. Parses response for model_info.*.context_length (GGUF training max) and num_ctx from Modelfile parameters text. Internal ollama_query_api_show_internal() shared by both public functions. provider_query_ollama_num_ctx() adds provider prefix stripping and server-type verification. 4 test assertions (335→339). Suite 334/0/3. v347.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

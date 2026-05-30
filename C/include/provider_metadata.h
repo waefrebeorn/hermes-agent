@@ -341,6 +341,22 @@ int provider_context_cache_invalidate(const char *model, const char *base_url);
  * or NULL if undetermined. Caller must free(). */
 char *provider_detect_local_server_type(const char *base_url, const char *api_key);
 
+/* Query an Ollama server's native /api/show endpoint for model context length.
+ * Port of Python model_metadata._query_ollama_api_show().
+ * Provider-agnostic: POSTs /api/show with {"name": model}, parses response
+ * for model_info.*.context_length (GGUF training max, authoritative for hosted)
+ * and falls back to num_ctx from parameters text.
+ * Returns context length or -1 on failure. */
+int provider_query_ollama_api_show(const char *model, const char *base_url, const char *api_key);
+
+/* Query an Ollama server for the model's num_ctx (user-overridden context length).
+ * Port of Python model_metadata.query_ollama_num_ctx().
+ * Strips provider prefix, verifies server is Ollama via detect_local_server_type(),
+ * then delegates to query_ollama_api_show() with flipped preference order:
+ * num_ctx from parameters > model_info context_length.
+ * Returns context length or -1 on failure. */
+int provider_query_ollama_num_ctx(const char *model, const char *base_url, const char *api_key);
+
 /* Add model aliases: if model_id contains "/", also indexes under bare name.
  * Port of Python model_metadata._add_model_aliases().
  * Sets cache[model_id] = entry via json_copy. If model_id contains "/",

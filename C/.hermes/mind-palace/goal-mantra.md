@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v346)
+# Goal Mantra — Slermes C (v347)
 
-334/0/3 (292 test files). 94 gaps. Phase 279: S8 R10 depth — provider_detect_local_server_type() — probes LM Studio/Ollama/llama.cpp/vLLM endpoints. Provider metadata 335-test suite.
+334/0/3 (292 test files). 94 gaps. Phase 280: S8 R10 depth — provider_query_ollama_api_show() + provider_query_ollama_num_ctx(). Provider metadata 339-test suite.
 
 ## Loop
 

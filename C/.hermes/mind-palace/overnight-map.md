@@ -16,3 +16,4 @@
 | 277 | S8 R10 depth — provider_extract_first_int() generic JSON extractor + refactor. 13 new assertions (300→313). Suite 334/0/4. v344. | 94 gaps | 94 gaps |
 | 278 | S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345. | 94 gaps | 94 gaps |
 | 279 | S8 R10 depth — provider_detect_local_server_type() — probes LM Studio/Ollama/llama.cpp/vLLM endpoints via HTTP. 3 new assertions (332→335). Suite 334/0/3. v346. | 94 gaps | 94 gaps |
+| 280 | S8 R10 depth — provider_query_ollama_api_show() + provider_query_ollama_num_ctx() — Ollama context query via POST /api/show. 4 new assertions (335→339). Suite 334/0/3. v347. | 94 gaps | 94 gaps |
