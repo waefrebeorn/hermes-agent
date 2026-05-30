@@ -27,7 +27,16 @@ static int failed = 0;
     } \
 } while(0)
 
+/* Forward declarations for R10 utility test functions */
+static void test_model_grok_supports_reasoning_effort(void);
+static void test_provider_is_openrouter_base_url(void);
+static void test_provider_is_custom_endpoint(void);
+static void test_provider_is_known_base_url(void);
+static void test_provider_auth_headers(void);
+static void test_provider_coerce_reasonable_int(void);
+
 int main(void) {
+
     printf("=== Provider Metadata Tests (P85) ===\n\n");
 
     /* --- Test 1: Provider metadata lookup --- */
@@ -455,6 +464,102 @@ int main(void) {
     free(v);
 
     /* --- Summary --- */
-    printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
+    printf("\n=== R10 existing: %d passed, %d failed ===\n", passed, failed);
+
+    /* ---- R10 utility functions ---- */
+    test_model_grok_supports_reasoning_effort();
+    test_provider_is_openrouter_base_url();
+    test_provider_is_custom_endpoint();
+    test_provider_is_known_base_url();
+    test_provider_auth_headers();
+    test_provider_coerce_reasonable_int();
+
+    printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
+}
+
+/* ---- model_grok_supports_reasoning_effort ---- */
+static void test_model_grok_supports_reasoning_effort(void) {
+    printf("\n[R10] model_grok_supports_reasoning_effort:\n");
+    TEST("null",            !model_grok_supports_reasoning_effort(NULL));
+    TEST("grok-3-mini",      model_grok_supports_reasoning_effort("grok-3-mini"));
+    TEST("grok-3-mini-beta", model_grok_supports_reasoning_effort("grok-3-mini-beta"));
+    TEST("x-ai/grok-3-mini", model_grok_supports_reasoning_effort("x-ai/grok-3-mini"));
+    TEST("openrouter/x-ai/grok-3-mini", model_grok_supports_reasoning_effort("openrouter/x-ai/grok-3-mini"));
+    TEST("grok-4.3",         model_grok_supports_reasoning_effort("grok-4.3"));
+    TEST("grok-4.20-multi-agent", model_grok_supports_reasoning_effort("grok-4.20-multi-agent"));
+    TEST("grok-2",          !model_grok_supports_reasoning_effort("grok-2"));
+    TEST("gpt-4",           !model_grok_supports_reasoning_effort("gpt-4"));
+    TEST("empty",           !model_grok_supports_reasoning_effort(""));
+}
+
+/* ---- provider_is_openrouter_base_url ---- */
+static void test_provider_is_openrouter_base_url(void) {
+    printf("\n[R10] provider_is_openrouter_base_url:\n");
+    TEST("null",            !provider_is_openrouter_base_url(NULL));
+    TEST("openrouter.ai",    provider_is_openrouter_base_url("https://openrouter.ai/api/v1"));
+    TEST("subdomain",        provider_is_openrouter_base_url("https://sub.openrouter.ai/v1"));
+    TEST("not openrouter",  !provider_is_openrouter_base_url("https://api.openai.com/v1"));
+    TEST("empty",           !provider_is_openrouter_base_url(""));
+}
+
+/* ---- provider_is_custom_endpoint ---- */
+static void test_provider_is_custom_endpoint(void) {
+    printf("\n[R10] provider_is_custom_endpoint:\n");
+    TEST("null",            !provider_is_custom_endpoint(NULL));
+    TEST("empty",           !provider_is_custom_endpoint(""));
+    TEST("openrouter",      !provider_is_custom_endpoint("https://openrouter.ai/v1"));
+    TEST("custom ollama",    provider_is_custom_endpoint("http://localhost:11434"));
+    TEST("custom url",       provider_is_custom_endpoint("https://my-endpoint.example.com/api"));
+}
+
+/* ---- provider_is_known_base_url ---- */
+static void test_provider_is_known_base_url(void) {
+    printf("\n[R10] provider_is_known_base_url:\n");
+    TEST("null",            !provider_is_known_base_url(NULL));
+    TEST("openai",           provider_is_known_base_url("https://api.openai.com/v1"));
+    TEST("anthropic",        provider_is_known_base_url("https://api.anthropic.com/v1"));
+    TEST("deepseek",         provider_is_known_base_url("https://api.deepseek.com/v1"));
+    TEST("unknown",         !provider_is_known_base_url("https://my-custom-server.example.com"));
+    TEST("empty",           !provider_is_known_base_url(""));
+}
+
+/* ---- provider_auth_headers ---- */
+static void test_provider_auth_headers(void) {
+    printf("\n[R10] provider_auth_headers:\n");
+    {
+        json_t *h = provider_auth_headers(NULL);
+        TEST("null key", h == NULL);
+    }
+    {
+        json_t *h = provider_auth_headers("");
+        TEST("empty key", h == NULL);
+    }
+    {
+        json_t *h = provider_auth_headers("   ");
+        TEST("whitespace key", h == NULL);
+    }
+    {
+        json_t *h = provider_auth_headers("sk-test-123");
+        TEST("non-null", h != NULL);
+        const char *auth = json_get_str(h, "Authorization", NULL);
+        TEST("Bearer prefix", auth && strncmp(auth, "Bearer ", 7) == 0);
+        TEST("key present", auth && strstr(auth, "sk-test-123") != NULL);
+        json_free(h);
+    }
+}
+
+/* ---- provider_coerce_reasonable_int ---- */
+static void test_provider_coerce_reasonable_int(void) {
+    printf("\n[R10] provider_coerce_reasonable_int:\n");
+    TEST("null",            provider_coerce_reasonable_int(NULL, 0, 10000) == -1);
+    TEST("empty",           provider_coerce_reasonable_int("", 0, 10000) == -1);
+    TEST("normal 4096",     provider_coerce_reasonable_int("4096", 1024, 10000000) == 4096);
+    TEST("with commas",     provider_coerce_reasonable_int("8,192", 1024, 10000000) == 8192);
+    TEST("127 below min",   provider_coerce_reasonable_int("127", 1024, 10000000) == -1);
+    TEST("below min",       provider_coerce_reasonable_int("512", 1024, 10000000) == -1);
+    TEST("above max",       provider_coerce_reasonable_int("99999999", 1024, 10000000) == -1);
+    TEST("not a number",    provider_coerce_reasonable_int("abc", 0, 10000) == -1);
+    TEST("bool false",      provider_coerce_reasonable_int("false", 0, 10000) == -1);
+    TEST("leading spaces",  provider_coerce_reasonable_int("  16384", 1024, 10000000) == 16384);
 }

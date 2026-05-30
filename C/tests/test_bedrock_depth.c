@@ -18,10 +18,18 @@ static int failures = 0;
         fprintf(stderr, "FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
         failures++; \
     } else { \
-        printf("PASS: %s\n", name); \
+        printf("  PASS: %s\n", name); \
     } \
 } while(0)
 
+/* Forward declarations for R02 utility test functions */
+static void test_is_anthropic_model(void);
+static void test_supports_tool_use(void);
+static void test_resolve_auth_env_var(void);
+static void test_has_credentials(void);
+static void test_resolve_region(void);
+
+/* Test data */
 static const message_t user_msg = {.role = MSG_USER, .content = (char*)"hello"};
 static const message_t sys_msg = {.role = MSG_SYSTEM, .content = (char*)"system prompt"};
 static const message_t *msgs1[] = {&user_msg};
@@ -425,6 +433,146 @@ int main(void) {
     }
 
     /* Print summary */
-    printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
+    printf("\n=== Existing tests: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
+
+    /* ---- R02 utility function tests ---- */
+    test_is_anthropic_model();
+    test_supports_tool_use();
+    test_resolve_auth_env_var();
+    test_has_credentials();
+    test_resolve_region();
+
+    printf("\n=== Overall: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
+}
+
+/* ---- bedrock_is_anthropic_model ---- */
+static void test_is_anthropic_model(void) {
+    printf("\n[R02] bedrock_is_anthropic_model:\n");
+    TEST("null",         !bedrock_is_anthropic_model(NULL));
+    TEST("anthropic",     bedrock_is_anthropic_model("anthropic.claude-sonnet-4"));
+    TEST("us prefix",     bedrock_is_anthropic_model("us.anthropic.claude-sonnet-4"));
+    TEST("global prefix", bedrock_is_anthropic_model("global.anthropic.claude-haiku"));
+    TEST("eu prefix",     bedrock_is_anthropic_model("eu.anthropic.claude-opus"));
+    TEST("ap prefix",     bedrock_is_anthropic_model("ap.anthropic.claude-3-5"));
+    TEST("jp prefix",     bedrock_is_anthropic_model("jp.anthropic.claude-3"));
+    TEST("non-anthropic", !bedrock_is_anthropic_model("meta.llama4-maverick"));
+    TEST("aws nova",      !bedrock_is_anthropic_model("amazon.nova-pro"));
+    TEST("deepseek",      !bedrock_is_anthropic_model("deepseek.r1-v1:0"));
+    TEST("empty",         !bedrock_is_anthropic_model(""));
+    TEST("case check",    bedrock_is_anthropic_model("ANTHROPIC.CLAUDE-SONNET"));
+}
+
+/* ---- bedrock_model_supports_tool_use ---- */
+static void test_supports_tool_use(void) {
+    printf("\n[R02] bedrock_model_supports_tool_use:\n");
+    TEST("null",          !bedrock_model_supports_tool_use(NULL));
+    TEST("claude",         bedrock_model_supports_tool_use("anthropic.claude-sonnet-4"));
+    TEST("deepseek r1",   !bedrock_model_supports_tool_use("deepseek.r1-v1:0"));
+    TEST("deepseek-r1",   !bedrock_model_supports_tool_use("deepseek-r1-v1:0"));
+    TEST("stability",     !bedrock_model_supports_tool_use("stability.stable-diffusion-xl"));
+    TEST("cohere embed",  !bedrock_model_supports_tool_use("cohere.embed-english-v3"));
+    TEST("titan embed",   !bedrock_model_supports_tool_use("amazon.titan-embed-text-v2"));
+    TEST("nova",           bedrock_model_supports_tool_use("amazon.nova-pro"));
+    TEST("llama",          bedrock_model_supports_tool_use("meta.llama4-maverick"));
+    TEST("case check",    !bedrock_model_supports_tool_use("DEEPSEEK.R1"));
+}
+
+/* ---- bedrock_resolve_auth_env_var ---- */
+static void test_resolve_auth_env_var(void) {
+    printf("\n[R02] bedrock_resolve_auth_env_var:\n");
+    /* These tests rely on the current env state. Run before/after setenv. */
+    const char *saved_bearer = getenv("AWS_BEARER_TOKEN_BEDROCK");
+    const char *saved_key_id = getenv("AWS_ACCESS_KEY_ID");
+    const char *saved_secret = getenv("AWS_SECRET_ACCESS_KEY");
+    const char *saved_profile = getenv("AWS_PROFILE");
+
+    /* Test with no AWS env vars */
+    unsetenv("AWS_BEARER_TOKEN_BEDROCK");
+    unsetenv("AWS_ACCESS_KEY_ID");
+    unsetenv("AWS_SECRET_ACCESS_KEY");
+    unsetenv("AWS_PROFILE");
+    unsetenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
+    unsetenv("AWS_WEB_IDENTITY_TOKEN_FILE");
+    TEST("none set", bedrock_resolve_auth_env_var() == NULL);
+
+    /* Test bearer token */
+    setenv("AWS_BEARER_TOKEN_BEDROCK", "tok_123", 1);
+    TEST("bearer token", bedrock_resolve_auth_env_var() != NULL &&
+         strcmp(bedrock_resolve_auth_env_var(), "AWS_BEARER_TOKEN_BEDROCK") == 0);
+    unsetenv("AWS_BEARER_TOKEN_BEDROCK");
+
+    /* Test access key pair (both needed) */
+    setenv("AWS_ACCESS_KEY_ID", "AKID123", 1);
+    setenv("AWS_SECRET_ACCESS_KEY", "secret456", 1);
+    TEST("access key pair", bedrock_resolve_auth_env_var() != NULL &&
+         strcmp(bedrock_resolve_auth_env_var(), "AWS_ACCESS_KEY_ID") == 0);
+    unsetenv("AWS_ACCESS_KEY_ID");
+    unsetenv("AWS_SECRET_ACCESS_KEY");
+
+    /* Test partial access key (secret only, no key id) */
+    setenv("AWS_SECRET_ACCESS_KEY", "secret", 1);
+    TEST("secret only no key", bedrock_resolve_auth_env_var() == NULL);
+    unsetenv("AWS_SECRET_ACCESS_KEY");
+
+    /* Test profile */
+    setenv("AWS_PROFILE", "myprofile", 1);
+    TEST("profile", bedrock_resolve_auth_env_var() != NULL &&
+         strcmp(bedrock_resolve_auth_env_var(), "AWS_PROFILE") == 0);
+    unsetenv("AWS_PROFILE");
+
+    /* Restore saved env */
+    if (saved_bearer) setenv("AWS_BEARER_TOKEN_BEDROCK", saved_bearer, 1);
+    if (saved_key_id) setenv("AWS_ACCESS_KEY_ID", saved_key_id, 1);
+    if (saved_secret) setenv("AWS_SECRET_ACCESS_KEY", saved_secret, 1);
+    if (saved_profile) setenv("AWS_PROFILE", saved_profile, 1);
+}
+
+/* ---- bedrock_has_credentials ---- */
+static void test_has_credentials(void) {
+    printf("\n[R02] bedrock_has_credentials:\n");
+    const char *saved_profile = getenv("AWS_PROFILE");
+
+    unsetenv("AWS_PROFILE");
+    unsetenv("AWS_BEARER_TOKEN_BEDROCK");
+    unsetenv("AWS_ACCESS_KEY_ID");
+    unsetenv("AWS_SECRET_ACCESS_KEY");
+    TEST("no creds", !bedrock_has_credentials());
+
+    setenv("AWS_PROFILE", "test", 1);
+    TEST("has profile", bedrock_has_credentials());
+    unsetenv("AWS_PROFILE");
+
+    if (saved_profile) setenv("AWS_PROFILE", saved_profile, 1);
+}
+
+/* ---- bedrock_resolve_region ---- */
+static void test_resolve_region(void) {
+    printf("\n[R02] bedrock_resolve_region:\n");
+    const char *saved_region = getenv("AWS_REGION");
+    const char *saved_def = getenv("AWS_DEFAULT_REGION");
+
+    unsetenv("AWS_REGION");
+    unsetenv("AWS_DEFAULT_REGION");
+    const char *r = bedrock_resolve_region();
+    TEST("default us-east-1", r && strcmp(r, "us-east-1") == 0);
+
+    setenv("AWS_REGION", "eu-west-1", 1);
+    TEST("AWS_REGION", bedrock_resolve_region() &&
+         strcmp(bedrock_resolve_region(), "eu-west-1") == 0);
+
+    unsetenv("AWS_REGION");
+    setenv("AWS_DEFAULT_REGION", "ap-southeast-1", 1);
+    TEST("AWS_DEFAULT_REGION", bedrock_resolve_region() &&
+         strcmp(bedrock_resolve_region(), "ap-southeast-1") == 0);
+
+    /* AWS_REGION takes priority over AWS_DEFAULT_REGION */
+    setenv("AWS_REGION", "us-west-2", 1);
+    TEST("priority", bedrock_resolve_region() &&
+         strcmp(bedrock_resolve_region(), "us-west-2") == 0);
+
+    unsetenv("AWS_REGION");
+    unsetenv("AWS_DEFAULT_REGION");
+    if (saved_region) setenv("AWS_REGION", saved_region, 1);
+    if (saved_def) setenv("AWS_DEFAULT_REGION", saved_def, 1);
 }

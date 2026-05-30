@@ -756,6 +756,92 @@ int bedrock_get_context_length(const char *model_id) {
     return best_val;
 }
 
+/* ---- bedrock_is_anthropic_model ---- */
+/* Port of Python bedrock_adapter.is_anthropic_bedrock_model().
+ * Checks if model_id is an Anthropic Claude model on Bedrock.
+ * Strips regional prefixes (us., global., eu., ap., jp.) before matching. */
+bool bedrock_is_anthropic_model(const char *model_id) {
+    if (!model_id) return false;
+    size_t len = strlen(model_id);
+    char *lower = malloc(len + 1);
+    if (!lower) return false;
+    for (size_t i = 0; i < len; i++)
+        lower[i] = tolower((unsigned char)model_id[i]);
+    lower[len] = '\0';
+    const char *prefixes[] = {"us.", "global.", "eu.", "ap.", "jp.", NULL};
+    const char *p = lower;
+    for (int i = 0; prefixes[i]; i++) {
+        size_t plen = strlen(prefixes[i]);
+        if (strncmp(p, prefixes[i], plen) == 0) { p += plen; break; }
+    }
+    bool result = (strncmp(p, "anthropic.claude", 16) == 0);
+    free(lower);
+    return result;
+}
+
+/* ---- bedrock_model_supports_tool_use ---- */
+/* Port of Python bedrock_adapter._model_supports_tool_use().
+ * Checks 5 denylist patterns; unknown models default to True. */
+bool bedrock_model_supports_tool_use(const char *model_id) {
+    if (!model_id) return false;
+    size_t len = strlen(model_id);
+    char *lower = malloc(len + 1);
+    if (!lower) return true;
+    for (size_t i = 0; i < len; i++)
+        lower[i] = tolower((unsigned char)model_id[i]);
+    lower[len] = '\0';
+    const char *denylist[] = {
+        "deepseek.r1", "deepseek-r1", "stability.",
+        "cohere.embed", "amazon.titan-embed", NULL
+    };
+    bool blocked = false;
+    for (int i = 0; denylist[i]; i++) {
+        if (strstr(lower, denylist[i])) { blocked = true; break; }
+    }
+    free(lower);
+    return !blocked;
+}
+
+/* ---- bedrock_resolve_auth_env_var ---- */
+/* Port of Python bedrock_adapter.resolve_aws_auth_env_var().
+ * Checks 5 AWS credential env vars in priority order.
+ * Returns the env var name, or NULL if none found. */
+const char *bedrock_resolve_auth_env_var(void) {
+    const char *v;
+    v = getenv("AWS_BEARER_TOKEN_BEDROCK");
+    if (v && v[0]) return "AWS_BEARER_TOKEN_BEDROCK";
+    v = getenv("AWS_ACCESS_KEY_ID");
+    if (v && v[0] && getenv("AWS_SECRET_ACCESS_KEY") && getenv("AWS_SECRET_ACCESS_KEY")[0])
+        return "AWS_ACCESS_KEY_ID";
+    v = getenv("AWS_PROFILE");
+    if (v && v[0]) return "AWS_PROFILE";
+    v = getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
+    if (v && v[0]) return "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
+    v = getenv("AWS_WEB_IDENTITY_TOKEN_FILE");
+    if (v && v[0]) return "AWS_WEB_IDENTITY_TOKEN_FILE";
+    return NULL;
+}
+
+/* ---- bedrock_has_credentials ---- */
+/* Port of Python bedrock_adapter.has_aws_credentials().
+ * Returns true if any AWS credential env var is set.
+ * Note: unlike Python, this does NOT fall back to boto3/IMDS. */
+bool bedrock_has_credentials(void) {
+    return bedrock_resolve_auth_env_var() != NULL;
+}
+
+/* ---- bedrock_resolve_region ---- */
+/* Port of Python bedrock_adapter.resolve_bedrock_region().
+ * Reads AWS_REGION or AWS_DEFAULT_REGION, falls back to "us-east-1".
+ * Note: unlike Python, does NOT fall back to boto3 session config. */
+const char *bedrock_resolve_region(void) {
+    const char *v = getenv("AWS_REGION");
+    if (v && v[0]) return v;
+    v = getenv("AWS_DEFAULT_REGION");
+    if (v && v[0]) return v;
+    return "us-east-1";
+}
+
 const provider_ops_t PROVIDER_OPS_BEDROCK = {
     .build_url = bedrock_build_url,
     .build_headers = bedrock_build_headers,

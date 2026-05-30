@@ -200,6 +200,32 @@ bool provider_model_suggests_kimi(const char *model);
  * Returns malloc'd string, caller must free(). */
 char *provider_normalize_model_version(const char *model);
 
+/* Check if Grok model supports reasoning.effort parameter.
+ * Port of Python model_metadata.grok_supports_reasoning_effort(). */
+bool model_grok_supports_reasoning_effort(const char *model);
+
+/* Check if a URL is an OpenRouter base URL (contains openrouter.ai).
+ * Port of Python model_metadata._is_openrouter_base_url(). */
+bool provider_is_openrouter_base_url(const char *base_url);
+
+/* Check if a URL is a custom (non-OpenRouter) endpoint.
+ * Port of Python model_metadata._is_custom_endpoint(). */
+bool provider_is_custom_endpoint(const char *base_url);
+
+/* Check if a URL is a known provider base URL.
+ * Port of Python model_metadata._is_known_provider_base_url(). */
+bool provider_is_known_base_url(const char *base_url);
+
+/* Build Authorization header dict as json_t {Authorization: Bearer <key>}.
+ * Port of Python model_metadata._auth_headers().
+ * Returns NULL when api_key is empty/NULL/whitespace-only. */
+json_t *provider_auth_headers(const char *api_key);
+
+/* Coerce a string value to an int within [minimum, maximum].
+ * Port of Python model_metadata._coerce_reasonable_int().
+ * Returns -1 on failure (not a valid int, or out of range). */
+int provider_coerce_reasonable_int(const char *value, int minimum, int maximum);
+
 #ifdef __cplusplus
 }
 #endif

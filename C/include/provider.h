@@ -211,6 +211,11 @@ bool bedrock_is_context_overflow(const char *error_message);
 const char *bedrock_classify_error(const char *error_message);
 char *bedrock_extract_provider_from_arn(const char *arn);
 int  bedrock_get_context_length(const char *model_id);
+bool bedrock_is_anthropic_model(const char *model_id);
+bool bedrock_model_supports_tool_use(const char *model_id);
+const char *bedrock_resolve_auth_env_var(void);
+bool bedrock_has_credentials(void);
+const char *bedrock_resolve_region(void);
 
 /* Google provider utility functions */
 bool google_is_native_base_url(const char *base_url);

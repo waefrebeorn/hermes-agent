@@ -1,4 +1,4 @@
-# Overnight Map — Recent Phases (v337)
+# Overnight Map — Recent Phases (v338)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
@@ -7,3 +7,4 @@
 | 268 | S8 R04 depth — google_translate_tools_to_gemini(). 15 new assertions (86→101). Suite 335/0/0. v335. | 95 gaps | 95 gaps |
 | 269 | S8 R04 depth — tool_choice + thinking_config. 29 new assertions (101→130). Suite 335/0/0. v336. | 95 gaps | 94 gaps |
 | 270 | S8 R04 depth — extract + build_contents. 36 new assertions (130→166). Suite 335/0/0. v337. | 94 gaps | 94 gaps |
+| 271 | S8 R02+R10 depth — batch 10 functions (5 R02 bedrock + 5 R10 model_metadata). 104 new assertions. Suite 335/0/0. v338. | 94 gaps | 94 gaps |

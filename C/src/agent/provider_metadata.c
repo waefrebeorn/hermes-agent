@@ -1131,3 +1131,102 @@ char *provider_normalize_model_version(const char *model) {
 
     return result;
 }
+
+/* ---- model_grok_supports_reasoning_effort ---- */
+/* Port of Python model_metadata.grok_supports_reasoning_effort().
+ * Checks if model name starts with a known Grok-effort-capable prefix. */
+bool model_grok_supports_reasoning_effort(const char *model) {
+    if (!model) return false;
+    size_t len = strlen(model);
+    char *lower = malloc(len + 1);
+    if (!lower) return false;
+    for (size_t i = 0; i < len; i++)
+        lower[i] = tolower((unsigned char)model[i]);
+    lower[len] = '\0';
+    /* Strip aggregator prefix after last '/' */
+    const char *name = lower;
+    const char *slash = strrchr(lower, '/');
+    if (slash) name = slash + 1;
+    /* Check against known capable prefixes */
+    const char *prefixes[] = {"grok-3-mini", "grok-4.20-multi-agent", "grok-4.3", NULL};
+    bool result = false;
+    for (int i = 0; prefixes[i]; i++) {
+        if (strncmp(name, prefixes[i], strlen(prefixes[i])) == 0) {
+            result = true;
+            break;
+        }
+    }
+    free(lower);
+    return result;
+}
+
+/* ---- provider_is_openrouter_base_url ---- */
+/* Port of Python model_metadata._is_openrouter_base_url().
+ * Checks if URL contains "openrouter.ai". */
+bool provider_is_openrouter_base_url(const char *base_url) {
+    return base_url && strstr(base_url, "openrouter.ai") != NULL;
+}
+
+/* ---- provider_is_custom_endpoint ---- */
+/* Port of Python model_metadata._is_custom_endpoint().
+ * URL is valid (non-empty) and not an OpenRouter endpoint. */
+bool provider_is_custom_endpoint(const char *base_url) {
+    return base_url && *base_url && !provider_is_openrouter_base_url(base_url);
+}
+
+/* ---- provider_is_known_base_url ---- */
+/* Port of Python model_metadata._is_known_provider_base_url().
+ * Wraps provider_infer_from_url(). */
+bool provider_is_known_base_url(const char *base_url) {
+    char *provider = provider_infer_from_url(base_url);
+    if (provider) {
+        free(provider);
+        return true;
+    }
+    return false;
+}
+
+/* ---- provider_auth_headers ---- */
+/* Port of Python model_metadata._auth_headers().
+ * Returns json_t dict {Authorization: Bearer <key>} or NULL if key empty. */
+json_t *provider_auth_headers(const char *api_key) {
+    if (!api_key) return NULL;
+    while (*api_key == ' ' || *api_key == '\t') api_key++;
+    if (!*api_key) return NULL;
+    json_t *obj = json_object();
+    if (!obj) return NULL;
+    size_t klen = strlen(api_key);
+    char *bearer = malloc(klen + 8);
+    if (!bearer) { json_free(obj); return NULL; }
+    memcpy(bearer, "Bearer ", 7);
+    memcpy(bearer + 7, api_key, klen + 1);
+    json_set(obj, "Authorization", json_string(bearer));
+    free(bearer);
+    return obj;
+}
+
+/* ---- provider_coerce_reasonable_int ---- */
+/* Port of Python model_metadata._coerce_reasonable_int().
+ * Converts string to int, checks range [minimum, maximum].
+ * Returns -1 on failure (overflow, non-numeric, out of range). */
+int provider_coerce_reasonable_int(const char *value, int minimum, int maximum) {
+    if (!value) return -1;
+    while (*value == ' ' || *value == '\t') value++;
+    if (!*value) return -1;
+    size_t len = strlen(value);
+    char *buf = malloc(len + 1);
+    if (!buf) return -1;
+    size_t j = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (value[i] != ',') buf[j++] = value[i];
+    }
+    buf[j] = '\0';
+    char *endptr = NULL;
+    long val = strtol(buf, &endptr, 10);
+    /* Save whether endptr consumed all non-whitespace BEFORE freeing buf */
+    bool endptr_ok = (endptr && (*endptr == '\0' || *endptr == ' ' || *endptr == '\t'));
+    free(buf);
+    if (!endptr_ok) return -1;
+    if (val < (long)minimum || val > (long)maximum) return -1;
+    return (int)val;
+}

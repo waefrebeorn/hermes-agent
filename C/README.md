@@ -7,8 +7,8 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||||||| Suite:  335/0/0 (292 test files, completes in <60s)
 |||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 |||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-|||||||||||||| Gaps:  95 real parity gaps (1000+ test case gaps) across 8 sectors
-|||||||| Phase 270: S8 R04 — extract_multimodal_parts + build_gemini_contents ported from gemini_native_adapter.py
+|||||||||||||| Gaps:  94 real parity gaps (1000+ test case gaps) across 8 sectors
+||||||| Phase 271: S8 R02+R10 — batch 10 utility functions ported from bedrock_adapter.py + model_metadata.py
 ```
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered
 ||||||||||Tools:  85 registered (100+ at runtime with MCP dynamic)
@@ -477,7 +477,7 @@ All real, tab complete + history. The CLI uses a central command registry (`cli/
 
 All codebase stubs have been resolved through Triple DA audits. The codebase contains zero `TODO`, `FIXME`, or `assert(0)` patterns in code logic. See `.hermes/mind-palace/vault/achievements.md` for the full resolution record.
 
-**However:** 115 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
+**However:** 94 real parity gaps remain (9 sectors, 1000+ test case gaps) — display, conversation loop, agent modules, test coverage, provider adapters, and more. See `.hermes/mind-palace/battleship-v34.md` for the active gap map.
 
 ---
 
@@ -531,7 +531,7 @@ Development is managed through the `.hermes/mind-palace/` prestige system — a 
 
 **Core files:**
 - `state.md` — Live dashboard: suite stats, fork state, critical gaps
-- `battleship-v34.md` — Canonical gap list (121 gaps across 9 sectors, 1000+ test case gaps)
+- `battleship-v34.md` — Canonical gap list (94 gaps across 8 sectors, 1000+ test case gaps)
 - `prestige_prompt.md` — Priority-ordered gap summary
 - `plan.md` — Sector-by-sector breakdown
 - `vault/achievements.md` — Phase-by-phase resolved-gap history
