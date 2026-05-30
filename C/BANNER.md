@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v264)**
+**BANNER — WuBu Slermes C Translation (v265)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v264                                          ║
-║  317 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  WuBu Slermes C v265                                          ║
+║  319 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 196: terminal_rewrite_sudo() ported (24 tests)       ║
+║  Phase 198: _transform_sudo() wired into terminal_handler()  ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

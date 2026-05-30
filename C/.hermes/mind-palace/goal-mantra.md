@@ -1,4 +1,4 @@
-(v264)
+(v265)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-317/0/0 (275 test files). 119 gaps. Phase 196: terminal_rewrite_sudo() ported (24 tests).
+319/0/0 (277 test files). 119 gaps. Phase 198: _transform_sudo() wired into terminal_handler() (7 tests).
 Next: S6 B07/B08 depth, S3 G02/G06 depth, S7 test gaps.

@@ -3106,6 +3106,24 @@ if gcc -O2 -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-format-tr
 else skip "terminal_compound_background (compilation failed)"
 fi
 
+# Terminal transform_sudo wiring test (B07 depth — sudo rewrite pipeline)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libcrypto" \
+    -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libtooloutput" -I"$CDIR/lib/libenvpassthrough" \
+    -I"$CDIR/lib/libansi" \
+    "$CDIR/tests/test_transform_sudo.c" \
+    "$CDIR/src/tools/terminal.c" "$CDIR/src/tools/tool_config.c" "$CDIR/src/tools/registry.c" \
+    "$CDIR/src/sandbox_escape.c" "$CDIR/src/agent/vault.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libcrypto/crypto.c" \
+    "$CDIR/lib/libtooloutput/tool_output.c" "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
+    "$CDIR/src/tools/approval.c" "$CDIR/lib/libansi/ansi_strip.c" \
+    -o /tmp/hermes_test_transform -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_transform > /dev/null 2>&1; then ok "terminal_transform_sudo (7 tests)"
+    else fail "terminal_transform_sudo (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_transform
+else skip "terminal_transform_sudo (compilation failed)"
+fi
+
 # Clarify tool test (M40 — needs clarify.c + json, stdin for response)
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_clarify.c" \

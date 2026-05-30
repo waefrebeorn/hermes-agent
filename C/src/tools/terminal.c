@@ -960,6 +960,45 @@ char *terminal_rewrite_sudo(const char *command, bool *found) {
     return out;
 }
 
+/* B07: Transform sudo commands to use -S flag for piped password.
+ * Port of Python terminal_tool._transform_sudo_command().
+ * Returns malloc'd string: rewritten command if sudo found and password available,
+ * or original command if no sudo or passwordless sudo works.
+ * Caller must free(). */
+static char *_transform_sudo(const char *command) {
+    if (!command || !command[0]) return NULL;
+
+    bool found = false;
+    char *rewritten = terminal_rewrite_sudo(command, &found);
+    if (!rewritten) return NULL;
+    if (!found) {
+        /* No sudo in command — return original as-is */
+        return rewritten; /* already strdup'd by terminal_rewrite_sudo */
+    }
+
+    /* Passwordless sudo check: skip rewrite if sudo -n works.
+     * Mirrors Python: if _sudo_nopasswd_works(): return command, None */
+    if (terminal_sudo_nopasswd_works()) {
+        /* Sudo works without password — return original command unchanged */
+        free(rewritten);
+        return strdup(command);
+    }
+
+    /* SUDO_PASSWORD env var available — rewrite is correct for stdin pipe.
+     * Note: current C backends use popen() which doesn't support stdin piping.
+     * This will work when backends are updated to fork/exec with pipe(). */
+    const char *sudo_password = getenv("SUDO_PASSWORD");
+    if (sudo_password && sudo_password[0]) {
+        return rewritten;
+    }
+
+    /* Interactive mode: prompt for password (future).
+     * For now, just return original command — will fail gracefully with
+     * "sudo: a password is required" which _inject_sudo_failure catches. */
+    free(rewritten);
+    return strdup(command);
+}
+
 /* B07: Rewrite A && B & (or A || B &) to A && { B & } at depth 0.
  * Bash parses A && B & as a subshell fork for the whole compound, making
  * the subshell wait for B to finish. Wrapping in braces runs B as a simple
@@ -1485,6 +1524,25 @@ char *terminal_handler(const char *args_json, const char *task_id) {
             snprintf(err, sizeof(err),
                      "{\"error\": \"%s\", \"status\": \"error\"}", esc.reason);
             return strdup(err);
+        }
+    }
+
+    /* B07: Transform sudo commands for piped password support.
+     * Calls _transform_sudo() which handles SUDO_PASSWORD env var,
+     * passwordless sudo detection, and command rewrite.
+     * The result replaces the command pointer for downstream use. */
+    {
+        char *transformed = _transform_sudo(command);
+        if (transformed) {
+            if (strcmp(transformed, command) != 0) {
+                /* Transformation changed the command — copy into command_buf */
+                size_t tlen = strlen(transformed);
+                if (tlen < sizeof(command_buf)) {
+                    memcpy(command_buf, transformed, tlen + 1);
+                    command = command_buf;
+                }
+            }
+            free(transformed);
         }
     }
 

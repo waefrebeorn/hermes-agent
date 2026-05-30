@@ -4,10 +4,10 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-|||||||||||| Suite:  315/0/0 (272 test files, completes in <60s)
-||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
-||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||||||| Gaps:  128 real parity gaps (1000+ test case gaps) across 9 sectors
+||||||||||||| Suite:  319/0/0 (277 test files, completes in <60s)
+|||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
+|||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
+|||||||||||||||| Gaps:  119 real parity gaps (1000+ test case gaps) across 9 sectors
 |||||||||||Stubs:  0 stubs remain. All entry points verified.
 ||||||||||Build:  gcc -O2 -g -Wall -Wextra -Wpedantic — 0 errors, 0 warnings
 ||||||||||CLI:    98 cmd_ functions + 37 config sections — 85 unique tools registered

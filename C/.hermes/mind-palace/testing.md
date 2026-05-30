@@ -1,7 +1,8 @@
-(v264)
+(v265)
 
-318/0/0, 276 test files. All pass. Gap: 276 C vs ~17k Python.
+319/0/0, 277 test files. All pass. Gap: 277 C vs ~17k Python.
 
+Phase 198: _transform_sudo() wired into terminal_handler() (7 tests). B07 depth.
 Phase 197: terminal_rewrite_compound_background() (12 tests). B07 depth.
 Phase 196: terminal_rewrite_sudo() (24 tests). B07 depth.
-Coverage: 276/1262 test files (21.9%). 36 new assertions across Phases 196-197.
+Coverage: 277/1262 test files (22.0%). 43 new assertions across Phases 196-198.
