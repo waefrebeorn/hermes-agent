@@ -15,10 +15,12 @@
 #include "hermes.h"
 #include "hermes_json.h"
 #include "hermes_http.h"
+#include "hermes_url_safety.h"
 #include "provider.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /* ================================================================
  *  Model-aware helpers
@@ -159,34 +161,47 @@ static char *anthropic_build_url(const provider_t *p, const char *base_url) {
  * ================================================================ */
 
 static char *anthropic_build_headers(const provider_t *p, const char *api_key) {
-    (void)api_key;
-    /* Collect beta headers */
+    const char *base_url = p ? p->base_url : NULL;
+
+    /* Determine auth header type: Bearer for MiniMax/Azure, x-api-key for native Anthropic */
+    bool use_bearer = anthropic_requires_bearer_auth(base_url);
+
+    /* Collect beta headers using endpoint-aware beta resolution */
+    json_t *beta_list = anthropic_common_betas_for_base_url(base_url, false);
     char betas[512] = "";
     size_t pos = 0;
+    size_t n = json_len(beta_list);
 
-    /* Prompt caching beta */
+    /* Prompt caching beta — always sent first if applicable */
     if (p && provider_get_system_cached(p)) {
         pos += snprintf(betas + pos, sizeof(betas) - pos,
                         "anthropic-beta: ephemeral-cache-2025-05-20");
     }
 
-    /* Interleaved thinking — always safe on native Anthropic */
-    pos += snprintf(betas + pos, sizeof(betas) - pos,
-                    "%s%s",
-                    pos > 0 ? "\r\n" : "anthropic-beta: ",
-                    "interleaved-thinking-2025-05-14");
-
-    /* Fine-grained tool streaming — needed for tool-using requests.
-     * We always send it; Anthropic ignores it on non-tool requests. */
-    pos += snprintf(betas + pos, sizeof(betas) - pos,
-                    "\r\nanthropic-beta: fine-grained-tool-streaming-2025-05-14");
+    for (size_t i = 0; i < n; i++) {
+        json_t *beta_item = json_get(beta_list, i);
+        const char *b = (beta_item && beta_item->type == JSON_STRING) ? beta_item->str_val : "";
+        if (!*b) continue;
+        pos += snprintf(betas + pos, sizeof(betas) - pos,
+                        "%s%s",
+                        pos > 0 ? "\r\nanthropic-beta: " : "anthropic-beta: ",
+                        b);
+    }
+    json_free(beta_list);
 
     char *headers = (char *)malloc(1536);
     if (!headers) return NULL;
 
-    const char *key_header = "";
-    if (api_key && *api_key)
-        key_header = "x-api-key: ";
+    const char *auth_header = "";
+    const char *auth_value = "";
+    if (api_key && *api_key) {
+        if (use_bearer) {
+            auth_header = "Authorization: Bearer ";
+        } else {
+            auth_header = "x-api-key: ";
+        }
+        auth_value = api_key;
+    }
 
     snprintf(headers, 1536,
         "%s%s\r\n"
@@ -194,7 +209,7 @@ static char *anthropic_build_headers(const provider_t *p, const char *api_key) {
         "%s"
         "Content-Type: application/json\r\n"
         "Accept: application/json",
-        key_header, api_key ? api_key : "",
+        auth_header, auth_value,
         betas);
 
     return headers;
@@ -877,6 +892,266 @@ static void anthropic_free_response(provider_response_t *resp) {
     free(resp->content);
     free(resp->reasoning);
     free(resp);
+}
+
+/* ================================================================
+ *  Endpoint detection utilities — ported from Python anthropic_adapter.py
+ * ================================================================ */
+
+bool anthropic_is_oauth_token(const char *key) {
+    if (!key || !*key) return false;
+    /* Regular Anthropic Console API keys — x-api-key auth, not OAuth */
+    if (strncmp(key, "sk-ant-api", 10) == 0) return false;
+    /* Anthropic-issued tokens (setup-tokens sk-ant-oat-*, managed keys) */
+    if (strncmp(key, "sk-ant-", 7) == 0) return true;
+    /* JWTs from Anthropic OAuth flow */
+    if (strncmp(key, "eyJ", 3) == 0) return true;
+    /* Claude Code OAuth access tokens */
+    if (strncmp(key, "cc-", 3) == 0) return true;
+    return false;
+}
+
+char *anthropic_normalize_base_url_text(const char *base_url) {
+    if (!base_url || !*base_url) return strdup("");
+    /* Strip leading/trailing whitespace */
+    while (*base_url == ' ' || *base_url == '\t') base_url++;
+    if (!*base_url) return strdup("");
+    size_t len = strlen(base_url);
+    while (len > 0 && (base_url[len-1] == ' ' || base_url[len-1] == '\t')) len--;
+    return strndup(base_url, len);
+}
+
+bool anthropic_is_third_party_endpoint(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    /* Lowercase for comparison */
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    /* Strip trailing slash */
+    while (len > 0 && lower[len-1] == '/') lower[--len] = '\0';
+    bool result = (strstr(lower, "anthropic.com") == NULL);
+    free(lower);
+    free(norm);
+    return result;
+}
+
+bool anthropic_is_kimi_coding_endpoint(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    while (len > 0 && lower[len-1] == '/') lower[--len] = '\0';
+    bool result = (strncmp(lower, "https://api.kimi.com/coding", 27) == 0);
+    free(lower);
+    free(norm);
+    return result;
+}
+
+static bool str_is_kimi_prefix(const char *m) {
+    if (!m || !*m) return false;
+    static const char *prefixes[] = {
+        "kimi-", "kimi_", "moonshot-", "moonshot_",
+        "k1.", "k1-", "k2.", "k2-", "k25", "k2.5", NULL
+    };
+    for (int i = 0; prefixes[i]; i++) {
+        size_t plen = strlen(prefixes[i]);
+        if (strncmp(m, prefixes[i], plen) == 0) return true;
+    }
+    return false;
+}
+
+bool anthropic_model_name_is_kimi_family(const char *model) {
+    if (!model || !*model) return false;
+    const char *m = model;
+    while (*m == ' ' || *m == '\t') m++;
+    if (!*m) return false;
+    size_t len = strlen(m);
+    char *lower = malloc(len + 1);
+    if (!lower) return false;
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)m[i]);
+    lower[len] = '\0';
+    /* Strip vendor prefix */
+    char *slash = strrchr(lower, '/');
+    char *prefix = slash ? slash + 1 : lower;
+    /* Strip trailing whitespace */
+    size_t plen = strlen(prefix);
+    while (plen > 0 && (prefix[plen-1] == ' ' || prefix[plen-1] == '\t')) prefix[--plen] = '\0';
+    bool result = str_is_kimi_prefix(prefix);
+    free(lower);
+    return result;
+}
+
+bool anthropic_is_kimi_family_endpoint(const char *base_url, const char *model) {
+    if (anthropic_is_kimi_coding_endpoint(base_url)) return true;
+    /* Check known domains */
+    if (base_url && *base_url) {
+        if (url_host_matches(base_url, "api.kimi.com") ||
+            url_host_matches(base_url, "moonshot.ai") ||
+            url_host_matches(base_url, "moonshot.cn"))
+            return true;
+    }
+    if (anthropic_model_name_is_kimi_family(model)) return true;
+    return false;
+}
+
+bool anthropic_is_deepseek_endpoint(const char *base_url) {
+    if (!base_url || !*base_url) return false;
+    if (!url_host_matches(base_url, "api.deepseek.com")) return false;
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    while (len > 0 && lower[len-1] == '/') lower[--len] = '\0';
+    bool result = (strstr(lower, "/anthropic") != NULL);
+    free(lower);
+    free(norm);
+    return result;
+}
+
+bool anthropic_requires_bearer_auth(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    while (len > 0 && lower[len-1] == '/') lower[--len] = '\0';
+    bool result = (
+        (strncmp(lower, "https://api.minimax.io/anthropic", 33) == 0 ||
+         strncmp(lower, "https://api.minimaxi.com/anthropic", 34) == 0 ||
+         strstr(lower, "azure.com") != NULL)
+    );
+    free(lower);
+    free(norm);
+    return result;
+}
+
+bool anthropic_base_url_needs_1m_beta(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    bool result = (strstr(lower, "azure.com") != NULL);
+    free(lower);
+    free(norm);
+    return result;
+}
+
+bool anthropic_is_minimax_endpoint(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    while (len > 0 && lower[len-1] == '/') lower[--len] = '\0';
+    bool result = (
+        strncmp(lower, "https://api.minimax.io/anthropic", 33) == 0 ||
+        strncmp(lower, "https://api.minimaxi.com/anthropic", 34) == 0
+    );
+    free(lower);
+    free(norm);
+    return result;
+}
+
+bool anthropic_is_azure_anthropic_endpoint(const char *base_url) {
+    char *norm = anthropic_normalize_base_url_text(base_url);
+    if (!norm || !*norm) { free(norm); return false; }
+    size_t len = strlen(norm);
+    char *lower = malloc(len + 1);
+    if (!lower) { free(norm); return false; }
+    for (size_t i = 0; i < len; i++) lower[i] = tolower((unsigned char)norm[i]);
+    lower[len] = '\0';
+    /* URL parsing: extract hostname */
+    const char *host_start = NULL;
+    const char *proto = strstr(lower, "://");
+    if (proto) host_start = proto + 3; else host_start = lower;
+    const char *path_start = strchr(host_start, '/');
+    size_t host_len = path_start ? (size_t)(path_start - host_start) : strlen(host_start);
+    /* Extract host portion for dot-padded matching */
+    char host_buf[512];
+    size_t hl = host_len < 511 ? host_len : 511;
+    memcpy(host_buf, host_start, hl);
+    host_buf[hl] = '\0';
+    /* Check with dot-padded boundaries */
+    char padded[520];
+    snprintf(padded, sizeof(padded), ".%s.", host_buf);
+    const char *path = path_start ? path_start : "";
+    bool is_foundry = (strstr(padded, ".services.ai.azure.") != NULL);
+    bool is_legacy = (strstr(padded, ".openai.azure.") != NULL);
+    bool has_anthropic_path = (strstr(path, "/anthropic") != NULL);
+    bool result = (is_foundry || is_legacy) && has_anthropic_path;
+    free(lower);
+    free(norm);
+    return result;
+}
+
+json_t *anthropic_common_betas_for_base_url(const char *base_url, bool drop_context_1m_beta) {
+    json_t *betas = json_array();
+    json_append(betas, json_string("interleaved-thinking-2025-05-14"));
+    json_append(betas, json_string("fine-grained-tool-streaming-2025-05-14"));
+
+    if (anthropic_base_url_needs_1m_beta(base_url) && !drop_context_1m_beta)
+        json_append(betas, json_string("context-1m-2025-08-07"));
+
+    if (anthropic_is_minimax_endpoint(base_url)) {
+        /* Strip tool-streaming and context-1m for MiniMax */
+        json_t *filtered = json_array();
+        size_t n = json_len(betas);
+        for (size_t i = 0; i < n; i++) {
+            json_t *item = json_get(betas, i);
+            if (item && item->type == JSON_STRING && item->str_val) {
+                if (strcmp(item->str_val, "fine-grained-tool-streaming-2025-05-14") != 0 &&
+                    strcmp(item->str_val, "context-1m-2025-08-07") != 0)
+                    json_append(filtered, json_copy(item));
+            }
+        }
+        json_free(betas);
+        return filtered;
+    }
+
+    if (drop_context_1m_beta) {
+        json_t *filtered = json_array();
+        size_t n = json_len(betas);
+        for (size_t i = 0; i < n; i++) {
+            json_t *item = json_get(betas, i);
+            if (item && item->type == JSON_STRING && item->str_val) {
+                if (strcmp(item->str_val, "context-1m-2025-08-07") != 0)
+                    json_append(filtered, json_copy(item));
+            }
+        }
+        json_free(betas);
+        return filtered;
+    }
+
+    return betas;
+}
+
+bool anthropic_is_bedrock_model_id(const char *model_id) {
+    if (!model_id || !*model_id) return false;
+    /* Bedrock model IDs: anthropic.claude-* */
+    if (strncmp(model_id, "anthropic.claude-", 17) == 0) return true;
+    /* Also check for common Bedrock ARN format */
+    if (strstr(model_id, "bedrock") && strstr(model_id, "anthropic")) return true;
+    return false;
+}
+
+int anthropic_resolve_positive_max_tokens(int value) {
+    return (value > 0) ? value : 0;
 }
 
 /* ================================================================

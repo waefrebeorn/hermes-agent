@@ -46,7 +46,7 @@ static json_t *make_tools(void) {
     return tools;
 }
 
-int main(void) {
+static int test_anthropic_depth_main(void) {
     printf("=== Anthropic provider depth tests ===\n\n");
 
     /* ──────────── URL building ──────────── */
@@ -583,4 +583,191 @@ int main(void) {
 
     printf("\n=== Results: %s ===\n", failures == 0 ? "ALL PASSED" : "SOME FAILED");
     return failures;
+}
+
+/* ──────────── Anthropic endpoint detection utility tests ──────────── */
+
+static int test_endpoint_detection(void) {
+    int f = 0;
+#define TEST_ED(name, expr) do { \
+    if (!(expr)) { \
+        fprintf(stderr, "FAIL: %s (%s:%d)\n", name, __FILE__, __LINE__); \
+        f++; \
+    } else { \
+        printf("PASS: %s\n", name); \
+    } \
+} while(0)
+
+    printf("\n=== Anthropic endpoint detection tests ===\n\n");
+
+    /* anthropic_is_oauth_token */
+    {
+        TEST_ED("oauth_token: NULL returns false", !anthropic_is_oauth_token(NULL));
+        TEST_ED("oauth_token: empty returns false", !anthropic_is_oauth_token(""));
+        TEST_ED("oauth_token: sk-ant-api key returns false", !anthropic_is_oauth_token("sk-ant-api03-***"));
+        TEST_ED("oauth_token: sk-ant-oa setup token returns true", anthropic_is_oauth_token("sk-ant-oat-***"));
+        TEST_ED("oauth_token: sk-ant-managed returns true", anthropic_is_oauth_token("sk-ant-managed-***"));
+        TEST_ED("oauth_token: JWT returns true", anthropic_is_oauth_token("eyJhbGciOiJSUzI1NiJ9.***"));
+        TEST_ED("oauth_token: cc- prefix returns true", anthropic_is_oauth_token("cc-***"));
+        TEST_ED("oauth_token: random string returns false", !anthropic_is_oauth_token("random"));
+    }
+
+    /* anthropic_normalize_base_url_text */
+    {
+        char *r;
+        r = anthropic_normalize_base_url_text(NULL);
+        TEST_ED("norm_base_url: NULL returns empty", r && *r == '\0');
+        free(r);
+        r = anthropic_normalize_base_url_text("");
+        TEST_ED("norm_base_url: empty returns empty", r && *r == '\0');
+        free(r);
+        r = anthropic_normalize_base_url_text("  https://api.anthropic.com  ");
+        TEST_ED("norm_base_url: strips whitespace", r && strcmp(r, "https://api.anthropic.com") == 0);
+        free(r);
+        r = anthropic_normalize_base_url_text("https://api.anthropic.com");
+        TEST_ED("norm_base_url: passthrough", r && strcmp(r, "https://api.anthropic.com") == 0);
+        free(r);
+    }
+
+    /* anthropic_is_third_party_endpoint */
+    {
+        TEST_ED("third_party: NULL returns false", !anthropic_is_third_party_endpoint(NULL));
+        TEST_ED("third_party: anthropic.com returns false", !anthropic_is_third_party_endpoint("https://api.anthropic.com"));
+        TEST_ED("third_party: custom URL returns true", anthropic_is_third_party_endpoint("https://custom.proxy.com"));
+        TEST_ED("third_party: minimax returns true", anthropic_is_third_party_endpoint("https://api.minimax.io/anthropic"));
+    }
+
+    /* anthropic_is_kimi_coding_endpoint */
+    {
+        TEST_ED("kimi_coding: NULL returns false", !anthropic_is_kimi_coding_endpoint(NULL));
+        TEST_ED("kimi_coding: matching URL", anthropic_is_kimi_coding_endpoint("https://api.kimi.com/coding"));
+        TEST_ED("kimi_coding: with trailing slash", anthropic_is_kimi_coding_endpoint("https://api.kimi.com/coding/"));
+        TEST_ED("kimi_coding: non-matching URL", !anthropic_is_kimi_coding_endpoint("https://api.anthropic.com"));
+    }
+
+    /* anthropic_model_name_is_kimi_family */
+    {
+        TEST_ED("kimi_model: NULL returns false", !anthropic_model_name_is_kimi_family(NULL));
+        TEST_ED("kimi_model: empty returns false", !anthropic_model_name_is_kimi_family(""));
+        TEST_ED("kimi_model: kimi-k2.5", anthropic_model_name_is_kimi_family("kimi-k2.5"));
+        TEST_ED("kimi_model: moonshot-v1-8k", anthropic_model_name_is_kimi_family("moonshot-v1-8k"));
+        TEST_ED("kimi_model: k2-thinking", anthropic_model_name_is_kimi_family("k2-thinking"));
+        TEST_ED("kimi_model: with vendor prefix", anthropic_model_name_is_kimi_family("moonshotai/kimi-k2.5"));
+        TEST_ED("kimi_model: claude not kimi", !anthropic_model_name_is_kimi_family("claude-sonnet-4"));
+        TEST_ED("kimi_model: llama not kimi", !anthropic_model_name_is_kimi_family("llama-3-70b"));
+    }
+
+    /* anthropic_is_kimi_family_endpoint */
+    {
+        TEST_ED("kimi_endpoint: NULL base NULL model", !anthropic_is_kimi_family_endpoint(NULL, NULL));
+        TEST_ED("kimi_endpoint: coding URL", anthropic_is_kimi_family_endpoint("https://api.kimi.com/coding", NULL));
+        TEST_ED("kimi_endpoint: api.kimi.com domain", anthropic_is_kimi_family_endpoint("https://api.kimi.com/v1/chat", NULL));
+        TEST_ED("kimi_endpoint: model name fallback", anthropic_is_kimi_family_endpoint("https://custom.gateway.com", "kimi-k2.5"));
+        TEST_ED("kimi_endpoint: non-kimi", !anthropic_is_kimi_family_endpoint("https://api.anthropic.com", "claude-sonnet-4"));
+    }
+
+    /* anthropic_is_deepseek_endpoint */
+    {
+        TEST_ED("deepseek: NULL returns false", !anthropic_is_deepseek_endpoint(NULL));
+        TEST_ED("deepseek: matching URL", anthropic_is_deepseek_endpoint("https://api.deepseek.com/anthropic"));
+        TEST_ED("deepseek: with trailing slash", anthropic_is_deepseek_endpoint("https://api.deepseek.com/anthropic/"));
+        TEST_ED("deepseek: wrong host", !anthropic_is_deepseek_endpoint("https://api.anthropic.com"));
+        TEST_ED("deepseek: wrong path", !anthropic_is_deepseek_endpoint("https://api.deepseek.com/chat"));
+    }
+
+    /* anthropic_requires_bearer_auth */
+    {
+        TEST_ED("bearer: NULL returns false", !anthropic_requires_bearer_auth(NULL));
+        TEST_ED("bearer: minimax.io", anthropic_requires_bearer_auth("https://api.minimax.io/anthropic"));
+        TEST_ED("bearer: minimaxi.com", anthropic_requires_bearer_auth("https://api.minimaxi.com/anthropic"));
+        TEST_ED("bearer: azure.com", anthropic_requires_bearer_auth("https://my-account.services.ai.azure.com/anthropic"));
+        TEST_ED("bearer: native anthropic", !anthropic_requires_bearer_auth("https://api.anthropic.com"));
+    }
+
+    /* anthropic_base_url_needs_1m_beta */
+    {
+        TEST_ED("1m_beta: NULL returns false", !anthropic_base_url_needs_1m_beta(NULL));
+        TEST_ED("1m_beta: azure.com returns true", anthropic_base_url_needs_1m_beta("https://my-account.services.ai.azure.com"));
+        TEST_ED("1m_beta: native anthropic returns false", !anthropic_base_url_needs_1m_beta("https://api.anthropic.com"));
+    }
+
+    /* anthropic_is_minimax_endpoint */
+    {
+        TEST_ED("minimax: NULL returns false", !anthropic_is_minimax_endpoint(NULL));
+        TEST_ED("minimax: minimax.io", anthropic_is_minimax_endpoint("https://api.minimax.io/anthropic"));
+        TEST_ED("minimax: minimaxi.com", anthropic_is_minimax_endpoint("https://api.minimaxi.com/anthropic"));
+        TEST_ED("minimax: azure not minimax", !anthropic_is_minimax_endpoint("https://my-account.openai.azure.com"));
+    }
+
+    /* anthropic_is_azure_anthropic_endpoint */
+    {
+        TEST_ED("azure: NULL returns false", !anthropic_is_azure_anthropic_endpoint(NULL));
+        TEST_ED("azure: foundry host + /anthropic", anthropic_is_azure_anthropic_endpoint(
+            "https://my-account.services.ai.azure.com/anthropic"));
+        TEST_ED("azure: legacy azoai + /anthropic", anthropic_is_azure_anthropic_endpoint(
+            "https://my-account.openai.azure.com/anthropic"));
+        TEST_ED("azure: no /anthropic path", !anthropic_is_azure_anthropic_endpoint(
+            "https://my-account.services.ai.azure.com/chat"));
+        TEST_ED("azure: wrong host", !anthropic_is_azure_anthropic_endpoint(
+            "https://api.anthropic.com"));
+    }
+
+    /* anthropic_common_betas_for_base_url */
+    {
+        json_t *betas;
+        /* Native Anthropic — no 1m beta by default */
+        betas = anthropic_common_betas_for_base_url("https://api.anthropic.com", false);
+        TEST_ED("betas: native has interleaved-thinking",
+                betas && strstr(json_serialize(betas), "interleaved-thinking-2025-05-14"));
+        TEST_ED("betas: native no 1m-beta",
+                betas && !strstr(json_serialize(betas), "context-1m-2025-08-07"));
+        json_free(betas);
+
+        /* Azure — includes 1m beta */
+        betas = anthropic_common_betas_for_base_url("https://my-account.services.ai.azure.com", false);
+        TEST_ED("betas: azure has 1m-beta",
+                betas && strstr(json_serialize(betas), "context-1m-2025-08-07"));
+        json_free(betas);
+
+        /* MiniMax — excludes tool-streaming */
+        betas = anthropic_common_betas_for_base_url("https://api.minimax.io/anthropic", false);
+        TEST_ED("betas: minimax no tool-streaming",
+                betas && !strstr(json_serialize(betas), "fine-grained-tool-streaming-2025-05-14"));
+        TEST_ED("betas: minimax has interleaved-thinking",
+                betas && strstr(json_serialize(betas), "interleaved-thinking-2025-05-14"));
+        json_free(betas);
+
+        /* drop_context_1m_beta=true */
+        betas = anthropic_common_betas_for_base_url("https://my-account.services.ai.azure.com", true);
+        TEST_ED("betas: drop 1m-beta when drop flag set",
+                betas && !strstr(json_serialize(betas), "context-1m-2025-08-07"));
+        json_free(betas);
+    }
+
+    /* anthropic_is_bedrock_model_id */
+    {
+        TEST_ED("bedrock_id: NULL returns false", !anthropic_is_bedrock_model_id(NULL));
+        TEST_ED("bedrock_id: empty returns false", !anthropic_is_bedrock_model_id(""));
+        TEST_ED("bedrock_id: anthropic.claude- prefix", anthropic_is_bedrock_model_id("anthropic.claude-sonnet-4-v1"));
+        TEST_ED("bedrock_id: ARN format", anthropic_is_bedrock_model_id("arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2"));
+        TEST_ED("bedrock_id: openai not bedrock", !anthropic_is_bedrock_model_id("gpt-4o"));
+    }
+
+    /* anthropic_resolve_positive_max_tokens */
+    {
+        TEST_ED("pos_tokens: positive returns value", anthropic_resolve_positive_max_tokens(8192) == 8192);
+        TEST_ED("pos_tokens: zero returns 0", anthropic_resolve_positive_max_tokens(0) == 0);
+        TEST_ED("pos_tokens: negative returns 0", anthropic_resolve_positive_max_tokens(-1) == 0);
+    }
+
+    printf("\n=== Endpoint detection: %s ===\n", f == 0 ? "ALL PASSED" : "SOME FAILED");
+    return f;
+}
+
+int main(void) {
+    int total = 0;
+    total += test_anthropic_depth_main();
+    total += test_endpoint_detection();
+    printf("\n=== Overall: %s ===\n", total == 0 ? "ALL PASSED" : "SOME FAILED");
+    return total ? 1 : 0;
 }

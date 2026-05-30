@@ -237,6 +237,22 @@ json_t *google_build_gemini_contents(const json_t *messages);
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;
 
+/* Anthropic provider utility functions — ported from Python anthropic_adapter.py */
+bool anthropic_is_oauth_token(const char *key);
+char *anthropic_normalize_base_url_text(const char *base_url);
+bool anthropic_is_third_party_endpoint(const char *base_url);
+bool anthropic_is_kimi_coding_endpoint(const char *base_url);
+bool anthropic_model_name_is_kimi_family(const char *model);
+bool anthropic_is_kimi_family_endpoint(const char *base_url, const char *model);
+bool anthropic_is_deepseek_endpoint(const char *base_url);
+bool anthropic_requires_bearer_auth(const char *base_url);
+bool anthropic_base_url_needs_1m_beta(const char *base_url);
+bool anthropic_is_minimax_endpoint(const char *base_url);
+bool anthropic_is_azure_anthropic_endpoint(const char *base_url);
+json_t *anthropic_common_betas_for_base_url(const char *base_url, bool drop_context_1m_beta);
+bool anthropic_is_bedrock_model_id(const char *model_id);
+int  anthropic_resolve_positive_max_tokens(int value);
+
 /* Register all built-in providers */
 void provider_register_builtins(void);
 

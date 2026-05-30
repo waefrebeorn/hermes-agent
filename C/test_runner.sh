@@ -1942,9 +1942,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
+    "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (50 tests)"
+    if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (119 tests)"
     else
         echo "  Anthropic depth test output:"
         /tmp/hermes_test_anth_depth 2>&1 | sed 's/^/    /'
@@ -1963,8 +1964,9 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
+        "$CDIR/src/tools/url_safety.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
-        -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
+        -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz 2>&1 | sed 's/^/    /'
     skip "anthropic_depth (compilation failed)"
 fi
 

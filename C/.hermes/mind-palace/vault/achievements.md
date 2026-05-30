@@ -2041,4 +2041,20 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |||## Phase 286: S0 D09 Vi Count Prefixes — D09 PORTED (v353)
 |||ID | Achievement | Evidence |
 ||---|-------------|----------|
-|||D09x | Vi count prefixes — digits 1-9 accumulate as repeat count in `vi_count` field. Multi-digit counts supported (12w = word_forward × 12). h/l/j/k/w/b/e/x/X/s/~ all repeat N times. r replaces N chars with same char. ~ toggles case N chars advancing cursor. Count resets on default/unknown commands. Tested with count accumulation (1→12→123), 3h, 2l, 3x, 2X, 2s, 2~, and default reset. S0 D09 now PORTED — all major vi features implemented. | `lib/liblineedit/line_edit.h` — vi_count field. `lib/liblineedit/line_edit.c` — digit accumulation before switch, count-aware loops in 10+ handlers. `tests/test_line_edit.c` — 8 new assertions (161→169). Suite 334/0/3. v353. S0 D09 PORTED. |
+| D09x | Vi count prefixes — digits 1-9 accumulate as repeat count in `vi_count` field. Multi-digit counts supported (12w = word_forward × 12). h/l/j/k/w/b/e/x/X/s/~ all repeat N times. r replaces N chars with same char. ~ toggles case N chars advancing cursor. Count resets on default/unknown commands. Tested with count accumulation (1→12→123), 3h, 2l, 3x, 2X, 2s, 2~, and default reset. S0 D09 now PORTED — all major vi features implemented. | `lib/liblineedit/line_edit.h` — vi_count field. `lib/liblineedit/line_edit.c` — digit accumulation before switch, count-aware loops in 10+ handlers. `tests/test_line_edit.c` — 8 new assertions (161→169). Suite 334/0/3. v353. S0 D09 PORTED. |
+|## Phase 287: S8 R01 Anthropic Endpoint Detection — R01 PORTED (v354)
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| R01a | `anthropic_is_oauth_token()` — detects Anthropic OAuth tokens (sk-ant-oat/eyJ/cc- prefixes), distinguishes from regular sk-ant-api keys. | `src/agent/provider_anthropic.c` — 8 tests. `include/provider.h` — declaration. Suite 335/0/14. v354. |
+| R01b | `anthropic_normalize_base_url_text()` — strips whitespace from base_url for consistent inspection. | `src/agent/provider_anthropic.c` — 4 tests. |
+| R01c | `anthropic_is_third_party_endpoint()` — detects non-Anthropic endpoints (no anthropic.com in URL). | `src/agent/provider_anthropic.c` — 4 tests. |
+| R01d | `anthropic_is_kimi_coding_endpoint()` — detects Kimi's /coding Anthropic-Messages endpoint. | `src/agent/provider_anthropic.c` — 4 tests. |
+| R01e | `anthropic_model_name_is_kimi_family()` — detects Kimi/Moonshot model prefixes (kimi-, moonshot-, k1.*, k2.*, k25, k2.5) including vendor prefix stripping. | `src/agent/provider_anthropic.c` — 8 tests. |
+| R01f | `anthropic_is_kimi_family_endpoint()` — broad Kimi endpoint detection via URL host matching + model name fallback. | `src/agent/provider_anthropic.c` — 5 tests. |
+| R01g | `anthropic_is_deepseek_endpoint()` — detects DeepSeek's /anthropic Messages endpoint. | `src/agent/provider_anthropic.c` — 5 tests. |
+| R01h | `anthropic_requires_bearer_auth()` — detects MiniMax (minimax.io/minimaxi.com) and Azure endpoints that need Authorization: Bearer *** of x-api-key. Wired into anthropic_build_headers(). | `src/agent/provider_anthropic.c` — 5 tests. |
+| R01i | `anthropic_base_url_needs_1m_beta()` + `anthropic_is_minimax_endpoint()` + `anthropic_is_azure_anthropic_endpoint()` — per-endpoint beta header classification. | `src/agent/provider_anthropic.c` — 12 tests. |
+| R01j | `anthropic_common_betas_for_base_url()` — returns JSON array of safe beta headers per endpoint: Azure gets context-1m, MiniMax strips tool-streaming+1m. Wired into anthropic_build_headers(). | `src/agent/provider_anthropic.c` — 6 tests. |
+| R01k | `anthropic_is_bedrock_model_id()` — detects Bedrock model IDs. | `src/agent/provider_anthropic.c` — 5 tests. |
+| R01l | `anthropic_resolve_positive_max_tokens()` — validates max_tokens positive. | `src/agent/provider_anthropic.c` — 3 tests. |
+| R01m | 14 functions ported from Python anthropic_adapter.py. 69 new assertions. S8 R01 PORTED. Total 90 gaps. | `tests/test_anthropic_depth.c` 50→119. Suite 335/0/14. |
