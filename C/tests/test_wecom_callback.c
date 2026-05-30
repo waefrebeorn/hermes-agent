@@ -202,12 +202,78 @@ static void test_user_app_key(void)
     TEST("key contains colon", strstr(buf, ":") != NULL);
 }
 
+/* ─── Test wecom_callback_build_event ────────────────── */
+
+static void test_build_event(void)
+{
+    wecom_callback_event_t ev;
+
+    /* 1: Text message parsing */
+    memset(&ev, 0, sizeof(ev));
+    int ret = wecom_callback_build_event(SAMPLE_XML, "wxCorpId", &ev);
+    TEST("build_event text success", ret == 0);
+    TEST("build_event msg_type", strcmp(ev.msg_type, "text") == 0);
+    TEST("build_event from_user", strcmp(ev.from_user_name, "FromUser") == 0);
+    TEST("build_event content", strcmp(ev.content, "Hello, world!") == 0);
+    TEST("build_event msg_id", strcmp(ev.msg_id, "987654321") == 0);
+    TEST("build_event create_time", strcmp(ev.create_time, "123456789") == 0);
+    TEST("build_event not lifecycle", ev.is_lifecycle == false);
+    TEST("build_event scoped_chat_id", strcmp(ev.scoped_chat_id, "wxCorpId:FromUser") == 0);
+
+    /* 2: Event message (subscribe) */
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event(SAMPLE_EVENT_XML, "wxCorpId", &ev);
+    TEST("build_event event success", ret == 0);
+    TEST("build_event event msg_type", strcmp(ev.msg_type, "event") == 0);
+    TEST("build_event event.name", strcmp(ev.event, "subscribe") == 0);
+    TEST("build_event event is_lifecycle", ev.is_lifecycle == true);
+    TEST("build_event event content /start", strcmp(ev.content, "/start") == 0);
+
+    /* 3: Null/empty inputs */
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event(NULL, "wxCorpId", &ev);
+    TEST("build_event NULL xml", ret == -1);
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event(SAMPLE_XML, NULL, &ev);
+    TEST("build_event NULL corp_id", ret == 0);
+    TEST("build_event NULL corp_id chat_id", strcmp(ev.scoped_chat_id, "FromUser") == 0);
+
+    /* 4: Missing MsgType (invalid XML) */
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event("<xml><NoMsgType/></xml>", "corp", &ev);
+    TEST("build_event invalid xml", ret == -1);
+
+    /* 5: Lifecycle event - enter_agent */
+    const char *enter_agent_xml =
+        "<xml>\n"
+        "<ToUserName>corp</ToUserName>\n"
+        "<FromUserName>User</FromUserName>\n"
+        "<CreateTime>111</CreateTime>\n"
+        "<MsgType><![CDATA[event]]></MsgType>\n"
+        "<Event><![CDATA[enter_agent]]></Event>\n"
+        "</xml>";
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event(enter_agent_xml, "corp", &ev);
+    TEST("build_event enter_agent success", ret == 0);
+    TEST("build_event enter_agent is_lifecycle", ev.is_lifecycle == true);
+
+    /* 6: Unknown event type (not text or event) */
+    const char *unknown_xml =
+        "<xml>\n"
+        "<MsgType><![CDATA[image]]></MsgType>\n"
+        "</xml>";
+    memset(&ev, 0, sizeof(ev));
+    ret = wecom_callback_build_event(unknown_xml, "corp", &ev);
+    TEST("build_event unknown type", ret == -1);
+}
+
 int main(void)
 {
     printf("=== WeCom Callback Tests ===\n");
 
     test_xml_extract_tag();
     test_user_app_key();
+    test_build_event();
 
     printf("=== Results: %d/%d passed ===\n", g_pass, g_tests);
     return (g_pass == g_tests) ? 0 : 1;

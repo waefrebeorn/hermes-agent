@@ -114,3 +114,103 @@ int wecom_callback_user_app_key(const char *corp_id, const char *user_id,
     }
     return 0;
 }
+
+/* ─── Build event from decrypted XML ──────────────────── */
+
+/* Parse a decrypted WeCom callback XML message into event fields.
+ * Port of Python _build_event().
+ *
+ * Extracts MsgType, Event, FromUserName, ToUserName, Content,
+ * MsgId, CreateTime from XML. Filters lifecycle events (enter_agent,
+ * subscribe) via is_lifecycle flag. Builds scoped_chat_id from corp_id
+ * and from_user_name. Generates msg_id from MsgId or user_id:CreateTime.
+ *
+ * @param xml_text    Decrypted WeCom callback XML (NUL-terminated)
+ * @param corp_id     WeCom corp ID for scoping
+ * @param event       Output event structure (caller-allocated)
+ * @return 0 on success, -1 if XML could not be parsed */
+int wecom_callback_build_event(const char *xml_text, const char *corp_id,
+                                wecom_callback_event_t *event)
+{
+    if (!xml_text || !event)
+        return -1;
+    memset(event, 0, sizeof(*event));
+
+    char buf[4096];
+
+    /* Extract MsgType */
+    if (wecom_xml_extract_tag(xml_text, "MsgType", event->msg_type, sizeof(event->msg_type)) != 0)
+        return -1;
+
+    /* Lowercase msg_type */
+    for (char *p = event->msg_type; *p; p++)
+        if (*p >= 'A' && *p <= 'Z') *p += 32;
+
+    /* Extract Event (may not exist for text messages) */
+    if (wecom_xml_extract_tag(xml_text, "Event", event->event, sizeof(event->event)) == 0) {
+        for (char *p = event->event; *p; p++)
+            if (*p >= 'A' && *p <= 'Z') *p += 32;
+
+        /* Filter lifecycle events */
+        if (strcmp(event->event, "enter_agent") == 0 ||
+            strcmp(event->event, "subscribe") == 0) {
+            event->is_lifecycle = true;
+        }
+    }
+
+    /* Only process text and event types */
+    if (strcmp(event->msg_type, "text") != 0 &&
+        strcmp(event->msg_type, "event") != 0) {
+        return -1;
+    }
+
+    /* Extract FromUserName */
+    wecom_xml_extract_tag(xml_text, "FromUserName",
+                          event->from_user_name, sizeof(event->from_user_name));
+
+    /* Extract ToUserName */
+    wecom_xml_extract_tag(xml_text, "ToUserName",
+                          event->to_user_name, sizeof(event->to_user_name));
+
+    /* Extract Content for text messages */
+    if (strcmp(event->msg_type, "text") == 0) {
+        if (wecom_xml_extract_tag(xml_text, "Content",
+                                  buf, sizeof(buf)) == 0) {
+            /* Strip whitespace */
+            const char *s = buf;
+            while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
+            size_t len = strlen(s);
+            while (len > 0 && (s[len-1] == ' ' || s[len-1] == '\t' ||
+                   s[len-1] == '\n' || s[len-1] == '\r')) len--;
+            if (len < sizeof(event->content)) {
+                memcpy(event->content, s, len);
+                event->content[len] = '\0';
+            }
+        }
+    }
+
+    /* For events without content, set to "/start" */
+    if (event->content[0] == '\0' && strcmp(event->msg_type, "event") == 0) {
+        snprintf(event->content, sizeof(event->content), "/start");
+    }
+
+    /* Extract CreateTime */
+    wecom_xml_extract_tag(xml_text, "CreateTime",
+                          event->create_time, sizeof(event->create_time));
+
+    /* Build message ID: prefer MsgId, fall back to user_id:CreateTime */
+    if (wecom_xml_extract_tag(xml_text, "MsgId",
+                              event->msg_id, sizeof(event->msg_id)) != 0) {
+        /* Fallback: user_id:CreateTime */
+        if (event->from_user_name[0] && event->create_time[0]) {
+            snprintf(event->msg_id, sizeof(event->msg_id), "%s:%s",
+                     event->from_user_name, event->create_time);
+        }
+    }
+
+    /* Build scoped_chat_id */
+    wecom_callback_user_app_key(corp_id, event->from_user_name,
+                                event->scoped_chat_id, sizeof(event->scoped_chat_id));
+
+    return 0;
+}

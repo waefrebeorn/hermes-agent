@@ -171,7 +171,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
     "$CDIR/tests/test_wecom_callback.c" "$CDIR/src/gateway/platforms/wecom_callback.c" \
     -o /tmp/hermes_test_wecom_callback -lm 2>/dev/null && [[ -x /tmp/hermes_test_wecom_callback ]]; then
     if /tmp/hermes_test_wecom_callback > /dev/null 2>&1; then
-        ok "wecom_callback (25 tests)"
+        ok "wecom_callback (62 tests)"
     else
         fail "wecom_callback (test binary returned non-zero)"
     fi

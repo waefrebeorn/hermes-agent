@@ -1697,3 +1697,11 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v251
 | P184-04 | 27-test suite covering all three new functions: split_host_port (URL/IPv6/host:port/plain/NULL/empty/uppercase/trailing-dot), no_proxy_entries (no env / with env / entry values), should_bypass_proxy (localhost/subdomain/not-bypassed/NULL/empty). | `C/tests/test_http.c` — 27/27 passed. |
 
 Suite: 315/0/0 (273 test files). Gaps: 128. v252
+## Phase 185: G06 wecom_callback Depth — XML Event Builder (v253)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P185-01 | G06 wecom_callback depth — wecom_callback_build_event() ported from Python _build_event(). Parses decrypted WeCom callback XML into event fields: MsgType, Event, FromUserName, ToUserName, Content (stripped), MsgId, CreateTime. Filters lifecycle events (enter_agent/subscribe → is_lifecycle=true). Sets content to "/start" for events. Builds scoped_chat_id via corp_id:user_id. Falls back msg_id to user_id:CreateTime when MsgId missing. | `C/include/hermes_wecom_callback.h` — struct + declaration. `C/src/gateway/platforms/wecom_callback.c` — implementation (110 LOC). |
+| P185-02 | 37-test suite (62 total): text message parsing, subscribe event, NULL inputs, invalid XML, enter_agent lifecycle, unknown msg_type rejection. | `C/tests/test_wecom_callback.c` — 62/62 passed. |
+
+Suite: 315/0/0 (273 test files). Gaps: 128. v253
