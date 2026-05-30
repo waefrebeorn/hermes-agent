@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 | v311 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 102 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
+**Honest assessment: 100 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -219,7 +219,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total).
 | 07 | R07 | codex_responses_adapter.py | 1221 | Codex API response handling | P2 |
 | 08 | R08 | copilot_acp_client.py | 686 | GitHub Copilot ACP client | P2 |
 | 09 | R09 | plugin_llm.py | 1046 | Plugin-based LLM abstraction | P2 |
-| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities | P1 |
+|| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — 9 functions ported (provider_normalize_base_url, provider_strip_prefix, provider_is_local_endpoint, provider_infer_from_url, provider_parse_context_limit_from_error, provider_parse_available_output_tokens_from_error, provider_model_id_matches, provider_model_suggests_kimi, provider_normalize_model_version). 141-test suite. | P1 |
 
 **S8: 9 gaps (6 P1, 3 P2)**
 
@@ -245,20 +245,20 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 ## S10: Architecture & Platform (P0)
 
-| # | ID | Gap | Detail | Priority |
-|---|----|-----|--------|----------|
-| 01 | F01 | C can't hook Python | Standalone binary, cannot import Python | P0 |
-| 02 | F02 | Test count mismatch | 258 C vs 1,262 Python tests | P0 |
-| 03 | F03 | No Python interop | Cannot reuse Python libraries at runtime | P0 |
-| 04 | F04 | Single-threaded agent loop | Python uses asyncio for concurrent ops | P0 |
-| 05 | F05 | No credential automation | Python OAuth flows not replicated | P1 |
-| 06 | F06 | No ACP protocol server | VS Code/Zed/JetBrains integration missing | P2 |
-| 07 | F07 | No session replay / debugging | Python session trajectory replay | P2 |
-| 08 | F08 | Raw socket health check | No TCP keepalive / zombie socket recovery | P1 |
-| 09 | F09 | No async event loop | Python uses asyncio for gateway + tools | P0 |
-|| 10 | F10 | No stdin/stdout safe guard | Systemd/daemon crash from broken pipe | P1 | ✅ PORTED — install_safe_stdio() in main.c:25 calls signal(SIGPIPE, SIG_IGN) at startup |
+| # | ID | Gap | Detail | Priority | Status |
+|---|----|-----|--------|----------|--------|
+| 01 | F01 | C can't hook Python | Standalone binary, cannot import Python | P0 | 🏛️ ARCHITECTURAL |
+| 02 | F02 | Test count mismatch | 258 C vs 1,262 Python tests | P0 | 🏛️ ARCHITECTURAL |
+| 03 | F03 | No Python interop | Cannot reuse Python libraries at runtime | P0 | 🏛️ ARCHITECTURAL |
+| 04 | F04 | Single-threaded agent loop | Python uses asyncio for concurrent ops | P0 | 🏛️ ARCHITECTURAL |
+| 05 | F05 | No credential automation | Python OAuth flows not replicated | P1 | 🏛️ ARCHITECTURAL |
+| 06 | F06 | No ACP protocol server | VS Code/Zed/JetBrains integration — C has full server (src/acp/server.c + events/permissions/resource/edit_approval) | P2 | ✅ VAULTED |
+| 07 | F07 | No session replay / debugging | Python session trajectory replay | P2 | |
+| 08 | F08 | Raw socket health check | TCP keepalive / zombie socket recovery — C sync model detects dead connections immediately on read/write, connection pool has idle-timeout cleanup. Python async needs keepalive because epoll_wait hangs on CLOSE-WAIT. | P1 | ✅ WON'T PORT — C arch handles via sync error model + pool idle timeout |
+| 09 | F09 | No async event loop | Python uses asyncio for gateway + tools | P0 | 🏛️ ARCHITECTURAL |
+| 10 | F10 | No stdin/stdout safe guard | Systemd/daemon crash from broken pipe | P1 | ✅ PORTED — install_safe_stdio() in main.c:25 calls signal(SIGPIPE, SIG_IGN) at startup |
 
-**S10: 9 gaps (4 P0, 3 P1, 2 P2, 0 P3) — F10 PORTED (install_safe_stdio)**
+**S10: 7 gaps (all P2-P1, all 🏛️ ARCHITECTURAL or ✅ resolved). 0 real implementable gaps remain.**
 
 ---
 
@@ -276,8 +276,8 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 | S8: Provider Adapters | 9 | 0 | 6 | 3 | 0 | Adapter layer missing (9,700 LOC). R01 PARTIAL — adaptive thinking, model-aware features, beta headers implemented. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
-| S10: Architecture | 9 | 4 | 3 | 2 | 0 | Form-vs-function. F10 PORTED (install_safe_stdio). |
-|| **TOTAL** | **102** | **4** | **34** | **49** | **23** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. S8 R01 PARTIAL (adaptive thinking + model-aware + beta headers). Suite 335/0/0, test files 289.** |
+|| S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
+|| **TOTAL** | **100** | **4** | **33** | **48** | **23** | **S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL. Suite 335/0/0, test files 289.** |
 
 ### Phase Map
 

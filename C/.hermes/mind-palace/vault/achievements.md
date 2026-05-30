@@ -1872,8 +1872,16 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ## Phase 17: Display & Visual
 | ID | Achievement | Evidence |
 |----|-------------|----------|
-| D09 | Minimal vi mode keybindings in line_edit.c — ESC toggles INSERT↔NORMAL. NORMAL: h/j/k/l navigation, 0/$ line start/end, x delete char, X backspace, i/I/a/A insert/append, u undo, dd delete line, p/P paste. [NORMAL] mode indicator in prompt. | `C/lib/liblineedit/line_edit.c` + `C/lib/liblineedit/line_edit.h` — vi_mode field, line_edit_get_mode(), vi dispatch in line_edit_read(). Tests: `C/tests/test_line_edit.c` — test_vi_mode(), 83 total. |
+|| D09 | Minimal vi mode keybindings in line_edit.c — ESC toggles INSERT↔NORMAL. NORMAL: h/j/k/l navigation, 0/$ line start/end, x delete char, X backspace, i/I/a/A insert/append, u undo, dd delete line, p/P paste. [NORMAL] mode indicator in prompt. | `C/lib/liblineedit/line_edit.c` + `C/lib/liblineedit/line_edit.h` — vi_mode field, line_edit_get_mode(), vi dispatch in line_edit_read(). Tests: `C/tests/test_line_edit.c` — test_vi_mode(), 83 total. |
+|## Phase 251: S8 R10 — Model Metadata Utility Functions (v318)
+|| ID | Achievement | Evidence |
+||----|-------------|----------|
+|| R10f | provider_model_id_matches() — port of Python model_metadata._model_id_matches(). Exact match or slug match (part after last /). | `C/src/agent/provider_metadata.c:1082` — 8 test assertions in test_provider_metadata.c. |
+|| R10g | provider_model_suggests_kimi() — port of Python model_metadata._model_name_suggests_kimi(). Case-insensitive 'kimi' prefix or 'moonshot' substring. | `C/src/agent/provider_metadata.c:1108` — 9 test assertions. |
+|| R10h | provider_normalize_model_version() — port of Python model_metadata._normalize_model_version(). Replaces '.' with '-'. | `C/src/agent/provider_metadata.c:1131` — 6 test assertions. |
+|
 ## Phase 18: Stale Claims Corrected
 | ID | Claim | Correction | Evidence |
 |----|-------|------------|----------|
 | F06 | No ACP protocol server — VS Code/Zed/JetBrains integration missing (S10 P2) | C has full ACP server at `src/acp/server.c` (40KB) with JSON-RPC 2.0 over stdio, Content-Length framing. Handles initialize, new/list/load/resume/delete session, tools_list/call, edit_approval, auto-approve, permissions, fork_session, set_session_model/mode/config. Plus events.c, permissions.c, resource.c, edit_approval.c. | `C/src/acp/server.c` (40784 bytes), 712+ lines, 20+ message handlers. `C/tests/test_acp_events.c` (367 lines, 5 test suites, 76 assertions). `C/tests/test_acp_resource.c` (106 lines). |
+|| F08 | Raw socket health check — TCP keepalive / zombie socket recovery (S10 P1) | **WON'T PORT.** Python's async httpx needs SO_KEEPALIVE because epoll_wait hangs on CLOSE-WAIT sockets. C's sync libhttp detects dead connections immediately on next read/write (+ connection pool idle-timeout cleanup). No benefit to porting. | Python: `_build_keepalive_http_client()` (run_agent.py:2739) sets SO_KEEPALIVE/TCP_KEEPIDLE=30/TCP_KEEPINTVL=10/TCP_KEEPCNT=3. `cleanup_dead_connections()` (agent_runtime_helpers.py:2099) probes pool with MSG_PEEK. C: libhttp pool idle-timeout in `http.c:1599`. |

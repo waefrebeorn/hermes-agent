@@ -1078,3 +1078,56 @@ int provider_parse_available_output_tokens_from_error(const char *error_msg) {
 
     return -1;
 }
+
+/* ---- provider_model_id_matches ---- */
+bool provider_model_id_matches(const char *candidate_id, const char *lookup_model) {
+    if (!candidate_id || !lookup_model) return false;
+
+    /* Exact match */
+    if (strcmp(candidate_id, lookup_model) == 0) return true;
+
+    /* Slug match: part after last '/' equals lookup_model */
+    const char *slash = strrchr(candidate_id, '/');
+    if (slash) {
+        const char *slug = slash + 1;
+        if (strcmp(slug, lookup_model) == 0) return true;
+    }
+
+    return false;
+}
+
+/* ---- provider_model_suggests_kimi ---- */
+bool provider_model_suggests_kimi(const char *model) {
+    if (!model) return false;
+
+    /* Case-insensitive check */
+    size_t len = strlen(model);
+    char *lower = malloc(len + 1);
+    if (!lower) return false;
+    for (size_t i = 0; i < len; i++) {
+        lower[i] = tolower((unsigned char)model[i]);
+    }
+    lower[len] = '\0';
+
+    /* Check for 'kimi' prefix or 'moonshot' substring */
+    bool result = (strncmp(lower, "kimi", 4) == 0) || (strstr(lower, "moonshot") != NULL);
+
+    free(lower);
+    return result;
+}
+
+/* ---- provider_normalize_model_version ---- */
+char *provider_normalize_model_version(const char *model) {
+    if (!model) return NULL;
+
+    size_t len = strlen(model);
+    char *result = malloc(len + 1);
+    if (!result) return NULL;
+
+    for (size_t i = 0; i < len; i++) {
+        result[i] = (model[i] == '.') ? '-' : model[i];
+    }
+    result[len] = '\0';
+
+    return result;
+}

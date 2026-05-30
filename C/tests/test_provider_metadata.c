@@ -401,6 +401,59 @@ int main(void) {
     avail = provider_parse_available_output_tokens_from_error(NULL);
     TEST("NULL -> -1", avail == -1);
 
+    /* --- Test 13: provider_model_id_matches --- */
+    printf("\n[R10] provider_model_id_matches:\n");
+
+    TEST("exact match", provider_model_id_matches("claude-sonnet-4", "claude-sonnet-4") == true);
+    TEST("slug match", provider_model_id_matches("anthropic/claude-sonnet-4", "claude-sonnet-4") == true);
+    TEST("no match", provider_model_id_matches("gpt-4", "claude-sonnet-4") == false);
+    TEST("null candidate", provider_model_id_matches(NULL, "claude-sonnet-4") == false);
+    TEST("null lookup", provider_model_id_matches("claude-sonnet-4", NULL) == false);
+    TEST("both null", provider_model_id_matches(NULL, NULL) == false);
+    TEST("slug with no slash = exact", provider_model_id_matches("claude-sonnet-4", "claude-sonnet") == false);
+    TEST("multi-segment slug", provider_model_id_matches("nvidia/nvidia-nemotron-super-49b-v1", "nvidia-nemotron-super-49b-v1") == true);
+
+    /* --- Test 14: provider_model_suggests_kimi --- */
+    printf("\n[R10] provider_model_suggests_kimi:\n");
+
+    TEST("kimi-k2.6", provider_model_suggests_kimi("kimi-k2.6") == true);
+    TEST("kimi-k2-thinking", provider_model_suggests_kimi("kimi-k2-thinking") == true);
+    TEST("Kimi-K2.6 uppercase", provider_model_suggests_kimi("Kimi-K2.6") == true);
+    TEST("moonshotai/Kimi-K2.6", provider_model_suggests_kimi("moonshotai/Kimi-K2.6") == true);
+    TEST("claude not kimi", provider_model_suggests_kimi("claude-sonnet-4") == false);
+    TEST("empty string", provider_model_suggests_kimi("") == false);
+    TEST("null model", provider_model_suggests_kimi(NULL) == false);
+    TEST("kimi alone", provider_model_suggests_kimi("kimi") == true);
+    TEST("just moonshot", provider_model_suggests_kimi("moonshot") == true);
+
+    /* --- Test 15: provider_normalize_model_version --- */
+    printf("\n[R10] provider_normalize_model_version:\n");
+
+    char *v;
+    v = provider_normalize_model_version("claude-opus-4.6");
+    TEST("dot to dash", v && strcmp(v, "claude-opus-4-6") == 0);
+    free(v);
+
+    v = provider_normalize_model_version("claude-sonnet-4.5");
+    TEST("another dot version", v && strcmp(v, "claude-sonnet-4-5") == 0);
+    free(v);
+
+    v = provider_normalize_model_version("gpt-4");
+    TEST("no dots unchanged", v && strcmp(v, "gpt-4") == 0);
+    free(v);
+
+    v = provider_normalize_model_version("");
+    TEST("empty string", v && strcmp(v, "") == 0);
+    free(v);
+
+    v = provider_normalize_model_version(NULL);
+    TEST("null returns null", v == NULL);
+    free(v);
+
+    v = provider_normalize_model_version("multiple.dots.version.1.2.3");
+    TEST("multiple dots", v && strcmp(v, "multiple-dots-version-1-2-3") == 0);
+    free(v);
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

@@ -185,6 +185,21 @@ int provider_parse_context_limit_from_error(const char *error_msg);
  * Returns available tokens, or -1 if not a max_tokens-too-large error. */
 int provider_parse_available_output_tokens_from_error(const char *error_msg);
 
+/* Check if a candidate model ID matches a lookup model string.
+ * Port of Python model_metadata._model_id_matches().
+ * Supports exact match and slug match (part after last '/' equals lookup). */
+bool provider_model_id_matches(const char *candidate_id, const char *lookup_model);
+
+/* Check if a model name looks like a Kimi-family model.
+ * Port of Python model_metadata._model_name_suggests_kimi().
+ * Checks for 'kimi' prefix or 'moonshot' in the name (case-insensitive). */
+bool provider_model_suggests_kimi(const char *model);
+
+/* Normalize version separators: replace '.' with '-'.
+ * Port of Python model_metadata._normalize_model_version().
+ * Returns malloc'd string, caller must free(). */
+char *provider_normalize_model_version(const char *model);
+
 #ifdef __cplusplus
 }
 #endif
