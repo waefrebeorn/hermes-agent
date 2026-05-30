@@ -1950,3 +1950,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 ||---|-------------|----------|
 ||| D09q | `.` repeats the last single-command vi change operation: `x` (delete char), `X` (delete before), `~` (toggle case), `r` (replace with stored param), `s` (substitute), `D` (delete to end), `C` (change to end), `d` (dd delete line). Tracks via `vi_last_change_op` + `vi_last_change_param` in line_edit_t struct. Replays the operation at current cursor position. Does nothing if no prior change (`vi_last_change_op == 0`). | `lib/liblineedit/line_edit.h:54-55` — struct fields. `lib/liblineedit/line_edit.c:331,335-336` — init to 0. `lib/liblineedit/line_edit.c:1013-1198+1204-1220` — recording at each change site. `lib/liblineedit/line_edit.c:1195-1237` — `.` dispatch switch. `tests/test_line_edit.c:532-535` — 2 init assertions (135→137). Suite 335/0/0. v328. |
+||
+||## Phase 262: S8 R02 Bedrock Depth — Stop Reason Mapping
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| R02a | Bedrock `stopReason` field extracted from Converse API response root and mapped to OpenAI `finish_reason`: `end_turn`/`stop_sequence`→`stop`, `tool_use`→`tool_calls`, `max_tokens`→`length`, `content_filtered`/`guardrail_intervened`→`content_filter`. Port of Python `_converse_stop_reason_to_openai()` from bedrock_adapter.py:616-626. | `src/agent/provider_bedrock.c:531-544` — stop_reason extraction + 5-way if/else mapping. `tests/test_bedrock_depth.c:206-246` — 5 new tests for each stop reason variant (45→50 assertions). Suite 335/0/0. v329. |

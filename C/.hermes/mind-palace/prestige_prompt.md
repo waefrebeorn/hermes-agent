@@ -1,4 +1,4 @@
-# Prestige (v328)
+# Prestige (v329)
 
 ## P0 — Architecture (4 gaps)
 F01: C can't hook Python
@@ -26,5 +26,5 @@ C11: Auth/OAuth system (1 P1)
 
 ## Strategy
 
-S0+S1+S3+S6+S8(R05-R09 WON'T PORT) all PORTED. Focus shifts to S0 D09 vi depth,
-S8 R02/R03/R04 provider adapters, and S7 test expansion.
+S0+S1+S3+S6+S8(R05-R09 WON'T PORT) all PORTED. Focus shifts to S8 R02/R04 provider depth,
+S7 test expansion, and remaining D09 vi features.

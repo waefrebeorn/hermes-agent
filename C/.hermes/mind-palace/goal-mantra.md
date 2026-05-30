@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v328)
+# Goal Mantra — Slermes C (v329)
 
-335/0/0 (292 test files). 95 gaps. Phase 261: S0 D09 vi mode depth — . repeat last change. 137-test suite.
+335/0/0 (292 test files). 95 gaps. Phase 262: S8 R02 Bedrock depth — stop_reason mapping. 50-test bedrock suite.
 
 ## Loop
 

@@ -211,7 +211,38 @@ int main(void) {
         TEST("parse_response tool_call name", r && strcmp(r->tool_calls[0].name, "web_search") == 0);
         TEST("parse_response tool_call id", r && strcmp(r->tool_calls[0].id, "tu1") == 0);
         TEST("parse_response tool_call args has query", r && strstr(r->tool_calls[0].arguments, "test") != NULL);
-        if (r) { free(r->content); free(r->reasoning); free(r); }
+        TEST("parse_response finish_reason = tool_calls", r && strcmp(r->finish_reason, "tool_calls") == 0);
+        if (r) PROVIDER_OPS_BEDROCK.free_response(r);
+    }
+    /* stopReason = end_turn */
+    {
+        const char *resp_json = "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"Hello!\"}]}},\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":5,\"outputTokens\":3}}";
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(NULL, resp_json);
+        TEST("parse_response end_turn text", r && r->content && strcmp(r->content, "Hello!") == 0);
+        TEST("parse_response finish_reason = stop", r && strcmp(r->finish_reason, "stop") == 0);
+        if (r) PROVIDER_OPS_BEDROCK.free_response(r);
+    }
+    /* stopReason = max_tokens */
+    {
+        const char *resp_json = "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"Partial response\"}]}},\"stopReason\":\"max_tokens\",\"usage\":{\"inputTokens\":5,\"outputTokens\":128}}";
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(NULL, resp_json);
+        TEST("parse_response max_tokens text", r && r->content && strcmp(r->content, "Partial response") == 0);
+        TEST("parse_response finish_reason = length", r && strcmp(r->finish_reason, "length") == 0);
+        if (r) PROVIDER_OPS_BEDROCK.free_response(r);
+    }
+    /* stopReason = content_filtered */
+    {
+        const char *resp_json = "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"\"}]}},\"stopReason\":\"content_filtered\",\"usage\":{\"inputTokens\":5,\"outputTokens\":1}}";
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(NULL, resp_json);
+        TEST("parse_response content_filtered finish_reason = content_filter", r && strcmp(r->finish_reason, "content_filter") == 0);
+        if (r) PROVIDER_OPS_BEDROCK.free_response(r);
+    }
+    /* stopReason = guardrail_intervened */
+    {
+        const char *resp_json = "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[]}},\"stopReason\":\"guardrail_intervened\",\"usage\":{\"inputTokens\":5,\"outputTokens\":0}}";
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(NULL, resp_json);
+        TEST("parse_response guardrail_intervened finish_reason = content_filter", r && strcmp(r->finish_reason, "content_filter") == 0);
+        if (r) PROVIDER_OPS_BEDROCK.free_response(r);
     }
     {
         /* Error response (no output key, message field) */

@@ -528,6 +528,20 @@ static provider_response_t *bedrock_parse_response(const provider_t *p,
     if (output) {
         json_t *message = json_object_get(output, "message");
         if (message) {
+            /* Extract and map stopReason to OpenAI finish_reason */
+            const char *stop_reason = json_get_str(root, "stopReason", NULL);
+            if (stop_reason) {
+                if (strcmp(stop_reason, "end_turn") == 0 || strcmp(stop_reason, "stop_sequence") == 0)
+                    snprintf(resp->finish_reason, sizeof(resp->finish_reason), "stop");
+                else if (strcmp(stop_reason, "tool_use") == 0)
+                    snprintf(resp->finish_reason, sizeof(resp->finish_reason), "tool_calls");
+                else if (strcmp(stop_reason, "max_tokens") == 0)
+                    snprintf(resp->finish_reason, sizeof(resp->finish_reason), "length");
+                else if (strcmp(stop_reason, "content_filtered") == 0 || strcmp(stop_reason, "guardrail_intervened") == 0)
+                    snprintf(resp->finish_reason, sizeof(resp->finish_reason), "content_filter");
+                else
+                    snprintf(resp->finish_reason, sizeof(resp->finish_reason), "stop");
+            }
             json_t *content = json_object_get(message, "content");
             if (content && json_len(content) > 0) {
                 /* Concatenate all text blocks */
