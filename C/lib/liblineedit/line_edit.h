@@ -48,6 +48,9 @@ typedef struct line_edit_t {
     line_edit_mode_t vi_mode;             /* INSERT or NORMAL (vi mode) */
     char vi_saved_line[LINE_EDIT_MAX_LINE]; /* for vi undo */
     bool vi_saved;                        /* whether vi_saved_line is valid */
+    char vi_last_find_char;               /* last f/F/t/T target char */
+    bool vi_last_find_forward;            /* last find direction (true=forward) */
+    bool vi_last_find_till;               /* last find was till (t/T), not find (f/F) */
 } line_edit_t;
 
 /* Create a line editor instance */

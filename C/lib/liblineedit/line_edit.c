@@ -1075,6 +1075,109 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     line_buf_delete_forward(le->buf);
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
                     break;
+                case 'r': /* replace char under cursor */
+                {
+                    char next;
+                    if (read(STDIN_FILENO, &next, 1) > 0 && next >= 32 && next <= 126) {
+                        if (le->buf->cursor < le->buf->len) {
+                            le->buf->buf[le->buf->cursor] = next;
+                            term_redraw_line(le->buf);
+                        }
+                    }
+                    break;
+                }
+                case '~': /* toggle case of char under cursor */
+                    if (le->buf->cursor < le->buf->len) {
+                        unsigned char uc = (unsigned char)le->buf->buf[le->buf->cursor];
+                        if (uc >= 'a' && uc <= 'z')
+                            le->buf->buf[le->buf->cursor] = uc - 32;
+                        else if (uc >= 'A' && uc <= 'Z')
+                            le->buf->buf[le->buf->cursor] = uc + 32;
+                        /* cursor stays on the character (like vim ~) */
+                        term_redraw_line(le->buf);
+                    }
+                    break;
+                case 'f': /* find char forward */
+                case 'F': /* find char backward */
+                case 't': /* till char forward (stops before) */
+                case 'T': /* till char backward (stops after) */
+                {
+                    char target;
+                    if (read(STDIN_FILENO, &target, 1) <= 0) break;
+                    le->vi_last_find_char = target;
+                    le->vi_last_find_forward = (c == 'f' || c == 't');
+                    le->vi_last_find_till = (c == 't' || c == 'T');
+                    /* Search for target */
+                    line_buf_t *lb = le->buf;
+                    if (c == 'f' || c == 't') {
+                        /* Forward search */
+                        size_t start = le->buf->cursor + 1;
+                        for (size_t i = start; i < lb->len; i++) {
+                            if (lb->buf[i] == (unsigned char)target) {
+                                le->buf->cursor = (c == 't') ? (i - 1) : i;
+                                break;
+                            }
+                        }
+                    } else {
+                        /* Backward search (F/T) */
+                        size_t end = le->buf->cursor;
+                        for (size_t i = end; i > 0; i--) {
+                            if (lb->buf[i - 1] == (unsigned char)target) {
+                                le->buf->cursor = (c == 'T') ? i : (i - 1);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                case ';': /* repeat last f/F/t/T */
+                {
+                    if (le->vi_last_find_char && le->vi_last_find_char) {
+                        line_buf_t *lb = le->buf;
+                        if (le->vi_last_find_forward) {
+                            size_t start = le->buf->cursor + 1;
+                            for (size_t i = start; i < lb->len; i++) {
+                                if (lb->buf[i] == (unsigned char)le->vi_last_find_char) {
+                                    le->buf->cursor = le->vi_last_find_till ? (i - 1) : i;
+                                    break;
+                                }
+                            }
+                        } else {
+                            size_t end = le->buf->cursor;
+                            for (size_t i = end; i > 0; i--) {
+                                if (lb->buf[i - 1] == (unsigned char)le->vi_last_find_char) {
+                                    le->buf->cursor = le->vi_last_find_till ? i : (i - 1);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                case ',': /* repeat last f/F/t/T in opposite direction */
+                {
+                    if (le->vi_last_find_char) {
+                        line_buf_t *lb = le->buf;
+                        if (!le->vi_last_find_forward) {
+                            size_t start = le->buf->cursor + 1;
+                            for (size_t i = start; i < lb->len; i++) {
+                                if (lb->buf[i] == (unsigned char)le->vi_last_find_char) {
+                                    le->buf->cursor = le->vi_last_find_till ? (i - 1) : i;
+                                    break;
+                                }
+                            }
+                        } else {
+                            size_t end = le->buf->cursor;
+                            for (size_t i = end; i > 0; i--) {
+                                if (lb->buf[i - 1] == (unsigned char)le->vi_last_find_char) {
+                                    le->buf->cursor = le->vi_last_find_till ? i : (i - 1);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
                 default:
                     handled = false;
                     break;

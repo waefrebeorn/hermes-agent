@@ -1,31 +1,30 @@
-# Prestige (v311)
+# Prestige (v322)
 
 ## P0 — Architecture (4 gaps)
 F01: C can't hook Python
-F02: Test count mismatch (282 vs ~1262)
+F02: Test count mismatch (289 vs ~1262)
 F03: No Python interop
 F09: No async event loop
 
-## P1 — TUI (14), Test coverage (9), Provider adapters (6), Architecture (3), CLI (1), Plugin (1) = 34
+## P1 — TUI (14), Test coverage (9), Provider adapters (3), Architecture (2), CLI (1) = 29
 
 T01-T14: TUI backend + React frontend (28 total, 14 P1)
 X01-X09: Test coverage (19 clusters, 1000+ tests)
-R01-R06: Provider adapters (10 total, 6 P1)
-F05, F08, F10: Architecture gaps (3 P1)
+R02-R04: Provider adapters (3 real gaps, P1)
+F05, F07: Architecture gaps (2 P1)
 C11: Auth/OAuth system (1 P1)
-P01: Plugin loading/lifecycle (1 P1)
 
 ## Phase Map
 
 | Phase | Focus | Sectors | Gaps |
 |-------|-------|---------|------|
-| Phase 1 | Agent plumbing + Provider adapters + TUI backend | S1 (5), S8 (6), S4 P1 (14) | ~25 |
+| Phase 0 | S0 D09 vi mode + S4 T01-T14 TUI backend | S0, S4 P1 | ~16 |
+| Phase 1 | Provider adapters | S8 (R02,R03,R04) | ~3 |
 | Phase 2 | Test coverage campaign | S7 | 19* (1000+ tests) |
 | Phase 4 | CLI ecosystem | S5 | ~30 |
-| Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~30 |
-| Phase 6 | Agent module depth | S2 (15 won't-port) + S8 remaining | ~12 |
+| Phase 5 | Plugin system + Architecture gaps | S9, S10 | ~27 |
 
 ## Strategy
 
-S0+S3+S6 all PORTED. Focus shifts to S1 partials depth (L25-L28),
-S7 test expansion, and B08 send_message remaining features.
+S0+S1+S3+S6+S8(R05-R09 WON'T PORT) all PORTED. Focus shifts to S0 D09 vi depth,
+S8 R02/R03/R04 provider adapters, and S7 test expansion.

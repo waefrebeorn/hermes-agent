@@ -473,7 +473,232 @@ static void test_vi_mode(void) {
     /* vi_saved_line initialized */
     TEST("vi_saved initialized false", le->vi_saved == false);
 
+    /* vi_last_find fields initialized via calloc */
+    TEST("vi_last_find_char initialized 0", le->vi_last_find_char == 0);
+    TEST("vi_last_find_forward initialized false",
+         le->vi_last_find_forward == false);
+    TEST("vi_last_find_till initialized false",
+         le->vi_last_find_till == false);
+
     line_edit_free(le);
+
+    /* --- toggle case (~) logic test --- */
+    le = make_buffer("Hello World", 0);
+    TEST_NOT_NULL("create for toggle test", le);
+    if (le) {
+        /* Simulate ~ at cursor 0: 'H' -> 'h' */
+        unsigned char uc = (unsigned char)le->buf->buf[0];
+        if (uc >= 'A' && uc <= 'Z')
+            le->buf->buf[0] = uc + 32;
+        TEST("~ toggles 'H' to 'h'",
+             le->buf->buf[0] == 'h');
+
+        /* Move to cursor 6 ('W') */
+        le->buf->cursor = 6;
+        uc = (unsigned char)le->buf->buf[6];
+        if (uc >= 'A' && uc <= 'Z')
+            le->buf->buf[6] = uc + 32;
+        TEST("~ toggles 'W' to 'w'",
+             le->buf->buf[6] == 'w');
+
+        /* Move to cursor 0, lower-case letter 'h' */
+        le->buf->cursor = 0;
+        uc = (unsigned char)le->buf->buf[0];
+        if (uc >= 'a' && uc <= 'z')
+            le->buf->buf[0] = uc - 32;
+        TEST("~ toggles 'h' back to 'H'",
+             le->buf->buf[0] == 'H');
+
+        /* Non-alpha char should not change */
+        line_edit_free(le);
+        le = make_buffer("abc123", 3);  /* cursor at '1' */
+        TEST_NOT_NULL("create for non-alpha toggle test", le);
+        if (le) {
+            uc = (unsigned char)le->buf->buf[3];
+            if (uc >= 'a' && uc <= 'z')
+                le->buf->buf[3] = uc - 32;
+            else if (uc >= 'A' && uc <= 'Z')
+                le->buf->buf[3] = uc + 32;
+            /* '1' unchanged */
+            TEST("~ leaves digit unchanged",
+                 le->buf->buf[3] == '1');
+            line_edit_free(le);
+        }
+
+        /* --- replace char (r) logic test --- */
+        le = make_buffer("hello world", 0);
+        TEST_NOT_NULL("create for replace test", le);
+        if (le) {
+            /* Simulate rX at cursor 0: replace 'h' with 'X' */
+            if (le->buf->cursor < le->buf->len) {
+                le->buf->buf[le->buf->cursor] = 'X';
+            }
+            TEST("r replaces 'h' with 'X'",
+                 le->buf->buf[0] == 'X');
+            TEST("r leaves rest of string intact",
+                 strcmp(le->buf->buf + 1, "ello world") == 0);
+            TEST("r does not change length",
+                 le->buf->len == 11);
+
+            /* Replace at cursor 6 ('w' -> 'W') */
+            le->buf->cursor = 6;
+            if (le->buf->cursor < le->buf->len) {
+                le->buf->buf[6] = 'W';
+            }
+            TEST("r replaces 'w' with 'W'",
+                 le->buf->buf[6] == 'W');
+
+            line_edit_free(le);
+        }
+    }
+
+    /* --- find (f) logic test --- */
+    le = make_buffer("hello world, hello!", 0);
+    TEST_NOT_NULL("create for find test", le);
+    if (le) {
+        /* Simulate fo (find 'o' forward from cursor 0): 'o' at position 4 */
+        size_t start = le->buf->cursor + 1;
+        size_t found_pos = le->buf->len;
+        size_t end = 0;
+        for (size_t i = start; i < le->buf->len; i++) {
+            if (le->buf->buf[i] == 'o') {
+                found_pos = i;
+                break;
+            }
+        }
+        le->buf->cursor = found_pos;
+        TEST("fo finds 'o' at position 4",
+             le->buf->cursor == 4);
+
+        /* Simulate ; (repeat last find 'o' forward) from cursor 5 */
+        start = le->buf->cursor + 1;
+        found_pos = le->buf->len;
+        for (size_t i = start; i < le->buf->len; i++) {
+            if (le->buf->buf[i] == 'o') {
+                found_pos = i;
+                break;
+            }
+        }
+        le->buf->cursor = found_pos;
+        TEST("; finds next 'o' at position 7",
+             le->buf->cursor == 7);
+
+        /* Simulate F' (find '\'' backward) — cursor at end */
+        /* Set text with a single char target */
+        line_edit_free(le);
+        le = make_buffer("find.in.the.way", 14); /* cursor at end */
+        TEST_NOT_NULL("create for F test", le);
+        if (le) {
+            /* F. — find '.' backward from cursor 14 */
+            end = le->buf->cursor;
+            found_pos = 0;
+            for (size_t i = end; i > 0; i--) {
+                if (le->buf->buf[i - 1] == '.') {
+                    found_pos = i - 1;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("F. finds '.' at position 11 (last '.')",
+                 le->buf->cursor == 11);
+
+            /* ; (repeat backward) */
+            end = le->buf->cursor;
+            found_pos = 0;
+            for (size_t i = end; i > 0; i--) {
+                if (le->buf->buf[i - 1] == '.') {
+                    found_pos = i - 1;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("; repeats F. to find '.' at position 7",
+                 le->buf->cursor == 7);
+
+            line_edit_free(le);
+        }
+
+        /* --- till (t) logic test --- */
+        le = make_buffer("find.in.the.way", 0);
+        TEST_NOT_NULL("create for t test", le);
+        if (le) {
+            /* t. — forward till '.', cursor lands BEFORE target */
+            start = le->buf->cursor + 1;
+            found_pos = le->buf->len;
+            for (size_t i = start; i < le->buf->len; i++) {
+                if (le->buf->buf[i] == '.') {
+                    /* till means stop at i-1 */
+                    if (i > 0) found_pos = i - 1;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("t. stops before '.' at position 3",
+                 le->buf->cursor == 3);
+
+            /* T. — backward till '.' */
+            le->buf->cursor = 14; /* at end */
+            end = le->buf->cursor;
+            found_pos = le->buf->len;
+            for (size_t i = end; i > 0; i--) {
+                if (le->buf->buf[i - 1] == '.') {
+                    /* T means stop AFTER the char (at i) */
+                    found_pos = i;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("T. stops after '.' at position 12",
+                 le->buf->cursor == 12);
+            line_edit_free(le);
+        }
+
+        /* --- , (reverse direction repeat) logic test --- */
+        le = make_buffer("hello world, hello!", 0);
+        TEST_NOT_NULL("create for comma test", le);
+        if (le) {
+            /* Simulate fo (find 'o' forward from cursor 0): 'o' at position 4 */
+            le->buf->cursor = 0;
+            start = le->buf->cursor + 1;
+            found_pos = le->buf->len;
+            for (size_t i = start; i < le->buf->len; i++) {
+                if (le->buf->buf[i] == 'o') {
+                    found_pos = i;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("fo finds 'o' at position 4",
+                 le->buf->cursor == 4);
+
+            /* ; repeat forward from cursor 5 -> 'o' at position 7 */
+            start = le->buf->cursor + 1;
+            found_pos = le->buf->len;
+            for (size_t i = start; i < le->buf->len; i++) {
+                if (le->buf->buf[i] == 'o') {
+                    found_pos = i;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST("; finds next 'o' at position 7",
+                 le->buf->cursor == 7);
+
+            /* , — repeat in opposite direction (backward find 'o' from 7) */
+            end = le->buf->cursor;
+            found_pos = 0;
+            for (size_t i = end; i > 0; i--) {
+                if (le->buf->buf[i - 1] == 'o') {
+                    found_pos = i - 1;
+                    break;
+                }
+            }
+            le->buf->cursor = found_pos;
+            TEST(", reverses fo to find 'o' at position 4",
+                 le->buf->cursor == 4);
+            line_edit_free(le);
+        }
+    }
 }
 
 /* ================================================================

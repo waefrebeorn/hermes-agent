@@ -1,31 +1,27 @@
+
 # Build artifacts
+# Config (user-specific)
+# Digestion output
+# IDE
+# Temp
+# Test binaries
+*.a
+*.o
+*.out
+*.pyc
+*.so
+*.swp
+.env
+.idea/
+.vscode/
+/tmp/
+__pycache__/
+config.yaml
+digest_output/
+hermes
+hermes-fuzz
+hermes-tui
 slermes
 slermes_test
-hermes
-hermes-tui
-hermes-fuzz
-*.o
-*.a
-*.so
-*.out
-
-# Config (user-specific)
-.env
-config.yaml
-
-# Temp
-/tmp/
-digest_output/
-__pycache__/
-*.pyc
-
-# Test binaries
 tests/test_json
-
-# Digestion output
-digest_output/
-
-# IDE
-.vscode/
-.idea/
-*.swp
+tests/test_line_edit

@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v311)
+# Goal Mantra — Slermes C (v322)
 
-335/0/0 (289 test files). 102 gaps. Phase 244: xAI HTTP edge case expansion (test_xai_http.c 15→24 tests).
+335/0/0 (289 test files). 96 gaps. Phase 255: S0 D09 vi mode depth — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
 
 ## Loop
 
@@ -15,4 +15,4 @@ Commit. Push. Repeat.
 
 Sectors: S0+S1+S3+S6 PORTED. F10 PORTED.
 S4: 28 TUI gaps. S5: 30 CLI gaps. S7: 19 test gaps (1000+ cases).
-S8: 10 provider gaps. S9: 20 plugin gaps. S10: 9 arch gaps.
+S8: 5 provider gaps (3 real: R02,R03,R04). S9: 20 plugin gaps. S10: 7 arch gaps.

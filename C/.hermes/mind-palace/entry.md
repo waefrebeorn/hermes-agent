@@ -1,6 +1,5 @@
-# Entry — Slermes C Parity (v286)
+# Entry — Slermes C Parity (v322)
 
-Phase 219: L28 agent init PORTED + tool_delay. S1 complete.
-S7 depth: test_cli_paths.c 15→21 tests, test_session_id.c new (19 tests). Suite 325/0/0, 280 test files.
-F10 safe_stdio PORTED (install_safe_stdio). 103 gaps remain.
-S0+S1+S3+S6 PORTED.
+Phase 255: S0 D09 vi mode depth — r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat. 120-test suite.
+S7 X09 depth: test_line_edit.c 93→120 assertions. Suite 335/0/0, 289 test files.
+96 gaps remain (S0+S1+S3+S6+S8 R05-R09 WON'T PORT).
