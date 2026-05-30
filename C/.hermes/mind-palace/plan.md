@@ -1,14 +1,14 @@
-# Plan — Next Phase (v324)
+# Plan — Next Phase (v325)
 
-S0+S1+S3+S6 PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. 95 gaps.
+S0+S1+S3+S6 PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. 95 gaps.
 
 **Next gap targets:**
 
 | Priority | Sector | Gap | Action |
 |----------|--------|-----|--------|
-| P2 | S0 D09 | Vi mode | r/~ toggle, f/F/t/T find/till, ;/, repeat done. Remaining: o/O open, % match, . repeat, y/yy/Y, / search, visual mode, count prefixes |
-| P1 | S7 X01-X09 | Test coverage | Continue expanding test files (289 / 1262 parity). Pending: provider depth (R02,R03,R04), gateway edge cases |
-| P1 | S8 R03 | Google OAuth | OAuth token exchange, refresh for Google APIs — REAL GAP |
+| P2 | S0 D09 | Vi mode | yy/Y yank line done (Phase 258). Remaining: o/O open, % match, . repeat, y/yy/Y done, / search, visual mode, count prefixes |
+| P1 | S7 X01-X09 | Test coverage | Continue expanding test files (292 / 1262 parity). Pending: provider depth (R02,R03,R04), gateway edge cases |
+| P1 | S8 R03 | Google OAuth | OAuth token exchange, refresh for Google APIs — WON'T PORT (cloudcode-only) |
 | P1 | S8 R02 | Bedrock depth | Model discovery, region auto-detection — PARTIAL |
 | P1 | S8 R04 | Gemini native | Native API format translation — PARTIAL |
 | P1 | S4 T01-T18 | TUI backend | JSON-RPC gateway, transport, render, entry |

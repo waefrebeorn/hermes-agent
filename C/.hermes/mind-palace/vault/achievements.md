@@ -1931,3 +1931,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 ||---|-------------|----------|
 ||| R04a | `google_map_finish_reason()` — maps Google raw finish reasons (STOP→stop, MAX_TOKENS→length, SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPAM/IMAGE_SAFETY→content_filter). `google_is_free_tier_quota_error()` — detects free-tier quota exhaustion in 429 errors with billing guidance. Blocked content handler emits "[Content blocked by Google safety filters]" when finishReason=SAFETY with no content parts. | `src/agent/provider_google.c:23-77` — mapper + detector. `src/agent/provider_google.c:475-485` — free-tier guidance wired into error handler. `src/agent/provider_google.c:573-580` — finish_reason mapping in parse_response. `src/agent/provider_google.c:649-656` — finish_reason mapping in parse_stream_chunk. Suite 335/0/0. v324. |
+||
+||## Phase 258: S0 D09 Vi Mode Depth — yy/Y Yank Line
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| D09n | `line_edit_yank_line()` — yanks entire buffer contents into kill ring without deleting. `yy` (two-key sequence, reads next char) and `Y` (single key) both call `line_edit_yank_line()` to copy buffer to kill ring for later paste via `p`/`P`. Buffer and cursor position unchanged. | `lib/liblineedit/line_edit.c:420-431` — `line_edit_yank_line()` implementation. `lib/liblineedit/line_edit.c:1054-1066` — `yy`/`Y` dispatch calls `line_edit_yank_line()`. `lib/liblineedit/line_edit.h:82` — function declaration. `tests/test_line_edit.c:328-382` — 13 new assertions (120→133). Suite 335/0/0. v325. |

@@ -326,7 +326,57 @@ static void test_kill_yank(void) {
 }
 
 /* ================================================================
- *  6. Kill word forward
+ *  6. Yank line (yy / Y)
+ * ================================================================ */
+static void test_yank_line(void) {
+    printf("\n--- yank line ---\n");
+
+    /* Yank non-empty buffer */
+    line_edit_t *le = make_buffer("hello world", 6);
+    TEST_NOT_NULL("yank_line on \"hello world\"", le);
+    if (le) {
+        line_edit_yank_line(le);
+        TEST("kill_ring_len is 11", le->kill_ring_len == 11);
+        TEST("kill_ring saved \"hello world\"",
+             strcmp(le->kill_ring, "hello world") == 0);
+        TEST("buffer unchanged", strcmp(le->buf->buf, "hello world") == 0);
+        TEST("cursor unchanged at 6", le->buf->cursor == 6);
+        line_edit_free(le);
+    }
+
+    /* Yank empty buffer (no-op) */
+    le = make_buffer("", 0);
+    TEST_NOT_NULL("yank_line on empty buffer", le);
+    if (le) {
+        TEST("pre: kill_ring_len is 0", le->kill_ring_len == 0);
+        line_edit_yank_line(le);
+        TEST("post: kill_ring_len still 0", le->kill_ring_len == 0);
+        line_edit_free(le);
+    }
+
+    /* Yank then yank to verify paste round-trip */
+    le = make_buffer("hello world", 0);
+    TEST_NOT_NULL("yank then paste round-trip", le);
+    if (le) {
+        line_edit_yank_line(le);
+        TEST("yank saved full text", strcmp(le->kill_ring, "hello world") == 0);
+        /* Use line_edit_yank to paste (inserts text at cursor) */
+        size_t pre_len = le->buf->len;
+        line_edit_yank(le);
+        TEST("buffer length doubled after yank",
+             le->buf->len == pre_len * 2);
+        TEST("buffer doubled content",
+             strcmp(le->buf->buf, "hello worldhello world") == 0);
+        line_edit_free(le);
+    }
+
+    /* Yank NULL (no crash) */
+    line_edit_yank_line(NULL);
+    TEST("yank_line(NULL) no crash", 1);
+}
+
+/* ================================================================
+ *  7. Kill word forward
  * ================================================================ */
 static void test_kill_word_forward(void) {
     printf("\n--- kill word forward ---\n");
@@ -764,6 +814,7 @@ int main(void) {
     test_history_errors();
     test_word_motion();
     test_kill_yank();
+    test_yank_line();
     test_kill_word_forward();
     test_transpose();
     test_null_safety();

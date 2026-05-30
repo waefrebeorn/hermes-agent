@@ -79,6 +79,7 @@ line_edit_mode_t line_edit_get_mode(const line_edit_t *le);
 /* Emacs-style editing helpers — exposed for testing */
 void line_edit_kill_line(line_edit_t *le);
 void line_edit_yank(line_edit_t *le);
+void line_edit_yank_line(line_edit_t *le);   /* yy/Y — yank entire line into kill ring */
 void line_edit_kill_word_forward(line_edit_t *le);
 void line_edit_transpose_chars(line_edit_t *le);
 void line_edit_cursor_word_forward(line_edit_t *le);

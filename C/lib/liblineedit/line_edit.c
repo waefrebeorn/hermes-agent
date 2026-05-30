@@ -418,6 +418,16 @@ void line_edit_yank(line_edit_t *le) {
             break;
 }
 
+/* Yank entire line into kill ring (yy / Y) */
+void line_edit_yank_line(line_edit_t *le) {
+    if (!le) return;
+    if (le->buf->len == 0) return;
+    size_t to_copy = le->buf->len < MAX_KILL_RING - 1 ? le->buf->len : MAX_KILL_RING - 1;
+    memcpy(le->kill_ring, le->buf->buf, to_copy);
+    le->kill_ring[to_copy] = '\0';
+    le->kill_ring_len = to_copy;
+}
+
 /* Kill from cursor to end of current/next word */
 void line_edit_kill_word_forward(line_edit_t *le) {
     if (!le) return;
@@ -1038,6 +1048,19 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     }
                     break;
                 }
+                case 'y': /* yy — yank whole line */
+                {
+                    char next;
+                    if (read(STDIN_FILENO, &next, 1) <= 0 || next != 'y') {
+                        if (next > 0 && next != 'y') { /* ignore non-yy */ }
+                    } else {
+                        line_edit_yank_line(le);
+                    }
+                    break;
+                }
+                case 'Y': /* yank whole line */
+                    line_edit_yank_line(le);
+                    break;
                 case 'p': /* paste after cursor */
                     if (le->kill_ring_len > 0) {
                         /* Insert killed text at current position */

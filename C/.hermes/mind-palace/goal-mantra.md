@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v324)
+# Goal Mantra — Slermes C (v325)
 
-335/0/0 (289 test files). 95 gaps. Phase 257: S8 R04 Gemini native depth — finish_reason mapping + free-tier detection — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
+335/0/0 (292 test files). 95 gaps. Phase 258: S0 D09 vi mode depth — line_edit_yank_line(), yy/Y yank whole line. 133-test suite.
 
 ## Loop
 
