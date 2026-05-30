@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v376)
+# Goal Mantra — Slermes C (v377)
 
-325/0/14 (289 test files). 75 gaps. Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link.
+325/0/14 (289 test files). 74 gaps. Phase 313: S5 C17 skills hub CLI — /skills-hub [list|search|show|sync].
 
 ## Loop
 

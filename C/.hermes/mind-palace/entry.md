@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v376)
+# Entry — Slermes C Parity (v377)
 
-Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link. 75 gaps.
+Phase 313: S5 C17 skills hub CLI — /skills-hub [list|search|show|sync]. 74 gaps.

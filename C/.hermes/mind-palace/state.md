@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|||5|||||||||||||||||||Battleship v34 (75 gaps across 8 sectors, 1000+ test case gaps). v376. Phase 312: S5 C16 kanban CLI — /kanban list/show/create/complete/block/unblock/link wired to kanban tools via registry_dispatch(). list prints formatted task table. Suite 325/0/14. C16 PORTED. 76→75 gaps.
+|||5|||||||||||||||||||Battleship v34 (74 gaps across 8 sectors, 1000+ test case gaps). v377. Phase 313: S5 C17 skills hub CLI — /skills-hub [list|search|show|sync]. list shows catalog summary + first 50 skills. search finds by query substring. show displays full skill details. sync clears cache and re-fetches. Suite 325/0/14. C17 PORTED. 75→74 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

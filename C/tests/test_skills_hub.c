@@ -122,7 +122,7 @@ static void test_skills_hub_no_network(void) {
     skills_hub_clear_cache();
 
     /* Searching without data should auto-fetch (which will fail without network) */
-    skill_meta_t results[10];
+    hub_skill_meta_t results[10];
     int n = skills_hub_search("airbnb", results, 10);
     /* May return 0 if network unavailable; that's OK */
     printf("  INFO: skills_hub_search returned %d (network may be unavailable)\n", n);
@@ -137,7 +137,7 @@ static void test_skills_hub_no_network(void) {
     }
 
     /* get_by_slug with empty catalog */
-    skill_meta_t meta;
+    hub_skill_meta_t meta;
     bool found = skills_hub_get_by_slug("nonexistent", &meta);
     TEST("nonexistent slug not found", !found);
 

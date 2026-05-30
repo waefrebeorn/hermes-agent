@@ -34,10 +34,10 @@ typedef struct {
     char recommended_method[32];
     int  install_count;
     bool needs_proxy;
-} skill_meta_t;
+} hub_skill_meta_t;
 
 typedef struct {
-    skill_meta_t skills[SKILLS_HUB_MAX_SKILLS];
+    hub_skill_meta_t skills[SKILLS_HUB_MAX_SKILLS];
     int count;
     bool loaded;
 } skills_catalog_t;
@@ -56,12 +56,12 @@ bool skills_hub_fetch_catalog(void);
  * Search cached catalog by query string.
  * Returns up to limit results. query="" returns all.
  */
-int skills_hub_search(const char *query, skill_meta_t *results, int limit);
+int skills_hub_search(const char *query, hub_skill_meta_t *results, int limit);
 
 /**
  * Get a skill by slug. Returns true if found.
  */
-bool skills_hub_get_by_slug(const char *slug, skill_meta_t *out);
+bool skills_hub_get_by_slug(const char *slug, hub_skill_meta_t *out);
 
 /**
  * Clear the in-memory cache (force next fetch to go to network).

@@ -6,6 +6,7 @@
 #include "hermes.h"
 #include "hermes_secrets.h"
 #include "hermes_gateway.h"
+#include "hermes_skills_hub.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,6 +112,7 @@ static void cmd_session_search(const char *args, agent_state_t *state);
 static void cmd_session_export(const char *args, agent_state_t *state);
 static void cmd_logs(const char *args, agent_state_t *state);
 static void cmd_gateway(const char *args, agent_state_t *state);
+static void cmd_skills_hub(const char *args, agent_state_t *state);
 static void cmd_dump(const char *args, agent_state_t *state);
 static void cmd_send(const char *args, agent_state_t *state);
 static void cmd_webhook(const char *args, agent_state_t *state);
@@ -141,6 +143,7 @@ static const command_def_t COMMANDS[] = {
     {"/tools",  NULL,     "List available tools and their status",         cmd_tools},
     {"/tools-verify", NULL, "Verify all expected tools are registered",     cmd_tools_verify},
     {"/commands","/cmds", "List all available slash commands",              cmd_commands},
+    {"/skills-hub", "/hub", "Skills hub: /skills-hub [search|show|list|sync]", cmd_skills_hub},
 
     /* Help and exit */
     {"/help",    "/h",    "Show help for commands: /help [command]",       cmd_help},
@@ -4196,6 +4199,100 @@ static void cmd_steer(const char *args, agent_state_t *state) {
     state->steer_roles[state->steer_count] = role;
     state->steer_count++;
     printf("Steer message queued: \"%s\"\n", msg_start);
+}
+
+/* /skills-hub: Browse.sh skills catalog CLI */
+static void cmd_skills_hub(const char *args, agent_state_t *state) {
+    (void)state;
+    if (!args || !args[0]) {
+        printf("Usage: /skills-hub <subcommand> [args]\n");
+        printf("  /skills-hub list              — List all hub skills\n");
+        printf("  /skills-hub search <query>    — Search hub skills\n");
+        printf("  /skills-hub show <slug>       — Show skill details\n");
+        printf("  /skills-hub sync              — Refresh catalog from network\n");
+        return;
+    }
+    const char *sub = args;
+    while (*sub == ' ') sub++;
+
+    if (strcmp(sub, "list") == 0) {
+        skills_hub_fetch_catalog();
+        char *s = skills_hub_summary();
+        if (s) {
+            printf("%s\n", s);
+            free(s);
+        }
+        /* Print first 30 skills */
+        hub_skill_meta_t results[50];
+        int n = skills_hub_search("", results, 50);
+        if (n > 0) {
+            printf("\nSkills (%d shown of %d):\n", n > 50 ? 50 : n, n);
+            for (int i = 0; i < n && i < 50; i++) {
+                printf("  %-28s %s\n", results[i].slug, results[i].title);
+            }
+            if (n > 50) printf("  ... and %d more\n", n - 50);
+        } else {
+            printf("No skills found (catalog empty or not loaded).\n");
+        }
+        return;
+    }
+
+    if (strncmp(sub, "search", 6) == 0) {
+        const char *query = sub + 6;
+        while (*query == ' ') query++;
+        if (!*query) { printf("Usage: /skills-hub search <query>\n"); return; }
+        skills_hub_fetch_catalog();
+        hub_skill_meta_t results[SKILLS_HUB_MAX_RESULTS];
+        int n = skills_hub_search(query, results, SKILLS_HUB_MAX_RESULTS);
+        if (n > 0) {
+            printf("Found %d skills matching \"%s\":\n", n, query);
+            for (int i = 0; i < n; i++) {
+                printf("  %-28s %s\n", results[i].slug, results[i].title);
+            }
+        } else {
+            printf("No skills found for \"%s\". Try a different query.\n", query);
+        }
+        return;
+    }
+
+    if (strncmp(sub, "show", 4) == 0) {
+        const char *slug = sub + 4;
+        while (*slug == ' ') slug++;
+        if (!*slug) { printf("Usage: /skills-hub show <slug>\n"); return; }
+        skills_hub_fetch_catalog();
+        hub_skill_meta_t meta;
+        if (skills_hub_get_by_slug(slug, &meta)) {
+            printf("Slug:    %s\n", meta.slug);
+            printf("Name:    %s\n", meta.name[0] ? meta.name : meta.title);
+            printf("Title:   %s\n", meta.title);
+            printf("Category:%s\n", meta.category);
+            printf("Desc:    %s\n", meta.description);
+            printf("URL:     %s\n", meta.source_url);
+            if (meta.tags[0])
+                printf("Tags:    %s\n", meta.tags);
+            printf("Installs:%d\n", meta.install_count);
+            printf("Proxy:   %s\n", meta.needs_proxy ? "yes" : "no");
+            printf("Method:  %s\n", meta.recommended_method[0] ? meta.recommended_method : "(auto)");
+        } else {
+            printf("Skill not found: %s\n", slug);
+        }
+        return;
+    }
+
+    if (strcmp(sub, "sync") == 0) {
+        skills_hub_clear_cache();
+        printf("Cleared cache. Fetching catalog...\n");
+        if (skills_hub_fetch_catalog()) {
+            char *s = skills_hub_summary();
+            printf("Catalog refreshed: %s\n", s ? s : "(ok)");
+            free(s);
+        } else {
+            printf("Error: Could not fetch skills catalog.\n");
+        }
+        return;
+    }
+
+    printf("Unknown subcommand: '%s'. Use: /skills-hub list|search|show|sync\n", sub);
 }
 
 /* /kanban: Kanban board management */

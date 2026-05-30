@@ -29,8 +29,8 @@ static bool cache_valid(void) {
     return (time(NULL) - g_last_fetch) < SKILLS_HUB_CACHE_TTL_SEC;
 }
 
-static skill_meta_t parse_skill_item(json_node_t *item) {
-    skill_meta_t meta = {0};
+static hub_skill_meta_t parse_skill_item(json_node_t *item) {
+    hub_skill_meta_t meta = {0};
 
     const char *slug = json_get_str(item, "slug", NULL);
     if (slug) snprintf(meta.slug, sizeof(meta.slug), "%s", slug);
@@ -146,7 +146,7 @@ bool skills_hub_fetch_catalog(void) {
     return true;
 }
 
-int skills_hub_search(const char *query, skill_meta_t *results, int limit) {
+int skills_hub_search(const char *query, hub_skill_meta_t *results, int limit) {
     if (!results || limit <= 0) return 0;
 
     /* Auto-fetch if not loaded */
@@ -166,7 +166,7 @@ int skills_hub_search(const char *query, skill_meta_t *results, int limit) {
             match = true;
         } else {
             /* Simple substring match against name, title, description, category, tags */
-            const skill_meta_t *s = &g_catalog.skills[i];
+            const hub_skill_meta_t *s = &g_catalog.skills[i];
             if (strcasestr(s->name, query)) match = true;
             else if (strcasestr(s->title, query)) match = true;
             else if (strcasestr(s->description, query)) match = true;
@@ -183,7 +183,7 @@ int skills_hub_search(const char *query, skill_meta_t *results, int limit) {
     return found;
 }
 
-bool skills_hub_get_by_slug(const char *slug, skill_meta_t *out) {
+bool skills_hub_get_by_slug(const char *slug, hub_skill_meta_t *out) {
     if (!slug || !out) return false;
 
     /* Auto-fetch if not loaded */
