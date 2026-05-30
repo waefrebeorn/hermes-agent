@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 ```text
-||||||||||||| Suite:  331/0/0 (285 test files, completes in <60s)
+||||||||||||| Suite:  332/0/0 (286 test files, completes in <60s)
 ||||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 ||||||||||||||| Gaps:  106 real parity gaps (1000+ test case gaps) across 9 sectors
@@ -53,7 +53,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 cd C/
 make -j$(nproc)            # Build hermes binary
 ./hermes --help            # Usage
-bash test_runner.sh        # 331/0/0
+bash test_runner.sh        # 332/0/0
 ./hermes --version         # v0.14.1+
 
 # Modes
@@ -547,8 +547,8 @@ The full development protocol is documented in the caveman skill (`~/.hermes/ski
 
 | Suite | Count | Notes |
 |-------|-------|-------|
-|| Library tests | 331/0/0 | All pass, ~60s |
-|| Test files | 285 | C files in tests/ |
+|| Library tests | 332/0/0 | All pass, ~60s |
+|| Test files | 286 | C files in tests/ |
 | Gateway subsystem | 49 | JSON-RPC routing, auth |
 | Gateway escape | 30 | Shell injection, pipe-to-interpreter |
 | Provider depth | 54+ | OpenAI, Anthropic, Google, DeepSeek, Azure, Bedrock |
