@@ -1,7 +1,16 @@
-# Overnight Map — Recent Phases (v345)
+# Overnight Map — Recent Phases (v356)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
+| 287 | S8 R01 endpoint detection — 14 functions PORTED, 69 tests, Bearer auth wiring. Suite 335/0/14. v354. | 92 gaps | 90 gaps |
+| 287b | S10 F07 trajectory saving vaulted — trajectory.c already PORTED. v354. | 90 gaps | 89 gaps |
+| 287c | S5 C06 env_loader — load_slermes_env(). Suite 335/0/14. v354. | 89 gaps | 88 gaps |
+| 288 | S5 C02 doctor — /doctor command. v355. | 88 gaps | 87 gaps |
+| 288b | C04/C07/C08/C09 stale cleanup — /model, /profile, /config all exist. v355. | 87 gaps | 84 gaps |
+| 289 | S7 test_trajectory.c — 19 assertions (294 test files). v355. | 84 gaps | 84 gaps |
+| 290 | C11 OAuth status in /secrets. v355. | 84 gaps | 84 gaps |
+| 291 | S7 test_regex.c — 17 assertions (17→294 test files). v355. | 84 gaps | 84 gaps |
+| 292 | S5 C13 Gateway CLI — gateway status + list + start subcommands. Suite 323/0/16. v356. | 84 gaps | 84 gaps |
 | 266 | S8 R04 depth — google_tool_call_extra_signature() + google_translate_tool_call(). 13 new assertions (60→73). Suite 335/0/0. v333. | 95 gaps | 95 gaps |
 | 267 | S8 R04 depth — google_translate_tool_result(). 13 new assertions (73→86). Suite 335/0/0. v334. | 95 gaps | 95 gaps |
 | 268 | S8 R04 depth — google_translate_tools_to_gemini(). 15 new assertions (86→101). Suite 335/0/0. v335. | 95 gaps | 95 gaps |

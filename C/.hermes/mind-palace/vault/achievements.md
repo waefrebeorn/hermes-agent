@@ -2078,3 +2078,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |ID | Achievement | Evidence |
 |---|-------------|----------|
 | X02 | test_regex.c — 17 assertions covering hermes_regex library: regex_extract (4: basic word/group 0/NULL pattern/NULL string), regex_compile+regex_search (3: found match/no match/group 0 content), regex_replace (5: basic/no-match-passthrough/backreference-$1/NULL handle/NULL string), NULL safety (2: regex_free/regex_match_free). Test files 293→294. | `tests/test_regex.c` (17 tests). Suite 324/0/15. v355. |
+|## Phase 292: S5 C13 Gateway CLI Subcommands (v356)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| C13 | Gateway CLI subcommands — `gateway status` shows configured platforms (config + env), credential key check (6 platforms), and ready message. `gateway list` shows all 20 available platform types with descriptions (Telegram, Discord, Slack, Matrix, Mattermost, Webhook, WhatsApp, Email, Signal, Home Assistant, SMS, API Server, Feishu, WeCom, DingTalk, QQ Bot, BlueBubbles, MS Graph, Weixin, Yuanbao). `gateway start` runs gateway normally. Subcommand dispatch parses before `--platform` flags. | `src/gateway/server.c` — cmd_gateway_status(), cmd_gateway_list(), subcommand dispatch prior to initialization. Binary smoke test: ✓ `./slermes gateway list` shows 20 platforms. ✓ `./slermes gateway status` shows config/env/creds. Suite 323/0/16. v356. |

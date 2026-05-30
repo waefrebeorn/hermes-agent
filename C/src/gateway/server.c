@@ -2075,7 +2075,96 @@ static void *thread_yuanbao(void *arg) {
     return NULL;
 }
 
+/* ── Gateway subcommand: status ───────────────────────────────── */
+static int cmd_gateway_status(void) {
+    hermes_config_t cfg;
+    if (!hermes_config_load(&cfg, NULL)) {
+        printf("No config loaded\n");
+        return 1;
+    }
+
+    printf("=== Gateway Status ===\n\n");
+
+    printf("Configured platforms: ");
+    if (cfg.gateway_platforms[0])
+        printf("%s\n", cfg.gateway_platforms);
+    else
+        printf("(none in config)\n");
+
+    printf("Env HERMES_GATEWAY_PLATFORMS: ");
+    const char *env = getenv("HERMES_GATEWAY_PLATFORMS");
+    if (env) printf("%s\n", env); else printf("(not set)\n");
+
+    printf("Default platform: telegram\n");
+
+    /* Check key env vars per platform type */
+    static const char *platform_keys[][2] = {
+        {"telegram", "TELEGRAM_BOT_TOKEN"},
+        {"discord",  "DISCORD_BOT_TOKEN"},
+        {"slack",    "SLACK_BOT_TOKEN"},
+        {"signal",   "SIGNAL_NUMBER"},
+        {"sms",      "TWILIO_ACCOUNT_SID"},
+        {"matrix",   "MATRIX_HOMESERVER"},
+        {NULL, NULL}
+    };
+
+    printf("\nCredentials check:\n");
+    for (int i = 0; platform_keys[i][0]; i++) {
+        const char *val = getenv(platform_keys[i][1]);
+        printf("  %-12s %s %s\n", platform_keys[i][0],
+               val ? "✅" : "❌", val ? "(found)" : "missing");
+    }
+
+    printf("\nGateway: ready to start with `slermes gateway start`\n");
+    return 0;
+}
+
+/* ── Gateway subcommand: list ─────────────────────────────────── */
+static int cmd_gateway_list(void) {
+    static const char *platforms[] = {
+        "telegram", "discord", "slack", "matrix", "mattermost",
+        "webhook", "whatsapp", "email", "signal", "homeassistant",
+        "sms", "api_server", "feishu", "wecom", "dingtalk",
+        "qqbot", "bluebubbles", "msgraph_webhook", "weixin", "yuanbao",
+        NULL
+    };
+    static const char *descriptions[] = {
+        "Telegram bot API polling", "Discord gateway bot", "Slack RTM/Events API",
+        "Matrix client-server API", "Mattermost webhooks",
+        "Generic HTTP webhook receiver", "WhatsApp Cloud API webhook",
+        "IMAP/SMTP email client", "Signal CLI over dbus",
+        "Home Assistant long-lived token API",
+        "Twilio SMS gateway", "REST API server",
+        "Feishu/Lark bot API", "WeCom (WeChat Work) bot API",
+        "DingTalk bot API",
+        "QQ Bot API (OneBot/QQ Guild)", "BlueBubbles iMessage API",
+        "Microsoft Graph API webhook", "Weixin Official Account",
+        "Yuanbao (Tencent) protobuf protocol",
+        NULL
+    };
+
+    printf("=== Available Gateway Platforms ===\n\n");
+    for (int i = 0; platforms[i]; i++)
+        printf("  %-20s %s\n", platforms[i], descriptions[i]);
+    printf("\n%d platform types available\n", 20);
+    printf("Usage: slermes gateway [start|--platform <name>]\n");
+    return 0;
+}
+
 int hermes_gateway_main(int argc, char **argv) {
+    /* Subcommand dispatch */
+    if (argc > 1 && argv[1] && argv[1][0] != '-') {
+        if (strcmp(argv[1], "status") == 0)
+            return cmd_gateway_status();
+        if (strcmp(argv[1], "list") == 0)
+            return cmd_gateway_list();
+        if (strcmp(argv[1], "start") == 0) {
+            /* Shift args forward so --platform and other flags still work */
+            argc--;
+            argv++;
+        }
+    }
+
     memset(&g_gw, 0, sizeof(g_gw));
     g_gw.running = true;
     g_gw.poll_interval = 1;

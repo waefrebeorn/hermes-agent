@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v353)
+# Entry — Slermes C Parity (v356)
 
-Phase 286: S0 D09 vi count prefixes. D09 PORTED. — v/V selection with highlighting. — / ? n N implemented. Suite 334/0/4. 92 gaps.
+Phase 292: S5 C13 Gateway CLI subcommands — gateway status + list + start. Suite 323/0/16. 84 gaps.

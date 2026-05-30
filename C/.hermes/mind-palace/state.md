@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|||||||||||||||||||Battleship v34 (84 gaps across 8 sectors, 1000+ test case gaps). v355. Phase 291: S7 test expansion — test_regex.c (17 assertions) covers regex_extract (4 tests: basic, group 0, NULL pattern/string), regex_compile+search (3 tests: basic, no-match, group 0), regex_replace (5 tests: basic, no-match, backreference $1, NULL handle/string), NULL safety (2 tests). Test files 293→294. Suite 324/0/15.
+5|||||||||||||||||||Battleship v34 (84 gaps across 8 sectors, 1000+ test case gaps). v356. Phase 292: S5 C13 Gateway CLI subcommands — gateway status (config + env + credentials check), gateway list (20 platform types), gateway start (default behavior). Binary smoke: ✓. Suite 323/0/16.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

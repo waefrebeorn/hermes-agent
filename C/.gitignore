@@ -25,3 +25,4 @@ slermes
 slermes_test
 tests/test_json
 tests/test_line_edit
+failed_trajectories.jsonl

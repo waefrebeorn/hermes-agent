@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-||| v354 | Fork diverged — C/ lives only on fork | Suite 335/0/14 | 85 tools | 98 CLI**
-||**Honest assessment: 90 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/14.**
+| v356 | Fork diverged — C/ lives only on fork | Suite 323/0/16 | 85 tools | 98 CLI**|
+|**Honest assessment: 84 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 323/0/16.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **84** | **4** | **30** | **37** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07 VAULTED, F10 PORTED. C02+C04+C06+C07+C08+C09 PORTED. Suite 335/0/14, test files 292.** |
+||| **TOTAL** | **84** | **4** | **31** | **36** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07+F10 VAULTED/PORTED. C02+C04+C06+C07+C08+C09+C13 depth. Suite 323/0/16, test files 289.** |
 
 ### Phase Map
 
