@@ -1,4 +1,4 @@
-# Slermes C — Goal Mantra (v297)
+# Slermes C — Goal Mantra (v298)
 
 ── STATE: battleship documents in C/.hermes/mind-palace/.
    Suite: 335/0/0. Tools: 85. CLI: 98 commands.
