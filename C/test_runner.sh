@@ -2914,7 +2914,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_approval.c" \
     "$CDIR/src/tools/approval.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libansi/ansi_strip.c" \
     -o /tmp/hermes_test_app -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_app > /dev/null 2>&1; then ok "approval_system (23 tests)"
+    if /tmp/hermes_test_app > /dev/null 2>&1; then ok "approval_system (75 tests)"
     else fail "approval_system (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_app
 else skip "approval_system (compilation failed)"

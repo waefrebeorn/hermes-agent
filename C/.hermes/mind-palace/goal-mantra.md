@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v382)
+# Goal Mantra — Slermes C (v383)
 
-325/0/15 (289 test files). 68 gaps. Phase 318: T13 model picker overlay in TUI — interactive model selection via /model.
+325/0/15 (289 test files). 68 gaps. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75).
 
 ## Loop
 

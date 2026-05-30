@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v382)
+# Entry — Slermes C Parity (v383)
 
-Phase 318: T13 model picker overlay — interactive model selection via /model in TUI. 68 gaps.
+Phase 319: X09 approval edge case expansion — 56 assertions (19→75). 68 gaps.
