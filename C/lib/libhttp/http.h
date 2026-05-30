@@ -134,6 +134,24 @@ void http_client_set_proxy(http_t *h, const char *proxy_url);
  * entry is trimmed/lowercased internally. */
 bool http_no_proxy_match(const char *host, const char *entry);
 
+/* Parse a host:port string into host and port components.
+ * Supports: URL format (http://host:port), IPv6 ([::1]:port),
+ *           simple host:port, and plain host.
+ * Returns true on success. Sets *port_out to -1 if no port found.
+ * host_out: caller-allocated buffer recommended >= 256 bytes. */
+bool http_split_host_port(const char *value, char *host_out, size_t host_cap, int *port_out);
+
+/* Read NO_PROXY/no_proxy env vars and return array of entry strings.
+ * Caller must free via http_free_no_proxy_entries(). */
+int http_no_proxy_entries(const char ***entries_out);
+
+/* Free entries returned by http_no_proxy_entries(). */
+void http_free_no_proxy_entries(const char **entries, int count);
+
+/* Check if a target host should bypass the proxy based on NO_PROXY env var.
+ * target_host may include :port. Returns true if NO_PROXY matches. */
+bool http_should_bypass_proxy(const char *target_host);
+
 /* === Connection pool for keep-alive === */
 /* Enable connection pooling. max_connections: 0 = disable, 1-16. idle_timeout_sec: 0 = never expire. */
 void http_client_set_pool(http_t *h, int max_connections, int idle_timeout_sec);

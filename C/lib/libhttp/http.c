@@ -425,6 +425,205 @@ bool http_no_proxy_match(const char *host, const char *entry) {
     return false;
 }
 
+/* ================================================================
+ *  Host:port parsing
+ * ================================================================ */
+
+/* Parse a host:port string into host and port components.
+ * Port of Python gateway/platforms/base.py _split_host_port().
+ * Supports: URL format (http://host:port), IPv6 ([::1]:port),
+ *           simple host:port, and plain host.
+ * Returns true on success. Sets *port_out to -1 if no port found. */
+bool http_split_host_port(const char *value, char *host_out, size_t host_cap, int *port_out) {
+    if (host_out && host_cap > 0) host_out[0] = '\0';
+    if (port_out) *port_out = -1;
+    if (!value || !value[0]) return false;
+
+    /* Trim whitespace */
+    const char *p = value;
+    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+    if (!*p) return false;
+
+    /* Find end of full input (before IPv6/port detection) */
+    const char *end = p + strlen(p);
+
+    /* Detect URL format (scheme://...) */
+    const char *scheme_sep = strstr(p, "://");
+    if (scheme_sep) {
+        p = scheme_sep + 3; /* skip past :// */
+        /* In URL mode, host ends at the next / or end */
+        const char *path_sep = strchr(p, '/');
+        if (path_sep) {
+            end = path_sep;
+        }
+    }
+
+    /* Detect IPv6: [host]:port */
+    if (*p == '[') {
+        p++; /* skip [ */
+        const char *close_bracket = strchr(p, ']');
+        if (!close_bracket) return false;
+        size_t host_len = (size_t)(close_bracket - p);
+        if (host_out && host_len < host_cap) {
+            memcpy(host_out, p, host_len);
+            host_out[host_len] = '\0';
+            /* Lowercase */
+            for (size_t i = 0; i < host_len; i++)
+                if (host_out[i] >= 'A' && host_out[i] <= 'Z')
+                    host_out[i] += 32;
+        }
+        p = close_bracket + 1;
+        if (*p == ':') {
+            const char *port_s = p + 1;
+            if (port_out) *port_out = atoi(port_s);
+        }
+        return true;
+    }
+
+    /* Find end of host part (stop at : for port, or end of string) */
+    /* end was set above — now check for port separator */
+    const char *port_colon = NULL;
+
+    /* Count colons to distinguish IPv6 from host:port */
+    int colon_count = 0;
+    for (const char *cp = p; *cp; cp++) {
+        if (*cp == ':') colon_count++;
+    }
+
+    if (colon_count == 1) {
+        /* Simple host:port — find the colon */
+        port_colon = strchr(p, ':');
+        if (port_colon) {
+            end = port_colon;
+        }
+    }
+
+    /* Extract host */
+    size_t host_len = (size_t)(end - p);
+    if (host_out && host_cap > 0) {
+        size_t copy_len = host_len < host_cap - 1 ? host_len : host_cap - 1;
+        memcpy(host_out, p, copy_len);
+        host_out[copy_len] = '\0';
+        /* Lowercase */
+        for (size_t i = 0; i < copy_len; i++)
+            if (host_out[i] >= 'A' && host_out[i] <= 'Z')
+                host_out[i] += 32;
+        /* Strip trailing dots (FQDN) */
+        while (copy_len > 0 && host_out[copy_len - 1] == '.')
+            host_out[--copy_len] = '\0';
+    }
+
+    /* Extract port */
+    if (port_colon && port_colon[1]) {
+        if (port_out) *port_out = atoi(port_colon + 1);
+    }
+
+    return host_out && host_out[0] ? true : false;
+}
+
+/* Read NO_PROXY/no_proxy env vars and return comma-separated entries.
+ * Port of Python gateway/platforms/base.py _no_proxy_entries().
+ * entries_out: caller-allocated array of char* pointers (count entries).
+ * Returns the number of entries found (0 if none). */
+int http_no_proxy_entries(const char ***entries_out) {
+    if (!entries_out) return 0;
+    *entries_out = NULL;
+
+    /* Thread-local maximum entries */
+    enum { MAX_ENTRIES = 128 };
+    static const char *keys[] = {"NO_PROXY", "no_proxy"};
+    const char *all_entries[MAX_ENTRIES];
+    int count = 0;
+
+    for (int k = 0; k < 2 && count < MAX_ENTRIES; k++) {
+        const char *raw = getenv(keys[k]);
+        if (!raw || !raw[0]) continue;
+
+        /* Copy to mutable buffer for tokenization */
+        char buf[4096];
+        size_t raw_len = strlen(raw);
+        if (raw_len >= sizeof(buf)) raw_len = sizeof(buf) - 1;
+        memcpy(buf, raw, raw_len);
+        buf[raw_len] = '\0';
+
+        /* Tokenize by comma */
+        char *token = buf;
+        while (token && *token && count < MAX_ENTRIES) {
+            /* Skip leading whitespace */
+            while (*token == ' ' || *token == '\t') token++;
+            if (!*token) break;
+
+            /* Find comma or end */
+            char *comma = strchr(token, ',');
+            if (comma) *comma = '\0';
+
+            /* Trim trailing whitespace */
+            char *end = token + strlen(token);
+            while (end > token && (end[-1] == ' ' || end[-1] == '\t' ||
+                   end[-1] == '\r' || end[-1] == '\n'))
+                end--;
+            *end = '\0';
+
+            if (token[0]) {
+                all_entries[count++] = xstrdup(token);
+            }
+
+            token = comma ? comma + 1 : NULL;
+        }
+    }
+
+    if (count == 0) return 0;
+
+    /* Copy to output array */
+    *entries_out = (const char **)xmalloc((size_t)count * sizeof(char *));
+    if (!*entries_out) {
+        for (int i = 0; i < count; i++) free((void *)all_entries[i]);
+        return 0;
+    }
+    for (int i = 0; i < count; i++)
+        (*entries_out)[i] = all_entries[i];
+
+    return count;
+}
+
+/* Free entries returned by http_no_proxy_entries(). */
+void http_free_no_proxy_entries(const char **entries, int count) {
+    if (!entries) return;
+    for (int i = 0; i < count; i++)
+        free((void *)entries[i]);
+    free((void *)entries);
+}
+
+/* Check if a target host should bypass the proxy based on NO_PROXY env var.
+ * Port of Python gateway/platforms/base.py should_bypass_proxy().
+ * target_host: hostname to check (may include :port).
+ * Returns true if NO_PROXY matches the target. */
+bool http_should_bypass_proxy(const char *target_host) {
+    if (!target_host || !target_host[0]) return false;
+
+    const char **entries = NULL;
+    int count = http_no_proxy_entries(&entries);
+    if (count == 0) return false;
+
+    /* Parse target into host and port */
+    char target_host_buf[256];
+    int target_port = -1;
+    http_split_host_port(target_host, target_host_buf, sizeof(target_host_buf), &target_port);
+    if (!target_host_buf[0]) {
+        http_free_no_proxy_entries(entries, count);
+        return false;
+    }
+
+    bool matches = false;
+    for (int i = 0; i < count && !matches; i++) {
+        if (http_no_proxy_match(target_host_buf, entries[i]))
+            matches = true;
+    }
+
+    http_free_no_proxy_entries(entries, count);
+    return matches;
+}
+
 /* Forward declaration for decompression function defined below */
 static char *http_decompress_body(const char *compressed, size_t compressed_len,
                                    size_t *decompressed_len);

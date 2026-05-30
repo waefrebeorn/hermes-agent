@@ -1687,3 +1687,13 @@ Suite: 314/0/0 (272 test files). Gaps: 128. v250
 | P183-01 | B07 terminal depth — terminal_sudo_nopasswd_works() ported from Python terminal_tool._sudo_nopasswd_works(). Probes sudo -n true via popen, checks TERMINAL_ENV guard. Returns true when local sudo works without password prompt. No caching. 3-test suite. | `C/include/hermes.h` — declaration. `C/src/tools/terminal.c` — implementation (16 LOC after _inject_sudo_failure). `C/tests/test_terminal_sudo.c` — 3/3 passed. |
 | P183-02 | Depth improvement within existing PARTIAL classification. Gaps unchanged (128). Suite 314→315. Test files 272→273. | `.hermes/mind-palace/battleship-v34.md` — B07 updated with terminal_sudo_nopasswd_works. |
 Suite: 315/0/0 (273 test files). Gaps: 128. v251
+## Phase 184: G02 base.py Depth — Host:port + Proxy Bypass (v252)
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| P184-01 | G02 base.py depth — http_split_host_port() ported from base.py _split_host_port(). Parses host:port strings supporting URL format (http://host:port/path), IPv6 ([::1]:port), simple host:port, and plain host. Case normalization, FQDN trailing-dot stripping. | `C/lib/libhttp/http.h` — declaration. `C/lib/libhttp/http.c` — implementation (80 LOC). |
+| P184-02 | http_no_proxy_entries() ported from base.py _no_proxy_entries(). Reads NO_PROXY/no_proxy env vars, splits by comma, trims whitespace, returns malloc'd array. Paired with http_free_no_proxy_entries(). | `C/lib/libhttp/http.c` — implementation (50 LOC). `C/lib/libhttp/http.h` — declaration. |
+| P184-03 | http_should_bypass_proxy() ported from base.py should_bypass_proxy(). High-level proxy bypass check: reads NO_PROXY env, parses target host:port, checks each entry via http_no_proxy_match(). | `C/lib/libhttp/http.c` — implementation (28 LOC). `C/lib/libhttp/http.h` — declaration. |
+| P184-04 | 27-test suite covering all three new functions: split_host_port (URL/IPv6/host:port/plain/NULL/empty/uppercase/trailing-dot), no_proxy_entries (no env / with env / entry values), should_bypass_proxy (localhost/subdomain/not-bypassed/NULL/empty). | `C/tests/test_http.c` — 27/27 passed. |
+
+Suite: 315/0/0 (273 test files). Gaps: 128. v252

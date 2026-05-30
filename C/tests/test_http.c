@@ -192,6 +192,85 @@ int main(void) {
         TEST("no_proxy whitespace entry", http_no_proxy_match("example.com", " example.com "));
     }
 
+    /* Test 22-32: http_split_host_port */
+    {
+        char host[256];
+        int port = -1;
+
+        /* URL format */
+        TEST("split_host_port URL format", http_split_host_port("http://example.com:8080/path", host, sizeof(host), &port));
+        TEST("split_host_port URL host", strcmp(host, "example.com") == 0);
+        TEST("split_host_port URL port", port == 8080);
+
+        /* IPv6 */
+        TEST("split_host_port IPv6", http_split_host_port("[::1]:9090", host, sizeof(host), &port));
+        TEST("split_host_port IPv6 host", strcmp(host, "::1") == 0);
+        TEST("split_host_port IPv6 port", port == 9090);
+
+        /* Simple host:port */
+        TEST("split_host_port host:port", http_split_host_port("example.com:443", host, sizeof(host), &port));
+        TEST("split_host_port host:port host", strcmp(host, "example.com") == 0);
+        TEST("split_host_port host:port port", port == 443);
+
+        /* Plain host (no port) */
+        TEST("split_host_port plain host", http_split_host_port("localhost", host, sizeof(host), &port));
+        TEST("split_host_port plain host result", strcmp(host, "localhost") == 0);
+        TEST("split_host_port plain host no port", port == -1);
+
+        /* HTTPS with default port */
+        TEST("split_host_port https", http_split_host_port("https://api.example.com/v1", host, sizeof(host), &port));
+        TEST("split_host_port https host", strcmp(host, "api.example.com") == 0);
+        TEST("split_host_port https port", port == -1);
+
+        /* Edge cases */
+        port = -1; host[0] = '\0';
+        TEST("split_host_port NULL", !http_split_host_port(NULL, host, sizeof(host), &port));
+        TEST("split_host_port empty", !http_split_host_port("", host, sizeof(host), &port));
+        TEST("split_host_port whitespace", !http_split_host_port("   ", host, sizeof(host), &port));
+
+        /* Case normalization */
+        TEST("split_host_port uppercase", http_split_host_port("EXAMPLE.COM:80", host, sizeof(host), &port));
+        TEST("split_host_port uppercase host", strcmp(host, "example.com") == 0);
+        TEST("split_host_port uppercase port", port == 80);
+
+        /* Trailing dot (FQDN style) */
+        TEST("split_host_port trailing dot", http_split_host_port("example.com.:8080", host, sizeof(host), &port));
+        TEST("split_host_port trailing dot stripped", strcmp(host, "example.com") == 0);
+    }
+
+    /* Test 33-34: http_no_proxy_entries / http_should_bypass_proxy */
+    {
+        const char **entries = NULL;
+        int count = http_no_proxy_entries(&entries);
+        /* Without NO_PROXY set, expect 0 entries */
+        TEST("no_proxy_entries no env", count == 0);
+        TEST("no_proxy_entries NULL entries", entries == NULL);
+    }
+
+    {
+        /* Set NO_PROXY and test */
+        setenv("NO_PROXY", "localhost,127.0.0.1,.internal.example.com", 1);
+        const char **entries = NULL;
+        int count = http_no_proxy_entries(&entries);
+        TEST("no_proxy_entries count", count == 3);
+        TEST("no_proxy_entries entry 0", entries && strcmp(entries[0], "localhost") == 0);
+        TEST("no_proxy_entries entry 1", entries && strcmp(entries[1], "127.0.0.1") == 0);
+        TEST("no_proxy_entries entry 2", entries && strcmp(entries[2], ".internal.example.com") == 0);
+        http_free_no_proxy_entries(entries, count);
+        unsetenv("NO_PROXY");
+    }
+
+    {
+        /* Test should_bypass_proxy */
+        setenv("NO_PROXY", "localhost,*.example.com", 1);
+        TEST("bypass_proxy localhost", http_should_bypass_proxy("localhost"));
+        TEST("bypass_proxy subdomain", http_should_bypass_proxy("sub.example.com"));
+        TEST("bypass_proxy not bypassed", !http_should_bypass_proxy("other.com"));
+        TEST("bypass_proxy NULL", !http_should_bypass_proxy(NULL));
+        TEST("bypass_proxy empty", !http_should_bypass_proxy(""));
+        unsetenv("NO_PROXY");
+    }
+
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All HTTP tests PASSED");
     return failures ? 1 : 0;
 }
