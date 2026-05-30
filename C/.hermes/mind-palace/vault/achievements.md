@@ -2062,3 +2062,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |ID | Achievement | Evidence |
 |---|-------------|----------|
 | F07 | Trajectory saving + session export — C has trajectory.c with 3 functions: convert_scratchpad_to_think (REASONING_SCRATCHPAD → think tags), has_incomplete_scratchpad (unclosed tag detection), save_trajectory (JSONL append with ISO timestamp, model, completed flag). Plus agent_session_export_json/markdown. Python's trajectory.py has same 3 functions. | `src/agent/trajectory.c` (139 LOC). `src/agent/agent_loop.c` — agent_session_export_json/markdown. S10 8→7 gaps. Total 90→89 gaps. v354. |
+|## Phase 287c: S5 C06 Env Loader — env_loader.py PORTED (v354)
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| C06 | `load_slermes_env()` ported from Python hermes_cli/env_loader.py (load_hermes_dotenv). Loads ~/.slermes/.env via libdotenv at startup, exports to process environment, sanitizes credential values (strips non-ASCII from _API_KEY, _TOKEN, _SECRET, _KEY suffix vars) with per-var warning. Graceful no-op when no .env file exists. | `src/main.c` — load_slermes_env() function + call in main(). S5 30→29 gaps. Total 89→88 gaps. v354. |

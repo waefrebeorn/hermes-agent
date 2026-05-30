@@ -142,7 +142,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 | 03 | C03 | Memory setup (memory_setup.py) | ~500 | P3 |
 | 04 | C04 | Profile management (profiles.py) | ~1000 | P2 |
 | 05 | C05 | Config editor (config.py) | ~800 | P2 |
-| 06 | C06 | Env loader (env_loader.py) | ~200 | P2 |
+|| 06 | C06 | Env loader (env_loader.py) | ~200 | P2 |
 | 07 | C07 | Model management (models.py) | ~2000 | P2 |
 | 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 |
 | 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 |
@@ -157,7 +157,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 | 18 | C18 | Voice mode (voice.py) | 846 | P3 |
 | 19 | C19-C30 | Other CLI modules | ~25000 | P2-P3 |
 
-**S5: 30 gaps (1 P1, 17 P2, 12 P3)**
+**S5: 29 gaps (1 P1, 16 P2, 12 P3) — C06 env_loader.py PORTED**
 
 ---
 
@@ -271,13 +271,13 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
-| S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
+| S5: CLI Ecosystem | 29 | 0 | 1 | 16 | 12 | hermes_cli infrastructure — C06 PORTED |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **89** | **4** | **30** | **42** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07 VAULTED, F10 PORTED. Suite 335/0/14, test files 292.** |
+||| **TOTAL** | **88** | **4** | **30** | **41** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07 VAULTED, F10 PORTED. C06 PORTED. Suite 335/0/14, test files 292.** |
 
 ### Phase Map
 

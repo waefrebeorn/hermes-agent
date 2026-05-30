@@ -11,10 +11,12 @@
 #include "hermes_mcp_serve.h"
 #include "hermes_secrets.h"
 #include "hermes_api_server.h"
+#include "dotenv.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <ctype.h>
 
 /* Forward declaration for startup initialization */
 extern void mcp_init_all(void);
@@ -26,6 +28,87 @@ static void install_safe_stdio(void) {
     signal(SIGPIPE, SIG_IGN);
 }
 
+/* Credential env var suffixes that need ASCII sanitization */
+static const char *CRED_SUFFIXES[] = {"_API_KEY", "_TOKEN", "_SECRET", "_KEY", NULL};
+
+/* Port of Python hermes_cli/env_loader.py: load ~/.slermes/.env via libdotenv
+ * and sanitize credential values. Must be called before any config/API init. */
+static bool load_slermes_env(void) {
+    /* Determine HERMES_HOME */
+    const char *home_env = getenv("SLERMES_HOME");
+    char hermes_home[512];
+    if (home_env && *home_env) {
+        snprintf(hermes_home, sizeof(hermes_home), "%s", home_env);
+    } else {
+        const char *user_home = getenv("HOME");
+        if (!user_home) return false;
+        /* Try ~/.slermes first, then ~/.hermes */
+        snprintf(hermes_home, sizeof(hermes_home), "%s/.slermes", user_home);
+        if (access(hermes_home, F_OK) != 0) {
+            snprintf(hermes_home, sizeof(hermes_home), "%s/.hermes", user_home);
+            if (access(hermes_home, F_OK) != 0)
+                return false; /* No Hermes home found */
+        }
+    }
+
+    /* Build .env path */
+    char env_path[1024];
+    snprintf(env_path, sizeof(env_path), "%s/.env", hermes_home);
+
+    if (access(env_path, F_OK) != 0)
+        return false; /* No .env file */
+
+    /* Load via libdotenv */
+    env_t *env = dotenv_load(env_path, NULL);
+    if (!env) return false;
+
+    /* Export to process environment */
+    dotenv_export(env);
+
+    /* Sanitize credential values: strip non-ASCII chars */
+    size_t idx = 0;
+    const char *key, *value;
+    while (dotenv_iter(env, &idx, &key, &value)) {
+        if (!key || !value) continue;
+        /* Check if key ends with a credential suffix */
+        bool is_cred = false;
+        for (int si = 0; CRED_SUFFIXES[si]; si++) {
+            size_t slen = strlen(CRED_SUFFIXES[si]);
+            size_t klen = strlen(key);
+            if (klen >= slen && strcmp(key + klen - slen, CRED_SUFFIXES[si]) == 0) {
+                is_cred = true;
+                break;
+            }
+        }
+        if (!is_cred) continue;
+
+        /* Check for non-ASCII characters */
+        bool has_non_ascii = false;
+        for (const char *p = value; *p; p++) {
+            if ((unsigned char)*p > 127) { has_non_ascii = true; break; }
+        }
+        if (!has_non_ascii) continue;
+
+        /* Strip non-ASCII and re-set the env var */
+        size_t vlen = strlen(value);
+        char *cleaned = malloc(vlen + 1);
+        if (!cleaned) continue;
+        size_t j = 0;
+        for (const char *p = value; *p; p++) {
+            if ((unsigned char)*p <= 127)
+                cleaned[j++] = *p;
+        }
+        cleaned[j] = '\0';
+        setenv(key, cleaned, 1);
+        if (j < vlen)
+            fprintf(stderr, "  Warning: %s contained %zu non-ASCII character(s) — stripped\n", key, vlen - j);
+        free(cleaned);
+    }
+
+    dotenv_free(env);
+    return true;
+}
+
 static void print_banner(void) {
     printf("WuBu Slermes v%s\n", HERMES_VERSION);
     printf("Slermes C Translation\n");
@@ -35,6 +118,9 @@ static void print_banner(void) {
 int main(int argc, char **argv) {
     /* L03: Install crash-resistant stdio before any output */
     install_safe_stdio();
+
+    /* C06: Load .env file into process environment (port of Python env_loader.py) */
+    load_slermes_env();
 
     if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
         print_banner();
