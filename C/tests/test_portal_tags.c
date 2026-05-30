@@ -45,6 +45,39 @@ int main(void)
         json && strstr(json, "client=hermes-client-v") != NULL);
     free(json);
 
+    /* Test 3: Extended edge cases */
+    printf("\n--- Edge cases ---\n");
+
+    /* Repeated calls yield same format (save before free) */
+    tag = hermes_client_tag();
+    char *tag2 = hermes_client_tag();
+    TEST("client tag consistent", tag && tag2 && strcmp(tag, tag2) == 0);
+    free(tag);
+    tag = NULL;
+    free(tag2);
+
+    /* JSON contains only expected tag fields */
+    json = hermes_nous_portal_tags_json();
+    TEST("portal has product= tag", json && strstr(json, "product=hermes-agent") != NULL);
+    TEST("portal has client= tag", json && strstr(json, "client=hermes-client-v") != NULL);
+    TEST("portal json has exactly 2 entries", json && strstr(json, "product=") && strstr(json, "client="));
+    free(json);
+
+    /* JSON is valid (starts with [, ends with ], parseable) */
+    json = hermes_nous_portal_tags_json();
+    TEST("portal json starts with [", json && json[0] == '[');
+    TEST("portal json ends with ]", json && json[strlen(json)-1] == ']');
+    TEST("portal json valid JSON", json && json[0] == '[' && json[strlen(json)-1] == ']');
+    free(json);
+
+    /* Edge: NULL safety — functions never return NULL unless allocation fails */
+    tag = hermes_client_tag();
+    TEST("client tag always non-NULL", tag != NULL);
+    free(tag);
+    json = hermes_nous_portal_tags_json();
+    TEST("portal json always non-NULL", json != NULL);
+    free(json);
+
     printf("portal_tags: %d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;
 }

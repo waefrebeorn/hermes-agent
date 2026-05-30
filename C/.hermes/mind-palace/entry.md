@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v358)
+# Entry — Slermes C Parity (v359)
 
-Phase 295: C01 stale retired. /platforms enhanced. S5 19→18 gaps. 78 gaps total.
+Phase 296: S7 portal_tags test expansion — 17 assertions (8→17). 78 gaps.

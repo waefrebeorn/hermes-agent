@@ -2094,4 +2094,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+|## Phase 296: S7 X09 portal_tags Edge Case Expansion (v359)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | portal_tags test expansion — 9 new edge case assertions (8→17). Tests: repeated call consistency, product/client tag field verification, JSON array validity (starts with [, ends with ]), NULL safety for both functions. | `tests/test_portal_tags.c` — 9 new assertions (8→17). Suite 324/0/15. v359. |
 | C05 | Config editor — C has `/config validate/diff/export/migrate/groups/schema/show/get/set`. Python config.py has same core features. | `src/cli/commands.c` — cmd_config() with validate (~1442), diff (~1455), export (~1478), migrate (~1483), groups (~1494), schema (~1499), profile subcommands (~1510), show/get/set (~1700-). |

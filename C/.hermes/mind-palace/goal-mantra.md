@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v358)
+# Goal Mantra — Slermes C (v359)
 
-324/0/16 (294 test files). 78 gaps. Phase 295: C01 setup wizard retired (slermes setup exists). /platforms enhanced with config display + -v credential check.
+324/0/15 (294 test files). 78 gaps. Phase 296: S7 portal_tags test expansion — 9 new edge case assertions.
 
 ## Loop
 

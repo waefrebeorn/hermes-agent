@@ -1,8 +1,8 @@
-(v358)
+(v359)
 
-324/0/16, 289 test files. All pass. 78 gaps. Phase 295: C01 stale retired. /platforms enhanced.
+324/0/15, 289 test files. All pass. 78 gaps. Phase 296: S7 portal_tags test expansion — 9 new edge case assertions (8→17).
 
-Phase 295: C01 setup wizard PORTED (slermes setup). /platforms shows config + -v cred check. 78 gaps. v358.
+Phase 296: S7 portal_tags test expansion — format consistency, field verification, JSON validity, NULL safety. v359.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.
