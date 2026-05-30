@@ -2058,3 +2058,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | R01k | `anthropic_is_bedrock_model_id()` — detects Bedrock model IDs. | `src/agent/provider_anthropic.c` — 5 tests. |
 | R01l | `anthropic_resolve_positive_max_tokens()` — validates max_tokens positive. | `src/agent/provider_anthropic.c` — 3 tests. |
 | R01m | 14 functions ported from Python anthropic_adapter.py. 69 new assertions. S8 R01 PORTED. Total 90 gaps. | `tests/test_anthropic_depth.c` 50→119. Suite 335/0/14. |
+|## Phase 287b: S10 F07 Vaulted — Trajectory Saving PORTED
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| F07 | Trajectory saving + session export — C has trajectory.c with 3 functions: convert_scratchpad_to_think (REASONING_SCRATCHPAD → think tags), has_incomplete_scratchpad (unclosed tag detection), save_trajectory (JSONL append with ISO timestamp, model, completed flag). Plus agent_session_export_json/markdown. Python's trajectory.py has same 3 functions. | `src/agent/trajectory.c` (139 LOC). `src/agent/agent_loop.c` — agent_session_export_json/markdown. S10 8→7 gaps. Total 90→89 gaps. v354. |

@@ -252,8 +252,8 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | 03 | F03 | No Python interop | Cannot reuse Python libraries at runtime | P0 | 🏛️ ARCHITECTURAL |
 | 04 | F04 | Single-threaded agent loop | Python uses asyncio for concurrent ops | P0 | 🏛️ ARCHITECTURAL |
 | 05 | F05 | No credential automation | Python OAuth flows not replicated | P1 | 🏛️ ARCHITECTURAL |
-| 06 | F06 | No ACP protocol server | VS Code/Zed/JetBrains integration — C has full server (src/acp/server.c + events/permissions/resource/edit_approval) | P2 | ✅ VAULTED |
-| 07 | F07 | No session replay / debugging | Python session trajectory replay | P2 | |
+|| 06 | F06 | No ACP protocol server | VS Code/Zed/JetBrains integration — C has full server (src/acp/server.c + events/permissions/resource/edit_approval) | P2 | ✅ VAULTED |
+|| 07 | F07 | No session replay / debugging | Python session trajectory replay — C has trajectory.c (3 functions: convert_scratchpad_to_think, has_incomplete_scratchpad, save_trajectory) + session export (export_json/export_markdown) | P2 | ✅ PORTED — trajectory saving + session export ported |
 | 08 | F08 | Raw socket health check | TCP keepalive / zombie socket recovery — C sync model detects dead connections immediately on read/write, connection pool has idle-timeout cleanup. Python async needs keepalive because epoll_wait hangs on CLOSE-WAIT. | P1 | ✅ WON'T PORT — C arch handles via sync error model + pool idle timeout |
 | 09 | F09 | No async event loop | Python uses asyncio for gateway + tools | P0 | 🏛️ ARCHITECTURAL |
 | 10 | F10 | No stdin/stdout safe guard | Systemd/daemon crash from broken pipe | P1 | ✅ PORTED — install_safe_stdio() in main.c:25 calls signal(SIGPIPE, SIG_IGN) at startup |
@@ -276,8 +276,8 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
-|| S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **90** | **4** | **30** | **43** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06 VAULTED, F10 PORTED. Suite 335/0/14, test files 292.** |
+|| S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
+||| **TOTAL** | **89** | **4** | **30** | **42** | **23** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. F06+F07 VAULTED, F10 PORTED. Suite 335/0/14, test files 292.** |
 
 ### Phase Map
 
