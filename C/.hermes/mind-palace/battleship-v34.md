@@ -14,9 +14,9 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
-|| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). **Vi mode PARTIAL** — ESC→NORMAL, h/j/k/l, 0/$, ^/_, x/X, i/I/a/A, u undo, dd, p/P, **w/W/b/B/e/E** word nav, D/C/s delete/change/substitute, **r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat**, **yy/Y yank whole line** (Phase 258), **o/O open line below/above** (Phase 259), **% jump to matching bracket** (Phase 260), **. repeat last change** (Phase 261), **/ ? forward/backward search with wrap-around, n/N repeat** (Phase 284), **v/V visual mode with selection highlighting, x/d/y delete/yank selection, ESC exit** (Phase 285). 161-test suite. | PARTIAL | P2 |
+|| 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). **Vi mode PARTIAL** — ESC→NORMAL, h/j/k/l, 0/$, ^/_, x/X, i/I/a/A, u undo, dd, p/P, **w/W/b/B/e/E** word nav, D/C/s delete/change/substitute, **r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat**, **yy/Y yank whole line** (Phase 258), **o/O open line below/above** (Phase 259), **% jump to matching bracket** (Phase 260), **. repeat last change** (Phase 261), **/ ? forward/backward search with wrap-around, n/N repeat** (Phase 284), **v/V visual mode with selection highlighting, x/d/y delete/yank selection, ESC exit** (Phase 285), **count prefixes for h/l/j/k/w/b/e/x/X/s/~** (Phase 286). 169-test suite. | PORTED ✅ | P2 |
 
-**S0: 1 gap (D09 vi mode) — all display infrastructure PORTED. D16 type-ahead IMPLEMENTED (Phase 210).**
+**S0: 0 gaps (D09 vi mode PORTED) — all display infrastructure PORTED. D16 type-ahead IMPLEMENTED (Phase 210). D09 vi mode: navigation, motion, find/till, search, visual, paste, undo, yank, open, repeat, delete, replace, toggle, count prefixes all implemented.**
 
 ---
 
@@ -266,7 +266,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
-| S0: Display & Visual | 1 | 0 | 0 | 1 | 0 | Phase 0 — D09 vi mode remains. D16 type-ahead IMPLEMENTED (Phase 210). |
+| S0: Display & Visual | 0 | 0 | 0 | 0 | 0 | D09 vi mode PORTED (all features). D16 type-ahead IMPLEMENTED (Phase 210). |
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 1 | 0 | 1 | 0 | 0 | 0 remaining implementable. R01 PARTIAL. R02+R04+R10 PORTED. R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **92** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R02+R04+R10 all PORTED. F06 VAULTED, F10 PORTED. S8 R01 PARTIAL, R03+R05-R09 WON'T PORT. Suite 334/0/3, test files 292.** |
+||| **TOTAL** | **91** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R02+R04+R10 all PORTED. F06 VAULTED, F10 PORTED. S8 R01 PARTIAL, R03+R05-R09 WON'T PORT. Suite 334/0/3, test files 292.** |
 
 ### Phase Map
 

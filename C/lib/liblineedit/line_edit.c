@@ -1035,6 +1035,12 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         if (le->vi_mode == LINE_EDIT_MODE_NORMAL) {
             bool handled = true;
 
+            /* Count prefix: digits 1-9 accumulate as repeat count */
+            if (c >= '1' && c <= '9') {
+                le->vi_count = le->vi_count * 10 + (c - '0');
+                continue;
+            }
+
             /* Visual mode: intercept v/V/ESC/x/d/y before NORMAL dispatch */
             if (le->vi_visual_active) {
                 if (c == 'v' || c == 'V' || c == 27) {
@@ -1078,14 +1084,26 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             }
 
             switch (c) {
-                case 'h': /* left */
-                    if (le->buf->cursor > 0) le->buf->cursor--;
+                case 'h': /* left */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep && le->buf->cursor > 0; _i++)
+                        le->buf->cursor--;
                     break;
-                case 'l': /* right */
-                    if (le->buf->cursor < le->buf->len) le->buf->cursor++;
+                }
+                case 'l': /* right */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep && le->buf->cursor < le->buf->len; _i++)
+                        le->buf->cursor++;
                     break;
-                case 'j': /* down (next history) */
-                {
+                }
+                case 'j': /* down (next history) */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    if (rep > 1) { /* skip first if count > 1 */
+                        for (int _i = 1; _i < rep && history_next(le->history); _i++);
+                    }
                     const char *hist = history_next(le->history);
                     if (hist) {
                         line_buf_set(le->buf, hist);
@@ -1094,12 +1112,17 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     }
                     break;
                 }
-                case 'k': /* up (prev history) */
-                {
-                    if (le->history->current == le->history->tail)
-                        strncpy(le->saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
-                    const char *hist = history_prev(le->history);
-                    if (hist) line_buf_set(le->buf, hist);
+                case 'k': /* up (prev history) */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++) {
+                        if (le->history->current == le->history->tail)
+                            strncpy(le->saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+                        const char *hist = history_prev(le->history);
+                        if (!hist) break;
+                        if (_i == rep - 1 && hist)
+                            line_buf_set(le->buf, hist);
+                    }
                     break;
                 }
                 case '0': /* go to line start */
@@ -1129,14 +1152,22 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     le->buf->cursor = pos;
                     break;
                 }
-                case 'x': /* delete char under cursor */
-                    line_buf_delete_forward(le->buf);
+                case 'x': /* delete char under cursor */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_buf_delete_forward(le->buf);
                     le->vi_last_change_op = 'x';
                     break;
-                case 'X': /* delete char before cursor */
-                    line_buf_delete(le->buf);
+                }
+                case 'X': /* delete char before cursor */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_buf_delete(le->buf);
                     le->vi_last_change_op = 'X';
                     break;
+                }
                 case 'i': /* insert before cursor */
                 case 'I': /* insert at line start */
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
@@ -1210,17 +1241,29 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     }
                     break;
                 case 'w': /* word forward */
-                case 'W':
-                    line_edit_cursor_word_forward(le);
+                case 'W': {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_edit_cursor_word_forward(le);
                     break;
+                }
                 case 'b': /* word backward */
-                case 'B':
-                    line_edit_cursor_word_backward(le);
+                case 'B': {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_edit_cursor_word_backward(le);
                     break;
+                }
                 case 'e': /* word end */
-                case 'E':
-                    line_edit_cursor_word_end(le);
+                case 'E': {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_edit_cursor_word_end(le);
                     break;
+                }
                 case 'D': /* delete to end of line */
                     line_edit_kill_line(le);
                     le->vi_last_change_op = 'D';
@@ -1230,11 +1273,15 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
                     le->vi_last_change_op = 'C';
                     break;
-                case 's': /* substitute char (delete + insert) */
-                    line_buf_delete_forward(le->buf);
+                case 's': /* substitute char (delete + insert) */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep; _i++)
+                        line_buf_delete_forward(le->buf);
                     le->vi_mode = LINE_EDIT_MODE_INSERT;
                     le->vi_last_change_op = 's';
                     break;
+                }
                 case 'o': /* open line below, enter INSERT */
                 {
                     le->buf->cursor = le->buf->len;
@@ -1284,6 +1331,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 }
                 case '.': /* repeat last change */
                 {
+                    le->vi_count = 0;
                     if (le->vi_last_change_op) {
                         switch (le->vi_last_change_op) {
                             case 'x': line_buf_delete_forward(le->buf); break;
@@ -1328,26 +1376,32 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 {
                     char next;
                     if (read(STDIN_FILENO, &next, 1) > 0 && next >= 32 && next <= 126) {
-                        if (le->buf->cursor < le->buf->len) {
-                            le->buf->buf[le->buf->cursor] = next;
-                            le->vi_last_change_op = 'r';
-                            le->vi_last_change_param = next;
-                            term_redraw_line(le);
-                        }
+                        int rep = le->vi_count > 0 ? le->vi_count : 1;
+                        le->vi_count = 0;
+                        for (int _i = 0; _i < rep && le->buf->cursor + _i < le->buf->len; _i++)
+                            le->buf->buf[le->buf->cursor + _i] = next;
+                        le->vi_last_change_op = 'r';
+                        le->vi_last_change_param = next;
+                        term_redraw_line(le);
                     }
                     break;
                 }
-                case '~': /* toggle case of char under cursor */
-                    if (le->buf->cursor < le->buf->len) {
+                case '~': /* toggle case of chars */ {
+                    int rep = le->vi_count > 0 ? le->vi_count : 1;
+                    le->vi_count = 0;
+                    for (int _i = 0; _i < rep && le->buf->cursor < le->buf->len; _i++) {
                         unsigned char uc = (unsigned char)le->buf->buf[le->buf->cursor];
                         if (uc >= 'a' && uc <= 'z')
                             le->buf->buf[le->buf->cursor] = uc - 32;
                         else if (uc >= 'A' && uc <= 'Z')
                             le->buf->buf[le->buf->cursor] = uc + 32;
-                        le->vi_last_change_op = '~';
-                        term_redraw_line(le);
+                        if (le->buf->cursor < le->buf->len)
+                            le->buf->cursor++;
                     }
+                    le->vi_last_change_op = '~';
+                    term_redraw_line(le);
                     break;
+                }
                 case 'f': /* find char forward */
                 case 'F': /* find char backward */
                 case 't': /* till char forward (stops before) */
@@ -1504,6 +1558,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                 }
                 default:
                     handled = false;
+                    le->vi_count = 0;  /* reset count on unknown commands */
                     break;
             }
             if (handled) {

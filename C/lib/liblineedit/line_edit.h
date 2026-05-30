@@ -58,6 +58,7 @@ typedef struct line_edit_t {
     bool vi_last_search_forward;          /* direction of last search (for n/N repeat) */
     bool vi_visual_active;                /* visual mode active (v/V) */
     size_t vi_visual_start;               /* cursor position when visual mode started */
+    int vi_count;                         /* numeric prefix count (0 = none) */
 } line_edit_t;
 
 /* Create a line editor instance */

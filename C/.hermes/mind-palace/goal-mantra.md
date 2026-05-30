@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v352)
+# Goal Mantra — Slermes C (v353)
 
-334/0/3 (292 test files). 92 gaps. Phase 285: S0 D09 vi visual mode — v/V visual mode with selection highlighting. — / ? n N forward/backward search with wrap-around.
+334/0/3 (292 test files). 92 gaps. Phase 286: S0 D09 vi count prefixes. D09 PORTED (all major features). — v/V visual mode with selection highlighting. — / ? n N forward/backward search with wrap-around.
 
 ## Loop
 

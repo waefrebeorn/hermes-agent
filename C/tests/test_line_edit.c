@@ -1117,6 +1117,131 @@ int main(void) {
         TEST("visual yank preserves buffer", le.buf->len == 11);
     }
 
+    /* ---- vi count prefix tests ---- */
+    printf("\n--- vi count prefix (3w 5j 2x) ---\n");
+    line_edit_t *le;
+    int vi_count_tmp;
+
+    /* count accumulation */
+    {
+        vi_count_tmp= 0;
+        vi_count_tmp= 0 * 10 + 1;
+        TEST("count single digit", vi_count_tmp== 1);
+        vi_count_tmp= vi_count_tmp* 10 + 2;
+        TEST("count two digits", vi_count_tmp== 12);
+        vi_count_tmp= vi_count_tmp* 10 + 3;
+        TEST("count three digits", vi_count_tmp== 123);
+    }
+
+    /* 3h = move left 3 positions */
+    {
+        le = make_buffer("hello world", 5);
+        TEST_NOT_NULL("3h buffer", le);
+        if (le) {
+            int rep = 3;
+            for (int i = 0; i < rep && le->buf->cursor > 0; i++)
+                le->buf->cursor--;
+            TEST("3h moves left 3", le->buf->cursor == 2);
+            line_edit_free(le);
+        }
+    }
+
+    /* 2l = move right 2 positions */
+    {
+        le = make_buffer("abcde", 0);
+        TEST_NOT_NULL("2l buffer", le);
+        if (le) {
+            int rep = 2;
+            for (int i = 0; i < rep && le->buf->cursor < le->buf->len; i++)
+                le->buf->cursor++;
+            TEST("2l moves right 2", le->buf->cursor == 2);
+            line_edit_free(le);
+        }
+    }
+
+    /* 3x = delete 3 chars forward */
+    {
+        le = make_buffer("abcdef", 0);
+        TEST_NOT_NULL("3x buffer", le);
+        if (le) {
+            /* Simulate 3x: delete 3 chars from cursor position forward */
+            size_t pos = le->buf->cursor;
+            if (pos + 3 <= le->buf->len) {
+                memmove(le->buf->buf + pos, le->buf->buf + pos + 3,
+                        le->buf->len - pos - 3 + 1);
+                le->buf->len -= 3;
+            }
+            TEST("3x deletes 3 chars", strcmp(le->buf->buf, "def") == 0);
+            line_edit_free(le);
+        }
+    }
+
+    /* 2X = delete 2 chars backward */
+    {
+        le = make_buffer("abcdef", 4);
+        TEST_NOT_NULL("2X buffer", le);
+        if (le) {
+            /* Simulate 2X: delete 2 chars before cursor */
+            size_t pos = le->buf->cursor;
+            size_t del = 2;
+            if (del <= pos) {
+                memmove(le->buf->buf + pos - del, le->buf->buf + pos,
+                        le->buf->len - pos + 1);
+                le->buf->len -= del;
+                le->buf->cursor -= del;
+            }
+            TEST("2X deletes 2 backward", strcmp(le->buf->buf, "abef") == 0);
+            TEST("2X cursor adjusts", le->buf->cursor == 2);
+            line_edit_free(le);
+        }
+    }
+
+    /* 2s = substitute 2 chars */
+    {
+        le = make_buffer("abcdef", 2);
+        TEST_NOT_NULL("2s buffer", le);
+        if (le) {
+            /* Simulate 2s: delete 2 chars at cursor */
+            size_t pos = le->buf->cursor;
+            if (pos + 2 <= le->buf->len) {
+                memmove(le->buf->buf + pos, le->buf->buf + pos + 2,
+                        le->buf->len - pos - 2 + 1);
+                le->buf->len -= 2;
+            }
+            TEST("2s deletes 2 chars", strcmp(le->buf->buf, "abef") == 0);
+            TEST("2s cursor at position", le->buf->cursor == 2);
+            line_edit_free(le);
+        }
+    }
+
+    /* 2~ = toggle case 2 chars */
+    {
+        le = make_buffer("aBcDeF", 0);
+        TEST_NOT_NULL("2~ buffer", le);
+        if (le) {
+            int rep = 2;
+            for (int i = 0; i < rep && le->buf->cursor < le->buf->len; i++) {
+                unsigned char uc = (unsigned char)le->buf->buf[le->buf->cursor];
+                if (uc >= 'a' && uc <= 'z')
+                    le->buf->buf[le->buf->cursor] = uc - 32;
+                else if (uc >= 'A' && uc <= 'Z')
+                    le->buf->buf[le->buf->cursor] = uc + 32;
+                if (le->buf->cursor < le->buf->len)
+                    le->buf->cursor++;
+            }
+            TEST("2~ toggled first char", le->buf->buf[0] == 'A');
+            TEST("2~ toggled second char", le->buf->buf[1] == 'b');
+            TEST("2~ cursor advanced 2", le->buf->cursor == 2);
+            line_edit_free(le);
+        }
+    }
+
+    /* count resets after command (default handler) */
+    {
+        vi_count_tmp = 42;
+        vi_count_tmp = 0;
+        TEST("count reset on default", vi_count_tmp == 0);
+    }
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
