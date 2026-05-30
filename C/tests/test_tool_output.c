@@ -101,7 +101,80 @@ int main(void) {
         unset_env("HERMES_TOOL_OUTPUT_MAX_BYTES");
     }
 
-    /* Test 5: exceeds_byte_limit */
+    /* Test 5: max_line_length getter default */
+    {
+        ASSERT(tool_output_get_max_line_length() == 2000,
+               "default max_line_length is 2000");
+    }
+
+    /* Test 6: max_line_length env override */
+    {
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "500");
+        ASSERT(tool_output_get_max_line_length() == 500,
+               "max_line_length override 500");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "0");
+        ASSERT(tool_output_get_max_line_length() == 2000,
+               "zero max_line_length falls back to default");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "-100");
+        ASSERT(tool_output_get_max_line_length() == 2000,
+               "negative max_line_length falls back to default");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+    }
+
+    /* Test 7: All three env vars set simultaneously */
+    {
+        set_env("HERMES_TOOL_OUTPUT_MAX_BYTES", "1000");
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINES", "50");
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH", "100");
+        ASSERT(tool_output_get_max_bytes() == 1000,
+               "all-three: max_bytes 1000");
+        ASSERT(tool_output_get_max_lines() == 50,
+               "all-three: max_lines 50");
+        ASSERT(tool_output_get_max_line_length() == 100,
+               "all-three: max_line_length 100");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_BYTES");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINES");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINE_LENGTH");
+    }
+
+    /* Test 8: strtol quirks — trailing garbage / whitespace rejected */
+    {
+        set_env("HERMES_TOOL_OUTPUT_MAX_BYTES", "100abc");
+        ASSERT(tool_output_get_max_bytes() == 50000,
+               "strtol: trailing garbage '100abc' falls back to default");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_BYTES");
+
+        set_env("HERMES_TOOL_OUTPUT_MAX_BYTES", "  500  ");
+        ASSERT(tool_output_get_max_bytes() == 50000,
+               "strtol: trailing whitespace '  500  ' falls back to default");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_BYTES");
+    }
+
+    /* Test 9: Simultaneous byte AND line exceeds */
+    {
+        set_env("HERMES_TOOL_OUTPUT_MAX_BYTES", "50");
+        set_env("HERMES_TOOL_OUTPUT_MAX_LINES", "5");
+        ASSERT(tool_output_exceeds_byte_limit(49) == false,
+               "mixed: 49 bytes < 50 limit");
+        ASSERT(tool_output_exceeds_byte_limit(50) == false,
+               "mixed: 50 bytes == 50 limit (not exceeding)");
+        ASSERT(tool_output_exceeds_byte_limit(51) == true,
+               "mixed: 51 bytes > 50 limit");
+        ASSERT(tool_output_exceeds_line_limit(4) == false,
+               "mixed: 4 lines < 5 limit");
+        ASSERT(tool_output_exceeds_line_limit(5) == false,
+               "mixed: 5 lines == 5 limit (not exceeding)");
+        ASSERT(tool_output_exceeds_line_limit(6) == true,
+               "mixed: 6 lines > 5 limit");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_BYTES");
+        unset_env("HERMES_TOOL_OUTPUT_MAX_LINES");
+    }
+
+    /* Test 10: exceeds_byte_limit */
     {
         ASSERT(tool_output_exceeds_byte_limit(0) == false,
                "0 bytes does not exceed limit");
@@ -115,7 +188,7 @@ int main(void) {
                "100000 bytes exceeds limit");
     }
 
-    /* Test 6: exceeds_line_limit with default */
+    /* Test 11: exceeds_line_limit with default */
     {
         ASSERT(tool_output_exceeds_line_limit(0) == false,
                "0 lines does not exceed limit");
@@ -127,7 +200,7 @@ int main(void) {
                "2001 lines exceeds limit");
     }
 
-    /* Test 7: exceeds_* with custom env override */
+    /* Test 12: exceeds_* with custom env override */
     {
         set_env("HERMES_TOOL_OUTPUT_MAX_BYTES", "100");
         ASSERT(tool_output_exceeds_byte_limit(99) == false,

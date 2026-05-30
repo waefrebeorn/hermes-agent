@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (markdown 30→42 assertions). v299.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (tool_output 24→38 assertions). v300.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -178,7 +178,8 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 229: GHSA hardening edge case expansion (S7 X09). test_env_passthrough.c — 37→91 assertions. 54 new assertions covering all 67 blocked vars: hermes-prefixed provider keys, extended provider keys (XAI/DEEPSEEK/TOGETHER/PERPLEXITY/COHERE/FIREWORKS/HELICONE/PARALLEL), AWS creds, gateway credentials (TELEGRAM_HOME_CHANNEL, DISCORD_HOME_CHANNEL, SLACK_HOME_CHANNEL, SIGNAL_*, HASS, GITHUB_APP_*), infra (DOCKER_CERT_PATH, MODAL_TOKEN_SECRET, HERMES_HOME). v296.
 |- Phase 230: Website policy edge case expansion (S7 X09). test_website.c — 17→38 assertions. New edge cases: extract_host (deep subdomain, port, IP, trailing slash, empty, fragment), match_host (fnmatch wildcard behavior, different domain, null/empty patterns), check_access (query params, port, fragment, multiple rules, NULL/empty URL). v297.
 |- Phase 231: Cron schedule edge case expansion (S7 X09). test_cronjob.c — 21→33 assertions. New edge cases: @annually/@reboot (unsupported), @ alone, whitespace-only/leading whitespace, reversed ranges, negative values, high minute/day/dow numbers (no-crash), step on wrong field, 6-field seconds-prefix cron. v298.
-|- Phase 232: Markdown edge case expansion (S7 X09). test_markdown.c — 30→42 assertions. New strip edge cases: code fences, image alt text, strikethrough content, blockquote text, horizontal rule, inline HTML, nested bold+italic. New render edge cases: code block content, long text word wrap, narrow terminal (width 5), very wide terminal (width 999), negative width. v299.
+||- Phase 232: Markdown edge case expansion (S7 X09). test_markdown.c — 30→42 assertions. New strip edge cases: code fences, image alt text, strikethrough content, blockquote text, horizontal rule, inline HTML, nested bold+italic. New render edge cases: code block content, long text word wrap, narrow terminal (width 5), very wide terminal (width 999), negative width. v299.
+|- Phase 233: Tool output edge case expansion (S7 X09). test_tool_output.c — 24→38 assertions. New edge cases: max_line_length getter default+override, all-three env var interaction, strtol trailing-garbage/whitespace rejection, simultaneous byte+line exceed with overridden limits. v300.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
