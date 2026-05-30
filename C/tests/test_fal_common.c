@@ -53,6 +53,25 @@ static void test_key_missing(void) {
     PASS();
 }
 
+static void test_key_empty_fal(void) {
+    TEST("empty FAL_API_KEY falls through");
+    setenv("FAL_API_KEY", "", 1);
+    setenv("SLERMES_FAL_KEY", "fallback", 1);
+    const char *k = fal_get_api_key();
+    ASSERT(k != NULL, "got fallback");
+    ASSERT(strcmp(k, "fallback") == 0, "matches SLERMES_FAL_KEY");
+    PASS();
+}
+
+static void test_key_empty_both(void) {
+    TEST("both empty");
+    setenv("FAL_API_KEY", "", 1);
+    setenv("SLERMES_FAL_KEY", "", 1);
+    const char *k = fal_get_api_key();
+    ASSERT(k == NULL, "null when both empty");
+    PASS();
+}
+
 static void test_escape_normal(void) {
     TEST("normal text");
     char out[64];
@@ -67,6 +86,48 @@ static void test_escape_null_in(void) {
     char out[64];
     size_t n = fal_escape_json(NULL, out, sizeof(out));
     ASSERT(n == 0, "zero");
+    PASS();
+}
+
+static void test_escape_quotes(void) {
+    TEST("escape quotes");
+    char out[64];
+    size_t n = fal_escape_json("\"hello\"", out, sizeof(out));
+    ASSERT(n > 8, "escaped length > input");
+    ASSERT(strstr(out, "\\") != NULL || strstr(out, "\"") != NULL,
+           "contains backslash or quote");
+    PASS();
+}
+
+static void test_escape_backslash(void) {
+    TEST("escape backslash");
+    char out[64];
+    size_t n = fal_escape_json("a\\b", out, sizeof(out));
+    ASSERT(n > 3, "escaped length > input");
+    PASS();
+}
+
+static void test_escape_newline(void) {
+    TEST("escape real newline");
+    char out[64];
+    size_t n = fal_escape_json("line1\nline2", out, sizeof(out));
+    ASSERT(strstr(out, "\\n") != NULL, "newline escaped");
+    PASS();
+}
+
+static void test_escape_tab(void) {
+    TEST("escape real tab");
+    char out[64];
+    size_t n = fal_escape_json("a\tb", out, sizeof(out));
+    ASSERT(strstr(out, "\\t") != NULL, "tab escaped");
+    PASS();
+}
+
+static void test_escape_truncation(void) {
+    TEST("truncation tiny buffer");
+    char out[4];
+    size_t n = fal_escape_json("hello", out, sizeof(out));
+    ASSERT(n < 5, "truncated to fit buffer");
     PASS();
 }
 
@@ -88,6 +149,15 @@ static void test_err_response(void) {
     PASS();
 }
 
+static void test_err_response_plain(void) {
+    TEST("error_response plain");
+    char *e = fal_error_response("something went wrong");
+    ASSERT(e != NULL, "not null");
+    ASSERT(strstr(e, "something went wrong") != NULL, "has message");
+    free(e);
+    PASS();
+}
+
 static void test_err_from_null(void) {
     TEST("error_from_http(NULL)");
     char *e = fal_error_from_http(NULL);
@@ -103,13 +173,21 @@ int main(void) {
     test_key_slermes_env();
     test_key_precedence();
     test_key_missing();
-    printf("\n2. JSON escaping:\n");
+    test_key_empty_fal();
+    test_key_empty_both();
+    printf("2. JSON escaping:\n");
     test_escape_normal();
     test_escape_null_in();
-    printf("\n3. POST:\n");
+    test_escape_quotes();
+    test_escape_backslash();
+    test_escape_newline();
+    test_escape_tab();
+    test_escape_truncation();
+    printf("3. POST:\n");
     test_post_no_key();
-    printf("\n4. Error builders:\n");
+    printf("4. Error builders:\n");
     test_err_response();
+    test_err_response_plain();
     test_err_from_null();
     printf("\n=== %d pass, %d fail ===\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
