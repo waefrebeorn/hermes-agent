@@ -1,4 +1,4 @@
-(v278)
+(v279)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-323/0/0 (279 test files). 112 gaps. Phase 211: L25 message repair sequence ported (17-test suite).
-S0+S3+S6 all PORTED. S1 L25 REAL→PARTIAL. Next: S7 test expansion, S1 partials, or B08 depth.
+323/0/0 (280 test files). 111 gaps. Phase 212: L25 sanitize_tool_call_arguments() ported (39-test suite).
+S0+S3+S6 all PORTED. S1 L25 depth: 2/3 functions ported. Next: S7 test expansion, S1 partials, or B08 depth.

@@ -187,6 +187,7 @@ char *agent_generate_title(llm_config_t *cfg, const char *first_message);
 
 /* === Message sequence repair (agent_message_repair.c) === */
 int hermes_repair_message_sequence(message_t *messages, int *count);
+int hermes_sanitize_tool_call_arguments(message_t *messages, int *count);
 
 #ifdef __cplusplus
 }

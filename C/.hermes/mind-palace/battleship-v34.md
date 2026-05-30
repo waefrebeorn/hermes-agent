@@ -1,6 +1,6 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v278 | Fork diverged — C/ lives only on fork | Suite 323/0/0 | 85 tools | 98 CLI**\\n**Honest assessment: 112 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 279 (22.1% parity). S0+S3+S6 all PORTED. Suite 323/0/0.**
+**v279 | Fork diverged — C/ lives only on fork | Suite 323/0/0 | 85 tools | 98 CLI**\\n**Honest assessment: 111 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 280 (22.2% parity). S0+S3+S6 all PORTED. Suite 323/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -27,7 +27,7 @@ Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all 
 | # | ID | Feature | Python | C | Priority | Status |
 |---|----|---------|--------|---|----------|--------|
 | 01 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
-| 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | hermes_repair_message_sequence() ported (Phase 211). 17-test suite. Sanitize tool call args pending. | P1 | PARTIAL |
+| 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | hermes_repair_message_sequence() + sanitize_tool_call_arguments() ported (Phases 211-212). 39-test suite. repair_tool_call() pending. | P1 | PARTIAL |
 | 03 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler | P1 | PARTIAL |
 | 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
 | 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
@@ -276,7 +276,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-| **TOTAL** | **112** | **4** | **34** | **52** | **24** | **S0+S3+S6 all PORTED. Suite 323/0/0, test files 279.** |
+| **TOTAL** | **111** | **4** | **34** | **52** | **24** | **S0+S3+S6 all PORTED. Suite 323/0/0, test files 280.** |
 
 ### Phase Map
 

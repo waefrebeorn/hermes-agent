@@ -155,6 +155,8 @@ static void test_consecutive_users_merged(void) {
 
     /* Only free up to the new count — entries beyond were overwritten */
     for (int i = 0; i < count; i++) free_msg(&msgs2[i]);
+    /* Clear entries beyond new count to prevent stale pointer tracking */
+    for (int i = count; i < 5; i++) memset(&msgs2[i], 0, sizeof(msgs2[i]));
 }
 
 static void test_user_clears_known_ids(void) {
@@ -194,6 +196,140 @@ static void test_three_consecutive_users(void) {
     for (int i = 0; i < count; i++) free_msg(&msgs[i]);
 }
 
+/* ================================================================
+ *  sanitize_tool_call_arguments tests
+ * ================================================================ */
+
+static void test_sanitize_empty_or_null(void) {
+    printf("\n--- sanitize: empty/null ---\n");
+    int count = 0;
+    int r = hermes_sanitize_tool_call_arguments(NULL, NULL);
+    TEST("NULL messages + NULL count returns 0", r == 0);
+    r = hermes_sanitize_tool_call_arguments(NULL, &count);
+    TEST("NULL messages returns 0", r == 0);
+}
+
+/* Helper: create assistant with multiple tool calls */
+static message_t make_assistant_tool_calls(const char *content,
+                                            const char *tc1_id, const char *tc1_name, const char *tc1_args,
+                                            const char *tc2_id, const char *tc2_name, const char *tc2_args) {
+    message_t msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.role = MSG_ASSISTANT;
+    msg.content = content ? strdup(content) : NULL;
+    int idx = 0;
+    if (tc1_id) {
+        snprintf(msg.tool_calls[idx].id, sizeof(msg.tool_calls[idx].id), "%s", tc1_id);
+        snprintf(msg.tool_calls[idx].name, sizeof(msg.tool_calls[idx].name), "%s", tc1_name ? tc1_name : "tool1");
+        snprintf(msg.tool_calls[idx].arguments, sizeof(msg.tool_calls[idx].arguments), "%s", tc1_args ? tc1_args : "");
+        idx++;
+    }
+    if (tc2_id) {
+        snprintf(msg.tool_calls[idx].id, sizeof(msg.tool_calls[idx].id), "%s", tc2_id);
+        snprintf(msg.tool_calls[idx].name, sizeof(msg.tool_calls[idx].name), "%s", tc2_name ? tc2_name : "tool2");
+        snprintf(msg.tool_calls[idx].arguments, sizeof(msg.tool_calls[idx].arguments), "%s", tc2_args ? tc2_args : "");
+        idx++;
+    }
+    msg.tool_calls_count = idx;
+    return msg;
+}
+
+static void test_sanitize_valid_args(void) {
+    printf("\n--- sanitize: valid args ---\n");
+    message_t msgs[2];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tool_calls("thinking", "call_1", "read_file", "{}", NULL, NULL, NULL);
+    msgs[1] = make_tool_msg("call_1", "result ok");
+
+    int count = 2;
+    int r = hermes_sanitize_tool_call_arguments(msgs, &count);
+    TEST("valid args: 0 repairs", r == 0);
+    TEST("count unchanged", count == 2);
+    /* Verify args still "{}" */
+    TEST("args preserved", strcmp(msgs[0].tool_calls[0].arguments, "{}") == 0);
+
+    for (int i = 0; i < count; i++) free_msg(&msgs[i]);
+}
+
+static void test_sanitize_empty_args(void) {
+    printf("\n--- sanitize: empty args ---\n");
+    message_t msgs[2];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tool_calls("thinking", "call_1", "read_file", "", NULL, NULL, NULL);
+    msgs[1] = make_tool_msg("call_1", "result ok");
+
+    int count = 2;
+    int r = hermes_sanitize_tool_call_arguments(msgs, &count);
+    TEST("empty args: 1 repair", r == 1);
+    TEST("args now '{}'", strcmp(msgs[0].tool_calls[0].arguments, "{}") == 0);
+    /* Tool result should have marker prepended */
+    TEST("marker prepended", strstr(msgs[1].content, "hermes-agent: tool call arguments") != NULL);
+
+    for (int i = 0; i < count; i++) free_msg(&msgs[i]);
+}
+
+static void test_sanitize_corrupted_args(void) {
+    printf("\n--- sanitize: corrupted args ---\n");
+    message_t msgs[2];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tool_calls("thinking", "call_1", "read_file", "not valid json at all", NULL, NULL, NULL);
+    msgs[1] = make_tool_msg("call_1", "original result");
+
+    int count = 2;
+    int r = hermes_sanitize_tool_call_arguments(msgs, &count);
+    TEST("corrupted args: 1 repair", r == 1);
+    TEST("args fixed to '{}'", strcmp(msgs[0].tool_calls[0].arguments, "{}") == 0);
+    /* Tool result should have marker prepended to original content */
+    TEST("marker + original content preserved",
+         strstr(msgs[1].content, "original result") != NULL);
+    TEST("marker prepended",
+         strstr(msgs[1].content, "hermes-agent: tool call arguments") != NULL);
+
+    for (int i = 0; i < count; i++) free_msg(&msgs[i]);
+}
+
+static void test_sanitize_no_existing_result(void) {
+    printf("\n--- sanitize: no existing result ---\n");
+    /* Use large stack allocation — message_t is ~270KB due to inline tool_calls */
+    message_t msgs[10];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tool_calls("thinking", "call_1", "read_file", "bad-json", NULL, NULL, NULL);
+
+    int count = 1;
+    int r = hermes_sanitize_tool_call_arguments(msgs, &count);
+    TEST("no existing result: 1 repair", r == 1);
+    TEST("count increased to 2 (new tool result inserted)", count == 2);
+    TEST("args fixed", strcmp(msgs[0].tool_calls[0].arguments, "{}") == 0);
+    TEST("new tool result has matching tool_call_id",
+         strcmp(msgs[1].tool_call_id, "call_1") == 0);
+    TEST("new tool result has corruption marker",
+         strstr(msgs[1].content, "hermes-agent: tool call arguments") != NULL);
+
+    for (int i = 0; i < count; i++) free_msg(&msgs[i]);
+}
+
+static void test_sanitize_mixed_tool_calls(void) {
+    printf("\n--- sanitize: mixed tool calls ---\n");
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tool_calls("thinking",
+                                         "call_1", "tool_a", "{\"key\":\"val\"}",
+                                         "call_2", "tool_b", "broken-json");
+    msgs[1] = make_tool_msg("call_1", "result a");
+    msgs[2] = make_tool_msg("call_2", "result b");
+
+    int count = 3;
+    int r = hermes_sanitize_tool_call_arguments(msgs, &count);
+    TEST("mixed: 1 repair (call_2 only)", r == 1);
+    TEST("call_1 args preserved", strcmp(msgs[0].tool_calls[0].arguments, "{\"key\":\"val\"}") == 0);
+    TEST("call_2 args fixed", strcmp(msgs[0].tool_calls[1].arguments, "{}") == 0);
+    /* call_2's result should have marker, call_1's should not */
+    TEST("call_2 result has marker", strstr(msgs[2].content, "hermes-agent: tool call arguments") != NULL);
+    TEST("call_1 result has no marker", strstr(msgs[1].content, "hermes-agent: tool call arguments") == NULL);
+
+    for (int i = 0; i < count; i++) free_msg(&msgs[i]);
+}
+
 int main(void) {
     printf("=== Agent Message Repair Test Suite ===\n");
 
@@ -203,6 +339,13 @@ int main(void) {
     test_consecutive_users_merged();
     test_user_clears_known_ids();
     test_three_consecutive_users();
+
+    test_sanitize_empty_or_null();
+    test_sanitize_valid_args();
+    test_sanitize_empty_args();
+    test_sanitize_corrupted_args();
+    test_sanitize_no_existing_result();
+    test_sanitize_mixed_tool_calls();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

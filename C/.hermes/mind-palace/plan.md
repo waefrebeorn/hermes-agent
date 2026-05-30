@@ -1,15 +1,15 @@
-(v278)
+(v279)
 
 ## Immediate Next
 
-S0+S3+S6 all PORTED. 112 gaps remain across 7 sectors.
+S0+S3+S6 all PORTED. 111 gaps remain across 7 sectors.
 Next: S7 test expansion, S1 partials (L24-L28), or B08 send_message remaining depth.
 
 ## Pipeline
 
 S1 L25 depth (agent_runtime_helpers):
 - hermes_repair_message_sequence() ported ✅ (Phase 211, 17 tests)
-- sanitize_tool_call_arguments() — pending
+- hermes_sanitize_tool_call_arguments() ported ✅ (Phase 212, 22 tests)
 - repair_tool_call() — pending
 
 S0 D09 depth (line_edit):
@@ -23,8 +23,8 @@ S6 B08 depth (send_message):
 - Smart message chunking — pending
 - Home channel resolution — pending
 
-S7 test coverage (279/1262 test files = 22.1%):
-- Phase 211: 17-test agent_message_repair suite
+S7 test coverage (280/1262 test files = 22.2%):
+- Phase 211-212: 39-test agent_message_repair suite
 - Suite now 323/0/0
 
 ## Future
