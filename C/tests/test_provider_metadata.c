@@ -348,6 +348,59 @@ int main(void) {
     prov = provider_infer_from_url(NULL);
     TEST("NULL -> NULL", prov == NULL);
 
+    /* --- Test 11: provider_parse_context_limit_from_error --- */
+    printf("\n[R10] provider_parse_context_limit_from_error:\n");
+
+    int ctx;
+    ctx = provider_parse_context_limit_from_error(
+        "maximum context length is 32768 tokens");
+    TEST("maximum context length is 32768", ctx == 32768);
+
+    ctx = provider_parse_context_limit_from_error(
+        "This model's maximum context length is 128000 tokens.");
+    TEST("maximum context length is 128000", ctx == 128000);
+
+    ctx = provider_parse_context_limit_from_error(
+        "context_length_exceeded: 131072");
+    TEST("context_length_exceeded: 131072", ctx == 131072);
+
+    ctx = provider_parse_context_limit_from_error(
+        "context length is 65536");
+    TEST("context length is 65536", ctx == 65536);
+
+    ctx = provider_parse_context_limit_from_error(
+        "250000 tokens > 200000 maximum");
+    TEST("250000 > 200000 maximum", ctx == 200000);
+
+    ctx = provider_parse_context_limit_from_error(
+        "max context size 32768 exceeded");
+    TEST("max context size 32768 exceeded", ctx == 32768);
+
+    ctx = provider_parse_context_limit_from_error("some random error");
+    TEST("random error -> -1", ctx == -1);
+
+    ctx = provider_parse_context_limit_from_error(NULL);
+    TEST("NULL -> -1", ctx == -1);
+
+    /* --- Test 12: provider_parse_available_output_tokens_from_error --- */
+    printf("\n[R10] provider_parse_available_output_tokens_from_error:\n");
+
+    int avail;
+    avail = provider_parse_available_output_tokens_from_error(
+        "max_tokens: 32768 > context_window: 200000 - input_tokens: 190000 = available_tokens: 10000");
+    TEST("available_tokens: 10000", avail == 10000);
+
+    avail = provider_parse_available_output_tokens_from_error(
+        "max_tokens too large: max_tokens: 50000 > context_window: 128000 - input_tokens: 100000 = available_output_tokens: 28000");
+    TEST("available_tokens: 28000", avail == 28000);
+
+    avail = provider_parse_available_output_tokens_from_error(
+        "prompt too long: 200000 > 128000");
+    TEST("not a max_tokens error -> -1", avail == -1);
+
+    avail = provider_parse_available_output_tokens_from_error(NULL);
+    TEST("NULL -> -1", avail == -1);
+
     /* --- Summary --- */
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

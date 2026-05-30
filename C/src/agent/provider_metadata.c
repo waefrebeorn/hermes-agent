@@ -948,3 +948,133 @@ char *provider_infer_from_url(const char *base_url) {
     free(host);
     return result;
 }
+
+/* Parse a context length limit from an API error message.
+ * Port of Python model_metadata.parse_context_limit_from_error().
+ * Extracts numbers near context-related keywords. Returns limit,
+ * or -1 if not found / not parseable. */
+int provider_parse_context_limit_from_error(const char *error_msg) {
+    if (!error_msg || !*error_msg) return -1;
+
+    /* Work on a lowercase copy */
+    char buf[2048];
+    size_t len = strlen(error_msg);
+    if (len >= sizeof(buf)) len = sizeof(buf) - 1;
+    for (size_t i = 0; i < len; i++)
+        buf[i] = (char)tolower((unsigned char)error_msg[i]);
+    buf[len] = '\0';
+
+    /* Pattern 1: "maximum context length is N" or "max context size is N" */
+    const char *p = strstr(buf, "maximum");
+    if (!p) p = strstr(buf, "max");
+    if (p) {
+        /* Scan around this area for a 4+ digit number */
+        const char *scan_start = p > buf ? p - 20 : buf;
+        const char *scan_end = p + 40;
+        if (scan_end > buf + len) scan_end = buf + len;
+        if (scan_start < buf) scan_start = buf;
+
+        /* Look for number near context/length keywords */
+        const char *keywords[] = {"context", "length", "size", "window", "limit", "token", NULL};
+        for (int ki = 0; keywords[ki]; ki++) {
+            const char *kw = strstr(scan_start, keywords[ki]);
+            if (kw && kw < scan_end) {
+                /* Search for digits before and after the keyword */
+                const char *num_search_start = (kw - scan_start) > 20 ? kw - 20 : scan_start;
+                const char *num_search_end = kw + 20;
+                if (num_search_end > scan_end) num_search_end = scan_end;
+
+                for (const char *cp = num_search_start; cp < num_search_end; cp++) {
+                    if (cp >= buf + len) break;
+                    if (cp >= num_search_end) break;
+                    if (cp < scan_start) continue;
+                    if (*cp >= '0' && *cp <= '9') {
+                        long val = strtol(cp, NULL, 10);
+                        if (val >= 1024 && val <= 10000000)
+                            return (int)val;
+                        /* Skip this number */
+                        while (cp < num_search_end && *cp >= '0' && *cp <= '9') cp++;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Pattern 2: "context_length_exceeded: NNNNN" */
+    const char *cl = strstr(buf, "context_length_exceeded");
+    if (cl) {
+        const char *num = cl + 24; /* skip past "context_length_exceeded" */
+        while (*num && (*num == ':' || *num == ' ' || *num == ',')) num++;
+        if (*num >= '0' && *num <= '9') {
+            long val = strtol(num, NULL, 10);
+            if (val >= 1024 && val <= 10000000) return (int)val;
+        }
+    }
+
+    /* Pattern 3: "context length is N" or "context size N" */
+    p = strstr(buf, "context length");
+    if (!p) p = strstr(buf, "context size");
+    if (!p) p = strstr(buf, "context window");
+    if (p) {
+        /* Look for a number within 30 chars after the keyword */
+        const char *end = p + 30;
+        if (end > buf + len) end = buf + len;
+        for (const char *cp = p; cp < end; cp++) {
+            if (*cp >= '0' && *cp <= '9') {
+                long val = strtol(cp, NULL, 10);
+                if (val >= 1024 && val <= 10000000) return (int)val;
+                while (cp < end && *cp >= '0' && *cp <= '9') cp++;
+            }
+        }
+    }
+
+    return -1;
+}
+
+/* Parse available output tokens from a max_tokens-too-large error message.
+ * Port of Python model_metadata.parse_available_output_tokens_from_error().
+ * Returns available tokens, or -1 if not a max_tokens-too-large error. */
+int provider_parse_available_output_tokens_from_error(const char *error_msg) {
+    if (!error_msg || !*error_msg) return -1;
+
+    /* Work on a lowercase copy */
+    char buf[2048];
+    size_t len = strlen(error_msg);
+    if (len >= sizeof(buf)) len = sizeof(buf) - 1;
+    for (size_t i = 0; i < len; i++)
+        buf[i] = (char)tolower((unsigned char)error_msg[i]);
+    buf[len] = '\0';
+
+    /* Must contain "max_tokens" and "available_(output_)?tokens" */
+    if (!strstr(buf, "max_tokens")) return -1;
+    if (!strstr(buf, "available_tokens") && !strstr(buf, "available tokens")
+        && !strstr(buf, "available_output_tokens")) return -1;
+
+    /* Extract the available tokens figure */
+    const char *at = strstr(buf, "available_output_tokens");
+    if (!at) at = strstr(buf, "available_tokens");
+    if (!at) at = strstr(buf, "available tokens");
+    if (at) {
+        const char *num = at;
+        /* Skip past the keyword */
+        while (*num && *num != ':' && *num != '=' && *num != ' ') num++;
+        while (*num && (*num == ':' || *num == ' ' || *num == '=')) num++;
+        if (*num >= '0' && *num <= '9') {
+            long val = strtol(num, NULL, 10);
+            if (val >= 1) return (int)val;
+        }
+    }
+
+    /* Fallback: look for "= N" at the end of the error */
+    const char *eq = strrchr(buf, '=');
+    if (eq) {
+        const char *num = eq + 1;
+        while (*num && *num == ' ') num++;
+        if (*num >= '0' && *num <= '9') {
+            long val = strtol(num, NULL, 10);
+            if (val >= 1) return (int)val;
+        }
+    }
+
+    return -1;
+}

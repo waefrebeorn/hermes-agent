@@ -175,6 +175,16 @@ bool provider_is_local_endpoint(const char *base_url);
  * Returns malloc'd provider name string, or NULL if unknown. Caller must free(). */
 char *provider_infer_from_url(const char *base_url);
 
+/* Parse a context length limit from an API error message.
+ * Port of Python model_metadata.parse_context_limit_from_error().
+ * Returns limit, or -1 if not found. */
+int provider_parse_context_limit_from_error(const char *error_msg);
+
+/* Parse available output tokens from a max_tokens-too-large error message.
+ * Port of Python model_metadata.parse_available_output_tokens_from_error().
+ * Returns available tokens, or -1 if not a max_tokens-too-large error. */
+int provider_parse_available_output_tokens_from_error(const char *error_msg);
+
 #ifdef __cplusplus
 }
 #endif
