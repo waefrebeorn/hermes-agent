@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). S7 X09 openrouter_depth expansion (12→60 tests). v310.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). S7 X09 openrouter_depth expansion (12→60 tests). S7 X09 xai_http expansion (15→24 tests). v311.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -190,6 +190,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 241: S7 X09 Google provider depth expansion — test_google_depth.c 8→45 tests. New: build_url edge cases (model, base, trailing slash), build_headers (with/without key), genConfig (temp/top_p/top_k/stop), contents multi-message, streaming body, parse_response (text, function_call, error, blocked, multi-part, null/empty). Suite 335/0/0. v308.
 |- Phase 242: S7 X09 Azure provider depth expansion — test_azure_depth.c 10→55 tests. New: build_url edge cases (NULL/empty/trailing slash base), build_headers (with/without key), build_request_body (stream=true/false, genConfig: temperature/top_p/stop/service_tier/presence/freq/seed/user/logprobs/top_logprobs/n/max_tool_calls/reasoning_effort, tools array, tool_calls in messages, tool_result, extra_body merge), parse_response (text, tool calls, error, empty/null/non-json body), parse_stream_chunk (null, delta, done, finish_reason). Suite 335/0/0. v309.
 |- Phase 243: S7 X09 OpenRouter provider depth expansion — test_openrouter_depth.c 12→60 tests. New: build_url (default, custom base, trailing slash, existing chat/completions, empty), build_headers (Bearer token, Referer/X-Title, with/without key), build_request_body (model, stream flag, genConfig 14 params, system message, tools, tool_calls, extra_body merge), parse_response (text, tool_calls, error, reasoning_content, null/empty/invalid), parse_stream_chunk (null, delta, done, raw DONE, finish_reason). Suite 335/0/0. v310.
+|- Phase 244: S7 X09 xAI HTTP library edge case expansion — test_xai_http.c 15→24 tests. New: whitespace key (preserved), long key truncation (XAI_API_KEY_MAX), trailing slash base URL preserved, long base URL truncation, state cleanup (set/unset/no leakage), user agent non-empty. Suite 335/0/0. v311.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)

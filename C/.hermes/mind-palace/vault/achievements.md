@@ -1859,3 +1859,13 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | B44d | parse_response: normal text with usage tokens, tool_calls with name/id/function, error with message, reasoning_content preserved, null/empty/invalid JSON safety. | `C/tests/test_openrouter_depth.c` — 7 new tests. |
 | B44e | parse_stream_chunk: null chunk (empty), data: delta content, [DONE] termination, raw [DONE] without data: prefix, finish_reason delta. | `C/tests/test_openrouter_depth.c` — 5 new tests. |
 | B44f | Test file growth: 12→60 tests (+48, +400%). All 7 provider ops functions covered. | `C/tests/test_openrouter_depth.c` — 60 tests. |
+
+## Phase 244: S7 X09 xAI HTTP Library Edge Case Expansion (v311)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X01 | Whitespace key: whitespace-only value preserved (treated as valid, unlike empty string). | `C/tests/test_xai_http.c` — test_whitespace_key(). |
+| X02 | Long key truncation: key > XAI_API_KEY_MAX truncated to max-1. | `C/tests/test_xai_http.c` — test_long_key(). |
+| X03 | Trailing slash base URL: trailing slash preserved in URL. | `C/tests/test_xai_http.c` — test_base_url_trailing_slash(). |
+| X04 | Long base URL truncation: URL > XAI_BASE_URL_MAX truncated to max-1. | `C/tests/test_xai_http.c` — test_base_url_long(). |
+| X05 | State cleanup: setenv/unsetenv leaves no state leakage. | `C/tests/test_xai_http.c` — test_state_cleanup(). |
+| X06 | Test file growth: 15→24 tests (+9, +60%). | `C/tests/test_xai_http.c` — 24 tests. |
