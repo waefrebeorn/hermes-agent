@@ -228,3 +228,99 @@ bool telegram_query_doh(const char *doh_url,
     http_free(h);
     return ok;
 }
+
+/* ================================================================
+ *  telegram_discover_fallback_ips
+ *  Port of Python discover_fallback_ips().
+ *  Queries DoH providers, merges with system DNS, deduplicates.
+ * ================================================================ */
+
+/* DoH provider definitions — mirrors Python _DOH_PROVIDERS */
+typedef struct {
+    const char *url;
+    const char *headers;
+} doh_provider_t;
+
+static const doh_provider_t DOH_PROVIDERS[] = {
+    {"https://dns.google/resolve",           NULL},
+    {"https://cloudflare-dns.com/dns-query", "Accept: application/dns-json"},
+};
+
+#define DOH_PROVIDER_COUNT 2
+
+/* Hardcoded seed IPs — mirrors Python _SEED_FALLBACK_IPS */
+static const char *SEED_FALLBACK_IPS[] = {
+    "149.154.167.220",
+};
+
+#define SEED_FALLBACK_IP_COUNT 1
+
+/* Helper: check if IP is already in a list */
+static bool ip_in_list(const char *ip, char **list, size_t count) {
+    for (size_t i = 0; i < count; i++) {
+        if (strcmp(ip, list[i]) == 0) return true;
+    }
+    return false;
+}
+
+bool telegram_discover_fallback_ips(const char *hostname,
+                                     char ***out_ips,
+                                     size_t *out_count)
+{
+    if (!out_ips || !out_count) return false;
+    *out_ips = NULL;
+    *out_count = 0;
+
+    if (!hostname || !hostname[0]) return false;
+
+    /* Temporary storage: max 64 IPs */
+    char *tmp_ips[64];
+    size_t tmp_count = 0;
+
+    /* 1. System DNS resolution */
+    char **sys_ips = NULL;
+    size_t sys_count = 0;
+    telegram_resolve_system_dns(hostname, &sys_ips, &sys_count);
+    for (size_t i = 0; i < sys_count && tmp_count < 64; i++) {
+        if (!ip_in_list(sys_ips[i], tmp_ips, tmp_count)) {
+            tmp_ips[tmp_count] = strdup(sys_ips[i]);
+            if (tmp_ips[tmp_count]) tmp_count++;
+        }
+    }
+    telegram_free_ip_list(sys_ips, sys_count);
+
+    /* 2. Query each DoH provider */
+    for (int pi = 0; pi < DOH_PROVIDER_COUNT && tmp_count < 64; pi++) {
+        char **doh_ips = NULL;
+        size_t doh_count = 0;
+        telegram_query_doh(DOH_PROVIDERS[pi].url, hostname,
+                           DOH_PROVIDERS[pi].headers,
+                           4, &doh_ips, &doh_count);
+        for (size_t i = 0; i < doh_count && tmp_count < 64; i++) {
+            if (!ip_in_list(doh_ips[i], tmp_ips, tmp_count)) {
+                tmp_ips[tmp_count] = strdup(doh_ips[i]);
+                if (tmp_ips[tmp_count]) tmp_count++;
+            }
+        }
+        telegram_free_ip_list(doh_ips, doh_count);
+    }
+
+    /* 3. Fall back to seed IPs if nothing found */
+    if (tmp_count == 0) {
+        for (size_t i = 0; i < SEED_FALLBACK_IP_COUNT; i++) {
+            tmp_ips[tmp_count] = strdup(SEED_FALLBACK_IPS[i]);
+            if (tmp_ips[tmp_count]) tmp_count++;
+        }
+    }
+
+    if (tmp_count == 0) return true;
+
+    /* Allocate output array */
+    char **result = (char **)xmalloc(tmp_count * sizeof(char *));
+    for (size_t i = 0; i < tmp_count; i++) {
+        result[i] = tmp_ips[i];
+    }
+    *out_ips = result;
+    *out_count = tmp_count;
+    return true;
+}

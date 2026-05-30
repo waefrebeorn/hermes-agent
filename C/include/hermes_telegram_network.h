@@ -69,6 +69,23 @@ bool telegram_parse_doh_response(const char *doh_response,
                                   char ***out_ips,
                                   size_t *out_count);
 
+/**
+ * Discover Telegram API fallback IPs via DoH + system DNS fallback.
+ * Port of Python discover_fallback_ips().
+ *
+ * Queries Google and Cloudflare DoH providers, merges with system DNS
+ * results, deduplicates, validates via telegram_parse_fallback_ips(),
+ * and falls back to hardcoded seed IPs only when DoH yields nothing.
+ *
+ * @param hostname  Hostname to resolve (e.g. "api.telegram.org")
+ * @param out_ips   Output: malloc'd array of malloc'd IP strings.
+ * @param out_count Output: number of IPs found.
+ * @return true on success (even if empty), false on error.
+ */
+bool telegram_discover_fallback_ips(const char *hostname,
+                                     char ***out_ips,
+                                     size_t *out_count);
+
 #ifdef __cplusplus
 }
 #endif
