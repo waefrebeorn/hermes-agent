@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 329/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 283 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 283 (+1 qqbot). v289.
+Suite: 330/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 284 | C src: 180
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X01 test files 284 (+1 slack). v290.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -169,6 +169,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 220: display_word_wrap test suite + bugfix. test_display_word_wrap.c — 16 assertions covering NULL/empty, exact boundary, word wrapping, existing newline preservation, multi-word, single char width, edge cases. Bugfix: capacity calc OBO in display_word_wrap() dropped trailing words (pos + wlen + 1 >= cap triggered prematurely). Suite 325/0/0. Test files 280→281. v287.
 |- Phase 221: Mattermost platform test suite (S7 X01). test_mattermost.c — 28 assertions covering mattermost_set_url (trailing slash, path, IP, empty, multiple slashes), mattermost_set_token (normal, empty, long truncation, special chars), mattermost_set_channel (normal, empty, dashes, long truncation), mattermost_get_chat_id (current channel, change reflection, NULL update), mattermost_get_text (normal, empty, missing field, no message, NULL, unicode, multi-line), set/get interaction. Suite 325→328/0/0. Test files 281→282. v288.
 |- Phase 222: QQ Bot platform test suite (S7 X01). test_qqbot.c — 57 assertions covering qqbot_set_webhook/set_token (URL, empty, NULL, reset), ring buffer queue/poll (single, multi-message, FIFO, empty, NULL params, overflow), get_chat_id/get_text (normal, missing, NULL, unicode), handle_webhook OneBot format (group, private), handle_webhook QQ Guild API format (channel, content, sender, empty content, missing channel), edge cases (NULL, empty, invalid JSON, unknown format, non-message, empty/null text). Suite 328→329/0/0. Test files 282→283. v289.
+|- Phase 223: Slack platform test suite (S7 X01). test_slack.c — 26 assertions covering slack_set_token (normal, empty, long, special chars), slack_set_channel (normal, empty, dashes, DM), slack_set_signing_secret (NULL, normal, empty, hex), slack_get_chat_id (current, change, NULL update), slack_get_text (normal, empty, missing, no msg, NULL, unicode, multi-line, markdown), setter/getter interaction (multiple sets, re-sets). Suite 329→330/0/0. Test files 283→284. v290.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
