@@ -4,9 +4,9 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║  WuBu Slermes C v248                                       ║
 ║  313/0/0 test suite  │  85 tools  │  98 CLI commands        ║
-║  130 gaps  │  31MB binary  │  0 warnings                     ║
+║  129 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 180: G07 telegram_network PORTED                 ║
+║  Phase 180: G07 + B03 PORTED                            ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -22,4 +22,4 @@
 | Library modules | 65 |
 | Binary size | 31MB |
 | Warnings | 0 |
-| Gaps | 130 |
+| Gaps | 129 |

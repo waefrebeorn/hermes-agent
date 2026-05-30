@@ -1665,4 +1665,4 @@ Suite: 311/0/0 (270 test files). Gaps: 134. v246
 | P177-02 | Gap count reduced: 132→131 gaps. Suite 312→313. Test files 271→272. | `.hermes/mind-palace/battleship-v34.md` — G07 updated, S7 X01 updated, summary table updated. |
 | P180-01 | G07 telegram_network PORTED — telegram_query_doh() (DoH HTTP GET), telegram_parse_doh_response() (JSON A-record parsing), telegram_discover_fallback_ips() (orchestration + seed fallback), telegram_rewrite_url_for_ip() (URL host replacement). 22 test assertions. Suite 313/0/0 v248. | `C/src/gateway/platforms/telegram_network.c` — 4 new functions. `C/tests/test_telegram_network.c` — 22/22 passed. |
 | P180-02 | Gap count reduced: 131→130 gaps. S3 sector: 4→3 gaps. G07 upgraded PARTIAL→✅ PORTED (7/8 functions, 87.5%). Remaining: TelegramFallbackTransport (async httpx, won't port to sync C). | `.hermes/mind-palace/battleship-v34.md` — G07 ✅ PORTED, S3 4→3, TOTAL 131→130. |
-Suite: 313/0/0 (272 test files). Gaps: 130. v248
+Suite: 313/0/0 (272 test files). Gaps: 129. v248
