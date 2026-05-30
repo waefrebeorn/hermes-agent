@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 302: S7 X09 proc Edge Case Expansion (v366)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | proc test expansion — 21 new assertions (15→36). PID 0 (swapper, may fail gracefully). Invalid PID -1 returns false. Large PID 999999999 returns false. proc_self(NULL)/proc_get(NULL) return false. proc_load_avg NULL params (4 combinations) no crash. Process sanity: vm_size_kb >= rss_kb, pid matches getpid(). System consistency: total_ram consistent across calls, cpu_count consistent. Sanity bounds: total_ram < 1TB, cpu_count < 1024, uptime < 10yr. Avail RAM <= total RAM. | `tests/test_proc.c` — 21 new assertions (15→36). Suite 335/0/15. v366. |
 ## Phase 301: S7 X09 display Edge Case Expansion (v364)
 | ID | Achievement | Evidence |
 |----|-------------|----------|

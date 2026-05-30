@@ -34,4 +34,4 @@
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
 | 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
-| 301 | S7 X09 display edge case expansion — 22 new assertions (17→39). Double init/reset, zero total clamp, long/NULL label, update beyond total, catch-up, double start/stop, unstarted stop. Suite 335/0/15. v364. |
+| 302 | S7 X09 proc edge case expansion — 21 new assertions (15→36). PID 0/invalid/large, NULL safety, load_avg NULL params, vm>=rss, pid==getpid(), consistency, sanity bounds. Suite 335/0/15. v366. |

@@ -1,8 +1,8 @@
-(v364)
+(v366)
 
-335/0/15, 289 test files. All pass. 78 gaps. Phase 301: S7 display test expansion — 22 new edge case assertions (17→39).
+335/0/15, 289 test files. All pass. 78 gaps. Phase 302: S7 proc test expansion — 21 new edge case assertions (15→36).
 
-Phase 301: S7 display edge case expansion — double init, double reset, zero total clamped, long label truncation, NULL label, update no-crash, beyond-total clamps, catch-up reset, NULL label spinner, double start, stop clear active, double stop, unstarted stop. v364.
+Phase 302: S7 proc edge case expansion — PID 0/invalid/large, NULL safety, load_avg NULL params, vm>=rss, pid==getpid(), consistency, sanity bounds. v366.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.
