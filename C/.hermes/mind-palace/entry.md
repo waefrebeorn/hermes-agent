@@ -1,4 +1,4 @@
-(v267)
+(v268)
 
 **Slermes C** — Full C translation of Hermes Agent by Nous Research.
 

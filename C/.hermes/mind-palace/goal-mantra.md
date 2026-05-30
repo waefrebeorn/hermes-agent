@@ -1,4 +1,4 @@
-(v267)
+(v268)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-320/0/0 (278 test files). 119 gaps. Phase 200: sudo password piped into PTY master fd for sudo -S.
-Next: S6 B07/B08 depth, S3 G02/G06 depth, S7 test gaps.
+320/0/0 (278 test files). 117 gaps. Phase 201: B08 send_message PORTED (100%). S6 all tools PORTED.
+Next: S3 G02/G06 depth, S7 test gaps, or S0 D09/D16 display depth.

@@ -1,9 +1,9 @@
-(v267)
+(v268)
 
 ## Immediate Next
 
-S6 B07 terminal depth — sudo password piped into PTY master fd for sudo -S (Phase 200).
-Next: B08 send_message remaining depth, S3 G02/G06 depth, or S7 test expansion.
+S6 all tools PORTED. B08 send_message PORTED (100% portable). 117 gaps remain.
+Next: S3 G02/G06 depth, or S7 test expansion, or S0 D09/D16 display depth.
 
 ## Pipeline
 
