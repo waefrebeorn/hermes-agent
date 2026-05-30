@@ -80,6 +80,7 @@ static void cmd_fast(const char *args, agent_state_t *state);
 static void cmd_secrets(const char *args, agent_state_t *state);
 static void cmd_completions(const char *args, agent_state_t *state);
 static void cmd_reload(const char *args, agent_state_t *state);
+static void cmd_doctor(const char *args, agent_state_t *state);
 static void cmd_rollback(const char *args, agent_state_t *state);
 static void cmd_copy(const char *args, agent_state_t *state);
 static void cmd_queue(const char *args, agent_state_t *state);
@@ -171,6 +172,7 @@ static const command_def_t COMMANDS[] = {
     {"/toolsets",NULL,    "List available toolsets",                    cmd_toolsets},
     {"/skills",  NULL,    "Search and manage installed skills",         cmd_skills},
     {"/secrets", NULL,    "Manage secrets: /secrets [list|get|sync|status]", cmd_secrets},
+    {"/doctor",  NULL,    "Run system diagnostics: /doctor [all|config|env|keys]", cmd_doctor},
     {"/completions", NULL, "Generate shell completions: /completions [bash|zsh|fish]", cmd_completions},
     {"/cron",    NULL,    "Manage scheduled tasks: /cron [list|status]", cmd_cron},
     {"/fast",    NULL,    "Toggle fast mode for priority processing",   cmd_fast},
@@ -4724,4 +4726,90 @@ static void cmd_send(const char *args, agent_state_t *state) {
     } else {
         printf("Error: send_message_handler returned NULL\n");
     }
+}
+
+/* /doctor: Run system diagnostics */
+static void cmd_doctor(const char *args, agent_state_t *state) {
+    bool show_all = (!args || !*args || strcmp(args, "all") == 0);
+    bool show_config = show_all || strcmp(args, "config") == 0;
+    bool show_env = show_all || strcmp(args, "env") == 0;
+    bool show_keys = show_all || strcmp(args, "keys") == 0;
+
+    printf("=== System Diagnostics ===\n\n");
+
+    /* 1. HERMES_HOME */
+    const char *home = state->hermes_home[0] ? state->hermes_home
+                    : getenv("SLERMES_HOME") ? getenv("SLERMES_HOME")
+                    : getenv("HOME");
+    printf("[HERMES_HOME]  %s\n", home ? home : "(not found)");
+
+    /* Check ~/.slermes or ~/.hermes exists */
+    char home_dir[1024];
+    if (state->hermes_home[0]) {
+        snprintf(home_dir, sizeof(home_dir), "%s", state->hermes_home);
+    } else {
+        const char *uh = getenv("HOME");
+        if (uh) {
+            snprintf(home_dir, sizeof(home_dir), "%s/.slermes", uh);
+            if (access(home_dir, F_OK) != 0)
+                snprintf(home_dir, sizeof(home_dir), "%s/.hermes", uh);
+        }
+    }
+    printf("[HOME_DIR]    %s %s\n", home_dir,
+           access(home_dir, F_OK) == 0 ? "✓" : "✗ (not found)");
+
+    /* 2. Config file */
+    if (show_config) {
+        printf("\n--- Config ---\n");
+        char cfg_path[1024];
+        snprintf(cfg_path, sizeof(cfg_path), "%s/config.yaml", home_dir);
+        if (access(cfg_path, F_OK) == 0) {
+            printf("[config.yaml] %s ✓\n", cfg_path);
+            hermes_config_t cfg;
+            if (hermes_config_load(&cfg, home_dir))
+                printf("[config]      Loaded successfully (v%d)\n", cfg.config_version);
+            else
+                printf("[config]      ✗ Failed to parse\n");
+        } else {
+            printf("[config.yaml] ✗ Not found at %s\n", cfg_path);
+        }
+    }
+
+    /* 3. .env file */
+    if (show_env) {
+        printf("\n--- Environment ---\n");
+        char env_path[1024];
+        snprintf(env_path, sizeof(env_path), "%s/.env", home_dir);
+        if (access(env_path, F_OK) == 0) {
+            printf("[.env]        %s ✓\n", env_path);
+        } else {
+            printf("[.env]        Not found (optional)\n");
+        }
+    }
+
+    /* 4. API key detection */
+    if (show_keys) {
+        printf("\n--- API Keys ---\n");
+        const char *key_names[] = {
+            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_TOKEN",
+            "OPENROUTER_API_KEY", "DEEPSEEK_API_KEY", "GOOGLE_API_KEY",
+            "XAI_API_KEY", "AZURE_API_KEY", "AWS_ACCESS_KEY_ID",
+            "NOUS_API_KEY", "HF_TOKEN", NULL
+        };
+        int found = 0;
+        for (int i = 0; key_names[i]; i++) {
+            const char *val = getenv(key_names[i]);
+            if (val && *val) {
+                size_t vlen = strlen(val);
+                printf("[%-20s] ✓ (%zu chars)\n", key_names[i], vlen);
+                found++;
+            }
+        }
+        if (found == 0)
+            printf("  No API keys found in environment.\n");
+        else
+            printf("  %d API key(s) detected.\n", found);
+    }
+
+    printf("\n=== Diagnostics complete ===\n");
 }

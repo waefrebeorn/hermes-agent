@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/14 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||||||||||||||||Battleship v34 (88 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06+R04+R10+R02 all PORTED. S8 R01 PORTED. C06 env_loader.py PORTED. v354. Phase 287c: S5 C06 env_loader.py ported — load_slermes_env() in main.c loads ~/.slermes/.env via libdotenv at startup, exports to process environment, sanitizes credential values (strips non-ASCII from _API_KEY/_TOKEN/_SECRET/_KEY vars with warning). S5 30→29 gaps. Total 89→88 gaps.
+|||||||||||||||||||Battleship v34 (87 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06+R04+R10+R02 all PORTED. S8 R01 PORTED. C06 env_loader.py PORTED. C02 doctor cmd PORTED. v355. Phase 288: S5 C02 doctor diagnostic command — /doctor shows HERMES_HOME, config.yaml validity, .env presence, 11 API key env vars. Port of Python hermes_cli/doctor.py core checks. S5 29→28 gaps. Total 88→87 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.

@@ -2066,3 +2066,7 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |ID | Achievement | Evidence |
 |---|-------------|----------|
 | C06 | `load_slermes_env()` ported from Python hermes_cli/env_loader.py (load_hermes_dotenv). Loads ~/.slermes/.env via libdotenv at startup, exports to process environment, sanitizes credential values (strips non-ASCII from _API_KEY, _TOKEN, _SECRET, _KEY suffix vars) with per-var warning. Graceful no-op when no .env file exists. | `src/main.c` — load_slermes_env() function + call in main(). S5 30→29 gaps. Total 89→88 gaps. v354. |
+|## Phase 288: S5 C02 Doctor Diagnostic Command (v355)
+|ID | Achievement | Evidence |
+|---|-------------|----------|
+| C02 | `/doctor` diagnostic command — shows HERMES_HOME path, config.yaml validity+version, .env file presence, and scans 11 common API key env vars (OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, DEEPSEEK_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, AZURE_API_KEY, AWS_ACCESS_KEY_ID, NOUS_API_KEY, HF_TOKEN, ANTHROPIC_TOKEN) with length display. Subcommands: /doctor all|config|env|keys. Port of Python hermes_cli/doctor.py core checks. | `src/cli/commands.c` — cmd_doctor() implementation + registry entry. Binary smoke test: ✓. S5 29→28 gaps. Total 88→87 gaps. v355. |
