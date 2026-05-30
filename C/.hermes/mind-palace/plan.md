@@ -1,31 +1,30 @@
-(v262)
+(v263)
 
 ## Immediate Next
 
-B08 media path validation done (Phase 194). Media validation test suite (Phase 195, 11 tests).
+B07 terminal depth — terminal_rewrite_sudo() ported (Phase 196, 24 tests).
 
 ## Pipeline
 
+S6 B07 depth (terminal):
+- terminal_rewrite_sudo() ported from Python _rewrite_real_sudo_invocations() ✅ (Phase 196)
+- _rewrite_compound_background — pending
+- check_terminal_requirements — pending
+
 S6 B08 depth (send_message):
-- validate_media_path() ported from Python base.py validate_media_delivery_path() ✅ (Phase 194)
+- validate_media_path() ported ✅ (Phase 194)
 - Media validation test suite (11 tests) ✅ (Phase 195)
 - Slack DM resolution (U... → D...) — pending
-- Smart message chunking for long messages — pending
+- Smart message chunking — pending
 - Home channel resolution — pending
-
-S6 B07 depth (terminal):
-- _rewrite_compound_background — pending
-- _rewrite_real_sudo_invocations — pending
-- _prompt_for_sudo_password — won't port (interactive CLI)
-- check_terminal_requirements — pending
 
 S3:
 - G02 base.py remaining (validate_media_path done Phase 194)
 - G06 wecom_callback remaining
 
-S7 test coverage (274/1262 test files = 21.7%):
+S7 test coverage (275/1262 test files = 21.8%):
 - Phase 195: media_validation test suite (11 tests) ✅
-- Expand coverage on untested modules
+- Phase 196: terminal_sudo_rewrite (24 tests) ✅
 
 ## Future
 

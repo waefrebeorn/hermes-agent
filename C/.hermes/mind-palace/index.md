@@ -1,9 +1,9 @@
-(v262)
+(v263)
 
 # Slermes C — Walkway Index
 
-Battleship v34 — 119 gaps across 9 sectors. Phase 195: media_validation test suite (11 tests).
-Suite 316/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
+Battleship v34 — 119 gaps across 9 sectors. Phase 196: terminal_rewrite_sudo() (24 tests).
+Suite 317/0/0, 85 tools, 98 CLI, 19 GW, 10 prov, 65 libs.
 
 | File | Purpose |
 |------|---------|

@@ -817,6 +817,149 @@ bool terminal_sudo_nopasswd_works(void) {
     return status == 0;
 }
 
+/* Check if token looks like a shell env assignment (KEY=VALUE).
+ * Port of Python terminal_tool._looks_like_env_assignment(). */
+static bool looks_like_env_assignment(const char *token) {
+    if (!token || !token[0]) return false;
+    const char *eq = strchr(token, '=');
+    if (!eq || eq == token) return false;
+    /* Check that chars before '=' are valid env var name */
+    for (const char *p = token; p < eq; p++) {
+        if (p == token) {
+            if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') || *p == '_'))
+                return false;
+        } else {
+            if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
+                  (*p >= '0' && *p <= '9') || *p == '_'))
+                return false;
+        }
+    }
+    return true;
+}
+
+/* Forward declaration */
+char *terminal_read_shell_token(const char *command, int start, int *end);
+
+/* B07: Rewrite bare 'sudo' command words to 'sudo -S -p ""' for piped password.
+ * Port of Python terminal_tool._rewrite_real_sudo_invocations().
+ * Returns malloc'd transformed string. Sets *found to true if any sudo was rewritten.
+ * Caller must free() the returned string. */
+char *terminal_rewrite_sudo(const char *command, bool *found) {
+    if (!command || !found) return NULL;
+    *found = false;
+    int n = (int)strlen(command);
+    if (n == 0) return strdup("");
+
+    /* Allocate output buffer: worst case is same length + " -S -p ''" for each sudo.
+     * A generous overestimate: 2x input. */
+    size_t out_cap = (size_t)n * 2 + 64;
+    char *out = (char *)malloc(out_cap);
+    if (!out) return NULL;
+    int out_pos = 0;
+
+    int i = 0;
+    bool command_start = true;
+    const char *sudo_replacement = "sudo -S -p ''";
+
+    while (i < n) {
+        char ch = command[i];
+
+        if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+            if ((size_t)out_pos + 1 >= out_cap) break;
+            out[out_pos++] = ch;
+            if (ch == '\n') command_start = true;
+            i++;
+            continue;
+        }
+
+        /* Comment at statement start: copy to end of line */
+        if (ch == '#' && command_start) {
+            while (i < n && command[i] != '\n') {
+                if ((size_t)out_pos + 1 >= out_cap) break;
+                out[out_pos++] = command[i++];
+            }
+            continue;
+        }
+
+        /* Compound operators: &&, ||, ;; */
+        if (i + 1 < n) {
+            if ((command[i] == '&' && command[i+1] == '&') ||
+                (command[i] == '|' && command[i+1] == '|') ||
+                (command[i] == ';' && command[i+1] == ';')) {
+                if ((size_t)out_pos + 3 >= out_cap) break;
+                out[out_pos++] = command[i++];
+                out[out_pos++] = command[i++];
+                command_start = true;
+                continue;
+            }
+        }
+
+        /* Single char operators: ; | & ( */
+        if (ch == ';' || ch == '|' || ch == '&' || ch == '(') {
+            if ((size_t)out_pos + 1 >= out_cap) break;
+            out[out_pos++] = ch;
+            i++;
+            command_start = true;
+            continue;
+        }
+
+        /* Closing paren */
+        if (ch == ')') {
+            if ((size_t)out_pos + 1 >= out_cap) break;
+            out[out_pos++] = ch;
+            i++;
+            command_start = false;
+            continue;
+        }
+
+        /* Read next shell token */
+        int end = 0;
+        char *token = terminal_read_shell_token(command, i, &end);
+        if (!token) {
+            /* Copy remaining as-is */
+            while (i < n) {
+                if ((size_t)out_pos + 1 >= out_cap) break;
+                out[out_pos++] = command[i++];
+            }
+            break;
+        }
+
+        if (command_start && strcmp(token, "sudo") == 0) {
+            /* Replace bare 'sudo' with 'sudo -S -p ""' */
+            size_t replen = strlen(sudo_replacement);
+            if ((size_t)out_pos + replen + 1 >= out_cap) {
+                free(token);
+                break;
+            }
+            memcpy(out + out_pos, sudo_replacement, replen);
+            out_pos += (int)replen;
+            *found = true;
+        } else {
+            /* Copy token verbatim */
+            size_t tlen = strlen(token);
+            if ((size_t)out_pos + tlen + 1 >= out_cap) {
+                free(token);
+                break;
+            }
+            memcpy(out + out_pos, token, tlen);
+            out_pos += (int)tlen;
+        }
+
+        /* Determine command_start for next token */
+        if (command_start && looks_like_env_assignment(token)) {
+            command_start = true; /* env assignment keeps command_start */
+        } else {
+            command_start = false;
+        }
+
+        free(token);
+        i = end;
+    }
+
+    out[out_pos] = '\0';
+    return out;
+}
+
 /* Inject exit_code_interpretation field into result JSON */
 static char *_inject_interpretation(const char *result_json, const char *command) {
     if (!result_json) return NULL;

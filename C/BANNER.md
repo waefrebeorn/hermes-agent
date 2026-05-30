@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v262)**
+**BANNER — WuBu Slermes C Translation (v263)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v262                                          ║
-║  316 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
+║  WuBu Slermes C v263                                          ║
+║  317 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 195: media_validation test suite (11 tests)         ║
+║  Phase 196: terminal_rewrite_sudo() ported (24 tests)       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

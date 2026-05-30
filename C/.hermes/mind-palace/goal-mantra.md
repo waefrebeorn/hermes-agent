@@ -1,4 +1,4 @@
-(v262)
+(v263)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-316/0/0 (274 test files). 119 gaps. Phase 195: media_validation test suite (11 tests).
-Next: S6 B08/B07 depth, S3 G02/G06 depth, S7 test gaps.
+317/0/0 (275 test files). 119 gaps. Phase 196: terminal_rewrite_sudo() ported (24 tests).
+Next: S6 B07/B08 depth, S3 G02/G06 depth, S7 test gaps.
