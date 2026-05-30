@@ -1805,3 +1805,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v301
 Suite: 335/0/0 (289 test files). Gaps: 103. v302
 || S7v | S7 depth: Interrupt edge case expansion (S7 X09). test_interrupt.c — 8→13 tests (+5). Clear non-existent thread is no-op (count unchanged). set-clear-set cycle yields correct count. clear_all twice is idempotent. Max capacity (64 threads) reached, overflow is no-op. Self thread not interrupted when only other threads are. | tests/test_interrupt.c — 13 tests, ~27 assertions. lib/libinterrupt/interrupt.c covered. |
 Suite: 335/0/0 (289 test files). Gaps: 103. v303
+|| S7w | S7 depth: File state edge case expansion (S7 X09). test_file_state.c — 10→13 tests (+3). Disabled env var: HERMES_DISABLE_FILE_STATE_GUARD=1 makes fs_is_disabled return true. Known reads: agent with no reads returns count=0. NULL path: fs_record_read with NULL path does not add entry. | tests/test_file_state.c — 13 tests. lib/libfilestate/file_state.c covered. |
+Suite: 335/0/0 (289 test files). Gaps: 103. v304

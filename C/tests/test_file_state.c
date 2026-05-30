@@ -197,6 +197,34 @@ static int test_disabled(void) {
     return 1;
 }
 
+static int test_disabled_with_env(void) {
+    setup();
+    setenv("HERMES_DISABLE_FILE_STATE_GUARD", "1", 1);
+    ASSERT(fs_is_disabled() == true, "Should be disabled with env var");
+    unsetenv("HERMES_DISABLE_FILE_STATE_GUARD");
+    return 1;
+}
+
+static int test_known_reads_empty(void) {
+    setup();
+    char paths[256][256];
+    int count = 99;
+    fs_known_reads("nobody", paths, &count);
+    ASSERT(count == 0, "Agent with no reads should return 0");
+    return 1;
+}
+
+static int test_record_read_null_path(void) {
+    setup();
+    /* Should not crash on NULL path */
+    fs_record_read("agent_1", NULL, false, 0.0);
+    char paths[256][256];
+    int count = 0;
+    fs_known_reads("agent_1", paths, &count);
+    ASSERT(count == 0, "NULL path should not add an entry");
+    return 1;
+}
+
 int main(void) {
     printf("=== file_state tests ===\n\n");
 
@@ -210,6 +238,9 @@ int main(void) {
     TEST(clear);
     TEST(lock_path);
     TEST(disabled);
+    TEST(disabled_with_env);
+    TEST(known_reads_empty);
+    TEST(record_read_null_path);
 
     printf("\n%s\n", tests_failed > 0 ? "SOME TESTS FAILED" : "ALL TESTS PASSED");
     printf("Results: %d/%d passed, %d failed, %d total (sum %d)\n",
