@@ -1100,12 +1100,14 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
 else
     skip "yuanbao_media (compilation failed)"
 fi
-# telegram_network utility test (G07: telegram_resolve_system_dns)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" \
+# telegram_network utility test (G07: telegram_resolve_system_dns, telegram_parse_doh_response)
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_telegram_network.c" \
     "$CDIR/src/gateway/platforms/telegram_network.c" \
-    -o /tmp/hermes_test_telegram_network -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_telegram_network > /dev/null 2>&1; then ok "telegram_network (G07: 7 tests)"
+    "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
+    -o /tmp/hermes_test_telegram_network -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
+    if /tmp/hermes_test_telegram_network > /dev/null 2>&1; then ok "telegram_network (G07: 16 tests)"
     else fail "telegram_network (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_telegram_network

@@ -1,12 +1,13 @@
 /*
  * test_telegram_network.c — Tests for telegram_network helpers.
  *
- * Tests: telegram_resolve_system_dns.
+ * Tests: telegram_resolve_system_dns, telegram_parse_doh_response.
  *
  * Build:
- *   gcc -O2 -g -Wall -Wextra -I include \
+ *   gcc -O2 -g -Wall -Wextra -I include -I lib/libjson \
  *       tests/test_telegram_network.c \
  *       src/gateway/platforms/telegram_network.c \
+ *       lib/libjson/json.c \
  *       -o /tmp/hermes_test_telegram_network -lm
  *
  * Run:
@@ -14,6 +15,7 @@
  */
 
 #include "hermes_telegram_network.h"
+#include "hermes_json.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -75,17 +77,10 @@ static void test_resolve_nonexistent(void) {
     TEST("resolve nonexistent host returns empty (not error)");
     char **ips = NULL;
     size_t cnt = 999;
-    /* Use a hostname that's extremely unlikely to resolve */
     bool ok = telegram_resolve_system_dns("zzz-nonexistent-host-xyz.test.", &ips, &cnt);
-    /* Should return true (not an error) with empty list */
     if (ok && cnt == 0 && ips == NULL) { PASS(); return; }
-    /* Some resolvers may return results for any query */
     telegram_free_ip_list(ips, cnt);
-    if (ok && cnt > 0) {
-        /* Actually resolved — not expected but possible with wildcard DNS */
-        PASS();
-        return;
-    }
+    if (ok && cnt > 0) { PASS(); return; }
     FAIL("expected true with empty results");
 }
 
@@ -96,7 +91,6 @@ static void test_resolve_ipv4_only(void) {
     bool ok = telegram_resolve_system_dns("localhost", &ips, &cnt);
     if (!ok || cnt == 0) { FAIL("no results"); telegram_free_ip_list(ips, cnt); return; }
     for (size_t i = 0; i < cnt; i++) {
-        /* Check it's a valid IPv4 address (no colons = no IPv6) */
         if (strchr(ips[i], ':')) {
             FAIL("Got IPv6 address");
             telegram_free_ip_list(ips, cnt);
@@ -115,6 +109,111 @@ static void test_free_null(void) {
 }
 
 /* ================================================================
+ *  telegram_parse_doh_response tests
+ * ================================================================ */
+
+static void test_parse_doh_null(void) {
+    TEST("parse null response returns false");
+    char **ips = NULL;
+    size_t cnt = 999;
+    bool ok = telegram_parse_doh_response(NULL, &ips, &cnt);
+    if (!ok && ips == NULL && cnt == 0) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_parse_doh_empty(void) {
+    TEST("parse empty response returns false");
+    char **ips = NULL;
+    size_t cnt = 999;
+    bool ok = telegram_parse_doh_response("", &ips, &cnt);
+    if (!ok && ips == NULL && cnt == 0) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_parse_doh_invalid_json(void) {
+    TEST("parse invalid JSON returns false");
+    char **ips = NULL;
+    size_t cnt = 999;
+    bool ok = telegram_parse_doh_response("not json", &ips, &cnt);
+    if (!ok && ips == NULL && cnt == 0) { PASS(); return; }
+    FAIL("expected false");
+}
+
+static void test_parse_doh_no_answer(void) {
+    TEST("parse response with no Answer key returns empty");
+    char **ips = NULL;
+    size_t cnt = 999;
+    bool ok = telegram_parse_doh_response("{\"status\":0}", &ips, &cnt);
+    if (ok && cnt == 0 && ips == NULL) { PASS(); return; }
+    FAIL("expected true, empty");
+}
+
+static void test_parse_doh_empty_answer(void) {
+    TEST("parse response with empty Answer array returns empty");
+    char **ips = NULL;
+    size_t cnt = 999;
+    bool ok = telegram_parse_doh_response("{\"Answer\":[]}", &ips, &cnt);
+    if (ok && cnt == 0 && ips == NULL) { PASS(); return; }
+    FAIL("expected true, empty");
+}
+
+static void test_parse_doh_single_a(void) {
+    TEST("parse single A record");
+    char **ips = NULL;
+    size_t cnt = 0;
+    bool ok = telegram_parse_doh_response(
+        "{\"Answer\":[{\"name\":\"api.telegram.org\",\"type\":1,\"data\":\"149.154.167.220\"}]}",
+        &ips, &cnt);
+    if (!ok) { FAIL("returned false"); return; }
+    if (cnt != 1) { FAIL("expected 1 IP"); telegram_free_ip_list(ips, cnt); return; }
+    if (strcmp(ips[0], "149.154.167.220") == 0) { PASS(); telegram_free_ip_list(ips, cnt); return; }
+    FAIL("wrong IP"); telegram_free_ip_list(ips, cnt);
+}
+
+static void test_parse_doh_multiple_a(void) {
+    TEST("parse multiple A records");
+    char **ips = NULL;
+    size_t cnt = 0;
+    bool ok = telegram_parse_doh_response(
+        "{\"Answer\":["
+        "{\"name\":\"api.telegram.org\",\"type\":1,\"data\":\"149.154.167.220\"},"
+        "{\"name\":\"api.telegram.org\",\"type\":1,\"data\":\"149.154.167.221\"},"
+        "{\"name\":\"api.telegram.org\",\"type\":1,\"data\":\"149.154.167.222\"}"
+        "]}",
+        &ips, &cnt);
+    if (!ok) { FAIL("returned false"); return; }
+    if (cnt != 3) { FAIL("expected 3 IPs"); telegram_free_ip_list(ips, cnt); return; }
+    if (strcmp(ips[0], "149.154.167.220") == 0 &&
+        strcmp(ips[1], "149.154.167.221") == 0 &&
+        strcmp(ips[2], "149.154.167.222") == 0) { PASS(); telegram_free_ip_list(ips, cnt); return; }
+    FAIL("wrong IPs"); telegram_free_ip_list(ips, cnt);
+}
+
+static void test_parse_doh_filters_non_a(void) {
+    TEST("parse filters non-A records");
+    char **ips = NULL;
+    size_t cnt = 0;
+    bool ok = telegram_parse_doh_response(
+        "{\"Answer\":["
+        "{\"name\":\"api.telegram.org\",\"type\":1,\"data\":\"149.154.167.220\"},"
+        "{\"name\":\"api.telegram.org\",\"type\":28,\"data\":\"2001:db8::1\"},"
+        "{\"name\":\"api.telegram.org\",\"type\":5,\"data\":\"cname.example.com\"}"
+        "]}",
+        &ips, &cnt);
+    if (!ok) { FAIL("returned false"); return; }
+    if (cnt != 1) { FAIL("expected 1 A record"); telegram_free_ip_list(ips, cnt); return; }
+    if (strcmp(ips[0], "149.154.167.220") == 0) { PASS(); telegram_free_ip_list(ips, cnt); return; }
+    FAIL("wrong IP"); telegram_free_ip_list(ips, cnt);
+}
+
+static void test_parse_doh_null_out_params(void) {
+    TEST("parse null out params returns false");
+    bool ok = telegram_parse_doh_response("{\"Answer\":[]}", NULL, NULL);
+    if (!ok) { PASS(); return; }
+    FAIL("expected false");
+}
+
+/* ================================================================
  *  Main
  * ================================================================ */
 
@@ -127,6 +226,17 @@ int main(void) {
     test_resolve_nonexistent();
     test_resolve_ipv4_only();
     test_free_null();
+
+    printf("=== telegram_parse_doh_response ===\n");
+    test_parse_doh_null();
+    test_parse_doh_empty();
+    test_parse_doh_invalid_json();
+    test_parse_doh_no_answer();
+    test_parse_doh_empty_answer();
+    test_parse_doh_single_a();
+    test_parse_doh_multiple_a();
+    test_parse_doh_filters_non_a();
+    test_parse_doh_null_out_params();
 
     printf("\n%d/%d passed\n", passed, tests);
     return passed == tests ? 0 : 1;
