@@ -1820,3 +1820,12 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | R01-05 | Model version detection: `normalize_model_key()` strips provider prefix (`anthropic/`), normalizes dots to hyphens (`4.6`→`4-6`) for substring matching. Used by all 4 helper predicates. | `C/src/agent/provider_anthropic.c` — `normalize_model_key()` (43-54), `model_contains_any()` (56-68). |
 | R01-06 | Test suite: 27 assertions for normalize_model_key (5 tests), model_contains_any (9 tests), build_url (5 tests), headers (3 tests). Full suite 335/0/2. | `C/tests/test_provider_anthropic.c` — 22 new test assertions. |
 | R01-07 | Provider LOC growth: 731→1085 LOC (+354, +48%). All existing functionality preserved. | `wc -l C/src/agent/provider_anthropic.c` — 1085 lines. |
+
+## Phase 240: S7 X09 Bedrock Provider Depth Expansion (v307)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B42a | build_url edge cases: model present in URL, bedrock-runtime domain, /converse suffix, empty model uses default, AWS_REGION env var overrides region. | `C/tests/test_bedrock_depth.c` — 5 new tests. |
+| B42b | inferenceConfig: defaults (maxTokens=4096, temperature=0.7), custom values (maxTokens=8192, temperature=1.0, topP=0.95), stop sequences array. | `C/tests/test_bedrock_depth.c` — 8 new tests. |
+| B42c | Request body: system message extraction to separate array, tool config with tools_json. | `C/tests/test_bedrock_depth.c` — 4 new tests. |
+| B42d | parse_response: normal text response with usage tokens, tool_use with name/id/args, error via message field, nested error, multi-block text concatenation, null/empty body. | `C/tests/test_bedrock_depth.c` — 8 new tests. |
+| B42e | Test file growth: 14→45 tests (+31, +221%). Full suite 335/0/2. | `C/tests/test_bedrock_depth.c` — 45 tests. |

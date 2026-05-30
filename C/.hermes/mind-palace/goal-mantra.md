@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v306)
+# Goal Mantra — Slermes C (v307)
 
-335/0/0 (289 test files). 103 gaps. Phase 239: S8 R01 adaptive thinking + model-aware Anthropic provider (provider_anthropic.c 731→1085 LOC).
+335/0/0 (289 test files). 102 gaps. Phase 240: Bedrock provider depth expansion (test_bedrock_depth.c 14→45 tests).
 
 ## Loop
 

@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). v306.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). v307.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -186,6 +186,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 237: File state edge case expansion (S7 X09). test_file_state.c — 10→13 tests. New: disabled env var (HERMES_DISABLE_FILE_STATE_GUARD=1), known_reads empty agent, record_read NULL path safety. v304.
 |- Phase 238: MCP tool edge case expansion (S7 X09). test_mcp_tool.c — 4→10 tests (24 assertions). New: mcp_call_handler missing fields/unknown server/bad JSON, mcp_resource_read_handler missing fields, mcp_prompt_get_handler missing fields, mcp_auth_handler empty args defaults to status. v305.
 |- Phase 239: S8 R01 Anthropic extended thinking — adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, classic budget_tokens for pre-4.6. Model-aware max_tokens per model table (15 entries). Sampling param forbiddance for Opus 4.7+. Beta headers: interleaved-thinking + fine-grained-tool-streaming. provider_anthropic.c 731→1085 LOC. Suite 335/0/0. v306.
+|- Phase 240: S7 X09 Bedrock provider depth expansion — test_bedrock_depth.c 14→45 tests. New: build_url edge cases (model, region, empty), inferenceConfig defaults/custom, system message extraction, stop sequences, parse_response (normal text, tool_use, error, nested error, multi-block, null/empty body). Suite 335/0/0. v307.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
