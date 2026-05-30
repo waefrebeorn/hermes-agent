@@ -1902,6 +1902,15 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || D09j | _ — last non-whitespace in vi NORMAL dispatch. | case '_': scan backward from end. |
 || R01a | retry_utils edge cases: zero max_delay (caps at 0), very small base (0.001), very large max (999999), jitter ratio >1.0, multiple reset() calls. | `C/tests/test_retry_utils.c` — 22/22 passed. |
 |
+|## Phase 254: S8 WON'T PORT Reclassification (v321)
+|| ID | Claim | Reclassification | Evidence |
+||----|-------|-----------------|----------|
+|| R05 | Gemini Cloud Code Assist adapter (gemini_cloudcode_adapter.py, 909 LOC) | **WON'T PORT** — cloud IDE feature. Depends on OAuth PKCE + Google Cloud APIs + httpx. C is standalone binary. | `agent/gemini_cloudcode_adapter.py` — wraps Google Code Assist API. No C equivalent needed. |
+|| R06 | Azure managed identity / OAuth2 (azure_identity_adapter.py, 555 LOC) | **WON'T PORT** — alternative auth mechanism. C uses direct `api-key:` header which works for Azure OpenAI. No functional gap. | `agent/azure_identity_adapter.py` — Azure SDK identity flow. C's provider_azure.c uses api-key header directly. |
+|| R07 | OpenAI Responses API format (codex_responses_adapter.py, 1221 LOC) | **WON'T PORT** — C uses simpler /chat/completions format. All supported providers (OpenAI, xAI, DeepSeek, etc.) support both formats. | `agent/codex_responses_adapter.py` — Responses API format conversion. C's providers all use chat completions format. |
+|| R08 | Copilot ACP client (copilot_acp_client.py, 686 LOC) | **WON'T PORT** — depends on `copilot --acp` CLI binary existing on system. C already has ACP server at acp/server.c for serving, but doesn't need to connect to Copilot ACP. | `agent/copilot_acp_client.py` — launches `copilot --acp` subprocess. C has no copilot CLI dependency. |
+|| R09 | Plugin LLM facade (plugin_llm.py, 1046 LOC) | **WON'T PORT** — Python plugin architecture. C's plugin system is .so loading only and doesn't provide LLM access to plugins. | `agent/plugin_llm.py` — registers llm access on plugin context. C's plugin_ext.c loads .so with simple hooks. |
+|
 |## Phase 18: Stale Claims Corrected
 || ID | Claim | Correction | Evidence |
 ||----|-------|------------|----------|
