@@ -1,8 +1,7 @@
-(v280)
+(v281)
 
-323/0/0, 280 test files. All pass. Gap: 280 C vs ~1262 Python.
+324/0/0, 281 test files. All pass. Gap: 281 C vs ~1262 Python.
 
-Phase 213: L25 repair_tool_call() ported — 11-test registry_repair_tool_name suite (41 total).
-Phase 212: L25 sanitize_tool_call_arguments() ported (22 tests).
-Phase 211: L25 hermes_repair_message_sequence() ported (17 tests).
-Coverage: 280/1262 test files (22.2%). 11 new registry tests across Phase 213.
+Phase 214: L26 tool_call_args_truncate() ported — JSON arg string truncation preserving validity. 29-test suite.
+Phase 213: L25 repair_tool_call() ported — 11-test registry_repair_tool_name suite.
+Coverage: 281/1262 test files (22.3%). 29 new truncation tests across Phase 214.

@@ -308,6 +308,20 @@ else
     fail "tool_result_classification (compilation failed)"
 fi
 
+echo ""; echo "=== Tool Call Args Truncate Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" \
+    "$CDIR/tests/test_tool_call_args_truncate.c" "$CDIR/src/tools/tool_result.c" "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_truncate -lm 2>/dev/null && [[ -x /tmp/hermes_test_truncate ]]; then
+    if /tmp/hermes_test_truncate > /dev/null 2>&1; then
+        ok "tool_call_args_truncate"
+    else
+        fail "tool_call_args_truncate (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_truncate
+else
+    fail "tool_call_args_truncate (compilation failed)"
+fi
+
 echo ""; echo "=== Hook Registry Tests === "
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" \
     "$CDIR/tests/test_hook_registry.c" "$CDIR/src/agent/hook_registry.c" "$CDIR/lib/libjson/json.c" \

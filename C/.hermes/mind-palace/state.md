@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 323/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 280 | C src: 179
-Battleship v34 (110 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Suite: 324/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 281 | C src: 179
+Battleship v34 (109 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -160,12 +160,13 @@ Battleship v34 (110 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- Phase 124: test_tool_init.c rewrite + registration — 13 registry tests (register, dispatch, count, get_name, NULL safety). Suite 301/0/0 (258 test files).
 |- Phase 212: L25 sanitize_tool_call_arguments() ported from Python agent_runtime_helpers.sanitize_tool_call_arguments(). Two-pass: (1) find corrupted tool call args, replace with "{}", (2) prepend corruption marker to existing tool results or insert new. 22-test suite (39 total). Suite 323/0/0 (v280). Test files 279→280. Battleship 112→111 gaps. S1 L25 2/3 functions ported.
 |- Phase 213: L25 repair_tool_call() ported from Python agent_runtime_helpers.repair_tool_call(). Tool name normalization pipeline: lowercase, hyphens/spaces→underscores, CamelCase→snake_case, _tool/-tool/tool suffix stripping (up to 2x), Levenshtein fuzzy match (cutoff 0.7). Wired into registry_dispatch() as fallback when registry_find() returns NULL. 11-test suite (41 total). Suite 323/0/0 (v280). Test files 280→280. Battleship 111→110 gaps. S1 L25 all 3 functions ported: repair_message_sequence, sanitize_tool_call_arguments, repair_tool_call.
-|
+|- Phase 214: L26 tool_call_args_truncate() ported from Python agent/context_compressor._truncate_tool_call_args_json(). Parses tool-call args JSON, walks tree recursively, truncates string values longer than head_chars (default 200) to "prefix...[truncated]", re-serializes. Non-string values preserved. Returns original on parse failure. Added to src/tools/tool_result.c. 29-test suite. Test files 280→281. Suite 323→324/0/0. Battleship 110→109 gaps. S1 L26 depth: 1/3 functions ported.
+
 |## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
 ||- **P1** (34): TUI ecosystem (14), Test coverage (9), Provider adapters (6), Gateway helpers (0), CLI ecosystem (1), Architecture (3), Plugin system (1)
 ||- **P2** (51): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), Plugin system (4), Architecture (2), S2 remaining (5)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 |
-|||Real parity gap is 110 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 323/0/0 (280 test files). v280. S0+S3+S6 all PORTED. S1 L25 all 3 functions ported (repair_message_sequence + sanitize_tool_call_arguments + repair_tool_call).
+|||Real parity gap is 109 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 324/0/0 (281 test files). v281. S0+S3+S6 all PORTED. S1 L25 ported. L26 depth: tool_call_args_truncate() done.
 |
