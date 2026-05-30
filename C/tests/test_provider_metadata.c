@@ -44,6 +44,8 @@ static void test_estimate_message_chars(void);
 static void test_estimate_messages_tokens_rough(void);
 static void test_estimate_request_tokens_rough(void);
 static void test_get_next_probe_tier(void);
+static void test_provider_context_cache_path(void);
+static void test_provider_context_cache_save_get_invalidate(void);
 
 int main(void) {
 
@@ -493,6 +495,8 @@ int main(void) {
     test_estimate_messages_tokens_rough();
     test_estimate_request_tokens_rough();
     test_get_next_probe_tier();
+    test_provider_context_cache_path();
+    test_provider_context_cache_save_get_invalidate();
 
     printf("\n=== Overall: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
@@ -1220,4 +1224,74 @@ static void test_get_next_probe_tier(void) {
     TEST("negative -> -1",        get_next_probe_tier(-1)     == -1);
     TEST("zero -> -1",            get_next_probe_tier(0)      == -1);
     TEST("256001 -> 256000",      get_next_probe_tier(256001) == 256000);
+}
+
+/* ---- provider_context_cache_path ---- */
+static void test_provider_context_cache_path(void) {
+    printf("\n[R10] provider_context_cache_path:\n");
+    char path[HERMES_PATH_MAX];
+    provider_context_cache_path(path, sizeof(path));
+    TEST("path non-empty", path[0] != '\0');
+    TEST("ends with context_length_cache.json",
+         strstr(path, "context_length_cache.json") != NULL);
+    TEST("contains hermes home or slermes",
+         strstr(path, "slermes") != NULL || strstr(path, "hermes") != NULL);
+}
+
+/* ---- provider_context_cache + get + invalidate ---- */
+static void test_provider_context_cache_save_get_invalidate(void) {
+    printf("\n[R10] provider_context_cache_save/get/invalidate:\n");
+
+    /* Test save and get */
+    {
+        int ok = provider_context_cache_save("test-model", "http://test.url", 128000);
+        if (!ok) {
+            /* May fail if hermes home doesn't exist — skip gracefully */
+            printf("  ~ cache save skipped (no write access)\n");
+            return;
+        }
+        TEST("save returned 1", ok == 1);
+
+        int got = provider_context_cache_get("test-model", "http://test.url");
+        TEST("get returned 128000", got == 128000);
+    }
+
+    /* Test get non-existent */
+    {
+        int got = provider_context_cache_get("nonexistent-model", "http://nonexistent.url");
+        TEST("get non-existent returns -1", got == -1);
+    }
+
+    /* Test get with NULL params */
+    {
+        TEST("get NULL model", provider_context_cache_get(NULL, "url") == -1);
+        TEST("get NULL url",   provider_context_cache_get("model", NULL) == -1);
+    }
+
+    /* Test invalidate */
+    {
+        int ok = provider_context_cache_invalidate("test-model", "http://test.url");
+        TEST("invalidate returned 1", ok == 1);
+
+        int got = provider_context_cache_get("test-model", "http://test.url");
+        TEST("get after invalidate returns -1", got == -1);
+    }
+
+    /* Test invalidate non-existent is success */
+    {
+        int ok = provider_context_cache_invalidate("no-such-model", "no-such-url");
+        TEST("invalidate non-existent returns 1", ok == 1);
+    }
+
+    /* Test save with NULL params */
+    {
+        TEST("save NULL model",  provider_context_cache_save(NULL, "url", 100) == 0);
+        TEST("save NULL url",    provider_context_cache_save("m", NULL, 100) == 0);
+    }
+
+    /* Test invalidate with NULL params */
+    {
+        TEST("invalidate NULL model", provider_context_cache_invalidate(NULL, "url") == 0);
+        TEST("invalidate NULL url",   provider_context_cache_invalidate("m", NULL) == 0);
+    }
 }

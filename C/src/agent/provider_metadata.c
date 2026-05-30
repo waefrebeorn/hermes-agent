@@ -1643,3 +1643,169 @@ int get_next_probe_tier(int current_length) {
     }
     return -1;
 }
+
+/* ---- provider_context_cache_path ---- */
+/* Port of Python model_metadata._get_context_cache_path().
+ * Returns path: {hermes_home}/context_length_cache.json */
+void provider_context_cache_path(char *buf, size_t sz) {
+    hermes_resolve_path("context_length_cache.json", buf, sz);
+}
+
+/* ---- provider_context_cache_load ---- */
+/* Port of Python model_metadata._load_context_cache().
+ * Loads the context_length_cache.json file and returns the root object. */
+json_t *provider_context_cache_load(void) {
+    char path[HERMES_PATH_MAX];
+    provider_context_cache_path(path, sizeof(path));
+
+    struct stat st;
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode))
+        return NULL;
+
+    json_t *root = json_parse_file(path, NULL);
+    if (!root || root->type != JSON_OBJECT) {
+        json_free(root);
+        return NULL;
+    }
+    return root;
+}
+
+/* ---- provider_context_cache_save ---- */
+/* Port of Python model_metadata.save_context_length().
+ * Saves model@base_url -> length entry to the cache file.
+ * Creates the file if it doesn't exist. */
+int provider_context_cache_save(const char *model, const char *base_url, int length) {
+    if (!model || !base_url) return 0;
+
+    /* Build cache key: model@base_url */
+    size_t key_len = strlen(model) + 1 + strlen(base_url) + 1;
+    char *key = malloc(key_len);
+    if (!key) return 0;
+    snprintf(key, key_len, "%s@%s", model, base_url);
+
+    /* Load existing cache or create new */
+    json_t *cache = provider_context_cache_load();
+    if (!cache)
+        cache = json_object();
+
+    /* Check if already stored with same value */
+    json_t *existing = json_obj_get(cache, key);
+    if (existing && existing->type == JSON_NUMBER) {
+        int existing_val = (int)existing->num_val;
+        if (existing_val == length) {
+            free(key);
+            json_free(cache);
+            return 1; /* Already stored */
+        }
+    }
+
+    /* Update or add entry */
+    json_set(cache, key, json_number((double)length));
+
+    /* Serialize and write */
+    char *json_str = json_serialize(cache);
+    if (!json_str) {
+        free(key);
+        json_free(cache);
+        return 0;
+    }
+
+    char path[HERMES_PATH_MAX];
+    provider_context_cache_path(path, sizeof(path));
+
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        free(key);
+        free(json_str);
+        json_free(cache);
+        return 0;
+    }
+    fwrite(json_str, 1, strlen(json_str), f);
+    fclose(f);
+
+    free(key);
+    free(json_str);
+    json_free(cache);
+    return 1;
+}
+
+/* ---- provider_context_cache_get ---- */
+/* Port of Python model_metadata.get_cached_context_length().
+ * Looks up model@base_url in the cache file. Returns -1 if not found. */
+int provider_context_cache_get(const char *model, const char *base_url) {
+    if (!model || !base_url) return -1;
+
+    size_t key_len = strlen(model) + 1 + strlen(base_url) + 1;
+    char *key = malloc(key_len);
+    if (!key) return -1;
+    snprintf(key, key_len, "%s@%s", model, base_url);
+
+    json_t *cache = provider_context_cache_load();
+    if (!cache) {
+        free(key);
+        return -1;
+    }
+
+    json_t *val = json_obj_get(cache, key);
+    int result = -1;
+    if (val && val->type == JSON_NUMBER)
+        result = (int)val->num_val;
+
+    free(key);
+    json_free(cache);
+    return result;
+}
+
+/* ---- provider_context_cache_invalidate ---- */
+/* Port of Python model_metadata._invalidate_cached_context_length().
+ * Removes a stale cache entry and rewrites the file. */
+int provider_context_cache_invalidate(const char *model, const char *base_url) {
+    if (!model || !base_url) return 0;
+
+    size_t key_len = strlen(model) + 1 + strlen(base_url) + 1;
+    char *key = malloc(key_len);
+    if (!key) return 0;
+    snprintf(key, key_len, "%s@%s", model, base_url);
+
+    json_t *cache = provider_context_cache_load();
+    if (!cache) {
+        free(key);
+        return 0; /* No cache file to invalidate from */
+    }
+
+    /* Check if key exists */
+    json_t *existing = json_obj_get(cache, key);
+    if (!existing) {
+        free(key);
+        json_free(cache);
+        return 1; /* Already absent — success */
+    }
+
+    /* Remove by setting to null */
+    json_set(cache, key, json_null());
+
+    char *json_str = json_serialize(cache);
+    if (!json_str) {
+        free(key);
+        json_free(cache);
+        return 0;
+    }
+
+    char path[HERMES_PATH_MAX];
+    provider_context_cache_path(path, sizeof(path));
+
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        free(key);
+        free(json_str);
+        json_free(cache);
+        return 0;
+    }
+    fwrite(json_str, 1, strlen(json_str), f);
+    fclose(f);
+
+    free(key);
+    free(json_str);
+    json_free(cache);
+    return 1;
+}

@@ -2,7 +2,7 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||||||||||||Battleship v34 (94 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R02+R10 PARTIAL, R04 PORTED, R03+R05-R09 WON'T PORT. v342. Phase 275: batch R10 context probe tiers + get_next_probe_tier.
+||||||||||||||Battleship v34 (94 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R02+R10 PARTIAL, R04 PORTED, R03+R05-R09 WON'T PORT. v343. Phase 276: batch R10 context cache layer.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -34,6 +34,7 @@ Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
 ||||- Phase 273: S8 R02+R10 depth — batch 2 functions. R02: bedrock_convert_content_to_converse() (OpenAI content→Converse blocks: text, image_url with data: URI parsing). R10: provider_extract_pricing() (nested JSON pricing extraction with alias maps for prompt/completion/request/cache_read/cache_write). ~35 new bedrock assertions (160→195) + 19 new provider_metadata (219→238) = ~54 total. Suite 335/0/0. v340.
  |||- Phase 274: S8 R10 depth — batch 4 token estimation functions from model_metadata.py: estimate_count_image_tokens(), estimate_message_chars(), estimate_messages_tokens_rough(), estimate_request_tokens_rough(). 26 new assertions (238→264). Suite 335/0/0. v341.
 |||- Phase 275: S8 R10 depth — CONTEXT_PROBE_TIERS, DEFAULT_FALLBACK_CONTEXT, MINIMUM_CONTEXT_LENGTH constants + get_next_probe_tier() ported from Python model_metadata.py. 21 new assertions (264→285). Suite 335/0/0. v342.
+|||- Phase 276: S8 R10 depth — context length cache layer: provider_context_cache_path(), provider_context_cache_load(), provider_context_cache_save(), provider_context_cache_get(), provider_context_cache_invalidate(). Ported from Python model_metadata cache helpers. 15 new assertions (285→300). Suite 335/0/0. v343.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

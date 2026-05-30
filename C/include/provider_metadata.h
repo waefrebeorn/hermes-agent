@@ -301,6 +301,31 @@ extern const int CONTEXT_PROBE_TIERS[CONTEXT_PROBE_TIER_COUNT];
  * Port of Python model_metadata.get_next_probe_tier(). */
 int get_next_probe_tier(int current_length);
 
+/* ---- Context length cache ---- */
+
+/* Get path to context length cache file ({hermes_home}/context_length_cache.json). */
+void provider_context_cache_path(char *buf, size_t sz);
+
+/* Load context length cache from disk.
+ * Port of Python model_metadata._load_context_cache().
+ * Returns json_t* object of model@base_url -> length mappings, or NULL. */
+json_t *provider_context_cache_load(void);
+
+/* Save a context length entry for model@base_url to the cache file.
+ * Port of Python model_metadata.save_context_length().
+ * Returns 1 on success, 0 on failure. */
+int provider_context_cache_save(const char *model, const char *base_url, int length);
+
+/* Look up a cached context length for model@base_url.
+ * Port of Python model_metadata.get_cached_context_length().
+ * Returns the length or -1 if not found. */
+int provider_context_cache_get(const char *model, const char *base_url);
+
+/* Remove a stale cache entry for model@base_url.
+ * Port of Python model_metadata._invalidate_cached_context_length().
+ * Returns 1 on success, 0 on failure. */
+int provider_context_cache_invalidate(const char *model, const char *base_url);
+
 #ifdef __cplusplus
 }
 #endif

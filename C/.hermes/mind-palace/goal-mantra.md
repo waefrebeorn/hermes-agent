@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v342)
+# Goal Mantra — Slermes C (v343)
 
-335/0/0 (292 test files). 94 gaps. Phase 275: S8 R10 depth — context probe tiers + get_next_probe_tier. Provider metadata 285-test suite.
+335/0/0 (292 test files). 94 gaps. Phase 276: S8 R10 depth — context cache layer (5 functions). Provider metadata 300-test suite.
 
 ## Loop
 

@@ -1,8 +1,8 @@
-(v342)
+(v343)
 
 335/0/0, 292 test files. All pass. Gap: 292 C vs ~1262 Python (23.1% parity).
 
-Phase 275: S8 R10 depth — context probe tiers + get_next_probe_tier. Provider metadata 285-test suite (264→285).
+Phase 276: S8 R10 depth — context cache layer (5 functions). Provider metadata 300-test suite (285→300).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.
 Phase 271: S8 R02+R10 depth — batch 10 functions. 104 new assertions. Suite 335/0/0. v338.
 Phase 270: S8 R04 Gemini depth — batch 3 functions. 36 new assertions (130→166). Suite 335/0/0. v337.

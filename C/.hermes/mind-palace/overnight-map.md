@@ -1,4 +1,4 @@
-# Overnight Map — Recent Phases (v342)
+# Overnight Map — Recent Phases (v343)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
@@ -12,3 +12,4 @@
 | 273 | S8 R02+R10 depth — batch 2 functions (convert_content_to_converse, extract_pricing). ~54 new assertions. Suite 335/0/0. v340. | 94 gaps | 94 gaps |
 | 274 | S8 R10 depth — batch 4 token estimation functions (count_image_tokens, message_chars, messages_tokens_rough, request_tokens_rough). 26 new assertions (238→264). Suite 335/0/0. v341. | 94 gaps | 94 gaps |
 | 275 | S8 R10 depth — CONTEXT_PROBE_TIERS + DEFAULT_FALLBACK_CONTEXT + MINIMUM_CONTEXT_LENGTH + get_next_probe_tier(). 21 new assertions (264→285). Suite 335/0/0. v342. | 94 gaps | 94 gaps |
+| 276 | S8 R10 depth — 5 context cache functions (path, load, save, get, invalidate). 15 new assertions (285→300). Suite 335/0/0. v343. | 94 gaps | 94 gaps |
