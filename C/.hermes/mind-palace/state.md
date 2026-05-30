@@ -1,7 +1,7 @@
 ||| Slermes C
 
-Suite: 321/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 279 | C src: 178
+Suite: 322/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 280 | C src: 178
 Battleship v34 (115 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
@@ -140,6 +140,7 @@ Battleship v34 (115 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |||    |- Phase 205: strip_yaml_frontmatter() ported from Python agent/prompt_builder.py to lib/libhtml. C function strip_yaml_frontmatter() — strips YAML frontmatter (--- delimited) from content. 7 new test assertions in test_html.c. Suite 320/0/0 (v272).
 |||    |- Phase 206: agent_get_continuation_prompt() ported from Python conversation_loop._get_continuation_prompt(). Continuation prompt builder with 3 variants: partial stub + dropped tools (max 3 names from JSON array), partial stub only (network error), default (output length limit). 24-test suite in test_system_prompt_continuation.c. Suite 320/0/0 (v273).
 |||    |- Phase 207: tool_error_sanitize() ported from Python model_tools._sanitize_tool_error(). Strips XML role tags, code fences, and CDATA from tool error messages before sending to model. 26-test suite in test_tool_error.c. Suite 321/0/0 (v274). Test files 278→279.
+|||    |- Phase 208: tool_coerce_number() + tool_coerce_boolean() ported from Python model_tools._coerce_number() / _coerce_boolean(). Coerces string tool args to typed values (int, float, bool). 35-test suite in test_tool_coerce.c. Suite 322/0/0 (v275). Test files 279→280.
     |- Phase 204: S7 test expansion — 10 new edge case assertions in test_title.c. Added: exclamation/question marks, only-code-block (no text → New Session), non-ASCII bytes dropped gracefully, very long input (40-80 char truncation), tab/control chars, trailing ellipsis trim, multiple sentences (no break on mid-text period). Assertions 12→22. Suite 320/0/0 (v271).
     |- Phase 203: S7 test expansion — 11 new edge case assertions in test_sanitize.c. Added: nested JSON repair (nested object/array, multi trailing comma, unclosed nested, mixed excess closers, escaped quotes, unicode content), sanitize_surrogates edge cases (3-byte UTF-8, 4-byte UTF-8 emoji, long text), hermes_sanitize_output edge cases (URL token redaction, SSH key path). Assertions 24→35. Suite 320/0/0 (v270).
     |- Phase 202: S3 G02 base.py + G06 wecom_callback.py reclassified PORTED. Function-level API audit: base.py (4286 LOC, 45 functions, ~21 portable — all ported: gw_utf16_len, gw_float_env, http_no_proxy_match, http_split_host_port, http_no_proxy_entries, http_should_bypass_proxy, http_parse_retry_after, url_safe_for_log, url_is_network_accessible, media_cache_save/cleanup, media_should_send_as_audio, gw_custom_unit_to_cp, validate_media_path, detect_image_magic). Remaining 24 WON'T PORT (async cache_from_url, macOS proxy, async proxy, cache dirs, media delivery security helpers, gateway event/channel helpers — all C-arch-different). wecom_callback.py (425 LOC, 20 functions, 3 portable — all ported: wecom_xml_extract_tag, wecom_callback_user_app_key, wecom_callback_build_event). Remaining 17 WON'T PORT (async aiohttp server, class state, token refresh). S3 2→0 gaps. 117→115 gaps. Suite 320/0/0 (v269).
