@@ -2,14 +2,14 @@
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
-| 219 | L28 agent init PORTED + tool_delay. S1 complete (0 gaps). | PARTIAL (105 gaps) | PORTED (104 gaps) |
-| S7a | S7 test expansion — test_cli_paths.c 15→21 tests (50 assertions). Edge cases: tiny buffer, trailing slash, consistency, profile independence, long SLERMES_HOME. | — | S7 depth |
+| 219+ | L28 PORTED + tool_delay. S7 depth: test_cli_paths 21 tests, test_session_id 19 tests. F10 PORTED. Suite 326/0/0, 283 test files. | 105 gaps | 103 gaps |
+| 218 | L24 checkpoint/snapshot reclassified PORTED | PARTIAL (106 gaps) | PORTED (105 gaps) |
 | 217 | L27 prompt builder PORTED + S7 test expansion (22 assertions) | 107 gaps | 106 gaps |
-| 216 | L26 hermes_message_sanitize() — sanitization pipeline (surrogate fix, think-block strip, secret redaction). Wired into agent_loop.c. 35 tests. | 108 gaps | 107 gaps |
-| 215 | L26 estimate_payload_context_tokens() ported — JSON token estimator | 109 gaps | 108 gaps |
-| 214 | L26 tool_call_args_truncate() ported — truncate long tool args | 110 gaps | 109 gaps |
-| 213 | L25 repair_tool_call() ported — tool name normalization + Levenshtein fuzzy match | 111 gaps | 110 gaps |
-| 212 | L25 sanitize_tool_call_arguments() — corrupt arg repair + marker insertion | 112 gaps | 111 gaps |
-| 211 | L25 message sequence repair — drop stray tools, merge consecutive users | 113 gaps | 112 gaps |
+| 216 | L26 hermes_message_sanitize() — sanitization pipeline | 108 gaps | 107 gaps |
+| 215 | L26 estimate_payload_context_tokens() ported | 109 gaps | 108 gaps |
+| 214 | L26 tool_call_args_truncate() ported | 110 gaps | 109 gaps |
+| 213 | L25 repair_tool_call() ported | 111 gaps | 110 gaps |
+| 212 | L25 sanitize_tool_call_arguments() ported | 112 gaps | 111 gaps |
+| 211 | L25 message sequence repair ported | 113 gaps | 112 gaps |
 | 210 | D16 type-ahead reader — background stdin capture | 114 gaps | 113 gaps |
-| 209 | D09 emacs keybindings — Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D. 66 tests | 115 gaps | 114 gaps |
+| 209 | D09 emacs keybindings — 66 tests | 115 gaps | 114 gaps |

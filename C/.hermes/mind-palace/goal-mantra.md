@@ -1,6 +1,6 @@
 # Goal Mantra — Slermes C (v284)
 
-325/0/0 (282 test files). 104 gaps. Phase 219: L28 agent init PORTED + tool_delay implemented. S1 complete — all 28 gaps resolved.
+326/0/0 (283 test files). 103 gaps. Phase 219+: S1 complete, F10 PORTED (install_safe_stdio), S7 depth (test_cli_paths, test_session_id).
 
 ## Loop
 
@@ -13,6 +13,6 @@ Commit. Push. Repeat.
 
 ## Status
 
-Sectors: S0+S1+S3+S6 PORTED.
+Sectors: S0+S1+S3+S6 PORTED. F10 PORTED.
 S4: 28 TUI gaps. S5: 30 CLI gaps. S7: 19 test gaps (1000+ cases).
-S8: 10 provider gaps. S9: 20 plugin gaps. S10: 10 arch gaps.
+S8: 10 provider gaps. S9: 20 plugin gaps. S10: 9 arch gaps.

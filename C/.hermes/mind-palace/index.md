@@ -1,12 +1,12 @@
 # Slermes C — Index (v284)
 
-S0+S1+S3+S6 all PORTED. 104 gaps across 9 sectors. Phase 219: L28 agent init PORTED + tool_delay implemented. S1 complete.
+S0+S1+S3+S6 all PORTED. F10 PORTED. 103 gaps across 9 sectors. Suite 326/0/0, 283 test files.
 
 ## Walkway Files
 
 | File | Description |
 |------|-------------|
-| [battleship-v34.md](battleship-v34.md) | Canonical gap list (104 gaps) |
+| [battleship-v34.md](battleship-v34.md) | Canonical gap list (103 gaps) |
 | [state.md](state.md) | Current state dashboard |
 | [vault/achievements.md](vault/achievements.md) | Completed milestones archive |
 | [plan.md](plan.md) | Next gap targets |

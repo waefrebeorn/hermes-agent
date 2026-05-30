@@ -1,8 +1,8 @@
 ||| Slermes C
 
-Suite: 325/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-Binary: 31M | Warnings: 0 | Test files: 282 | C src: 180
-Battleship v34 (104 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Suite: 326/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
+Binary: 31M | Warnings: 0 | Test files: 283 | C src: 180
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -171,5 +171,5 @@ Battleship v34 (104 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 ||- **P2** (51): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), Plugin system (4), Architecture (2), S2 remaining (5)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 |
-|Real parity gap is 106 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 325/0/0 (282 test files). v284. S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED.
+|Real parity gap is 103 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 326/0/0 (283 test files). v284. S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED.
 |

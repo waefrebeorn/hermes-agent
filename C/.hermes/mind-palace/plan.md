@@ -1,12 +1,12 @@
 # Plan — Next Phase (v284)
 
-S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. S1 complete. 104 gaps remain across 7 sectors.
+S0+S1+S3+S6 PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. 103 gaps.
 
 **Next gap targets:**
 
 | Priority | Sector | Gap | Action |
 |----------|--------|-----|--------|
-| P1 | S7 X01-X09 | Test coverage | Continue expanding test files (282 / 1262 parity). |
+| P1 | S7 X01-X09 | Test coverage | Continue expanding test files (283 / 1262 parity). |
 | P1 | S8 R01 | Provider adapters | Anthropic extended thinking, streaming variants |
 | P1 | S4 T01-T18 | TUI backend | JSON-RPC gateway, transport, render, entry |
 | P2 | S5 C01-C30 | CLI ecosystem | Setup wizard, doctor, config, profiles |
