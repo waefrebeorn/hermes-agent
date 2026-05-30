@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v333 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 95 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
+| v336 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+|**Honest assessment: 94 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -213,7 +213,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 | 01 | R01 | anthropic_adapter.py | 2275 | Adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, model-aware max_tokens per model (15-entry table), beta headers (interleaved-thinking + fine-grained-tool-streaming), sampling param forbiddance for Opus 4.7+. Remaining: full client builder, content conversion, OAuth. | P1 | ✅ IMPLEMENTED — adaptive thinking, model-aware features, beta headers. Partially covers "extended thinking" sub-gap. Implementation in provider_anthropic.c:1085 LOC (up from 731). |
 | 02 | R02 | bedrock_adapter.py | 1289 | AWS Bedrock auth, model discovery. C has sigv4 signing + Converse API but simpler model/region handling. **Phase 263 depth:** 4 utility functions ported: bedrock_is_context_overflow() (3 pattern groups, case-insensitive strstr), bedrock_classify_error() (context_overflow/rate_limit/overloaded/unknown), bedrock_extract_provider_from_arn() (foundation-model/provider parsing), bedrock_get_context_length() (18-entry substring table, longest match wins). **Phase 262 depth:** stop_reason mapping (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 82-test bedrock depth suite (up from 14). | P1 | PARTIAL |
 | 03 | R03 | google_oauth.py | 1059 | OAuth token exchange, refresh for Google Cloud Code Assist. Only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). No standalone Google provider use. | P1 | ✅ WON'T PORT — tied to cloudcode adapter |
-| 04 | R04 | gemini_native_adapter.py | 971 | Gemini native API format translation (contents[]/parts[]/functionDeclarations). C's provider_google.c covers core flow. **Phase 266 depth:** google_tool_call_extra_signature() + google_translate_tool_call() ported. OpenAI tool_call → Gemini functionCall part with thoughtSignature support (from Python _tool_call_extra_signature() + _translate_tool_call_to_gemini()). **Phase 265 depth:** google_coerce_content_to_text(). **Phase 264 depth:** google_is_native_base_url(). **Phase 257 depth:** google_map_finish_reason() + google_is_free_tier_quota_error() + blocked content. | P1 | PARTIAL |
+|| 04 | R04 | gemini_native_adapter.py | 971 | Gemini native API format translation (contents[]/parts[]/functionDeclarations). C's provider_google.c covers core flow. **Phase 266 depth:** google_tool_call_extra_signature() + google_translate_tool_call() ported. OpenAI tool_call → Gemini functionCall part with thoughtSignature support (from Python _tool_call_extra_signature() + _translate_tool_call_to_gemini()). **Phase 265 depth:** google_coerce_content_to_text(). **Phase 264 depth:** google_is_native_base_url(). **Phase 257 depth:** google_map_finish_reason() + google_is_free_tier_quota_error() + blocked content. **Phase 267 depth:** google_translate_tool_result(). **Phase 268 depth:** google_translate_tools_to_gemini(). **Phase 269 depth:** google_translate_tool_choice_to_gemini() + google_normalize_thinking_config(). **All 6 portable functions done.** | P1 | ✅ PORTED (100% portable) |
 | 05 | R05 | gemini_cloudcode_adapter.py | 909 | Google Cloud Code Assist integration — cloud IDE feature. Depends on OAuth PKCE + Google Cloud APIs + httpx. C is standalone binary. | P2 | ✅ WON'T PORT — cloud IDE feature |
 | 06 | R06 | azure_identity_adapter.py | 555 | Azure managed identity / OAuth2 token acquisition. C uses direct api-key: header auth which works for Azure OpenAI. | P1 | ✅ WON'T PORT — alternative auth mechanism, C uses direct API key |
 | 07 | R07 | codex_responses_adapter.py | 1221 | OpenAI Responses API format conversion. C uses simpler /chat/completions format which works for all supported providers. | P2 | ✅ WON'T PORT — C uses chat completions format, works fine |
@@ -274,10 +274,10 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
-| S8: Provider Adapters | 4 | 0 | 3 | 1 | 0 | 2 remaining implementable: R02 (PARTIAL), R04 (PARTIAL). R03+R05-R09 WON'T PORT (cloud/Python-arch). |
+|| S8: Provider Adapters | 3 | 0 | 2 | 1 | 0 | 1 remaining implementable: R02 (PARTIAL). R04 PORTED. R03+R05-R09 WON'T PORT (cloud/Python-arch). |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **95** | **4** | **31** | **44** | **23** | **S0+S1+S3+S6 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 335/0/0, test files 289.** |
+||| **TOTAL** | **94** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R04 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 335/0/0, test files 289.** |
 
 ### Phase Map
 

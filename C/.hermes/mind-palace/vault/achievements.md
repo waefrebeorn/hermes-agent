@@ -1995,3 +1995,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | R04f | `google_translate_tools_to_gemini()` ported from Python `gemini_native_adapter._translate_tools_to_gemini()`. Translates OpenAI tool definitions array (`[{type: "function", function: {name, description?, parameters?}}]`) to Gemini functionDeclarations array (`[{functionDeclarations: [{name, description?, parameters?}]}]`). Parameters deep-copied via `json_copy()`. Empty name entries skipped. Returns `[]` for NULL, non-array, or empty/empty-result inputs. | `src/agent/provider_google.c:949-1001` — implementation. `include/provider.h:219` — declaration. `tests/test_google_depth.c:620-752` — 15 test assertions (86→101). test_runner.sh updated for 101 tests. Suite 335/0/0. v335. |
+
+## Phase 269: S8 R04 Gemini Depth — tool_choice + thinking_config
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04g | `google_translate_tool_choice_to_gemini()` ported from Python `gemini_native_adapter._translate_tool_choice_to_gemini()`. Maps OpenAI tool_choice (`"auto"`/`"required"`/`"none"`/`{function: {name}}`) to Gemini functionCallingConfig (`{mode: "AUTO"|"ANY"|"NONE"}`, with optional `allowedFunctionNames`). Returns NULL for unknown inputs. | `src/agent/provider_google.c:1002-1045` — implementation. `include/provider.h:220` — declaration. `tests/test_google_depth.c:610-722` — 13 test assertions (101→114). Suite 335/0/0. v336. |
+| R04h | `google_normalize_thinking_config()` ported from Python `gemini_native_adapter._normalize_thinking_config()`. Normalizes thinking config: camelCase + snake_case aliases for `thinkingBudget`, `includeThoughts`, `thinkingLevel` (strip+lower for level). Returns NULL for None/unknown/empty inputs. | `src/agent/provider_google.c:1047-1102` — implementation. `include/provider.h:221` — declaration. `tests/test_google_depth.c:724-792` — 16 test assertions (114→130). Suite 335/0/0. v336. |

@@ -219,6 +219,8 @@ char *google_tool_call_extra_signature(const json_t *tool_call);
 json_t *google_translate_tool_call(const json_t *tool_call);
 json_t *google_translate_tool_result(const json_t *message, const json_t *tool_name_by_call_id);
 json_t *google_translate_tools_to_gemini(const json_t *tools);
+json_t *google_translate_tool_choice_to_gemini(const json_t *tool_choice);
+json_t *google_normalize_thinking_config(const json_t *config);
 
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;

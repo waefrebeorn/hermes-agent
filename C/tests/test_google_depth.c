@@ -607,6 +607,189 @@ static int test_translate_tool_result(void) {
     return f;
 }
 
+/* ── google_translate_tool_choice_to_gemini ────────────── */
+static int test_translate_tool_choice(void) {
+    int f = 0;
+    json_t *r, *cfg;
+
+    printf("\n--- google_translate_tool_choice_to_gemini ---\n");
+
+    /* 1. NULL */
+    r = google_translate_tool_choice_to_gemini(NULL);
+    TEST("tc NULL returns NULL", r == NULL);
+
+    /* 2. "auto" */
+    r = google_translate_tool_choice_to_gemini(json_string("auto"));
+    TEST("tc auto returns non-NULL", r != NULL);
+    if (r) {
+        cfg = json_obj_get(r, "functionCallingConfig");
+        TEST("tc auto mode AUTO", cfg && strcmp(json_get_str(cfg, "mode", ""), "AUTO") == 0);
+    }
+    json_free(r);
+
+    /* 3. "required" */
+    r = google_translate_tool_choice_to_gemini(json_string("required"));
+    TEST("tc required non-NULL", r != NULL);
+    if (r) {
+        cfg = json_obj_get(r, "functionCallingConfig");
+        TEST("tc required mode ANY", cfg && strcmp(json_get_str(cfg, "mode", ""), "ANY") == 0);
+    }
+    json_free(r);
+
+    /* 4. "none" */
+    r = google_translate_tool_choice_to_gemini(json_string("none"));
+    TEST("tc none non-NULL", r != NULL);
+    if (r) {
+        cfg = json_obj_get(r, "functionCallingConfig");
+        TEST("tc none mode NONE", cfg && strcmp(json_get_str(cfg, "mode", ""), "NONE") == 0);
+    }
+    json_free(r);
+
+    /* 5. Unknown string */
+    r = google_translate_tool_choice_to_gemini(json_string("unknown"));
+    TEST("tc unknown returns NULL", r == NULL);
+    json_free(r);
+
+    /* 6. Dict: {"function": {"name": "my_tool"}} */
+    {
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("my_tool"));
+        json_t *tc = json_object();
+        json_set(tc, "function", fn);
+        r = google_translate_tool_choice_to_gemini(tc);
+        TEST("tc dict non-NULL", r != NULL);
+        if (r) {
+            cfg = json_obj_get(r, "functionCallingConfig");
+            TEST("tc dict mode ANY", cfg && strcmp(json_get_str(cfg, "mode", ""), "ANY") == 0);
+            json_t *names = cfg ? json_obj_get(cfg, "allowedFunctionNames") : NULL;
+            TEST("tc dict has allowedFunctionNames", names != NULL && names->type == JSON_ARRAY);
+            if (names && names->c.count > 0) {
+                json_t *n0 = names->c.items[0];
+                TEST("tc dict name = my_tool", n0 && n0->type == JSON_STRING && strcmp(n0->str_val, "my_tool") == 0);
+            }
+        }
+        json_free(r);
+        json_free(tc);
+    }
+
+    /* 7. Dict with missing function.name */
+    {
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string(""));
+        json_t *tc = json_object();
+        json_set(tc, "function", fn);
+        r = google_translate_tool_choice_to_gemini(tc);
+        TEST("tc empty name returns NULL", r == NULL);
+        json_free(r);
+        json_free(tc);
+    }
+
+    return f;
+}
+
+/* ── google_normalize_thinking_config ──────────────────── */
+static int test_normalize_thinking_config(void) {
+    int f = 0;
+    json_t *r;
+
+    printf("\n--- google_normalize_thinking_config ---\n");
+
+    /* 1. NULL */
+    r = google_normalize_thinking_config(NULL);
+    TEST("nt NULL returns NULL", r == NULL);
+
+    /* 2. Empty object */
+    r = google_normalize_thinking_config(json_object());
+    TEST("nt empty returns NULL", r == NULL);
+    json_free(r);
+
+    /* 3. thinkingBudget */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "thinkingBudget", json_number(20000));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt budget non-NULL", r != NULL);
+        if (r) {
+            TEST("nt budget = 20000", json_get_num(r, "thinkingBudget", 0) == 20000);
+        }
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 4. thinking_budget (snake_case alias) */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "thinking_budget", json_number(15000));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt snake budget non-NULL", r != NULL);
+        if (r) {
+            TEST("nt snake budget = 15000", json_get_num(r, "thinkingBudget", 0) == 15000);
+        }
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 5. includeThoughts */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "includeThoughts", json_bool(true));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt include non-NULL", r != NULL);
+        if (r) {
+            TEST("nt include = true", json_get_bool(r, "includeThoughts", false) == true);
+        }
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 6. thinking_level with strip+lower */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "thinking_level", json_string("  DEEP  "));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt level non-NULL", r != NULL);
+        if (r) {
+            TEST("nt level = deep", strcmp(json_get_str(r, "thinkingLevel", ""), "deep") == 0);
+        }
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 7. All fields together */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "thinkingBudget", json_number(50000));
+        json_set(cfg, "includeThoughts", json_bool(false));
+        json_set(cfg, "thinkingLevel", json_string("MODERATE"));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt all non-NULL", r != NULL);
+        if (r) {
+            TEST("nt all budget = 50000", json_get_num(r, "thinkingBudget", 0) == 50000);
+            TEST("nt all include = false", json_get_bool(r, "includeThoughts", true) == false);
+            TEST("nt all level = moderate", strcmp(json_get_str(r, "thinkingLevel", ""), "moderate") == 0);
+        }
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 8. No valid fields → NULL */
+    {
+        json_t *cfg = json_object();
+        json_set(cfg, "unknown", json_string("value"));
+        r = google_normalize_thinking_config(cfg);
+        TEST("nt unknown returns NULL", r == NULL);
+        json_free(r);
+        json_free(cfg);
+    }
+
+    /* 9. Non-object (string) */
+    r = google_normalize_thinking_config(json_string("test"));
+    TEST("nt non-object returns NULL", r == NULL);
+    json_free(r);
+
+    return f;
+}
+
 /* ── google_translate_tools_to_gemini ──────────────────── */
 static int test_translate_tools_to_gemini(void) {
     int f = 0;
@@ -753,6 +936,8 @@ int main(void) {
     total_fail += test_original_suite();
     total_fail += test_translate_tool_result();
     total_fail += test_translate_tools_to_gemini();
+    total_fail += test_translate_tool_choice();
+    total_fail += test_normalize_thinking_config();
     printf("\n=== Overall: %s ===\n", total_fail ? "SOME FAILED" : "ALL PASSED");
     return total_fail ? 1 : 0;
 }

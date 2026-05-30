@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v335)
+# Goal Mantra — Slermes C (v336)
 
-335/0/0 (292 test files). 95 gaps. Phase 268: S8 R04 Gemini depth — translate_tools_to_gemini. 101-test google depth suite.
+335/0/0 (292 test files). 94 gaps. Phase 269: S8 R04 depth — tool_choice + thinking_config. 130-test google depth suite.
 
 ## Loop
 

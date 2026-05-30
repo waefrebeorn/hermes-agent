@@ -996,6 +996,108 @@ json_t *google_translate_tools_to_gemini(const json_t *tools) {
     return result;
 }
 
+/* Port of Python gemini_native_adapter._translate_tool_choice_to_gemini().
+ * Translates OpenAI tool_choice to Gemini tool_config.
+ * OpenAI: "auto" / "required" / "none" / {"function": {"name": "..."}}
+ * Gemini: {"functionCallingConfig": {"mode": "AUTO"|"ANY"|"NONE"}}
+ * Returns NULL for None/unknown inputs. Caller must json_free() result. */
+json_t *google_translate_tool_choice_to_gemini(const json_t *tool_choice) {
+    if (!tool_choice) return NULL;
+
+    if (tool_choice->type == JSON_STRING) {
+        const char *s = tool_choice->str_val ? tool_choice->str_val : "";
+        const char *mode = NULL;
+        if (strcmp(s, "auto") == 0) mode = "AUTO";
+        else if (strcmp(s, "required") == 0) mode = "ANY";
+        else if (strcmp(s, "none") == 0) mode = "NONE";
+        else return NULL;
+
+        json_t *config = json_object();
+        json_set(config, "mode", json_string(mode));
+        json_t *result = json_object();
+        json_set(result, "functionCallingConfig", config);
+        return result;
+    }
+
+    if (tool_choice->type == JSON_OBJECT) {
+        json_t *fn = json_obj_get(tool_choice, "function");
+        if (fn) {
+            const char *name = json_get_str(fn, "name", NULL);
+            if (name && *name) {
+                json_t *names = json_array();
+                json_append(names, json_string(name));
+                json_t *config = json_object();
+                json_set(config, "mode", json_string("ANY"));
+                json_set(config, "allowedFunctionNames", names);
+                json_t *result = json_object();
+                json_set(result, "functionCallingConfig", config);
+                return result;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/* Port of Python gemini_native_adapter._normalize_thinking_config().
+ * Normalizes thinking config to Gemini-compatible format.
+ * Accepts thinkingBudget/thinking_budget (int), includeThoughts/include_thoughts (bool),
+ * thinkingLevel/thinking_level (string, stripped+lowered).
+ * Returns NULL for None/unknown/empty inputs. Caller must json_free() result. */
+json_t *google_normalize_thinking_config(const json_t *config) {
+    if (!config || config->type != JSON_OBJECT || config->c.count == 0)
+        return NULL;
+
+    json_t *result = json_object();
+    bool has_any = false;
+
+    /* Budget: thinkingBudget or thinking_budget */
+    json_t *v = json_obj_get(config, "thinkingBudget");
+    if (!v) v = json_obj_get(config, "thinking_budget");
+    if (v && v->type == JSON_NUMBER) {
+        json_set(result, "thinkingBudget", json_number(v->num_val));
+        has_any = true;
+    }
+
+    /* Include thoughts: includeThoughts or include_thoughts */
+    v = json_obj_get(config, "includeThoughts");
+    if (!v) v = json_obj_get(config, "include_thoughts");
+    if (v && v->type == JSON_BOOL) {
+        json_set(result, "includeThoughts", json_bool(v->bool_val));
+        has_any = true;
+    }
+
+    /* Thinking level: thinkingLevel or thinking_level */
+    v = json_obj_get(config, "thinkingLevel");
+    if (!v) v = json_obj_get(config, "thinking_level");
+    if (v && v->type == JSON_STRING && v->str_val && v->str_val[0]) {
+        /* Strip leading whitespace and lowercase */
+        const char *s = v->str_val;
+        while (*s == ' ') s++;
+        if (*s) {
+            char *lower = strdup(s);
+            if (lower) {
+                for (char *p = lower; *p; p++) *p = (char)tolower((unsigned char)*p);
+                /* Strip trailing space */
+                size_t len = strlen(lower);
+                while (len > 0 && lower[len - 1] == ' ') lower[--len] = '\0';
+                if (*lower) {
+                    json_set(result, "thinkingLevel", json_string(lower));
+                    has_any = true;
+                }
+                free(lower);
+            }
+        }
+    }
+
+    if (!has_any) {
+        json_free(result);
+        return NULL;
+    }
+
+    return result;
+}
+
 /* ================================================================
  *  Free response
  * ================================================================ */
