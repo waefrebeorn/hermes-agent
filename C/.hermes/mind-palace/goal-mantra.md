@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v308)
+# Goal Mantra — Slermes C (v309)
 
-335/0/0 (289 test files). 102 gaps. Phase 241: Google provider depth expansion (test_google_depth.c 8→45 tests).
+335/0/0 (289 test files). 102 gaps. Phase 242: Azure provider depth expansion (test_azure_depth.c 10→55 tests).
 
 ## Loop
 

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v308 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 103 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
+| v309 | Fork diverged — C/ lives only on fork | Suite 335/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 102 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 289 (22.9% parity). S0+S1+S3+S6 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 335/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -221,7 +221,7 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total).
 | 09 | R09 | plugin_llm.py | 1046 | Plugin-based LLM abstraction | P2 |
 | 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities | P1 |
 
-**S8: 10 gaps (6 P1, 4 P2)**
+**S8: 9 gaps (6 P1, 3 P2)**
 
 ---
 

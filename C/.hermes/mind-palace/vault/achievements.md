@@ -1839,3 +1839,13 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | B33d | Contents array: multi-message (user/assistant/user), role mapping (user/model), text content extraction. Streaming body still valid. | `C/tests/test_google_depth.c` — 6 new tests. |
 | B33e | parse_response: normal text with usage tokens, functionCall with name/args, error with message, blocked/SAFETY finish, multi-part concatenation, null/empty body. | `C/tests/test_google_depth.c` — 8 new tests. |
 | B33f | Test file growth: 8→45 tests (+37, +463%). Full suite 335/0/2. | `C/tests/test_google_depth.c` — 45 tests. |
+
+## Phase 242: S7 X09 Azure Provider Depth Expansion (v309)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B43a | build_url: NULL/empty base fallback to default, trailing slash stripped, model→deployment, custom deployment_id/api_version overrides. | `C/tests/test_azure_depth.c` — 10 tests (8 existing + 3 new). |
+| B43b | build_headers: api-key present with key, omitted for empty/NULL key. | `C/tests/test_azure_depth.c` — 3 new tests. |
+| B43c | build_request_body: stream=true/false, genConfig (max_tokens default 4096, temperature, top_p, stop, service_tier, presence_penalty, frequency_penalty, seed, user, logprobs, top_logprobs, n, max_tool_calls, reasoning_effort), tools array, tool_calls in assistant message, tool_result with tool_call_id, extra_body merge. | `C/tests/test_azure_depth.c` — 19 new tests. |
+| B43d | parse_response: normal text with usage tokens, tool_calls with name/id/function, error with message, empty/null/non-JSON body safety. | `C/tests/test_azure_depth.c` — 6 new tests. |
+| B43e | parse_stream_chunk: null chunk (empty content), data: prefixed delta (content extraction), [DONE] termination, finish_reason delta. | `C/tests/test_azure_depth.c` — 4 new tests. |
+| B43f | Test file growth: 10→55 tests (+45, +450%). All 7 provider ops functions covered. | `C/tests/test_azure_depth.c` — 55 tests. |

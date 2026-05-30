@@ -2,7 +2,7 @@
 
 Suite: 335/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 289 | C src: 180
-Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). v308.
+Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED (L24+L25+L26+L27+L28). F10 PORTED (install_safe_stdio). Bugfix: display_word_wrap capacity OBO (dropped trailing words). S7 X09 edge case expansion (mcp_tool 4→10 tests). S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance (provider_anthropic.c 731→1085 LOC). S7 X09 bedrock_depth expansion (14→45 tests). S7 X09 google_depth expansion (8→45 tests). S7 X09 azure_depth expansion (10→55 tests). v309.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -188,6 +188,7 @@ Battleship v34 (103 gaps across 9 sectors, 1000+ test case gaps). S1 all PORTED 
 |- Phase 239: S8 R01 Anthropic extended thinking — adaptive thinking (type="adaptive" + output_config.effort) for Claude 4.6+, classic budget_tokens for pre-4.6. Model-aware max_tokens per model table (15 entries). Sampling param forbiddance for Opus 4.7+. Beta headers: interleaved-thinking + fine-grained-tool-streaming. provider_anthropic.c 731→1085 LOC. Suite 335/0/0. v306.
 |- Phase 240: S7 X09 Bedrock provider depth expansion — test_bedrock_depth.c 14→45 tests. New: build_url edge cases (model, region, empty), inferenceConfig defaults/custom, system message extraction, stop sequences, parse_response (normal text, tool_use, error, nested error, multi-block, null/empty body). Suite 335/0/0. v307.
 |- Phase 241: S7 X09 Google provider depth expansion — test_google_depth.c 8→45 tests. New: build_url edge cases (model, base, trailing slash), build_headers (with/without key), genConfig (temp/top_p/top_k/stop), contents multi-message, streaming body, parse_response (text, function_call, error, blocked, multi-part, null/empty). Suite 335/0/0. v308.
+|- Phase 242: S7 X09 Azure provider depth expansion — test_azure_depth.c 10→55 tests. New: build_url edge cases (NULL/empty/trailing slash base), build_headers (with/without key), build_request_body (stream=true/false, genConfig: temperature/top_p/stop/service_tier/presence/freq/seed/user/logprobs/top_logprobs/n/max_tool_calls/reasoning_effort, tools array, tool_calls in messages, tool_result, extra_body merge), parse_response (text, tool calls, error, empty/null/non-json body), parse_stream_chunk (null, delta, done, finish_reason). Suite 335/0/0. v309.
 
 ## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
