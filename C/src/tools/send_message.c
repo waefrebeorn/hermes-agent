@@ -307,7 +307,8 @@ static bool telegram_send_with_mode(http_client_t *http,
                                     bool disable_notification,
                                     bool disable_preview,
                                     json_node_t *input_media,
-                                    size_t mg_added)
+                                    size_t mg_added,
+                                    const char *reply_to)
 {
     if (input_media && mg_added >= 2) {
         return telegram_send_media_group(http, chat_id ? chat_id : "", input_media);
@@ -334,18 +335,18 @@ static bool telegram_send_with_mode(http_client_t *http,
         if (reply_markup) {
             ok = telegram_send_message_with_keyboard(http, chat_id ? chat_id : "",
                                                      tg_msg, parse_mode, tg_thread_id,
-                                                     reply_markup, disable_notification, disable_preview);
+                                                     reply_markup, disable_notification, disable_preview, reply_to);
             json_free(reply_markup);
         } else {
             ok = telegram_send_message(http, chat_id ? chat_id : "",
                                        tg_msg, parse_mode, tg_thread_id,
-                                       disable_notification, disable_preview);
+                                       disable_notification, disable_preview, reply_to);
         }
         return ok;
     } else {
         return telegram_send_message(http, chat_id ? chat_id : "",
                                      tg_msg, parse_mode, tg_thread_id,
-                                     disable_notification, disable_preview);
+                                     disable_notification, disable_preview, reply_to);
     }
 }
 
@@ -582,7 +583,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                                                       inline_buttons_node, tg_msg,
                                                       parse_mode, tg_thread_id,
                                                       disable_notification, disable_preview,
-                                                      input_media, mg_added);
+                                                      input_media, mg_added, reply_to);
 
                         if (!sent && attempt < max_attempts - 1) {
                             /* Exponential backoff: 0.5s, 1s, 2s */
@@ -600,7 +601,7 @@ char *send_message_handler(const char *args_json, const char *task_id) {
                                                       inline_buttons_node, tg_msg,
                                                       NULL, tg_thread_id,
                                                       disable_notification, disable_preview,
-                                                      input_media, mg_added);
+                                                      input_media, mg_added, reply_to);
                     }
                     json_free(input_media);
                     http_client_free(http);

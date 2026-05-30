@@ -1,16 +1,16 @@
-**BANNER — WuBu Slermes C Translation (v259)**
+**BANNER — WuBu Slermes C Translation (v260)**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v259                                       ║
+║  WuBu Slermes C v260                                       ║
 ║  315 tests · 119 gaps · 85 tools · 98 CLI · 65 libs        ║
 ║  119 gaps  │  31MB binary  │  0 warnings                     ║
 ║  Fork diverged — C/ lives only on fork                   ║
-║  Phase 191: B11-B20 PORTED — vision URL validator          ║
+║  Phase 193: reply_to_message_id wired to Telegram API    ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## Build Metrics (v259)
+## Build Metrics (v260)
 
 | Metric | Value |
 |--------|-------|

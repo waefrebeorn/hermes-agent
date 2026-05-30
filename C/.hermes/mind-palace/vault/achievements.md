@@ -1731,5 +1731,8 @@ Suite: 315/0/0 (273 test files). Gaps: 128. v254
 | P191-01 | B11-B20 stale claim verified — all 30+ Python tools have C equivalents (clarify, cronjob, delegate, discord, exec_code, homeassistant, image_gen, kanban, memory, process, session_crud, skills, todo, transcribe, tts, video_gen, voice_mode, x_search, yuanbao, etc.). S6 gaps 11→4. | `C/src/tools/` — verified May 2026. |
 | P191-02 | vision_validate_image_url() ported from Python vision_tools.py _validate_image_url(). Validates format: http/https scheme, network location, host presence. Pure function, testable in isolation. | `C/src/tools/vision.c:289-317` — new public function. `C/include/image_routing.h:112-115` — declaration. |
 | P191-03 | 12-test suite for vision_validate_image_url: valid http, https, port, query, NULL, empty, ftp, no-scheme, no-host, data URI, localhost. | `C/tests/test_vision.c` — 12/12 passed. Test count 35→47. |
+| P192-01 | B01 browser stale claim verified PORTED — all user-facing features confirmed (URL safety, snapshot full, PDF, navigate, click, type, scroll, press, CDP, console, dialog, supervisor, vision). | `C/src/tools/browser.c` — verified May 2026 |
+| P192-02 | B02 vision stale claim verified PORTED — 14/19 Python functions ported (74%). Core features all implemented. | `C/src/tools/vision.c` — verified May 2026 |
+| P193-01 | reply_to_message_id wired through Telegram API send path. Previously only used in CLI fallback. Now passed as parameter through telegram_send_message(), telegram_send_message_with_keyboard(), and telegram_send_with_mode(). 9 callers updated. | `C/src/gateway/platforms/telegram.c:159-219` — added reply_to param + JSON body. `C/src/tools/send_message.c:298-605` — threaded through. `C/src/gateway/server.c:1241-1245` — callers updated. `C/include/hermes_gateway.h:307-332` — declarations updated. |
 
-Suite: 315/0/0 (273 test files). Gaps: 119. v259
+Suite: 315/0/0 (273 test files). Gaps: 119. v260
