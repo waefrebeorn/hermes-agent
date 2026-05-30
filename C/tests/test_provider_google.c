@@ -321,7 +321,7 @@ static void test_parse_stream_finish_reason(void)
     provider_response_t *r1 = ops->parse_stream_chunk(p, chunk);
     TEST("google finish chunk", r1 != NULL);
     if (r1) {
-        TEST("google finish reason", strcmp(r1->finish_reason, "STOP") == 0);
+        TEST("google finish reason", strcmp(r1->finish_reason, "stop") == 0);
         ops->free_response(r1);
     }
 
@@ -333,7 +333,7 @@ static void test_parse_stream_finish_reason(void)
     TEST("google final chunk", r2 != NULL);
     if (r2) {
         TEST("google final text", r2->content != NULL && strcmp(r2->content, "Final") == 0);
-        TEST("google final reason", strcmp(r2->finish_reason, "STOP") == 0);
+        TEST("google final reason", strcmp(r2->finish_reason, "stop") == 0);
         ops->free_response(r2);
     }
 

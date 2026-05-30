@@ -19,6 +19,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+
+/* ================================================================
+ *  Gemini native adapter helpers
+ * ================================================================ */
+
+/* Map Google finish reason to OpenAI-compatible format */
+static const char *google_map_finish_reason(const char *reason) {
+    if (!reason || !*reason) return "stop";
+    /* Google returns: STOP, MAX_TOKENS, SAFETY, RECITATION, OTHER, BLOCKLIST, PROHIBITED_CONTENT, SPAM, IMAGE_SAFETY */
+    if (strcasecmp(reason, "STOP") == 0) return "stop";
+    if (strcasecmp(reason, "MAX_TOKENS") == 0) return "length";
+    if (strcasecmp(reason, "SAFETY") == 0) return "content_filter";
+    if (strcasecmp(reason, "RECITATION") == 0) return "content_filter";
+    if (strcasecmp(reason, "BLOCKLIST") == 0) return "content_filter";
+    if (strcasecmp(reason, "PROHIBITED_CONTENT") == 0) return "content_filter";
+    if (strcasecmp(reason, "SPAM") == 0) return "content_filter";
+    if (strcasecmp(reason, "IMAGE_SAFETY") == 0) return "content_filter";
+    return "stop";
+}
+
+/* Detect free-tier quota exhaustion in Gemini error responses */
+static bool google_is_free_tier_quota_error(const char *error_message) {
+    if (!error_message) return false;
+    /* Python: "free_tier" in error_message.lower() */
+    const char *p = error_message;
+    while (*p) {
+        if ((*p == 'f' || *p == 'F') &&
+            strncasecmp(p, "free_tier", 9) == 0)
+            return true;
+        p++;
+    }
+    return false;
+}
 
 /* ================================================================
  *  URL building
@@ -437,9 +471,19 @@ static provider_response_t *google_parse_response(const provider_t *p,
     json_t *error_obj = json_obj_get(root, "error");
     if (error_obj) {
         const char *err_msg = json_get_str(error_obj, "message", "unknown error");
+        int status = (int)json_get_num(error_obj, "code", 0);
         resp->content = (char *)malloc(1024);
-        if (resp->content)
-            snprintf(resp->content, 1024, "Google API error: %s", err_msg);
+        if (resp->content) {
+            if (status == 429 && google_is_free_tier_quota_error(err_msg)) {
+                snprintf(resp->content, 1024,
+                    "Google API free-tier quota exhausted: %s\n\n"
+                    "Your API key is on the free tier (<= 250 requests/day). "
+                    "Enable billing at https://aistudio.google.com/apikey",
+                    err_msg);
+            } else {
+                snprintf(resp->content, 1024, "Google API error: %s", err_msg);
+            }
+        }
         json_free(root);
         return resp;
     }
@@ -536,9 +580,15 @@ static provider_response_t *google_parse_response(const provider_t *p,
 
         /* Check finish reason */
         const char *finish = json_get_str(candidate, "finishReason", "");
-        if (strcmp(finish, "STOP") == 0 || strcmp(finish, "MAX_TOKENS") == 0) {
-            /* Normal completion — keep content but don't add tool calls */
+        const char *mapped = google_map_finish_reason(finish);
+        snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", mapped);
+
+        /* Handle blocked content (finishReason=SAFETY/BLOCKLIST/etc with no content text) */
+        if (!resp->content && mapped && strcmp(mapped, "content_filter") == 0) {
+            /* Extract safety ratings for user feedback */
+            resp->content = strdup("[Content blocked by Google safety filters]");
         }
+
         /* If finishReason is "STOP" but we have function calls,
          * that's normal for Google — keep tool calls. */
     }
@@ -605,7 +655,8 @@ static provider_response_t *google_parse_stream_chunk(const provider_t *p,
          * may have finishReason + text content simultaneously) */
         const char *finish = json_get_str(candidate, "finishReason", NULL);
         if (finish) {
-            snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", finish);
+            const char *mapped = google_map_finish_reason(finish);
+            snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", mapped);
             /* Also extract text if present before signaling end */
         }
 

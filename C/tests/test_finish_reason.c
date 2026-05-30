@@ -93,7 +93,7 @@ int main(void) {
         provider_t p = {0};
         const char *chunk = "data: {\"candidates\":[{\"finishReason\":\"STOP\",\"content\":{\"parts\":[{\"text\":\"\"}]}}]}";
         provider_response_t *r = PROVIDER_OPS_GOOGLE.parse_stream_chunk(&p, chunk);
-        TEST("Google finishReason STOP", r && strcmp(r->finish_reason, "STOP") == 0);
+        TEST("Google finishReason STOP", r && strcmp(r->finish_reason, "stop") == 0);
         PROVIDER_OPS_GOOGLE.free_response(r);
     }
 

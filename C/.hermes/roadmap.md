@@ -1,4 +1,4 @@
-# Slermes C — Roadmap (v323)
+# Slermes C — Roadmap (v324)
 
 > Battleship: v34 (95 gaps). See `mind-palace/battleship-v34.md`.
 

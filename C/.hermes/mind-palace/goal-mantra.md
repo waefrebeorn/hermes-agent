@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v323)
+# Goal Mantra — Slermes C (v324)
 
-335/0/0 (289 test files). 95 gaps. Phase 256: S8 R03 reclassified WON'T PORT — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
+335/0/0 (289 test files). 95 gaps. Phase 257: S8 R04 Gemini native depth — finish_reason mapping + free-tier detection — r/~ toggle, f/F/t/T find/till, ;/, repeat. 120-test suite.
 
 ## Loop
 

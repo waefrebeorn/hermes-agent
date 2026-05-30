@@ -1926,3 +1926,8 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| ID | Achievement | Evidence |
 ||---|-------------|----------|
 ||| R03 | google_oauth.py (1059 LOC) reclassified WON'T PORT. Verified: only imported by gemini_cloudcode_adapter.py (R05, already WON'T PORT). Implements PKCE OAuth for Google Cloud Code Assist backend. No standalone Google provider use — C's Google provider uses x-goog-api-key header. | `agent/google_oauth.py` — `from agent import google_oauth` only in `agent/gemini_cloudcode_adapter.py:40`. `C/src/agent/provider_google.c:60-65` — uses x-goog-api-key header. S8 5→4 gaps, total 96→95 gaps. v323. |
+||
+||## Phase 257: S8 R04 Gemini Native Adapter Depth
+||| ID | Achievement | Evidence |
+||---|-------------|----------|
+||| R04a | `google_map_finish_reason()` — maps Google raw finish reasons (STOP→stop, MAX_TOKENS→length, SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPAM/IMAGE_SAFETY→content_filter). `google_is_free_tier_quota_error()` — detects free-tier quota exhaustion in 429 errors with billing guidance. Blocked content handler emits "[Content blocked by Google safety filters]" when finishReason=SAFETY with no content parts. | `src/agent/provider_google.c:23-77` — mapper + detector. `src/agent/provider_google.c:475-485` — free-tier guidance wired into error handler. `src/agent/provider_google.c:573-580` — finish_reason mapping in parse_response. `src/agent/provider_google.c:649-656` — finish_reason mapping in parse_stream_chunk. Suite 335/0/0. v324. |

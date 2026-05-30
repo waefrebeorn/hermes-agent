@@ -428,7 +428,7 @@ int main(void) {
             "\"finishReason\":\"STOP\"}]}\n";
         provider_response_t *r = PROVIDER_OPS_GOOGLE.parse_stream_chunk(&p, chunk);
         TEST("stream finishReason chunk parsed", r != NULL);
-        TEST("stream finishReason stop", r && strcmp(r->finish_reason, "STOP") == 0);
+        TEST("stream finishReason stop", r && strcmp(r->finish_reason, "stop") == 0);
         if (r) PROVIDER_OPS_GOOGLE.free_response(r);
     }
 
