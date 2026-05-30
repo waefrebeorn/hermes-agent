@@ -8,7 +8,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 |||||||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
 |||||||||||||||||| Gaps:  78 parity gaps (1000+ test case gaps) across 8 sectors
-||||||||| Phase 298: S7 regex edge exp — 15 new assertions!
+||||||||| Phase 299: S7 session_id edge exp — 5 new assertions!
 ||||||||| Phase 272: S8 R02+R10 — batch 5 utility functions (convert_tools_to_converse, estimate_tokens_rough, resolve_verify, extract context/max_tokens)
 ||| 274 | S8 R10 depth — batch 4 token est (count_image_tokens, message_chars, messages_tokens_rough, request_tokens_rough)
 ||| 275 | S8 R10 — context probe tiers + get_next_probe_tier

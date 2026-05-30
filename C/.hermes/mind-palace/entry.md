@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v361)
+# Entry — Slermes C Parity (v362)
 
-Phase 298: S7 regex test expansion — 32 assertions (17→32). 78 gaps.
+Phase 299: S7 session_id test expansion — 21 assertions (16→21). 78 gaps.

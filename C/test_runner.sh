@@ -1304,7 +1304,7 @@ run_lib_test "acp_resource" "tests/test_acp_resource.c" "include" "$CDIR/src/acp
 echo ""; echo "=== CLI Paths Tests (P21) ==="
 run_lib_test "cli_paths" "tests/test_cli_paths.c" "include" "$CDIR/src/cli/paths.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
 echo ""; echo "=== Session ID Tests (G166) ==="
-run_lib_test "session_id" "tests/test_session_id.c" "include" "$CDIR/src/agent/agent_loop.c $CDIR/lib/libjson/json.c -I$CDIR/lib/libjson -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all" "session_id (19 tests)"
+run_lib_test "session_id" "tests/test_session_id.c" "include" "$CDIR/src/agent/agent_loop.c $CDIR/lib/libjson/json.c -I$CDIR/lib/libjson -I$CDIR/lib/libplugin -Wl,--unresolved-symbols=ignore-all" "session_id (21 tests)"
 echo ""; echo "=== Session Search Tests (P142) ==="
 run_lib_test "session_search" "tests/test_session_search.c" "include" "$CDIR/src/tools/session_search.c $CDIR/lib/libjson/json.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libhttp -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv" "session_search (17 tests)"
 echo ""; echo "=== Session CRUD Tests (P143) ==="

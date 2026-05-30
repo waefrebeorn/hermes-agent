@@ -1,8 +1,8 @@
-(v361)
+(v362)
 
-335/0/15, 289 test files. All pass. 78 gaps. Phase 298: S7 regex test expansion — 15 new edge case assertions (17→32).
+335/0/15, 289 test files. All pass. 78 gaps. Phase 299: S7 session_id test expansion — 5 new edge case assertions (16→21).
 
-Phase 298: S7 regex edge case expansion — extraction (empty string, group bounds, multi-group, invalid pattern), compile/search (empty/case-sensitive/invalid/NULL), replace (empty, single-match, NULL replacement). Bugfix: regex_extract() negative group guard. v361.
+Phase 299: S7 session_id edge case expansion — buffer overflow (byte 16 untouched), only-one-underscore, same-second duplication, 20-call stress test. v362.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.

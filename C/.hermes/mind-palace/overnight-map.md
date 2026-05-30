@@ -34,4 +34,4 @@
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
 | 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
-| 298 | S7 X09 regex edge case expansion — 15 new assertions (17→32). Extraction (empty string, group bounds, multi-group, invalid pattern), compile/search (empty/case-sensitive/invalid/NULL), replace (empty, single-match, NULL replacement). Bugfix: regex_extract() negative group guard. Suite 335/0/15. v361. |
+| 299 | S7 X09 session_id edge case expansion — 5 new assertions (16→21). Buffer overflow detection (byte 16 preserved), only-one-underscore validation, same-second ID duplication (1s resolution), 20-call stress test. Bugfix: removed incorrect uniqueness test (1s resolution → IDs can be same). Suite 335/0/15. v362. |

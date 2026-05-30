@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 299: S7 X09 session_id Edge Case Expansion (v362)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | session_id test expansion — 5 new assertions (16→21). Buffer overflow edge case: verifies byte 16 of 64-char buffer is preserved/untouched after ID generation (confirms snprintf doesn't overflow). Underscore validation: confirms exactly one underscore at position 8. Same-second duplication: confirms agent_generate_session_id() has 1-second resolution (time(NULL)), two calls in same tick produce identical ID. Stress test: 20 rapid calls with format validation each iteration. | `tests/test_session_id.c` — 5 new assertions (16→21). `test_runner.sh` — count 19→21. Suite 335/0/15. v362. |
 ## Phase 298: S7 X09 regex Edge Case Expansion (v361)
 | ID | Achievement | Evidence |
 |----|-------------|----------|
