@@ -1011,6 +1011,480 @@ json_t *bedrock_convert_content_to_converse(const json_t *content) {
     return blocks;
 }
 
+/* ---- bedrock_converse_stop_reason_to_openai ---- */
+/* Port of Python bedrock_adapter._converse_stop_reason_to_openai().
+ * Maps Bedrock Converse stop reasons to OpenAI-compatible finish_reason strings. */
+static const char *bedrock_converse_stop_reason_to_openai(const char *stop_reason) {
+    if (!stop_reason || !*stop_reason) return "stop";
+    if (strcmp(stop_reason, "end_turn") == 0 || strcmp(stop_reason, "stop_sequence") == 0)
+        return "stop";
+    if (strcmp(stop_reason, "tool_use") == 0)
+        return "tool_calls";
+    if (strcmp(stop_reason, "max_tokens") == 0)
+        return "length";
+    if (strcmp(stop_reason, "content_filtered") == 0 || strcmp(stop_reason, "guardrail_intervened") == 0)
+        return "content_filter";
+    return "stop";
+}
+
+/* ---- bedrock_convert_messages_to_converse ---- */
+/* Port of Python bedrock_adapter.convert_messages_to_converse().
+ * Converts OpenAI-format messages array to Bedrock Converse format.
+ * Returns json_t* with {system: [blocks]?, messages: [{role, content: [blocks]}]}.
+ * Handles: system→system prompt extraction, user/assistant→role+content,
+ * tool_calls→toolUse blocks, tool results→toolResult in user role.
+ * Enforces strict user/assistant alternation per Converse API requirements.
+ * Caller must free() the result. */
+json_t *bedrock_convert_messages_to_converse(const json_t *messages) {
+    if (!messages || messages->type != JSON_ARRAY)
+        return NULL;
+
+    json_t *system_blocks = json_array();
+    json_t *converse_msgs = json_array();
+    if (!system_blocks || !converse_msgs) {
+        json_free(system_blocks);
+        json_free(converse_msgs);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < messages->c.count; i++) {
+        json_t *msg = messages->c.items[i];
+        if (!msg || msg->type != JSON_OBJECT) continue;
+
+        const char *role = json_get_str(msg, "role", "");
+        json_t *content = json_obj_get(msg, "content");
+
+        if (strcmp(role, "system") == 0) {
+            /* System messages become the system prompt */
+            if (content && content->type == JSON_STRING) {
+                const char *text = content->str_val;
+                while (*text == ' ') text++;
+                if (*text) {
+                    json_t *block = json_object();
+                    json_set(block, "text", json_string(content->str_val));
+                    json_append(system_blocks, block);
+                }
+            } else if (content && content->type == JSON_ARRAY) {
+                for (size_t j = 0; j < content->c.count; j++) {
+                    json_t *part = content->c.items[j];
+                    if (!part) continue;
+                    if (part->type == JSON_STRING) {
+                        json_t *block = json_object();
+                        json_set(block, "text", json_string(part->str_val ? part->str_val : ""));
+                        json_append(system_blocks, block);
+                    } else if (part->type == JSON_OBJECT) {
+                        const char *type_s = json_get_str(part, "type", "");
+                        if (strcmp(type_s, "text") == 0) {
+                            const char *text = json_get_str(part, "text", "");
+                            if (*text) {
+                                json_t *block = json_object();
+                                json_set(block, "text", json_string(text));
+                                json_append(system_blocks, block);
+                            }
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        if (strcmp(role, "tool") == 0) {
+            /* Tool result messages → merge into preceding user turn */
+            const char *tool_call_id = json_get_str(msg, "tool_call_id", "");
+            json_t *tool_result_content = NULL;
+            if (content && content->type == JSON_STRING) {
+                tool_result_content = json_array();
+                json_t *tc = json_object();
+                json_set(tc, "text", json_string(content->str_val));
+                json_append(tool_result_content, tc);
+            } else if (content && content->type == JSON_OBJECT) {
+                char *serialized = json_serialize(content);
+                tool_result_content = json_array();
+                json_t *tc = json_object();
+                json_set(tc, "text", json_string(serialized ? serialized : "{}"));
+                json_append(tool_result_content, tc);
+                free(serialized);
+            } else {
+                tool_result_content = json_array();
+                json_t *tc = json_object();
+                json_set(tc, "text", json_string("{}"));
+                json_append(tool_result_content, tc);
+            }
+
+            json_t *tool_result_block = json_object();
+            json_t *tr = json_object();
+            json_set(tr, "toolUseId", json_string(tool_call_id));
+            if (tool_result_content)
+                json_set(tr, "content", tool_result_content);
+            json_set(tool_result_block, "toolResult", tr);
+
+            /* Merge with last user message if possible */
+            size_t last_idx = converse_msgs->c.count;
+            if (last_idx > 0) {
+                json_t *last = converse_msgs->c.items[last_idx - 1];
+                const char *last_role = json_get_str(last, "role", "");
+                if (strcmp(last_role, "user") == 0) {
+                    json_t *blocks = json_obj_get(last, "content");
+                    if (blocks && blocks->type == JSON_ARRAY) {
+                        json_append(blocks, tool_result_block);
+                        continue;
+                    }
+                }
+            }
+            /* No user message to merge with — create new user message */
+            json_t *new_msg = json_object();
+            json_set(new_msg, "role", json_string("user"));
+            json_t *new_blocks = json_array();
+            json_append(new_blocks, tool_result_block);
+            json_set(new_msg, "content", new_blocks);
+            json_append(converse_msgs, new_msg);
+            continue;
+        }
+
+        if (strcmp(role, "assistant") == 0) {
+            json_t *content_blocks = json_array();
+
+            /* Convert text content */
+            if (content && content->type == JSON_STRING) {
+                const char *text = content->str_val;
+                while (*text == ' ') text++;
+                if (*text) {
+                    json_t *block = json_object();
+                    json_set(block, "text", json_string(content->str_val));
+                    json_append(content_blocks, block);
+                }
+            } else if (content && content->type == JSON_ARRAY) {
+                json_t *converted = bedrock_convert_content_to_converse(content);
+                if (converted) {
+                    for (size_t j = 0; j < converted->c.count; j++) {
+                        json_t *cb = converted->c.items[j];
+                        if (cb) json_append(content_blocks, json_copy(cb));
+                    }
+                    json_free(converted);
+                }
+            }
+
+            /* Convert tool_calls */
+            json_t *tool_calls = json_obj_get(msg, "tool_calls");
+            if (tool_calls && tool_calls->type == JSON_ARRAY) {
+                for (size_t j = 0; j < tool_calls->c.count; j++) {
+                    json_t *tc = tool_calls->c.items[j];
+                    if (!tc || tc->type != JSON_OBJECT) continue;
+
+                    const char *tc_id = json_get_str(tc, "id", "");
+                    json_t *fn_obj = json_obj_get(tc, "function");
+                    const char *fn_name = fn_obj ? json_get_str(fn_obj, "name", "") : "";
+                    json_t *fn_args = fn_obj ? json_obj_get(fn_obj, "arguments") : NULL;
+
+                    json_t *input = NULL;
+                    if (fn_args && fn_args->type == JSON_OBJECT) {
+                        input = json_copy(fn_args);
+                    } else if (fn_args && fn_args->type == JSON_STRING) {
+                        char *parsed = NULL;
+                        json_t *parsed_args = json_parse(fn_args->str_val, &parsed);
+                        if (parsed_args) {
+                            input = parsed_args;
+                            free(parsed);
+                        }
+                    }
+                    if (!input) {
+                        input = json_object();
+                    }
+
+                    json_t *tool_use = json_object();
+                    json_set(tool_use, "toolUseId", json_string(tc_id));
+                    json_set(tool_use, "name", json_string(fn_name));
+                    json_set(tool_use, "input", input);
+
+                    json_t *block = json_object();
+                    json_set(block, "toolUse", tool_use);
+                    json_append(content_blocks, block);
+                }
+            }
+
+            /* Ensure at least one content block */
+            if (content_blocks->c.count == 0) {
+                json_t *block = json_object();
+                json_set(block, "text", json_string(" "));
+                json_append(content_blocks, block);
+            }
+
+            /* Merge with previous assistant message if needed */
+            size_t last_idx = converse_msgs->c.count;
+            if (last_idx > 0) {
+                json_t *last = converse_msgs->c.items[last_idx - 1];
+                const char *last_role = json_get_str(last, "role", "");
+                if (strcmp(last_role, "assistant") == 0) {
+                    json_t *last_content = json_obj_get(last, "content");
+                    if (last_content && last_content->type == JSON_ARRAY) {
+                        for (size_t j = 0; j < content_blocks->c.count; j++) {
+                            json_append(last_content, json_copy(content_blocks->c.items[j]));
+                        }
+                        json_free(content_blocks);
+                        continue;
+                    }
+                }
+            }
+
+            json_t *new_msg = json_object();
+            json_set(new_msg, "role", json_string("assistant"));
+            json_set(new_msg, "content", content_blocks);
+            json_append(converse_msgs, new_msg);
+            continue;
+        }
+
+        if (strcmp(role, "user") == 0) {
+            json_t *content_blocks = bedrock_convert_content_to_converse(content);
+
+            /* Merge with previous user message if needed */
+            size_t last_idx = converse_msgs->c.count;
+            if (last_idx > 0) {
+                json_t *last = converse_msgs->c.items[last_idx - 1];
+                const char *last_role = json_get_str(last, "role", "");
+                if (strcmp(last_role, "user") == 0) {
+                    json_t *last_content = json_obj_get(last, "content");
+                    if (last_content && last_content->type == JSON_ARRAY && content_blocks) {
+                        for (size_t j = 0; j < content_blocks->c.count; j++) {
+                            json_append(last_content, json_copy(content_blocks->c.items[j]));
+                        }
+                        json_free(content_blocks);
+                        continue;
+                    }
+                }
+            }
+
+            json_t *new_msg = json_object();
+            json_set(new_msg, "role", json_string("user"));
+            json_set(new_msg, "content", content_blocks ? content_blocks : json_array());
+            json_append(converse_msgs, new_msg);
+            continue;
+        }
+    }
+
+    /* Enforce Converse alternation rules */
+    /* First message must be from user */
+    if (converse_msgs->c.count > 0) {
+        json_t *first = converse_msgs->c.items[0];
+        const char *first_role = json_get_str(first, "role", "");
+        if (strcmp(first_role, "user") != 0) {
+            json_t *padding = json_object();
+            json_set(padding, "role", json_string("user"));
+            json_t *pad_content = json_array();
+            json_t *pad_block = json_object();
+            json_set(pad_block, "text", json_string(" "));
+            json_append(pad_content, pad_block);
+            json_set(padding, "content", pad_content);
+            /* Insert at front */
+            json_t **new_items = realloc(converse_msgs->c.items,
+                (converse_msgs->c.count + 1) * sizeof(json_t*));
+            if (new_items) {
+                memmove(new_items + 1, new_items,
+                    converse_msgs->c.count * sizeof(json_t*));
+                new_items[0] = padding;
+                converse_msgs->c.items = new_items;
+                converse_msgs->c.count++;
+            }
+        }
+    }
+
+    /* Last message must be from user */
+    if (converse_msgs->c.count > 0) {
+        json_t *last = converse_msgs->c.items[converse_msgs->c.count - 1];
+        const char *last_role = json_get_str(last, "role", "");
+        if (strcmp(last_role, "user") != 0) {
+            json_t *padding = json_object();
+            json_set(padding, "role", json_string("user"));
+            json_t *pad_content = json_array();
+            json_t *pad_block = json_object();
+            json_set(pad_block, "text", json_string(" "));
+            json_append(pad_content, pad_block);
+            json_set(padding, "content", pad_content);
+            json_append(converse_msgs, padding);
+        }
+    }
+
+    /* Build result */
+    json_t *result = json_object();
+    if (system_blocks->c.count > 0)
+        json_set(result, "system", system_blocks);
+    else
+        json_free(system_blocks);
+    json_set(result, "messages", converse_msgs);
+    return result;
+}
+
+/* ---- bedrock_normalize_converse_response ---- */
+/* Port of Python bedrock_adapter.normalize_converse_response().
+ * Converts a Bedrock Converse API response JSON to a normalized format
+ * matching the shape used internally: {choices: [...], usage: {...}, model: "..."}.
+ * Returns json_t* that the caller must free(). */
+json_t *bedrock_normalize_converse_response(const json_t *response) {
+    if (!response || response->type != JSON_OBJECT)
+        return NULL;
+
+    json_t *output = json_obj_get(response, "output");
+    json_t *message = NULL;
+    json_t *content_blocks = NULL;
+    if (output) message = json_obj_get(output, "message");
+    if (message) content_blocks = json_obj_get(message, "content");
+
+    const char *stop_reason_str = json_get_str(response, "stopReason", "end_turn");
+    const char *finish_reason = bedrock_converse_stop_reason_to_openai(stop_reason_str);
+
+    /* Extract content blocks */
+    json_t *text_parts = json_array();
+    json_t *reasoning_parts = json_array();
+    json_t *tool_calls = json_array();
+    bool has_tool_use = false;
+
+    if (content_blocks && content_blocks->type == JSON_ARRAY) {
+        for (size_t i = 0; i < content_blocks->c.count; i++) {
+            json_t *block = content_blocks->c.items[i];
+            if (!block || block->type != JSON_OBJECT) continue;
+
+            /* Text block */
+            const char *text = json_get_str(block, "text", NULL);
+            if (text) {
+                json_append(text_parts, json_string(text));
+                continue;
+            }
+
+            /* Reasoning content block */
+            json_t *reasoning = json_obj_get(block, "reasoningContent");
+            if (reasoning) {
+                const char *thinking = json_get_str(reasoning, "text", NULL);
+                if (thinking && *thinking) {
+                    json_append(reasoning_parts, json_string(thinking));
+                }
+                continue;
+            }
+
+            /* Tool use block */
+            json_t *tu = json_obj_get(block, "toolUse");
+            if (tu) {
+                has_tool_use = true;
+                json_t *tc = json_object();
+                json_set(tc, "id", json_string(json_get_str(tu, "toolUseId", "")));
+                json_set(tc, "type", json_string("function"));
+                json_t *fn = json_object();
+                json_set(fn, "name", json_string(json_get_str(tu, "name", "")));
+                json_t *input = json_obj_get(tu, "input");
+                if (input) {
+                    char *args_str = json_serialize(input);
+                    json_set(fn, "arguments", json_string(args_str ? args_str : "{}"));
+                    free(args_str);
+                } else {
+                    json_set(fn, "arguments", json_string("{}"));
+                }
+                json_set(tc, "function", fn);
+                json_append(tool_calls, tc);
+            }
+        }
+    }
+
+    /* Build content string from text parts */
+    char *content_str = NULL;
+    if (text_parts->c.count > 0) {
+        size_t total = 0;
+        for (size_t i = 0; i < text_parts->c.count; i++) {
+            json_t *tp = text_parts->c.items[i];
+            if (tp && tp->type == JSON_STRING && tp->str_val)
+                total += strlen(tp->str_val) + 1; /* \n separator or \0 */
+        }
+        content_str = (char *)calloc(1, total + 1);
+        if (content_str) {
+            size_t pos = 0;
+            for (size_t i = 0; i < text_parts->c.count; i++) {
+                json_t *tp = text_parts->c.items[i];
+                if (tp && tp->type == JSON_STRING && tp->str_val) {
+                    size_t len = strlen(tp->str_val);
+                    if (pos > 0) content_str[pos++] = '\n';
+                    memcpy(content_str + pos, tp->str_val, len);
+                    pos += len;
+                }
+            }
+        }
+    }
+
+    /* Build reasoning string */
+    char *reasoning_str = NULL;
+    if (reasoning_parts->c.count > 0) {
+        size_t total = 0;
+        for (size_t i = 0; i < reasoning_parts->c.count; i++) {
+            json_t *rp = reasoning_parts->c.items[i];
+            if (rp && rp->type == JSON_STRING && rp->str_val)
+                total += strlen(rp->str_val) + 2; /* \n\n separator */
+        }
+        reasoning_str = (char *)calloc(1, total + 1);
+        if (reasoning_str) {
+            size_t pos = 0;
+            for (size_t i = 0; i < reasoning_parts->c.count; i++) {
+                json_t *rp = reasoning_parts->c.items[i];
+                if (rp && rp->type == JSON_STRING && rp->str_val) {
+                    size_t len = strlen(rp->str_val);
+                    if (pos > 0) { reasoning_str[pos++] = '\n'; reasoning_str[pos++] = '\n'; }
+                    memcpy(reasoning_str + pos, rp->str_val, len);
+                    pos += len;
+                }
+            }
+        }
+    }
+
+    /* Adjust finish_reason: tool_calls override stop */
+    if (has_tool_use && strcmp(finish_reason, "stop") == 0)
+        finish_reason = "tool_calls";
+
+    /* Build usage */
+    json_t *usage_data = json_obj_get(response, "usage");
+    int input_tokens = usage_data ? (int)json_get_num(usage_data, "inputTokens", 0) : 0;
+    int output_tokens = usage_data ? (int)json_get_num(usage_data, "outputTokens", 0) : 0;
+
+    /* Build message object */
+    json_t *msg_obj = json_object();
+    json_set(msg_obj, "role", json_string("assistant"));
+    if (content_str) {
+        json_set(msg_obj, "content", json_string(content_str));
+        free(content_str);
+    } else {
+        json_set(msg_obj, "content", json_null());
+    }
+    if (tool_calls->c.count > 0)
+        json_set(msg_obj, "tool_calls", tool_calls);
+    else
+        json_free(tool_calls);
+    if (reasoning_str) {
+        json_set(msg_obj, "reasoning_content", json_string(reasoning_str));
+        free(reasoning_str);
+    }
+
+    /* Build choice */
+    json_t *choice = json_object();
+    json_set(choice, "index", json_number(0));
+    json_set(choice, "message", msg_obj);
+    json_set(choice, "finish_reason", json_string(finish_reason));
+
+    json_t *choices = json_array();
+    json_append(choices, choice);
+
+    /* Build usage */
+    json_t *usage = json_object();
+    json_set(usage, "prompt_tokens", json_number(input_tokens));
+    json_set(usage, "completion_tokens", json_number(output_tokens));
+    json_set(usage, "total_tokens", json_number(input_tokens + output_tokens));
+
+    /* Build result */
+    json_t *result = json_object();
+    const char *model_id = json_get_str(response, "modelId", "");
+    json_set(result, "choices", choices);
+    json_set(result, "usage", usage);
+    json_set(result, "model", json_string(model_id));
+
+    json_free(text_parts);
+    json_free(reasoning_parts);
+
+    return result;
+}
+
 const provider_ops_t PROVIDER_OPS_BEDROCK = {
     .build_url = bedrock_build_url,
     .build_headers = bedrock_build_headers,

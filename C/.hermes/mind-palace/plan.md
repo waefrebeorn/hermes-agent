@@ -1,9 +1,9 @@
-# Plan — Next Phase (v349)
+# Plan — Next Phase (v350)
 
-S0+S1+S3+S6+R04+R10 PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. 93 gaps.
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 92 gaps.
 
 **Next gap targets:**
 
 | Priority | Sector | Gap | Action |
-|----------|--------|-----|--------|
-| P1 | S8 R02 | Bedrock depth | Remaining: model discovery, converse response normalization. Next portable utility |
+||----------|--------|-----|--------|
+|| P1 | S8 R01 | Anthropic depth | Adapt thinking wired. Remaining: boto3/OAuth WON'T PORT. |

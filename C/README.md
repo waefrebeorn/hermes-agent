@@ -7,7 +7,7 @@ One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 ||||||||||||||| Suite:  334/0/3 (292 test files, completes in <60s)
 ||||||||||||||| Binary: 31M    (dynamic ELF, -O2 -g)
 ||||||||||||||| Source: 456+ .c files (src/ + lib/ + tests/): 108K+ C LOC
-||||||||||||||| Gaps:  94 real parity gaps (1000+ test case gaps) across 8 sectors
+|||||||||||||||| Gaps:  92 real parity gaps (1000+ test case gaps) across 8 sectors
 ||||||||| Phase 271: S8 R02+R10 — batch 10 utility functions ported from bedrock_adapter.py + model_metadata.py
 ||||||||| Phase 272: S8 R02+R10 — batch 5 utility functions (convert_tools_to_converse, estimate_tokens_rough, resolve_verify, extract context/max_tokens)
 ||| 274 | S8 R10 depth — batch 4 token est (count_image_tokens, message_chars, messages_tokens_rough, request_tokens_rough)
