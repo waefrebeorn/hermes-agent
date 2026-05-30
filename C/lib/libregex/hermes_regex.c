@@ -110,7 +110,7 @@ char *regex_extract(const char *pattern, const char *str, int group) {
     if (!re) return NULL;
     regex_match_t *m = regex_search(re, str);
     char *result = NULL;
-    if (m && m->matched && group < REGEX_MAX_GROUPS && m->groups[group])
+    if (m && m->matched && group >= 0 && group < REGEX_MAX_GROUPS && m->groups[group])
         result = strdup(m->groups[group]);
     regex_match_free(m);
     regex_free(re);

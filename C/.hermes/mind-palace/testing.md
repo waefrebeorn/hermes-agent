@@ -1,8 +1,8 @@
-(v360)
+(v361)
 
-335/0/15, 289 test files. All pass. 78 gaps. Phase 297: S7 finish_reason test expansion — 25 new edge case assertions (12→37).
+335/0/15, 289 test files. All pass. 78 gaps. Phase 298: S7 regex test expansion — 15 new edge case assertions (17→32).
 
-Phase 297: S7 finish_reason edge case expansion — OpenRouter content_filter, Azure stop/length, Bedrock end_turn/tool_use/max_tokens/content_filtered/normalize NULL safety, DeepSeek length, Anthropic max_tokens/tool_use, Google MAX_TOKENS/SAFETY/stop+content, xAI length. OpenAI edge: NULL/empty/malformed/non-stream. v360.
+Phase 298: S7 regex edge case expansion — extraction (empty string, group bounds, multi-group, invalid pattern), compile/search (empty/case-sensitive/invalid/NULL), replace (empty, single-match, NULL replacement). Bugfix: regex_extract() negative group guard. v361.
 Phase 278: S8 R10 depth — provider_add_model_aliases() + provider_get_context_length_from_provider_error(). 19 new assertions (313→332). Suite 334/0/3. v345.
 Phase 277: S8 R10 depth — provider_extract_first_int() refactor. Provider metadata 313-test suite (300→313).
 Phase 272: S8 R02+R10 depth — batch 5 functions. 54 new assertions. Suite 335/0/0. v339.

@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v360)
+# Entry — Slermes C Parity (v361)
 
-Phase 297: S7 finish_reason test expansion — 37 assertions (12→37). 78 gaps.
+Phase 298: S7 regex test expansion — 32 assertions (17→32). 78 gaps.

@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 298: S7 X09 regex Edge Case Expansion (v361)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | regex test expansion — 15 new assertions (17→32). Extraction edge cases: empty string, out-of-bounds group (99), negative group (-1), multi-group (group 2), invalid pattern `[invalid`. Compile/search edge cases: empty string with `.*`, case-sensitive no match (WORLD vs world), empty pattern (returns NULL), invalid pattern (returns NULL), NULL pattern (returns NULL), NULL search handle, NULL search string. Replace edge cases: empty replacement strips matched text, single-match replaces first digit, NULL replacement passthrough (passthrough, not crash). Bugfix: `regex_extract()` negative group guard — added `group >= 0` check before array access prevents segfault on `regex_extract(..., -1)`. | `tests/test_regex.c` — 15 new assertions (17→32). `lib/libregex/hermes_regex.c` — group >= 0 guard added. Suite 335/0/15. v361. |
 ## Phase 297: S7 X09 finish_reason Edge Case Expansion (v360)
 | ID | Achievement | Evidence |
 |----|-------------|----------|

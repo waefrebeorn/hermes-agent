@@ -2,7 +2,7 @@
 
 |||Suite: 335/0/15 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v360. Phase 297: S7 X09 finish_reason edge case expansion — 25 new assertions (12→37). Finish reason: OpenRouter content_filter, Azure stop/length, Bedrock end_turn/tool_use/max_tokens/content_filtered/normalize NULL safety, DeepSeek length, Anthropic max_tokens/tool_use, Google MAX_TOKENS/SAFETY/stop+content, xAI length. OpenAI edge: NULL/empty/malformed/non-stream. Suite 335/0/15.
+|5|||||||||||||||||||Battleship v34 (78 gaps across 8 sectors, 1000+ test case gaps). v361. Phase 298: S7 X09 regex edge case expansion — 15 new assertions (17→32). Regex: extraction edge cases (empty string, group bounds, multi-group, invalid pattern), compile/search edge cases (empty string, case-sensitivity, empty/invalid/NULL patterns, NULL handle/string), replace edge cases (empty replacement, single-match, NULL replacement). Bugfix: regex_extract() negative group guard (group >= 0) prevents segfault. Suite 335/0/15.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
