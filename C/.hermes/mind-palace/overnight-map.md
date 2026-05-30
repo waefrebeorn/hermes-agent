@@ -34,4 +34,4 @@
 || 293 | S5 stale sweep — C04 PORTED, C05 PORTED, C10+C12 WON'T PORT. S5 25→20 gaps. Total 84→80 gaps. v356. |
 | 294 | S5 C14 webhook CLI — /webhook list/add/remove PORTED. S5 20→19 gaps. Total 80→79 gaps. v357. |
 | 295 | S5 stale sweep — C01 setup wizard PORTED (slermes setup exists). /platforms enhanced with config display + -v credential check. S5 19→18 gaps. Total 79→78 gaps. v358. |
-| 296 | S7 X09 portal_tags test expansion — 9 new edge case assertions (8→17). Format consistency, field verification, JSON validity, NULL safety. Suite 324/0/15. v359. |
+| 297 | S7 X09 finish_reason edge case expansion — 25 new assertions (12→37). OpenRouter content_filter, Azure stop/length, Bedrock end_turn/tool_use/max_tokens/content_filtered, DeepSeek length, Anthropic max_tokens/tool_use, Google MAX_TOKENS/SAFETY/stop+content, xAI length. OpenAI: NULL/empty/malformed/non-stream. Suite 335/0/15. v360. |

@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-| **TOTAL** | **78** | **4** | **31** | **32** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→18 (C01 setup PORTED, C15 depth). Suite 324/0/16.** |
+| **TOTAL** | **78** | **4** | **31** | **32** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→18 (C01 setup PORTED, C15 depth). Suite 335/0/15.** |
 
 ### Phase Map
 

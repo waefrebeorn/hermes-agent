@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v359)
+# Goal Mantra — Slermes C (v360)
 
-324/0/15 (294 test files). 78 gaps. Phase 296: S7 portal_tags test expansion — 9 new edge case assertions.
+335/0/15 (294 test files). 78 gaps. Phase 297: S7 finish_reason test expansion — 25 new edge case assertions (12→37).
 
 ## Loop
 

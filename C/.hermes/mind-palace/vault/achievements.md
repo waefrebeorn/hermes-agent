@@ -2094,6 +2094,10 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | C01 | Setup wizard — C has `slermes setup` interactive wizard. Prompts for provider (menu: openai/anthropic/Groq/etc.), model, API key. Creates config.yaml + .env. Detects existing config with warning. | `src/cli/config.c` — hermes_config_setup_interactive() (131 LOC). `src/main.c` — `setup` command dispatch at L146-149. |
+## Phase 297: S7 X09 finish_reason Edge Case Expansion (v360)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| X09 | finish_reason test expansion — 25 new assertions (12→37). OpenRouter content_filter, Azure stop/length, Bedrock end_turn/tool_use/max_tokens/content_filtered via normalize_converse_response, DeepSeek length, Anthropic max_tokens/tool_use, Google MAX_TOKENS/SAFETY/stop+content, xAI length. OpenAI edge: NULL/empty/malformed/non-stream with empty finish_reason. 4 pre-existing failures fixed (bedrock key path, openai non-NULL behavior). url_safety.c added to test_runner.sh for provider_anthropic dependency. | `tests/test_finish_reason.c` — 25 new assertions (12→37). `test_runner.sh` — count 12→37, added url_safety.c dependency. Suite 335/0/15. v360. |
 |## Phase 296: S7 X09 portal_tags Edge Case Expansion (v359)
 | ID | Achievement | Evidence |
 |----|-------------|----------|

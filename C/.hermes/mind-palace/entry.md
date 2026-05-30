@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v359)
+# Entry — Slermes C Parity (v360)
 
-Phase 296: S7 portal_tags test expansion — 17 assertions (8→17). 78 gaps.
+Phase 297: S7 finish_reason test expansion — 37 assertions (12→37). 78 gaps.

@@ -2023,10 +2023,11 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
+    "$CDIR/src/tools/url_safety.c" \
     "$CDIR/src/agent/portal_tags.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (12 tests)"
+    if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (37 tests)"
     else
         echo "  Finish reason test output:"
         /tmp/hermes_test_finish_reason 2>&1 | sed 's/^/    /'
@@ -2043,6 +2044,7 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
+        "$CDIR/src/tools/url_safety.c" \
         "$CDIR/src/agent/portal_tags.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
