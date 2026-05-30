@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v309)
+# Goal Mantra — Slermes C (v310)
 
-335/0/0 (289 test files). 102 gaps. Phase 242: Azure provider depth expansion (test_azure_depth.c 10→55 tests).
+335/0/0 (289 test files). 102 gaps. Phase 243: OpenRouter provider depth expansion (test_openrouter_depth.c 12→60 tests).
 
 ## Loop
 

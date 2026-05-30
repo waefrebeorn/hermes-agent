@@ -227,7 +227,7 @@ int main(void) {
     {
         provider_t p = {0};
         /* extra_body merge */
-        p.config.extra_body[0] = '{'; 
+        p.config.extra_body[0] = '{';
         snprintf(p.config.extra_body, sizeof(p.config.extra_body), "{\"custom_field\":\"value\"}");
         char *body = PROVIDER_OPS_AZURE.build_request_body(&p, msgs1, 1, NULL, false);
         TEST("extra_body merged", body && strstr(body, "custom_field") != NULL);

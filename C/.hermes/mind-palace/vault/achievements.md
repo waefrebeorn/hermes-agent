@@ -1849,3 +1849,13 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | B43d | parse_response: normal text with usage tokens, tool_calls with name/id/function, error with message, empty/null/non-JSON body safety. | `C/tests/test_azure_depth.c` — 6 new tests. |
 | B43e | parse_stream_chunk: null chunk (empty content), data: prefixed delta (content extraction), [DONE] termination, finish_reason delta. | `C/tests/test_azure_depth.c` — 4 new tests. |
 | B43f | Test file growth: 10→55 tests (+45, +450%). All 7 provider ops functions covered. | `C/tests/test_azure_depth.c` — 55 tests. |
+
+## Phase 243: S7 X09 OpenRouter Provider Depth Expansion (v310)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B44a | build_url: default openrouter.ai, custom base, trailing slash, existing /chat/completions preserved, empty base. | `C/tests/test_openrouter_depth.c` — 5 new tests. |
+| B44b | build_headers: Bearer token format, HTTP-Referer + X-Title headers, empty/NULL key still has custom headers. | `C/tests/test_openrouter_depth.c` — 3 new tests. |
+| B44c | build_request_body: model name + stream flag, genConfig (14 params: max_tokens, temperature, top_p, stop, service_tier, reasoning_effort, presence/frequency penalty, seed, user, logprobs, top_logprobs, n, max_tool_calls), system message extraction, tools array, tool_calls in assistant messages, tool_result with tool_call_id, extra_body merge, provider preferences (order, fallbacks, data_control, route, ignore, non-JSON drop). | `C/tests/test_openrouter_depth.c` — 22 new tests. |
+| B44d | parse_response: normal text with usage tokens, tool_calls with name/id/function, error with message, reasoning_content preserved, null/empty/invalid JSON safety. | `C/tests/test_openrouter_depth.c` — 7 new tests. |
+| B44e | parse_stream_chunk: null chunk (empty), data: delta content, [DONE] termination, raw [DONE] without data: prefix, finish_reason delta. | `C/tests/test_openrouter_depth.c` — 5 new tests. |
+| B44f | Test file growth: 12→60 tests (+48, +400%). All 7 provider ops functions covered. | `C/tests/test_openrouter_depth.c` — 60 tests. |

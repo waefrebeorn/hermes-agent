@@ -1,4 +1,4 @@
-# Overnight Map — Recent Phases (v309)
+# Overnight Map — Recent Phases (v310)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
@@ -7,6 +7,7 @@
 || 240 | S7 X09 Bedrock provider depth expansion — test_bedrock_depth.c 14→45 tests. build_url, inferenceConfig, system, stop seqs, parse_response (text/tool_use/error/multi-block/null). Suite 335/0/0. | 102 gaps | 102 gaps |
 || 241 | S7 X09 Google provider depth expansion — test_google_depth.c 8→45 tests. build_url, headers, genConfig, multi-msg, parse_response (text/fc/error/blocked). Suite 335/0/0. | 102 gaps | 102 gaps |
 || 242 | S7 X09 Azure provider depth expansion — test_azure_depth.c 10→55 tests. build_url edges (NULL/trailing slash), headers, genConfig (15 params), tools, tool_calls, parse_response/stream all ops. Suite 335/0/0. | 102 gaps | 102 gaps |
+|| 243 | S7 X09 OpenRouter provider depth expansion — test_openrouter_depth.c 12→60 tests. build_url, headers (Bearer/Referer/Title), genConfig (14 params), tools, parse_response (text/tc/error/reasoning), stream. Suite 335/0/0. | 102 gaps | 102 gaps |
 | 218 | L24 checkpoint/snapshot reclassified PORTED | PARTIAL (106 gaps) | PORTED (105 gaps) |
 | 217 | L27 prompt builder PORTED + S7 test expansion (22 assertions) | 107 gaps | 106 gaps |
 | 216 | L26 hermes_message_sanitize() — sanitization pipeline | 108 gaps | 107 gaps |
