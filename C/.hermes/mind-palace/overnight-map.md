@@ -1,10 +1,11 @@
-# Overnight Map — Recent Phases (v307)
+# Overnight Map — Recent Phases (v308)
 
 | Phase | Change | Before | After |
 |-------|--------|--------|-------|
 || 219+ | L28 PORTED + tool_delay. S7 depth: test_cli_paths 21 tests, test_session_id 19 tests, test_acp_events 76 tests, test_hermes_signal 8 tests. F10 PORTED. Suite 325/0/0, 280 test files. | 105 gaps | 103 gaps |
 || 239 | S8 R01 adaptive thinking + model-aware max_tokens + beta headers + sampling param forbiddance for Anthropic provider (provider_anthropic.c 731→1085 LOC). 28-provider test suite. Suite 335/0/0, test files 289. | 103 gaps | 102 gaps |
 || 240 | S7 X09 Bedrock provider depth expansion — test_bedrock_depth.c 14→45 tests. build_url, inferenceConfig, system, stop seqs, parse_response (text/tool_use/error/multi-block/null). Suite 335/0/0. | 102 gaps | 102 gaps |
+|| 241 | S7 X09 Google provider depth expansion — test_google_depth.c 8→45 tests. build_url, headers, genConfig, multi-msg, parse_response (text/fc/error/blocked). Suite 335/0/0. | 102 gaps | 102 gaps |
 | 218 | L24 checkpoint/snapshot reclassified PORTED | PARTIAL (106 gaps) | PORTED (105 gaps) |
 | 217 | L27 prompt builder PORTED + S7 test expansion (22 assertions) | 107 gaps | 106 gaps |
 | 216 | L26 hermes_message_sanitize() — sanitization pipeline | 108 gaps | 107 gaps |

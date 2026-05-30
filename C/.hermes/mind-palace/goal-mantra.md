@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v307)
+# Goal Mantra — Slermes C (v308)
 
-335/0/0 (289 test files). 102 gaps. Phase 240: Bedrock provider depth expansion (test_bedrock_depth.c 14→45 tests).
+335/0/0 (289 test files). 102 gaps. Phase 241: Google provider depth expansion (test_google_depth.c 8→45 tests).
 
 ## Loop
 

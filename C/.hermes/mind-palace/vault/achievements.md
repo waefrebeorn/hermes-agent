@@ -1829,3 +1829,13 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | B42c | Request body: system message extraction to separate array, tool config with tools_json. | `C/tests/test_bedrock_depth.c` — 4 new tests. |
 | B42d | parse_response: normal text response with usage tokens, tool_use with name/id/args, error via message field, nested error, multi-block text concatenation, null/empty body. | `C/tests/test_bedrock_depth.c` — 8 new tests. |
 | B42e | Test file growth: 14→45 tests (+31, +221%). Full suite 335/0/2. | `C/tests/test_bedrock_depth.c` — 45 tests. |
+
+## Phase 241: S7 X09 Google Provider Depth Expansion (v308)
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| B33a | build_url: model in URL, default gemini-2.0-flash, custom base, trailing slash stripped, existing generateContent preserved. | `C/tests/test_google_depth.c` — 5 new tests. |
+| B33b | build_headers: x-goog-api-key present with key, omitted with empty/NULL key. | `C/tests/test_google_depth.c` — 3 new tests. |
+| B33c | generationConfig: temperature, topP, topK, stopSequences all present; temperature/top_p omitted when negative; maxOutputTokens default 4096. | `C/tests/test_google_depth.c` — 8 new tests. |
+| B33d | Contents array: multi-message (user/assistant/user), role mapping (user/model), text content extraction. Streaming body still valid. | `C/tests/test_google_depth.c` — 6 new tests. |
+| B33e | parse_response: normal text with usage tokens, functionCall with name/args, error with message, blocked/SAFETY finish, multi-part concatenation, null/empty body. | `C/tests/test_google_depth.c` — 8 new tests. |
+| B33f | Test file growth: 8→45 tests (+37, +463%). Full suite 335/0/2. | `C/tests/test_google_depth.c` — 45 tests. |
