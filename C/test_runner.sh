@@ -417,7 +417,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_plugin_ext.c" "$CDIR/src/agent/plugin
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_plugin_ext -lm 2>/dev/null && [[ -x /tmp/hermes_test_plugin_ext ]]; then
     if /tmp/hermes_test_plugin_ext > /dev/null 2>&1; then
@@ -438,7 +438,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openai.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_openai -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openai ]]; then
     if /tmp/hermes_test_provider_openai > /dev/null 2>&1; then
@@ -459,7 +459,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_anthropic.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_anthropic -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_anthropic ]]; then
     if /tmp/hermes_test_provider_anthropic > /dev/null 2>&1; then
@@ -480,7 +480,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_google.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_google -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_google ]]; then
     if /tmp/hermes_test_provider_google > /dev/null 2>&1; then
@@ -501,7 +501,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_deepseek.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_deepseek -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_deepseek ]]; then
     if /tmp/hermes_test_provider_deepseek > /dev/null 2>&1; then
@@ -707,7 +707,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_xai.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_xai -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_xai ]]; then
     if /tmp/hermes_test_provider_xai > /dev/null 2>&1; then
@@ -728,7 +728,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_azure.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_azure -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_azure ]]; then
     if /tmp/hermes_test_provider_azure > /dev/null 2>&1; then
@@ -749,7 +749,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_bedrock.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_bedrock -lm -lcrypto 2>/dev/null && [[ -x /tmp/hermes_test_provider_bedrock ]]; then
     if /tmp/hermes_test_provider_bedrock > /dev/null 2>&1; then
@@ -770,7 +770,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openrouter.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_openrouter -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openrouter ]]; then
     if /tmp/hermes_test_provider_openrouter > /dev/null 2>&1; then
@@ -791,7 +791,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_custom.c" \
        "$CDIR"/lib/libcrypto "$CDIR"/lib/libdb "$CDIR"/lib/libskin \
        "$CDIR"/lib/libwebsocket "$CDIR"/lib/libprotobuf "$CDIR"/lib/libcron \
        "$CDIR"/lib/libproc "$CDIR"/lib/libtui "$CDIR"/lib/libtemplate \
-       "$CDIR"/lib/libdotenv; do echo -n " -I${d}"; done) \
+       "$CDIR"/lib/libdotenv "$CDIR"/lib/libbase64; do echo -n " -I${d}"; done) \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_custom -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_custom ]]; then
     if /tmp/hermes_test_provider_custom > /dev/null 2>&1; then
@@ -1500,7 +1500,7 @@ fi &
 
 # Home Assistant tool test (needs json lib + http lib for unresolved symbols)
 echo ""; echo "=== Home Assistant Tool Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_homeassistant.c" \
     "$CDIR/src/tools/homeassistant.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_homeassistant -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
@@ -1512,7 +1512,7 @@ fi &
 
 # DingTalk gateway test
 echo ""; echo "=== DingTalk Gateway Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_dingtalk.c" \
     "$CDIR/src/gateway/platforms/dingtalk.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_dingtalk -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
@@ -1791,7 +1791,7 @@ fi &
 
 # TIRITH policy engine test (O13 — standalone, only needs tirith.c + fnmatch)
 echo ""; echo "=== TIRITH Policy Depth Tests (O13) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" \
     -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
     -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
@@ -1809,7 +1809,7 @@ else skip "tirith_policy (compilation failed)"
 fi &
 
 # Provider metadata test (needs libjson + libplugin + url_safety)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_provider_metadata.c" \
     "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_provmeta -lssl -lcrypto -ldl -lpthread -lz -lm > /dev/null 2>&1; then
@@ -1821,7 +1821,7 @@ fi &
 
 # Azure provider depth test (B37-B38: deployment_id + api_version)
 echo ""; echo "=== Azure Provider Depth Tests (B37-B38) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_azure_depth.c" \
     "$CDIR/src/agent/provider_azure.c" \
     "$CDIR/src/agent/provider.c" \
@@ -1830,7 +1830,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_azure_depth > /dev/null 2>&1; then ok "azure_depth (9 tests)"
     else
@@ -1850,14 +1850,14 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_azure_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "azure_depth (compilation failed)"
 fi
 
 # Bedrock provider depth test (B39-B41: inferenceProfile + guardrails + trace)
 echo ""; echo "=== Bedrock Provider Depth Tests (B39-B41) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_bedrock_depth.c" \
     "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider.c" \
@@ -1866,7 +1866,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_br_depth > /dev/null 2>&1; then ok "bedrock_depth (80 tests)"
     else
@@ -1886,14 +1886,14 @@ else
         "$CDIR/src/agent/provider_anthropic.c" "$CDIR/src/agent/provider_google.c" \
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_br_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "bedrock_depth (compilation failed)"
 fi
 
 # OpenRouter provider depth test (B43-B46: provider preferences)
 echo ""; echo "=== OpenRouter Provider Depth Tests (B43-B46) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_openrouter_depth.c" \
     "$CDIR/src/agent/provider_openrouter.c" \
     "$CDIR/src/agent/provider.c" \
@@ -1903,7 +1903,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_or_depth > /dev/null 2>&1; then ok "openrouter_depth (13 tests)"
     else
@@ -1924,14 +1924,14 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_or_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "openrouter_depth (compilation failed)"
 fi
 
 # Anthropic provider depth test (B26-B28: thinking, cache control, tool format)
 echo ""; echo "=== Anthropic Provider Depth Tests (B26-B28) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_anthropic_depth.c" \
     "$CDIR/src/agent/provider_anthropic.c" \
     "$CDIR/src/agent/provider.c" \
@@ -1941,7 +1941,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_anth_depth > /dev/null 2>&1; then ok "anthropic_depth (50 tests)"
     else
@@ -1962,14 +1962,14 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_anth_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "anthropic_depth (compilation failed)"
 fi
 
 # Google provider comprehensive tests
 echo ""; echo "=== Google Provider Comprehensive Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_google_full.c" \
     "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider.c" \
@@ -1979,7 +1979,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_goog_full > /dev/null 2>&1; then ok "google_full (40 tests)"
     else
@@ -2000,7 +2000,7 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_goog_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "google_full (compilation failed)"
 fi
@@ -2012,7 +2012,7 @@ fi
 
 # B22: finish_reason tracking (standalone — needs all providers + json + http)
 echo ""; echo "=== Finish Reason Tracking Tests (B22) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_finish_reason.c" \
     "$CDIR/src/agent/provider.c" \
     "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
@@ -2021,7 +2021,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_finish_reason > /dev/null 2>&1; then ok "finish_reason (12 tests)"
     else
@@ -2041,14 +2041,14 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_finish_reason -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "finish_reason (compilation failed)"
 fi
 
 # Google depth tests (B30-B31: top_k + candidate_count + systemInstruction)
 echo ""; echo "=== Google Provider Depth Tests (B30-B31) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_google_depth.c" \
     "$CDIR/src/agent/provider_google.c" \
     "$CDIR/src/agent/provider.c" \
@@ -2058,9 +2058,9 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (130 tests)"
+    if /tmp/hermes_test_google_depth > /dev/null 2>&1; then ok "google_depth (166 tests)"
     else
         echo "  Google depth test output:"
         /tmp/hermes_test_google_depth 2>&1 | sed 's/^/    /'
@@ -2079,14 +2079,14 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_google_depth -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "google_depth (compilation failed)"
 fi
 
 # JSON mode + response_format UAF test (B23 — standalone, needs all providers)
 echo ""; echo "=== JSON Mode Tests (B23) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_json_mode.c" \
     "$CDIR/src/agent/provider.c" \
     "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
@@ -2095,7 +2095,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (10 tests)"
     else
@@ -2115,14 +2115,14 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "json_mode (compilation failed)"
 fi
 
 # Bedrock provider comprehensive tests
 echo ""; echo "=== Bedrock Provider Comprehensive Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_bedrock_full.c" \
     "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider.c" \
@@ -2132,7 +2132,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_br_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_br_full > /dev/null 2>&1; then ok "bedrock_full (35 tests)"
     else
@@ -2153,14 +2153,14 @@ else
         "$CDIR/src/agent/provider_azure.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_br_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "bedrock_full (compilation failed)"
 fi
 
 # Azure provider comprehensive tests
 echo ""; echo "=== Azure Provider Comprehensive Tests ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_azure_full.c" \
     "$CDIR/src/agent/provider_azure.c" \
     "$CDIR/src/agent/provider.c" \
@@ -2170,7 +2170,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_az_full -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_az_full > /dev/null 2>&1; then ok "azure_full (45 tests)"
     else
@@ -2191,14 +2191,14 @@ else
         "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_az_full -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "azure_full (compilation failed)"
 fi
 
 # DeepSeek FIM tests (B32 — needs all providers + JSON + HTTP + URL safety)
 echo ""; echo "=== DeepSeek FIM (Fill-in-the-Middle) Tests (B32) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" -I"$CDIR/lib/libprotobuf" \
     -I"$CDIR/lib/libdb" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
     -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
@@ -2209,7 +2209,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_google.c" "$CDIR/src/agent/provider_azure.c" \
     "$CDIR/src/agent/provider_bedrock.c" "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/provider_metadata.c" "$CDIR/src/tools/url_safety.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_deepseek_fim -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_deepseek_fim > /dev/null 2>&1; then ok "deepseek_fim (30 tests)"
     else
@@ -2229,7 +2229,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
     "$CDIR/tests/test_discord_interactions.c" \
     "$CDIR/src/gateway/platforms/discord.c" "$CDIR/src/tools/url_safety.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_discord_int -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_discord_int > /dev/null 2>&1; then ok "discord_interactions (31 tests)"
     else
@@ -2242,7 +2242,7 @@ else skip "discord_interactions (compilation failed)"
 fi &
 
 # Provider smoke test (needs all provider object files + libs)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_provider_smoke.c" \
     "$CDIR/src/agent/provider.c" \
     "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
@@ -2251,7 +2251,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_provsmoke -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_provsmoke > /dev/null 2>&1; then ok "provider_smoke (439 tests)"
     else fail "provider_smoke (test binary returned non-zero)"; fi
@@ -2261,7 +2261,7 @@ fi &
 
 # Provider error handling edge cases test (M06 — all providers with error inputs)
 echo ""; echo "=== Provider Error Handling Edge Cases (M06) ==="
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_provider_error.c" \
     "$CDIR/src/agent/provider.c" \
     "$CDIR/src/agent/provider_openai.c" "$CDIR/src/agent/provider_openrouter.c" \
@@ -2270,7 +2270,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_proverr -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_proverr > /dev/null 2>&1; then ok "provider_error (M06: all providers error handling)"
     else
@@ -2290,7 +2290,7 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_proverr -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "provider_error (M06: compilation failed)"
 fi
@@ -2322,7 +2322,7 @@ echo ""; echo "=== Browse.sh Skills Hub Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
     "$CDIR/tests/test_skills_hub.c" \
     "$CDIR/src/skills_hub.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_hub -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
     if /tmp/hermes_test_hub > /dev/null 2>&1; then ok "skills_hub (17 tests)"
     else
@@ -2336,7 +2336,7 @@ else
     gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" \
         "$CDIR/tests/test_skills_hub.c" \
         "$CDIR/src/skills_hub.c" \
-        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+        "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
         -o /tmp/hermes_test_hub -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
     skip "skills_hub (compilation failed)"
 fi
@@ -2431,7 +2431,7 @@ else skip "credential_pool (compilation failed)"
 fi &
 
 # Budget tracker test (needs budget_tracker.c + provider_metadata + url_safety + json lib)
-if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" \
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libbase64" \
     "$CDIR/tests/test_budget_tracker.c" \
     "$CDIR/src/agent/budget_tracker.c" "$CDIR/src/agent/provider_metadata.c" \
     "$CDIR/src/tools/url_safety.c" \
@@ -2723,7 +2723,7 @@ INCLUDES_ALL+=("-I$CDIR/lib/libregex" "-I$CDIR/lib/libansi")
 if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
     "$CDIR/tests/test_x_search.c" \
     "$CDIR/src/tools/x_search.c" \
-    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_x_search -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_x_search > /dev/null 2>&1; then ok "x_search (9 tests: 4 error-path + 5 date validation)"
     else fail "x_search (test binary returned non-zero)"; fi

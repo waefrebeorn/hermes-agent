@@ -1996,6 +1996,14 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 |----|-------------|----------|
 | R04f | `google_translate_tools_to_gemini()` ported from Python `gemini_native_adapter._translate_tools_to_gemini()`. Translates OpenAI tool definitions array (`[{type: "function", function: {name, description?, parameters?}}]`) to Gemini functionDeclarations array (`[{functionDeclarations: [{name, description?, parameters?}]}]`). Parameters deep-copied via `json_copy()`. Empty name entries skipped. Returns `[]` for NULL, non-array, or empty/empty-result inputs. | `src/agent/provider_google.c:949-1001` — implementation. `include/provider.h:219` — declaration. `tests/test_google_depth.c:620-752` — 15 test assertions (86→101). test_runner.sh updated for 101 tests. Suite 335/0/0. v335. |
 
+## Phase 270: S8 R04 Gemini Depth — extract_multimodal_parts + build_gemini_contents
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04i | `google_extract_multimodal_parts()` ported from Python `gemini_native_adapter._extract_multimodal_parts()`. Extracts Gemini multimodal parts from message content: non-array→text part, array→iterates strings (→`{"text": ...}`), text objects (→`{"text": ...}`), and image_url objects (→`{"inlineData": {"mimeType": ..., "data": ...}}`). Handles base64 decode/re-encode for image URLs. | `src/agent/provider_google.c:1103-1195` — implementation. `include/provider.h:222` — declaration. `tests/test_google_depth.c:933-976` — 7 test assertions (130→137). |
+| R04j | `google_tool_call_extra_from_part()` ported from Python `gemini_native_adapter._tool_call_extra_from_part()`. Reverse of `google_tool_call_extra_signature()`: extracts `thoughtSignature` from a Gemini part and wraps as `{"google": {"thought_signature": sig}}`. Returns NULL if no signature. | `src/agent/provider_google.c:1198-1212` — implementation. `include/provider.h:223` — declaration. `tests/test_google_depth.c:979-1009` — 6 test assertions (137→143). |
+| R04k | `google_build_gemini_contents()` ported from Python `gemini_native_adapter._build_gemini_contents()`. Translates OpenAI messages to Gemini contents[] + systemInstruction. System messages → accumulated into system_instruction; tool/function → translate_tool_result wrapped as user; assistant/user → extract_multimodal_parts + translate_tool_calls. Builds tool_name_by_call_id map. | `src/agent/provider_google.c:1215-1350` — implementation. `include/provider.h:224` — declaration. `tests/test_google_depth.c:1012-1098` — 23 test assertions (143→166). Suite 335/0/0. v337. |
+
 ## Phase 269: S8 R04 Gemini Depth — tool_choice + thinking_config
 
 | ID | Achievement | Evidence |

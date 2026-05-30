@@ -16,6 +16,7 @@
 #include "hermes_json.h"
 #include "hermes_http.h"
 #include "provider.h"
+#include "base64.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1095,6 +1096,252 @@ json_t *google_normalize_thinking_config(const json_t *config) {
         return NULL;
     }
 
+    return result;
+}
+
+/* Port of Python gemini_native_adapter._extract_multimodal_parts().
+ * Extracts multimodal parts from message content for Gemini.
+ * - Non-array content → text parts via google_coerce_content_to_text()
+ * - Array content → iterates items:
+ *   - string → {"text": string}
+ *   - dict type="text" → {"text": text}
+ *   - dict type="image_url" → {"inlineData": {"mimeType": ..., "data": ...}}
+ * Returns json_t* array of parts. Empty array if no valid parts.
+ * Caller must json_free(). */
+json_t *google_extract_multimodal_parts(const json_t *content) {
+    json_t *parts = json_array();
+
+    if (!content || content->type == JSON_NULL)
+        return parts;
+
+    if (content->type != JSON_ARRAY) {
+        char *text = google_coerce_content_to_text(content);
+        if (text && *text) {
+            json_t *part = json_object();
+            json_set(part, "text", json_string(text));
+            json_append(parts, part);
+        }
+        free(text);
+        return parts;
+    }
+
+    for (size_t i = 0; i < content->c.count; i++) {
+        json_t *item = content->c.items[i];
+        if (!item) continue;
+
+        if (item->type == JSON_STRING) {
+            json_t *part = json_object();
+            json_set(part, "text", json_string(item->str_val ? item->str_val : ""));
+            json_append(parts, part);
+
+        } else if (item->type == JSON_OBJECT) {
+            const char *ptype = json_get_str(item, "type", "");
+
+            if (strcmp(ptype, "text") == 0) {
+                const char *text = json_get_str(item, "text", "");
+                if (text && *text) {
+                    json_t *part = json_object();
+                    json_set(part, "text", json_string(text));
+                    json_append(parts, part);
+                }
+
+            } else if (strcmp(ptype, "image_url") == 0) {
+                json_t *image_url = json_obj_get(item, "image_url");
+                if (!image_url) continue;
+                const char *url = json_get_str(image_url, "url", "");
+                if (!url || strncmp(url, "data:", 5) != 0) continue;
+
+                /* Parse data: URL: data:[mime][;base64],<data> */
+                const char *comma = strchr(url, ',');
+                if (!comma) continue;
+
+                /* Extract MIME type from header */
+                char mime[128] = "image/png";
+                const char *semi = (const char *)memchr(url + 5, ';',
+                    (size_t)(comma - url - 5));
+                if (semi) {
+                    size_t mime_len = (size_t)(semi - url - 5);
+                    if (mime_len > 0 && mime_len < sizeof(mime)) {
+                        memcpy(mime, url + 5, mime_len);
+                        mime[mime_len] = '\0';
+                    }
+                }
+
+                /* Decode then re-encode to normalize (matches Python behavior) */
+                size_t decoded_len = 0;
+                unsigned char *decoded = base64_decode(comma + 1, &decoded_len);
+                if (decoded) {
+                    char *encoded = base64_encode(decoded, decoded_len);
+                    if (encoded) {
+                        json_t *inline_data = json_object();
+                        json_set(inline_data, "mimeType", json_string(mime));
+                        json_set(inline_data, "data", json_string(encoded));
+                        json_t *part = json_object();
+                        json_set(part, "inlineData", inline_data);
+                        json_append(parts, part);
+                        free(encoded);
+                    }
+                    free(decoded);
+                }
+            }
+        }
+    }
+
+    return parts;
+}
+
+/* Port of Python gemini_native_adapter._tool_call_extra_from_part().
+ * Reverse of google_tool_call_extra_signature(): extracts thoughtSignature
+ * from a Gemini part and wraps as {google: {thought_signature: sig}}.
+ * Returns NULL if no signature found. Caller must json_free(). */
+json_t *google_tool_call_extra_from_part(const json_t *part) {
+    if (!part || part->type != JSON_OBJECT) return NULL;
+
+    const char *sig = json_get_str(part, "thoughtSignature", NULL);
+    if (!sig || !*sig) return NULL;
+
+    json_t *google = json_object();
+    json_set(google, "thought_signature", json_string(sig));
+    json_t *result = json_object();
+    json_set(result, "google", google);
+    return result;
+}
+
+/* Port of Python gemini_native_adapter._build_gemini_contents().
+ * Translates OpenAI-format messages array to Gemini contents[] + systemInstruction.
+ * Iterates messages by role:
+ *   - system → accumulates into system_instruction.text
+ *   - tool/function → translate_tool_result wrapped as user role
+ *   - assistant/user → extract_multimodal_parts + translate_tool_calls
+ * Returns json_t object with "contents" array and optional "systemInstruction".
+ * Caller must json_free(). */
+json_t *google_build_gemini_contents(const json_t *messages) {
+    json_t *result = json_object();
+    json_t *contents = json_array();
+    json_t *tool_name_by_call_id = json_object();
+    char *system_texts[64];
+    int n_system = 0;
+    size_t system_total = 0;
+
+    if (!messages || messages->type != JSON_ARRAY) {
+        json_set(result, "contents", contents);
+        json_free(tool_name_by_call_id);
+        return result;
+    }
+
+    for (size_t i = 0; i < messages->c.count; i++) {
+        json_t *msg = messages->c.items[i];
+        if (!msg || msg->type != JSON_OBJECT) continue;
+
+        const char *role = json_get_str(msg, "role", "user");
+
+        /* System messages: accumulate text */
+        if (strcmp(role, "system") == 0) {
+            json_t *content = json_obj_get(msg, "content");
+            char *text = google_coerce_content_to_text(content);
+            if (text && *text && n_system < 64) {
+                system_texts[n_system] = text;
+                system_total += strlen(text);
+                n_system++;
+            } else {
+                free(text);
+            }
+            continue;
+        }
+
+        /* Tool/function results: translate as functionResponse */
+        if (strcmp(role, "tool") == 0 || strcmp(role, "function") == 0) {
+            json_t *tool_part = google_translate_tool_result(msg, tool_name_by_call_id);
+            json_t *content_obj = json_object();
+            json_t *parts = json_array();
+            json_append(parts, tool_part);
+            json_set(content_obj, "role", json_string("user"));
+            json_set(content_obj, "parts", parts);
+            json_append(contents, content_obj);
+            continue;
+        }
+
+        /* User/assistant messages */
+        const char *gemini_role = (strcmp(role, "assistant") == 0) ? "model" : "user";
+        json_t *parts = json_array();
+
+        /* Extract multimodal parts from content */
+        json_t *content_val = json_obj_get(msg, "content");
+        json_t *content_parts = google_extract_multimodal_parts(content_val);
+        if (content_parts) {
+            for (size_t j = 0; j < content_parts->c.count; j++)
+                json_append(parts, json_copy(content_parts->c.items[j]));
+            json_free(content_parts);
+        }
+
+        /* Translate tool_calls */
+        json_t *tool_calls = json_obj_get(msg, "tool_calls");
+        if (tool_calls && tool_calls->type == JSON_ARRAY) {
+            for (size_t j = 0; j < tool_calls->c.count; j++) {
+                json_t *tc = tool_calls->c.items[j];
+                if (!tc || tc->type != JSON_OBJECT) continue;
+
+                /* Build tool_name_by_call_id map */
+                const char *tc_id = json_get_str(tc, "id", NULL);
+                if (!tc_id) tc_id = json_get_str(tc, "call_id", NULL);
+                if (tc_id && *tc_id) {
+                    json_t *fn = json_obj_get(tc, "function");
+                    if (fn) {
+                        const char *fn_name = json_get_str(fn, "name", NULL);
+                        if (fn_name && *fn_name)
+                            json_set(tool_name_by_call_id, tc_id, json_string(fn_name));
+                    }
+                }
+
+                json_t *tc_part = google_translate_tool_call(tc);
+                json_append(parts, tc_part);
+            }
+        }
+
+        if (parts->c.count > 0) {
+            json_t *content_obj = json_object();
+            json_set(content_obj, "role", json_string(gemini_role));
+            json_set(content_obj, "parts", parts);
+            json_append(contents, content_obj);
+        } else {
+            json_free(parts);
+        }
+    }
+
+    json_set(result, "contents", contents);
+
+    /* Build system instruction from accumulated system texts */
+    if (n_system > 0) {
+        size_t needed = system_total + (size_t)(n_system > 0 ? n_system - 1 : 0) + 1;
+        char *joined = (char *)malloc(needed);
+        if (joined) {
+            joined[0] = '\0';
+            for (int i = 0; i < n_system; i++) {
+                if (i > 0) strcat(joined, "\n");
+                strcat(joined, system_texts[i]);
+                free(system_texts[i]);
+            }
+            /* Strip trailing whitespace */
+            size_t len = strlen(joined);
+            while (len > 0 && (joined[len - 1] == ' ' || joined[len - 1] == '\n' || joined[len - 1] == '\t'))
+                joined[--len] = '\0';
+
+            if (*joined) {
+                json_t *text_part = json_object();
+                json_set(text_part, "text", json_string(joined));
+                json_t *si_parts = json_array();
+                json_append(si_parts, text_part);
+                json_t *si = json_object();
+                json_set(si, "parts", si_parts);
+                json_set(result, "systemInstruction", si);
+            }
+            free(joined);
+        } else {
+            for (int i = 0; i < n_system; i++) free(system_texts[i]);
+        }
+    }
+
+    json_free(tool_name_by_call_id);
     return result;
 }
 

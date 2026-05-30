@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v336)
+# Goal Mantra — Slermes C (v337)
 
-335/0/0 (292 test files). 94 gaps. Phase 269: S8 R04 depth — tool_choice + thinking_config. 130-test google depth suite.
+335/0/0 (292 test files). 94 gaps. Phase 270: S8 R04 depth — extract + build_contents. 166-test google depth suite.
 
 ## Loop
 

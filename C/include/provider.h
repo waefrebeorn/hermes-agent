@@ -221,6 +221,9 @@ json_t *google_translate_tool_result(const json_t *message, const json_t *tool_n
 json_t *google_translate_tools_to_gemini(const json_t *tools);
 json_t *google_translate_tool_choice_to_gemini(const json_t *tool_choice);
 json_t *google_normalize_thinking_config(const json_t *config);
+json_t *google_extract_multimodal_parts(const json_t *content);
+json_t *google_tool_call_extra_from_part(const json_t *part);
+json_t *google_build_gemini_contents(const json_t *messages);
 
 /* Custom (user-defined) provider */
 extern const provider_ops_t PROVIDER_OPS_CUSTOM;

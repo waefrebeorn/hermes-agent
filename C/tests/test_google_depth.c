@@ -931,6 +931,264 @@ static int test_translate_tools_to_gemini(void) {
     return f;
 }
 
+/* ── google_extract_multimodal_parts ────────────────────── */
+static int test_extract_multimodal_parts(void) {
+    int f = 0;
+
+    printf("\n--- google_extract_multimodal_parts ---\n");
+
+    /* 1. NULL content */
+    json_t *r = google_extract_multimodal_parts(NULL);
+    TEST("emp NULL returns empty array", r && r->type == JSON_ARRAY && r->c.count == 0);
+    json_free(r);
+
+    /* 2. String content */
+    r = google_extract_multimodal_parts(json_string("hello"));
+    TEST("emp string has 1 part", r && r->c.count == 1);
+    if (r && r->c.count > 0) {
+        TEST("emp string text=hello", strcmp(json_get_str(r->c.items[0], "text", ""), "hello") == 0);
+    }
+    json_free(r);
+
+    /* 3. Array of strings */
+    {
+        json_t *arr = json_array();
+        json_append(arr, json_string("part one"));
+        json_append(arr, json_string("part two"));
+        r = google_extract_multimodal_parts(arr);
+        TEST("emp array has 2 parts", r && r->c.count == 2);
+        json_free(r);
+        json_free(arr);
+    }
+
+    /* 4. Array with text objects */
+    {
+        json_t *arr = json_array();
+        json_t *t1 = json_object();
+        json_set(t1, "type", json_string("text"));
+        json_set(t1, "text", json_string("obj text"));
+        json_append(arr, t1);
+        r = google_extract_multimodal_parts(arr);
+        TEST("emp text obj has 1 part", r && r->c.count == 1);
+        if (r && r->c.count > 0) {
+            TEST("emp text obj text=obj text", strcmp(json_get_str(r->c.items[0], "text", ""), "obj text") == 0);
+        }
+        json_free(r);
+        json_free(arr);
+    }
+
+    /* 5. Empty string array item (should produce empty text part) */
+    {
+        json_t *arr = json_array();
+        json_append(arr, json_string(""));
+        r = google_extract_multimodal_parts(arr);
+        TEST("emp empty string has 1 part", r && r->c.count == 1);
+        json_free(r);
+        json_free(arr);
+    }
+
+    return f;
+}
+
+/* ── google_tool_call_extra_from_part ──────────────────── */
+static int test_tool_call_extra_from_part(void) {
+    int f = 0;
+
+    printf("\n--- google_tool_call_extra_from_part ---\n");
+
+    /* 1. NULL */
+    json_t *r = google_tool_call_extra_from_part(NULL);
+    TEST("tce NULL returns NULL", r == NULL);
+
+    /* 2. No thoughtSignature */
+    {
+        json_t *part = json_object();
+        json_set(part, "text", json_string("hello"));
+        r = google_tool_call_extra_from_part(part);
+        TEST("tce no sig returns NULL", r == NULL);
+        json_free(r);
+        json_free(part);
+    }
+
+    /* 3. With thoughtSignature */
+    {
+        json_t *part = json_object();
+        json_set(part, "thoughtSignature", json_string("sig123"));
+        r = google_tool_call_extra_from_part(part);
+        TEST("tce has sig", r != NULL);
+        if (r) {
+            json_t *google = json_obj_get(r, "google");
+            TEST("tce has google", google != NULL);
+            if (google) {
+                TEST("tce thought_signature = sig123",
+                     strcmp(json_get_str(google, "thought_signature", ""), "sig123") == 0);
+            }
+        }
+        json_free(r);
+        json_free(part);
+    }
+
+    /* 4. Empty thoughtSignature */
+    {
+        json_t *part = json_object();
+        json_set(part, "thoughtSignature", json_string(""));
+        r = google_tool_call_extra_from_part(part);
+        TEST("tce empty sig returns NULL", r == NULL);
+        json_free(r);
+        json_free(part);
+    }
+
+    return f;
+}
+
+/* ── google_build_gemini_contents ──────────────────────── */
+static int test_build_gemini_contents(void) {
+    int f = 0;
+
+    printf("\n--- google_build_gemini_contents ---\n");
+
+    /* 1. NULL messages */
+    json_t *r = google_build_gemini_contents(NULL);
+    json_t *contents = json_obj_get(r, "contents");
+    TEST("bgc NULL has contents", contents != NULL);
+    TEST("bgc NULL contents empty", contents && contents->c.count == 0);
+    json_free(r);
+
+    /* 2. Empty array */
+    r = google_build_gemini_contents(json_array());
+    contents = json_obj_get(r, "contents");
+    TEST("bgc empty has contents", contents != NULL);
+    TEST("bgc empty contents empty", contents && contents->c.count == 0);
+    json_free(r);
+
+    /* 3. Single user message */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("user"));
+        json_set(msg, "content", json_string("hello world"));
+        json_append(msgs, msg);
+        r = google_build_gemini_contents(msgs);
+        contents = json_obj_get(r, "contents");
+        TEST("bgc user has 1 content", contents && contents->c.count == 1);
+        if (contents && contents->c.count > 0) {
+            json_t *c = contents->c.items[0];
+            TEST("bgc user role = user", strcmp(json_get_str(c, "role", ""), "user") == 0);
+            json_t *parts = json_obj_get(c, "parts");
+            TEST("bgc user has parts", parts && parts->type == JSON_ARRAY);
+            if (parts && parts->c.count > 0) {
+                TEST("bgc user text = hello world",
+                     strcmp(json_get_str(parts->c.items[0], "text", ""), "hello world") == 0);
+            }
+        }
+        TEST("bgc user no systemInstruction", json_obj_get(r, "systemInstruction") == NULL);
+        json_free(r);
+        json_free(msgs);
+    }
+
+    /* 4. System message */
+    {
+        json_t *msgs = json_array();
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("system"));
+        json_set(msg, "content", json_string("Be helpful"));
+        json_append(msgs, msg);
+        json_t *umsg = json_object();
+        json_set(umsg, "role", json_string("user"));
+        json_set(umsg, "content", json_string("hi"));
+        json_append(msgs, umsg);
+        r = google_build_gemini_contents(msgs);
+        contents = json_obj_get(r, "contents");
+        json_t *si = json_obj_get(r, "systemInstruction");
+        TEST("bgc system has systemInstruction", si != NULL);
+        if (si) {
+            json_t *si_parts = json_obj_get(si, "parts");
+            TEST("bgc si has parts", si_parts && si_parts->c.count > 0);
+            if (si_parts && si_parts->c.count > 0) {
+                TEST("bgc si text = Be helpful",
+                     strcmp(json_get_str(si_parts->c.items[0], "text", ""), "Be helpful") == 0);
+            }
+        }
+        TEST("bgc system has 1 content (system excluded)", contents && contents->c.count == 1);
+        json_free(r);
+        json_free(msgs);
+    }
+
+    /* 5. Assistant with tool_calls */
+    {
+        json_t *msgs = json_array();
+        json_t *fn = json_object();
+        json_set(fn, "name", json_string("search_web"));
+        json_set(fn, "arguments", json_string("{}"));
+        json_t *tc = json_object();
+        json_set(tc, "id", json_string("call_001"));
+        json_set(tc, "type", json_string("function"));
+        json_set(tc, "function", fn);
+        json_t *tcs = json_array();
+        json_append(tcs, tc);
+        json_t *msg = json_object();
+        json_set(msg, "role", json_string("assistant"));
+        json_set(msg, "content", json_string("Let me search"));
+        json_set(msg, "tool_calls", tcs);
+        json_append(msgs, msg);
+
+        r = google_build_gemini_contents(msgs);
+        contents = json_obj_get(r, "contents");
+        TEST("bgc tool_calls has 1 content", contents && contents->c.count == 1);
+        if (contents && contents->c.count > 0) {
+            json_t *c = contents->c.items[0];
+            TEST("bgc tool_calls role = model", strcmp(json_get_str(c, "role", ""), "model") == 0);
+            json_t *parts = json_obj_get(c, "parts");
+            TEST("bgc tool_calls has parts", parts != NULL);
+            if (parts) {
+                /* Should have text part + functionCall part = 2 parts */
+                bool found_text = false, found_fc = false;
+                for (size_t i = 0; i < parts->c.count; i++) {
+                    json_t *p = parts->c.items[i];
+                    if (json_get_str(p, "text", NULL)) found_text = true;
+                    if (json_obj_get(p, "functionCall")) found_fc = true;
+                }
+                TEST("bgc tool_calls has text part", found_text);
+                TEST("bgc tool_calls has functionCall", found_fc);
+            }
+        }
+        json_free(r);
+        json_free(msgs);
+    }
+
+    /* 6. Tool result */
+    {
+        json_t *msgs = json_array();
+        json_t *tr = json_object();
+        json_set(tr, "role", json_string("tool"));
+        json_set(tr, "tool_call_id", json_string("call_001"));
+        json_set(tr, "name", json_string("search_web"));
+        json_set(tr, "content", json_string("{\"result\": \"data\"}"));
+        json_append(msgs, tr);
+        r = google_build_gemini_contents(msgs);
+        contents = json_obj_get(r, "contents");
+        TEST("bgc tool_result has 1 content", contents && contents->c.count == 1);
+        if (contents && contents->c.count > 0) {
+            json_t *c = contents->c.items[0];
+            TEST("bgc tool_result role = user", strcmp(json_get_str(c, "role", ""), "user") == 0);
+            json_t *parts = json_obj_get(c, "parts");
+            TEST("bgc tool_result has parts", parts && parts->c.count > 0);
+            if (parts && parts->c.count > 0) {
+                json_t *fr = json_obj_get(parts->c.items[0], "functionResponse");
+                TEST("bgc tool_result has functionResponse", fr != NULL);
+                if (fr) {
+                    TEST("bgc tool_result name = search_web",
+                         strcmp(json_get_str(fr, "name", ""), "search_web") == 0);
+                }
+            }
+        }
+        json_free(r);
+        json_free(msgs);
+    }
+
+    return f;
+}
+
 int main(void) {
     int total_fail = 0;
     total_fail += test_original_suite();
@@ -938,6 +1196,9 @@ int main(void) {
     total_fail += test_translate_tools_to_gemini();
     total_fail += test_translate_tool_choice();
     total_fail += test_normalize_thinking_config();
+    total_fail += test_extract_multimodal_parts();
+    total_fail += test_tool_call_extra_from_part();
+    total_fail += test_build_gemini_contents();
     printf("\n=== Overall: %s ===\n", total_fail ? "SOME FAILED" : "ALL PASSED");
     return total_fail ? 1 : 0;
 }
