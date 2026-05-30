@@ -755,6 +755,62 @@ bool google_is_native_base_url(const char *base_url) {
     return true;
 }
 
+/* Port of Python gemini_native_adapter._coerce_content_to_text().
+ * Extracts text from a Gemini message content value.
+ * Handles: NULL/JSON_NULL → "", string → copy, array → join text parts,
+ * object with type=="text" → extract text field.
+ * Returns malloc'd string, caller must free. */
+char *google_coerce_content_to_text(const json_t *content) {
+    if (!content || content->type == JSON_NULL) return strdup("");
+
+    /* String: return content directly */
+    if (content->type == JSON_STRING)
+        return strdup(content->str_val ? content->str_val : "");
+
+    /* Array: iterate parts, collect text pieces */
+    if (content->type == JSON_ARRAY) {
+        char *pieces[256];
+        int n = 0;
+        size_t total = 0;
+
+        for (size_t i = 0; i < content->c.count && n < 256; i++) {
+            json_t *item = content->c.items[i];
+            if (!item) continue;
+
+            if (item->type == JSON_STRING) {
+                const char *s = item->str_val ? item->str_val : "";
+                pieces[n] = strdup(s);
+                if (pieces[n]) { total += strlen(s); n++; }
+            } else if (item->type == JSON_OBJECT) {
+                const char *type_str = json_get_str(item, "type", "");
+                if (strcmp(type_str, "text") == 0) {
+                    const char *text = json_get_str(item, "text", "");
+                    pieces[n] = strdup(text);
+                    if (pieces[n]) { total += strlen(text); n++; }
+                }
+            }
+        }
+
+        if (n == 0) return strdup("");
+
+        size_t needed = total + (n > 0 ? (size_t)(n - 1) : 0) + 1;
+        char *result = (char *)malloc(needed);
+        if (!result) {
+            for (int i = 0; i < n; i++) free(pieces[i]);
+            return NULL;
+        }
+        result[0] = '\0';
+        for (int i = 0; i < n; i++) {
+            if (i > 0) strcat(result, "\n");
+            strcat(result, pieces[i]);
+            free(pieces[i]);
+        }
+        return result;
+    }
+
+    return strdup("");
+}
+
 /* ================================================================
  *  Free response
  * ================================================================ */

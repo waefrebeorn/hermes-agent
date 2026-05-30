@@ -1970,3 +1970,9 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | R04a | `google_is_native_base_url()` ported from Python `gemini_native_adapter.is_native_gemini_base_url()`. Normalizes URL (lowercase, strip, rstrip /), checks for `generativelanguage.googleapis.com` and absence of `/openai` suffix. | `src/agent/provider_google.c:725-754` — implementation. `include/provider.h:216` — declaration. `tests/test_google_depth.c:242-269` — 7 test assertions (45→52). Suite 335/0/0. v331. |
+
+## Phase 265: S8 R04 Gemini Depth — google_coerce_content_to_text()
+
+| ID | Achievement | Evidence |
+|----|-------------|----------|
+| R04b | `google_coerce_content_to_text()` ported from Python `gemini_native_adapter._coerce_content_to_text()`. Extracts text from Gemini message content: NULL/JSON_NULL → "", string → copy, array → iterate parts joining strings and `type=="text"` object text fields with `\n`. | `src/agent/provider_google.c:758-813` — implementation. `include/provider.h:215` — declaration. `tests/test_google_depth.c:271-346` — 8 test assertions (52→60). Suite 335/0/0. v332. |

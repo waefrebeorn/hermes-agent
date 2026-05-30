@@ -2,8 +2,8 @@
 
 Suite: 335/0/2 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
-||||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v331.
-|||- Phase 245:
+|||||||Battleship v34 (95 gaps across 8 sectors, 1000+ test case gaps). S0+S1+S3+S6+F10+F06 all PORTED. S8 R01+R10+R04 PARTIAL, R03+R05-R09 WON'T PORT. v332.
+|||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
 |- Phase 248: R10 parse_context_limit + parse_available_output_tokens — port of Python model_metadata.parse_context_limit_from_error() and parse_available_output_tokens_from_error(). Error message parsing for context length extraction. 12 test assertions (→118). Suite 335/0/2. v315.
@@ -21,8 +21,9 @@ Binary: 31M | Warnings: 0 | Test files: 292 | C src: 180
 |- Phase 260: S0 D09 vi mode depth — % jump to matching bracket/paren/brace. Suite 335/0/0. v327.
 |- Phase 261: S0 D09 vi mode depth — . repeat last change (x/X/~/'r'/s/D/C/dd). Suite 335/0/0. v328.
 ||- Phase 262: S8 R02 Bedrock depth — stop_reason mapping in bedrock_parse_response (end_turn/stop_sequence→stop, tool_use→tool_calls, max_tokens→length, content_filtered/guardrail_intervened→content_filter). 5 test assertions in test_bedrock_depth.c (45→50). Suite 335/0/0. v329.
-|||- Phase 263: S8 R02 Bedrock depth — bedrock_is_context_overflow() + bedrock_classify_error() + bedrock_extract_provider_from_arn() + bedrock_get_context_length() ported from Python bedrock_adapter.py. 32 test assertions in test_bedrock_depth.c (50→82). test_runner.sh updated 14→80. Suite 335/0/0 (1 pre-existing parallel race). v330.
-||- Phase 264: S8 R04 Gemini depth — google_is_native_base_url() ported from Python gemini_native_adapter.py. Detects native Gemini API endpoint (contains generativelanguage.googleapis.com, doesn't end with /openai). 7 test assertions in test_google_depth.c (45→52). test_runner.sh updated 7→52. Suite 335/0/0 (2 pre-existing skips). v331.
+||||- Phase 263: S8 R02 Bedrock depth — bedrock_is_context_overflow() + bedrock_classify_error() + bedrock_extract_provider_from_arn() + bedrock_get_context_length() ported from Python bedrock_adapter.py. 32 test assertions in test_bedrock_depth.c (50→82). test_runner.sh updated 14→80. Suite 335/0/0 (1 pre-existing parallel race). v330.
+||||- Phase 264: S8 R04 Gemini depth — google_is_native_base_url() ported from Python gemini_native_adapter.py. Detects native Gemini API endpoint (contains generativelanguage.googleapis.com, doesn't end with /openai). 7 test assertions in test_google_depth.c (45→52). test_runner.sh updated 7→52. Suite 335/0/0 (2 pre-existing skips). v331.
+|||- Phase 265: S8 R04 Gemini depth — google_coerce_content_to_text() ported from Python gemini_native_adapter._coerce_content_to_text(). Handles NULL/JSON_NULL, string, array-of-string, array-of-object(type==text), and mixed content. 8 test assertions in test_google_depth.c (52→60). test_runner.sh updated 52→60. Suite 335/0/0. v332.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

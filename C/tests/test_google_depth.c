@@ -265,6 +265,85 @@ int main(void) {
              !google_is_native_base_url("https://generativelanguage.googleapis.com/v1beta/openai"));
     }
 
+    /* ── google_coerce_content_to_text ────────────────────────── */
+    printf("\n--- google_coerce_content_to_text ---\n");
+    {
+        char *r = google_coerce_content_to_text(NULL);
+        TEST("coerce NULL", r && strcmp(r, "") == 0);
+        free(r);
+    }
+    {
+        /* String content */
+        json_t *s = json_string("hello world");
+        char *r = google_coerce_content_to_text(s);
+        TEST("coerce string", r && strcmp(r, "hello world") == 0);
+        free(r);
+        json_free(s);
+    }
+    {
+        /* Array with string parts */
+        json_t *arr = json_array();
+        json_append(arr, json_string("part one"));
+        json_append(arr, json_string("part two"));
+        char *r = google_coerce_content_to_text(arr);
+        TEST("coerce array of strings", r && strcmp(r, "part one\npart two") == 0);
+        free(r);
+        json_free(arr);
+    }
+    {
+        /* Array with object parts (type="text") */
+        json_t *obj1 = json_object();
+        json_set(obj1, "type", json_string("text"));
+        json_set(obj1, "text", json_string("text one"));
+        json_t *obj2 = json_object();
+        json_set(obj2, "type", json_string("text"));
+        json_set(obj2, "text", json_string("text two"));
+        json_t *arr = json_array();
+        json_append(arr, obj1);
+        json_append(arr, obj2);
+        char *r = google_coerce_content_to_text(arr);
+        TEST("coerce array of objects", r && strcmp(r, "text one\ntext two") == 0);
+        free(r);
+        json_free(arr);
+    }
+    {
+        /* Mixed array: string + object */
+        json_t *obj = json_object();
+        json_set(obj, "type", json_string("text"));
+        json_set(obj, "text", json_string("obj text"));
+        json_t *arr = json_array();
+        json_append(arr, json_string("str part"));
+        json_append(arr, obj);
+        char *r = google_coerce_content_to_text(arr);
+        TEST("coerce mixed array", r && strcmp(r, "str part\nobj text") == 0);
+        free(r);
+        json_free(arr);
+    }
+    {
+        /* Empty array */
+        json_t *arr = json_array();
+        char *r = google_coerce_content_to_text(arr);
+        TEST("coerce empty array", r && strcmp(r, "") == 0);
+        free(r);
+        json_free(arr);
+    }
+    {
+        /* Empty string */
+        json_t *s = json_string("");
+        char *r = google_coerce_content_to_text(s);
+        TEST("coerce empty string", r && strcmp(r, "") == 0);
+        free(r);
+        json_free(s);
+    }
+    {
+        /* Null value (json_null) */
+        json_t *n = json_null();
+        char *r = google_coerce_content_to_text(n);
+        TEST("coerce null json", r && strcmp(r, "") == 0);
+        free(r);
+        json_free(n);
+    }
+
     /* Print summary */
     printf("\n=== Results: %s ===\n", failures ? "SOME FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
