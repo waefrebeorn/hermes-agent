@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v347)
+# Goal Mantra — Slermes C (v348)
 
-334/0/3 (292 test files). 94 gaps. Phase 280: S8 R10 depth — provider_query_ollama_api_show() + provider_query_ollama_num_ctx(). Provider metadata 339-test suite.
+334/0/3 (292 test files). 93 gaps. Phase 281: R10 PORTED — provider_query_local_context_length() multi-endpoint context probing. R10 35/43=81%.
 
 ## Loop
 

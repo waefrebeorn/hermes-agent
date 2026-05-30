@@ -2061,3 +2061,174 @@ int provider_query_ollama_num_ctx(const char *model, const char *base_url, const
     if (flags & 1) return model_ctx;   /* Fall back to model_info */
     return -1;
 }
+
+/* ---- Internal: parse a context length from a single model JSON object ---- */
+/* Checks max_model_len, context_length, max_tokens fields. Returns -1 if none. */
+static int parse_model_ctx_from_json(json_t *model_obj) {
+    if (!model_obj || model_obj->type != JSON_OBJECT) return -1;
+    const char *keys[] = {"max_model_len", "context_length", "max_tokens"};
+    for (int i = 0; i < 3; i++) {
+        json_t *val = json_obj_get(model_obj, keys[i]);
+        if (val && val->type == JSON_NUMBER) {
+            int ctx = (int)val->num_val;
+            if (ctx >= 1024) return ctx;
+        }
+    }
+    return -1;
+}
+
+/* ---- Internal: probe generic /v1/models/{model} endpoint ---- */
+static int probe_v1_models_model(http_t *h, const char *server_url,
+                                  const char *auth_header, const char *model) {
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/v1/models/%s", server_url, model);
+    http_resp_t *resp = http_get(h, url, auth_header);
+    if (!resp || resp->status != 200 || !resp->body) {
+        http_resp_free(resp);
+        return -1;
+    }
+    json_t *data = json_parse(resp->body, NULL);
+    http_resp_free(resp);
+    int ctx = -1;
+    if (data && data->type == JSON_OBJECT)
+        ctx = parse_model_ctx_from_json(data);
+    json_free(data);
+    return ctx;
+}
+
+/* ---- Internal: probe generic /v1/models endpoint and match by ID ---- */
+static int probe_v1_models_list(http_t *h, const char *server_url,
+                                 const char *auth_header, const char *model) {
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/v1/models", server_url);
+    http_resp_t *resp = http_get(h, url, auth_header);
+    if (!resp || resp->status != 200 || !resp->body) {
+        http_resp_free(resp);
+        return -1;
+    }
+    json_t *data = json_parse(resp->body, NULL);
+    http_resp_free(resp);
+    if (!data || data->type != JSON_OBJECT) { json_free(data); return -1; }
+    json_t *models_list = json_obj_get(data, "data");
+    if (!models_list || models_list->type != JSON_ARRAY) { json_free(data); return -1; }
+    int ctx = -1;
+    for (size_t i = 0; i < models_list->c.count; i++) {
+        json_t *m = models_list->c.items[i];
+        if (!m || m->type != JSON_OBJECT) continue;
+        const char *mid = json_get_str(m, "id", "");
+        if (!*mid) continue;
+        if (provider_model_id_matches(mid, model)) {
+            ctx = parse_model_ctx_from_json(m);
+            break;
+        }
+    }
+    json_free(data);
+    return ctx;
+}
+
+/* ---- provider_query_local_context_length ---- */
+/* Port of Python model_metadata._query_local_context_length().
+ * Probes local inference server endpoints to find the model's context length. */
+int provider_query_local_context_length(const char *model, const char *base_url, const char *api_key) {
+    if (!model || !*model || !base_url || !*base_url) return -1;
+
+    /* Strip provider prefix */
+    char *bare_model = provider_strip_prefix(model);
+    if (!bare_model) return -1;
+
+    /* Normalize URL, strip /v1 */
+    char *normalized = provider_normalize_base_url(base_url);
+    if (!normalized) { free(bare_model); return -1; }
+
+    char server_url[512];
+    size_t nlen = strlen(normalized);
+    if (nlen >= 3 && strcmp(normalized + nlen - 3, "/v1") == 0) {
+        memcpy(server_url, normalized, nlen - 3);
+        server_url[nlen - 3] = '\0';
+    } else {
+        snprintf(server_url, sizeof(server_url), "%s", normalized);
+    }
+    free(normalized);
+
+    /* Build auth header */
+    char *auth_header = NULL;
+    if (api_key && *api_key) {
+        size_t hlen = strlen(api_key) + 32;
+        auth_header = malloc(hlen);
+        if (auth_header)
+            snprintf(auth_header, hlen, "Authorization: Bearer %s", api_key);
+    }
+
+    /* Detect server type */
+    char *server_type = provider_detect_local_server_type(base_url, api_key);
+
+    /* Create HTTP client 3s timeout */
+    http_t *h = http_new(3);
+    int result = -1;
+
+    /* 1. Ollama: POST /api/show */
+    if (server_type && strcmp(server_type, "ollama") == 0) {
+        result = provider_query_ollama_api_show(bare_model, base_url, api_key);
+        if (result > 0) goto done;
+    }
+
+    /* 2. LM Studio: GET /api/v1/models */
+    if (server_type && strcmp(server_type, "lm-studio") == 0) {
+        char url[1024];
+        snprintf(url, sizeof(url), "%s/api/v1/models", server_url);
+        http_resp_t *resp = http_get(h, url, auth_header);
+        if (resp && resp->status == 200 && resp->body) {
+            json_t *data = json_parse(resp->body, NULL);
+            if (data && data->type == JSON_OBJECT) {
+                json_t *models = json_obj_get(data, "models");
+                if (models && models->type == JSON_ARRAY) {
+                    for (size_t i = 0; i < models->c.count; i++) {
+                        json_t *m = models->c.items[i];
+                        if (!m || m->type != JSON_OBJECT) continue;
+                        const char *key = json_get_str(m, "key", "");
+                        const char *mid = json_get_str(m, "id", "");
+                        if (provider_model_id_matches(key, bare_model) || provider_model_id_matches(mid, bare_model)) {
+                            json_t *instances = json_obj_get(m, "loaded_instances");
+                            if (instances && instances->type == JSON_ARRAY) {
+                                for (size_t j = 0; j < instances->c.count; j++) {
+                                    json_t *inst = instances->c.items[j];
+                                    if (!inst || inst->type != JSON_OBJECT) continue;
+                                    json_t *cfg = json_obj_get(inst, "config");
+                                    if (cfg && cfg->type == JSON_OBJECT) {
+                                        json_t *ctx_val = json_obj_get(cfg, "context_length");
+                                        if (ctx_val && ctx_val->type == JSON_NUMBER) {
+                                            int ctx = (int)ctx_val->num_val;
+                                            if (ctx >= 1024) {
+                                                result = ctx;
+                                                goto lm_studio_done;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            lm_studio_done:
+            json_free(data);
+        }
+        http_resp_free(resp);
+        if (result > 0) goto done;
+    }
+
+    /* 3. Generic: GET /v1/models/{model} */
+    result = probe_v1_models_model(h, server_url, auth_header, bare_model);
+    if (result > 0) goto done;
+
+    /* 4. Generic: GET /v1/models → find model by ID */
+    result = probe_v1_models_list(h, server_url, auth_header, bare_model);
+
+done:
+    http_free(h);
+    free(server_type);
+    free(auth_header);
+    free(bare_model);
+    return result;
+}

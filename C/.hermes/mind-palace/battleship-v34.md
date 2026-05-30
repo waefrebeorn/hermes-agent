@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v347 | Fork diverged — C/ lives only on fork | Suite 334/0/3 | 85 tools | 98 CLI**
-|**Honest assessment: 94 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 334/0/3.**
+| v348 | Fork diverged — C/ lives only on fork | Suite 334/0/3 | 85 tools | 98 CLI**
+|**Honest assessment: 93 structural gaps, 1000+ test case gaps across 8 sectors. S7 X01 test files 292 (23.1% parity). S0+S1+S3+S6+R04+R10 all PORTED. L24+L25+L26+L27+L28 PORTED. F10 PORTED. Suite 334/0/3.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -219,9 +219,9 @@ Python has adapter layers wrapping provider APIs (~9,700 LOC total). **5 of 10 a
 | 07 | R07 | codex_responses_adapter.py | 1221 | OpenAI Responses API format conversion. C uses simpler /chat/completions format which works for all supported providers. | P2 | ✅ WON'T PORT — C uses chat completions format, works fine |
 | 08 | R08 | copilot_acp_client.py | 686 | Launches `copilot --acp` subprocess and communicates via ACP. Depends on copilot CLI binary. | P2 | ✅ WON'T PORT — depends on copilot CLI binary |
 | 09 | R09 | plugin_llm.py | 1046 | Plugin LLM facade for plugins to make their own model calls. Python plugin arch. C's plugin system is .so loading only. | P2 | ✅ WON'T PORT — Python plugin architecture |
-||| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — **Phase 280 depth:** provider_query_ollama_api_show() + provider_query_ollama_num_ctx() — Ollama context query via POST /api/show. **Phase 279 depth:** provider_detect_local_server_type(). Prior phases: add_model_aliases, extract_first_int, cache layer, probe tiers, token estimation, extract_pricing, extract_context/max_tokens, estimate_tokens_rough, +20 base functions. | P1 | PARTIAL (34/43 = 79%) |
+||| 10 | R10 | model_metadata.py | 1850 | Model discovery, catalog, capabilities — **ALL PORTABLE FUNCTIONS PORTED (35/43 = 81%).** Ported in phases 245-281: URL utils (normalize, strip, infer, local endpoint), auth headers, server type detection, context probing (Ollama/LM Studio/generic), error parsing (context limit, output tokens, first int), pricing extraction, alias management, token estimation (4 functions), probe tiers, cache layer (5 functions), model matching (ID matches, kimi detection, version normalization), Grok reasoning detection, request verification. Remaining 8 functions are HTTP-fetch orchestrators (fetch_model_metadata, _resolve_endpoint_context_length, get_model_context_length etc.) or OAuth (won't port). | P1 | ✅ PORTED (35/43 = 81%) |
 
-**S8: 9→4 gaps after WON'T PORT reclassification (R03,R05-R09). 2 remaining implementable: R02 (PARTIAL), R10 (PARTIAL 79%).**
+**S8: 9→4 gaps after WON'T PORT reclassification (R03,R05-R09). 1 remaining implementable: R02 (PARTIAL). R10 PORTED.**
 
 ---
 
@@ -274,10 +274,10 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S5: CLI Ecosystem | 30 | 0 | 1 | 17 | 12 | hermes_cli infrastructure |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
-|| S8: Provider Adapters | 3 | 0 | 2 | 1 | 0 | 1 remaining implementable: R02 (PARTIAL). R04 PORTED. R03+R05-R09 WON'T PORT (cloud/Python-arch). |
+|| S8: Provider Adapters | 2 | 0 | 1 | 1 | 0 | 1 remaining implementable: R02 (PARTIAL). R04+R10 PORTED. R03+R05-R09 WON'T PORT (cloud/Python-arch). |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 8 | 4 | 3 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|||| **TOTAL** | **94** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R04 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R10 PARTIAL, R03+R05-R09 WON'T PORT. Suite 334/0/3, test files 292.** |
+||| **TOTAL** | **93** | **4** | **30** | **44** | **23** | **S0+S1+S3+S6+R04+R10 all PORTED. F06 VAULTED, F10 PORTED. S8 R01+R02 PARTIAL, R03+R05-R09 WON'T PORT. Suite 334/0/3, test files 292.** |
 
 ### Phase Map
 

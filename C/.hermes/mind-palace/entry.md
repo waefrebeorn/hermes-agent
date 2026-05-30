@@ -1,4 +1,3 @@
-# Entry — Slermes C Parity (v347)
+# Entry — Slermes C Parity (v348)
 
-Phase 280: S8 R10 depth — provider_query_ollama_api_show() + provider_query_ollama_num_ctx() ported from model_metadata.py. Ollama context query via POST /api/show parsing model_info.*.context_length and num_ctx from parameters. 4 new assertions (335→339).
-94 gaps remain (S0+S1+S3+S6+R04+S8 R03+R05-R09 WON'T PORT).
+Phase 281: S8 R10 — provider_query_local_context_length() ported. Multi-endpoint context probing orchestrator. R10 reclassified PARTIAL→PORTED (35/43 = 81%). 93 gaps remain.

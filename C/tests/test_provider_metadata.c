@@ -49,6 +49,7 @@ static void test_provider_context_cache_save_get_invalidate(void);
 static void test_provider_extract_first_int(void);
 static void test_provider_detect_local_server_type(void);
 static void test_provider_query_ollama_api_show(void);
+static void test_provider_query_local_context_length(void);
 static void test_provider_add_model_aliases(void);
 static void test_provider_get_context_length_from_provider_error(void);
 
@@ -505,6 +506,7 @@ int main(void) {
     test_provider_extract_first_int();
     test_provider_detect_local_server_type();
     test_provider_query_ollama_api_show();
+    test_provider_query_local_context_length();
     test_provider_add_model_aliases();
     test_provider_get_context_length_from_provider_error();
 
@@ -1455,6 +1457,27 @@ static void test_provider_query_ollama_api_show(void) {
 
     /* Unreachable endpoint — no crash, returns -1 */
     val = provider_query_ollama_api_show("llama3", "http://127.0.0.1:1", NULL);
+    TEST("unreachable returns -1", val == -1);
+}
+
+/* ---- provider_query_local_context_length ---- */
+static void test_provider_query_local_context_length(void) {
+    printf("\n[R10] provider_query_local_context_length:\n");
+
+    /* NULL model — no crash */
+    int val = provider_query_local_context_length(NULL, "http://127.0.0.1:1", NULL);
+    TEST("NULL model returns -1", val == -1);
+
+    /* Empty model — no crash */
+    val = provider_query_local_context_length("", "http://127.0.0.1:1", NULL);
+    TEST("empty model returns -1", val == -1);
+
+    /* NULL base_url — no crash */
+    val = provider_query_local_context_length("llama3", NULL, NULL);
+    TEST("NULL base_url returns -1", val == -1);
+
+    /* Unreachable endpoint — no crash */
+    val = provider_query_local_context_length("llama3", "http://127.0.0.1:1", NULL);
     TEST("unreachable returns -1", val == -1);
 }
 

@@ -357,6 +357,18 @@ int provider_query_ollama_api_show(const char *model, const char *base_url, cons
  * Returns context length or -1 on failure. */
 int provider_query_ollama_num_ctx(const char *model, const char *base_url, const char *api_key);
 
+/* Query a local inference server for the model's context length by probing
+ * known server-specific and generic endpoints.
+ * Port of Python model_metadata._query_local_context_length().
+ * Strips provider prefix, detects server type (Ollama/LM Studio/etc.), then
+ * probes the appropriate endpoints in order of reliability:
+ *   Ollama: POST /api/show → num_ctx > model_info.context_length
+ *   LM Studio: GET /api/v1/models → loaded_instances config context_length
+ *   Generic: GET /v1/models/{model} → max_model_len/context_length/max_tokens
+ *   Generic: GET /v1/models → find model by ID match
+ * Returns context length or -1 on failure. */
+int provider_query_local_context_length(const char *model, const char *base_url, const char *api_key);
+
 /* Add model aliases: if model_id contains "/", also indexes under bare name.
  * Port of Python model_metadata._add_model_aliases().
  * Sets cache[model_id] = entry via json_copy. If model_id contains "/",
