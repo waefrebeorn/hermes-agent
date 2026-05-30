@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-**v283 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**
-**Honest assessment: 107 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S3+S6 all PORTED. S1 L25+L26 PORTED. Suite 325/0/0.**
+**v284 | Fork diverged — C/ lives only on fork | Suite 325/0/0 | 85 tools | 98 CLI**
+**Honest assessment: 106 structural gaps, 1000+ test case gaps across 9 sectors. S7 X01 test files 282 (22.3% parity). S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED. Suite 325/0/0.**
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -30,10 +30,10 @@ Python's run_conversation (4606 LOC) — C's agent_loop.c (1600 LOC) covers all 
 | 01 | L24 | Turn-level checkpoint/snapshot for rollback | snapshot_create/restore per tool iteration | checkpoint_init exists but simpler | P2 | PARTIAL |
 || 02 | L25 | Agent runtime helpers: tool schema management | agent_runtime_helpers.py (2366 LOC) | hermes_repair_message_sequence() + sanitize_tool_call_arguments() + repair_tool_call() ported (Phases 211-213). 52-test suite. L25 all 3 portable functions done. | P1 | PORTED ✅ |
 | 03 | L26 | Chat completion helpers: request building, streaming | chat_completion_helpers.py (2467 LOC) | llm_chat_completion is simpler. **tool_call_args_truncate() + estimate_payload_context_tokens() + hermes_message_sanitize() ported** (Phases 214-216, 74 tests). build_assistant_message() sanitization pipeline (surrogate fix, think-block strip, secret redaction) implemented as hermes_message_sanitize(). | P1 | PORTED ✅ |
-| 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | hermes_system_prompt.h is simpler | P1 | PARTIAL |
+| 04 | L27 | Prompt builder: system prompt assembly, dynamic sections | prompt_builder.py (1451 LOC) | system_prompt.c (1273 LOC) covers core identity, memory, skills, tool enforcement, context file loading (SOUL.md/AGENTS.md/CLAUDE.md/.cursorrules), threat scanning, platform hints. Python's dynamic skills manifest system (snapshot caching, frontmatter parsing, condition matching) is arch-specific (C has simpler skill system). 15/25 functions ported (all portable ones). | P1 | PORTED ✅ |
 | 05 | L28 | Agent init: full AIAgent construction with 60+ params | agent_init.py (1649 LOC) | agent_init() + agent_configure_from_config() | P1 | PARTIAL |
 
-**S1: 3 gaps (all partial: L24, L27-L28) — 19 stale + 5 done + 2 PORTED (L25+L26). No remaining real gaps.**
+**S1: 2 gaps (all partial: L24, L28) — 19 stale + 5 done + 3 PORTED (L25+L26+L27). No remaining real gaps.**
 
 ---
 
@@ -267,7 +267,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
 | S0: Display & Visual | 1 | 0 | 0 | 1 | 0 | Phase 0 — D09 vi mode remains. D16 type-ahead IMPLEMENTED (Phase 210). |
-|| S1: Conversation Loop Plumbing | 3 | 0 | 0 | 3 | 0 | All 28 real gaps stale-retired or implemented. 3 partials (L24, L27-L28). L25+L26 PORTED. L26: tool_call_args_truncate + estimate_payload_context_tokens + hermes_message_sanitize ported (Phases 214-216). |
+|| S1: Conversation Loop Plumbing | 2 | 0 | 0 | 2 | 0 | All 28 real gaps stale-retired or implemented. 2 partials (L24, L28). L25+L26+L27 PORTED. L27 prompt builder reclassified (Phase 217). |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 | S4: TUI Ecosystem | 28 | 0 | 14 | 10 | 4 | Full TUI backend + React frontend |
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S8: Provider Adapters | 10 | 0 | 6 | 4 | 0 | Adapter layer missing (9,700 LOC) |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 | S10: Architecture | 10 | 4 | 3 | 2 | 1 | Form-vs-function |
-|| **TOTAL** | **107** | **4** | **34** | **51** | **24** | **S0+S3+S6 all PORTED. L25+L26 PORTED. L26 3/3 (tool_call_args_truncate, estimate_payload_context_tokens, hermes_message_sanitize). Suite 325/0/0, test files 282.** |
+|| **TOTAL** | **106** | **4** | **34** | **51** | **24** | **S0+S3+S6 all PORTED. L25+L26+L27 PORTED. Suite 325/0/0, test files 282.** |
 
 ### Phase Map
 

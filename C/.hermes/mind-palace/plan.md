@@ -1,9 +1,9 @@
-(v283)
+(v284)
 
 ## Immediate Next
 
-S0+S3+S6 all PORTED. S1 L25+L26 PORTED. 107 gaps remain across 7 sectors.
-Next: S7 test expansion, S1 depth (L24/L27/L28), or B08 send_message remaining depth.
+S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED. 106 gaps remain across 7 sectors.
+Next: S7 test expansion, S1 depth (L24/L28), or B08 send_message remaining depth.
 
 ## Pipeline
 
@@ -18,6 +18,9 @@ S1 L25 depth (agent_runtime_helpers):
 - hermes_sanitize_tool_call_arguments() ported ✅ (Phase 212, 22 tests)
 - repair_tool_call() ported ✅ (Phase 213, 11 tests)
 
+S1 L27 (prompt builder):
+- Reclassified PORTED ✅ (Phase 217, function-level comparison with system_prompt.c)
+
 S0 D09 depth (line_edit):
 - Emacs keybindings PORTED ✅ (Phase 209, 77 tests)
 - Vi mode remains — pending (P2)
@@ -29,10 +32,11 @@ S6 B08 depth (send_message):
 - Smart message chunking — pending
 - Home channel resolution — pending
 
-S7 test coverage (281/1262 test files = 22.3%):
-- Phase 214: 29-test tool_call_args_truncate suite
+S7 test coverage (282/1262 test files = 22.3%):
+- Phase 216: 35-test agent_message_sanitize suite
+- Phase 217: expanded to 57 tests (22 new edge cases)
 - Suite now 325/0/0
 
 ## Future
 
-S1 partials depth (L24 checkpoint, L27 prompt builder, L28 agent init), B08 send_message remaining depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.
+S1 partials depth (L24 checkpoint, L28 agent init), B08 send_message remaining depth, S4 TUI, S5 CLI, S8 providers, S9 plugin system, S10 architecture.

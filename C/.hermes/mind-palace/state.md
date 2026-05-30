@@ -2,7 +2,7 @@
 
 Suite: 325/0/0 | Tools: 85 | CLI: 98 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 Binary: 31M | Warnings: 0 | Test files: 282 | C src: 180
-Battleship v34 (107 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
+Battleship v34 (106 gaps across 9 sectors, 1000+ test case gaps). Fork diverged — C/ lives only on fork; upstream removed C/ entirely.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent
@@ -163,6 +163,7 @@ Battleship v34 (107 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 |- Phase 214: L26 tool_call_args_truncate() ported from Python agent/context_compressor._truncate_tool_call_args_json(). Parses tool-call args JSON, walks tree recursively, truncates string values longer than head_chars (default 200) to "prefix...[truncated]", re-serializes. Non-string values preserved. Returns NULL on parse failure. Added to src/tools/tool_result.c. 29-test suite. Test files 280→281. Suite 323→324/0/0. Battleship 110→109 gaps. S1 L26 depth: 1/3 functions ported.
 |- Phase 215: L26 estimate_payload_context_tokens() ported from Python agent/chat_completion_helpers.estimate_request_context_tokens(). Walks parsed JSON payload, counts chars in strings, /4 for token estimate. Handles Chat Completions ("messages"), Responses API ("input"), and generic shapes. Falls back to raw strlen/4 on invalid JSON. 10-test suite. Suite 324/0/0. Battleship 109→108 gaps. S1 L26 depth: 2/3 functions ported.
 |- Phase 216: L26 hermes_message_sanitize() ported from Python build_assistant_message() sanitization pipeline. Applies surrogate fix, think-block stripping, and secret redaction to assistant messages before storage. Wired into agent_loop.c after message creation. 35-test suite (new file: agent_message_sanitize.c/h). Suite 324→325/0/0. Test files 281→282. C src 179→180. Battleship 108→107 gaps. S1 L26 depth: 3/3 functions ported — L26 PORTED.
+|- Phase 217: L27 prompt builder reclassified PORTED. Function-level comparison: Python prompt_builder.py (25 functions) vs C system_prompt.c (15 public functions). All core features ported: identity, memory, skills, tool enforcement, context file loading, threat scanning, platform hints. 10 unported functions are Python skills-manifest system (arch-specific, won't port). Suite 325/0/0 (v284). Battleship 107→106 gaps. S1 L25+L26+L27 PORTED. S7 test expansion: 22 new edge-case tests in test_agent_message_sanitize.c (35→57 assertions). boundary_start bugfix in strip_think_blocks().
 
 |## Critical Gaps
 ||- **P0** (4): Display & Visual (0) + Form-vs-Function/Architecture (4)
@@ -170,5 +171,5 @@ Battleship v34 (107 gaps across 9 sectors, 1000+ test case gaps). Fork diverged 
 ||- **P2** (51): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (5), Tests (3), S8 remaining (4), Plugin system (4), Architecture (2), S2 remaining (5)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 |
-|||Real parity gap is 107 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 325/0/0 (282 test files). v283. S0+S3+S6 all PORTED. S1 L25+L26 both PORTED.
+|Real parity gap is 106 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 325/0/0 (282 test files). v284. S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED.
 |

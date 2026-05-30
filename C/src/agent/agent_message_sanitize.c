@@ -190,6 +190,8 @@ static char *strip_think_blocks(const char *text) {
             out3[out3_pos++] = out[src3_pos++];
             if (out[src3_pos - 1] == '\n')
                 boundary_start = 1;
+            else
+                boundary_start = 0;  /* reset after non-boundary check */
         }
         out3[out3_pos] = '\0';
         free(out);

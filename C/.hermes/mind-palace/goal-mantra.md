@@ -1,4 +1,4 @@
-(v283)
+(v284)
 
 ## Standing Goal
 
@@ -15,5 +15,5 @@ Commit. Push. Repeat. No choices. No questions.
 
 ## Current
 
-325/0/0 (282 test files). 107 gaps. Phase 216: L26 hermes_message_sanitize() ported (35 tests). L26 PORTED (3/3).
-S0+S3+S6 all PORTED. S1 L25+L26 PORTED. Next: S7 test expansion or S1 depth (L24/L27/L28).
+325/0/0 (282 test files). 106 gaps. Phase 217: L26 hermes_message_sanitize() ported (35 tests). L26 PORTED (3/3).
+S0+S3+S6 all PORTED. S1 L25+L26+L27 PORTED. Next: S7 test expansion or S1 depth (L24/L27/L28).
