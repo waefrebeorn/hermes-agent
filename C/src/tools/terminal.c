@@ -137,7 +137,7 @@ static char *run_command(const char *command, int timeout_sec) {
 
 /* F09: PTY mode execution using forkpty */
 #ifdef __linux__
-static char *run_command_pty(const char *command, int timeout_sec) {
+static char *run_command_pty(const char *command, int timeout_sec, const char *sudo_password) {
     if (!command) return strdup("{\"error\": \"No command provided\"}");
 
     int master_fd;
@@ -152,6 +152,20 @@ static char *run_command_pty(const char *command, int timeout_sec) {
         /* Child: execute command */
         execl("/bin/sh", "sh", "-c", command, (char *)NULL);
         _exit(127);
+    }
+
+    /* Parent: if sudo_password provided, write it to PTY master for sudo -S
+     * sudo reads exactly one line (the password) and passes rest of stdin
+     * to the child command. This must happen before the read loop starts. */
+    if (sudo_password && sudo_password[0]) {
+        size_t pwlen = strlen(sudo_password);
+        if (write(master_fd, sudo_password, pwlen) < 0) {
+            /* PTY write failed — non-fatal, sudo will fail with password required */
+            (void)0;
+        }
+        /* Send trailing newline for sudo -S to recognize end of password line */
+        if (write(master_fd, "\n", 1) < 0)
+            (void)0;
     }
 
     /* Parent: read output from PTY with timeout */
@@ -1647,9 +1661,10 @@ char *terminal_handler(const char *args_json, const char *task_id) {
     /* B07: Transform sudo commands for piped password support.
      * Calls _transform_sudo() which handles SUDO_PASSWORD env var,
      * passwordless sudo detection, interactive prompt, and command rewrite.
-     * The result replaces the command pointer for downstream use. */
+     * The result replaces the command pointer for downstream use.
+     * sudo_password persists for PTY stdin piping below. */
+    char *sudo_password = NULL;
     {
-        char *sudo_password = NULL;
         char *transformed = _transform_sudo(command, &sudo_password);
         if (transformed) {
             if (strcmp(transformed, command) != 0) {
@@ -1662,8 +1677,6 @@ char *terminal_handler(const char *args_json, const char *task_id) {
             }
             free(transformed);
         }
-        /* sudo_password is stored here for backend stdin piping (future) */
-        if (sudo_password) free(sudo_password);
     }
 
     /* Build workdir prefix */
@@ -1694,14 +1707,16 @@ char *terminal_handler(const char *args_json, const char *task_id) {
 
     if (use_pty) {
 #ifdef __linux__
-        char *res1 = run_command_pty(full_command, timeout);
+        char *res1 = run_command_pty(full_command, timeout, sudo_password);
         char *w1 = _inject_warnings(res1, wd_warn, disk_warn, guidance);
         free(res1);
+        free(sudo_password);
         return _inject_interpretation(w1, command);
 #else
         char *res1b = run_command(full_command, timeout);
         char *w1b = _inject_warnings(res1b, wd_warn, disk_warn, guidance);
         free(res1b);
+        free(sudo_password);
         return _inject_interpretation(w1b, command);
 #endif
     }
