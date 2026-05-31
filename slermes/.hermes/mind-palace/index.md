@@ -1,4 +1,4 @@
-# Index — Slermes C Mind Palace (v452)
+# Index — Slermes C Mind Palace (v453)
 
 ## Walkways
 | File | Purpose |
@@ -16,5 +16,5 @@
 | achievements.md | Vault of all closed gaps |
 | da-audit-v14.md, v15.md | Devil's Advocate audits |
 
-## Phase 396
-xAI Provider Test Expansion — S7 X03 EXPANDED. 69 new assertions (64→133). URL/header edge, response edge, encrypted_content, streaming depth, all 8 retired models. Bug fix: finish_reason extraction.
+## Phase 397
+Azure Provider Test Expansion — S7 X03 EXPANDED. 40 new assertions (54→94). URL/header edge, response edge, streaming depth. Bug fix: finish_reason extraction.

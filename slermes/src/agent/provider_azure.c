@@ -247,6 +247,9 @@ static provider_response_t *azure_parse_response(const provider_t *p,
                 }
             }
         }
+        /* Extract finish_reason from choice level */
+        const char *fr = json_get_str(choice, "finish_reason", NULL);
+        if (fr) snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", fr);
     }
     json_free(root);
     return resp;
