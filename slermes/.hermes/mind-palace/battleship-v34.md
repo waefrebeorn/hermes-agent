@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v423 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 65 structural gaps, 1000+ test case gaps. Phase 367: TUI thinking indicator (T11) — rich animated states: phase labels, animated ellipsis, pulsing arrow. Suite 328/0/12. 65 gaps.**|
+| v424 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 64 structural gaps, 1000+ test case gaps. Phase 368: TUI agent info overlay (T14) — /agent shows model, provider, tokens, budget, session info. Suite 328/0/12. 64 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -120,14 +120,14 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | ✅ PORTED — rich animated states. Multi-frame spinner (| / - \\), animated ellipsis (.→..→...→.. 12-frame cycle), phase labels by elapsed time: think (0-2s), ponder (2-5s), deep (5-10s), focus (10s+). After first token: pulsing arrow (>→=>) + live token counter + tok/s rate. Ctrl+C abort via SIGINT handler, nodelay throughout streaming. (Phase 367) | P1 |
 || 12 | T12 | Session picker | sessionPicker.tsx | ✅ PORTED — tui_fullscreen_session_browse (Phase 195) | P2 |
 || 13 | T13 | Model picker | modelPicker.tsx | ✅ PORTED — tui_fullscreen.c model picker overlay (Phase 318, /model opens interactive picker, arrow keys, Enter to apply) | P2 |
-| 14 | T14 | Agents overlay | agentsOverlay.tsx | None | P2 |
+| 14 | T14 | Agents overlay | agentsOverlay.tsx | ✅ IMPLEMENTED — `/agent` opens modal showing model, provider, session ID, iterations, messages, tool count, token stats (input/output/total), budget remaining, JSON mode. q/ESC closes. Read-only info display. (Phase 368) | P2 |
 || 15 | T15 | Todo panel | todoPanel.tsx | ✅ PORTED — /todos opens kanban task board overlay (Phase 364). Status colors: done/archived (dim), blocked (red), running (cyan), ready (green). Filters: All/Active/Done. Enter shows detail, c completes. | P2 |
 || 16 | T16 | Streaming markdown live update | streamingMarkdown.tsx | ✅ PORTED — tui_stream_cb + tui_fullscreen_stream_token real-time streaming | P1 |
 || 17 | T17 | Bounding box: window resize re-render | SIGWINCH + full re-layout | ✅ PORTED — handle_winch + tui_resize_panes (Phase 32: sig_atomic_t flag, deferred in main loop) | P1 |
 | 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | ✅ PORTED — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead buffers up to 1024 chars in stream_state_t.type_ahead_buf, injected into input buffer after stream end. beep() retained as feedback. (Phase 366) | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
-**S4: 17 gaps (7 P1, 6 P2, 4 P3) — T09+T10+T11+T12+T13+T15+T16+T17+T18 PORTED**
+**S4: 16 gaps (6 P1, 6 P2, 4 P3) — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18 PORTED**
 
 ---
 
@@ -270,14 +270,14 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
-||| S4: TUI Ecosystem | 17 | 0 | 7 | 6 | 4 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T15+T16+T17+T18 PORTED
+||| S4: TUI Ecosystem | 16 | 0 | 6 | 6 | 4 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18 PORTED
 || S5: CLI Ecosystem | 24 | 0 | 1 | 11 | 12 | hermes_cli infrastructure — C02/C04/C06/C07/C08/C09/C13/C14/C15/C16 PORTED |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **65** | **4** | **27** | **22** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 24→17 (T09+T10+T11+T12+T13+T15+T16+T17+T18 PORTED). Phase 367: TUI thinking indicator (T11) PORTED.** |
+||| **TOTAL** | **64** | **4** | **27** | **21** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 24→16 (T09+T10+T11+T12+T13+T14+T15+T16+T17+T18 PORTED). Phase 368: TUI agent info overlay (T14) IMPLEMENTED.** |
 
 ### Phase Map
 

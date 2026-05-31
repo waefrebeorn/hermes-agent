@@ -1,6 +1,6 @@
-# Entry — Slermes C Parity (v423)
+# Entry — Slermes C Parity (v424)
 
-Phase 367: TUI thinking indicator (T11) — rich animated states: phase labels, animated ellipsis, pulsing arrow. 65 gaps. Suite 328/0/12.
+Phase 368: TUI agent info overlay (T14) — /agent shows model, provider, tokens, budget. 64 gaps. Suite 328/0/12.
 Dynamic upstream version extracted from Python at build time (v0.15.1-slermes).
 
 **Sectors:**

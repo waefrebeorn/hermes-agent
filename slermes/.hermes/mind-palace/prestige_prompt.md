@@ -1,4 +1,4 @@
-# Prestige (v423)
+# Prestige (v424)
 
 ## P0 — Architecture (4 gaps)
 F01-F04, F09.
@@ -13,5 +13,5 @@ F01-F04, F09.
 
 ## Strategy
 
-Phase 367: TUI thinking indicator (T11) — rich animated states: phase labels (think/ponder/deep/focus by elapsed time), animated ellipsis (.→..→...→.. cycle), pulsing arrow (>→=>) on token receive. T11 PORTED.
-S4 gaps: 18→17. Total: 66→65.
+Phase 368: TUI agent info overlay (T14) — /agent opens modal showing model, provider, tokens, budget. T14 IMPLEMENTED.
+S4 gaps: 16→15. Total: 65→64.

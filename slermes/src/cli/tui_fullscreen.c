@@ -391,6 +391,7 @@ static const slash_cmd_t slash_commands[] = {
     {"/logs",    "Show log viewer", ""},
     {"/skills",  "Browse available skills", ""},
     {"/todos",   "Show todo/kanban board", ""},
+    {"/agent",   "Show agent info (model, provider, tokens)", ""},
     {NULL, NULL, NULL}
 };
 
@@ -709,6 +710,7 @@ typedef struct {
         MODE_HELP,
         MODE_MODEL_PICK,        /* T13: Model picker overlay */
         MODE_TODO_PANEL,        /* T15: Todo/kanban panel */
+        MODE_AGENT_INFO,        /* T14: Agent info overlay */
     } modal_mode;
 } tui_global_state_t;
 
@@ -2721,6 +2723,72 @@ static int tui_todo_panel_handle(int ch) {
     return 1;
 }
 
+/* ==================================================================
+ *  T14: AGENT INFO — display current agent configuration
+ * ================================================================== */
+static void tui_draw_agent_info(void) {
+    if (!tui.agent) {
+        tui_history_add(MSG_ROLE_WARN, "No agent state available", false);
+        tui.modal_mode = MODE_NORMAL;
+        return;
+    }
+
+    /* Calculate overlay dimensions */
+    int rows = tui.rows;
+    int cols = tui.cols;
+    int overlay_h = 16;
+    int overlay_w = (cols > 52) ? 50 : cols - 2;
+    int start_y = (rows - overlay_h) / 2;
+    int start_x = (cols - overlay_w) / 2;
+    if (start_y < 0) start_y = 0;
+    if (start_x < 0) start_x = 0;
+
+    /* Create overlay window */
+    WINDOW *win = newwin(overlay_h, overlay_w, start_y, start_x);
+    if (!win) return;
+    keypad(win, TRUE);
+
+    /* Draw border and title */
+    box(win, 0, 0);
+    mvwprintw(win, 0, 2, "[ Agent Info ]");
+
+    /* Gather agent info */
+    agent_state_t *a = tui.agent;
+
+    mvwprintw(win, 2, 2, "Model:      %s", a->llm.model[0] ? a->llm.model : "(none)");
+    mvwprintw(win, 3, 2, "Provider:   %s", a->llm.provider[0] ? a->llm.provider : "(none)");
+    mvwprintw(win, 4, 2, "Session ID: %s", a->session_id);
+
+    mvwprintw(win, 6, 2, "Iterations: %d / %d", a->iteration_count, a->max_iterations);
+    mvwprintw(win, 7, 2, "Messages:   %zu", a->message_count);
+    mvwprintw(win, 8, 2, "Tools:      %zu registered", a->tools.count);
+
+    /* Token stats */
+    mvwprintw(win, 10, 2, "Input Tokens:  %d", a->session_input_tokens);
+    mvwprintw(win, 11, 2, "Output Tokens: %d", a->session_output_tokens);
+    mvwprintw(win, 12, 2, "Total Tokens:  %d", a->session_total_tokens);
+
+    /* Budget */
+    if (a->budget) {
+        double remaining = budget_tracker_remaining_cost(a->budget);
+        if (remaining >= 0)
+            mvwprintw(win, 13, 2, "Budget:     $%.4f remaining", remaining);
+        else
+            mvwprintw(win, 13, 2, "Budget:     unlimited");
+    } else {
+        mvwprintw(win, 13, 2, "Budget:     (none)");
+    }
+
+    mvwprintw(win, 14, 2, "JSON Mode:  %s", a->llm.json_mode ? "on" : "off");
+
+    /* Footer */
+    mvwprintw(win, overlay_h - 2, 2, "Press q or ESC to close");
+
+    wnoutrefresh(win);
+    doupdate();
+    delwin(win);
+}
+
 static void tui_draw_skill_browser(void) {
     WINDOW *win = tui.panes[PANE_HISTORY].win;
     if (!win) return;
@@ -3225,6 +3293,11 @@ static void tui_process_input(const char *line) {
             tui_todo_panel_init();
             tui.modal_mode = MODE_TODO_PANEL;
             tui_draw_todo_panel();
+            return;
+
+        } else if (strcmp(line, "/agent") == 0 || strcmp(line, "/agents") == 0) {
+            tui.modal_mode = MODE_AGENT_INFO;
+            tui_draw_agent_info();
             return;
 
         } else if (strcmp(line, "/skills") == 0) {
@@ -3965,6 +4038,7 @@ int tui_fullscreen_run(agent_state_t *state) {
                 case MODE_SKILL_BROWSE:  tui_draw_skill_browser(); break;
                 case MODE_HELP:           break; /* help stays until dismissed */
                 case MODE_TODO_PANEL:      tui_draw_todo_panel(); break;
+                case MODE_AGENT_INFO:      { if (ch == 'q' || ch == 27) { tui.modal_mode = MODE_NORMAL; continue; } tui_draw_agent_info(); break; }
                 default: break;
             }
             continue;
