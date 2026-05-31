@@ -43,10 +43,41 @@ char *cron_list_jobs(void) {
 /* Stub for SQLite-backed cron store used by list action */
 struct cron_sqlite_store_t { int _; };
 struct cron_sqlite_store_t *g_cron_store = NULL;
+
+/* Initialize the cron store for testing */
+static void cron_store_init(void) {
+    if (!g_cron_store) {
+        g_cron_store = calloc(1, sizeof(struct cron_sqlite_store_t));
+    }
+}
+
+static void cron_store_cleanup(void) {
+    free(g_cron_store);
+    g_cron_store = NULL;
+}
+
 char *cron_sqlite_list_to_json(struct cron_sqlite_store_t *store) {
     (void)store;
     return strdup("[]");
 }
+
+bool cron_sqlite_update_job(struct cron_sqlite_store_t *store, const char *name,
+                             const char *field, const char *value) {
+    (void)store; (void)name; (void)field; (void)value;
+    return true;
+}
+
+char *cron_sqlite_get_command(struct cron_sqlite_store_t *store, const char *name) {
+    (void)store; (void)name;
+    return strdup("echo test");
+}
+
+/* Stub for cron_run_job — called by "run" action */
+void cron_run_job(const char *name, const char *command) {
+    (void)name; (void)command;
+}
+
+/* Stub for cron.h functions needed by cronjob.c */
 
 bool cron_job_set_retry(const char *job_name, int max_retries, int backoff_sec) {
     (void)job_name; (void)max_retries; (void)backoff_sec;
@@ -96,6 +127,7 @@ static int has_error(const char *json_str) {
 
 int main(void) {
     printf("=== Cron Tool Tests ===\n");
+    cron_store_init();
 
     /* Test 1: Null args */
     {
@@ -265,8 +297,203 @@ int main(void) {
         free(res);
     }
 
+    /* --- Edge case expansion: 20 new assertions --- */
+
+    /* Test 19: Empty action string should error -- not same as missing */
+    {
+        char *res = cronjob_handler("{\"action\":\"\"}", NULL);
+        TEST("empty action returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 20: Update without name */
+    {
+        char *res = cronjob_handler("{\"action\":\"update\"}", NULL);
+        TEST("update without name returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 21: Update with schedule */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"update\",\"name\":\"myjob\",\"schedule\":\"@weekly\"}", NULL);
+        TEST("update with schedule returns non-NULL", res != NULL);
+        if (res) {
+            TEST("update returns status", json_contains(res, "\"status\""));
+        }
+        free(res);
+    }
+
+    /* Test 22: Update with command + retry */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"update\",\"name\":\"myjob\",\"command\":\"echo new\","
+            "\"retry\":2,\"backoff\":15}", NULL);
+        TEST("update with command+retry returns non-NULL", res != NULL);
+        free(res);
+    }
+
+    /* Test 23: Pause without name */
+    {
+        char *res = cronjob_handler("{\"action\":\"pause\"}", NULL);
+        TEST("pause without name returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 24: Pause with name */
+    {
+        char *res = cronjob_handler("{\"action\":\"pause\",\"name\":\"myjob\"}", NULL);
+        TEST("pause with name returns non-NULL", res != NULL);
+        if (res) {
+            TEST("pause returns status paused", json_contains(res, "\"paused\""));
+        }
+        free(res);
+    }
+
+    /* Test 25: Resume without name */
+    {
+        char *res = cronjob_handler("{\"action\":\"resume\"}", NULL);
+        TEST("resume without name returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 26: Resume with name */
+    {
+        char *res = cronjob_handler("{\"action\":\"resume\",\"name\":\"myjob\"}", NULL);
+        TEST("resume with name returns non-NULL", res != NULL);
+        if (res) {
+            TEST("resume returns status resumed", json_contains(res, "\"resumed\""));
+        }
+        free(res);
+    }
+
+    /* Test 27: Run without name */
+    {
+        char *res = cronjob_handler("{\"action\":\"run\"}", NULL);
+        TEST("run without name returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 28: Run with name */
+    {
+        char *res = cronjob_handler("{\"action\":\"run\",\"name\":\"myjob\"}", NULL);
+        TEST("run with name returns non-NULL", res != NULL);
+        if (res) {
+            TEST("run returns status triggered", json_contains(res, "\"triggered\""));
+        }
+        free(res);
+    }
+
+    /* Test 29: History without name */
+    {
+        char *res = cronjob_handler("{\"action\":\"history\"}", NULL);
+        TEST("history without name returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 30: History with name */
+    {
+        char *res = cronjob_handler("{\"action\":\"history\",\"name\":\"myjob\"}", NULL);
+        TEST("history with name returns non-NULL", res != NULL);
+        if (res) {
+            TEST("history has history array", json_contains(res, "\"history\""));
+            TEST("history has total_runs", json_contains(res, "\"total_runs\""));
+        }
+        free(res);
+    }
+
+    /* Test 31: History with limit param */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"history\",\"name\":\"myjob\",\"limit\":5}", NULL);
+        TEST("history with limit returns non-NULL", res != NULL);
+        free(res);
+    }
+
+    /* Test 32: Unknown @-schedule */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"add\",\"name\":\"bad_sched\",\"schedule\":\"@fortnightly\",\"command\":\"x\"}", NULL);
+        TEST("unknown @-schedule returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 33: Add with timezone */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"add\",\"name\":\"tz_test\",\"schedule\":\"@daily\","
+            "\"command\":\"echo tz\",\"timezone\":\"America/New_York\"}", NULL);
+        TEST("add with timezone returns non-NULL", res != NULL);
+        if (res) {
+            TEST("add with timezone has status", json_contains(res, "\"status\""));
+        }
+        free(res);
+    }
+
+    /* Test 34: Config with timezone */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"config\",\"name\":\"tz_job\",\"timezone\":\"UTC\"}", NULL);
+        TEST("config with timezone returns non-NULL", res != NULL);
+        if (res) {
+            TEST("config with timezone returns status configured",
+                 json_contains(res, "\"configured\""));
+        }
+        free(res);
+    }
+
+    /* Test 35: Add with empty command */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"add\",\"name\":\"empty_cmd\",\"schedule\":\"@hourly\",\"command\":\"\"}", NULL);
+        TEST("add with empty command returns non-NULL", res != NULL);
+        if (res) {
+            TEST("add empty command succeeds", json_contains(res, "\"status\""));
+        }
+        free(res);
+    }
+
+    /* Test 36: List with name filter */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"list\",\"name\":\"myjob\"}", NULL);
+        TEST("list with name filter returns non-NULL", res != NULL);
+        if (res) {
+            TEST("list filtered has jobs", json_contains(res, "\"jobs\""));
+        }
+        free(res);
+    }
+
+    /* Test 37: Config without any settings (just name) */
+    {
+        char *res = cronjob_handler("{\"action\":\"config\",\"name\":\"test\"}", NULL);
+        TEST("config with just name returns non-NULL", res != NULL);
+        if (res) {
+            TEST("config bare returns status configured",
+                 json_contains(res, "\"configured\""));
+        }
+        free(res);
+    }
+
+    /* Test 38: Update with empty schedule (no change requested, should error "No changes") */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"update\",\"name\":\"myjob\",\"schedule\":\"\"}", NULL);
+        TEST("update with empty schedule returns error", has_error(res));
+        free(res);
+    }
+
+    /* Test 39: Add with empty name should succeed (not error on name alone) */
+    {
+        char *res = cronjob_handler(
+            "{\"action\":\"add\",\"name\":\"\",\"schedule\":\"@daily\",\"command\":\"x\"}", NULL);
+        TEST("add with empty name returns non-NULL", res != NULL);
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All cron tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);
+    cron_store_cleanup();
     return failed ? 1 : 0;
 }

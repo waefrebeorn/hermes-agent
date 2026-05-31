@@ -1,8 +1,18 @@
 # 🏆 Vault of Achievements — Slermes C Translation
+
+## Phase 406 — Cron Tool Edge Case Expansion (S7 X04)
+2026-06-01: Expanded test_cron_tool.c 25→57 assertions (+128%).
+21 new test blocks: empty action (→error), update (missing/schedule/command+retry),
+pause (missing/name), resume (missing/name), run (missing/name),
+history (missing/name/limit), unknown @-schedule, timezone on add/config,
+empty command, name filter, bare config, empty schedule, empty name.
+Stubs added: cron_sqlite_update_job, cron_sqlite_get_command, cron_run_job,
+g_cron_store init/cleanup.
+Suite: 338/0/13. Gaps: 53 (depth). Version: v462.
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v458** · 53 active gaps · **2196 entries** of progress
+> **v462** · 53 active gaps · **2196 entries** of progress
 |
 |## 📊 Sector Summary
 

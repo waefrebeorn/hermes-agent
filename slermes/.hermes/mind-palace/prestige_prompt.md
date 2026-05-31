@@ -1,18 +1,21 @@
-# Prestige — Progress Log (v461)
-Phase 405: Discord Tool Edge Case Expansion — S7 X04 EXPANDED.
-test_discord.c +6 new test functions (13→19 tests).
-6 new edge case groups: empty action, fetch_messages missing channel,
-search_members params, pin/unpin params, create_thread, role mgmt.
-Suite: 338/?/13. 53 gaps. X04 discord_tool depth improved (+46%).
+# Prestige — Progress Log (v462)
+Phase 406: Cron Tool Edge Case Expansion — S7 X04 EXPANDED.
+test_cron_tool.c +32 new assertions (25→57), +128%.
+21 new test blocks: empty action (→error), update (missing/with schedule/with command+retry),
+pause (missing/with name), resume (missing/with name), run (missing/with name),
+history (missing/with name/with limit), unknown @-schedule, add timezone, config timezone,
+empty command, name filter, bare config, empty schedule, empty name.
+Stubs: cron_sqlite_update_job, cron_sqlite_get_command, cron_run_job.
+Suite: 338/?/13. 53 gaps. X04 cronjob_tool depth improved (+128%).
 
 ## Recent Phases
-- Phase 397: S7 X03 Azure provider tests (+40 assertions, 1 bug fix)
-- Phase 396: S7 X03 xAI provider tests (+69 assertions, 1 bug fix)
-- Phase 395: S7 X03 Google provider tests (+87 assertions)
+- Phase 405: Discord Tool Edge Case Expansion — S7 X04 (13→19 tests, +46%)
+- Phase 404: TTS Tool Edge Case Expansion — S7 X04 (11→17 tests)
+- Phase 403: Skills Hub Edge Case Expansion — S7 X04 (17→41 tests, +141%)
 
 ### Sector Status
 PORTED: S0, S1, S2, S3, S6, S8
 ACTIVE: S4 (8 gaps), S5 (10 gaps), S7 (18 clusters), S9 (19 gaps), S10 (7 gaps)
 
 ### Latest Result
-Phase 404: tts_tool expanded 11→17 tests (+6). Speed clamping, provider validation, newlines, empty text, long text, chunk duration.
+Phase 406: cronjob_tool expanded 25→57 assertions (+128%). All 9 actions covered.

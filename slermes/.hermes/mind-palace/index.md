@@ -1,4 +1,4 @@
-# Index — Slermes C Mind Palace (v461)
+# Index — Slermes C Mind Palace (v462)
 
 ## Walkways
 | File | Purpose |
@@ -16,5 +16,6 @@
 | achievements.md | Vault of all closed gaps |
 | da-audit-v14.md, v15.md | Devil's Advocate audits |
 
-## Phase 399
-OpenRouter Provider Test Expansion — S7 X03 EXPANDED. 43 new assertions (51→94). URL/header edge, response edge, streaming reasoning, streaming depth. Bug fix: finish_reason extraction.
+## Phase 406
+Cron Tool Edge Case Expansion — S7 X04 EXPANDED. 32 new assertions (25→57).
+Empty action, update/pause/resume/run/history coverage, unknown @-schedule, timezone params.
