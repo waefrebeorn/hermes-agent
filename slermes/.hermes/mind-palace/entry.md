@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v392)
+# Entry — Slermes C Parity (v393)
 
-Phase 335: arrow key NORMAL mode bugfix. 68 gaps.
+Phase 336: file_batch edge case expansion (6→13 tests). 68 gaps.

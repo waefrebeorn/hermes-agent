@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v392)
+# Goal Mantra — Slermes C (v393)
 
-326/0/14 (289 test files). 68 gaps. Phase 335: arrow key NORMAL mode bugfix.
+326/0/14 (289 test files). 68 gaps. Phase 336: file_batch edge case expansion (6→13 tests).
 
 ## Loop
 
