@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v409)
+# Entry — Slermes C Parity (v410)
 
-Phase 352: DingTalk edge case expansion (30 new assertions). 68 gaps.
+Phase 353: Audit rotation edge case expansion (16 new assertions). 68 gaps.

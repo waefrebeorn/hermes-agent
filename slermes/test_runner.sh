@@ -1777,7 +1777,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_audit_rotate.c" \
     "$CDIR/src/agent/audit.c" \
     -o /tmp/hermes_test_audit -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_audit > /dev/null 2>&1; then ok "audit_rotate (11 tests)"
+    if /tmp/hermes_test_audit > /dev/null 2>&1; then ok "audit_rotate (27 tests)"
     else
         echo "  Audit rotate test output:"
         /tmp/hermes_test_audit 2>&1 | sed 's/^/    /'

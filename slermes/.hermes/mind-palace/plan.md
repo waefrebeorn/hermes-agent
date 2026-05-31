@@ -1,6 +1,6 @@
-# Plan — Next Phase (v409)
+# Plan — Next Phase (v410)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 352: DingTalk edge case expansion (30 new assertions).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 353: Audit rotation edge case expansion (16 new assertions).
 
 **Next gap targets:**
 
