@@ -184,6 +184,13 @@ oauth_token_t *oauth_device_code_poll(
  * Returns NULL on failure (check oauth_last_error()). */
 oauth_token_t *nous_device_code_login(int timeout_sec);
 
+/* xAI OAuth PKCE loopback callback login.
+ * Starts local HTTP server, displays authorize URL, waits for browser
+ * callback, exchanges code for tokens.
+ * Returns malloc'd oauth_token_t on success.
+ * Returns NULL on failure (check oauth_last_error()). */
+oauth_token_t *xai_oauth_callback_login(int timeout_sec);
+
 /* OAuth token refresh.
  * POSTs to token_endpoint with grant_type=refresh_token.
  * Returns malloc'd oauth_token_t on success.

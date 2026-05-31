@@ -535,3 +535,26 @@ char *crypto_md5_hex(const unsigned char *data, size_t len)
 
     return crypto_hex_encode(md5_out, 16);
 }
+
+/* ================================================================
+ *  PKCE helpers (RFC 7636)
+ * ================================================================ */
+
+char *crypto_pkce_verifier(void) {
+    unsigned char raw[64];
+    if (!crypto_random_bytes(raw, 64)) return NULL;
+    char *b64 = crypto_base64url_encode(raw, 64);
+    if (!b64) return NULL;
+    /* Truncate to 128 chars max (RFC 7636 §4.1: 43-128 chars) */
+    size_t len = strlen(b64);
+    if (len > 128) len = 128;
+    b64[len] = '\0';
+    return b64;
+}
+
+char *crypto_pkce_challenge(const char *code_verifier) {
+    unsigned char hash[32];
+    crypto_sha256((const unsigned char *)code_verifier,
+                  strlen(code_verifier), hash);
+    return crypto_base64url_encode(hash, 32);
+}

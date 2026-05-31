@@ -21,6 +21,11 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/select.h>
 
 /* Thread-local last error buffer */
 #define ERR_BUF_SZ 512
@@ -1018,5 +1023,370 @@ oauth_token_t *oauth_refresh_token(
     http_resp_free(resp);
     http_free(h);
 
+    return tok;
+}
+
+/* External crypto functions used by PKCE flow */
+extern char *crypto_pkce_verifier(void);
+extern char *crypto_pkce_challenge(const char *code_verifier);
+extern bool crypto_random_bytes(unsigned char *buf, size_t len);
+
+/* ================================================================
+ *  xAI OAuth callback server constants
+ * ================================================================ */
+
+#define XAI_OAUTH_AUTH_ENDPOINT     "https://auth.x.ai/oauth2/authorize"
+#define XAI_OAUTH_SCOPE             "openid profile email offline_access grok-cli:access api:access"
+#define XAI_OAUTH_REDIRECT_HOST     "127.0.0.1"
+#define XAI_OAUTH_REDIRECT_PORT     56121
+#define XAI_OAUTH_REDIRECT_PATH     "/callback"
+
+/* ================================================================
+ *  Build xAI OAuth authorize URL
+ * ================================================================ */
+
+static char *_xai_build_authorize_url(const char *redirect_uri,
+                                       const char *code_challenge,
+                                       const char *state,
+                                       const char *nonce) {
+    char *ruri = http_url_encode(redirect_uri);
+    char *cch = http_url_encode(code_challenge);
+    char *st  = http_url_encode(state);
+    char *non = http_url_encode(nonce);
+    if (!ruri || !cch || !st || !non) {
+        free(ruri); free(cch); free(st); free(non);
+        return NULL;
+    }
+
+    char url[4096];
+    int n = snprintf(url, sizeof(url),
+        "%s?response_type=code"
+        "&client_id=%s"
+        "&redirect_uri=%s"
+        "&scope=%s"
+        "&code_challenge=%s"
+        "&code_challenge_method=S256"
+        "&state=%s"
+        "&nonce=%s"
+        "&plan=generic"
+        "&referrer=hermes-agent",
+        XAI_OAUTH_AUTH_ENDPOINT,
+        XAI_OAUTH_CLIENT_ID,
+        ruri, XAI_OAUTH_SCOPE, cch, st, non);
+
+    free(ruri); free(cch); free(st); free(non);
+
+    if (n < 0 || (size_t)n >= sizeof(url)) return NULL;
+    return strdup(url);
+}
+
+/* Simple URL percent-decode in-place (replaces %XX with actual byte) */
+static char *_simple_url_decode(const char *src) {
+    if (!src) return NULL;
+    size_t len = strlen(src);
+    char *out = (char *)malloc(len + 1);
+    if (!out) return NULL;
+    size_t o = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (src[i] == '%' && i + 2 < len) {
+            char hex[3] = { src[i+1], src[i+2], '\0' };
+            char *end = NULL;
+            long val = strtol(hex, &end, 16);
+            if (end && *end == '\0') {
+                out[o++] = (char)val;
+                i += 2;
+                continue;
+            }
+        }
+        out[o++] = src[i];
+    }
+    out[o] = '\0';
+    return out;
+}
+
+/* ================================================================
+ *  Parse xAI OAuth callback HTTP GET
+ * ================================================================ */
+
+static int _parse_xai_callback(int fd,
+                                char **out_code,
+                                char **out_state,
+                                char **out_error) {
+    char buf[8192];
+    size_t pos = 0;
+    struct timeval tv = { .tv_sec = 120, .tv_usec = 0 };
+
+    while (pos < sizeof(buf) - 1) {
+        fd_set rfds;
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        int ret = select(fd + 1, &rfds, NULL, NULL, &tv);
+        if (ret <= 0) return -1;
+        ssize_t n = read(fd, buf + pos, sizeof(buf) - 1 - pos);
+        if (n <= 0) return -1;
+        pos += (size_t)n;
+        buf[pos] = '\0';
+        if (strstr(buf, "\r\n\r\n")) break;
+    }
+    buf[pos] = '\0';
+
+    char *method = buf;
+    char *path_start = method;
+    while (*path_start && *path_start != ' ') path_start++;
+    if (!*path_start) return -1;
+    *path_start = '\0';
+    path_start++;
+    if (strcmp(method, "GET") != 0) return -1;
+
+    char *http_ver = path_start;
+    while (*http_ver && *http_ver != ' ') http_ver++;
+    if (*http_ver) *http_ver = '\0';
+
+    char *qmark = strchr(path_start, '?');
+    if (!qmark) return -1;
+    *qmark = '\0';
+    char *query = qmark + 1;
+
+    if (strcmp(path_start, XAI_OAUTH_REDIRECT_PATH) != 0) return -1;
+
+    char *code = NULL, *state = NULL, *error = NULL;
+    char *tok = strtok(query, "&");
+    while (tok) {
+        char *eq = strchr(tok, '=');
+        if (eq) {
+            *eq = '\0';
+            char *val = eq + 1;
+            char *decoded = _simple_url_decode(val);
+            if (!decoded) { tok = strtok(NULL, "&"); continue; }
+            if (strcmp(tok, "code") == 0) code = strdup(decoded);
+            else if (strcmp(tok, "state") == 0) state = strdup(decoded);
+            else if (strcmp(tok, "error") == 0) error = strdup(decoded);
+            free(decoded);
+        }
+        tok = strtok(NULL, "&");
+    }
+
+    if (code || error) {
+        *out_code = code;
+        *out_state = state;
+        *out_error = error;
+        return 0;
+    }
+    free(code); free(state); free(error);
+    return -1;
+}
+
+/* ================================================================
+ *  Send success HTML response
+ * ================================================================ */
+
+static void _send_callback_response(int fd) {
+    const char *body =
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        "<title>Hermes xAI OAuth</title>"
+        "<style>body{font-family:sans-serif;display:flex;"
+        "justify-content:center;align-items:center;height:100vh;"
+        "margin:0;background:#1a1a2e;color:#e0e0e0}"
+        ".card{text-align:center;padding:2em;border-radius:12px;"
+        "background:#16213e;box-shadow:0 4px 24px rgba(0,0,0,0.3)}"
+        ".check{font-size:3em;color:#8FBC8F}</style></head>"
+        "<body><div class='card'><div class='check'>&#10003;</div>"
+        "<h2>Authorization Received</h2>"
+        "<p>You can close this window and return to Hermes.</p>"
+        "</div></body></html>";
+
+    char resp[4096];
+    int n = snprintf(resp, sizeof(resp),
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html; charset=utf-8\r\n"
+        "Content-Length: %zu\r\n"
+        "Connection: close\r\n"
+        "\r\n%s",
+        strlen(body), body);
+
+    if (n > 0 && (size_t)n < sizeof(resp))
+        write(fd, resp, (size_t)n);
+}
+
+/* ================================================================
+ *  xAI OAuth loopback callback login
+ * ================================================================ */
+
+oauth_token_t *xai_oauth_callback_login(int timeout_sec) {
+    if (timeout_sec < 30) timeout_sec = 30;
+
+    printf("\n=== xAI Grok OAuth (SuperGrok / Premium+) ===\n");
+    printf("========================================\n");
+    printf("(Hermes creates its own local OAuth session)\n\n");
+
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
+        _set_error("Failed to create callback server socket");
+        return NULL;
+    }
+
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(XAI_OAUTH_REDIRECT_HOST);
+
+    int actual_port = 0;
+    int ports[] = { XAI_OAUTH_REDIRECT_PORT, 0 };
+    for (int i = 0; i < 2; i++) {
+        addr.sin_port = htons((uint16_t)ports[i]);
+        if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) == 0) {
+            actual_port = ports[i];
+            break;
+        }
+    }
+
+    if (actual_port == 0) {
+        _set_error("Could not bind callback server on 127.0.0.1");
+        close(server_fd);
+        return NULL;
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        _set_error("listen failed on callback server");
+        close(server_fd);
+        return NULL;
+    }
+
+    /* Get actual port for ephemeral */
+    if (actual_port == 0) {
+        struct sockaddr_in bound;
+        socklen_t bound_len = sizeof(bound);
+        if (getsockname(server_fd, (struct sockaddr*)&bound, &bound_len) == 0)
+            actual_port = ntohs(bound.sin_port);
+        else
+            actual_port = XAI_OAUTH_REDIRECT_PORT;
+    }
+
+    char redirect_uri[128];
+    snprintf(redirect_uri, sizeof(redirect_uri),
+             "http://%s:%d%s",
+             XAI_OAUTH_REDIRECT_HOST, actual_port, XAI_OAUTH_REDIRECT_PATH);
+
+    char *code_verifier = crypto_pkce_verifier();
+    if (!code_verifier) {
+        _set_error("Failed to generate PKCE verifier");
+        close(server_fd);
+        return NULL;
+    }
+
+    char *code_challenge = crypto_pkce_challenge(code_verifier);
+    if (!code_challenge) {
+        _set_error("Failed to generate PKCE challenge");
+        free(code_verifier);
+        close(server_fd);
+        return NULL;
+    }
+
+    /* Generate random state and nonce */
+    char state[65] = {0}, nonce[65] = {0};
+    unsigned char rand_buf[32];
+    if (!crypto_random_bytes(rand_buf, 32)) {
+        _set_error("Failed to generate random bytes");
+        free(code_verifier); free(code_challenge);
+        close(server_fd);
+        return NULL;
+    }
+    for (int i = 0; i < 32; i++)
+        snprintf(state + i*2, 3, "%02x", rand_buf[i]);
+
+    if (!crypto_random_bytes(rand_buf, 32)) {
+        _set_error("Failed to generate random bytes");
+        free(code_verifier); free(code_challenge);
+        close(server_fd);
+        return NULL;
+    }
+    for (int i = 0; i < 32; i++)
+        snprintf(nonce + i*2, 3, "%02x", rand_buf[i]);
+
+    char *auth_url = _xai_build_authorize_url(
+        redirect_uri, code_challenge, state, nonce);
+    if (!auth_url) {
+        _set_error("Failed to build authorize URL");
+        free(code_verifier); free(code_challenge);
+        close(server_fd);
+        return NULL;
+    }
+
+    printf("Open this URL to authorize Hermes with xAI:\n");
+    printf("%s\n\n", auth_url);
+    printf("Waiting for callback on %s\n", redirect_uri);
+    printf("(timeout: %d seconds)\n\n", timeout_sec);
+    fflush(stdout);
+
+    int flags = fcntl(server_fd, F_GETFL, 0);
+    fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);
+
+    oauth_token_t *tok = NULL;
+    char *code = NULL, *cb_state = NULL, *cb_error = NULL;
+    int client_fd = -1;
+
+    time_t deadline = time(NULL) + timeout_sec;
+    while (time(NULL) < deadline) {
+        struct sockaddr_in client_addr;
+        socklen_t addr_len = sizeof(client_addr);
+        client_fd = accept(server_fd,
+                          (struct sockaddr*)&client_addr, &addr_len);
+        if (client_fd >= 0) break;
+        if (errno != EAGAIN && errno != EWOULDBLOCK) break;
+        usleep(100000);
+    }
+
+    if (client_fd < 0) {
+        _set_error("xAI callback server timed out waiting for browser redirect");
+        free(auth_url); free(code_verifier); free(code_challenge);
+        close(server_fd);
+        return NULL;
+    }
+
+    if (_parse_xai_callback(client_fd, &code, &cb_state, &cb_error) != 0) {
+        _set_error("Failed to parse OAuth callback request");
+        free(auth_url); free(code_verifier); free(code_challenge);
+        close(client_fd); close(server_fd);
+        return NULL;
+    }
+
+    _send_callback_response(client_fd);
+    close(client_fd);
+    close(server_fd);
+
+    if (cb_error) {
+        _set_error("xAI authorization failed: %s", cb_error);
+        free(cb_error); free(code); free(cb_state);
+        free(auth_url); free(code_verifier); free(code_challenge);
+        return NULL;
+    }
+
+    if (cb_state && strcmp(cb_state, state) != 0) {
+        _set_error("xAI authorization failed: state mismatch");
+        free(cb_state); free(code); free(cb_error);
+        free(auth_url); free(code_verifier); free(code_challenge);
+        return NULL;
+    }
+
+    if (!code || !code[0]) {
+        _set_error("xAI authorization failed: missing authorization code");
+        free(cb_state); free(code); free(cb_error);
+        free(auth_url); free(code_verifier); free(code_challenge);
+        return NULL;
+    }
+
+    tok = xai_oauth_exchange(code, redirect_uri,
+                              code_verifier, code_challenge,
+                              timeout_sec);
+
+    free(code); free(cb_state); free(cb_error);
+    free(auth_url); free(code_verifier); free(code_challenge);
+
+    if (!tok) return NULL;
+
+    printf("\n✅ Authorization received and tokens exchanged.\n");
     return tok;
 }

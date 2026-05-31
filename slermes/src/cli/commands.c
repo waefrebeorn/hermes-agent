@@ -5130,6 +5130,39 @@ static void cmd_auth(const char *args, agent_state_t *state) {
                 printf("\n❌ Failed to save OAuth token: %s\n", oauth_last_error());
                 oauth_token_free(tok);
             }
+        } else if (strcasecmp(provider, "xai-oauth") == 0 ||
+                   strcasecmp(provider, "xai") == 0) {
+            /* PKCE loopback callback flow for xAI OAuth */
+            const char *home = state->hermes_home[0] ? state->hermes_home : getenv("HOME");
+            if (!home) { printf("Cannot determine home directory.\n"); return; }
+
+            printf("Starting xAI OAuth loopback login...\n");
+            fflush(stdout);
+            oauth_token_t *tok = xai_oauth_callback_login(120);
+            if (!tok) {
+                printf("\n❌ xAI OAuth login failed: %s\n", oauth_last_error());
+                return;
+            }
+
+            /* Save token to auth store */
+            auth_entry_t entry;
+            memset(&entry, 0, sizeof(entry));
+            strncpy(entry.provider, "xai-oauth", sizeof(entry.provider) - 1);
+            entry.token = *tok;
+
+            printf("\nSaving xAI OAuth token to auth store...\n");
+            if (auth_store_save(home, &entry)) {
+                printf("✅ xAI OAuth token saved.\n");
+                if (tok->expires_at > 0) {
+                    time_t exp = (time_t)tok->expires_at;
+                    printf("   Expires: %s", ctime(&exp));
+                }
+                printf("\nRestart slermes or /reload to apply.\n");
+                printf("Set model.provider to xai-oauth in config to use.\n");
+            } else {
+                printf("\n❌ Failed to save OAuth token: %s\n", oauth_last_error());
+                oauth_token_free(tok);
+            }
         } else {
             printf("To configure %s:\n", provider);
             printf("  export %s=<your_key>\n", env_var);

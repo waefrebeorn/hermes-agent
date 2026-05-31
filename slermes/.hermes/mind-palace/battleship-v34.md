@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-|| v427 | Fork diverged — slermes/ lives only on fork | Suite 327/0/13 | 85 tools | 99 CLI** |
-||**Honest assessment: 64 structural gaps, 1000+ test case gaps. Phase 371: CLI status bar context% + budget/cost — D19+D20 PORTED. S0 complete (0 display gaps). Suite 327/0/13. 64 gaps.**|
+||| v428 | Fork diverged — slermes/ lives only on fork | Suite 327/0/13 | 85 tools | 99 CLI** |
+||**Honest assessment: 63 structural gaps, 1000+ test case gaps. Phase 372: xAI OAuth callback login — C11 PORTED (loopback HTTP server, PKCE authorize URL, code exchange, auth store save). Suite 327/0/13. 63 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -150,7 +150,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 | ✅ PORTED — /model set (same as C07) |
 || 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 | ✅ PORTED — /model list (same as C07) |
 || 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
-|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers|login|tokens|refresh|validate]. /auth login writes API keys to .env. Device code flow for Nous (Phase 359). **Token management** (Phase 360): /auth status shows OAuth token expiry, /auth refresh refreshes via oauth_refresh_token(), /auth tokens lists stored OAuth tokens. **Credential validation** (Phase 369): /auth validate <provider> tests API key with minimal API call (GET /v1/models for OpenAI-compatible, Anthropic minimal messages via POST, Google API key in query param). 8 providers supported. Remaining: interactive callback server for xAI OAuth flow. |
+||| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | ✅ PORTED — /auth [status|providers|login|tokens|refresh|validate]. /auth login writes API keys to .env. Device code flow for Nous (Phase 359). **Token management** (Phase 360): /auth status shows OAuth token expiry, /auth refresh refreshes via oauth_refresh_token(), /auth tokens lists stored OAuth tokens. **Credential validation** (Phase 369): /auth validate <provider> tests API key with minimal API call (GET /v1/models for OpenAI-compatible, Anthropic minimal messages via POST, Google API key in query param). 8 providers supported. **xAI OAuth callback** (Phase 372): xai_oauth_callback_login() with loopback HTTP server, PKCE authorize URL, browser callback, code exchange, auth store save — /auth login xai-oauth. |
 || 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
 || 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | ✅ PORTED — /gateway [status|list|stop|setup|restart] (Phase 292+311). All 5 subcommands implemented: status (shows configured platforms), list (shows all 19), stop (gw_platform_shutdown_all + session save + exit), setup (env var readiness check with [ready]/[missing] indicators), restart (save + re-exec). |
 || C14 | Webhook setup (webhook.py) | ~1000 | P2 | ✅ PORTED — /webhook list/add/remove CLI (Phase 294) |
@@ -160,7 +160,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 18 | C18 | Voice mode (voice.py) | 846 | P3 | ✅ PORTED — /voice [on|off|tts|status|config|key] enhanced (Phase 315) |
 || 19-30 | C19-C30 | Other CLI modules | ~25000 | P2-P3 | REAL GAP |
 
-**S5: 12 gaps (1 P1, 4 P2, 7 P3) — C01+C02+C03+C04+C05+C06+C07+C08+C09+C13+C14+C15+C16+C17+C18 PORTED. C10+C12 WON'T PORT. C11 PARTIAL.**
+**S5: 10 gaps (4 P2, 6 P3) — C01+C02+C03+C04+C05+C06+C07+C08+C09+C11+C13+C14+C15+C16+C17+C18 PORTED. C10+C12 WON'T PORT.**
 
 ---
 
@@ -274,13 +274,13 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
 ||| S4: TUI Ecosystem | 16 | 0 | 6 | 6 | 4 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18 PORTED
-|| S5: CLI Ecosystem | 24 | 0 | 1 | 11 | 12 | hermes_cli infrastructure — C02/C04/C06/C07/C08/C09/C13/C14/C15/C16 PORTED |
+||| S5: CLI Ecosystem | 10 | 0 | 0 | 4 | 6 | hermes_cli infrastructure — C01-C18 PORTED. C10+C12 WON'T PORT. C11 now PORTED (xAI OAuth callback).
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|||| **TOTAL** | **64** | **4** | **27** | **21** | **21** | **S0: 2→0 (D19 context% + D20 budget/cost PORTED). S0 complete. Total down from 66 to 64.** |
+|||| **TOTAL** | **63** | **4** | **27** | **19** | **21** | **S5: 12→10 (C11 PORTED — xAI OAuth callback). S0 complete. Total down from 64 to 63.** |
 
 ### Phase Map
 

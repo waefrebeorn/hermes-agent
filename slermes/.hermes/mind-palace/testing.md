@@ -1,2 +1,2 @@
-# Testing — Slermes C (v427)
-327/0/13. 64 gaps. Phase 371: CLI status bar context% + budget/cost implemented. D19+D20 PORTED.
+# Testing — Slermes C (v428)
+327/0/13. 63 gaps. Phase 372: xAI OAuth callback login. C11 PORTED.

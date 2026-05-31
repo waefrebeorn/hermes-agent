@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v427)
+# Entry — Slermes C Parity (v428)
 
-Phase 371: CLI status bar context% + budget/cost implemented. D19+D20 PORTED. S0 complete (0 gaps). 64 gaps. Suite 327/0/13.
+Phase 372: xAI OAuth callback login. C11 PORTED (callback server done). 63 gaps. Suite 327/0/13.

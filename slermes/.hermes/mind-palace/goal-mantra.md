@@ -1,2 +1,2 @@
-# Goal Mantra — Slermes C (v427)
-327/0/13. 64 gaps. Phase 371: CLI status bar context% + budget/cost. D19+D20 PORTED. S0 complete.
+# Goal Mantra — Slermes C (v428)
+327/0/13. 63 gaps. Phase 372: xAI OAuth callback login. C11 PORTED.

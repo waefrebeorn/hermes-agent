@@ -75,8 +75,12 @@ char *crypto_jwt_decode(const char *secret, const char *token, char **error);
 char *crypto_md5_hex(const unsigned char *data, size_t len);
 
 /* === Random === */
-/* Fill buffer with cryptographically secure random bytes. */
+/* Random bytes */
 bool crypto_random_bytes(unsigned char *buf, size_t len);
+
+/* PKCE (RFC 7636) */
+char *crypto_pkce_verifier(void);
+char *crypto_pkce_challenge(const char *code_verifier);
 
 /* === Utility === */
 /* Convert hex string to bytes. Returns malloc'd buffer. */

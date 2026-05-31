@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v427** · 64 active gaps · **2168 entries** of progress
+> **v428** · 63 active gaps · **2169 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -10,7 +10,7 @@
 |--------|--------|-------------|
 | S0 Display/Input | ✅ PORTED | D01-D21 |
 | S1 Agent Core | ✅ PORTED | L23-L28 |
-| S2 CLI/Config | ✅ PORTED | C01-C37 |
+| S2 CLI/Config | ✅ PORTED | C01-C18 |
 | S3 Gateway | ✅ PORTED | G01-G13 |
 | S4 TUI | 🔄 ACTIVE | 2 remaining |
 | S5 Agent Modules | 🔄 ACTIVE | 15 remaining |
@@ -2222,3 +2222,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 370 | S0 D21 | Live HH:MM timestamp on status bars. CLI `display_statusbar()` replaced raw session_id display (e.g. "20260531_031152") with real `strftime("%H:%M")`. TUI `tui_redraw_status()` replaced right-aligned version number with time. 2 new display gaps discovered: D19 (context usage %) + D20 (budget/cost) missing from CLI status bar. | `src/cli/display_core.c` — strftime time_str in display_statusbar. `src/cli/tui_fullscreen.c` — strftime time_str in tui_redraw_status. Suite 328/0/12. v426. |
 
 ||| 371 | S0 D19+D20 | CLI status bar context% + budget/cost implemented. D19: ctx:XX% via hermes_token_context_size(). D20: Budget N/M + cost $X.XX via agent state. S0 complete. | src/cli/display_core.c -- status bar rewritten. Suite 327/0/13. v427. |
+
+||| 372 | S5 C11 | xAI OAuth loopback callback login. xai_oauth_callback_login() creates TCP server on 127.0.0.1, PKCE authorize URL via crypto_pkce_verifier/challenge, waits for browser callback, parses GET /callback?code=XXX&state=YYY, exchanges code via xai_oauth_exchange(), saves to auth store. /auth login xai-oauth CLI wired. C11 changes from PARTIAL to PORTED. S5 gaps: 12->10. Total: 64->63. | src/provider/token_exchange.c -- xai_oauth_callback_login() + helpers (+360 LOC). lib/libcrypto/crypto.c + crypto.h -- PKCE functions moved from deps/crypto.c. src/cli/commands.c -- xai-oauth handler (+30 LOC). Suite 327/0/13. v428. |
