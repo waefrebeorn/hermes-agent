@@ -223,6 +223,79 @@ static void test_output_file_written(void) {
     PASS();
 }
 
+static void test_empty_modified(void) {
+    TEST("file_merge_handler(empty modified, non-empty base) returns merged");
+    char *base = create_temp("line1\nline2\n", 509);
+    char *modified = create_temp("", 510);
+    const char *out = "/tmp/_tmg_out6";
+    char args[1024];
+    snprintf(args, sizeof(args),
+        "{\"base_path\":\"%s\",\"modified_path\":\"%s\",\"output_path\":\"%s\"}",
+        base, modified, out);
+    char *result = file_merge_handler(args, "test");
+    assert(result != NULL);
+    assert(json_has(result, "\"status\":\"merged\""));
+    free(result);
+    free(base);
+    free(modified);
+    unlink(out);
+    PASS();
+}
+
+static void test_both_empty(void) {
+    TEST("file_merge_handler(both empty files) returns unchanged");
+    char *base = create_temp("", 511);
+    char *modified = create_temp("", 512);
+    const char *out = "/tmp/_tmg_out7";
+    char args[1024];
+    snprintf(args, sizeof(args),
+        "{\"base_path\":\"%s\",\"modified_path\":\"%s\",\"output_path\":\"%s\"}",
+        base, modified, out);
+    char *result = file_merge_handler(args, "test");
+    assert(result != NULL);
+    assert(json_has(result, "\"status\":\"unchanged\""));
+    free(result);
+    free(base);
+    free(modified);
+    unlink(out);
+    PASS();
+}
+
+static void test_self_merge(void) {
+    TEST("file_merge_handler(base==modified==output) returns unchanged");
+    char *base = create_temp("same content\n", 513);
+    char args[1024];
+    snprintf(args, sizeof(args),
+        "{\"base_path\":\"%s\",\"modified_path\":\"%s\",\"output_path\":\"%s\"}",
+        base, base, base);
+    char *result = file_merge_handler(args, "test");
+    assert(result != NULL);
+    assert(json_has(result, "\"status\":\"unchanged\""));
+    free(result);
+    free(base);
+    PASS();
+}
+
+static void test_strategy_git_merge(void) {
+    TEST("file_merge_handler(strategy=git-merge-file)");
+    char *base = create_temp("base content\n", 514);
+    char *modified = create_temp("modified content\n", 515);
+    const char *out = "/tmp/_tmg_out8";
+    char args[1024];
+    snprintf(args, sizeof(args),
+        "{\"base_path\":\"%s\",\"modified_path\":\"%s\",\"output_path\":\"%s\",\"strategy\":\"git-merge-file\"}",
+        base, modified, out);
+    char *result = file_merge_handler(args, "test");
+    assert(result != NULL);
+    /* git-merge-file should produce a result */
+    assert(json_has(result, "status"));
+    free(result);
+    free(base);
+    free(modified);
+    unlink(out);
+    PASS();
+}
+
 int main(void) {
     printf("file_merge tests:\n");
     test_null_args();
@@ -238,6 +311,10 @@ int main(void) {
     test_both_missing();
     test_empty_base_file();
     test_output_file_written();
+    test_empty_modified();
+    test_both_empty();
+    test_self_merge();
+    test_strategy_git_merge();
     printf("\n%d/%d passed\n", passed, tests);
     return passed == tests ? 0 : 1;
 }

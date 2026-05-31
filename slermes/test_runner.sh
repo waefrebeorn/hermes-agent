@@ -3681,7 +3681,7 @@ if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
     "$CDIR/src/tools/file_merge.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libdifflib/difflib.c" \
     -o /tmp/hermes_test_file_merge -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_file_merge > /dev/null 2>&1; then ok "file_merge (4 tests)"
+    if /tmp/hermes_test_file_merge > /dev/null 2>&1; then ok "file_merge (13 tests)"
     else fail "file_merge (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_file_merge
 else skip "file_merge (compilation failed)"
