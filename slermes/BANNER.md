@@ -1,4 +1,4 @@
-**BANNER — WuBu Slermes C Translation (v397) — slermes/ directory**
+**BANNER — WuBu Slermes C Translation (v398) — slermes/ directory**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
