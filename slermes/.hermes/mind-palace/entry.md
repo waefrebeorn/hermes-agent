@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v429)
+# Entry — Slermes C Parity (v430)
 
-Phase 373: TUI Event Publisher — T07 PORTED (typed event system). 62 gaps. Suite 328/0/13.
+Phase 374: TUI Slash Command Worker — T06 PORTED (dispatch-table). 61 gaps. Suite 329/0/13.

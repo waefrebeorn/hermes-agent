@@ -1,17 +1,18 @@
-# Plan — Next Phase (v429)
+# Plan — Next Phase (v430)
 
-S0: D09+D19+D20+D21 all PORTED. **C11 PORTED** (xAI OAuth callback login).
-**T07 PORTED** (TUI Event Publisher). 62 gaps. Suite 328/0/13.
+S0: D09+D19+D20+D21 all PORTED. C11 PORTED. **T07+T06 PORTED**.
+61 gaps. Suite 329/0/13.
 
-**Latest:** Phase 373 — TUI Event Publisher (T07). Typed event system
-with 22 event types, JSON-RPC 2.0 serialization, FIFO output batcher,
-subscriber dispatch with type filters. Wired into tui_fullscreen.c:
-history messages, streaming tokens, tool status, status updates,
-resize, command input. 21-test suite (test_tui_eventpub.c).
-S4 depth improved from 16→15 gaps.
+**Latest:** Phase 374 — TUI Slash Command Worker (T06). Dispatch-table
+architecture with 30 registered commands across 6 categories (TUI,
+Agent, Session, Modal, Meta, Skills). Argument parsing with quote
+support, programmatic register/unregister, categorized help generation.
+Replaced tui_process_input's 200-line if/else chain with single
+tui_slash_dispatch() call. 20-test suite (test_tui_slash_worker.c).
+S4 depth improved from 15→14 gaps.
 
 **Next gap target:**
-- S4 TUI backend (T01-T06, T08: JSON-RPC, transport, render, WebSocket, entry, slash worker, app layout)
+- S4 TUI backend (T01-T05, T08)
 - S7 Test coverage
 
 **Structural gaps remaining by sector:**

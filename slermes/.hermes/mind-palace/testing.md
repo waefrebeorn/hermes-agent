@@ -1,2 +1,2 @@
-# Testing — Slermes C (v429)
-328/0/13. 62 gaps. Phase 373: TUI Event Publisher — T07 PORTED (typed event system, 22 event types, JSON-RPC serialization, FIFO output, subscriber dispatch). 21-test suite added.
+# Testing — Slermes C (v430)
+329/0/13. 61 gaps. Phase 374: TUI Slash Command Worker — T06 PORTED (dispatch-table architecture, 30 commands, 6 categories, argument parsing, 20-test suite).

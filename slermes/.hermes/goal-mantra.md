@@ -1,8 +1,8 @@
-# Slermes — Goal Mantra (v429)
+# Slermes — Goal Mantra (v430)
 
 ── STATE: battleship documents in slermes/.hermes/mind-palace/.
-   Suite: 328/0/13. Tools: 85. CLI: 98 commands.
+   Suite: 329/0/13. Tools: 85. CLI: 98 commands.
    Gateways: 19. Providers: 10. Libs: 65.
-   62 structural gaps (battleship-v34).
-   T07 PORTED — TUI Event Publisher. Phase 373.
+   61 structural gaps (battleship-v34).
+   T06 PORTED — TUI Slash Command Worker. Phase 374.
    Build: make -j$(nproc). Test: bash test_runner.sh.

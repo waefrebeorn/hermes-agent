@@ -39,6 +39,7 @@
 #include "budget_tracker.h"
 #include "provider_metadata.h"
 #include "tui_eventpub.h"
+#include "tui_slash_worker.h"
 
 /* ==================================================================
  *  P198: THEME ENGINE — color scheme definitions and skin files
@@ -2898,6 +2899,7 @@ static bool tui_gateway_init(void) {
     tui.gateway.read_pos = 0;
 
     tui_eventpub_init(RPC_FIFO_PATH);  /* Init with FIFO path */
+    tui_slash_init_all();              /* T06: Register all slash commands */
 
     return true;
 }
@@ -3054,11 +3056,12 @@ static void tui_draw_help(void) {
     mvwprintw(win, y++, 0, "   Up/Down       History navigation");
     y++;
     mvwprintw(win, y++, 0, " Slash Commands:");
-    for (int i = 0; slash_commands[i].cmd; i++) {
+    const slash_cmd_entry_t **all_cmds = tui_slash_get_all();
+    for (int i = 0; all_cmds[i] != NULL; i++) {
         mvwprintw(win, y++, 0, "   %-15s %s %s",
-                  slash_commands[i].cmd,
-                  slash_commands[i].desc,
-                  slash_commands[i].args);
+                  all_cmds[i]->cmd,
+                  all_cmds[i]->desc,
+                  all_cmds[i]->args);
     }
 
     wattron(win, A_DIM | COLOR_PAIR(10));
@@ -3156,6 +3159,245 @@ static int tui_stream_cb(const char *token, void *userdata) {
    return 0; /* continue streaming */
 }
 
+/* ── Slash command handlers (T06) ───────────────────────────── */
+
+static bool cmd_help(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_HELP;
+    tui_draw_help();
+    return true;
+}
+static bool cmd_quit(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.running = false;
+    return true;
+}
+static bool cmd_clear(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.history.count = 0;
+    tui.history.head = 0;
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_sessions(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_fullscreen_session_browse();
+    return true;
+}
+static bool cmd_config(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_fullscreen_config_edit();
+    return true;
+}
+static bool cmd_mobile(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    if (tui.layout_mode == TUI_LAYOUT_NORMAL)
+        tui.layout_mode = TUI_LAYOUT_MOBILE;
+    else if (tui.layout_mode == TUI_LAYOUT_MOBILE)
+        tui.layout_mode = TUI_LAYOUT_COMPACT;
+    else
+        tui.layout_mode = TUI_LAYOUT_NORMAL;
+    tui_resize_panes();
+    tui_redraw_history();
+    tui_redraw_status();
+    return true;
+}
+static bool cmd_theme(const char *line, int argc, char **argv, void *state) {
+    (void)state;
+    if (argc > 1) {
+        tui_fullscreen_theme_reload(argv[1]);
+        tui_history_add(MSG_ROLE_INFO, "Theme changed", false);
+    }
+    tui_redraw_history();
+    tui_redraw_status();
+    return true;
+}
+static bool cmd_redraw(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    clearok(stdscr, TRUE);
+    refresh();
+    tui_resize_panes();
+    tui_redraw_history();
+    tui_redraw_status();
+    return true;
+}
+static bool cmd_tokens(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    char info[256];
+    snprintf(info, sizeof(info), "Tokens in: %d, out: %d, total: %d",
+             tui.status.tokens_in, tui.status.tokens_out,
+             tui.status.tokens_in + tui.status.tokens_out);
+    tui_history_add(MSG_ROLE_INFO, info, false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_budget(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    char info[128];
+    snprintf(info, sizeof(info), "Budget remaining: %.2f",
+             tui.status.budget_remaining);
+    tui_history_add(MSG_ROLE_INFO, info, false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_model(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)state;
+    if (argc < 2) {
+        /* No args: open model picker overlay */
+        tui_model_picker_init();
+        tui_draw_model_picker();
+        tui.modal_mode = MODE_MODEL_PICK;
+    } else {
+        /* /model <name>: quick set */
+        if (tui.agent)
+            snprintf(tui.agent->llm.model, sizeof(tui.agent->llm.model), "%s", argv[1]);
+        snprintf(tui.status.model, sizeof(tui.status.model), "%s", argv[1]);
+        tui.status.dirty = true;
+        char msg[256];
+        snprintf(msg, sizeof(msg), "Model set to: %s", argv[1]);
+        tui_history_add(MSG_ROLE_INFO, msg, false);
+        tui_redraw_history();
+        tui_redraw_status();
+    }
+    return true;
+}
+static bool cmd_undo(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    if (tui.agent)
+        tui_history_add(MSG_ROLE_INFO, "Undo requested", false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_reset(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.history.count = 0;
+    tui.history.head = 0;
+    if (tui.agent) { /* agent_reset(tui.agent); */ }
+    tui_history_add(MSG_ROLE_INFO, "Conversation reset", false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_skin(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    char info[1024] = "Available themes: ";
+    for (int i = 0; i < tui_theme_count; i++) {
+        char tmp[128];
+        snprintf(tmp, sizeof(tmp), "%s%s%s",
+                 (i > 0 ? ", " : ""),
+                 tui_themes[i]->name,
+                 (i == tui_current_theme ? " (active)" : ""));
+        strncat(info, tmp, sizeof(info) - strlen(info) - 1);
+    }
+    tui_history_add(MSG_ROLE_INFO, info, false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_verbose(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_history_add(MSG_ROLE_INFO, "Verbose level toggled", false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_yolo(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_history_add(MSG_ROLE_INFO, "Yolo mode toggled", false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_fast(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_history_add(MSG_ROLE_INFO, "Fast mode toggled", false);
+    tui_redraw_history();
+    return true;
+}
+static bool cmd_todos(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui_todo_panel_init();
+    tui.modal_mode = MODE_TODO_PANEL;
+    tui_draw_todo_panel();
+    return true;
+}
+static bool cmd_agent_info(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_AGENT_INFO;
+    tui_draw_agent_info();
+    return true;
+}
+static bool cmd_skills_browse(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_SKILL_BROWSE;
+    tui_draw_skill_browser();
+    return true;
+}
+static bool cmd_logs(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_LOG_VIEW;
+    tui_draw_log_viewer();
+    return true;
+}
+static bool cmd_cron(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_CRON_VIEW;
+    tui_draw_cron_viewer();
+    return true;
+}
+static bool cmd_gateway(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)argc; (void)argv; (void)state;
+    tui.modal_mode = MODE_GATEWAY_STATUS;
+    tui_draw_gateway_status();
+    return true;
+}
+static bool cmd_image(const char *line, int argc, char **argv, void *state) {
+    (void)line; (void)state;
+    if (argc > 1) {
+        tui_display_image(argv[1]);
+    } else {
+        tui_history_add(MSG_ROLE_ERROR, "Usage: /image <path>", true);
+        tui_redraw_history();
+    }
+    return true;
+}
+
+/* Registration table for all slash commands */
+static const slash_cmd_entry_t slash_registry[] = {
+    {"/help",    "Show help message", "",                SLASH_CAT_TUI,     cmd_help, NULL},
+    {"/quit",    "Exit the TUI", "",                     SLASH_CAT_META,    cmd_quit, NULL},
+    {"/exit",    "Exit the TUI", "",                     SLASH_CAT_META,    cmd_quit, NULL},
+    {"/clear",   "Clear output pane", "",                SLASH_CAT_TUI,     cmd_clear, NULL},
+    {"/theme",   "Set theme (default/dark/light/mono)", "<name>",           SLASH_CAT_TUI,     cmd_theme, NULL},
+    {"/model",   "Show/set current model", "[name]",     SLASH_CAT_AGENT,   cmd_model, NULL},
+    {"/tokens",  "Show token usage", "",                 SLASH_CAT_AGENT,   cmd_tokens, NULL},
+    {"/budget",  "Show budget status", "",               SLASH_CAT_AGENT,   cmd_budget, NULL},
+    {"/sessions","Open session browser", "",              SLASH_CAT_MODAL,   cmd_sessions, NULL},
+    {"/config",  "Open config editor", "",                SLASH_CAT_MODAL,   cmd_config, NULL},
+    {"/save",    "Save current session", "[name]",        SLASH_CAT_SESSION, NULL, NULL},
+    {"/load",    "Load a session", "<id>",                SLASH_CAT_SESSION, NULL, NULL},
+    {"/export",  "Export session as JSON/Markdown", "<fmt>", SLASH_CAT_SESSION, NULL, NULL},
+    {"/delete",  "Delete current session", "",            SLASH_CAT_SESSION, NULL, NULL},
+    {"/verbose", "Set verbose level (0/1/2)", "<level>",  SLASH_CAT_AGENT,   cmd_verbose, NULL},
+    {"/yolo",    "Toggle yolo mode", "",                  SLASH_CAT_AGENT,   cmd_yolo, NULL},
+    {"/fast",    "Toggle fast mode", "",                  SLASH_CAT_AGENT,   cmd_fast, NULL},
+    {"/mobile",  "Toggle mobile/compact layout", "",      SLASH_CAT_TUI,     cmd_mobile, NULL},
+    {"/reset",   "Reset conversation", "",                SLASH_CAT_META,    cmd_reset, NULL},
+    {"/undo",    "Undo last turn", "",                    SLASH_CAT_META,    cmd_undo, NULL},
+    {"/redraw",  "Force screen redraw", "",               SLASH_CAT_TUI,     cmd_redraw, NULL},
+    {"/skin",    "List/reload skins", "",                 SLASH_CAT_TUI,     cmd_skin, NULL},
+    {"/image",   "Display an image file", "<path>",       SLASH_CAT_TUI,     cmd_image, NULL},
+    {"/gateway", "Show gateway status dashboard", "",     SLASH_CAT_MODAL,   cmd_gateway, NULL},
+    {"/cron",    "Show cron job viewer", "",              SLASH_CAT_MODAL,   cmd_cron, NULL},
+    {"/logs",    "Show log viewer", "",                   SLASH_CAT_MODAL,   cmd_logs, NULL},
+    {"/skills",  "Browse available skills", "",           SLASH_CAT_MODAL,   cmd_skills_browse, NULL},
+    {"/todos",   "Show todo/kanban board", "",            SLASH_CAT_MODAL,   cmd_todos, NULL},
+    {"/agent",   "Show agent info (model, provider, tokens)", "", SLASH_CAT_MODAL, cmd_agent_info, NULL},
+    {NULL, NULL, NULL, 0, NULL, NULL}
+};
+
+/* Initialize slash command system — register all TUI commands */
+static void tui_slash_init_all(void) {
+    tui_slash_init((void *)tui.agent);
+    tui_slash_register_batch(slash_registry);
+}
+
 static void tui_process_input(const char *line) {
    if (!line || !*line) return;
 
@@ -3169,199 +3411,10 @@ static void tui_process_input(const char *line) {
     /* Echo to history */
     tui_history_add(MSG_ROLE_USER, line, false);
 
-    /* Check for slash commands */
+    /* Check for slash commands — dispatch via T06 slash worker */
     if (line[0] == '/') {
-        bool handled = true;
-
-        if (strcmp(line, "/help") == 0) {
-            tui.modal_mode = MODE_HELP;
-            tui_draw_help();
-            return;
-
-        } else if (strcmp(line, "/quit") == 0 || strcmp(line, "/exit") == 0) {
-            tui.running = false;
-            return;
-
-        } else if (strcmp(line, "/clear") == 0) {
-            tui.history.count = 0;
-            tui.history.head = 0;
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/sessions") == 0) {
-            tui_fullscreen_session_browse();
-            return;
-
-        } else if (strcmp(line, "/config") == 0) {
-            tui_fullscreen_config_edit();
-            return;
-
-        } else if (strcmp(line, "/mobile") == 0) {
-            if (tui.layout_mode == TUI_LAYOUT_NORMAL)
-                tui.layout_mode = TUI_LAYOUT_MOBILE;
-            else if (tui.layout_mode == TUI_LAYOUT_MOBILE)
-                tui.layout_mode = TUI_LAYOUT_COMPACT;
-            else
-                tui.layout_mode = TUI_LAYOUT_NORMAL;
-            tui_resize_panes();
-            tui_redraw_history();
-            tui_redraw_status();
-            return;
-
-        } else if (strncmp(line, "/theme ", 7) == 0) {
-            const char *name = line + 7;
-            tui_fullscreen_theme_reload(name);
-            tui_history_add(MSG_ROLE_INFO, "Theme changed", false);
-            tui_redraw_history();
-            tui_redraw_status();
-            return;
-
-        } else if (strcmp(line, "/redraw") == 0) {
-            clearok(stdscr, TRUE);
-            refresh();
-            tui_resize_panes();
-            tui_redraw_history();
-            tui_redraw_status();
-            return;
-
-        } else if (strcmp(line, "/help") == 0 || strcmp(line, "/?") == 0) {
-            tui.modal_mode = MODE_HELP;
-            tui_draw_help();
-            return;
-
-        } else if (strcmp(line, "/tokens") == 0) {
-            char info[256];
-            snprintf(info, sizeof(info), "Tokens in: %d, out: %d, total: %d",
-                     tui.status.tokens_in, tui.status.tokens_out,
-                     tui.status.tokens_in + tui.status.tokens_out);
-            tui_history_add(MSG_ROLE_INFO, info, false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/budget") == 0) {
-            char info[128];
-            snprintf(info, sizeof(info), "Budget remaining: %.2f",
-                     tui.status.budget_remaining);
-            tui_history_add(MSG_ROLE_INFO, info, false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/model") == 0) {
-            /* No args: open model picker overlay */
-            tui_model_picker_init();
-            tui_draw_model_picker();
-            tui.modal_mode = MODE_MODEL_PICK;
-            return;
-
-        } else if (strncmp(line, "/model ", 7) == 0) {
-            /* /model <name>: quick set */
-            const char *name = line + 7;
-            if (*name) {
-                if (tui.agent)
-                    snprintf(tui.agent->llm.model, sizeof(tui.agent->llm.model), "%s", name);
-                snprintf(tui.status.model, sizeof(tui.status.model), "%s", name);
-                tui.status.dirty = true;
-                char msg[256];
-                snprintf(msg, sizeof(msg), "Model set to: %s", name);
-                tui_history_add(MSG_ROLE_INFO, msg, false);
-            }
-            tui_redraw_history();
-            tui_redraw_status();
-            return;
-
-        } else if (strcmp(line, "/undo") == 0) {
-            if (tui.agent) {
-                /* Restore snapshot if available */
-                tui_history_add(MSG_ROLE_INFO, "Undo requested", false);
-            }
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/reset") == 0) {
-            tui.history.count = 0;
-            tui.history.head = 0;
-            if (tui.agent) {
-                /* agent_reset(tui.agent); */
-            }
-            tui_history_add(MSG_ROLE_INFO, "Conversation reset", false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/skin") == 0) {
-            /* List available skins */
-            char info[1024] = "Available themes: ";
-            for (int i = 0; i < tui_theme_count; i++) {
-                char tmp[128];
-                snprintf(tmp, sizeof(tmp), "%s%s%s",
-                         (i > 0 ? ", " : ""),
-                         tui_themes[i]->name,
-                         (i == tui_current_theme ? " (active)" : ""));
-                strncat(info, tmp, sizeof(info) - strlen(info) - 1);
-            }
-            tui_history_add(MSG_ROLE_INFO, info, false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/verbose") == 0) {
-            /* Toggle verbose: 0->1->2->0 */
-            tui_history_add(MSG_ROLE_INFO, "Verbose level toggled", false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/yolo") == 0) {
-            tui_history_add(MSG_ROLE_INFO, "Yolo mode toggled", false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/fast") == 0) {
-            tui_history_add(MSG_ROLE_INFO, "Fast mode toggled", false);
-            tui_redraw_history();
-            return;
-
-        } else if (strcmp(line, "/todos") == 0) {
-            tui_todo_panel_init();
-            tui.modal_mode = MODE_TODO_PANEL;
-            tui_draw_todo_panel();
-            return;
-
-        } else if (strcmp(line, "/agent") == 0 || strcmp(line, "/agents") == 0) {
-            tui.modal_mode = MODE_AGENT_INFO;
-            tui_draw_agent_info();
-            return;
-
-        } else if (strcmp(line, "/skills") == 0) {
-            tui.modal_mode = MODE_SKILL_BROWSE;
-            tui_draw_skill_browser();
-            return;
-
-        } else if (strcmp(line, "/logs") == 0) {
-            tui.modal_mode = MODE_LOG_VIEW;
-            tui_draw_log_viewer();
-            return;
-
-        } else if (strcmp(line, "/cron") == 0) {
-            tui.modal_mode = MODE_CRON_VIEW;
-            tui_draw_cron_viewer();
-            return;
-
-        } else if (strcmp(line, "/gateway") == 0) {
-            tui.modal_mode = MODE_GATEWAY_STATUS;
-            tui_draw_gateway_status();
-            return;
-
-        } else if (strncmp(line, "/image ", 7) == 0) {
-            /* Extract path and try to display image */
-            const char *img_path = line + 7;
-            if (*img_path) {
-                tui_display_image(img_path);
-            } else {
-                tui_history_add(MSG_ROLE_ERROR, "Usage: /image <path>", true);
-                tui_redraw_history();
-            }
-            return;
-
-        } else {
-            /* Unknown command — try dispatch via agent command system */
+        if (!tui_slash_dispatch(line)) {
+            /* Not a registered slash command — try agent CLI + skills */
             if (tui.agent && commands_dispatch((char *)line, tui.agent)) {
                 /* command handled */
             } else if (tui.agent && commands_try_skill((char *)line, tui.agent)) {
@@ -3370,10 +3423,7 @@ static void tui_process_input(const char *line) {
                 tui_history_add(MSG_ROLE_ERROR, "Unknown command", true);
             }
             tui_redraw_history();
-            return;
         }
-
-        (void)handled; /* suppress unused warning */
         return;
     }
 
