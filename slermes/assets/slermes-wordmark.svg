@@ -7,7 +7,7 @@
   </style>
   <rect width="400" height="100" fill="#1a1a2e" rx="12"/>
   <text x="200" y="55" text-anchor="middle" class="text">SLERMES</text>
-  <text x="200" y="80" text-anchor="middle" class="sub">C claw-machine champion</text>
+  <text x="200" y="80" text-anchor="middle" class="sub">C</text>
   <!-- paw print -->
   <circle cx="40" cy="75" r="8" class="paw" opacity="0.3"/>
   <circle cx="40" cy="63" r="4" class="paw" opacity="0.3"/>

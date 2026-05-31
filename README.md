@@ -7,7 +7,7 @@
 **Slermes** is a zero-dependency [C translation](slermes/) of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. One static binary, zero runtime deps beyond libc + libssl.
 
 <p align="center">
-  <img src="slermes/assets/slermes.jpg" alt="Slermes the stuffy — claw machine champion" width="300">
+  <img src="slermes/assets/slermes.jpg" alt="Slermes the stuffy" width="300">
 </p>
 
 This repo (`waefrebeorn/slermes`) is a fork of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) with the C translation living in [`slermes/`](slermes/). The Python reference implementation lives at the repo root (tracking upstream).

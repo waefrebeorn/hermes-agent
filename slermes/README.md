@@ -4,7 +4,7 @@
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
 
 <p align="center">
-  <img src="assets/slermes.jpg" alt="Slermes the stuffy — claw machine champion" width="300">
+  <img src="assets/slermes.jpg" alt="Slermes the stuffy" width="300">
 </p>
 
 ```text
