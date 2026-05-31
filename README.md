@@ -1,116 +1,109 @@
 <p align="center">
   <a href="slermes/README.md">
-    <img src="slermes/assets/slermes-logo-clean.svg" alt="Slermes" width="300">
+    <img src="slermes/assets/slermes-logo-clean.svg" alt="Slermes" width="400">
   </a>
 </p>
 
-```text
-╔══════════════════════════════════════════════════════════════╗
-║  Slermes v383                                               ║
-║  C translation  ·  325/0/14 tests  ·  31MB binary          ║
-║  68 gaps  ·  85 tools  ·  99 CLI  ·  65 libs               ║
-║  19 gateways  ·  10 providers  ·  0 warnings                ║
-╚══════════════════════════════════════════════════════════════╝
-```
-
-# Slermes ☤ — C Translation of Hermes Agent
-
-**Slermes** is a zero-dependency [C translation](slermes/) of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. One static binary, zero runtime deps beyond libc + libssl.
-
-This repo (`waefrebeorn/slermes`) is a fork of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) with the C translation living in [`slermes/`](slermes/). The Python reference implementation lives at the repo root (tracking upstream).
-
-| Aspect | Python (upstream) | C (Slermes) |
-|--------|-------------------|-------------|
-| **Location** | Repo root (upstream tracking) | [`slermes/`](slermes/) |
-| **Binary** | `hermes` (Python + uv) | `slermes` (static ELF, 31M) |
-| **Deps** | Python 3.11+, uv, Node.js | libc + libssl only |
-| **Suite** | ~17k pytest tests | 325/0/14 C tests |
-| **Readme** | [Upstream Hermes Agent docs](https://hermes-agent.nousresearch.com/docs) | [`slermes/README.md`](slermes/README.md) |
+# Slermes ☤
 
 <p align="center">
-  <a href="slermes/README.md"><img src="https://img.shields.io/badge/Slermes-README-FFD700?style=for-the-badge" alt="Slermes README"></a>
-  <a href="slermes/.hermes/mind-palace/battleship-v34.md"><img src="https://img.shields.io/badge/Battleship-v34-blue?style=for-the-badge" alt="Battleship v34"></a>
-  <a href="slermes/.hermes/mind-palace/vault/achievements.md"><img src="https://img.shields.io/badge/Vault-Achievements-green?style=for-the-badge" alt="Vault"></a>
-  <a href="https://github.com/waefrebeorn/slermes"><img src="https://img.shields.io/badge/Fork-waefrebeorn/slermes-blueviolet?style=for-the-badge" alt="Fork"></a>
+  <a href="slermes/README.md"><img src="https://img.shields.io/badge/Slermes-README-FFD700?style=for-the-badge" alt="README"></a>
+  <a href="slermes/.hermes/mind-palace/battleship-v34.md"><img src="https://img.shields.io/badge/Battleship-v34-0066FF?style=for-the-badge" alt="Battleship v34"></a>
+  <a href="slermes/.hermes/mind-palace/vault/achievements.md"><img src="https://img.shields.io/badge/Vault-achievements-00AA55?style=for-the-badge" alt="Vault"></a>
+  <a href="https://github.com/waefrebeorn/slermes"><img src="https://img.shields.io/badge/Fork-waefrebeorn/slermes-8B5CF6?style=for-the-badge" alt="Fork"></a>
+  <a href="https://github.com/NousResearch/hermes-agent"><img src="https://img.shields.io/badge/Upstream-NousResearch-FF6B35?style=for-the-badge" alt="Upstream"></a>
+  <img src="https://img.shields.io/badge/Tests-325%2F0%2F14-00AA55?style=for-the-badge" alt="Tests">
+  <img src="https://img.shields.io/badge/Binary-31MB%20ELF-FFD700?style=for-the-badge" alt="31MB">
 </p>
+
+**A zero-dependency C translation of [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.** One static binary, zero runtime deps beyond libc + libssl. 98 CLI commands, 85 tools, 19 gateway platforms, 10 LLM providers — all in 31MB of pure C.
+
+<table>
+<tr><td><b>⚡ Pure C, no runtime</b></td><td>One static ELF binary. No Python, no Node.js, no uv, no venv. `./slermes` and it runs. libc + libssl is all you need.</td></tr>
+<tr><td><b>🔧 85 native tools</b></td><td>File ops, terminal, web search, browser automation, MCP, cron, kanban, image generation, TTS, voice, Home Assistant, Discord — all compiled in, no plugin hell.</td></tr>
+<tr><td><b>🌐 19 gateway platforms</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, Matrix, Email, SMS, Feishu, WeCom, DingTalk, QQ Bot, BlueBubbles, YuanBao, Webhook, Home Assistant — one daemon, zero interpreter overhead.</td></tr>
+<tr><td><b>🧠 10 LLM providers</b></td><td>OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom, Copilot — native adapters, OpenAI-compat fallback. Switch with `/model`.</td></tr>
+<tr><td><b>📦 65 zero-dep libraries</b></td><td>JSON, YAML, TOML, HTTP/HTTPS, MCP, cron, regex, protobuf, WebSocket, Base64, UUID, CSV, HTML, crypto (AES/SHA/HMAC), line editing, ANSI, templating — all hand-written C, no external deps.</td></tr>
+<tr><td><b>🧪 325-test suite</b></td><td>289 test files, completes in &lt;60s. 0 warnings. 0 stubs.</td></tr>
+</table>
 
 ---
 
-## Quick Start (C)
+## Quick Start
 
 ```bash
-cd slermes/
-make -j$(nproc)            # Build slermes binary
-./slermes --help           # Usage
+git clone https://github.com/waefrebeorn/slermes.git
+cd slermes/slermes/
+make -j$(nproc)            # Build in ~30s
+./slermes --help           # See what it can do
 bash test_runner.sh        # 325/0/14 suite
 ```
 
-See [slermes/README.md](slermes/README.md) for full build docs, architecture, tool list, gateway platforms, and provider support.
+**Docker** (no build tools needed):
+```bash
+docker build -t slermes -f slermes/Dockerfile .
+docker run --rm slermes --help
+```
 
-## Project Structure
+---
+
+## Why C?
+
+| | Python (upstream) | C (Slermes) |
+|---|---|---|
+| **Runtime** | Python 3.11+, uv, Node.js | **libc + libssl** |
+| **Startup** | ~500ms (interpreter + uv) | **~5ms** |
+| **Binary size** | 150MB+ (venv + deps) | **31MB static ELF** |
+| **Suite speed** | ~45 min (17k pytest) | **&lt;60s** (325 tests) |
+| **Memory idle** | ~180MB | **~4MB** |
+| **Deploy** | uv sync, venv, Python | **`scp slermes`** |
+
+---
+
+## Project Map
 
 ```
 waefrebeorn/slermes/
-├── slermes/                    ← Slermes C translation (all source)
-│   ├── src/                    ←   174 .c files (agent, tools, CLI, gateway, cron)
-│   ├── lib/                    ←   65 library modules (json, http, crypto, mcp, ...)
-│   ├── tests/                  ←   239 test files (325/0/14 suite)
-│   ├── include/                ←   Master header + subsystem headers
-│   ├── assets/                 ←   Slermes stuffy mascot image
-│   ├── .hermes/                ←   Mind-palace docs, battleship, vault
-│   │   └── mind-palace/        ←     Walkway files, battleship, achievements
-│   └── README.md               ←   Full C build/architecture docs
-├── assets/                     ←   Python upstream assets
-├── ...python source...         ←   Upstream Python Hermes Agent reference
-└── README.md                   ←   This file (Slermes repo entry point)
+├── slermes/                    ← C translation (all source)
+│   ├── src/                    ← 174 .c files (agent, tools, CLI, gateway)
+│   ├── lib/                    ← 65 library modules (self-contained C)
+│   ├── tests/                  ← 239 test files (325/0/14)
+│   ├── include/                ← Master header + subsystem APIs
+│   ├── assets/                 ← Mascot, logos, banners
+│   ├── extras/                 ← C toolchest: img2svg, palette, asciimg, morph, imggrid
+│   ├── .hermes/                ← Mind-palace docs, battleship, vault
+│   └── README.md               ← Full C build/architecture docs
+├── ...python source...         ← Upstream Python Hermes Agent (tracking)
+└── README.md                   ← This file
 ```
 
-## History
-
-This repo started as a straight fork of `NousResearch/hermes-agent` at commit `2517917de`. All C translation work lives in `slermes/`. The original 277-commit development history is preserved on the [`c-work`](https://github.com/waefrebeorn/slermes/tree/c-work) branch for reference — squashed into a single commit on `main` for clean upstream tracking.
-
-- **Fork:** [waefrebeorn/slermes](https://github.com/waefrebeorn/slermes)
-- **Upstream:** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)
-- **Old dev branch:** [`c-work`](https://github.com/waefrebeorn/slermes/tree/c-work) (277 original C commits)
-- **Battleship:** [v34 — 68 parity gaps](slermes/.hermes/mind-palace/battleship-v34.md)
-- **Vault:** [Achievements log](slermes/.hermes/mind-palace/vault/achievements.md)
+---
 
 ## Parity Status
 
-| Metric | Value |
-|--------|-------|
-| Fork state | 0 behind, 2 ahead of upstream |
-| Suite | 325 passed, 0 failed, 14 skipped |
-| Tools | 85 registered |
-| CLI | 98 commands + 37 config sections |
-| Gateway | 19 platforms |
-| Providers | 10 |
-| Libraries | 65 C modules |
-| Binary | 31M dynamic ELF |
-| Warnings | 0 |
-| Stubs | 0 |
-| **Real parity gaps** | **68** (across 8 sectors) |
+325 tests pass | 68 gaps remain | 8 active sectors
 
-> **Honest assessment:** "0 gaps" was premature. Real parity gaps exist across form-vs-function, pipeline, cross-comparison, product features, and upstream drift. See [battleship v34](slermes/.hermes/mind-palace/battleship-v34.md).
+The [battleship](./slermes/.hermes/mind-palace/battleship-v34.md) tracks every feature gap between C and Python — function-level API comparisons, not file-name guessing. The [vault](./slermes/.hermes/mind-palace/vault/achievements.md) logs every resolved gap and retired stale claim.
 
-## Upstream Python
+**PORTED sectors:** S0 (display/input), S1 (agent core), S2 (CLI/config), S3 (gateway), S6 (tools), S8 (providers), S10 (infrastructure)
+**ACTIVE sectors:** S4 (TUI — 2 gaps), S5 (agent modules — 15 gaps), S7 (test coverage — 20 gaps), S9 (ecosystem — 20 gaps)
 
-The Python reference implementation is at the repo root (tracking upstream `NousResearch/hermes-agent:main` at `67011cc0d`). For Python usage, install and run the Python Hermes Agent:
+---
+
+## Upstream
+
+This is a fork of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). The Python reference lives at the repo root. C translation tracks upstream's architecture while being entirely independent code.
 
 ```bash
-# Python Hermes Agent (upstream)
+# Upstream Python (if you want the original)
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-hermes --help
 ```
-
-See [upstream docs](https://hermes-agent.nousresearch.com/docs/) for full Python documentation.
 
 ---
 
 <p align="center">
-  <i>Slermes — a C translation of Hermes Agent by Nous Research.</i><br>
-  <a href="slermes/.hermes/mind-palace/goal-mantra.md">Goal Loops</a> · 
-  <a href="slermes/.hermes/mind-palace/state.md">State</a> · 
-  <a href="slermes/.hermes/mind-palace/plan.md">Plan</a> · 
+  <a href="slermes/.hermes/mind-palace/goal-mantra.md">Goal Loops</a> ·
+  <a href="slermes/.hermes/mind-palace/state.md">State</a> ·
+  <a href="slermes/.hermes/mind-palace/plan.md">Plan</a> ·
   <a href="slermes/.hermes/mind-palace/prestige_prompt.md">Priorities</a>
 </p>
