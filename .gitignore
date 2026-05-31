@@ -100,3 +100,7 @@ scripts/out/
 # But slermes/.hermes/ is project documentation (battleship, vault, walkway files)
 # and IS an artifact of this codebase — keep it tracked.
 !slermes/.hermes/
+slermes/extras/img2svg
+slermes/extras/palette
+slermes/extras/asciimg
+slermes/extras/morph
