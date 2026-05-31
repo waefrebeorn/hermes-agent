@@ -3218,7 +3218,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libtooloutput/tool_output.c" "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
     "$CDIR/src/tools/approval.c" "$CDIR/lib/libansi/ansi_strip.c" \
     -o /tmp/hermes_test_transform -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_transform > /dev/null 2>&1; then ok "terminal_transform_sudo (7 tests)"
+    if /tmp/hermes_test_transform > /dev/null 2>&1; then ok "terminal_transform_sudo (22 tests)"
     else fail "terminal_transform_sudo (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_transform

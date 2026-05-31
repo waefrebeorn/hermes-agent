@@ -114,6 +114,66 @@ int main(void) {
         unsetenv("SUDO_PASSWORD");
     }
 
+    /* Test 8: Whitespace-only command */
+    {
+        char *res = terminal_handler(
+            "{\"command\":\"   \"}", "test");
+        TEST("whitespace command returns non-NULL", res != NULL);
+        free(res);
+    }
+
+    /* Test 9: Chained command with && */
+    {
+        char *res = terminal_handler(
+            "{\"command\":\"echo first && echo second\"}", "test");
+        TEST("chained cmd returns non-NULL", res != NULL);
+        if (res) {
+            TEST("chained cmd contains both outputs",
+                 strstr(res, "first") != NULL && strstr(res, "second") != NULL);
+        }
+        free(res);
+    }
+
+    /* Test 10: SUDO_PASSWORD with no sudo in command */
+    {
+        setenv("SUDO_PASSWORD", "testpass", 1);
+        char *res = terminal_handler(
+            "{\"command\":\"whoami\"}", "test");
+        TEST("password set but no sudo returns non-NULL", res != NULL);
+        if (res) {
+            TEST("no sudo no rewrite",
+                 strstr(res, "sudo -S") == NULL);
+        }
+        free(res);
+        unsetenv("SUDO_PASSWORD");
+    }
+
+    /* Test 11: Long command (approaching buffer boundary) */
+    {
+        char cmd[4096];
+        int pos = 0;
+        pos += sprintf(cmd + pos, "echo ");
+        for (int i = 0; i < 200; i++)
+            pos += sprintf(cmd + pos, "word%d ", i);
+        char args[4600];
+        snprintf(args, sizeof(args), "{\"command\":\"%s\"}", cmd);
+        char *res = terminal_handler(args, "test");
+        TEST("long command returns non-NULL", res != NULL);
+        free(res);
+    }
+
+    /* Test 12: brief timeout cmd works */
+    {
+        char *res = terminal_handler(
+            "{\"command\":\"echo fast_cmd\",\"timeout\":5}", "test");
+        TEST("brief timeout returns non-NULL", res != NULL);
+        if (res) {
+            TEST("brief timeout contains output",
+                 strstr(res, "fast_cmd") != NULL);
+        }
+        free(res);
+    }
+
     printf("\n=== Results: %s ===\n",
            failures ? "SOME TESTS FAILED" : "ALL PASSED");
     return failures ? 1 : 0;
