@@ -926,19 +926,28 @@ void display_statusbar(const char *model, const char *session_id,
     if (w > 100) w = 100;
     if (w < 40) { w = 40; } /* Minimum */
 
-    /* Build status bar segments: [model] | [session] | [context%] | [turns] */
+    /* Build real timestamp instead of raw session_id */
+    char time_str[32];
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    if (tm_info)
+        strftime(time_str, sizeof(time_str), "%H:%M", tm_info);
+    else
+        snprintf(time_str, sizeof(time_str), "--:--");
+
+    /* Build status bar segments: [model] | [time] | [context%] | [turns] */
     char left[256];
     snprintf(left, sizeof(left), " %s ", model ? model : "default");
     char iter_tok[64];
-    if (token_count > 0 && session_id && session_id[0]) {
+    if (token_count > 0 && turn_count > 0) {
         snprintf(iter_tok, sizeof(iter_tok), " iter:%d tok:%d %s",
-                 turn_count, token_count, session_id);
+                 turn_count, token_count, time_str);
     } else if (token_count > 0) {
-        snprintf(iter_tok, sizeof(iter_tok), " iter:%d tok:%d",
-                 turn_count, token_count);
+        snprintf(iter_tok, sizeof(iter_tok), " iter:%d tok:%d %s",
+                 turn_count, token_count, time_str);
     } else {
         snprintf(iter_tok, sizeof(iter_tok), " iter:%d %s",
-                 turn_count, session_id ? session_id : "");
+                 turn_count, time_str);
     }
 
 

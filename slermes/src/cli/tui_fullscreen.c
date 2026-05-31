@@ -1119,12 +1119,21 @@ static void tui_redraw_status(void) {
     else if (tui.layout_mode == TUI_LAYOUT_COMPACT)
         pos += snprintf(buf + pos, sizeof(buf) - pos, " | COMPACT");
 
-    /* Right-align version */
-    int right_start = tui.panes[PANE_STATUS].cols - 15;
+    /* Right-align time */
+    char time_str[16];
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    if (tm_info)
+        strftime(time_str, sizeof(time_str), " %H:%M ", tm_info);
+    else
+        snprintf(time_str, sizeof(time_str), " --:-- ");
+
+    int right_start = tui.panes[PANE_STATUS].cols - (int)strlen(time_str);
     if (right_start > pos) {
         while (pos < right_start)
             buf[pos++] = ' ';
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " v%s ", HERMES_VERSION);
+        memcpy(buf + pos, time_str, strlen(time_str));
+        pos += strlen(time_str);
     }
 
     buf[pos] = '\0';

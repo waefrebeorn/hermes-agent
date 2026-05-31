@@ -1,2 +1,2 @@
-# Goal Mantra — Slermes C (v425)
-328/0/12. 64 gaps. Phase 369: C11 /auth validate — tests API keys for 8 providers.
+# Goal Mantra — Slermes C (v426)
+328/0/12. 66 gaps. Phase 370: Live timestamp on CLI + TUI status bars (HH:MM). 2 new display gaps.

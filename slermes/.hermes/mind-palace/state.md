@@ -1,6 +1,5 @@
-# State — Slermes C (v425)
-328/0/12. Phase 369: C11 credential validation — /auth validate <provider>.
-   Tests API key via minimal API call: GET /v1/models for OpenAI-compatible,
-   Anthropic POST minimal messages, Google ?key= query param.
-   8 providers supported: openai, anthropic, openrouter, deepseek, xai, groq, together, google.
-64 gaps. S5 C11 depth improved (credential validation added).
+# State — Slermes C (v426)
+328/0/12. Phase 370: CLI/TUI status bar timestamp fix.
+   CLI + TUI status bars now show live `strftime("%H:%M")` instead of raw session_id.
+   2 new display parity gaps discovered: D19 context% + D20 budget/cost in status bar.
+66 gaps. S0 D21 timestamp PORTED. S0 gaps: 0→2 (D19+D20 PARTIAL).

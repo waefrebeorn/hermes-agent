@@ -1,4 +1,3 @@
-# Entry — Slermes C Parity (v425)
+# Entry — Slermes C Parity (v426)
 
-Phase 369: C11 /auth validate — tests API keys for 8 providers. 64 gaps. Suite 328/0/12.
-Dynamic upstream version extracted from Python at build time (v0.15.1-slermes).
+Phase 370: Live HH:MM timestamp on CLI/TUI status bars (replaced raw session_id). 2 new display gaps: D19 context%, D20 budget/cost. 66 gaps. Suite 328/0/12.

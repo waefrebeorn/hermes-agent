@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v425 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 64 structural gaps, 1000+ test case gaps. Phase 369: C11 credential validation — /auth validate tests API keys for 8 providers. Suite 328/0/12. 64 gaps.**|
+| v426 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 66 structural gaps, 1000+ test case gaps. Phase 370: CLI/TUI timestamp fix — status bar shows live HH:MM instead of raw session ID. 2 new display gaps added (D19 context%, D20 budget/cost). Suite 328/0/12. 66 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -15,8 +15,11 @@ C display_core.c (1211 LOC) + lib/libskin (657 LOC) + line_edit (593 LOC) alread
 | # | ID | Feature | Python | C | Status | Priority |
 |---|----|---------|--------|---|--------|----------|
 || 01 | D09 | Prompt input: tab completion, history search, multi-line editor | prompt_toolkit (async, emacs/vi modes) | Ctrl-R search, horizontal scroll, Alt+Enter multi-line. Tab completion + history + bracketed paste. **Emacs keybindings PORTED** (Ctrl-A/E/B/F/K/Y/L/T/P/N, Alt-F/B/D). **Vi mode PARTIAL** — ESC→NORMAL, h/j/k/l, 0/$, ^/_, x/X, i/I/a/A, u undo, dd, p/P, **w/W/b/B/e/E** word nav, D/C/s delete/change/substitute, **r replace, ~ toggle case, f/F/t/T find/till, ;/, repeat**, **yy/Y yank whole line** (Phase 258), **o/O open line below/above** (Phase 259), **% jump to matching bracket** (Phase 260), **. repeat last change** (Phase 261), **/ ? forward/backward search with wrap-around, n/N repeat** (Phase 284), **v/V visual mode with selection highlighting, x/d/y delete/yank selection, ESC exit** (Phase 285), **count prefixes for h/l/j/k/w/b/e/x/X/s/~** (Phase 286). 169-test suite. | PORTED ✅ | P2 |
+|| 02 | D19 | Context usage % in status bar | display.py: ctx: XX% showing context window utilization | CLI status bar shows iter/tok but no context % — missing `context_pct` field. Needs max_context from config or provider metadata. | PARTIAL | P2 |
+|| 03 | D20 | Budget/cost in CLI status bar | display.py: cost $X.XX or budget remaining in status bar | C TUI status bar (tui_fullscreen.c) shows budget, but CLI status bar (display_core.c) doesn't display budget or cost at all. | PARTIAL | P2 |
+|| 04 | D21 | Live timestamp | display.py: HH:MM timestamp on status bar | ✅ PORTED — Phase 370: CLI + TUI status bars show `strftime("%H:%M")` live time instead of raw session ID | P2 |
 
-**S0: 0 gaps (D09 vi mode PORTED) — all display infrastructure PORTED. D16 type-ahead IMPLEMENTED (Phase 210). D09 vi mode: navigation, motion, find/till, search, visual, paste, undo, yank, open, repeat, delete, replace, toggle, count prefixes all implemented.**
+**S0: 2 gaps (D19 context%, D20 budget/cost) — D09+D21 PORTED. D16 type-ahead IMPLEMENTED (Phase 210). D09 vi mode: navigation, motion, find/till, search, visual, paste, undo, yank, open, repeat, delete, replace, toggle, count prefixes all implemented.**
 
 ---
 
@@ -266,7 +269,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | Sector | Gaps | P0 | P1 | P2 | P3 | Description |
 |--------|------|----|----|----|----|-------------|
-| S0: Display & Visual | 0 | 0 | 0 | 0 | 0 | D09 vi mode PORTED (all features). D16 type-ahead IMPLEMENTED (Phase 210). |
+|| S0: Display & Visual | 2 | 0 | 0 | 2 | 0 | D09 PORTED. D21 PORTED (live timestamp). D19 context% + D20 budget/cost PARTIAL. |
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
@@ -277,7 +280,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **64** | **4** | **27** | **21** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 24→16 (T09+T10+T11+T12+T13+T14+T15+T16+T17+T18 PORTED). Phase 368: TUI agent info overlay (T14) IMPLEMENTED.** |
+||| **TOTAL** | **66** | **4** | **27** | **23** | **21** | **S0: 0→2 (D19 context%, D20 budget/cost). D21 timestamp PORTED. S4 24→16 (T09-T18 PORTED). Total up from 64 to 66 due to new display gaps.** |
 
 ### Phase Map
 

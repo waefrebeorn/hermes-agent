@@ -1,7 +1,4 @@
-# Prestige (v425)
-
-## P0 — Architecture (4 gaps)
-F01-F04, F09.
+# Prestige (v426)
 
 ## Phase Map
 
@@ -13,5 +10,5 @@ F01-F04, F09.
 
 ## Strategy
 
-Phase 369: C11 /auth validate — tests API keys for 8 providers via minimal API calls.
-S5 C11 depth improved (credential validation done). 64 gaps.
+Phase 370: Live HH:MM timestamp on CLI + TUI status bars (fix: was displaying raw session_id).
+S0: 2 new display gaps (D19 context%, D20 budget/cost). D21 timestamp PORTED. 66 gaps.
