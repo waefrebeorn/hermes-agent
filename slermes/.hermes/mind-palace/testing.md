@@ -1,4 +1,4 @@
-# Testing — Slermes C Test Suite (v451)
+# Testing — Slermes C Test Suite (v452)
 
 ## Current Status
 338/?/13 — Suite stable. Pre-existing TTY skip fluctuation acceptable.
@@ -12,14 +12,15 @@
 - Gateway platform tests (gateway_platforms)
 - Process, tool coercion, delegate edge case tests
 
-## Recent Improvements (Phase 395)
-- test_provider_google.c: 65→152 assertions (+87)
-- 8 new test functions: finish reason mapping (9 Google reasons),
-  content blocked, is_native_base_url, coerce_content_to_text,
-  URL/header edge cases, streaming finish reason depth, empty candidates
+## Recent Improvements (Phase 396)
+- test_provider_xai.c: 64→133 assertions (+69)
+- 6 new test functions: URL/header edge, response edge cases,
+  encrypted_content, streaming depth, all 8 retired models
+- Bug fix: finish_reason extraction in xai_parse_response
 
 ## Test Labels (test_runner.sh)
 - provider_openai: 111 tests
 - provider_anthropic: 98 tests
 - provider_deepseek: 106 tests
-- provider_google: 152 tests (was 64)
+- provider_google: 152 tests
+- provider_xai: 133 tests (was 63)

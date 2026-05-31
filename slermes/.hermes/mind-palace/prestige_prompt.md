@@ -1,15 +1,15 @@
-# Prestige — Progress Log (v451)
-Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED.
-test_provider_google.c +87 new assertions (65→152 total).
-Finish reason mapping (9 Google reasons), content blocked message,
-is_native_base_url, coerce_content_to_text, URL/header edge cases,
-streaming finish reason depth, empty candidates.
+# Prestige — Progress Log (v452)
+Phase 396: xAI Provider Test Expansion — S7 X03 EXPANDED.
+test_provider_xai.c +69 new assertions (64→133 total).
+URL/header edge cases, response edge cases (empty/null choices, length finish),
+encrypted_content parsing, streaming edge depth, all 8 retired models verified.
+Bug fix: missing finish_reason extraction in xai_parse_response.
 Suite: 338/?/13. 53 gaps.
 
 ## Recent Phases
+- Phase 395: S7 X03 Google provider tests (+87 assertions)
 - Phase 394: S7 X03 DeepSeek provider tests (+35 assertions)
 - Phase 393: S7 X03 Anthropic provider tests (+70 assertions)
-- Phase 392: S7 X03 OpenAI provider tests (+74 assertions, 2 bug fixes)
 
 ## Sector Status
 PORTED: S0, S1, S2, S3, S6, S8

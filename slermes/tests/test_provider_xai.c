@@ -377,18 +377,286 @@ static void test_model_retirement(void)
     }
 }
 
+/* === URL edge cases (double-slash fix, proxy path) === */
+static void test_url_edge_cases(void)
+{
+    provider_register(PROVIDER_XAI, &PROVIDER_OPS_XAI);
+
+    /* Double-slash fix: base URL ending in /v1/ → /v1/chat/completions (no //) */
+    provider_t *p1 = provider_create("xai", "grok-4.3", "sk-test", "https://api.x.ai/v1/");
+    TEST("url edge p1", p1 != NULL);
+    if (p1) {
+        const provider_ops_t *ops = provider_ops(p1);
+        if (ops && ops->build_url) {
+            char *url = ops->build_url(p1, "https://api.x.ai/v1/");
+            TEST("url trailing slash", url != NULL);
+            if (url) {
+                TEST("no double slash", strstr(url, "//chat") == NULL);
+                TEST("url ends with chat/completions", strstr(url, "/chat/completions") != NULL);
+                free(url);
+            }
+        }
+        provider_free(p1);
+    }
+
+    /* Proxy URL with custom path */
+    provider_t *p2 = provider_create("xai", "grok-4.3", "sk-test", "https://proxy.example.com/xai/v1");
+    TEST("url edge p2", p2 != NULL);
+    if (p2) {
+        const provider_ops_t *ops = provider_ops(p2);
+        if (ops && ops->build_url) {
+            char *url = ops->build_url(p2, "https://proxy.example.com/xai/v1");
+            TEST("url proxy", url != NULL);
+            if (url) {
+                TEST("proxy base preserved", strstr(url, "proxy.example.com") != NULL);
+                free(url);
+            }
+        }
+        provider_free(p2);
+    }
+}
+
+/* === Header edge cases === */
+static void test_header_edge_cases(void)
+{
+    provider_t *p = provider_create("xai", "grok-4.3", "", "");
+    TEST("header edge p", p != NULL);
+    if (p) {
+        const provider_ops_t *ops = provider_ops(p);
+        if (ops && ops->build_headers) {
+            /* Empty API key — no Authorization header */
+            char *h1 = ops->build_headers(p, "");
+            TEST("header empty key", h1 != NULL);
+            if (h1) {
+                TEST("no Bearer with empty key", strstr(h1, "Bearer") == NULL);
+                free(h1);
+            }
+
+            /* NULL API key — no Authorization header */
+            char *h2 = ops->build_headers(p, NULL);
+            TEST("header NULL key", h2 != NULL);
+            if (h2) {
+                TEST("no Bearer with NULL key", strstr(h2, "Bearer") == NULL);
+                free(h2);
+            }
+
+            /* Long API key */
+            char *long_key = "sk-test-key-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+            char *h3 = ops->build_headers(p, long_key);
+            TEST("header long key", h3 != NULL);
+            if (h3) {
+                TEST("has Bearer with long key", strstr(h3, "Bearer") != NULL);
+                TEST("has long key value", strstr(h3, long_key) != NULL);
+                free(h3);
+            }
+        }
+        provider_free(p);
+    }
+}
+
+/* === Response parsing edge cases === */
+static void test_parse_response_edge_cases(void)
+{
+    provider_t *p = provider_create("xai", "grok-4.3", "sk-test", "");
+    TEST("edge parse p", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_response) { provider_free(p); return; }
+
+    /* Empty choices array */
+    const char *json1 = "{\"choices\":[],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":3}}";
+    provider_response_t *r1 = ops->parse_response(p, json1);
+    TEST("empty choices", r1 != NULL);
+    if (r1) {
+        TEST("empty choices tokens", r1->input_tokens == 5 && r1->output_tokens == 3);
+        ops->free_response(r1);
+    }
+
+    /* No choices key */
+    const char *json2 = "{\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":2}}";
+    provider_response_t *r2 = ops->parse_response(p, json2);
+    TEST("no choices key", r2 != NULL);
+    if (r2) {
+        TEST("no choices tokens", r2->input_tokens == 7 && r2->output_tokens == 2);
+        ops->free_response(r2);
+    }
+
+    /* Null content in message */
+    const char *json3 =
+        "{\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":null},\"finish_reason\":\"stop\"}]}";
+    provider_response_t *r3 = ops->parse_response(p, json3);
+    TEST("null content", r3 != NULL);
+    if (r3) {
+        TEST("null content empty string", r3->content && strlen(r3->content) == 0);
+        ops->free_response(r3);
+    }
+
+    /* Finish reason = length */
+    const char *json4 =
+        "{\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"partial\"},\"finish_reason\":\"length\"}]}";
+    provider_response_t *r4 = ops->parse_response(p, json4);
+    TEST("length finish", r4 != NULL);
+    if (r4) {
+        TEST("length content", r4->content && strcmp(r4->content, "partial") == 0);
+        TEST("length finish_reason", strcmp(r4->finish_reason, "length") == 0);
+        ops->free_response(r4);
+    }
+
+    /* No usage metadata */
+    const char *json5 =
+        "{\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"no usage\"},\"finish_reason\":\"stop\"}]}";
+    provider_response_t *r5 = ops->parse_response(p, json5);
+    TEST("no usage", r5 != NULL);
+    if (r5) {
+        TEST("no usage zero tokens", r5->input_tokens == 0 && r5->output_tokens == 0);
+        ops->free_response(r5);
+    }
+
+    provider_free(p);
+}
+
+/* === Encrypted content parsing === */
+static void test_parse_response_encrypted(void)
+{
+    provider_t *p = provider_create("xai", "grok-4.3", "sk-test", "");
+    TEST("encrypted p", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_response) { provider_free(p); return; }
+
+    const char *json =
+        "{\"choices\":[{\"index\":0,\"message\":{"
+        "\"role\":\"assistant\",\"content\":\"visible text\","
+        "\"encrypted_content\":[{\"type\":\"text\",\"text\":\"secret data\"}]"
+        "},\"finish_reason\":\"stop\"}]}";
+
+    provider_response_t *r = ops->parse_response(p, json);
+    TEST("encrypted parsed", r != NULL);
+    if (r) {
+        TEST("encrypted content visible text", r->content && strcmp(r->content, "visible text") == 0);
+        TEST("encrypted_content set", r->encrypted_content != NULL);
+        if (r->encrypted_content) {
+            TEST("encrypted has type text", strstr(r->encrypted_content, "\"type\"") != NULL);
+            TEST("encrypted has secret data", strstr(r->encrypted_content, "secret data") != NULL);
+        }
+        ops->free_response(r);
+    }
+
+    provider_free(p);
+}
+
+/* === Streaming edge cases (depth) === */
+static void test_parse_stream_edge_depth(void)
+{
+    provider_t *p = provider_create("xai", "grok-4.3", "sk-test", "");
+    TEST("stream depth p", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
+
+    /* Empty delta */
+    provider_response_t *r1 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"delta\":{},\"index\":0}]}");
+    TEST("empty delta", r1 != NULL);
+    if (r1) {
+        TEST("empty delta empty content", r1->content && strlen(r1->content) == 0);
+        ops->free_response(r1);
+    }
+
+    /* Empty chunk */
+    provider_response_t *r2 = ops->parse_stream_chunk(p, "");
+    TEST("empty chunk", r2 != NULL);
+    if (r2) {
+        TEST("empty chunk empty", r1 == NULL || r2->content[0] == '\0');
+        ops->free_response(r2);
+    }
+
+    /* Finish reason = length in stream */
+    provider_response_t *r3 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"length\",\"index\":0}]}");
+    TEST("stream length finish", r3 != NULL);
+    if (r3) {
+        TEST("stream length finish reason", strcmp(r3->finish_reason, "length") == 0);
+        ops->free_response(r3);
+    }
+
+    /* Encrypted content in stream */
+    provider_response_t *r4 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hello\",\"encrypted_content\":[{\"type\":\"text\",\"text\":\"secret\"}]},\"index\":0}]}");
+    TEST("stream encrypted", r4 != NULL);
+    if (r4) {
+        TEST("stream encrypted content", r4->content && strcmp(r4->content, "hello") == 0);
+        TEST("stream encrypted_content set", r4->encrypted_content != NULL);
+        if (r4->encrypted_content)
+            TEST("stream encrypted has secret", strstr(r4->encrypted_content, "secret") != NULL);
+        ops->free_response(r4);
+    }
+
+    /* Whitespace delta */
+    provider_response_t *r5 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"delta\":{\"content\":\" \"},\"index\":0}]}");
+    TEST("whitespace delta", r5 != NULL);
+    if (r5) {
+        TEST("whitespace preserved", r5->content && strcmp(r5->content, " ") == 0);
+        ops->free_response(r5);
+    }
+
+    provider_free(p);
+}
+
+/* === Model retirement: all retired models === */
+static void test_model_retirement_all(void)
+{
+    struct { const char *model; const char *replacement; const char *reasoning; } cases[] = {
+        {"grok-4-0709",                 "grok-4.3", NULL},
+        {"grok-4-fast-reasoning",       "grok-4.3", NULL},
+        {"grok-4-fast-non-reasoning",   "grok-4.3", "none"},
+        {"grok-4-1-fast-reasoning",     "grok-4.3", NULL},
+        {"grok-4-1-fast-non-reasoning", "grok-4.3", "none"},
+        {"grok-code-fast-1",            "grok-4.3", NULL},
+        {"grok-3",                      "grok-4.3", NULL},
+        {"grok-imagine-image-pro",      "grok-imagine-image-quality", NULL},
+    };
+    int n = sizeof(cases) / sizeof(cases[0]);
+
+    for (int i = 0; i < n; i++) {
+        char replacement[64];
+        char reasoning[64];
+        bool retired = xai_is_model_retired(cases[i].model, replacement, sizeof(replacement),
+                                             reasoning, sizeof(reasoning));
+        TEST("retired model detected", retired == true);
+        if (retired) {
+            TEST("replacement correct", strcmp(replacement, cases[i].replacement) == 0);
+            if (cases[i].reasoning) {
+                TEST("reasoning effort set", strcmp(reasoning, cases[i].reasoning) == 0);
+            } else {
+                TEST("no reasoning effort", reasoning[0] == '\0');
+            }
+        }
+    }
+}
+
 int main(void)
 {
     /* Register xAI provider */
     provider_register(PROVIDER_XAI, &PROVIDER_OPS_XAI);
     test_url_building();
+    test_url_edge_cases();
     test_headers();
+    test_header_edge_cases();
     test_parse_response_basic();
     test_parse_response_with_tool_calls();
     test_parse_response_error();
     test_parse_response_malformed();
+    test_parse_response_edge_cases();
+    test_parse_response_encrypted();
     test_parse_stream_chunk();
+    test_parse_stream_edge_depth();
     test_model_retirement();
+    test_model_retirement_all();
 
     fprintf(stderr, "Results: %d passed, %d failed\n", passed, tests - passed);
     fprintf(stdout, "Results: %d passed, %d failed\n", passed, tests - passed);

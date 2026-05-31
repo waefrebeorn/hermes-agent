@@ -1,6 +1,6 @@
-v451
-338/?/13. 53 gaps. Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED.
-87 new assertions (65→152). Finish reason mapping, content blocked,
-is_native_base_url, coerce_content_to_text, URL/header edge cases,
-streaming finish reason depth, empty candidates.
-S7 X03: improved parity (OpenAI+Anthropic+DeepSeek+Google expanded).
+v452
+338/?/13. 53 gaps. Phase 396: xAI Provider Test Expansion — S7 X03 EXPANDED.
+69 new assertions (64→133). URL/header edge cases, response edge cases,
+encrypted_content parsing, streaming depth, all 8 retired models.
+Bug fix: finish_reason extraction in xai_parse_response.
+S7 X03: improved parity (OpenAI+Anthropic+DeepSeek+Google+xAI expanded).
