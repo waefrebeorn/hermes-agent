@@ -3276,7 +3276,7 @@ if gcc -O2 -g -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib
     "$CDIR/lib/libskillusage/skill_provenance.c" \
     "$CDIR/lib/libskillusage/skill_usage.c" \
     -o /tmp/hermes_test_skill_mgmt -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_skill_mgmt > /dev/null 2>&1; then ok "skill_mgmt_tool (9 tests)"
+    if /tmp/hermes_test_skill_mgmt > /dev/null 2>&1; then ok "skill_mgmt_tool (15 tests)"
     else fail "skill_mgmt_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_skill_mgmt
 else skip "skill_mgmt_tool (compilation failed)"

@@ -7,6 +7,8 @@
  * - Skill listing
  * - Error handling (missing name, invalid JSON)
  * - NULL/empty safety
+ * Phase 339: +6 edge cases: special chars in name, no SKILL.md dir,
+ *   empty name, create action, delete action, edit action.
  */
 
 #include "hermes_json.h"
@@ -86,7 +88,6 @@ static bool setup_test_skill(const char *name, const char *content) {
 static bool setup_skill_file(const char *skill_name, const char *file_path, const char *content) {
     char full_path[4096];
     snprintf(full_path, sizeof(full_path), "%s/skills/%s/%s", g_test_skills_dir, skill_name, file_path);
-    /* Create parent directory if needed */
     char *slash = strrchr(full_path, '/');
     if (slash) {
         *slash = '\0';
@@ -100,10 +101,17 @@ static bool setup_skill_file(const char *skill_name, const char *file_path, cons
     return true;
 }
 
+/* Check if a skill directory exists */
+static bool skill_dir_exists(const char *name) {
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/skills/%s", g_test_skills_dir, name);
+    struct stat st;
+    return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+}
+
 static void init_test_env(void) {
     snprintf(g_test_skills_dir, sizeof(g_test_skills_dir), "/tmp/hermes_test_skills_%d", getpid());
     mkdir(g_test_skills_dir, 0755);
-    /* Create skills subdirectory — get_skills_dir() looks for $HERMES_HOME/skills/ */
     char skills_sub[4096];
     snprintf(skills_sub, sizeof(skills_sub), "%s/skills", g_test_skills_dir);
     mkdir(skills_sub, 0755);
@@ -111,7 +119,6 @@ static void init_test_env(void) {
 }
 
 static void cleanup_test_env(void) {
-    /* Remove recursively */
     char cmd[4096];
     snprintf(cmd, sizeof(cmd), "rm -rf %s", g_test_skills_dir);
     system(cmd);
@@ -142,7 +149,6 @@ static bool test_view_valid_skill(void) {
     json_free(j);
     free(resp);
 
-    /* Cleanup */
     char cmd[4096];
     snprintf(cmd, sizeof(cmd), "rm -rf %s/skills/test-skill", g_test_skills_dir);
     system(cmd);
@@ -247,7 +253,6 @@ static bool test_view_missing_name(void) {
 }
 
 static bool test_manage_list(void) {
-    /* Set up 2 skills */
     ASSERT(setup_test_skill("alpha", "# Alpha skill\n"), "setup alpha");
     ASSERT(setup_test_skill("beta", "# Beta skill\n"), "setup beta");
 
@@ -276,7 +281,6 @@ static bool test_manage_list(void) {
 }
 
 static bool test_manage_empty(void) {
-    /* Use a completely empty temp dir */
     char empty_dir[4096];
     snprintf(empty_dir, sizeof(empty_dir), "/tmp/hermes_empty_skills_%d", getpid());
     mkdir(empty_dir, 0755);
@@ -297,7 +301,6 @@ static bool test_manage_empty(void) {
     json_free(j);
     free(resp);
 
-    /* Restore env to test dir */
     setenv("HERMES_HOME", g_test_skills_dir, 1);
     char cmd[4096];
     snprintf(cmd, sizeof(cmd), "rm -rf %s", empty_dir);
@@ -322,6 +325,201 @@ static bool test_manage_null_args(void) {
     return true;
 }
 
+/* ─── Phase 339: Edge case expansion ─────────────────────── */
+
+static bool test_view_special_chars_name(void) {
+    /* Skill name with dots and hyphens */
+    ASSERT(setup_test_skill("my.special-skill.v2", "# Special\n"), "setup");
+
+    char *resp = skill_view_handler("{\"name\":\"my.special-skill.v2\"}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON");
+    free(err);
+
+    const char *name = json_get_str(j, "name", NULL);
+    ASSERT(name != NULL && strcmp(name, "my.special-skill.v2") == 0, "name with special chars");
+    const char *content = json_get_str(j, "content", NULL);
+    ASSERT(content != NULL && strstr(content, "Special") != NULL, "content present");
+
+    json_free(j);
+    free(resp);
+
+    char cmd[4096];
+    snprintf(cmd, sizeof(cmd), "rm -rf %s/skills/my.special-skill.v2", g_test_skills_dir);
+    system(cmd);
+    return true;
+}
+
+static bool test_view_empty_skill_dir(void) {
+    /* Skill directory exists but has no SKILL.md — should not be listable */
+    char empty_skill[4096];
+    snprintf(empty_skill, sizeof(empty_skill), "%s/skills/empty-dir", g_test_skills_dir);
+    mkdir(empty_skill, 0755);
+
+    /* Listing should NOT include empty-dir (no SKILL.md) */
+    char *resp = skill_manage_handler("{}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON");
+    free(err);
+
+    json_t *skills = json_object_get(j, "skills");
+    ASSERT(skills != NULL, "skills array present");
+
+    /* Check empty-dir is NOT in the list */
+    bool found = false;
+    for (size_t i = 0; i < json_len(skills); i++) {
+        json_t *item = json_array_get(skills, i);
+        if (item && item->type == JSON_STRING && strcmp(item->str_val, "empty-dir") == 0) {
+            found = true;
+            break;
+        }
+    }
+    ASSERT(!found, "empty-dir without SKILL.md not in list");
+
+    json_free(j);
+    free(resp);
+
+    rmdir(empty_skill);
+    return true;
+}
+
+static bool test_view_empty_name(void) {
+    /* Empty string name should error */
+    char *resp = skill_view_handler("{\"name\":\"\"}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON");
+    free(err);
+
+    const char *error = json_get_str(j, "error", NULL);
+    ASSERT(error != NULL, "error for empty name");
+
+    json_free(j);
+    free(resp);
+    return true;
+}
+
+static bool test_manage_create_and_list(void) {
+    /* Create a skill via skill_manage_handler */
+    char *resp = skill_manage_handler(
+        "{\"action\":\"create\",\"name\":\"created-skill\","
+        "\"content\":\"# Created Skill\\n\"}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON for create");
+    free(err);
+
+    const char *error = json_get_str(j, "error", NULL);
+    ASSERT(error == NULL, "no error on create");
+    ASSERT(skill_dir_exists("created-skill"), "skill dir created");
+
+    json_free(j);
+    free(resp);
+
+    /* Verify it appears in listing */
+    resp = skill_manage_handler("{}", NULL);
+    ASSERT(resp != NULL, "list response");
+
+    j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON");
+    free(err);
+
+    json_t *skills = json_object_get(j, "skills");
+    ASSERT(skills != NULL, "skills array");
+    bool found = false;
+    for (size_t i = 0; i < json_len(skills); i++) {
+        json_t *item = json_array_get(skills, i);
+        if (item && item->type == JSON_STRING && strcmp(item->str_val, "created-skill") == 0) {
+            found = true;
+            break;
+        }
+    }
+    ASSERT(found, "created-skill in listing");
+
+    json_free(j);
+    free(resp);
+
+    /* Cleanup */
+    char cmd[4096];
+    snprintf(cmd, sizeof(cmd), "rm -rf %s/skills/created-skill", g_test_skills_dir);
+    system(cmd);
+    return true;
+}
+
+static bool test_manage_delete(void) {
+    ASSERT(setup_test_skill("delete-me", "# Delete me\n"), "setup");
+    ASSERT(skill_dir_exists("delete-me"), "exists before delete");
+
+    char *resp = skill_manage_handler(
+        "{\"action\":\"delete\",\"name\":\"delete-me\"}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON for delete");
+    free(err);
+
+    const char *error = json_get_str(j, "error", NULL);
+    ASSERT(error == NULL, "no error on delete");
+    ASSERT(!skill_dir_exists("delete-me"), "skill dir removed");
+
+    json_free(j);
+    free(resp);
+    return true;
+}
+
+static bool test_manage_edit(void) {
+    ASSERT(setup_test_skill("editable", "# Original\n"), "setup");
+
+    /* Edit the skill content */
+    char *resp = skill_manage_handler(
+        "{\"action\":\"edit\",\"name\":\"editable\","
+        "\"content\":\"# Edited\\n\\nNew content\"}", NULL);
+    ASSERT(resp != NULL, "response non-null");
+
+    char *err = NULL;
+    json_t *j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON for edit");
+    free(err);
+
+    const char *error = json_get_str(j, "error", NULL);
+    ASSERT(error == NULL, "no error on edit");
+
+    json_free(j);
+    free(resp);
+
+    /* Verify via view */
+    resp = skill_view_handler("{\"name\":\"editable\"}", NULL);
+    ASSERT(resp != NULL, "view response");
+    j = json_parse(resp, &err);
+    ASSERT(j != NULL, "valid JSON");
+    free(err);
+
+    const char *content = json_get_str(j, "content", NULL);
+    ASSERT(content != NULL, "content present");
+    ASSERT(strstr(content, "Edited") != NULL, "content updated");
+    ASSERT(strstr(content, "New content") != NULL, "new content present");
+    ASSERT(strstr(content, "Original") == NULL, "original content gone");
+
+    json_free(j);
+    free(resp);
+
+    char cmd[4096];
+    snprintf(cmd, sizeof(cmd), "rm -rf %s/skills/editable", g_test_skills_dir);
+    system(cmd);
+    return true;
+}
+
 /* ─── Main ────────────────────────────────────────────────── */
 
 int main(void) {
@@ -337,6 +535,14 @@ int main(void) {
     TEST(manage_list);
     TEST(manage_empty);
     TEST(manage_null_args);
+
+    /* Phase 339 */
+    TEST(view_special_chars_name);
+    TEST(view_empty_skill_dir);
+    TEST(view_empty_name);
+    TEST(manage_create_and_list);
+    TEST(manage_delete);
+    TEST(manage_edit);
 
     cleanup_test_env();
 
