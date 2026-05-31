@@ -1,4 +1,4 @@
-# Slermes C — Index (v420)
+# Slermes C — Index (v421)
 
 - [State](state.md) — current build state, suite, gaps
 - [Plan](plan.md) — next gap target, sector priorities
@@ -9,4 +9,4 @@
 - [Entry](entry.md) — project kickoff reference
 - [Testing](testing.md) — test suite reference
 
-Phase 363: TUI improvements — right-aligned thinking indicator, live token counter, Ctrl+C abort. Suite 328/0/12.
+Phase 364: TUI todo panel — kanban task board overlay. Suite 328/0/12.

@@ -1,2 +1,2 @@
-# Goal Mantra — Slermes C (v420)
-328/0/12. 67 gaps. Phase 363: TUI improvements (right-aligned thinking indicator, live token counter, Ctrl+C abort).
+# Goal Mantra — Slermes C (v421)
+328/0/12. 67 gaps. Phase 364: TUI todo panel (T15) — kanban task board overlay.
