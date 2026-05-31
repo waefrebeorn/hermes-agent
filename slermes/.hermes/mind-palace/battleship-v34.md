@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v424 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 64 structural gaps, 1000+ test case gaps. Phase 368: TUI agent info overlay (T14) — /agent shows model, provider, tokens, budget, session info. Suite 328/0/12. 64 gaps.**|
+| v425 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 64 structural gaps, 1000+ test case gaps. Phase 369: C11 credential validation — /auth validate tests API keys for 8 providers. Suite 328/0/12. 64 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -147,7 +147,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 | ✅ PORTED — /model set (same as C07) |
 || 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 | ✅ PORTED — /model list (same as C07) |
 || 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
-|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers|login|tokens|refresh] (Phases 316+358+360). /auth login writes API keys to .env. Device code flow for Nous (Phase 359). **Token management** (Phase 360): /auth status shows OAuth token expiry, /auth refresh [provider] refreshes via oauth_refresh_token(), /auth tokens lists all stored OAuth tokens with status. Remaining: interactive callback server for xAI OAuth flow, credential validation. |
+|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers|login|tokens|refresh|validate]. /auth login writes API keys to .env. Device code flow for Nous (Phase 359). **Token management** (Phase 360): /auth status shows OAuth token expiry, /auth refresh refreshes via oauth_refresh_token(), /auth tokens lists stored OAuth tokens. **Credential validation** (Phase 369): /auth validate <provider> tests API key with minimal API call (GET /v1/models for OpenAI-compatible, Anthropic minimal messages via POST, Google API key in query param). 8 providers supported. Remaining: interactive callback server for xAI OAuth flow. |
 || 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
 || 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | ✅ PORTED — /gateway [status|list|stop|setup|restart] (Phase 292+311). All 5 subcommands implemented: status (shows configured platforms), list (shows all 19), stop (gw_platform_shutdown_all + session save + exit), setup (env var readiness check with [ready]/[missing] indicators), restart (save + re-exec). |
 || C14 | Webhook setup (webhook.py) | ~1000 | P2 | ✅ PORTED — /webhook list/add/remove CLI (Phase 294) |

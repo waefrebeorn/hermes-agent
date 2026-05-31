@@ -5233,12 +5233,81 @@ static void cmd_auth(const char *args, agent_state_t *state) {
                    entries[i].token.refresh_token && entries[i].token.refresh_token[0] ? "yes" : "no");
         }
         auth_store_free(entries, count);
-        printf("\nUse /auth refresh [provider] to refresh expiring tokens.\n");
+        printf("\nUse /auth refresh [provider] to refresh expiring tokens.\\n");
         return;
     }
 
-    printf("Unknown subcommand: '%s'\n", sub);
-    printf("Usage: /auth status | providers | login | tokens | refresh\n");
+    if (strcmp(sub, "validate") == 0 || strncmp(sub, "validate ", 9) == 0) {
+        const char *target = sub + 8;
+        while (*target == ' ') target++;
+        if (!*target) {
+            printf("Usage: /auth validate <provider>\n");
+            printf("Tests API key. Supported: openai/ anthropic/ openrouter/ deepseek/ xai/ groq/ together/ google\n");
+            return;
+        }
+        typedef struct { const char *n; const char *e; const char *u; int m; } val_t;
+        static const val_t V[] = {
+            {"openai","OPENAI_API_KEY","https://api.openai.com/v1/models",0},
+            {"openrouter","OPENROUTER_API_KEY","https://openrouter.ai/api/v1/models",0},
+            {"deepseek","DEEPSEEK_API_KEY","https://api.deepseek.com/chat/completions",0},
+            {"xai","XAI_API_KEY","https://api.x.ai/v1/models",0},
+            {"groq","GROQ_API_KEY","https://api.groq.com/openai/v1/models",0},
+            {"together","TOGETHER_API_KEY","https://api.together.xyz/v1/models",0},
+            {"google","GOOGLE_API_KEY","https://generativelanguage.googleapis.com/v1beta/models",1},
+            {"anthropic","ANTHROPIC_API_KEY","https://api.anthropic.com/v1/messages",2},
+            {NULL,NULL,NULL,0}
+        };
+        int found = 0;
+        for (int i = 0; V[i].n; i++) {
+            if (strcasecmp(target, V[i].n) != 0) continue;
+            found = 1;
+            const char *key = getenv(V[i].e);
+            if (!key||!*key) { printf("*** env var not set\n", V[i].e); break; }
+            printf("Testing "); printf(V[i].n); printf("... ");
+            fflush(stdout);
+            http_client_t *c = http_new(15);
+            bool ok = false;
+            if (c) {
+                if (V[i].m == 1) {
+                    char url[1024];
+                    char gpf[] = "?key=";
+                    memcpy(url, V[i].u, strlen(V[i].u) + 1);
+                    strcat(url, gpf);
+                    strcat(url, key);
+                    http_resp_t *r = http_get(c,url,NULL);
+                    ok = r && (r->status==200||r->status==403||r->status==400);
+                    http_resp_free(r);
+                } else if (V[i].m == 2) {
+                    char hdr[512];
+                    char ap[] = "x-api-key: ";
+                    char aver[] = "\r\nanthropic-version: 2023-06-01";
+                    memcpy(hdr, ap, strlen(ap) + 1);
+                    strcat(hdr, key);
+                    strcat(hdr, aver);
+                    const char *msg = "{\"model\":\"claude-3-5-sonnet-20241022\",\"max_tokens\":1,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
+                    http_resp_t *r = http_post_json_auth(c, V[i].u, hdr, msg);
+                    ok = r && (r->status==200||r->status==400||r->status==401);
+                    http_resp_free(r);
+                } else {
+                    char hdr[512];
+                    char bp[] = "Authorization: Bearer ";
+                    strcpy(hdr, bp);
+                    strcat(hdr, key);
+                    http_resp_t *r = http_get(c, V[i].u, hdr);
+                    ok = r && (r->status == 200 || r->status == 401);
+                    http_resp_free(r);
+                }
+                http_free(c);
+            }
+            printf(ok ? "valid\n" : "invalid\n");
+            break;
+        }
+        if (!found) printf("Unknown provider\n");
+        return;
+    }
+
+    printf("Unknown subcommand: '%s'\\n", sub);
+    printf("Usage: /auth status | providers | login | tokens | refresh | validate\\n");
 }
 
 /* ================================================================

@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v424** · 64 active gaps · **2165 entries** of progress
+> **v425** · 64 active gaps · **2166 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -2218,3 +2218,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 366 | S4 T18 | TUI type-ahead buffer — keystrokes captured during streaming, replayed after stream end. Added `type_ahead_buf[1024]` + `type_ahead_len` to `stream_state_t`. Initialized in `tui_stream_start()`. In streaming input loop: printable chars (32-126) now buffered instead of just beeping. In `tui_stream_finish()`: buffered input injected into `tui.input.buf` via memcpy after nodelay(FALSE). beep() retained as audible feedback. T18 changes from PARTIAL to PORTED. S4 gaps: 19->18. Total: 67->66. | `src/cli/tui_fullscreen.c` -- TYPE_AHEAD_BUF_SIZE define, 2 stream_state_t fields, init in tui_stream_start(), buffer in streaming loop, inject in tui_stream_finish(). Suite 328/0/12. v422. |
 || 367 | S4 T11 | TUI thinking indicator — rich animated states. Multi-frame spinner (| / - \\) + animated ellipsis (.->..->...->.. cycle @ 12 frames). Phase labels by elapsed time: think (0-2s), ponder (2-5s), deep (5-10s), focus (10s+). After first token: pulsing arrow (>->=>, 8-frame cycle) + live token counter + tok/s. T11 changes from PARTIAL to PORTED. S4 gaps: 18->17. Total: 66->65. | `src/cli/tui_fullscreen.c` — 159-line thinking block replaced with rich animated states (phase labels, ellipsis cycle, pulsing arrow). Suite 328/0/12. v423. |
 || 368 | S4 T14 | TUI agent info overlay. `/agent` opens modal showing model, provider, session ID, iteration count, message count, tool count, token stats (input/output/total), budget remaining, JSON mode. Read-only info display. q/ESC closes. T14 changes from None to IMPLEMENTED. S4 gaps: 17->16. Total: 65->64. | `src/cli/tui_fullscreen.c` — tui_draw_agent_info() (72 LOC), MODE_AGENT_INFO enum, /agent slash command + handler. Suite 328/0/12. v424. |
+|| 369 | S5 C11 | Auth credential validation — /auth validate <provider>. Tests API key via minimal API call for 8 providers: openai/openrouter/deepseek/xai/groq/together (GET/v1/models), anthropic (POST minimal messages with x-api-key header), google (?key= query param). Reports valid/invalid. C11 depth improved (1 of 2 remaining items done: callback server still pending). | `src/cli/commands.c` — /auth validate handler (~85 LOC). Suite 328/0/12. v425. |

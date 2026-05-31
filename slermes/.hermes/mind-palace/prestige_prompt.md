@@ -1,4 +1,4 @@
-# Prestige (v424)
+# Prestige (v425)
 
 ## P0 — Architecture (4 gaps)
 F01-F04, F09.
@@ -13,5 +13,5 @@ F01-F04, F09.
 
 ## Strategy
 
-Phase 368: TUI agent info overlay (T14) — /agent opens modal showing model, provider, tokens, budget. T14 IMPLEMENTED.
-S4 gaps: 16→15. Total: 65→64.
+Phase 369: C11 /auth validate — tests API keys for 8 providers via minimal API calls.
+S5 C11 depth improved (credential validation done). 64 gaps.
