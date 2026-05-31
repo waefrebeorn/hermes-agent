@@ -1,20 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&amp;display=swap');
-    .text { font-family: 'Fredoka One', sans-serif; font-size: 48px; fill: #ffd700; }
-    .sub { font-family: monospace; font-size: 14px; fill: #888; }
-    .paw { fill: #ffd700; }
+    .text { font-family: system-ui, -apple-system, sans-serif; font-size: 44px; font-weight: 800; fill: #e06020; }
+    .sub { font-family: monospace; font-size: 13px; fill: #666; }
+    .paw { fill: #e06020; opacity: 0.2; }
   </style>
   <rect width="400" height="100" fill="#1a1a2e" rx="12"/>
-  <text x="200" y="55" text-anchor="middle" class="text">SLERMES</text>
-  <text x="200" y="80" text-anchor="middle" class="sub">C</text>
-  <!-- paw print -->
-  <circle cx="40" cy="75" r="8" class="paw" opacity="0.3"/>
-  <circle cx="40" cy="63" r="4" class="paw" opacity="0.3"/>
-  <circle cx="33" cy="58" r="3" class="paw" opacity="0.3"/>
-  <circle cx="47" cy="58" r="3" class="paw" opacity="0.3"/>
-  <circle cx="360" cy="75" r="8" class="paw" opacity="0.3" transform="scale(-1,1) translate(-720,0)"/>
-  <circle cx="360" cy="63" r="4" class="paw" opacity="0.3" transform="scale(-1,1) translate(-720,0)"/>
-  <circle cx="353" cy="58" r="3" class="paw" opacity="0.3" transform="scale(-1,1) translate(-720,0)"/>
-  <circle cx="367" cy="58" r="3" class="paw" opacity="0.3" transform="scale(-1,1) translate(-720,0)"/>
+  <circle cx="36" cy="72" r="7" class="paw"/>
+  <circle cx="36" cy="60" r="3.5" class="paw"/>
+  <circle cx="30" cy="55" r="2.5" class="paw"/>
+  <circle cx="42" cy="55" r="2.5" class="paw"/>
+  <circle cx="364" cy="72" r="7" class="paw"/>
+  <circle cx="364" cy="60" r="3.5" class="paw"/>
+  <circle cx="358" cy="55" r="2.5" class="paw"/>
+  <circle cx="370" cy="55" r="2.5" class="paw"/>
+  <text x="200" y="52" text-anchor="middle" class="text">SLERMES</text>
+  <text x="200" y="76" text-anchor="middle" class="sub">C translation</text>
 </svg>
