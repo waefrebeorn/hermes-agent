@@ -72,6 +72,13 @@ static void test_number_edge_cases(void) {
     TEST("inf", !tool_coerce_number("inf", &v, &is_int, false));
     TEST("-inf", !tool_coerce_number("-inf", &v, &is_int, false));
     TEST("whitespace only", !tool_coerce_number("   ", &v, &is_int, false));
+    TEST("just minus", !tool_coerce_number("-", &v, &is_int, false));
+    TEST("just plus", !tool_coerce_number("+", &v, &is_int, false));
+    TEST("just decimal", !tool_coerce_number(".", &v, &is_int, false));
+    TEST("just minus decimal", !tool_coerce_number("-.", &v, &is_int, false));
+    TEST("leading zeros", tool_coerce_number("00042", &v, &is_int, false) && v == 42.0 && is_int);
+    TEST("null output ptr", !tool_coerce_number("42", NULL, &is_int, false));
+    TEST("null is_int ptr", !tool_coerce_number("42", &v, NULL, false));
 }
 
 /* ================================================================
