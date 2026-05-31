@@ -1,8 +1,8 @@
-# Overnight Map — Recent Phases (v397)
+# Overnight Map — Recent Phases (v398)
 
 | Phase | Change | What | Before | After |
 |-------|--------|------|--------|-------|
-| 340 | X09 | Clarify edge case expansion — 12 new tests (12→24), 29 new assertions (12→41). Empty choices array, single choice, out-of-range 0, negative idx, JSON-special chars, whitespace-only response, skip with choices, very long question, null choice items. | `tests/test_clarify.c` — 12 new sections. Suite 326/0/14. v397. | 68 gaps | 68 gaps |
+| 341 | X09 | Tool result edge case expansion — 21 new assertions (27→48). Case sensitivity (Write_File/WRITE_FILE), other mutation tools (file_merge/exec_code/image_gen/session_crud), bytes_written edge cases (0.0/-0.5/string\"5\"/bool true), success edge cases (number 1/string \"true\"), error field variants (empty string/false/0), nested bytes_written, very long JSON (3800-char padding). | `tests/test_tool_result.c` — 21 new assertions (27→48). Suite 326/0/14. v398. | 68 gaps | 68 gaps |
 | 319 | X09 | Approval edge case expansion — 56 new assertions (19→75). Covers approval_is_terminal_dangerous (25 patterns across 6 categories), approval_normalize_command (ANSI stripping, null byte edge cases), approval_is_path_dangerous (12 system paths), approval_is_path_traversal (6 encodings). | `tests/test_approval.c` — 3 test functions + fwd decls. Suite 325/0/14. v383. | 68 gaps | 68 gaps |
 | 317 | S7 X10 fuzz tests expanded — 14 test cases (5→19): JSON (5), YAML (2), template (2), regex (2), HTML (1), path (1), JSON round-trip property (1). 6 parser families. Stale claim corrected (tests existed, now expanded). | `tests/test_fuzz.c` — 14 new tests. `test_runner.sh` — deps updated. Suite 325/0/14. v381. | 72 gaps | 72 gaps |
 | 316 | S5 C11 auth CLI — /auth [status|providers]. status checks 17 provider env vars, OAuth tokens, .env/config.yaml. providers lists 15 known providers with credential hints. C11 PARTIAL depth. | `src/cli/commands.c` — cmd_auth() (+110 LOC). Suite 325/0/14. v380. | 72 gaps | 72 gaps |

@@ -109,6 +109,73 @@ static void test_json_edge_cases(void) {
             "{\"bytes_written\":10,\"error\":null}"));
 }
 
+static void test_additional_edge_cases(void) {
+    printf("\n--- Additional edge cases ---\n");
+
+    /* Case sensitivity */
+    TEST("Write_File (PascalCase) returns false",
+        !tool_result_file_mutation_landed("Write_File", "{\"bytes_written\":10}"));
+    TEST("WRITE_FILE (SCREAMING) returns false",
+        !tool_result_file_mutation_landed("WRITE_FILE", "{\"bytes_written\":10}"));
+
+    /* Other mutation tools not in the list */
+    TEST("file_merge returns false",
+        !tool_result_file_mutation_landed("file_merge", "{\"success\":true}"));
+    TEST("exec_code returns false",
+        !tool_result_file_mutation_landed("exec_code", "{\"success\":true}"));
+    TEST("image_gen returns false",
+        !tool_result_file_mutation_landed("image_gen", "{\"success\":true}"));
+    TEST("session_crud returns false",
+        !tool_result_file_mutation_landed("session_crud", "{\"success\":true}"));
+
+    /* bytes_written edge cases */
+    TEST("bytes_written = 0.0",
+        !tool_result_file_mutation_landed("write_file", "{\"bytes_written\":0.0}"));
+    TEST("bytes_written = -0.5",
+        !tool_result_file_mutation_landed("write_file", "{\"bytes_written\":-0.5}"));
+    TEST("bytes_written as string '5'",
+        !tool_result_file_mutation_landed("write_file", "{\"bytes_written\":\"5\"}"));
+    TEST("bytes_written as bool true",
+        !tool_result_file_mutation_landed("write_file", "{\"bytes_written\":true}"));
+
+    /* success edge cases */
+    TEST("success = 1 (number, not bool)",
+        !tool_result_file_mutation_landed("patch", "{\"success\":1}"));
+    TEST("success = \"true\" (string, not bool)",
+        !tool_result_file_mutation_landed("patch", "{\"success\":\"true\"}"));
+
+    /* Error field edge cases */
+    TEST("error = empty string treated as error",
+        !tool_result_file_mutation_landed("write_file",
+            "{\"bytes_written\":10,\"error\":\"\"}"));
+    TEST("error = false treated as error",
+        !tool_result_file_mutation_landed("write_file",
+            "{\"bytes_written\":10,\"error\":false}"));
+    TEST("error = 0 treated as error",
+        !tool_result_file_mutation_landed("write_file",
+            "{\"bytes_written\":10,\"error\":0}"));
+
+    /* Deeply nested bytes_written */
+    TEST("nested bytes_written not detected at top level",
+        !tool_result_file_mutation_landed("write_file",
+            "{\"result\":{\"bytes_written\":10}}"));
+    TEST("bytes_written at root in bigger JSON",
+        tool_result_file_mutation_landed("write_file",
+            "{\"bytes_written\":42,\"path\":\"/tmp/x\",\"checksum\":\"abc123\"}"));
+
+    /* Very long result JSON */
+    {
+        char long_result[4096];
+        char padding[3800];
+        memset(padding, 'x', 3798);
+        padding[3798] = '\0';
+        snprintf(long_result, sizeof(long_result),
+            "{\"bytes_written\":1,\"padding\":\"%s\"}", padding);
+        TEST("very long JSON result handled gracefully",
+            tool_result_file_mutation_landed("write_file", long_result));
+    }
+}
+
 int main(void) {
     printf("=== Tool Result Tests ===\n");
 
@@ -119,6 +186,7 @@ int main(void) {
     test_patch_success();
     test_patch_failure();
     test_json_edge_cases();
+    test_additional_edge_cases();
 
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;

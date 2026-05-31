@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v397)
+# Goal Mantra — Slermes C (v398)
 
-326/0/14 (289 test files). 68 gaps. Phase 340: clarify edge case expansion — 12 new tests (12→24).
+326/0/14 (289 test files). 68 gaps. Phase 341: tool_result edge case expansion — 21 new assertions (27→48).
 
 ## Loop
 

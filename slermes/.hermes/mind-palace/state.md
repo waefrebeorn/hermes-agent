@@ -1,5 +1,5 @@
-|# State — Slermes C (v397)
-326/0/14. Phase 340: clarify tool edge case expansion — 12 new tests (12→24), 29 new assertions (12→41). Empty choices, single choice, out-of-range index 0, negative index, quotes in response, whitespace-only response, skip with choices, very long question, null choice items.
+|# State — Slermes C (v398)
+326/0/14. Phase 341: tool_result edge case expansion — 21 new assertions (27→48). Case sensitivity, other mutation tools, bytes_written 0.0/-0.5/string/bool, success number/string, error empty/false/0, nested bytes_written, very long JSON (3800-char padding).
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

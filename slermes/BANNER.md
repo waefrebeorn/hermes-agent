@@ -2,10 +2,10 @@
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v397                                          ║
+║  WuBu Slermes C v398                                          ║
 |║  326 tests · 68 gaps · 85 tools · 99 CLI · 65 libs         ║
 ║  68 gaps  │  31MB binary  │  0 warnings                     ║
-║  Phase 340: clarify edge case — 41 assertions                   ║
+║  Phase 341: tool_result edge — 48 assertions                    ║
 ║  S0+S1+S3+S6+F10+R02+R04+R10+C03+C13+C15+C16+C17+C18 PORTED ║
 ╚══════════════════════════════════════════════════════════════╝
 ```

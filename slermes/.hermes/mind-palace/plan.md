@@ -1,6 +1,6 @@
-# Plan — Next Phase (v397)
+# Plan — Next Phase (v398)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 340: clarify edge case expansion — 12 new tests (12→24).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 341: tool_result edge case expansion — 21 new assertions (27→48).
 
 **Next gap targets:**
 
