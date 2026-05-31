@@ -490,6 +490,7 @@ typedef struct {
 
 typedef struct {
     bool    active;
+    bool    abort_requested;    /* Ctrl+C during streaming */
     char    current_line[MAX_LINE_LENGTH];
     int     current_pos;
     int     token_count;
@@ -830,6 +831,13 @@ static void handle_winch(int sig) {
     g_resize_requested = 1;
 }
 
+/* SIGINT handler — abort streaming during blocking agent_chat call */
+static void handle_sigint(int sig) {
+    (void)sig;
+    if (tui.stream.active)
+        tui.stream.abort_requested = true;
+}
+
 /* ==================================================================
  *  P191: MESSAGE DISPLAY — rendering messages with role colors
  * ================================================================== */
@@ -1120,6 +1128,7 @@ void tui_fullscreen_status_update(const char *model, const char *provider,
 /* Start streaming session */
 static void tui_stream_start(void) {
     tui.stream.active = true;
+    tui.stream.abort_requested = false;
     tui.stream.current_pos = 0;
     tui.stream.current_line[0] = '\0';
     tui.stream.token_count = 0;
@@ -1129,7 +1138,7 @@ static void tui_stream_start(void) {
     tui.stream.tokens_per_sec = 0.0;
     tui.think_frame = 0;
 
-    /* Set input window to non-blocking for thinking animation */
+    /* Set input window to non-blocking during entire streaming */
     if (tui.panes[PANE_INPUT].win)
         nodelay(tui.panes[PANE_INPUT].win, TRUE);
 
@@ -2658,7 +2667,8 @@ static void tui_draw_help(void) {
     mvwprintw(win, y++, 0, " Navigation:");
     mvwprintw(win, y++, 0, "   Tab           Switch between panes");
     mvwprintw(win, y++, 0, "   PgUp/PgDn     Scroll history pane");
-    mvwprintw(win, y++, 0, "   Ctrl+C        Quit");
+    mvwprintw(win, y++, 0, "   Ctrl+C        Abort streaming / Quit (at prompt)");
+    mvwprintw(win, y++, 0, "   Ctrl+L        Redraw screen");
     y++;
     mvwprintw(win, y++, 0, " Input:");
     mvwprintw(win, y++, 0, "   Enter         Send message");
@@ -2761,10 +2771,13 @@ void tui_fullscreen_warn(const char *fmt, ...) {
 * doesn't match llm_token_cb_t (no userdata, void return).
 * This wrapper bridges the gap so agent_loop can stream tokens
 * into the TUI display during agent_chat(). */
+/* Check abort flag in streaming callback — allows signal/thread abort */
 static int tui_stream_cb(const char *token, void *userdata) {
    (void)userdata;
+   if (tui.stream.abort_requested)
+       return 1; /* abort streaming */
    tui_fullscreen_stream_token(token);
-   return 0;
+   return 0; /* continue streaming */
 }
 
 static void tui_process_input(const char *line) {
@@ -3438,8 +3451,9 @@ bool tui_fullscreen_init(void) {
     tui_load_external_skins();
     tui_apply_theme(tui_themes[tui_current_theme]);
 
-    /* Setup signal handler for resize */
+    /* Setup signal handlers */
     signal(SIGWINCH, handle_winch);
+    signal(SIGINT, handle_sigint);  /* abort streaming on Ctrl+C */
 
     /* Get terminal dimensions */
     getmaxyx(stdscr, tui.rows, tui.cols);
@@ -3568,23 +3582,57 @@ int tui_fullscreen_run(agent_state_t *state) {
             tui_resize_panes();
         }
 
-        /* Thinking indicator animation — P192: show spinner while
-         * streaming has started but no token received yet */
-        if (tui.stream.active && tui.stream.first_token) {
-            static const char spin[] = {'|', '/', '-', '\\\\'};
+        /* Thinking indicator + non-blocking input during streaming */
+        if (tui.stream.active) {
+            /* Show animated indicator on right side of status bar */
+            static const char spin[] = {'|', '/', '-', '\\'};
             int frame = tui.think_frame % 4;
-            /* Show thinking indicator on status bar area */
             if (tui.panes[PANE_STATUS].win) {
-                mvwaddch(tui.panes[PANE_STATUS].win, 0, 2, spin[frame]);
-                /* Update elapsed time display */
-                double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
-                mvwprintw(tui.panes[PANE_STATUS].win, 0, 4, " thinking  %4.1fs ", elapsed);
-                wnoutrefresh(tui.panes[PANE_STATUS].win);
+                WINDOW *sw = tui.panes[PANE_STATUS].win;
+                int sw_cols = tui.panes[PANE_STATUS].cols;
+                /* Write thinking indicator at right side, preserving left model info */
+                if (tui.stream.first_token) {
+                    double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
+                    char think_buf[64];
+                    snprintf(think_buf, sizeof(think_buf), " %c think %4.1fs  ", spin[frame], elapsed);
+                    int think_start = sw_cols - (int)strlen(think_buf) - 1;
+                    if (think_start < 0) think_start = 0;
+                    mvwprintw(sw, 0, think_start, "%s", think_buf);
+                } else {
+                    /* Show live token count during streaming */
+                    double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
+                    double tps = (elapsed > 0.1) ? tui.stream.token_count / elapsed : 0.0;
+                    char stream_buf[64];
+                    snprintf(stream_buf, sizeof(stream_buf), " t: %d  tok/s: %.0f  ", 
+                             tui.stream.token_count, tps);
+                    int stream_start = sw_cols - (int)strlen(stream_buf) - 1;
+                    if (stream_start < 0) stream_start = 0;
+                    mvwprintw(sw, 0, stream_start, "%s", stream_buf);
+                }
+                wnoutrefresh(sw);
                 doupdate();
             }
             tui.think_frame++;
-            napms(100);  /* ~10fps animation */
-            continue;    /* skip input — don't block */
+
+            /* Non-blocking input check: process abort/commands during streaming */
+            int ch = wgetch(tui.panes[PANE_INPUT].win);
+            if (ch == 3) { /* Ctrl+C — abort streaming */
+                tui.stream.abort_requested = true;
+                tui_history_add(MSG_ROLE_WARN, "[Aborted by user]", true);
+                tui_fullscreen_stream_done();
+                tui_redraw_history();
+                tui_redraw_status();
+                continue;
+            } else if (ch == ERR) {
+                /* No input available — sleep a bit then continue loop */
+                napms(50);
+                continue;
+            } else if (ch >= 32 && ch <= 126) {
+                /* Type-ahead: buffer character for after streaming ends */
+                /* For now, just beep to acknowledge but don't buffer */
+                beep();
+            }
+            continue; /* skip normal input processing during streaming */
         }
 
         /* Get input from the input pane */

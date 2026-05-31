@@ -1,3 +1,2 @@
-# Goal Mantra — Slermes C (v419)
-
-328/0/12. 67 gaps. Phase 362: Dynamic version + TUI thinking indicator.
+# Goal Mantra — Slermes C (v420)
+328/0/12. 67 gaps. Phase 363: TUI improvements (right-aligned thinking indicator, live token counter, Ctrl+C abort).

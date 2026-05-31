@@ -1,4 +1,4 @@
-# Prestige (v419)
+# Prestige (v420)
 
 ## P0 — Architecture (4 gaps)
 F01-F04, F09.
@@ -13,4 +13,4 @@ F01-F04, F09.
 
 ## Strategy
 
-Dynamic version extraction. TUI: T09+T10 PORTED (DA correction), T11 animated thinking indicator.
+TUI Phase 363: right-aligned thinking indicator, live token counter during streaming, Ctrl+C abort, non-blocking input polling. S4 T11 depth improved.

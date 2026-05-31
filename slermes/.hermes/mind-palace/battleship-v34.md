@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v419 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 362: Dynamic upstream version + TUI thinking indicator. Suite 328/0/12. 67 gaps.**|
+| v420 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 363: TUI major improvements — right-aligned thinking indicator, live token counter, Ctrl+C abort, non-blocking input. Suite 328/0/12. 67 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -117,14 +117,14 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 08 | T08 | App layout + chrome | appLayout.tsx, appChrome.tsx | ncurses panel only | P1 |
 || 09 | T09 | Text input: autocomplete, history, multi-line | textInput.tsx (1233 LOC) | ✅ PORTED — getch()-based multi-line, emoji picker, slash autocomplete, history, Ctrl-key nav | P1 |
 || 10 | T10 | Markdown render: rich streaming render | markdown.tsx (1119 LOC) | ✅ PORTED — tui_render_markdown() role-colored, bold/italic/code markdown patterns | P1 |
-|| 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | PARTIAL — animated spinner (|/-\), nodelay during streaming, elapsed time (Phase 362) | P1 |
+| 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | PARTIAL — animated spinner (right-aligned status bar), live token counter during streaming, Ctrl+C abort via SIGINT handler, nodelay throughout streaming (Phase 363). Remaining: rich animated states from Python's thinking.tsx. | P1 |
 || 12 | T12 | Session picker | sessionPicker.tsx | ✅ PORTED — tui_fullscreen_session_browse (Phase 195) | P2 |
 || 13 | T13 | Model picker | modelPicker.tsx | ✅ PORTED — tui_fullscreen.c model picker overlay (Phase 318, /model opens interactive picker, arrow keys, Enter to apply) | P2 |
 | 14 | T14 | Agents overlay | agentsOverlay.tsx | None | P2 |
 | 15 | T15 | Todo panel | todoPanel.tsx | None | P2 |
 || 16 | T16 | Streaming markdown live update | streamingMarkdown.tsx | ✅ PORTED — tui_stream_cb + tui_fullscreen_stream_token real-time streaming | P1 |
 || 17 | T17 | Bounding box: window resize re-render | SIGWINCH + full re-layout | ✅ PORTED — handle_winch + tui_resize_panes (Phase 32: sig_atomic_t flag, deferred in main loop) | P1 |
-| 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | fgets blocks, input lost | P1 |
+| 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | PARTIAL — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead beeps but doesn't buffer (Phase 363). Remaining: proper type-ahead buffer replayed after stream end. | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
 **S4: 20 gaps (10 P1, 6 P2, 4 P3) — T09+T10+T12+T13+T16+T17 PORTED, T11 PARTIAL**

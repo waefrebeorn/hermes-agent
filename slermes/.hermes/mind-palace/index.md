@@ -1,3 +1,12 @@
-# Slermes C — Index (v419)
+# Slermes C — Index (v420)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. 67 gaps. Suite 328/0/12. Dynamic upstream version.
+- [State](state.md) — current build state, suite, gaps
+- [Plan](plan.md) — next gap target, sector priorities
+- [Battleship](battleship-v34.md) — full gap audit (67 gaps)
+- [Goal Mantra](goal-mantra.md) — one-liner status
+- [Prestige](prestige_prompt.md) — architectural overview
+- [Vault](vault/achievements.md) — 2161 closed-gap entries
+- [Entry](entry.md) — project kickoff reference
+- [Testing](testing.md) — test suite reference
+
+Phase 363: TUI improvements — right-aligned thinking indicator, live token counter, Ctrl+C abort. Suite 328/0/12.
