@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v400)
+# Goal Mantra — Slermes C (v401)
 
-326/0/14 (289 test files). 68 gaps. Phase 343: TUI edge case expansion — 30 new assertions (24→54).
+326/0/14 (289 test files). 68 gaps. Phase 344: HTML edge case expansion — 16 new assertions (25→41).
 
 ## Loop
 

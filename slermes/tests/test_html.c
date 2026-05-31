@@ -102,6 +102,101 @@ int main(void) {
     TEST("frontmatter trailing newlines stripped", got && strcmp(got, "Body after blanks.") == 0);
     free(got);
 
+    /* ── Extended edge cases ── */
+    printf("\n--- Extended edge cases ---\n");
+
+    /* Escape: all special chars at once */
+    got = html_escape("<>&\"'");
+    TEST("escape all special", got && strcmp(got, "&lt;&gt;&amp;&quot;&#39;") == 0);
+    free(got);
+
+    /* Escape: already-escaped input */
+    got = html_escape("&lt;hello&gt;");
+    TEST("escape already-escaped", got && strcmp(got, "&amp;lt;hello&amp;gt;") == 0);
+    free(got);
+
+    /* Escape: only special chars */
+    got = html_escape("<<<>>>&&&");
+    TEST("escape only specials", got && strcmp(got, "&lt;&lt;&lt;&gt;&gt;&gt;&amp;&amp;&amp;") == 0);
+    free(got);
+
+    /* Escape: long string */
+    {
+        char long_in[2048];
+        memset(long_in, 'a', 2000);
+        long_in[2000] = '\0';
+        long_in[500] = '<';
+        long_in[1000] = '>';
+        long_in[1500] = '&';
+        got = html_escape(long_in);
+        TEST("escape long string non-NULL", got != NULL);
+        if (got) {
+            TEST("escape long string > 2000", strlen(got) > 2000);
+            TEST("escape long contains &lt;", strstr(got, "&lt;") != NULL);
+            TEST("escape long contains &gt;", strstr(got, "&gt;") != NULL);
+            TEST("escape long contains &amp;", strstr(got, "&amp;") != NULL);
+            free(got);
+        }
+    }
+
+    /* Unescape: NULL input */
+    got = html_unescape(NULL);
+    TEST("unescape NULL", got == NULL);
+
+    /* Unescape: unknown entity */
+    got = html_unescape("&unknown;text");
+    TEST("unescape unknown entity", got && strstr(got, "&unknown;") != NULL);
+    free(got);
+
+    /* Unescape: invalid numeric entity */
+    got = html_unescape("&#XYZ;");
+    TEST("unescape invalid numeric", got != NULL);
+    free(got);
+
+    /* Unescape: multiple consecutive entities */
+    got = html_unescape("&lt;&gt;&amp;&quot;&#39;");
+    TEST("unescape multiple entities", got && strcmp(got, "<>&\"'") == 0);
+    free(got);
+
+    /* Strip tags: NULL input */
+    got = html_strip_tags(NULL);
+    TEST("strip NULL returns NULL", got == NULL);
+
+    /* Strip tags: self-closing */
+    got = html_strip_tags("line1<br/>line2<br>line3");
+    TEST("strip self-closing br", got && strcmp(got, "line1line2line3") == 0);
+    free(got);
+
+    /* Strip tags: nested tags */
+    got = html_strip_tags("<div><p><b>deep</b></p></div>");
+    TEST("strip nested", got && strcmp(got, "deep") == 0);
+    free(got);
+
+    /* Strip tags: malformed */
+    got = html_strip_tags("<<<>>>");
+    TEST("strip malformed <<<>>>", got && strcmp(got, "") == 0);
+    free(got);
+
+    /* Frontmatter: just --- with no content */
+    got = strip_yaml_frontmatter("---");
+    TEST("frontmatter just ---", got && strcmp(got, "---") == 0);
+    free(got);
+
+    /* Frontmatter: empty body after --- --- */
+    got = strip_yaml_frontmatter("---\n---\n");
+    TEST("frontmatter empty body returns original (no body after ---)", got && strcmp(got, "---\n---\n") == 0);
+    free(got);
+
+    /* Frontmatter: body after closing --- with leading newline */
+    got = strip_yaml_frontmatter("---\nkey: val\n---\nbody");
+    TEST("frontmatter with body after ---", got && strcmp(got, "body") == 0);
+    free(got);
+
+    /* Frontmatter: body with --- inside (not a delimiter) */
+    got = strip_yaml_frontmatter("# Body\n--- not a frontmatter\n--not either");
+    TEST("frontmatter --- in body preserved", got && strstr(got, "---") != NULL);
+    free(got);
+
     fprintf(stderr, "html: %d/%d passed\n", passed, total);
     return (passed == total) ? 0 : 1;
 }

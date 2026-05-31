@@ -1,6 +1,6 @@
-# Plan — Next Phase (v400)
+# Plan — Next Phase (v401)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 343: TUI edge case expansion — 30 new assertions (24→54).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 344: HTML edge case expansion — 16 new assertions (25→41).
 
 **Next gap targets:**
 
