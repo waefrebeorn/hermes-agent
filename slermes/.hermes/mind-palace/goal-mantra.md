@@ -1,2 +1,3 @@
-# Goal Mantra — Slermes C (v435)
-334/0/13. 56 gaps. Phase 379: TUI Render Engine — T03 PORTED.
+# Goal Mantra — Slermes C (v436)
+335/0/13. 55 gaps. Phase 380: TUI WebSocket Support — T04 PORTED.
+All S4 P1 gaps resolved.

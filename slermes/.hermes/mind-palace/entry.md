@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v435)
+# Entry — Slermes C Parity (v436)
 
-Phase 379: TUI Render Engine — T03 PORTED (virtual screen, dirty-rect tracking, double buffering, text wrapping/scrolling, color/attr stacks, markdown pipeline, ncurses flush). 56 gaps. Suite 334/0/13.
+Phase 380: TUI WebSocket Support — T04 PORTED (WebSocket server wrapper, libwebsocket server API + ws:// support). 55 gaps. Suite 335/0/13. ALL S4 P1 gaps resolved.

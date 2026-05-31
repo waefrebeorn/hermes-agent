@@ -12,7 +12,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
+#include <poll.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
@@ -30,6 +33,18 @@ struct ws_t {
     int fd;
     bool connected;
 };
+
+/* Helper: write_raw — uses SSL_write if ssl is set, otherwise write() */
+static int write_raw(ws_t *ws, const void *buf, int len) {
+    if (ws->ssl) return SSL_write(ws->ssl, buf, len);
+    return (int)write(ws->fd, buf, (size_t)len);
+}
+
+/* Helper: read_raw — uses SSL_read if ssl is set, otherwise read() */
+static int read_raw(ws_t *ws, void *buf, int len) {
+    if (ws->ssl) return SSL_read(ws->ssl, buf, len);
+    return (int)read(ws->fd, buf, (size_t)len);
+}
 
 /* Base64 encode */
 static char *base64_encode(const unsigned char *input, int len) {
@@ -78,12 +93,16 @@ static void compute_accept(const char *key, char *out, size_t out_sz) {
     }
 }
 
-/* Parse URL: wss://host:port/path */
+/* Parse URL: wss://host:port/path or ws://host:port/path */
+/* Returns: 0 on success, -1 on error. Sets is_ssl true for wss:// */
 static int parse_url(const char *url, char *host, size_t host_sz,
-                      int *port, char *path, size_t path_sz) {
+                      int *port, char *path, size_t path_sz, bool *is_ssl) {
     const char *p = url;
-    if (strncmp(p, "wss://", 6) == 0) p += 6;
-    else if (strncmp(p, "ws://", 5) == 0) return -1; /* Only wss supported */
+    bool ssl = false;
+    if (strncmp(p, "wss://", 6) == 0) { p += 6; ssl = true; }
+    else if (strncmp(p, "ws://", 5) == 0) p += 5;
+    else return -1; /* Must have ws:// or wss:// */
+    if (is_ssl) *is_ssl = ssl;
 
     /* Host */
     size_t i = 0;
@@ -97,6 +116,8 @@ static int parse_url(const char *url, char *host, size_t host_sz,
         p++;
         *port = 0;
         while (*p >= '0' && *p <= '9') { *port = *port * 10 + (*p - '0'); p++; }
+    } else if (!ssl) {
+        *port = 80;
     } else {
         *port = 443;
     }
@@ -115,7 +136,8 @@ static int parse_url(const char *url, char *host, size_t host_sz,
 ws_t *ws_connect(const char *url, int timeout_sec) {
     char host[256], path[1024];
     int port;
-    if (!url || parse_url(url, host, sizeof(host), &port, path, sizeof(path)) < 0)
+    bool use_ssl = true;
+    if (!url || parse_url(url, host, sizeof(host), &port, path, sizeof(path), &use_ssl) < 0)
         return NULL;
 
     if (timeout_sec <= 0) timeout_sec = 30;
@@ -160,18 +182,23 @@ ws_t *ws_connect(const char *url, int timeout_sec) {
     /* Restore blocking */
     fcntl(fd, F_SETFL, flags);
 
-    /* Initialize SSL */
-    SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
-    if (!ctx) { close(fd); return NULL; }
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+    /* Initialize SSL if needed */
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
 
-    SSL *ssl = SSL_new(ctx);
-    if (!ssl) { SSL_CTX_free(ctx); close(fd); return NULL; }
-    SSL_set_fd(ssl, fd);
+    if (use_ssl) {
+        ctx = SSL_CTX_new(TLS_client_method());
+        if (!ctx) { close(fd); return NULL; }
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
 
-    if (SSL_connect(ssl) != 1) {
-        SSL_free(ssl); SSL_CTX_free(ctx); close(fd);
-        return NULL;
+        ssl = SSL_new(ctx);
+        if (!ssl) { SSL_CTX_free(ctx); close(fd); return NULL; }
+        SSL_set_fd(ssl, fd);
+
+        if (SSL_connect(ssl) != 1) {
+            SSL_free(ssl); SSL_CTX_free(ctx); close(fd);
+            return NULL;
+        }
     }
 
     /* WebSocket upgrade */
@@ -189,17 +216,33 @@ ws_t *ws_connect(const char *url, int timeout_sec) {
         "\r\n",
         path, host, port, ws_key);
 
-    SSL_write(ssl, req, req_len);
+    /* Send upgrade request */
+    if (ssl) {
+        SSL_write(ssl, req, req_len);
+    } else {
+        write(fd, req, (size_t)req_len);
+    }
 
     /* Read response */
     char resp[4096];
-    int n = SSL_read(ssl, resp, sizeof(resp) - 1);
-    if (n <= 0) { SSL_free(ssl); SSL_CTX_free(ctx); close(fd); return NULL; }
+    int n;
+    if (ssl) {
+        n = SSL_read(ssl, resp, sizeof(resp) - 1);
+    } else {
+        n = (int)read(fd, resp, sizeof(resp) - 1);
+    }
+    if (n <= 0) {
+        if (ssl) { SSL_free(ssl); SSL_CTX_free(ctx); }
+        else if (ctx) SSL_CTX_free(ctx);
+        close(fd); return NULL;
+    }
     resp[n] = '\0';
 
     /* Expect 101 */
     if (strstr(resp, "101") == NULL) {
-        SSL_free(ssl); SSL_CTX_free(ctx); close(fd);
+        if (ssl) { SSL_free(ssl); SSL_CTX_free(ctx); }
+        else if (ctx) SSL_CTX_free(ctx);
+        close(fd);
         return NULL;
     }
 
@@ -214,7 +257,11 @@ ws_t *ws_connect(const char *url, int timeout_sec) {
     }
 
     ws_t *ws = calloc(1, sizeof(ws_t));
-    if (!ws) { SSL_free(ssl); SSL_CTX_free(ctx); close(fd); return NULL; }
+    if (!ws) {
+        if (ssl) { SSL_free(ssl); SSL_CTX_free(ctx); }
+        else if (ctx) SSL_CTX_free(ctx);
+        close(fd); return NULL;
+    }
     ws->ctx = ctx;
     ws->ssl = ssl;
     ws->fd = fd;
@@ -250,7 +297,7 @@ int ws_send(ws_t *ws, uint8_t opcode, const void *data, size_t len) {
     memcpy(header + hdr_len, mask, 4);
     hdr_len += 4;
 
-    SSL_write(ws->ssl, header, hdr_len);
+    write_raw(ws, header, hdr_len);
 
     /* Mask payload */
     unsigned char *masked = NULL;
@@ -259,7 +306,7 @@ int ws_send(ws_t *ws, uint8_t opcode, const void *data, size_t len) {
         if (!masked) return -1;
         for (size_t i = 0; i < len; i++)
             masked[i] = ((const unsigned char *)data)[i] ^ mask[i % 4];
-        SSL_write(ws->ssl, masked, (int)len);
+        write_raw(ws, masked, (int)len);
         free(masked);
     }
 
@@ -271,11 +318,13 @@ int ws_recv(ws_t *ws, ws_frame_t *frame, int timeout_sec) {
     memset(frame, 0, sizeof(*frame));
 
     /* Wait for data with timeout */
+    struct timeval tv;
+    fd_set rset;
     if (timeout_sec > 0) {
-        fd_set rset;
         FD_ZERO(&rset);
         FD_SET(ws->fd, &rset);
-        struct timeval tv = {timeout_sec, 0};
+        tv.tv_sec = timeout_sec;
+        tv.tv_usec = 0;
         int rc = select(ws->fd + 1, &rset, NULL, NULL, &tv);
         if (rc == 0) return 0; /* Timeout */
         if (rc < 0) return -1;
@@ -283,7 +332,7 @@ int ws_recv(ws_t *ws, ws_frame_t *frame, int timeout_sec) {
 
     /* Read first 2 bytes */
     unsigned char hdr[2];
-    int n = SSL_read(ws->ssl, hdr, 2);
+    int n = read_raw(ws, hdr, 2);
     if (n < 2) return -1;
 
     uint8_t opcode = hdr[0] & 0x0F;
@@ -292,11 +341,11 @@ int ws_recv(ws_t *ws, ws_frame_t *frame, int timeout_sec) {
 
     if (len == 126) {
         unsigned char ext[2];
-        if (SSL_read(ws->ssl, ext, 2) < 2) return -1;
+        if (read_raw(ws, ext, 2) < 2) return -1;
         len = ((size_t)ext[0] << 8) | ext[1];
     } else if (len == 127) {
         unsigned char ext[8];
-        if (SSL_read(ws->ssl, ext, 8) < 8) return -1;
+        if (read_raw(ws, ext, 8) < 8) return -1;
         len = 0;
         for (int i = 0; i < 8; i++)
             len = (len << 8) | ext[i];
@@ -304,7 +353,7 @@ int ws_recv(ws_t *ws, ws_frame_t *frame, int timeout_sec) {
 
     unsigned char mask[4];
     if (masked) {
-        if (SSL_read(ws->ssl, mask, 4) < 4) return -1;
+        if (read_raw(ws, mask, 4) < 4) return -1;
     }
 
     unsigned char *payload = NULL;
@@ -313,7 +362,7 @@ int ws_recv(ws_t *ws, ws_frame_t *frame, int timeout_sec) {
         if (!payload) return -1;
         size_t total_read = 0;
         while (total_read < len) {
-            n = SSL_read(ws->ssl, payload + total_read, (int)(len - total_read));
+            n = read_raw(ws, payload + total_read, (int)(len - total_read));
             if (n <= 0) { free(payload); return -1; }
             total_read += (size_t)n;
         }
@@ -362,10 +411,175 @@ void ws_close(ws_t *ws) {
     if (!ws) return;
     if (ws->connected) {
         unsigned char close_frame[2] = {0x88, 0x00};
-        SSL_write(ws->ssl, close_frame, 2);
+        write_raw(ws, close_frame, 2);
     }
     if (ws->ssl) SSL_free(ws->ssl);
     if (ws->ctx) SSL_CTX_free(ws->ctx);
     if (ws->fd >= 0) close(ws->fd);
     free(ws);
+}
+
+/* ── WebSocket Server ── */
+
+struct ws_server_t {
+    int listen_fd;
+    int port;
+    SSL_CTX *ctx;  /* NULL for ws:// */
+};
+
+ws_server_t *ws_server_listen(int port, const char *cert_path, const char *key_path) {
+    ws_server_t *server = (ws_server_t *)calloc(1, sizeof(ws_server_t));
+    if (!server) return NULL;
+    server->port = port;
+    server->listen_fd = -1;
+
+    /* Create SSL context if cert provided */
+    if (cert_path && key_path) {
+        server->ctx = SSL_CTX_new(TLS_server_method());
+        if (!server->ctx) { free(server); return NULL; }
+        if (SSL_CTX_use_certificate_file(server->ctx, cert_path, SSL_FILETYPE_PEM) <= 0) {
+            SSL_CTX_free(server->ctx); free(server); return NULL;
+        }
+        if (SSL_CTX_use_PrivateKey_file(server->ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
+            SSL_CTX_free(server->ctx); free(server); return NULL;
+        }
+    }
+
+    /* Create TCP socket */
+    server->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server->listen_fd < 0) {
+        if (server->ctx) SSL_CTX_free(server->ctx);
+        free(server);
+        return NULL;
+    }
+
+    /* Allow immediate reuse */
+    int opt = 1;
+    setsockopt(server->listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    /* Make non-blocking so accept with timeout=0 works */
+    int flags = fcntl(server->listen_fd, F_GETFL, 0);
+    fcntl(server->listen_fd, F_SETFL, flags | O_NONBLOCK);
+
+    /* Bind */
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons((uint16_t)(port > 0 ? port : 0));
+
+    if (bind(server->listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        ws_server_close(server);
+        return NULL;
+    }
+
+    /* Get actual port if port 0 was requested */
+    if (port == 0) {
+        socklen_t addrlen = sizeof(addr);
+        if (getsockname(server->listen_fd, (struct sockaddr *)&addr, &addrlen) == 0) {
+            server->port = ntohs(addr.sin_port);
+        }
+    } else {
+        server->port = port;
+    }
+
+    if (listen(server->listen_fd, 5) < 0) {
+        ws_server_close(server);
+        return NULL;
+    }
+
+    return server;
+}
+
+/* Parse incoming HTTP WebSocket upgrade request and send 101 response.
+ * Returns 0 on success, -1 on error.
+ */
+static int handle_upgrade(int client_fd) {
+    char buf[4096];
+    char key[256] = {0};
+    int n = (int)read(client_fd, buf, sizeof(buf) - 1);
+    if (n <= 0) return -1;
+    buf[n] = '\0';
+
+    /* Parse Sec-WebSocket-Key */
+    const char *key_hdr = strstr(buf, "Sec-WebSocket-Key: ");
+    if (!key_hdr) return -1;
+    key_hdr += 19;
+    for (int i = 0; i < 255 && *key_hdr && *key_hdr != '\r' && *key_hdr != '\n'; i++)
+        key[i] = *key_hdr++;
+
+    if (!key[0]) return -1;
+
+    /* Compute accept key */
+    const char *magic = "258EAFA5-E914-47DA-95CA-5AB9B3F51ABB";
+    char combined[512];
+    snprintf(combined, sizeof(combined), "%s%s", key, magic);
+    unsigned char sha[SHA_DIGEST_LENGTH];
+    SHA1((unsigned char *)combined, strlen(combined), sha);
+    char *accept_b64 = base64_encode(sha, SHA_DIGEST_LENGTH);
+    if (!accept_b64) return -1;
+
+    /* Send 101 response */
+    char response[1024];
+    int rlen = snprintf(response, sizeof(response),
+        "HTTP/1.1 101 Switching Protocols\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Accept: %s\r\n\r\n",
+        accept_b64);
+    free(accept_b64);
+
+    write(client_fd, response, (size_t)rlen);
+    return 0;
+}
+
+ws_t *ws_server_accept(ws_server_t *server, int timeout_sec) {
+    if (!server || server->listen_fd < 0) return NULL;
+
+    /* Poll for incoming connection */
+    if (timeout_sec > 0) {
+        struct pollfd pfd = {.fd = server->listen_fd, .events = POLLIN};
+        int ret = poll(&pfd, 1, timeout_sec * 1000);
+        if (ret <= 0) return NULL;
+    }
+
+    struct sockaddr_in client_addr;
+    socklen_t addrlen = sizeof(client_addr);
+    int client_fd = accept(server->listen_fd, (struct sockaddr *)&client_addr, &addrlen);
+    if (client_fd < 0) return NULL;
+
+    /* Perform WebSocket upgrade handshake */
+    if (handle_upgrade(client_fd) < 0) {
+        close(client_fd);
+        return NULL;
+    }
+
+    /* Create ws_t from the accepted connection */
+    ws_t *ws = (ws_t *)calloc(1, sizeof(ws_t));
+    if (!ws) { close(client_fd); return NULL; }
+    ws->fd = client_fd;
+    ws->connected = true;
+
+    /* If server has SSL context, wrap the connection */
+    if (server->ctx) {
+        ws->ctx = server->ctx;  /* Share server context */
+        ws->ssl = SSL_new(server->ctx);
+        if (ws->ssl) {
+            SSL_set_fd(ws->ssl, client_fd);
+            SSL_accept(ws->ssl);
+        }
+    }
+
+    return ws;
+}
+
+int ws_server_port(ws_server_t *server) {
+    return server ? server->port : -1;
+}
+
+void ws_server_close(ws_server_t *server) {
+    if (!server) return;
+    if (server->listen_fd >= 0) close(server->listen_fd);
+    if (server->ctx) SSL_CTX_free(server->ctx);
+    free(server);
 }

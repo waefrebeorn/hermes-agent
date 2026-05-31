@@ -55,6 +55,30 @@ void ws_frame_free(ws_frame_t *frame);
 /* Close and free WebSocket */
 void ws_close(ws_t *ws);
 
+/* ── WebSocket Server ── */
+
+/* Server handle (opaque) */
+typedef struct ws_server_t ws_server_t;
+
+/* Listen on a TCP port for WebSocket connections.
+ * Returns a server handle, or NULL on error.
+ * For secure (wss://), pass a certificate path, otherwise NULL for ws://.
+ */
+ws_server_t *ws_server_listen(int port, const char *cert_path, const char *key_path);
+
+/* Accept an incoming WebSocket connection (blocking).
+ * Performs the TCP accept and WebSocket upgrade handshake.
+ * Returns a ws_t handle for the connected client, or NULL on error/timeout.
+ * timeout_sec: max seconds to block waiting for a connection (0 = indefinite).
+ */
+ws_t *ws_server_accept(ws_server_t *server, int timeout_sec);
+
+/* Close the server and free resources. */
+void ws_server_close(ws_server_t *server);
+
+/* Get the listen port (useful when port 0 was requested). */
+int ws_server_port(ws_server_t *server);
+
 #ifdef __cplusplus
 }
 #endif

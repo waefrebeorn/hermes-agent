@@ -91,6 +91,7 @@ run_lib_test "tui_json_rpc" "tests/test_tui_json_rpc.c" "src/cli" "$CDIR/src/cli
 run_lib_test "tui_transport" "tests/test_tui_transport.c" "src/cli" "$CDIR/src/cli/tui_transport.c -I$CDIR/include"
 run_lib_test "tui_layout" "tests/test_tui_layout.c" "src/cli" "$CDIR/src/cli/tui_layout.c -I$CDIR/include"
 run_lib_test "tui_render" "tests/test_tui_render.c" "src/cli" "$CDIR/src/cli/tui_render.c -I$CDIR/include -I$CDIR/lib/libncurses/include -Wl,--unresolved-symbols=ignore-all"
+run_lib_test "tui_websocket" "tests/test_tui_websocket.c" "src/cli" "$CDIR/src/cli/tui_websocket.c $CDIR/lib/libwebsocket/websocket.c -I$CDIR/include -I$CDIR/lib/libwebsocket -lssl -lcrypto"
 echo ""; echo "=== Website Policy Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
     "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \
