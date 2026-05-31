@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v407)
+# Goal Mantra — Slermes C (v408)
 
-328/0/12 (289 test files). 68 gaps. Phase 350: acp_resource edge case expansion — 6 new test sections (7→13).
+328/0/12 (289 test files). 68 gaps. Phase 351: Triple DA TUI plumbing fix — 3 bugs fixed.
 
 ## Loop
 

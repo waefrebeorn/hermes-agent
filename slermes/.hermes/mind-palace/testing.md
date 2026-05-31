@@ -1,6 +1,6 @@
-# Testing — Slermes C (v407)
+# Testing — Slermes C (v408)
 
-328/0/12, 289 test files. All pass. 68 gaps. Phase 350: acp_resource edge case expansion — 6 new test sections (7→13).
+328/0/12, 289 test files. All pass. 68 gaps. Phase 351: Triple DA TUI plumbing fix — 3 bugs fixed.
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

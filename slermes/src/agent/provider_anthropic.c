@@ -602,9 +602,7 @@ static provider_response_t *anthropic_parse_response(const provider_t *p,
     char *err = NULL;
     json_t *root = json_parse(response_body, &err);
     if (!root) {
-        resp->content = (char *)malloc(256);
-        if (resp->content)
-            snprintf(resp->content, 256, "JSON parse error: %s", err ? err : "unknown");
+        resp->content = strdup("");
         free(err);
         return resp;
     }
@@ -809,7 +807,7 @@ static provider_response_t *anthropic_parse_stream_chunk(const provider_t *p,
     char *err = NULL;
     json_t *root = json_parse(json_str, &err);
     if (!root) {
-        resp->content = strdup(json_str);
+        resp->content = strdup("");
         free(err);
         return resp;
     }

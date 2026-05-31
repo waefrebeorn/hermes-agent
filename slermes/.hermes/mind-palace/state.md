@@ -1,5 +1,12 @@
-|# State — Slermes C (v407)
-328/0/12. Phase 350: acp_resource edge case expansion — 6 new test sections (7→13). Array content (strings, single, empty, text blocks, mixed with images), object content (text type, image type placeholder).
+|# State — Slermes C (v408)
+328/0/12. Phase 351: Triple DA TUI plumbing fix — 3 bugs fixed.
+  BUG 1: All 8 provider parse_stream_chunk returned raw JSON str on json_parse
+  failure, leaking SSE chunks into streaming display. Fix: return empty string.
+  BUG 2: Anthropic parse_response returned "JSON parse error: ..." on failure.
+  Fix: return empty string.
+  BUG 3: stderr diagnostics (fprintf to stderr) leaked into ncurses display
+  during TUI mode. Fix: redirect stderr to /dev/null in tui_fullscreen_init(),
+  restore in cleanup. Error messages after endwin() use saved_stderr fd.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v407)
+# Entry — Slermes C Parity (v408)
 
-Phase 350: acp_resource edge case expansion — 6 new test sections (7→13). 68 gaps.
+Phase 351: Triple DA TUI plumbing fix — 3 bugs fixed. 68 gaps.

@@ -261,7 +261,7 @@ static provider_response_t *custom_parse_stream_chunk(const provider_t *p,
     if (strncmp(json_str, "[DONE]", 6) == 0) { resp->content = strdup(""); return resp; }
     char *err = NULL;
     json_t *root = json_parse(json_str, &err);
-    if (!root) { resp->content = strdup(json_str); free(err); return resp; }
+    if (!root) { resp->content = strdup(""); free(err); return resp; }
     json_t *choices = json_object_get(root, "choices");
     if (choices && json_len(choices) > 0) {
         json_t *choice = json_get(choices, 0);

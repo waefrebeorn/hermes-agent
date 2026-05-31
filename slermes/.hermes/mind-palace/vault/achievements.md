@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v407** · 68 active gaps · **2160 entries** of progress
+|> **v408** · 68 active gaps · **2160 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -2199,4 +2199,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| 348 | X09 | JSON mode edge case expansion — 13 new assertions (10→23). Azure/Google/Bedrock provider json_mode support, json_mode toggle (true→false→true), json_mode=false + explicit response_format, json_mode with streaming, empty messages (0 messages), response_format_strict. Fixed test_runner.sh — corrupted redirect (2>-lm) + url_safety.c dep. | `tests/test_json_mode.c` — 13 new TEST calls across 5 new edge case sections + 3 additional providers. `test_runner.sh` — url_safety.c added + redirect fix. Suite 328/0/12. v405. |
 ||| 349 | X09 | Sudo prompt edge case expansion — 9 new assertions (6→15). HERMES_INTERACTIVE variants: trailing space "1 ", "true", empty string. Timeout boundaries: 1 sec, INT_MAX. Multiple sequential calls (no stale state). | `tests/test_sudo_prompt.c` — 9 new TEST calls across 6 new edge case sections. `test_runner.sh` — count 5→15. Suite 328/0/12. v406. |
 ||| 350 | X09 | ACP resource edge case expansion — 6 new test sections (7→13). Array content: string array join with newline, single element array, empty array returns NULL, text-object blocks joined with newline, mixed image+text array. Object content: text type returns text field, image type returns placeholder text. | `tests/test_acp_resource.c` — 6 new test functions (arrays + objects). Suite 328/0/12. v407. |
+||| 351 | TUI | Triple DA TUI plumbing fix — 3 bugs fixed in streaming display pipeline. **BUG1:** All 8 provider parse_stream_chunk functions returned raw JSON string on json_parse failure (strdup(json_str) fallback), causing SSE chunk data to leak into the streaming text display. Fix: return strdup("") instead. Affected: OpenAI, OpenRouter, DeepSeek, xAI, Anthropic, Google, Azure, Custom. **BUG2:** Anthropic parse_response returned "JSON parse error: ..." on parse failure — leaked diagnostic text into response content. Fix: return empty string. **BUG3:** stderr diagnostics (fprintf calls in llm_client.c, agent_loop.c) leaked into ncurses display during TUI mode, appearing inline with kawaii spinner and tool feed output. Fix: redirect stderr to /dev/null in tui_fullscreen_init(), restore via saved_stderr fd in cleanup. Error messages after endwin() use dprintf(saved_stderr) instead. | 8 provider source files modified (parse_stream_chunk). `src/cli/tui_fullscreen.c` — added saved_stderr field, stderr redirect in init, restore in cleanup. `tests/test_anthropic_depth.c`, `tests/test_provider_openrouter.c`, `tests/test_provider_azure.c`, `tests/test_provider_custom.c`, `tests/test_provider_xai.c` — updated passthrough/error tests. Suite 328/0/12. v408. |
 |

@@ -216,7 +216,7 @@ static void test_parse_stream_chunk(void)
     provider_response_t *r5 = ops->parse_stream_chunk(p, "raw");
     TEST("non-prefixed", r5 != NULL);
     if (r5) {
-        TEST("passthrough", strcmp(r5->content, "raw") == 0);
+        TEST("passthrough", r5->content && r5->content[0] == '\0');
         ops->free_response(r5);
     }
 

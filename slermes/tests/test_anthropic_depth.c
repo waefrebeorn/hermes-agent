@@ -504,8 +504,8 @@ static int test_anthropic_depth_main(void) {
         provider_t p = {0};
         provider_response_t *r = PROVIDER_OPS_ANTHROPIC.parse_response(&p, "{invalid}");
         TEST("parse_response(invalid JSON) returns non-NULL", r != NULL);
-        TEST("parse_response invalid has error text",
-             r && r->content && strstr(r->content, "JSON parse error"));
+        TEST("parse_response invalid has empty content",
+             r && r->content && r->content[0] == '\0');
         if (r) PROVIDER_OPS_ANTHROPIC.free_response(r);
     }
 

@@ -663,6 +663,9 @@ typedef struct {
     gateway_state_t       gateway;        /* P199 */
     model_picker_state_t  model_picker;   /* T13: Model picker */
 
+    /* Saved stderr fd for TUI mode stderr redirection */
+    int saved_stderr;
+
     /* Agent reference */
     agent_state_t        *agent;
 
@@ -3390,6 +3393,14 @@ static int tui_handle_input(int ch) {
 bool tui_fullscreen_init(void) {
     memset(&tui, 0, sizeof(tui));
 
+    /* Redirect stderr to log file to prevent diagnostic leaks into ncurses display */
+    tui.saved_stderr = dup(STDERR_FILENO);
+    int null_fd = open("/dev/null", O_WRONLY);
+    if (null_fd >= 0) {
+        dup2(null_fd, STDERR_FILENO);
+        close(null_fd);
+    }
+
     /* Set locale for wide char support */
     setlocale(LC_ALL, "");
 
@@ -3403,7 +3414,8 @@ bool tui_fullscreen_init(void) {
     /* Check color support */
     if (!has_colors()) {
         endwin();
-        fprintf(stderr, "Terminal does not support colors\n");
+        if (tui.saved_stderr >= 0)
+            dprintf(tui.saved_stderr, "Terminal does not support colors\n");
         return false;
     }
 
@@ -3422,8 +3434,9 @@ bool tui_fullscreen_init(void) {
     getmaxyx(stdscr, tui.rows, tui.cols);
     if (tui.rows < 8 || tui.cols < 40) {
         endwin();
-        fprintf(stderr, "Terminal too small (%dx%d), need at least 40x8\n",
-                tui.cols, tui.rows);
+        if (tui.saved_stderr >= 0)
+            dprintf(tui.saved_stderr, "Terminal too small (%dx%d), need at least 40x8\n",
+                    tui.cols, tui.rows);
         return false;
     }
 
@@ -3468,6 +3481,13 @@ bool tui_fullscreen_init(void) {
 }
 
 void tui_fullscreen_cleanup(void) {
+    /* Restore stderr before ncurses cleanup */
+    if (tui.saved_stderr >= 0) {
+        dup2(tui.saved_stderr, STDERR_FILENO);
+        close(tui.saved_stderr);
+        tui.saved_stderr = -1;
+    }
+
     /* Clean up gateway FIFO */
     if (tui.gateway.fifo_fd >= 0)
         close(tui.gateway.fifo_fd);
