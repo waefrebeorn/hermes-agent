@@ -1,5 +1,6 @@
 
-# Build artifacts
+# Build artifact
+.digest_state.json
 # Config (user-specific)
 # Digestion output
 # IDE
