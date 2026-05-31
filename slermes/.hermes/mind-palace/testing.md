@@ -1,2 +1,2 @@
-# Testing — Slermes C (v428)
-327/0/13. 63 gaps. Phase 372: xAI OAuth callback login. C11 PORTED.
+# Testing — Slermes C (v429)
+328/0/13. 62 gaps. Phase 373: TUI Event Publisher — T07 PORTED (typed event system, 22 event types, JSON-RPC serialization, FIFO output, subscriber dispatch). 21-test suite added.

@@ -1,10 +1,10 @@
-**BANNER — WuBu Slermes C Translation (v428) — slermes/ directory**
+**BANNER — WuBu Slermes C Translation (v429) — slermes/ directory**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v428                                       ║
-║  327 tests · 63 gaps · 85 tools · 99 CLI · 65 libs         ║
-║  63 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v429                                       ║
+║  328 tests · 62 gaps · 85 tools · 99 CLI · 65 libs         ║
+║  62 gaps  │  31MB binary  │  0 warnings                     ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 

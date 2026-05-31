@@ -1,6 +1,8 @@
-# State — Slermes C (v428)
-327/0/13. Phase 372: xAI OAuth loopback callback server.
-   C11: xAI OAuth PKCE callback login via `/auth login xai-oauth`.
-   Starts local HTTP server on 127.0.0.1, PKCE authorize URL,
-   browser callback handler, code exchange, auth store save.
-63 gaps. S5 C11 PORTED. S5 gaps: 12→11.
+# State — Slermes C (v429)
+328/0/13. Phase 373: TUI Event Publisher — T07 PORTED.
+   tui_eventpub.c/h — typed event system with 22 event types,
+   JSON-RPC 2.0 serialization, FIFO output, subscriber dispatch.
+   Wired into tui_fullscreen.c: history, streaming, tool feed,
+   status, resize, command input — all emit typed events.
+   1 new test (test_tui_eventpub.c — 21 test functions).
+62 gaps. S4 T07 PORTED. S4 gaps: 16→15.

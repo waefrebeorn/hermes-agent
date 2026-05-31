@@ -38,6 +38,7 @@
 #include <locale.h>
 #include "budget_tracker.h"
 #include "provider_metadata.h"
+#include "tui_eventpub.h"
 
 /* ==================================================================
  *  P198: THEME ENGINE — color scheme definitions and skin files
@@ -857,6 +858,7 @@ static volatile sig_atomic_t g_resize_requested = 0;
 static void handle_winch(int sig) {
     (void)sig;
     g_resize_requested = 1;
+    tui_eventpub_resize(tui.rows, tui.cols);
 }
 
 /* SIGINT handler — abort streaming during blocking agent_chat call */
@@ -897,6 +899,9 @@ static void tui_history_add(msg_role_t role, const char *text, bool bold) {
     tui.history.head = (tui.history.head + 1) % MAX_MESSAGES_DISPLAY;
     if (tui.history.count < MAX_MESSAGES_DISPLAY)
         tui.history.count++;
+
+    /* Emit event */
+    tui_eventpub_message((int)role, text ? text : "", bold);
 }
 
 /* Write a formatted line to a window with role coloring */
@@ -1156,6 +1161,8 @@ void tui_fullscreen_status_update(const char *model, const char *provider,
     tui.status.tokens_out = tokens_out;
     tui.status.budget_remaining = budget_remaining;
     tui.status.dirty = true;
+    tui_eventpub_agent(model, provider, iteration, max_iterations,
+                       tokens_in, tokens_out, budget_remaining);
 }
 
 /* ==================================================================
@@ -1236,6 +1243,9 @@ void tui_fullscreen_stream_token(const char *token) {
     tui.stream.bytes_received += strlen(token);
     tui.stream.last_token_time = (double)clock() / CLOCKS_PER_SEC;
 
+    /* Emit event */
+    tui_eventpub_stream_token(token, tui.stream.token_count);
+
     /* Add to current streaming line */
     int tlen = strlen(token);
     if (tui.stream.current_pos + tlen < MAX_LINE_LENGTH - 1) {
@@ -1292,6 +1302,7 @@ void tui_fullscreen_stream_token(const char *token) {
 
 void tui_fullscreen_stream_done(void) {
     tui_stream_finish();
+    tui_eventpub_stream_done();
 }
 
 /* ==================================================================
@@ -1330,6 +1341,9 @@ void tui_fullscreen_tool_status(const char *tool_name, const char *status,
 
     if (progress >= 0) entry->progress = progress;
     if (total > 0) entry->total_steps = total;
+
+    /* Emit event */
+    tui_eventpub_tool(tool_name, status, progress, total, NULL);
 
     /* Redraw tool feed pane */
     WINDOW *win = tui.panes[PANE_TOOL_FEED].win;
@@ -2875,12 +2889,15 @@ static bool tui_gateway_init(void) {
         /* Non-fatal: gateway mode is optional */
         tui.gateway.state = RPC_IDLE;
         tui.gateway.fifo_fd = -1;
+        tui_eventpub_init(NULL);  /* Init without FIFO path for local dispatch */
         return false;
     }
 
     tui.gateway.state = RPC_IDLE;
     tui.gateway.fifo_fd = -1;
     tui.gateway.read_pos = 0;
+
+    tui_eventpub_init(RPC_FIFO_PATH);  /* Init with FIFO path */
 
     return true;
 }
@@ -3141,6 +3158,9 @@ static int tui_stream_cb(const char *token, void *userdata) {
 
 static void tui_process_input(const char *line) {
    if (!line || !*line) return;
+
+   /* Emit command/input event */
+   tui_eventpub_command(line);
 
    /* Add to history */
    tui_input_history_add(line);
@@ -3912,6 +3932,7 @@ void tui_fullscreen_cleanup(void) {
 
     endwin();
     tui.running = false;
+    tui_eventpub_shutdown();
 }
 
 /* ==================================================================
@@ -3944,6 +3965,9 @@ int tui_fullscreen_run(agent_state_t *state) {
         /* Poll gateway for incoming messages (P199) */
         if (tui.gateway.state == RPC_CONNECTED)
             tui_gateway_poll();
+
+        /* Flush pending event publisher messages to FIFO */
+        tui_eventpub_flush();
 
         /* Handle deferred terminal resize (F03) — async-signal-safe:
          * signal handler only sets a flag, actual ncurses calls

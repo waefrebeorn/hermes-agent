@@ -12,8 +12,8 @@ LIBS = -lm
 # Optional ncurses full-screen TUI (enabled when ncurses is available)
 TUI_INC = -I lib/libncurses/include
 TUI_LIB = lib/libncurses/lib/libncursesw.a lib/libncurses/lib/libpanelw.a
-TUI_SRC = src/cli/tui_fullscreen.c
-TUI_OBJ = src/cli/tui_fullscreen.o
+TUI_SRC = src/cli/tui_fullscreen.c src/cli/tui_eventpub.c
+TUI_OBJ = src/cli/tui_fullscreen.o src/cli/tui_eventpub.o
 
 # Auto-detect: check if local ncurses headers exist
 ifneq ("$(wildcard lib/libncurses/include/curses.h)","")

@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v428** · 63 active gaps · **2169 entries** of progress
+> **v429** · 62 active gaps · **2170 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -12,7 +12,7 @@
 | S1 Agent Core | ✅ PORTED | L23-L28 |
 | S2 CLI/Config | ✅ PORTED | C01-C18 |
 | S3 Gateway | ✅ PORTED | G01-G13 |
-| S4 TUI | 🔄 ACTIVE | 2 remaining |
+| S4 TUI | 🔄 ACTIVE | 15 remaining |
 | S5 Agent Modules | 🔄 ACTIVE | 15 remaining |
 | S6 Tools | ✅ PORTED | B01-B10 |
 | S7 Test Coverage | 🔄 ACTIVE | 20 remaining |
@@ -2224,3 +2224,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| 371 | S0 D19+D20 | CLI status bar context% + budget/cost implemented. D19: ctx:XX% via hermes_token_context_size(). D20: Budget N/M + cost $X.XX via agent state. S0 complete. | src/cli/display_core.c -- status bar rewritten. Suite 327/0/13. v427. |
 
 ||| 372 | S5 C11 | xAI OAuth loopback callback login. xai_oauth_callback_login() creates TCP server on 127.0.0.1, PKCE authorize URL via crypto_pkce_verifier/challenge, waits for browser callback, parses GET /callback?code=XXX&state=YYY, exchanges code via xai_oauth_exchange(), saves to auth store. /auth login xai-oauth CLI wired. C11 changes from PARTIAL to PORTED. S5 gaps: 12->10. Total: 64->63. | src/provider/token_exchange.c -- xai_oauth_callback_login() + helpers (+360 LOC). lib/libcrypto/crypto.c + crypto.h -- PKCE functions moved from deps/crypto.c. src/cli/commands.c -- xai-oauth handler (+30 LOC). Suite 327/0/13. v428. |
+|| 373 | S4 T07 | TUI Event Publisher — typed event system: 22 event types (keyboard, command, resize, message, stream, tool, session, agent, status, theme, model, connection), JSON-RPC 2.0 notification serialization, subscribe/dispatch with type filters, FIFO batched output with flush. Wired into tui_fullscreen.c: tui_history_add, tui_fullscreen_stream_token/done, tui_fullscreen_tool_status, tui_fullscreen_status_update, handle_winch, tui_process_input — all emit typed events. T07 changes from None to PORTED. S4 gaps: 16->15. Total: 63->62. Suite 328/0/13. v429. | src/cli/tui_eventpub.c -- new file, +710 LOC, 22 convenience emitters. src/cli/tui_eventpub.h -- new header, full API. tests/test_tui_eventpub.c -- 21 test functions. tui_fullscreen.c -- 8 wiring points. test_runner.sh -- tui_eventpub entry. Makefile -- TUI_SRC/OBJ extended. |

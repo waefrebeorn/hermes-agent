@@ -84,6 +84,7 @@ run_lib_test "credential_files" "tests/test_credential_files.c" "lib/libcredenti
 run_lib_test "skill_audit" "tests/test_skill_audit.c" "lib/libskillaudit" "$CDIR/lib/libskillaudit/skill_audit.c"
 run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" "$CDIR/lib/libslashconfirm/slash_confirm.c -lpthread"
 
+run_lib_test "tui_eventpub" "tests/test_tui_eventpub.c" "src/cli" "$CDIR/src/cli/tui_eventpub.c -I$CDIR/include"
 echo ""; echo "=== Website Policy Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
     "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \

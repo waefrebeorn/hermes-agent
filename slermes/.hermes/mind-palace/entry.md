@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v428)
+# Entry — Slermes C Parity (v429)
 
-Phase 372: xAI OAuth callback login. C11 PORTED (callback server done). 63 gaps. Suite 327/0/13.
+Phase 373: TUI Event Publisher — T07 PORTED (typed event system). 62 gaps. Suite 328/0/13.
