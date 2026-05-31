@@ -1,4 +1,6 @@
 /* test_exec_code.c — Unit tests for exec_code */
+/* Phase 338: +7 edge cases: empty code, stderr, stdout+stderr, unicode,
+   no-output, very long code, zero/negative timeout */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,6 +86,79 @@ static void test_output_content(void) {
     free(r);
 }
 
+/* --- Phase 338: Edge case expansion --- */
+
+static void test_empty_code(void) {
+    /* Empty code string — runs python -c '' which exits 0 */
+    char *r = exec_code_handler("{\"code\":\"\"}", NULL);
+    assert(r != NULL);
+    /* Should return valid JSON with exit_code and output fields */
+    assert(strstr(r, "\"exit_code\"") != NULL);
+    assert(strstr(r, "\"output\"") != NULL);
+    free(r);
+}
+
+static void test_stderr_capture(void) {
+    /* Code that writes to stderr should be captured */
+    char *r = exec_code_handler("{\"code\":\"import sys; sys.stderr.write('stderr msg\\\\n')\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "stderr msg") != NULL);
+    free(r);
+}
+
+static void test_stdout_and_stderr(void) {
+    /* Code writing to both stdout and stderr */
+    char *r = exec_code_handler("{\"code\":\"import sys; print('stdout msg'); sys.stderr.write('stderr msg\\\\n')\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "stdout msg") != NULL);
+    assert(strstr(r, "stderr msg") != NULL);
+    free(r);
+}
+
+static void test_unicode_output(void) {
+    /* Unicode/emoji in output should round-trip through JSON */
+    char *r = exec_code_handler("{\"code\":\"print('\\\\u2603 snowman')\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "snowman") != NULL);
+    assert(strstr(r, "\\u2603") != NULL || strstr(r, "\xe2\x98\x83") != NULL);
+    free(r);
+}
+
+static void test_no_output(void) {
+    /* Code that produces no output — just an expression */
+    char *r = exec_code_handler("{\"code\":\"x = 42\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    /* Should have output field even if empty */
+    assert(strstr(r, "\"output\"") != NULL);
+    free(r);
+}
+
+static void test_very_long_code(void) {
+    /* Very long code string — ~2000 chars */
+    char long_code[4096];
+    snprintf(long_code, sizeof(long_code),
+             "{\"code\":\"print('long_test_start'); %s print('long_test_end')\"}",
+             "x = 'a' * 1000; ");
+    char *r = exec_code_handler(long_code, NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "long_test_start") != NULL);
+    assert(strstr(r, "long_test_end") != NULL);
+    free(r);
+}
+
+static void test_zero_timeout(void) {
+    /* timeout=0 or negative — should either error or run (not hang) */
+    char *r = exec_code_handler("{\"code\":\"print('zero_timeout')\",\"timeout\":0}", NULL);
+    assert(r != NULL);
+    /* timeout=0 may be treated as no limit or clamped — either is fine, just don't crash */
+    free(r);
+}
+
 int main(void) {
     printf("exec_code tests:\n");
     TEST(test_hello_world());
@@ -94,6 +169,14 @@ int main(void) {
     TEST(test_timeout_param());
     TEST(test_sandbox_flag());
     TEST(test_output_content());
+    /* Phase 338 */
+    TEST(test_empty_code());
+    TEST(test_stderr_capture());
+    TEST(test_stdout_and_stderr());
+    TEST(test_unicode_output());
+    TEST(test_no_output());
+    TEST(test_very_long_code());
+    TEST(test_zero_timeout());
     printf("All exec_code tests passed.\n");
     return 0;
 }

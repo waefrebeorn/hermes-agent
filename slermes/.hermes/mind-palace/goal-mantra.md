@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v394)
+# Goal Mantra — Slermes C (v395)
 
-326/0/14 (289 test files). 68 gaps. Phase 337: escape sequence getchar/read buffer fix.
+326/0/14 (289 test files). 68 gaps. Phase 338: exec_code edge case expansion (8→15 tests).
 
 ## Loop
 

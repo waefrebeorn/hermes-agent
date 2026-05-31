@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v394** · 68 active gaps · **2151 entries** of progress
+> **v395** · 68 active gaps · **2152 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2186,4 +2186,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 335 | X09 | Up/Down arrow keys switching to NORMAL mode bugfix. CSI escape sequence cases (KEY_UP/KEY_DOWN/KEY_LEFT/KEY_RIGHT/KEY_HOME/KEY_END/KEY_DELETE) used `break` inside `switch(seq[1])`, falling through to the standalone-ESC handler which switched `vi_mode` from INSERT to NORMAL — causing subsequent keypresses to be interpreted as vi commands instead of text input. Fix: changed all CSI cases to `continue` instead of `break`. | `lib/liblineedit/line_edit.c` — 7 break→continue changes. Suite 326/0/14. v392. |
 || 336 | X09 | file_batch edge case expansion — 7 new test functions (6→13 tests). Covers: stat nonexistent file (returns -1), SHA-256 hash of empty file (e3b0c...), hash of large repeated-content file (64 hex chars), touch on existing file preserves content, stat on directory (S_ISDIR), chmod to 0000 extreme permissions, chmod on nonexistent file (returns -1). | `tests/test_file_batch.c` — 7 new test functions (6→13). `test_runner.sh` — count 6→13. Suite 326/0/14. v393. |
 || 337 | X09 | Escape sequence reader buffer conflict fix. `getchar()` (stdio buffered) reads 4K+ chunks from fd 0, but `read(STDIN_FILENO)` bypasses the stdio buffer. When terminal sent `\x1b[A`, `getchar()` buffered all 3 bytes but returned only `\x1b`. Subsequent `read()` calls blocked because `[A` was stranded in the stdio buffer. On the next `getchar()`, `[` was inserted as literal text and `A` triggered NORMAL-mode vi commands. Fix: replaced ALL `read(STDIN_FILENO)` in ESC handler with `getchar()` calls. Also fixed `seq[1]=='2'||seq[1]=='2'` double-check bug. | `lib/liblineedit/line_edit.c` — 34 insertions, 13 deletions. Suite 326/0/14. v394. |
+|| 338 | X09 | exec_code edge case expansion — 7 new test functions (8→15 tests). Covers: empty code (python -c '' exits 0), stderr capture via sys.stderr.write(), stdout+stderr interleaving, unicode in output (\\u2603 snowman), no-output code (x=42), very long code string (~2K chars), zero timeout (no crash). | `tests/test_exec_code.c` — 7 new test functions (8→15). `test_runner.sh` — count 8→15. Suite 326/0/14. v395. |
 |

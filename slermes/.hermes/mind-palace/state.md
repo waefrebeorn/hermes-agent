@@ -1,5 +1,5 @@
-# State — Slermes C (v394)
-326/0/14. Phase 337: escape sequence reader getchar/read buffer conflict fix.
+# State — Slermes C (v395)
+326/0/14. Phase 338: exec_code edge case expansion — 7 new tests (8→15). empty code, stderr capture, stdout+stderr, unicode, no output, very long code, zero timeout.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

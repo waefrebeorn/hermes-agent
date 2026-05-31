@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v394)
+# Entry — Slermes C Parity (v395)
 
-Phase 337: escape sequence reader getchar/read buffer fix. 68 gaps.
+Phase 338: exec_code edge case expansion (8→15 tests). 68 gaps.
