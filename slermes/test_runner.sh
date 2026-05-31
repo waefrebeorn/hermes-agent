@@ -350,6 +350,17 @@ else
     fail "clarify (compilation failed)"
 fi
 
+echo ""; echo "=== Tirith Arg Injection Tests === "
+if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libregex" \
+    "$CDIR/tests/test_tirith.c" \
+    "$CDIR/src/tools/tirith.c" \
+    -o /tmp/hermes_test_tirith -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
+    if /tmp/hermes_test_tirith > /dev/null 2>&1; then ok "tirith_arg_injection (13 tests)"
+    else fail "tirith_arg_injection (test binary returned non-zero)"; fi
+    rm -f /tmp/hermes_test_tirith
+else skip "tirith_arg_injection (compilation failed)"
+fi &
+
 echo ""; echo "=== Threat Pattern Tests === "
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libregex" -I"$CDIR/lib/libthreatpatterns" \
     "$CDIR/tests/test_threat_patterns.c" "$CDIR/lib/libregex/hermes_regex.c" "$CDIR/lib/libthreatpatterns/threat_patterns.c" \

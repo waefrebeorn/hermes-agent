@@ -207,9 +207,14 @@ static int cli_tool_event_cb(const char *event_type, const char *tool_name,
                 const char *summary = json_get_str(res, "success", NULL);
                 if (!summary) summary = json_get_str(res, "output", NULL);
                 if (summary && strcmp(tool_name, "patch") != 0) {
-                    char truncated[80];
-                    snprintf(truncated, sizeof(truncated), "%.77s", summary);
-                    if (strlen(summary) > 77) strcat(truncated, "...");
+                    char truncated[96];
+                    size_t slen = strlen(summary);
+                    if (slen > 77) {
+                        memcpy(truncated, summary, 77);
+                        memcpy(truncated + 77, "...", 4); /* includes null */
+                    } else {
+                        memcpy(truncated, summary, slen + 1);
+                    }
                     printf(" %s", truncated);
                 }
             }

@@ -545,7 +545,9 @@ int approval_check(const char *tool_name, const char *args_json) {
         /* P161: Check command allowlist */
         if (!allowlist_check(tool_name, cmd)) {
             danger_reason = "Command not in allowlist";
-            danger_detail = cmd;
+            strncpy(detail_buf, cmd, sizeof(detail_buf) - 1);
+            detail_buf[sizeof(detail_buf) - 1] = '\0';
+            danger_detail = detail_buf;
             json_free(args);
             /* Denied — command not in allowlist */
             audit_log_security("allowlist", tool_name, "denied", "command not in allowlist", cmd);
@@ -554,18 +556,24 @@ int approval_check(const char *tool_name, const char *args_json) {
 
         if (cmd && approval_is_terminal_dangerous(cmd)) {
             danger_reason = "Dangerous shell command";
-            danger_detail = cmd;
+            strncpy(detail_buf, cmd, sizeof(detail_buf) - 1);
+            detail_buf[sizeof(detail_buf) - 1] = '\0';
+            danger_detail = detail_buf;
         }
         /* Also run Tirith scan on terminal commands */
         if (!danger_reason && cmd) {
             tirith_verdict_t t = tirith_inline_scan(cmd);
             if (t == TIRITH_BLOCK) {
                 danger_reason = "Tirith security: blocked pattern";
-                danger_detail = cmd;
+                strncpy(detail_buf, cmd, sizeof(detail_buf) - 1);
+                detail_buf[sizeof(detail_buf) - 1] = '\0';
+                danger_detail = detail_buf;
             } else if (t == TIRITH_WARN) {
                 /* Warnings only flag if there's a matching dangerous pattern */
                 danger_reason = "Tirith warning: suspicious command pattern";
-                danger_detail = cmd;
+                strncpy(detail_buf, cmd, sizeof(detail_buf) - 1);
+                detail_buf[sizeof(detail_buf) - 1] = '\0';
+                danger_detail = detail_buf;
             }
         }
     }

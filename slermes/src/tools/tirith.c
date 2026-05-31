@@ -133,16 +133,24 @@ bool tirith_has_arg_injection(const char *command) {
         if (memchr(tok_start, '|', tok_len)) return true;
         if (memchr(tok_start, '&', tok_len)) {
             /* '&' alone as background marker is OK; embedded in arg is not */
-            /* e.g. "arg&other" is injection; "arg &" is background */
-            for (const char *c = tok_start; c < tok_end; c++) {
-                if (*c == '&' && (c > tok_start || (c + 1 < tok_end && *(c+1) != ' '))) {
-                    /* & preceded by non-space content = embedded in arg */
-                    if (c == tok_start) continue; /* leading & is OK */
-                    return true;
+            /* e.g. "arg&other" is injection; "&&", "&", "&>" are shell operators */
+
+            /* Shell-operator-only tokens (&&, &, &>, &>>, |&) are NOT injection */
+            bool all_operators = true;
+            for (const char *cp = tok_start; cp < tok_end; cp++) {
+                if (*cp != '&' && *cp != '|' && *cp != '>' && *cp != ';')
+                    { all_operators = false; break; }
+            }
+            if (!all_operators) {
+                for (const char *c = tok_start; c < tok_end; c++) {
+                    if (*c == '&' && (c > tok_start || (c + 1 < tok_end && *(c+1) != ' '))) {
+                        /* & preceded by non-space content = embedded in arg */
+                        if (c == tok_start) continue; /* leading & is OK */
+                        return true;
+                    }
                 }
             }
         }
-
         /* Flag injection in positional-arg positions.
          * If token starts with -- or - and resembles a long flag,
          * and we're past the first few optional flags, flag it.

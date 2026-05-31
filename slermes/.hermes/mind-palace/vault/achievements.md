@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v386** · 68 active gaps · **2142 entries** of progress
+> **v387** · 68 active gaps · **2145 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2178,3 +2178,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 327 | X09 | Tool init registry edge case expansion — 5 new assertions (13→18). Covers: empty string name (allowed), dispatch NULL args, dispatch NULL task_id, get_name out-of-range, get_name max-size index. | `tests/test_tool_init.c` — 5 new assertions (13→18). `test_runner.sh` — count 13→18. Suite 325/0/14. v385. |
 || 328 | X09 | Delegate_tool edge case expansion — 3 new assertions (4→7). Covers: empty string args, whitespace-only goal (passes through, no strip), goal + subtasks passes validation. | `tests/test_delegate.c` — 3 new assertions (4→7). `test_runner.sh` — count 4→7. Suite 325/0/14. v385. |
 | 329 | X09 | Token exchange edge case expansion — 9 new assertions (7→16). Covers: auth_store_free single entry, auth_store_free multi-entry (3 providers with mixed field populations), auth_store_free count=0 pointer behavior, oauth_token_free only access_token, oauth_token_free only refresh_token, oauth_token_free all empty strings, oauth_token_free very long access_token (500 chars). | `tests/test_token_exchange.c` — 9 new assertions (7→16). `test_runner.sh` — count 7→16. Suite 325/0/14. v386. |
+| 330 | X09 | Bugfix sweep — 3 real bugs found via DA. **BUG1: Use-after-free in approval.c** — `danger_detail = cmd` (pointer into parsed JSON tree) used after `json_free(args)` at approval_prompt_user. Caused garbled detail display (\"��\\u001a\\u001e�W\"). Fixed by copying `cmd` to stack `detail_buf[2048]` before `json_free()`. **BUG2: `&&` operator false positive in tirith.c** — `tirith_has_arg_injection()` flagged `pwd && ls -la` because `&` at index 1 of `&&` token triggered \"embedded in arg\" check. Fixed by excluding shell-operator-only tokens (`&&`, `&`, `&>`, `&>>`, `|&`, `;`) from arg injection detection. **BUG3: strcat buffer overflow in cli.c:212** — `char truncated[80]` got 77 chars + null (78 bytes) then `strcat(truncated, \"...\")` wrote 3 more = 81 bytes. Fixed by using `memcpy` with proper length check. 13 new tirith arg injection tests. Suite 326/0/14. v387. | `src/tools/approval.c` — use-after-free fix (3 copy-to-detail_buf sites). `src/tools/tirith.c` — shell-operator-only exclusion. `src/cli/cli.c` — strcat→memcpy. `tests/test_tirith.c` — 13 new tests. `test_runner.sh` — new test file entry. Suite 325→326/0/14. v387. |
