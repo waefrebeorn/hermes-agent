@@ -1,8 +1,4 @@
-# STATE — Slermes C Translation (v442)
-
-> **This file has moved.** The canonical state dashboard is at `mind-palace/state.md`.
->
-> 10 providers, 19 gateways, 65 libs, 338/0/13 suite, 31M binary, ~43% parity at function level,
-> 53 gaps.
->
-> 🔗 **[mind-palace/state.md](mind-palace/state.md)**
+# STATE — Slermes C Translation (v443)
+338/0/13. Phase 387. S7 X08 EXPANDED (conversation loop edge cases: 48→76 assertions).
+hermes_message_sanitize, message_free, additional repair edge cases covered.
+53 gaps. Suite stable.

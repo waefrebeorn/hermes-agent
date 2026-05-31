@@ -1,4 +1,9 @@
-# Testing — Slermes C (v442)
-338/0/13. 53 gaps. Phase 386: Conversation Loop Edge Case Expansion — S7 X08 EXPANDED
-(test_conversation_edge.c: 19 new assertions, 29→48 total — null safety, tool-only,
-assistant-before-system, long IDs, consecutive assistants).
+# Testing — Slermes C (v443)
+
+**Suite: 338 passed, 0 failed, 13 skipped (351 total)**
+
+| Test File | Assertions | Status |
+|-----------|-----------|--------|
+| test_conversation_edge.c | 76 (X08, conversation loop edge cases) | ✅ |
+| test_agent_loop.c | 90 (X06, agent loop core) | ✅ |
+| test_gateway_platforms.c | 123 (X07, gateway platform) | ✅ |

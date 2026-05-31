@@ -1,10 +1,6 @@
-# Overnight Map — Recent Phases (v442)
+# Overnight Map — Recent Phases (v443)
 
-| Phase | Change | What | Before | After |
-|-------|--------|------|--------|-------|
-|| 386 | S7 X08 | Conversation Loop Edge Case Expansion — 19 new assertions (29→48 total). Message sequence: consecutive assistants, assistant-before-system, duplicate tool IDs, system-only/assistant-only/tool-only, null names, long IDs. NULL safety: repair/sanitize NULL msgs/count, negative/zero count. | Suite 338/0/13, 53 gaps, v441 | Suite 338/0/13, 53 gaps, v442 |
-| 385 | S7 X07 | Gateway Platform Test Expansion — 48 new assertions (75→123 total). WhatsApp/Slack/Matrix/Mattermost/Discord coverage: webhook verify, state setters, chat_id/text JSON parsing, trailing slash handling. | Suite 338/0/13, 53 gaps, v440 | Suite 338/0/13, 53 gaps, v441 |
-| 384 | S7 X06 | Agent Loop Core Function Tests — 90 assertions. test_agent_loop.c: session_id format, agent_free, configure_from_config, inject_history, snapshot lifecycle. | Suite 338/0/13, 53 gaps, v439 | Suite 338/0/13, 53 gaps, v440 |
-| 383 | S7 X04 | Memory Tool Edge Cases — 39 new assertions (13->52 total). test_memory.c: count/get/delete/search/clear/expiry/hash/prioritized/5000-char/duplicate update/negative priority/double cleanup/NULL-safe API. | Suite 337/0/13, 53 gaps, v438 | Suite 337/0/13, 53 gaps, v439 |
-| 382 | S7 X08 | Conversation Loop Edge Cases — 29 edge case tests. test_conversation_edge.c: message repair (4-tool assistant, mixed valid+stray, orphan tool, system+user consecutive, system+2user merge, tool with NULL content, interleaved tools, special char IDs, all stray tool cleanup), tool call sanitization (nested JSON, array args, escaped strings, 8-tool max), agent loop infra (max_iterations, msg_role enum, 2KB big args). | Suite 336/0/13, 54 gaps, v437 | Suite 337/0/13, 53 gaps, v438 |
-| 381 | S7 X09 | Edge Case Tests — 43 TUI edge/regression tests. test_tui_edge.c: json_rpc, transport, layout, render, websocket edge coverage. | Suite 335/0/13, 55 gaps, v436 | Suite 336/0/13, 54 gaps, v437 |
+| Phase | Sector | Focus | From | To |
+|-------|--------|-------|------|----|
+| 387 | S7 X08 | Conversation Loop Edge Case Expansion (Round 2) — 28 new assertions (48→76 total). hermes_message_sanitize: NULL/empty/think block redaction/surrogates/tool args. message_free: NULL/empty/content. Additional repair: 3 consecutive users, cross-assistant tool IDs, empty tool ID, user-after-tool, mixed roles, all tool IDs mismatched. | Suite 338/0/13, 53 gaps, v442 | Suite 338/0/13, 53 gaps, v443 |
+| 386 | S7 X08 | Conversation Loop Edge Case Expansion — 19 new assertions (29→48 total). Message sequence: consecutive assistants, assistant-before-system, duplicate tool IDs, system-only/assistant-only/tool-only, null names, long IDs. NULL safety: repair/sanitize NULL msgs/count, negative/zero count. | Suite 338/0/13, 53 gaps, v441 | Suite 338/0/13, 53 gaps, v442 |

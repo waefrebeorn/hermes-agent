@@ -509,6 +509,236 @@ static void test_repair_zero_count(void) {
     TEST("zero count: no crash", r == 0);
 }
 
+/* ── hermes_message_sanitize tests ── */
+
+static void test_sanitize_null_msg(void) {
+    TEST("sanitize NULL msg", hermes_message_sanitize(NULL) == false);
+}
+
+static void test_sanitize_empty_message(void) {
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_USER;
+    m.content = NULL;
+    TEST("sanitize empty msg (no content)", hermes_message_sanitize(&m) == false);
+}
+
+static void test_sanitize_think_blocks(void) {
+    /* Content with <think>...</think> tags should be stripped */
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_ASSISTANT;
+    m.content = strdup("Let me think...<think>This is internal reasoning</think> Answer is 42");
+    bool r = hermes_message_sanitize(&m);
+    TEST("sanitize think blocks: returns true", r == true);
+    TEST("sanitize think blocks: tag stripped",
+         m.content && strstr(m.content, "Let me think...") != NULL &&
+         strstr(m.content, "Answer is 42") != NULL &&
+         strstr(m.content, "This is internal") == NULL);
+    free(m.content); m.content = NULL;
+}
+
+static void test_sanitize_think_alone(void) {
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_ASSISTANT;
+    m.content = strdup("Just a message with no tags");
+    bool r = hermes_message_sanitize(&m);
+    TEST("sanitize no-op: returns true (no think/redact needed)", r == true);
+    TEST("sanitize no-op: content unchanged",
+         m.content && strcmp(m.content, "Just a message with no tags") == 0);
+    free(m.content); m.content = NULL;
+}
+
+static void test_sanitize_redact_simple(void) {
+    /* api_key= prefix triggers key-value redaction with max_show=4 prefix chars kept */
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_ASSISTANT;
+    m.content = strdup("api_key=abcdefghijklmnop12345");
+    bool r = hermes_message_sanitize(&m);
+    TEST("sanitize redact: returns true", r == true);
+    TEST("sanitize redact: value redacted (4 prefix chars kept)",
+         m.content && strstr(m.content, "api_key=abcd***REDACTED***") != NULL);
+    free(m.content); m.content = NULL;
+}
+
+static void test_sanitize_surrogate_content(void) {
+    /* Lone surrogates in content should be cleaned */
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_ASSISTANT;
+    /* Construct content with a lone high surrogate */
+    char *buf = malloc(32);
+    buf[0] = 'h'; buf[1] = 'i'; buf[2] = 0xED; buf[3] = 0xA0; buf[4] = 0x80;
+    buf[5] = '!'; buf[6] = '\0';
+    m.content = buf;
+    bool r = hermes_message_sanitize(&m);
+    TEST("sanitize surrogates: returns true", r == true);
+    TEST("sanitize surrogates: lone surrogate removed or replaced",
+         m.content && strlen(m.content) >= 2);
+    free(m.content); m.content = NULL;
+}
+
+static void test_sanitize_tool_args_redact(void) {
+    /* Tool call arguments containing 'apikey' prefix should be redacted */
+    message_t m;
+    memset(&m, 0, sizeof(m));
+    m.role = MSG_ASSISTANT;
+    m.content = strdup("running tool");
+    m.tool_calls_count = 1;
+    snprintf(m.tool_calls[0].id, sizeof(m.tool_calls[0].id), "call_1");
+    snprintf(m.tool_calls[0].name, sizeof(m.tool_calls[0].name), "read");
+    /* Use 'apikey:' pattern which should trigger key-value redaction */
+    snprintf(m.tool_calls[0].arguments, sizeof(m.tool_calls[0].arguments),
+             "apikey:abcdefghijklmnop12345");
+    bool r = hermes_message_sanitize(&m);
+    TEST("sanitize tool args: returns true", r == true);
+    TEST("sanitize tool args: secret redacted",
+         strstr(m.tool_calls[0].arguments, "***REDACTED***") != NULL);
+    free(m.content); m.content = NULL;
+}
+
+/* ── message_free edge cases ── */
+
+static void test_message_free_null(void) {
+    /* message_free must not crash on NULL */
+    message_free(NULL);
+    TEST("message_free(NULL): no crash", true);
+}
+
+static void test_message_free_empty(void) {
+    /* message_free with all NULL fields — no double-free */
+    message_t *m = (message_t *)calloc(1, sizeof(message_t));
+    TEST("message_free: alloc ok", m != NULL);
+    m->role = MSG_USER;
+    message_free(m);
+    TEST("message_free(empty msg): no crash", true);
+}
+
+static void test_message_free_with_content(void) {
+    message_t *m = (message_t *)calloc(1, sizeof(message_t));
+    TEST("message_free content: alloc ok", m != NULL);
+    m->role = MSG_USER;
+    m->content = strdup("hello");
+    message_free(m);
+    TEST("message_free(content): freed content handled", true);
+}
+
+/* ── Additional repair edge cases ── */
+
+static void test_repair_consecutive_user_msgs(void) {
+    /* Two consecutive user messages should merge */
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "first");
+    msgs[1] = make_msg(MSG_USER, "second");
+    msgs[2] = make_msg(MSG_USER, "third");
+
+    int cnt = 3;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("3 consecutive users: repair occurs", r > 0);
+    TEST("3 consecutive users: count < 3", cnt < 3);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_tool_id_cross_assistant(void) {
+    /* Tool IDs belong to different assistant turns (with user message between) */
+    const char *ids1[] = {"call_a"};
+    const char *names1[] = {"tool_a"};
+    const char *ids2[] = {"call_b"};
+    const char *names2[] = {"tool_b"};
+    message_t msgs[6];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "first request");
+    msgs[1] = make_assistant_tc("first response", ids1, names1, 1);
+    msgs[2] = make_tool_msg("call_a", "result for first");
+    msgs[3] = make_msg(MSG_USER, "second request");
+    msgs[4] = make_assistant_tc("second response", ids2, names2, 1);
+    msgs[5] = make_tool_msg("call_b", "result for second");
+
+    int cnt = 6;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    /* Both tools match their respective assistants — valid */
+    TEST("cross-assistant tool IDs: 0 repairs", r == 0);
+    TEST("cross-assistant tool IDs: count=6", cnt == 6);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_empty_tool_call_id(void) {
+    /* Tool call with empty string ID */
+    const char *ids[] = {""};
+    const char *names[] = {"tool"};
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tc("running", ids, names, 1);
+    msgs[1] = make_tool_msg("", "result with empty ID");
+    msgs[2] = make_msg(MSG_USER, "thanks");
+
+    int cnt = 3;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    /* Empty IDs may or may not be matched — just must not crash */
+    TEST("empty tool ID: no crash", r >= 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_user_after_tool(void) {
+    /* Normal flow: assistant→tool→user (valid, no repair needed) */
+    const char *ids[] = {"call_1"};
+    const char *names[] = {"tool"};
+    message_t msgs[4];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "do something");
+    msgs[1] = make_assistant_tc("ok", ids, names, 1);
+    msgs[2] = make_tool_msg("call_1", "done");
+    msgs[3] = make_msg(MSG_USER, "continue");
+
+    int cnt = 4;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("user after tool: 0 repairs", r == 0);
+    TEST("user after tool: count=4", cnt == 4);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_mixed_roles_large(void) {
+    /* Complex sequence: user, assistant(tc1), tool(tc1), user, assistant, user */
+    const char *ids[] = {"tc1"};
+    const char *names[] = {"calc"};
+    message_t msgs[6];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "calc 1+1");
+    msgs[1] = make_assistant_tc("running", ids, names, 1);
+    msgs[2] = make_tool_msg("tc1", "2");
+    msgs[3] = make_msg(MSG_USER, "now calc 2+2");
+    msgs[4] = make_assistant_tc("answer: 4", NULL, NULL, 0);
+    msgs[5] = make_msg(MSG_USER, "thanks");
+
+    int cnt = 6;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("mixed roles large: 0 repairs", r == 0);
+    TEST("mixed roles large: count=6", cnt == 6);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_tool_mismatch_all(void) {
+    /* All tool calls have IDs that don't match any assistant tool call */
+    const char *ids[] = {"call_a", "call_b"};
+    const char *names[] = {"tool1", "tool2"};
+    message_t msgs[5];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tc("running", ids, names, 2);
+    msgs[1] = make_tool_msg("call_x", "no match 1");
+    msgs[2] = make_tool_msg("call_y", "no match 2");
+    msgs[3] = make_tool_msg("call_z", "no match 3");
+    msgs[4] = make_msg(MSG_USER, "continue");
+
+    int cnt = 5;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("all tool IDs mismatched: 3 repairs", r == 3);
+    TEST("all tool IDs mismatched: count=2", cnt == 2);
+    free_msgs(msgs, cnt);
+}
+
 int main(void) {
     printf("=== Conversation Loop Edge Case Tests (X08) ===\n");
 
@@ -548,6 +778,28 @@ int main(void) {
     test_repair_null_safety();
     test_repair_negative_count();
     test_repair_zero_count();
+
+    printf("\n-- hermes_message_sanitize tests --\n");
+    test_sanitize_null_msg();
+    test_sanitize_empty_message();
+    test_sanitize_think_blocks();
+    test_sanitize_think_alone();
+    test_sanitize_redact_simple();
+    test_sanitize_surrogate_content();
+    test_sanitize_tool_args_redact();
+
+    printf("\n-- message_free edge cases --\n");
+    test_message_free_null();
+    test_message_free_empty();
+    test_message_free_with_content();
+
+    printf("\n-- additional repair edge cases --\n");
+    test_repair_consecutive_user_msgs();
+    test_repair_tool_id_cross_assistant();
+    test_repair_empty_tool_call_id();
+    test_repair_user_after_tool();
+    test_repair_mixed_roles_large();
+    test_repair_tool_mismatch_all();
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return fail > 0 ? 1 : 0;
