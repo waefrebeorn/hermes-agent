@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v406)
+# Goal Mantra — Slermes C (v407)
 
-328/0/12 (289 test files). 68 gaps. Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15).
+328/0/12 (289 test files). 68 gaps. Phase 350: acp_resource edge case expansion — 6 new test sections (7→13).
 
 ## Loop
 

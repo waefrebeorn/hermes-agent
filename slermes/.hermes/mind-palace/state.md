@@ -1,5 +1,5 @@
-|# State — Slermes C (v406)
-328/0/12. Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15). HERMES_INTERACTIVE variants (trailing space "1 ", "true", empty string), timeout boundary values (1 sec, INT_MAX), multiple sequential calls (no stale state).
+|# State — Slermes C (v407)
+328/0/12. Phase 350: acp_resource edge case expansion — 6 new test sections (7→13). Array content (strings, single, empty, text blocks, mixed with images), object content (text type, image type placeholder).
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

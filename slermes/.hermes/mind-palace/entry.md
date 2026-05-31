@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v406)
+# Entry — Slermes C Parity (v407)
 
-Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15). 68 gaps.
+Phase 350: acp_resource edge case expansion — 6 new test sections (7→13). 68 gaps.
