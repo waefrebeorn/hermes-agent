@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v415 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 68 structural gaps, 1000+ test case gaps. Phase 357: Terminal transform sudo edge case expansion (7→22). Suite 328/0/12. 68 gaps.**|
+| v416 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 359: Nous Portal OAuth device code login flow. Suite 328/0/12. 67 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -147,7 +147,7 @@ Python has 80+ CLI modules (~70,000 LOC). C has none of these.
 || 08 | C08 | Model switch (model_switch.py) | ~1000 | P2 | ✅ PORTED — /model set (same as C07) |
 || 09 | C09 | Model catalog (model_catalog.py) | ~2000 | P2 | ✅ PORTED — /model list (same as C07) |
 || 10 | C10 | Codex models (codex_models.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Codex cloud |
-|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers] (Phase 316) + OAuth status in /secrets (Phase 290). auth status checks 17 provider env vars, OAuth tokens, .env/config presence. auth providers lists 15 known providers with credential hints. Remaining: interactive auth login/flows (callback server, device code, token refresh) |
+|| 11 | C11 | Auth/OAuth system (auth.py + auth_commands.py) | ~5000 | P1 | PARTIAL — /auth [status|providers|login] (Phases 316+358). /auth login writes API keys to .env. **Device code flow added for Nous Portal** (Phase 359): oauth_device_code_request(), oauth_device_code_poll(), oauth_refresh_token() — full RFC 8628 flow with polling loop and auth_store_save(). Remaining: interactive callback server for xAI, token refresh wiring, credential validation. |
 || 12 | C12 | Copilot auth (copilot_auth.py) | ~1000 | P3 | WON'T PORT — C standalone binary, no Copilot |
 || 13 | C13 | Gateway CLI (gateway.py + gateway_windows.py) | ~4000 | P2 | ✅ PORTED — /gateway [status|list|stop|setup|restart] (Phase 292+311). All 5 subcommands implemented: status (shows configured platforms), list (shows all 19), stop (gw_platform_shutdown_all + session save + exit), setup (env var readiness check with [ready]/[missing] indicators), restart (save + re-exec). |
 || C14 | Webhook setup (webhook.py) | ~1000 | P2 | ✅ PORTED — /webhook list/add/remove CLI (Phase 294) |
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|| **TOTAL** | **68** | **4** | **29** | **26** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 28→24 (T12+T13+T16+T17 PORTED). Suite 325/0/14.** |
+||| **TOTAL** | **67** | **4** | **29** | **26** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 28→24 (T12+T13+T16+T17 PORTED). Phase 359: Nous device code flow added to C11.** |
 
 ### Phase Map
 

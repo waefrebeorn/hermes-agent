@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v415)
+# Entry — Slermes C Parity (v416)
 
-Phase 356: Cron scripts edge case expansion (9 new tests). 68 gaps.
+Phase 359: Nous Portal OAuth device code login. 67 gaps.

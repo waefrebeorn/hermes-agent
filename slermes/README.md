@@ -8,10 +8,10 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Tests-328%2F0%2F12-00AA55?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-v413-8A2BE2?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-v416-8A2BE2?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/Binary-31MB%20ELF-FFD700?style=flat-square" alt="31MB">
   <img src="https://img.shields.io/badge/Source-108K%20LOC%20C-blue?style=flat-square" alt="108K LOC">
-  <img src="https://img.shields.io/badge/Gaps-68-FF6B35?style=flat-square" alt="68 gaps">
+  <img src="https://img.shields.io/badge/Gaps-67-FF6B35?style=flat-square" alt="67 gaps">
   <img src="https://img.shields.io/badge/Tools-85-8B5CF6?style=flat-square" alt="85 tools">
   <img src="https://img.shields.io/badge/CLI-98%20commands-00AA55?style=flat-square" alt="98 CLI">
   <img src="https://img.shields.io/badge/Libs-65%20modules-0066FF?style=flat-square" alt="65 libs">
@@ -333,7 +333,7 @@ slermes/
 
 ## Parity
 
-**325 tests pass, 0 fail, 14 skip. 68 gaps across 8 sectors.**
+**328 tests pass, 0 fail, 12 skip. 67 gaps across 8 sectors.**
 
 | Sector | Status | Detail |
 |--------|--------|--------|

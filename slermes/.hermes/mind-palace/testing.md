@@ -1,6 +1,6 @@
-# Testing — Slermes C (v415)
+# Testing — Slermes C (v416)
 
-328/0/12, 289 test files. All pass. 68 gaps. Phase 356: Cron scripts edge case expansion (9 new tests).
+328/0/12, 289 test files. All pass. 67 gaps. Phase 359: Nous Portal OAuth device code login.
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

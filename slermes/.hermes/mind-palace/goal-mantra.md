@@ -1,6 +1,7 @@
-# Goal Mantra — Slermes C (v415)
+# Goal Mantra — Slermes C (v416)
 
-328/0/12 (289 test files). 68 gaps. Phase 356: Cron scripts edge case expansion (9 new tests).
+328/0/12 (289 test files). 67 gaps. Phase 359: Nous Portal OAuth device code login.
+Added device code flow (RFC 8628), token refresh, wired into /auth login nous.
 
 ## Loop
 
@@ -14,5 +15,6 @@ Commit. Push. Repeat.
 ## Status
 
 Sectors: S0+S1+S3+S6 PORTED. F10 PORTED. R02+R04+R10 PORTED.
-S4: 28 TUI gaps. S5: 30 CLI gaps. S7: 19 test gaps (1000+ cases).
-S8: 2 provider gaps (1 real: R01). S9: 20 plugin gaps. S10: 7 arch gaps.
+S4: 24 TUI gaps. S5: 12 CLI gaps. S7: 19 test gaps (1000+ cases).
+S8: 0 provider gaps. S9: 20 plugin gaps. S10: 7 arch gaps.
+C11 auth: device code flow added for Nous Portal.

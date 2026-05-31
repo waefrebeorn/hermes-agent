@@ -26,6 +26,7 @@
 #include "hermes_skin.h"
 #include "skill_usage.h"
 #include "hermes_skill_commands.h"
+#include "hermes_auth.h"
 
 /* Tool handler declarations (used by session commands) */
 extern char *session_search_handler(const char *args_json, const char *task_id);
@@ -4996,7 +4997,7 @@ static void cmd_auth(const char *args, agent_state_t *state) {
                (home && access(cfg_path, F_OK) == 0) ? "present" : "not found");
 
         printf("\n  For details, use: /secrets status\n");
-        printf("  For auth login flows, use the Python CLI: hermes auth login\n");
+        printf("  For auth login flows, use: /auth login <provider> [key]\n");
         return;
     }
 
@@ -5075,6 +5076,31 @@ static void cmd_auth(const char *args, agent_state_t *state) {
             fclose(f);
             printf("Wrote %s=%s to %s\n", env_var, key_value, ep);
             printf("Restart slermes or /reload to apply.\n");
+        } else if (strcasecmp(provider, "nous") == 0) {
+            /* Device code flow for Nous Portal */
+            const char *home = state->hermes_home[0] ? state->hermes_home : getenv("HOME");
+            if (!home) { printf("Cannot determine home directory.\n"); return; }
+
+            oauth_token_t *tok = nous_device_code_login(30);
+            if (!tok) return;
+
+            /* Save token to auth store */
+            auth_entry_t entry;
+            memset(&entry, 0, sizeof(entry));
+            strncpy(entry.provider, "nous-oauth", sizeof(entry.provider) - 1);
+            entry.token = *tok;  /* Transfer ownership — don't free separately */
+
+            if (auth_store_save(home, &entry)) {
+                printf("\n✅ Nous Portal OAuth token saved.\n");
+                printf("   Provider: nous-oauth\n");
+                if (tok->expires_at > 0) {
+                    printf("   Expires:  %s", ctime(&(time_t){ (time_t)tok->expires_at }));
+                }
+                printf("\nRestart slermes or /reload to apply.\n");
+            } else {
+                printf("\n❌ Failed to save OAuth token: %s\n", oauth_last_error());
+                oauth_token_free(tok);
+            }
         } else {
             printf("To configure %s:\n", provider);
             printf("  export %s=<your_key>\n", env_var);

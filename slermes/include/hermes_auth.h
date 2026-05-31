@@ -35,6 +35,11 @@ extern "C" {
 #define DEFAULT_NOUS_INFERENCE_URL  "https://inference-api.nousresearch.com/v1"
 #define DEFAULT_NOUS_CLIENT_ID      "hermes-cli"
 
+/* Nous OAuth device code endpoints (RFC 8628) */
+#define NOUS_OAUTH_DEVICE_ENDPOINT  "https://portal.nousresearch.com/oauth/device/code"
+#define NOUS_OAUTH_TOKEN_ENDPOINT   "https://portal.nousresearch.com/oauth/token"
+#define NOUS_OAUTH_SCOPE            "openid profile email offline_access"
+
 /* ================================================================
  *  Token data structures
  * ================================================================ */
@@ -133,6 +138,61 @@ bool auth_store_remove(const char *hermes_home, const char *provider);
 
 /* Free auth entry array */
 void auth_store_free(auth_entry_t *entries, int count);
+
+/* ================================================================
+ *  Device code flow (RFC 8628)
+ * ================================================================ */
+
+/* Device code response from RFC 8628 device authorization endpoint */
+typedef struct {
+    char *device_code;          /* Device code for polling token endpoint */
+    char *user_code;            /* User-facing code to display */
+    char *verification_uri;     /* URL user visits in browser */
+    char *verification_uri_complete; /* Full URL with user code embedded */
+    int   interval;             /* Polling interval (seconds) */
+    int   expires_in;           /* Seconds until device code expires */
+} oauth_device_code_t;
+
+/* Request a device code from OAuth provider (RFC 8628 §3.1).
+ * Posts to device_endpoint with client_id + scope.
+ * Returns malloc'd device_code_t (caller must free with oauth_device_code_free()).
+ * Returns NULL on failure (check oauth_last_error()). */
+oauth_device_code_t *oauth_device_code_request(
+    const char *device_endpoint,
+    const char *client_id,
+    const char *scope,
+    int timeout_sec);
+
+/* Free a device code response */
+void oauth_device_code_free(oauth_device_code_t *dc);
+
+/* Poll token endpoint with device code (RFC 8628 §3.4).
+ * Posts grant_type=urn:ietf:params:oauth:grant-type:device_code.
+ * Handles authorization_pending (returns NULL, sets last_error).
+ * Returns malloc'd oauth_token_t on success.
+ * Returns NULL on failure (check oauth_last_error()). */
+oauth_token_t *oauth_device_code_poll(
+    const char *token_endpoint,
+    const char *client_id,
+    const char *device_code,
+    int timeout_sec);
+
+/* Full device code login for Nous Portal.
+ * Orchestrates: request device code → display URI/code → poll → return token.
+ * Displays instructions to stdout during flow.
+ * Returns malloc'd oauth_token_t on success.
+ * Returns NULL on failure (check oauth_last_error()). */
+oauth_token_t *nous_device_code_login(int timeout_sec);
+
+/* OAuth token refresh.
+ * POSTs to token_endpoint with grant_type=refresh_token.
+ * Returns malloc'd oauth_token_t on success.
+ * Returns NULL on failure (check oauth_last_error()). */
+oauth_token_t *oauth_refresh_token(
+    const char *token_endpoint,
+    const char *client_id,
+    const char *refresh_token,
+    int timeout_sec);
 
 /* ================================================================
  *  Last error

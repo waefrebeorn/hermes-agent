@@ -3077,6 +3077,7 @@ fi &
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_token_exchange.c" \
     "$CDIR/src/provider/token_exchange.c" "$CDIR/lib/libjson/json.c" \
+    "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_token_exchange -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
     if /tmp/hermes_test_token_exchange > /dev/null 2>&1; then ok "token_exchange (16 tests)"
     else fail "token_exchange (test binary returned non-zero)"; fi

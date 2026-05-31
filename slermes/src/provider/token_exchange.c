@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 /* Thread-local last error buffer */
 #define ERR_BUF_SZ 512
@@ -549,4 +550,473 @@ void auth_store_free(auth_entry_t *entries, int count) {
         free(entries[i].token.token_type);
     }
     free(entries);
+}
+
+/* ================================================================
+ *  Device code helpers
+ * ================================================================ */
+
+oauth_device_code_t *oauth_device_code_new(void);
+static oauth_token_t *_parse_token_response_helper(json_t *root);
+
+oauth_device_code_t *oauth_device_code_new(void) {
+    oauth_device_code_t *dc = (oauth_device_code_t *)calloc(1, sizeof(oauth_device_code_t));
+    if (dc) {
+        dc->interval = 5;   /* default RFC 8628 §3.2 */
+    }
+    return dc;
+}
+
+void oauth_device_code_free(oauth_device_code_t *dc) {
+    if (!dc) return;
+    free(dc->device_code);
+    free(dc->user_code);
+    free(dc->verification_uri);
+    free(dc->verification_uri_complete);
+    free(dc);
+}
+
+oauth_device_code_t *oauth_device_code_request(
+    const char *device_endpoint,
+    const char *client_id,
+    const char *scope,
+    int timeout_sec)
+{
+    if (!device_endpoint || !device_endpoint[0] || !client_id || !client_id[0]) {
+        _set_error("device_endpoint and client_id are required");
+        return NULL;
+    }
+
+    /* Build form-urlencoded body */
+    char body[2048];
+    size_t pos = 0;
+    if (_append_form_field(body, sizeof(body), &pos, "client_id", client_id) < 0) {
+        _set_error("Failed to build device code request body");
+        return NULL;
+    }
+    if (scope && scope[0]) {
+        if (_append_form_field(body, sizeof(body), &pos, "scope", scope) < 0) {
+            _set_error("Failed to build device code request body (scope)");
+            return NULL;
+        }
+    }
+
+    /* Build headers */
+    char headers[256];
+    snprintf(headers, sizeof(headers),
+        "Content-Type: application/x-www-form-urlencoded\r\n"
+        "Accept: application/json\r\n");
+
+    if (timeout_sec < 20) timeout_sec = 20;
+
+    http_t *h = http_new(timeout_sec);
+    if (!h) {
+        _set_error("Failed to create HTTP client");
+        return NULL;
+    }
+
+    http_resp_t *resp = http_request(h, HTTP_POST, device_endpoint,
+                                     headers, body, strlen(body));
+    if (!resp) {
+        _set_error("Device code request failed (connection error)");
+        http_free(h);
+        return NULL;
+    }
+
+    if (resp->status != 200) {
+        char eb[512] = {0};
+        if (resp->body && resp->body_len > 0) {
+            size_t cp = resp->body_len < 511 ? resp->body_len : 511;
+            memcpy(eb, resp->body, cp);
+            eb[cp] = '\0';
+        }
+        _set_error("Device code request failed: HTTP %d — %s", resp->status, eb);
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    if (!resp->body || resp->body_len == 0) {
+        _set_error("Device code request returned empty body");
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    char *err = NULL;
+    json_t *root = json_parse(resp->body, &err);
+    http_resp_free(resp);
+    http_free(h);
+
+    if (!root) {
+        _set_error("Device code response parse failed: %s", err ? err : "unknown");
+        free(err);
+        return NULL;
+    }
+
+    if (root->type != JSON_OBJECT) {
+        _set_error("Device code response is not a JSON object");
+        json_free(root);
+        return NULL;
+    }
+
+    /* Check for error */
+    const char *err_str = json_get_str(root, "error", NULL);
+    if (err_str) {
+        const char *ed = json_get_str(root, "error_description", "");
+        _set_error("Device code error: %s — %s", err_str, ed);
+        json_free(root);
+        return NULL;
+    }
+
+    oauth_device_code_t *dc = oauth_device_code_new();
+    if (!dc) {
+        json_free(root);
+        _set_error("Out of memory");
+        return NULL;
+    }
+
+    const char *v;
+    v = json_get_str(root, "device_code", NULL);
+    dc->device_code = v ? strdup(v) : NULL;
+    v = json_get_str(root, "user_code", NULL);
+    dc->user_code = v ? strdup(v) : NULL;
+    v = json_get_str(root, "verification_uri", NULL);
+    dc->verification_uri = v ? strdup(v) : NULL;
+    v = json_get_str(root, "verification_uri_complete", NULL);
+    dc->verification_uri_complete = v ? strdup(v) : NULL;
+    dc->interval = (int)json_get_num(root, "interval", 5);
+    dc->expires_in = (int)json_get_num(root, "expires_in", 600);
+
+    json_free(root);
+
+    if (!dc->device_code || !dc->user_code) {
+        _set_error("Device code response missing device_code or user_code");
+        oauth_device_code_free(dc);
+        return NULL;
+    }
+
+    return dc;
+}
+
+oauth_token_t *oauth_device_code_poll(
+    const char *token_endpoint,
+    const char *client_id,
+    const char *device_code,
+    int timeout_sec)
+{
+    if (!token_endpoint || !token_endpoint[0] ||
+        !client_id || !client_id[0] ||
+        !device_code || !device_code[0]) {
+        _set_error("token_endpoint, client_id, and device_code are required");
+        return NULL;
+    }
+
+    /* Build body: grant_type=urn:ietf:params:oauth:grant-type:device_code */
+    char body[2048];
+    size_t pos = 0;
+    if (_append_form_field(body, sizeof(body), &pos,
+            "grant_type", "urn:ietf:params:oauth:grant-type:device_code") < 0) {
+        _set_error("Failed to build poll body");
+        return NULL;
+    }
+    if (_append_form_field(body, sizeof(body), &pos, "device_code", device_code) < 0) {
+        _set_error("Failed to build poll body (device_code)");
+        return NULL;
+    }
+    if (_append_form_field(body, sizeof(body), &pos, "client_id", client_id) < 0) {
+        _set_error("Failed to build poll body (client_id)");
+        return NULL;
+    }
+
+    char headers[256];
+    snprintf(headers, sizeof(headers),
+        "Content-Type: application/x-www-form-urlencoded\r\n"
+        "Accept: application/json\r\n");
+
+    if (timeout_sec < 20) timeout_sec = 20;
+
+    http_t *h = http_new(timeout_sec);
+    if (!h) {
+        _set_error("Failed to create HTTP client");
+        return NULL;
+    }
+
+    http_resp_t *resp = http_request(h, HTTP_POST, token_endpoint,
+                                     headers, body, strlen(body));
+    if (!resp) {
+        _set_error("Device code poll request failed (connection error)");
+        http_free(h);
+        return NULL;
+    }
+
+    if (!resp->body || resp->body_len == 0) {
+        _set_error("Device code poll returned empty response");
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    char *err = NULL;
+    json_t *root = json_parse(resp->body, &err);
+    http_resp_free(resp);
+
+    if (!root) {
+        _set_error("Device code poll parse failed: %s", err ? err : "unknown");
+        free(err);
+        http_free(h);
+        return NULL;
+    }
+
+    if (root->type != JSON_OBJECT) {
+        _set_error("Device code poll response is not a JSON object");
+        json_free(root);
+        http_free(h);
+        return NULL;
+    }
+
+    /* Check for authorization_pending (expected while user hasn't acted) */
+    const char *err_field = json_get_str(root, "error", NULL);
+    if (err_field) {
+        if (strcmp(err_field, "authorization_pending") == 0 ||
+            strcmp(err_field, "slow_down") == 0) {
+            /* Not an error — user hasn't authorized yet */
+            json_free(root);
+            http_free(h);
+            _set_error("pending");
+            return NULL;
+        }
+        const char *ed = json_get_str(root, "error_description", "");
+        _set_error("Device code poll error: %s — %s", err_field, ed);
+        json_free(root);
+        http_free(h);
+        return NULL;
+    }
+
+    http_free(h);
+
+    /* Parse token response */
+    oauth_token_t *tok = _parse_token_response_helper(root);
+    json_free(root);
+
+    if (!tok) {
+        /* _parse_token_response_helper sets last_error */
+        return NULL;
+    }
+
+    return tok;
+}
+
+/* Internal helper: parse token from already-parsed JSON root.
+ * Same as _parse_token_response but takes json_t* instead of string. */
+static oauth_token_t *_parse_token_response_helper(json_t *root) {
+    if (!root || root->type != JSON_OBJECT) {
+        _set_error("Token response is not a JSON object");
+        return NULL;
+    }
+
+    /* Check for error */
+    const char *err_str = json_get_str(root, "error", NULL);
+    if (err_str) {
+        const char *ed = json_get_str(root, "error_description", "");
+        _set_error("OAuth error: %s — %s", err_str, ed);
+        return NULL;
+    }
+
+    oauth_token_t *tok = (oauth_token_t *)calloc(1, sizeof(oauth_token_t));
+    if (!tok) {
+        _set_error("Out of memory");
+        return NULL;
+    }
+
+    const char *at = json_get_str(root, "access_token", "");
+    tok->access_token = at[0] ? strdup(at) : NULL;
+
+    const char *rt = json_get_str(root, "refresh_token", "");
+    tok->refresh_token = rt[0] ? strdup(rt) : NULL;
+
+    const char *it = json_get_str(root, "id_token", "");
+    tok->id_token = it[0] ? strdup(it) : NULL;
+
+    const char *tt = json_get_str(root, "token_type", "Bearer");
+    tok->token_type = strdup(tt);
+
+    tok->expires_in = (int)json_get_num(root, "expires_in", 0);
+
+    if (tok->expires_in > 0) {
+        time_t now = time(NULL);
+        tok->expires_at = (double)(now + tok->expires_in);
+    } else {
+        tok->expires_at = 0.0;
+    }
+
+    if (!tok->access_token) {
+        oauth_token_free(tok);
+        _set_error("Token response missing access_token");
+        return NULL;
+    }
+
+    return tok;
+}
+
+/* ================================================================
+ *  Nous Portal device code login
+ * ================================================================ */
+
+oauth_token_t *nous_device_code_login(int timeout_sec) {
+    /* Step 1: Request device code */
+    printf("\n🔐 Nous Portal Device Code Login\n");
+    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    oauth_device_code_t *dc = oauth_device_code_request(
+        NOUS_OAUTH_DEVICE_ENDPOINT,
+        DEFAULT_NOUS_CLIENT_ID,
+        NOUS_OAUTH_SCOPE,
+        timeout_sec);
+
+    if (!dc) {
+        printf("❌ Failed to start device code flow: %s\n", oauth_last_error());
+        return NULL;
+    }
+
+    /* Step 2: Display instructions */
+    printf("\n📋 Authorization Required\n\n");
+    if (dc->verification_uri_complete && dc->verification_uri_complete[0]) {
+        printf("   %s\n\n", dc->verification_uri_complete);
+    } else {
+        printf("   1. Open: %s\n", dc->verification_uri ? dc->verification_uri : "(unknown)");
+        printf("   2. Enter code: %s\n", dc->user_code ? dc->user_code : "(unknown)");
+    }
+    printf("\n   Your code: %s\n", dc->user_code ? dc->user_code : "???");
+    printf("\n⏳ Waiting for authorization ");
+    fflush(stdout);
+
+    /* Step 3: Poll for token */
+    int max_attempts = dc->expires_in > 0 ?
+        (dc->expires_in / (dc->interval > 0 ? dc->interval : 5)) : 120;
+    int poll_interval = dc->interval > 0 ? dc->interval : 5;
+
+    oauth_token_t *tok = NULL;
+    for (int attempt = 0; attempt < max_attempts; attempt++) {
+        /* Wait polling interval */
+        sleep(poll_interval);
+
+        printf(". ");
+        fflush(stdout);
+
+        tok = oauth_device_code_poll(
+            NOUS_OAUTH_TOKEN_ENDPOINT,
+            DEFAULT_NOUS_CLIENT_ID,
+            dc->device_code,
+            timeout_sec);
+
+        if (tok) {
+            printf("✅\n");
+            break;
+        }
+
+        const char *err = oauth_last_error();
+        if (err && strcmp(err, "pending") != 0) {
+            /* Real error, not just pending */
+            printf("\n❌ Poll failed: %s\n", err);
+            break;
+        }
+    }
+
+    oauth_device_code_free(dc);
+
+    if (!tok) {
+        const char *err = oauth_last_error();
+        if (err && strcmp(err, "pending") == 0) {
+            printf("\n⏰ Timed out waiting for authorization.\n");
+        } else if (err) {
+            printf("\n❌ %s\n", err);
+        } else {
+            printf("\n❌ Authorization failed.\n");
+        }
+        return NULL;
+    }
+
+    return tok;
+}
+
+/* ================================================================
+ *  Token refresh
+ * ================================================================ */
+
+oauth_token_t *oauth_refresh_token(
+    const char *token_endpoint,
+    const char *client_id,
+    const char *refresh_token,
+    int timeout_sec)
+{
+    if (!token_endpoint || !token_endpoint[0] ||
+        !client_id || !client_id[0] ||
+        !refresh_token || !refresh_token[0]) {
+        _set_error("token_endpoint, client_id, and refresh_token are required");
+        return NULL;
+    }
+
+    /* Build body: grant_type=refresh_token */
+    char body[2048];
+    size_t pos = 0;
+    if (_append_form_field(body, sizeof(body), &pos, "grant_type", "refresh_token") < 0) {
+        _set_error("Failed to build refresh body");
+        return NULL;
+    }
+    if (_append_form_field(body, sizeof(body), &pos, "refresh_token", refresh_token) < 0) {
+        _set_error("Failed to build refresh body (refresh_token)");
+        return NULL;
+    }
+    if (_append_form_field(body, sizeof(body), &pos, "client_id", client_id) < 0) {
+        _set_error("Failed to build refresh body (client_id)");
+        return NULL;
+    }
+
+    char headers[256];
+    snprintf(headers, sizeof(headers),
+        "Content-Type: application/x-www-form-urlencoded\r\n"
+        "Accept: application/json\r\n");
+
+    if (timeout_sec < 20) timeout_sec = 20;
+
+    http_t *h = http_new(timeout_sec);
+    if (!h) {
+        _set_error("Failed to create HTTP client");
+        return NULL;
+    }
+
+    http_resp_t *resp = http_request(h, HTTP_POST, token_endpoint,
+                                     headers, body, strlen(body));
+    if (!resp) {
+        _set_error("Token refresh request failed (connection error)");
+        http_free(h);
+        return NULL;
+    }
+
+    if (resp->status != 200) {
+        char eb[512] = {0};
+        if (resp->body && resp->body_len > 0) {
+            size_t cp = resp->body_len < 511 ? resp->body_len : 511;
+            memcpy(eb, resp->body, cp);
+            eb[cp] = '\0';
+        }
+        _set_error("Token refresh failed: HTTP %d — %s", resp->status, eb);
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    if (!resp->body || resp->body_len == 0) {
+        _set_error("Token refresh returned empty response body");
+        http_resp_free(resp);
+        http_free(h);
+        return NULL;
+    }
+
+    oauth_token_t *tok = _parse_token_response(resp->body);
+    http_resp_free(resp);
+    http_free(h);
+
+    return tok;
 }
