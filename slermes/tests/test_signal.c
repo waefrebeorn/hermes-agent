@@ -56,6 +56,15 @@ static void test_signal_on_default(void) {
     /* Restore default */
     TEST("signal_default returns true for SIGUSR1",
          signal_default(SIGUSR1));
+
+    /* SIGUSR2 — verify round-trip */
+    TEST("signal_on returns true for SIGUSR2",
+         signal_on(SIGUSR2, test_handler));
+    g_sig_caught = 0;
+    raise(SIGUSR2);
+    TEST_INT_EQ("handler caught SIGUSR2", g_sig_caught, 1);
+    TEST("signal_default returns true for SIGUSR2",
+         signal_default(SIGUSR2));
 }
 
 /* ================================================================
