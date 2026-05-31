@@ -1,7 +1,8 @@
-# Goal Mantra — Slermes C (v416)
+# Goal Mantra — Slermes C (v417)
 
-328/0/12 (289 test files). 67 gaps. Phase 359: Nous Portal OAuth device code login.
-Added device code flow (RFC 8628), token refresh, wired into /auth login nous.
+328/0/12 (289 test files). 67 gaps. Phase 360: Auth CLI token management.
+/auth status shows OAuth token expiry. /auth refresh [provider] refreshes tokens.
+/auth tokens lists all stored OAuth tokens.
 
 ## Loop
 
@@ -15,6 +16,6 @@ Commit. Push. Repeat.
 ## Status
 
 Sectors: S0+S1+S3+S6 PORTED. F10 PORTED. R02+R04+R10 PORTED.
-S4: 24 TUI gaps. S5: 12 CLI gaps. S7: 19 test gaps (1000+ cases).
+S4: 24 TUI gaps. S5: 11 CLI gaps. S7: 19 test gaps (1000+ cases).
 S8: 0 provider gaps. S9: 20 plugin gaps. S10: 7 arch gaps.
-C11 auth: device code flow added for Nous Portal.
+C11 auth: device code, token refresh, token listing all implemented.

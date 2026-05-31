@@ -4977,7 +4977,6 @@ static void cmd_auth(const char *args, agent_state_t *state) {
         if (!bws) bws = getenv("SLERMES_BWS_TOKEN");
         printf("  Bitwarden (BSM):  %s\n", (bws && *bws) ? "configured" : "not set");
 
-        /* Check if .env exists */
         printf("\n=== Config Status ===\n");
         const char *home = state->hermes_home[0] ? state->hermes_home : NULL;
         if (!home) home = getenv("SLERMES_HOME");
@@ -4996,8 +4995,38 @@ static void cmd_auth(const char *args, agent_state_t *state) {
         printf("  config.yaml:     %s\n",
                (home && access(cfg_path, F_OK) == 0) ? "present" : "not found");
 
+        /* Show OAuth token status */
+        if (home) {
+            int oauth_count = 0;
+            auth_entry_t *entries = auth_store_load(home, &oauth_count);
+            if (entries && oauth_count > 0) {
+                printf("\n  OAuth Tokens:\n");
+                time_t now = time(NULL);
+                for (int i = 0; i < oauth_count; i++) {
+                    const char *status = "expired";
+                    if (entries[i].token.expires_at > 0) {
+                        if (entries[i].token.expires_at > (double)now)
+                            status = "valid";
+                        else if (entries[i].token.refresh_token && entries[i].token.refresh_token[0])
+                            status = "expired (refreshable)";
+                    } else if (entries[i].token.access_token) {
+                        status = "valid (no expiry)";
+                    }
+                    printf("    %-20s %s", entries[i].provider, status);
+                    if (entries[i].token.expires_at > 0) {
+                        time_t et = (time_t)entries[i].token.expires_at;
+                        printf("  (expires %s", ctime(&et));
+                    } else {
+                        printf("\n");
+                    }
+                }
+                auth_store_free(entries, oauth_count);
+            }
+        }
+
         printf("\n  For details, use: /secrets status\n");
         printf("  For auth login flows, use: /auth login <provider> [key]\n");
+        printf("  To refresh OAuth tokens: /auth refresh [provider]\n");
         return;
     }
 
@@ -5109,8 +5138,107 @@ static void cmd_auth(const char *args, agent_state_t *state) {
         return;
     }
 
+    if (strcmp(sub, "refresh") == 0 || strncmp(sub, "refresh ", 8) == 0) {
+        const char *target = sub + 7;
+        while (*target == ' ') target++;
+        const char *home = state->hermes_home[0] ? state->hermes_home : getenv("HOME");
+        if (!home) { printf("Cannot determine home directory.\n"); return; }
+
+        int count = 0;
+        auth_entry_t *entries = auth_store_load(home, &count);
+        if (!entries || count == 0) {
+            printf("No OAuth tokens found in auth store.\n");
+            auth_store_free(entries, count);
+            return;
+        }
+
+        int refreshed = 0;
+        for (int i = 0; i < count; i++) {
+            if (target[0] && strcmp(entries[i].provider, target) != 0)
+                continue;
+            if (!entries[i].token.refresh_token || !entries[i].token.refresh_token[0]) {
+                if (target[0]) printf("  %s: no refresh token\n", entries[i].provider);
+                continue;
+            }
+            /* Determine token endpoint from provider name */
+            const char *endpoint = NULL;
+            const char *client_id = "hermes-cli";
+            if (strcmp(entries[i].provider, "nous-oauth") == 0) {
+                endpoint = NOUS_OAUTH_TOKEN_ENDPOINT;
+            } else if (strcmp(entries[i].provider, "xai-oauth") == 0) {
+                endpoint = "https://auth.x.ai/oauth2/token";
+                client_id = XAI_OAUTH_CLIENT_ID;
+            }
+            if (!endpoint) {
+                printf("  %s: unknown token endpoint, skipping\n", entries[i].provider);
+                continue;
+            }
+
+            printf("  Refreshing %s... ", entries[i].provider);
+            fflush(stdout);
+            oauth_token_t *tok = oauth_refresh_token(endpoint, client_id,
+                entries[i].token.refresh_token, 30);
+            if (!tok) {
+                printf("failed: %s\n", oauth_last_error());
+                continue;
+            }
+            /* Save updated token */
+            auth_entry_t new_entry;
+            memset(&new_entry, 0, sizeof(new_entry));
+            strncpy(new_entry.provider, entries[i].provider, sizeof(new_entry.provider) - 1);
+            new_entry.token = *tok;
+            if (auth_store_save(home, &new_entry)) {
+                printf("ok\n");
+                refreshed++;
+            } else {
+                printf("save failed\n");
+                oauth_token_free(tok);
+            }
+        }
+        auth_store_free(entries, count);
+        printf("\nRefreshed %d token(s).\n", refreshed);
+        return;
+    }
+
+    if (strcmp(sub, "tokens") == 0) {
+        const char *home = state->hermes_home[0] ? state->hermes_home : getenv("HOME");
+        if (!home) { printf("Cannot determine home directory.\n"); return; }
+        int count = 0;
+        auth_entry_t *entries = auth_store_load(home, &count);
+        if (!entries || count == 0) {
+            printf("No OAuth tokens stored.\n");
+            auth_store_free(entries, count);
+            return;
+        }
+        printf("Stored OAuth tokens:\n");
+        time_t now = time(NULL);
+        for (int i = 0; i < count; i++) {
+            const char *status = "expired";
+            if (entries[i].token.expires_at > 0) {
+                if (entries[i].token.expires_at > (double)now)
+                    status = "valid";
+                else if (entries[i].token.refresh_token && entries[i].token.refresh_token[0])
+                    status = "expired (refreshable)";
+            } else if (entries[i].token.access_token) {
+                status = "valid (no expiry)";
+            }
+            printf("  %-20s %s", entries[i].provider, status);
+            if (entries[i].token.expires_at > 0) {
+                time_t et = (time_t)entries[i].token.expires_at;
+                printf("  (expires %s", ctime(&et));
+            } else {
+                printf("\n");
+            }
+            printf("                 refresh_token: %s\n",
+                   entries[i].token.refresh_token && entries[i].token.refresh_token[0] ? "yes" : "no");
+        }
+        auth_store_free(entries, count);
+        printf("\nUse /auth refresh [provider] to refresh expiring tokens.\n");
+        return;
+    }
+
     printf("Unknown subcommand: '%s'\n", sub);
-    printf("Usage: /auth status | providers | login\n");
+    printf("Usage: /auth status | providers | login | tokens | refresh\n");
 }
 
 /* ================================================================

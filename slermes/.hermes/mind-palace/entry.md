@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v416)
+# Entry — Slermes C Parity (v417)
 
-Phase 359: Nous Portal OAuth device code login. 67 gaps.
+Phase 360: Auth CLI token management — /auth refresh, /auth tokens. 67 gaps.
