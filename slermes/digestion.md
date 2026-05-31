@@ -12,7 +12,7 @@ The digestion system tracks Python code changes from upstream Hermes Agent and m
 ## Workflow
 
 ```bash
-cd /home/wubu/hermes-agent-dev/C/
+cd /home/wubu/hermes-agent-dev/slermes/
 
 # Check for upstream changes:
 python3 digest.py --upstream
@@ -41,7 +41,7 @@ Entries with `(".")` indicate the Python module has NO C equivalent yet — thes
 
 ## Super Fork Architecture
 
-The C code lives in the SAME repo as the Python code (under `C/`). This means:
+The C code lives in the SAME repo as the Python code (under `slermes/`). This means:
 - `git pull wubu main` updates both Python and C in one operation
 - `git fetch origin` fetches upstream Python changes
 - `digest.py --upstream` detects what Python changes need C porting

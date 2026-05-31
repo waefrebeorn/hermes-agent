@@ -204,7 +204,7 @@ Claims from battleship-v19 verified against running source — all already imple
 | M01 | discord tool missing (P2) | `discord` tool registered with 12 actions | `src/tools/discord.c:482` — registry_register("discord") |
 | M02 | discord_admin missing (P2) | `discord_admin` tool registered | `src/tools/discord.c:510` — registry_register("discord_admin") |
 | L02 | libmcp SSE streaming missing | SSE transport state, event buffer, POST to SSE endpoint | `lib/libmcp/mcp.c:45-56` — SSE transport fields |
-| I01 | No Dockerfile | Dockerfile exists (1177 bytes) | `C/Dockerfile` — build works with `docker build` |
+| I01 | No Dockerfile | Dockerfile exists (1177 bytes) | `slermes/Dockerfile` — build works with `docker build` |
 Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file exists with substantive content (vision: 229L, image_gen: 76L, video_gen: 61L, transcribe: 95L, session_search: 285L). Edge case expansion P3 remains.
 ## Phase 10: Gateway Vtable Wiring
 | ID | Achievement | Evidence |
@@ -283,9 +283,9 @@ Note: X01-X05 (test coverage gaps) were listed as "0 test files" — each file e
 |----|-------------|----------|
 | U01 | Discovered and documented 7583 upstream commits behind upstream since fork point 2517917de | `git rev-list --count HEAD..upstream/main` = 7583 |
 | U02 | Cataloged 7 upstream drift impact areas: provider/API, agent loop, gateway, tool schema, MCP, security/auth, test suite | `C/.hermes/mind-palace/battleship-v27.md` S4 sector |
-| U03 | Retired false "0 gaps" claim — replaced with honest 33-gap assessment across 5 sectors | `C/.hermes/mind-palace/state.md` v116 |
-| U04 | Updated all walkway files to v116 with correct tool/CLI counts (85 tools, 80 CLI, 37 config sections) | All files in `C/.hermes/mind-palace/` |
-| U05 | Updated BANNER.md and README.md with honest gap counts | `C/BANNER.md`, `C/README.md` header block |
+| U03 | Retired false "0 gaps" claim — replaced with honest 33-gap assessment across 5 sectors | `slermes/.hermes/mind-palace/state.md` v116 |
+| U04 | Updated all walkway files to v116 with correct tool/CLI counts (85 tools, 80 CLI, 37 config sections) | All files in `slermes/.hermes/mind-palace/` |
+| U05 | Updated BANNER.md and README.md with honest gap counts | `slermes/BANNER.md`, `slermes/README.md` header block |
 | U06 | Fast-forwarded to upstream origin/main (3 new commits) | `git fetch origin main` -> `git merge --ff-only` to b243afb68 |
 | U07 | Verified no regression after upstream sync -- suite 282/0/0, 0 warnings | `make clean && make` + `bash test_runner.sh` |
 ## Phase 29: Fork Sync & Doc Migration (v117)

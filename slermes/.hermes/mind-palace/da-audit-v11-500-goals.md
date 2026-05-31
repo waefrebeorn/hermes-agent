@@ -281,7 +281,7 @@ Removing unused variable would clean up a warning.
 ## Part 7: CI/CD Fixes Applied
 
 1. **Dockerfile** — `RUN make` at wrong directory → `RUN cd C && make`
-2. **Dockerfile** — Wrong stage2 COPY paths → `/build/C/hermes`
+2. **Dockerfile** — Wrong stage2 COPY paths → `/build/slermes/hermes`
 3. **c-build.yml** — Removed `tail -20` truncation → full build output visible
 4. **c-build.yml** — Removed `make clean` before TUI build (was destroying binary)
 5. **c-build.yml** — Uncapped `tail -5`/`tail -10` for plugin and TUI output

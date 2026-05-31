@@ -1,7 +1,7 @@
 # Triple Devil's Advocate — Hermes C (v14)
 
 **Audit date:** 2026-05-23  
-**Scope:** `/home/wubu/hermes-agent-dev/C/`  
+**Scope:** `/home/wubu/hermes-agent-dev/slermes/`  
 **Python reference:** `/home/wubu/hermes-agent-dev/` (run_agent.py, cli.py, tools/, gateway/)
 
 ---
@@ -219,7 +219,7 @@ cli.py → HermesCLI.__init__() → load config
 
 ### Dockerfile ✅
 
-`C/Dockerfile` — Two-stage build:
+`slermes/Dockerfile` — Two-stage build:
 1. `gcc:13-bookworm` builder → `make -j$(nproc) hermes`
 2. `debian:bookworm-slim` runtime → 20MB static binary
 - Sets `SLERMES_HOME=/etc/hermes`

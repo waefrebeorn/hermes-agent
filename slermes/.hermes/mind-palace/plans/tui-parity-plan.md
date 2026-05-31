@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-23  
 **Scope:** C CLI display layer — achieve pixel/terminal-exact visual parity with Python Hermes  
-**Codebases:** Python (`hermes-agent-dev/`) → C (`hermes-agent-dev/C/`)
+**Codebases:** Python (`hermes-agent-dev/`) → C (`hermes-agent-dev/slermes/`)
 
 ---
 
