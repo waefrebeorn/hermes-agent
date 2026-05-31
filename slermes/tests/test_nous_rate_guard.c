@@ -70,6 +70,50 @@ int main(void) {
     rem = nous_rate_guard_remaining(tmpdir);
     TEST("expired_reset_uses_cooldown", rem > 0 && rem < 90);
 
+    /* Edge: format boundary cases */
+    {
+        char buf[64];
+        nous_rate_guard_format_remaining(0.0, buf, sizeof(buf));
+        TEST("format_0s", strcmp(buf, "0s") == 0);
+        nous_rate_guard_format_remaining(59.0, buf, sizeof(buf));
+        TEST("format_59s", strcmp(buf, "59s") == 0);
+        nous_rate_guard_format_remaining(60.0, buf, sizeof(buf));
+        TEST("format_60s_is_1m", strcmp(buf, "1m") == 0);
+        nous_rate_guard_format_remaining(119.0, buf, sizeof(buf));
+        TEST("format_119s_is_1m59s", strcmp(buf, "1m 59s") == 0);
+        nous_rate_guard_format_remaining(86400.0, buf, sizeof(buf));
+        TEST("format_24h", strcmp(buf, "24h") == 0);
+    }
+
+    /* Edge: NULL path safety */
+    {
+        double r = nous_rate_guard_remaining(NULL);
+        TEST("remaining_NULL_path", r < 0);
+        nous_rate_guard_record(NULL, 100.0, 60.0);
+        TEST("record_NULL_path_no_crash", 1);
+        nous_rate_guard_clear(NULL);
+        TEST("clear_NULL_path_no_crash", 1);
+    }
+
+    /* Edge: format with tiny buffer */
+    {
+        char tiny[2];
+        nous_rate_guard_format_remaining(45.0, tiny, sizeof(tiny));
+        TEST("format_tiny_buf_no_crash", 1);
+        nous_rate_guard_format_remaining(0.0, NULL, 0);
+        TEST("format_NULL_buf_no_crash", 1);
+    }
+
+    /* Edge: negative reset_at */
+    nous_rate_guard_record(tmpdir, -5.0, 60.0);
+    rem = nous_rate_guard_remaining(tmpdir);
+    TEST("negative_reset_still_works", 1);  /* no crash */
+
+    /* Edge: very large reset_at (years in future) */
+    nous_rate_guard_record(tmpdir, now + 86400.0 * 365 * 10, 300.0);  /* 10 years */
+    rem = nous_rate_guard_remaining(tmpdir);
+    TEST("very_large_reset_no_crash", 1);  /* no crash */
+
     /* Cleanup */
     unlink(tmpdir);
     rmdir(tmpdir);
