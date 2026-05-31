@@ -135,6 +135,112 @@ int main(void)
         free(preview);
     }
 
-    printf("\n=== Results: %d passed, %d failed ===\n", tests_passed, tests_failed);
+    /* ── max_chars = 0 ── */
+    printf("\n-- max_chars=0 --\n");
+    {
+        bool has_more = true;
+        char *preview = tool_result_generate_preview("hello", 0, &has_more);
+        TEST("zero max_chars returns empty", strcmp(preview, "") == 0);
+        TEST("has_more is true (truncated)", has_more == true);
+        free(preview);
+    }
+
+    /* ── max_chars = 1 (minimal boundary) ── */
+    printf("\n-- max_chars=1 --\n");
+    {
+        bool has_more = true;
+        char *preview = tool_result_generate_preview("ABC", 1, &has_more);
+        TEST("max_chars=1 returns first char", strcmp(preview, "A") == 0);
+        TEST("has_more is true", has_more == true);
+        free(preview);
+    }
+
+    /* ── negative max_chars ── */
+    printf("\n-- Negative max_chars --\n");
+    {
+        bool has_more = true;
+        char *preview = tool_result_generate_preview("hello", -1, &has_more);
+        /* (size_t)-1 = SIZE_MAX, so len <= max_chars always true -> returns full content */
+        TEST("negative max_chars returns full content (unsigned overflow)",
+             strcmp(preview, "hello") == 0);
+        TEST("has_more is false (no truncation)", has_more == false);
+        free(preview);
+    }
+
+    /* ── has_more = NULL ── */
+    printf("\n-- NULL has_more --\n");
+    {
+        char *preview = tool_result_generate_preview("short", 100, NULL);
+        TEST("NULL has_more doesn't crash", preview != NULL);
+        TEST("short content still correct", strcmp(preview, "short") == 0);
+        free(preview);
+
+        preview = tool_result_generate_preview(NULL, 100, NULL);
+        TEST("NULL content + NULL has_more doesn't crash", preview != NULL);
+        TEST("returns empty string", strcmp(preview, "") == 0);
+        free(preview);
+
+        preview = tool_result_generate_preview("long long long", 5, NULL);
+        TEST("truncation with NULL has_more doesn't crash", preview != NULL);
+        free(preview);
+    }
+
+    /* ── Empty string ── */
+    printf("\n-- Empty string --\n");
+    {
+        bool has_more = false;
+        char *preview = tool_result_generate_preview("", 100, &has_more);
+        TEST("empty string returned as-is", strcmp(preview, "") == 0);
+        TEST("has_more is false", has_more == false);
+        free(preview);
+    }
+
+    /* ── Newline at exactly halfway point (should NOT trigger) ── */
+    printf("\n-- Newline Exactly at Halfway --\n");
+    {
+        /* max_chars=100, halfway=50. Newline at 50. Code uses > not >= */
+        /* Content: 50 'A's + \n at 50 + 60 'B's = 111 chars, past max_chars 100 */
+        char content[200];
+        memset(content, 'A', 50);
+        content[50] = '\n';
+        memset(content + 51, 'B', 60);
+        content[111] = '\0';
+        bool has_more = false;
+        char *preview = tool_result_generate_preview(content, 100, &has_more);
+        /* newline at 50, halfway=50, 50>50 == false, truncate at 100 */
+        TEST("newline exactly at halfway not used", (int)strlen(preview) == 100);
+        TEST("has_more is true", has_more == true);
+        free(preview);
+    }
+
+    /* ── Newline at halfway+1 (should trigger) ── */
+    printf("\n-- Newline at Halfway+1 --\n");
+    {
+        /* Content: 51 'A's + \n at 51 + 60 'B's = 112 chars, past max_chars 100 */
+        char content[200];
+        memset(content, 'A', 51);
+        content[51] = '\n';
+        memset(content + 52, 'B', 60);
+        content[112] = '\0';
+        bool has_more = false;
+        char *preview = tool_result_generate_preview(content, 100, &has_more);
+        /* newline at 51, halfway=50, 51>50 == true, truncate at 52 (includes \n) */
+        TEST("truncated at newline (52 chars)", (int)strlen(preview) == 52);
+        TEST("has_more is true", has_more == true);
+        free(preview);
+    }
+
+    /* ── Content with trailing newline within limit ── */
+    printf("\n-- Trailing Newline --\n");
+    {
+        bool has_more = true;
+        char *preview = tool_result_generate_preview("hello world\n", 100, &has_more);
+        TEST("content with \\n not truncated", strcmp(preview, "hello world\n") == 0);
+        TEST("has_more is false", has_more == false);
+        free(preview);
+    }
+
+    printf("\n=== Results: %d passed, %d failed ===\n",
+           tests_passed, tests_failed);
     return tests_failed > 0 ? 1 : 0;
 }

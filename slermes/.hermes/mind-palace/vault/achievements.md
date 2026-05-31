@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v398** · 68 active gaps · **2155 entries** of progress
+|> **v399** · 68 active gaps · **2156 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2190,4 +2190,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 ||| 339 | X09 | skill_mgmt edge case expansion — 6 new test functions (9→15 tests). Covers: skill name with dots/hyphens (my.special-skill.v2), empty skill dir without SKILL.md excluded from listing, empty name errors gracefully, manage create action creates skill dir + lists correctly, manage delete removes skill dir, manage edit updates content verified via view. | `tests/test_skill_mgmt.c` — 6 new test functions (9→15). `test_runner.sh` — count 9→15. Suite 326/0/14. v396. |
 || 340 | X09 | Clarify tool edge case expansion — 12 new test sections (12→24 tests, 29 new assertions 12→41). Covers: empty choices array (no choices_offered), single choice, out-of-range index 0 (atoi-1 negative), negative index, quotes in response (JSON-special chars), whitespace-only response (3 spaces preserved), skip with choices, very long question (1100 chars), null choice items gracefully skipped (not displayed, not selectable). | `tests/test_clarify.c` — 12 new test sections (12→24 tests). Suite 326/0/14. v397. |
 || 341 | X09 | Tool result edge case expansion — 21 new assertions (27→48). Covers: case sensitivity (Write_File/WRITE_FILE returns false), other mutation tools (file_merge/exec_code/image_gen/session_crud), bytes_written edge cases (0.0, -0.5, string "5", bool true all false), success edge cases (number 1, string "true"), error field variants (empty string, false bool, number 0 all treated as error), nested bytes_written (not detected at top level), very long JSON result (3800-char padding handled gracefully). | `tests/test_tool_result.c` — 21 new assertions (27→48). Suite 326/0/14. v398. |
+|| 342 | X09 | Tool result storage edge case expansion — 18 new assertions (16→34). max_chars=0 returns empty (has_more=true), max_chars=1 minimal boundary, negative max_chars (unsigned SIZE_MAX overflow returns full content), NULL has_more pointer (short/NULL/truncation — no crash), empty string passthrough, newline exactly at halfway (not used — `>` not `>=`), newline at halfway+1 (triggers truncation at pos 52), trailing newline within limit. | `tests/test_tool_result_storage.c` — 18 new assertions (16→34). Suite 326/0/14. v399. |
 |
