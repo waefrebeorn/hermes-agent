@@ -7,15 +7,15 @@
 - Library unit tests (json, protobuf, yaml, crypto, http, ...)
 - Provider unit tests (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
 - Tool tests (file, web, terminal, send_message, patch, session_search, ...)
-- TUI tests (json_rpc, transport, render, layout, entry, slash_worker, eventpub, websocket, edge)
-- Agent loop tests (agent_loop_core, conversation_edge, fuzz)
-- Gateway platform tests (gateway_platforms)
-- Process, tool coercion, delegate edge case tests
+# Testing — Slermes C Test Suite (v454)
 
-## Recent Improvements (Phase 397)
-- test_provider_azure.c: 54→94 assertions (+40)
-- 4 new test functions: URL/header edge, response edge, streaming depth
-- Bug fix: finish_reason extraction in azure_parse_response
+## Current Status
+338/?/13 — Suite stable. Pre-existing TTY skip fluctuation acceptable.
+
+## Recent Improvements (Phase 398)
+- test_provider_bedrock.c: 41→102 assertions (+61)
+- 6 new test functions: stop reason mapping, error classification,
+  context overflow, response edge cases, URL edge, streaming depth
 
 ## Test Labels (test_runner.sh)
 - provider_openai: 111 tests
@@ -23,4 +23,5 @@
 - provider_deepseek: 106 tests
 - provider_google: 152 tests
 - provider_xai: 133 tests
-- provider_azure: 94 tests (was 54)
+- provider_azure: 94 tests
+- provider_bedrock: 102 tests (was 40)

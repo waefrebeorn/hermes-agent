@@ -797,7 +797,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_bedrock.c" \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_bedrock -lm -lcrypto 2>/dev/null && [[ -x /tmp/hermes_test_provider_bedrock ]]; then
     if /tmp/hermes_test_provider_bedrock > /dev/null 2>&1; then
-        ok "provider_bedrock (40 tests)"
+        ok "provider_bedrock (102 tests)"
     else fail "provider_bedrock (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_provider_bedrock

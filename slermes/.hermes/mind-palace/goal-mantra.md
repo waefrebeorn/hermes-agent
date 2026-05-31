@@ -1,5 +1,6 @@
-v453
-338/?/13. 53 gaps. Phase 397: Azure Provider Test Expansion — S7 X03 EXPANDED.
-40 new assertions (54→94). URL/header edge cases, response edge cases,
-streaming depth. Bug fix: finish_reason in azure_parse_response.
-S7 X03: improved parity (OpenAI+Anthropic+DeepSeek+Google+xAI+Azure expanded).
+v454
+338/?/13. 53 gaps. Phase 398: Bedrock Provider Test Expansion — S7 X03.
+61 new assertions (41→102). Stop reason mapping (6 Bedrock reasons),
+error classification (3 categories), context overflow (3 patterns),
+response edge cases.
+S7 X03: improved parity (6/10 providers expanded).

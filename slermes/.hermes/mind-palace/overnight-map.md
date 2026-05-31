@@ -1,30 +1,31 @@
-# Overnight Map (v453)
+# Overnight Map (v454)
 
-## Phase 397 — Azure Provider Test Expansion
-**S7 X03 EXPANDED** — 40 new assertions in test_provider_azure.c (54→94 total)
-**Coverage:** URL edge cases (proxy URL preserved with /deployments/, custom
-model name in URL, empty base→default azure.com); header edge cases (empty key
-omits api-key, NULL key omits, long key included); response edge cases (empty
-choices array, no choices key, null content→empty string, length finish reason
-with finish_reason extracted, no usage metadata→zero tokens); streaming edge
-depth (empty delta, empty chunk, length finish reason in stream, whitespace
-delta preserved).
-**Bug fix:** azure_parse_response — missing finish_reason extraction from choice
-level (same pattern as xAI Phase 396). The streaming path already had it.
+## Phase 398 — Bedrock Provider Test Expansion
+**S7 X03 EXPANDED** — 61 new assertions in test_provider_bedrock.c (41→102 total)
+**Coverage:** Stop reason mapping (end_turn→stop, stop_sequence→stop,
+tool_use→tool_calls, max_tokens→length, content_filtered→content_filter,
+guardrail_intervened→content_filter, unknown_reason→stop, missing→"");
+error classification: bedrock_is_context_overflow (15 cases across 3
+patterns: validation+too_long, validation+exceeds+max_tokens,
+stream_error+too_long + non-matches), bedrock_classify_error (10 cases:
+context_overflow, rate_limit 3 patterns, overloaded 4 patterns, unknown, NULL);
+response edge cases (no output, no message, empty content→NULL,
+tool-only content→empty text+tool count); URL edge cases (NULL base→default
+region, empty model→default model); streaming (NULL→"", empty→"").
 **Suite:** 338/?/13 — Stable
-**Gaps:** 53 (depth improved, no count reduction)
+**Gaps:** 53 (depth improved)
 
 ## Files Modified
-- tests/test_provider_azure.c — +40 assertions, 4 new test functions
-- src/agent/provider_azure.c — bug fix (finish_reason in parse_response)
-- test_runner.sh — label 54→94
-- .hermes/mind-palace/ — all walkways bumped v453
+- tests/test_provider_bedrock.c — +61 assertions, 6 new test functions
+- test_runner.sh — label 40→102
+- .hermes/mind-palace/ — all walkways bumped v454
 
 ## Phases This Session
-391: Delegate edge cases (S7 X04)
-392: OpenAI provider tests (S7 X03) — 2 bug fixes
-393: Anthropic provider tests (S7 X03)
-394: DeepSeek provider tests (S7 X03)
-395: Google provider tests (S7 X03)
-396: xAI provider tests (S7 X03) — 1 bug fix
-397: Azure provider tests (S7 X03) — 1 bug fix
+391: Delegate (S7 X04)
+392: OpenAI (S7 X03) — 2 bug fixes
+393: Anthropic (S7 X03)
+394: DeepSeek (S7 X03)
+395: Google (S7 X03)
+396: xAI (S7 X03) — 1 bug fix
+397: Azure (S7 X03) — 1 bug fix
+398: Bedrock (S7 X03)

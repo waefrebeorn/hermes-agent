@@ -16,5 +16,5 @@
 | achievements.md | Vault of all closed gaps |
 | da-audit-v14.md, v15.md | Devil's Advocate audits |
 
-## Phase 397
-Azure Provider Test Expansion — S7 X03 EXPANDED. 40 new assertions (54→94). URL/header edge, response edge, streaming depth. Bug fix: finish_reason extraction.
+## Phase 398
+Bedrock Provider Test Expansion — S7 X03 EXPANDED. 61 new assertions (41→102). Stop reason mapping, error classification, context overflow, response edge cases.
