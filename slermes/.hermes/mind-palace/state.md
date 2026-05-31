@@ -244,3 +244,4 @@
 ||- Phase 320: X09 Proc bugfix — proc_read_stat field-off-by-one. `(char **)&ptr` with `const char *ptr` caused strtoul to not update ptr. Replaced with local `char *end` + `ptr = end` pattern. Added missing space skip after stime read. Suite 325/0/14 (was 323/2/15). v384.|
 ||- Phase 321: X09 Vision media-in-tool-results edge case expansion — 12 new assertions (23→35). Covers: case sensitivity, model version boundary (gemini-30 false positive), precision fix (strstr("gemini-3") → strstr("gemini-3.") || strstr("gemini-3-") || strcmp("gemini-3")), whitespace, future models. Suite 325/0/14. v385.|
 ||- Phase 322: X09 Telegram thread_id edge case expansion — 7 new assertions (6→13). Leading zero, whitespace, non-numeric, multiple leading zeros. Suite 325/0/14. v385.|
+||- Phase 323: X09 Moonshot schema edge case expansion — 13 new assertions (17→30). Items tuple, empty/NULL/invalid JSON, deep nesting, all-null enum. Suite 325/0/14. v385.|
