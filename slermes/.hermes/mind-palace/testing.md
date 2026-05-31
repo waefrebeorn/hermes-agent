@@ -1,6 +1,6 @@
-# Testing — Slermes C (v393)
+# Testing — Slermes C (v394)
 
-326/0/14, 289 test files. All pass. 68 gaps. Phase 336: file_batch edge case expansion (6→13 tests).
+326/0/14, 289 test files. All pass. 68 gaps. Phase 337: escape sequence getchar/read buffer fix.
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.
