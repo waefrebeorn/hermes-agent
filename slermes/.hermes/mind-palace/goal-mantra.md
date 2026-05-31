@@ -1,4 +1,4 @@
-v441
-338/0/13. 53 gaps. Phase 385: Gateway Platform Test Expansion — S7 X07 EXPANDED.
-48 new gateway platform assertions (75→123 total). WhatsApp/Slack/Matrix/Mattermost/Discord
-coverage. S7 X07: 22%→improved parity.
+v442
+338/0/13. 53 gaps. Phase 386: Conversation Loop Edge Case Expansion — S7 X08 EXPANDED.
+19 new conversation loop edge assertions (29→48 total). Null safety, tool-only,
+consecutive assistants, long IDs. S7 X08: 5%→improved parity.

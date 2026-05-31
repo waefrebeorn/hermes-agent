@@ -342,7 +342,172 @@ static void test_tool_call_arg_truncation(void) {
     free_msgs(msgs, cnt);
 }
 
-/* ── main ── */
+/* ── Additional message sequence edge cases ── */
+
+static void test_repair_consecutive_assistants(void) {
+    /* Two consecutive assistant messages — repair behaves predictably */
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "hello");
+    msgs[1] = make_assistant_tc("first", NULL, NULL, 0);
+    msgs[2] = make_assistant_tc("second", NULL, NULL, 0);
+
+    int cnt = 3;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("consecutive assistants: no crash", r >= 0);
+    TEST("consecutive assistants: count decreased or equal", cnt <= 3);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_assistant_before_system(void) {
+    /* Assistant before system (invalid order) — should drop assistant */
+    message_t msgs[2];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_ASSISTANT, "response before system");
+    msgs[1] = make_msg(MSG_SYSTEM, "you are helpful");
+
+    int cnt = 2;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("assistant before system: repair", r >= 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_tool_after_tool_consecutive(void) {
+    /* Two tool results for the same call ID (edge: duplicate) */
+    const char *ids[] = {"call_x"};
+    const char *names[] = {"tool_x"};
+    message_t msgs[4];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tc("running", ids, names, 1);
+    msgs[1] = make_tool_msg("call_x", "first result");
+    msgs[2] = make_tool_msg("call_x", "second result"); /* duplicate */
+    msgs[3] = make_msg(MSG_USER, "continue");
+
+    int cnt = 4;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    /* Second tool with same ID is kept since it matches the assistant */
+    TEST("duplicate tool call ID: no crash", r >= 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_system_only(void) {
+    /* Only a system message, no user */
+    message_t msgs[1];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_SYSTEM, "you are helpful");
+
+    int cnt = 1;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("system only: no crash", r >= 0);
+    TEST("system only: count unchanged", cnt == 1);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_assistant_only(void) {
+    /* Only an assistant message, no user/system */
+    message_t msgs[1];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tc("hello!", NULL, NULL, 0);
+
+    int cnt = 1;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("assistant only: no crash", r >= 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_tool_only(void) {
+    /* Only a tool message with no assistant */
+    message_t msgs[1];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_tool_msg("orphan", "no assistant");
+
+    int cnt = 1;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("tool only: dropped (1 repair)", r == 1);
+    TEST("tool only: count=0", cnt == 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_tool_call_null_name(void) {
+    /* Assistant with null tool name but valid ID */
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    const char *ids[] = {"call_1"};
+    const char *names[] = {""};  /* empty name, not NULL */
+    msgs[0] = make_assistant_tc("thinking", ids, names, 1);
+    msgs[1] = make_tool_msg("call_1", "result");
+    msgs[2] = make_msg(MSG_USER, "thanks");
+
+    int cnt = 3;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("null tool name: 0 repairs (names ignored in matching)", r == 0);
+    free_msgs(msgs, cnt);
+}
+
+static void test_repair_extremely_long_tool_id(void) {
+    /* Reasonably long tool call ID — within tool_call_t.id[64] limit */
+    char long_id[60];
+    memset(long_id, 'x', sizeof(long_id) - 1);
+    long_id[sizeof(long_id) - 1] = '\0';
+    const char *ids[] = {long_id};
+    const char *names[] = {"tool"};
+    message_t msgs[3];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_assistant_tc("running", ids, names, 1);
+    msgs[1] = make_tool_msg(long_id, "done");
+    msgs[2] = make_msg(MSG_USER, "ok");
+
+    int cnt = 3;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("long tool ID: 0 repairs (valid match)", r == 0);
+    TEST("long tool ID: count=3", cnt == 3);
+    free_msgs(msgs, cnt);
+}
+
+/* ── NULL safety edge cases ── */
+
+static void test_repair_null_safety(void) {
+    /* NULL pointer safety for repair and sanitize */
+    int cnt = 5;
+    TEST("repair: NULL msgs, NULL count is safe",
+         hermes_repair_message_sequence(NULL, NULL) == 0);
+    TEST("repair: NULL msgs is safe",
+         hermes_repair_message_sequence(NULL, &cnt) == 0);
+    /* NULL count with valid msgs */
+    message_t msgs[1];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "test");
+    TEST("repair: NULL count is safe",
+         hermes_repair_message_sequence(msgs, NULL) == 0);
+    free_msgs(msgs, 1);
+
+    TEST("sanitize: NULL msgs, NULL count is safe",
+         hermes_sanitize_tool_call_arguments(NULL, NULL) == 0);
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "test");
+    cnt = 1;
+    TEST("sanitize: NULL count is safe",
+         hermes_sanitize_tool_call_arguments(msgs, NULL) == 0);
+    free_msgs(msgs, 1);
+}
+
+static void test_repair_negative_count(void) {
+    /* Negative count should not crash */
+    message_t msgs[1];
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0] = make_msg(MSG_USER, "test");
+    int cnt = -1;
+    int r = hermes_repair_message_sequence(msgs, &cnt);
+    TEST("negative count: no crash", r >= 0);
+    free_msgs(msgs, 1);
+}
+
+static void test_repair_zero_count(void) {
+    /* Zero count should not crash */
+    int cnt = 0;
+    int r = hermes_repair_message_sequence(NULL, &cnt);
+    TEST("zero count: no crash", r == 0);
+}
 
 int main(void) {
     printf("=== Conversation Loop Edge Case Tests (X08) ===\n");
@@ -368,6 +533,21 @@ int main(void) {
     test_loop_message_limit();
     test_message_roles_valid();
     test_tool_call_arg_truncation();
+
+    printf("\n-- additional message sequence edge cases --\n");
+    test_repair_consecutive_assistants();
+    test_repair_assistant_before_system();
+    test_repair_tool_after_tool_consecutive();
+    test_repair_system_only();
+    test_repair_assistant_only();
+    test_repair_tool_only();
+    test_repair_tool_call_null_name();
+    test_repair_extremely_long_tool_id();
+
+    printf("\n-- null safety edge cases --\n");
+    test_repair_null_safety();
+    test_repair_negative_count();
+    test_repair_zero_count();
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return fail > 0 ? 1 : 0;
