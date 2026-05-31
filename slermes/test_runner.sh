@@ -3010,7 +3010,7 @@ fi
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_telegram_thread_id_standalone.c" \
     -o /tmp/hermes_test_tg_tid -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_tg_tid > /dev/null 2>&1; then ok "telegram_thread_id_for_send (6 tests)"
+    if /tmp/hermes_test_tg_tid > /dev/null 2>&1; then ok "telegram_thread_id_for_send (13 tests)"
     else fail "telegram_thread_id_for_send (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tg_tid
 else skip "telegram_thread_id_for_send (compilation failed)"

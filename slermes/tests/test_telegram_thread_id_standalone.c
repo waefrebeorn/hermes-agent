@@ -56,6 +56,36 @@ int main(void) {
         TEST("'' -> ''", r && strcmp(r, "") == 0);
     }
 
+    /* Edge cases */
+    {
+        const char *r = message_thread_id_for_send("01");
+        TEST("'01' -> '01' (not same as '1')", r && strcmp(r, "01") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send(" 1");
+        TEST("' 1' -> ' 1' (leading space != '1')", r && strcmp(r, " 1") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send("1 ");
+        TEST("'1 ' -> '1 ' (trailing space != '1')", r && strcmp(r, "1 ") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send("abc");
+        TEST("'abc' -> 'abc' (non-numeric passes through)", r && strcmp(r, "abc") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send("-1");
+        TEST("'-1' -> '-1' (negative not '1')", r && strcmp(r, "-1") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send("1.0");
+        TEST("'1.0' -> '1.0' (float not '1')", r && strcmp(r, "1.0") == 0);
+    }
+    {
+        const char *r = message_thread_id_for_send("0001");
+        TEST("'0001' -> '0001' (leading zeros not '1')", r && strcmp(r, "0001") == 0);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All telegram thread_id tests PASSED");
     return failures ? 1 : 0;
