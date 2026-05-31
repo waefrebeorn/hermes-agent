@@ -1799,7 +1799,7 @@ echo ""; echo "=== Tokenizer Tests ==="
 run_lib_test "tokenizer" "tests/test_tokenizer.c" "include" "$CDIR/src/hermes_tokenizer.c"
 
 echo ""; echo "=== Fuzz Tests (T08) ==="
-run_lib_test "fuzz" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libtemplate -I$CDIR/lib/libregex -I$CDIR/lib/libhtml -I$CDIR/lib/libpath $CDIR/lib/libjson/json.c $CDIR/lib/libyaml/yaml.c $CDIR/lib/libtemplate/template.c $CDIR/lib/libregex/hermes_regex.c $CDIR/lib/libhtml/html.c $CDIR/lib/libpath/path.c"
+run_lib_test "fuzz (20 assertions)" "tests/test_fuzz.c" "include" "-I$CDIR/lib/libjson -I$CDIR/lib/libyaml -I$CDIR/lib/libtemplate -I$CDIR/lib/libregex -I$CDIR/lib/libhtml -I$CDIR/lib/libpath $CDIR/lib/libjson/json.c $CDIR/lib/libyaml/yaml.c $CDIR/lib/libtemplate/template.c $CDIR/lib/libregex/hermes_regex.c $CDIR/lib/libhtml/html.c $CDIR/lib/libpath/path.c"
 
 # File permissions hardening test (O15 — needs config.c + paths.c + all libs)
 if gcc -O2 -Wall -Wextra -Wno-format-truncation -I"$CDIR/include" -I"$CDIR/lib/libyaml" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \

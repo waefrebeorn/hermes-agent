@@ -8,7 +8,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Tests-338%2F0%2F13-00AA55?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-v443-8A2BE2?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-v444-8A2BE2?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/Binary-31MB%20ELF-FFD700?style=flat-square" alt="31MB">
   <img src="https://img.shields.io/badge/Source-108K%20LOC%20C-blue?style=flat-square" alt="108K LOC">
   <img src="https://img.shields.io/badge/Gaps-53-FF6B35?style=flat-square" alt="53 gaps">

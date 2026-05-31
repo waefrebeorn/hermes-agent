@@ -211,6 +211,29 @@ static void test_template_deep_nested(void) {
     PASS();
 }
 
+static void test_template_unmatched_tags(void) {
+    TEST("Template: unmatched/edge tags (4 cases)");
+    const char *inputs[] = {
+        "{%% endif %%}",                   /* lone endif */
+        "{%% if x %%}",                    /* unclosed if */
+        "{{ ",                             /* unclosed var */
+        "{% invalid_tag %}",               /* unknown tag */
+    };
+    int n = sizeof(inputs) / sizeof(inputs[0]);
+    for (int i = 0; i < n; i++) {
+        char *tmpl_err = NULL;
+        template_t *tmpl = template_compile(inputs[i], &tmpl_err);
+        free(tmpl_err);
+        if (tmpl) {
+            const char *ctx = "{}";
+            char *result = template_render(tmpl, ctx);
+            free(result);
+            template_free(tmpl);
+        }
+    }
+    PASS();
+}
+
 /* ─── Regex fuzz tests ───────────────────────────────────────── */
 static void test_regex_malformed(void) {
     TEST("Regex: malformed patterns (6 cases)");
@@ -238,15 +261,40 @@ static void test_regex_large(void) {
     PASS();
 }
 
+static void test_regex_more_edge(void) {
+    TEST("Regex: additional edge patterns (5 cases)");
+    const char *patterns[] = {
+        "[\\]",           /* escaped bracket */
+        "(a|b|c|d|e)",    /* alternation */
+        "a+b+c+d+e+",     /* long chain */
+        "\\d{3}-\\d{2}-\\d{4}",  /* realistic pattern */
+        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", /* email */
+    };
+    const char *test_str = "hello world 123 test@example.com";
+    int n = sizeof(patterns) / sizeof(patterns[0]);
+    for (int i = 0; i < n; i++) {
+        char *result = regex_extract(patterns[i], test_str, 0);
+        free(result);
+    }
+    PASS();
+}
+
 /* ─── HTML fuzz tests ────────────────────────────────────────── */
 static void test_html_malformed(void) {
-    TEST("HTML: malformed/strip inputs (8 cases)");
+    TEST("HTML: malformed/strip inputs (14 cases)");
     const char *inputs[] = {
         "", "plain text", "<p>hello</p>",
         "<script>alert(1)</script>",
         "<div><span>nested</span></div>",
         "<unclosed>", "extra <<<< brackets >>>>",
         "&\namp;\n",
+        /* New edge cases */
+        "<img src=x onerror=alert(1)>",   /* event handler */
+        "<script>/* nested */<script>inner</script>",  /* nested script */
+        "<div style=\"x:y\">text</div>",   /* style attribute */
+        "<!--[if IE]> bad <![endif]-->",   /* conditional comment */
+        "hello world with \x00 byte",       /* text-like */
+        "a < b > c"                         /* angle brackets in text */
     };
     int n = sizeof(inputs) / sizeof(inputs[0]);
     for (int i = 0; i < n; i++) {
@@ -256,12 +304,41 @@ static void test_html_malformed(void) {
     PASS();
 }
 
+static void test_html_extreme_nested(void) {
+    TEST("HTML: 100-level deep nesting");
+    char buf[4096];
+    int pos = 0;
+    for (int i = 0; i < 100 && pos < (int)sizeof(buf) - 20; i++) {
+        int n = snprintf(buf + pos, sizeof(buf) - pos, "<div id=\"l%d\">", i);
+        if (n > 0) pos += n;
+    }
+    buf[pos] = '\0';
+    char *stripped = html_strip_tags(buf);
+    free(stripped);
+    /* Now close all tags */
+    int lvl = 0;
+    for (int i = 99; i >= 0 && pos < (int)sizeof(buf) - 20; i--, lvl++) {
+        int n = snprintf(buf + pos, sizeof(buf) - pos, "</div>");
+        if (n > 0) pos += n;
+    }
+    buf[pos] = '\0';
+    char *stripped2 = html_strip_tags(buf);
+    free(stripped2);
+    PASS();
+}
+
 /* ─── Path fuzz tests ────────────────────────────────────────── */
 static void test_path_malformed(void) {
-    TEST("Path: traversal/extreme inputs (7 cases)");
+    TEST("Path: traversal/extreme inputs (11 cases)");
     const char *inputs[] = {
         "", "/", "../..", "../../../etc/passwd",
         "//foo///bar//", "/../", "/./",
+        /* New edge cases */
+        "~", "~/config",                    /* home dir */
+        "/../../../",                       /* over-traversal */
+        "a/../../b/../c",                   /* complex mixed */
+        "C:\\Windows\\System32",            /* Windows path */
+        "//hostname/share/path",            /* UNC path */
     };
     int n = sizeof(inputs) / sizeof(inputs[0]);
     for (int i = 0; i < n; i++) {
@@ -270,6 +347,20 @@ static void test_path_malformed(void) {
         free(norm);
         (void)trav;
     }
+    PASS();
+}
+
+static void test_path_very_long(void) {
+    TEST("Path: very long path (4096 chars)");
+    char buf[5000];
+    int pos = 0;
+    for (int i = 0; i < 200 && pos < 4000; i++) {
+        int n = snprintf(buf + pos, sizeof(buf) - pos, "subdir%d/", i);
+        if (n > 0) pos += n;
+    }
+    buf[pos] = '\0';
+    char *norm = path_normalize(buf);
+    free(norm);
     PASS();
 }
 
@@ -310,6 +401,57 @@ static void test_property_json_roundtrip(void) {
     PASS();
 }
 
+static void test_property_json_numeric_edge(void) {
+    TEST("Property: JSON numeric edge cases (6 cases)");
+    const char *inputs[] = {
+        "0.0", "-0.5", "1e-10", "-1e10", "0.0000001", "9999999999999999",
+    };
+    int n = sizeof(inputs) / sizeof(inputs[0]);
+    for (int i = 0; i < n; i++) {
+        char *err = NULL;
+        json_t *doc = json_parse(inputs[i], &err);
+        free(err);
+        if (doc) {
+            char *serialized = json_serialize(doc);
+            if (serialized) {
+                char *err2 = NULL;
+                json_t *doc2 = json_parse(serialized, &err2);
+                free(err2);
+                if (doc2) {
+                    json_free(doc2);
+                }
+                free(serialized);
+            }
+            json_free(doc);
+        }
+    }
+    PASS();
+}
+
+static void test_property_json_recursive_array(void) {
+    TEST("Property: deeply nested array round-trip (50 levels)");
+    char buf[4096];
+    int pos = 0;
+    buf[pos++] = '[';
+    for (int i = 0; i < 50 && pos < (int)sizeof(buf) - 5; i++) {
+        int n = snprintf(buf + pos, sizeof(buf) - pos, "[");
+        if (n > 0) pos += n;
+    }
+    buf[pos++] = '1';
+    for (int i = 0; i < 50 && pos < (int)sizeof(buf) - 2; i++)
+        buf[pos++] = ']';
+    buf[pos] = '\0';
+    char *err = NULL;
+    json_t *doc = json_parse(buf, &err);
+    free(err);
+    if (doc) {
+        char *s = json_serialize(doc);
+        free(s);
+        json_free(doc);
+    }
+    PASS();
+}
+
 int main(void) {
     printf("=== Fuzz Tests (T08) ===\n\n");
 
@@ -327,19 +469,25 @@ int main(void) {
     printf("\n-- Template --\n");
     test_template_malformed();
     test_template_deep_nested();
+    test_template_unmatched_tags();
 
     printf("\n-- Regex --\n");
     test_regex_malformed();
     test_regex_large();
+    test_regex_more_edge();
 
     printf("\n-- HTML --\n");
     test_html_malformed();
+    test_html_extreme_nested();
 
     printf("\n-- Path --\n");
     test_path_malformed();
+    test_path_very_long();
 
     printf("\n-- Property tests --\n");
     test_property_json_roundtrip();
+    test_property_json_numeric_edge();
+    test_property_json_recursive_array();
 
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0 ? 1 : 0;
