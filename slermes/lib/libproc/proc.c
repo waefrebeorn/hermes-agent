@@ -72,9 +72,18 @@ bool proc_read_stat(int pid, proc_t *p) {
     }
 
     /* utime and stime */
-    p->utime = strtoul(ptr, (char **)&ptr, 10);
+    {
+        char *end = NULL;
+        p->utime = strtoul(ptr, &end, 10);
+        if (end) ptr = end;
+    }
     while (*ptr == ' ') ptr++;
-    p->stime = strtoul(ptr, (char **)&ptr, 10);
+    {
+        char *end = NULL;
+        p->stime = strtoul(ptr, &end, 10);
+        if (end) ptr = end;
+    }
+    while (*ptr == ' ') ptr++;  /* skip to next field */
 
     /* Skip cutime, cstime, priority, nice, num_threads, itrealvalue (6 fields) */
     for (int i = 0; i < 6; i++) {
@@ -83,17 +92,31 @@ bool proc_read_stat(int pid, proc_t *p) {
     }
 
     /* starttime */
-    strtoul(ptr, (char **)&ptr, 10);
+    {
+        char *end = NULL;
+        unsigned long starttime_val = strtoul(ptr, &end, 10);
+        (void)starttime_val;
+        if (end && end != ptr) ptr = end;
+    }
     while (*ptr == ' ') ptr++;
 
     /* vsize (virtual memory size in bytes) */
-    long vsize = strtol(ptr, (char **)&ptr, 10);
-    p->vm_size_kb = vsize / 1024;
+    long vsize = 0;
+    {
+        char *end = NULL;
+        vsize = strtol(ptr, &end, 10);
+        if (end) ptr = end;
+        p->vm_size_kb = vsize / 1024;
+    }
     while (*ptr == ' ') ptr++;
 
     /* rss (number of pages) */
-    long rss_pages = strtol(ptr, (char **)&ptr, 10);
-    p->rss_kb = rss_pages * 4; /* assume 4KB pages */
+    {
+        char *end = NULL;
+        long rss_pages = strtol(ptr, &end, 10);
+        if (end) ptr = end;
+        p->rss_kb = rss_pages * 4; /* assume 4KB pages */
+    }
 
     return true;
 }

@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v383)
+# Goal Mantra — Slermes C (v384)
 
-325/0/14 (289 test files). 68 gaps. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75).
+325/0/14 (289 test files). 68 gaps. Proc bugfix: proc_read_stat field-off-by-one.
 
 ## Loop
 

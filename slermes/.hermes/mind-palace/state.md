@@ -240,5 +240,5 @@
 ||- **P2** (47): CLI ecosystem (17), Tool depth (0), Gateway helpers (1), TUI (10), S1 partials (0), Tests (3), S8 remaining (3), Plugin system (4), Architecture (1), S2 remaining (5), S10 F06 VAULTED (1), S8 R05/R07/R08/R09 WON'T PORT (4)
 ||- **P3** (24): Plugin system (15), CLI ecosystem (12), Tests (8), TUI (4), S8 remaining (1), Architecture (1), Tool depth (0), S2 (0)
 ||
-||Real parity gap is 94 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 335/0/0 (292 test files). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F06 VAULTED, F10 PORTED. S10 + R03+R05-R09 all WON'T PORT. S8 1 real gap remains (R02).
-|
+|||Real parity gap is 94 structural gaps + 1000+ test case gaps. C has 12% of Python's test LOC and 35% of agent module LOC. Suite 335/0/0 (292 test files). S0+S1+S3+S6+R04 all PORTED. L24+L25+L26+L27+L28 PORTED. F06 VAULTED, F10 PORTED. S10 + R03+R05-R09 all WON'T PORT. S8 1 real gap remains (R02).|
+||- Phase 320: X09 Proc bugfix — proc_read_stat field-off-by-one. `(char **)&ptr` with `const char *ptr` caused strtoul to not update ptr. Replaced with local `char *end` + `ptr = end` pattern. Added missing space skip after stime read. Suite 325/0/14 (was 323/2/15). v384.|
