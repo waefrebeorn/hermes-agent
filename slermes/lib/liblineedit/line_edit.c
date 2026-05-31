@@ -911,7 +911,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             line_buf_set(le->buf, hist);
                             term_redraw_line(le);
                         }
-                        break;
+                        continue; /* skip "Standalone ESC" fallthrough below */
                     }
                     case KEY_DOWN: {
                         const char *hist = history_next(le->history);
@@ -921,32 +921,32 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                             line_buf_set(le->buf, le->saved_line);
                         }
                         term_redraw_line(le);
-                        break;
+                        continue; /* skip "Standalone ESC" fallthrough below */
                     }
                     case KEY_RIGHT:
                         if (le->buf->cursor < le->buf->len) {
                             le->buf->cursor++;
                             term_redraw_line(le);
                         }
-                        break;
+                        continue;
                     case KEY_LEFT:
                         if (le->buf->cursor > 0) {
                             le->buf->cursor--;
                             term_redraw_line(le);
                         }
-                        break;
+                        continue;
                     case KEY_HOME:
                         le->buf->cursor = 0;
                         term_redraw_line(le);
-                        break;
+                        continue;
                     case KEY_END:
                         le->buf->cursor = le->buf->len;
                         term_redraw_line(le);
-                        break;
+                        continue;
                     case KEY_DELETE:
                         line_buf_delete_forward(le->buf);
                         term_redraw_line(le);
-                        break;
+                        continue;
                 }
             }
 
