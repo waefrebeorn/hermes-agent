@@ -1,4 +1,6 @@
-v450
-338/?/13. 53 gaps. Phase 394: DeepSeek Provider Test Expansion — S7 X03 EXPANDED.
-35 new assertions (71→106). URL/header edge, tool calls, streaming, FIM edge cases.
-S7 X03: improved parity (OpenAI+Anthropic+DeepSeek expanded).
+v451
+338/?/13. 53 gaps. Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED.
+87 new assertions (65→152). Finish reason mapping, content blocked,
+is_native_base_url, coerce_content_to_text, URL/header edge cases,
+streaming finish reason depth, empty candidates.
+S7 X03: improved parity (OpenAI+Anthropic+DeepSeek+Google expanded).

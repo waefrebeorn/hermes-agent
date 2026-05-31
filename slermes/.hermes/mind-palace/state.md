@@ -1,12 +1,17 @@
-# State — Slermes C (v450)
-338/?/13. Phase 394: DeepSeek Provider Test Expansion — S7 X03 EXPANDED.
-   test_provider_deepseek.c — 35 new assertions (71→106 total).
-   New coverage: URL edge cases (trailing slash, proxy, empty base),
-   header edge cases (empty key, negative cache TTL), tool call parsing,
-   reasoning+tool call combined, streaming edge cases (length/content_filter
-   finish, role delta, content+reasoning, whitespace, empty),
-   FIM response edge cases (empty text, no choices, empty/invalid JSON),
-   FIM body edge cases (empty prompt/suffix, long prompt, zero max_tokens),
-   response edge cases (empty/no/null choices).
-53 gaps. S7 X03 EXPANDED (DeepSeek provider tests).
+# State — Slermes C (v451)
+338/?/13. Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED.
+   test_provider_google.c — 87 new assertions (65→152 total).
+   New coverage: 8 new test functions:
+   - test_url_edge_cases — stream endpoint, proxy URL, empty model (3)
+   - test_header_edge_cases — empty key, NULL key, long key (3)
+   - test_parse_response_finish_reasons — all 9 Google finish reasons (9)
+   - test_parse_response_content_blocked — SAFETY/BLOCKLIST/PROHIBITED_CONTENT
+     with no content parts → "[Content blocked]" message (9)
+   - test_parse_response_no_candidates — empty array, no key, no content, empty parts (4)
+   - test_is_native_base_url — standard, /openai compat, custom, NULL, empty (7)
+   - test_google_coerce_content_to_text — NULL, string, empty, array,
+     text objects, empty array (10)
+   - test_parse_stream_finish_reason_depth — SAFETY, MAX_TOKENS, SPAM (3)
+   - test_parse_stream_empty_candidates — empty array, usage only, no content (3)
+53 gaps. S7 X03 EXPANDED (Google provider tests).
 S7: 18 clusters (X03 improved, X04 improved, X10 improved, X08 improved, X07 improved, X06 improved, X09 ported).

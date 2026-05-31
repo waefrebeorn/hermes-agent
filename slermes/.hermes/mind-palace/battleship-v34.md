@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-||| **v450** | Fork diverged — slermes/ lives only on fork | Suite 338/0/13 | 85 tools | 99 CLI** |
-|**|**Honest assessment: 53 structural gaps, 1000+ test case gaps. Phase 394: DeepSeek Provider Test Expansion — S7 X03 EXPANDED (35 new assertions, 71→106). Suite 338/0/13. 53 gaps. S7: 18 clusters (X03 improved, X04 improved, X10 improved, X08 improved, X07 improved, X06 improved, X09 ported).**|
+|| **v451** | Fork diverged — slermes/ lives only on fork | Suite 338/0/13 | 85 tools | 99 CLI** |
+||**|**Honest assessment: 53 structural gaps, 1000+ test case gaps. Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED (87 new assertions, 65→152). Suite 338/0/13. 53 gaps. S7: 18 clusters (X03 improved, X04 improved, X10 improved, X08 improved, X07 improved, X06 improved, X09 ported).**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -296,5 +296,5 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 ---
 
-*Compiled June 1 2026. DA v1 audit. Every count verified against live source code.*
+*Compiled June 1 2026 (Phase 395). DA v1 audit. Every count verified against live source code.*
 *S1 conversation loop plumbing extracted from Python's 4606-line run_conversation vs C's 1600-line agent_loop.c.*

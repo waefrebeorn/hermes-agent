@@ -1,13 +1,15 @@
-# Prestige — Progress Log (v450)
-Phase 394: DeepSeek Provider Test Expansion — S7 X03 EXPANDED.
-test_provider_deepseek.c +35 new assertions (71→106 total).
-URL/header edge, tool calls, reasoning+tool, streaming edge, FIM edge.
+# Prestige — Progress Log (v451)
+Phase 395: Google Provider Test Expansion — S7 X03 EXPANDED.
+test_provider_google.c +87 new assertions (65→152 total).
+Finish reason mapping (9 Google reasons), content blocked message,
+is_native_base_url, coerce_content_to_text, URL/header edge cases,
+streaming finish reason depth, empty candidates.
 Suite: 338/?/13. 53 gaps.
 
 ## Recent Phases
+- Phase 394: S7 X03 DeepSeek provider tests (+35 assertions)
 - Phase 393: S7 X03 Anthropic provider tests (+70 assertions)
 - Phase 392: S7 X03 OpenAI provider tests (+74 assertions, 2 bug fixes)
-- Phase 391: S7 X04 delegate tool edge cases (+6 assertions)
 
 ## Sector Status
 PORTED: S0, S1, S2, S3, S6, S8
