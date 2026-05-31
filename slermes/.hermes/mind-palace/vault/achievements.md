@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v388** · 68 active gaps · **2146 entries** of progress
+> **v389** · 68 active gaps · **2147 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2180,3 +2180,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | 329 | X09 | Token exchange edge case expansion — 9 new assertions (7→16). Covers: auth_store_free single entry, auth_store_free multi-entry (3 providers with mixed field populations), auth_store_free count=0 pointer behavior, oauth_token_free only access_token, oauth_token_free only refresh_token, oauth_token_free all empty strings, oauth_token_free very long access_token (500 chars). | `tests/test_token_exchange.c` — 9 new assertions (7→16). `test_runner.sh` — count 7→16. Suite 325/0/14. v386. |
 | 330 | X09 | Bugfix sweep — 3 real bugs found via DA. **BUG1: Use-after-free in approval.c** ... **BUG2: `&&` operator false positive in tirith.c** ... **BUG3: strcat buffer overflow in cli.c:212** ... 13 new tirith arg injection tests. Suite 326/0/14. v387. | `src/tools/approval.c` — use-after-free fix (3 copy-to-detail_buf sites). `src/tools/tirith.c` — shell-operator-only exclusion. `src/cli/cli.c` — strcat→memcpy. `tests/test_tirith.c` — 13 new tests. `test_runner.sh` — new test file entry. Suite 325→326/0/14. v387. |
 | 331 | X09 | File merge edge case expansion — 5 new test functions (13→18 assertions) + stale test_runner count fix (4→13). Covers: empty modified content, both empty files, self-merge (base==modified==output), git-merge-file strategy, duplicate test_empty_base_file removed. Suite 326/0/14. v388. | `tests/test_file_merge.c` — 5 new test functions (13→18 assertions). `test_runner.sh` — count 4→13. Suite 326/0/14. v388. |
+| 332 | X09 | Vi mode arrow key bugfix — Up/Down arrow keys in INSERT mode were broken by vi mode. `continue` in ESC handler skipped escape sequence reading, so `\x1b[A` (Up arrow) toggled INSERT→NORMAL (via ESC), then `A` in NORMAL mode triggered "append" (back to INSERT). No history navigation ever executed. Fix: read escape sequence bytes BEFORE mode switch, insert mode switch as fallback after sequence consumption. | `lib/liblineedit/line_edit.c` — restructured ESC handler (escape read before mode switch). Suite 326/0/14. v389. |

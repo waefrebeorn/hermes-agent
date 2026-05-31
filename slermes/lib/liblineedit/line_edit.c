@@ -848,20 +848,11 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
         }
 
         if (c == KEY_ESC) {
-            if (le->vi_mode == LINE_EDIT_MODE_INSERT) {
-                /* Switch to NORMAL mode — save undo buffer */
-                strncpy(le->vi_saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
-                le->vi_saved_line[LINE_EDIT_MAX_LINE - 1] = '\0';
-                le->vi_saved = true;
-                le->vi_mode = LINE_EDIT_MODE_NORMAL;
-            printf("\r\033[K%s", le->vi_visual_active ? "[VISUAL]" : "[NORMAL]");
-                if (prompt) printf("%s", prompt);
-                term_redraw_line(le);
-                fflush(stdout);
-                continue;
-            }
-
-            /* NORMAL mode or already handled: read escape sequence */
+            /* Always read escape sequence first, regardless of mode.
+             * Arrow keys (UP/DOWN/RIGHT/LEFT) and other ESC-prefixed sequences
+             * must be consumed BEFORE mode handling, otherwise the \x1b from
+             * an arrow key press toggles INSERT->NORMAL and the trailing bytes
+             * get interpreted as vi commands (e.g. 'A' in "ESC[A" = append). */
             char seq[3];
             if (read(STDIN_FILENO, &seq[0], 1) <= 0) continue;
             if (read(STDIN_FILENO, &seq[1], 1) <= 0) continue;
@@ -983,6 +974,18 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
             if (seq[0] == '\r') {
                 line_buf_insert(le->buf, '\n');
                 term_redraw_line(le);
+            }
+
+            /* Standalone ESC (not an arrow/Alt sequence): switch to NORMAL mode */
+            if (le->vi_mode == LINE_EDIT_MODE_INSERT) {
+                strncpy(le->vi_saved_line, le->buf->buf, LINE_EDIT_MAX_LINE - 1);
+                le->vi_saved_line[LINE_EDIT_MAX_LINE - 1] = '\0';
+                le->vi_saved = true;
+                le->vi_mode = LINE_EDIT_MODE_NORMAL;
+                printf("\r\033[K%s", le->vi_visual_active ? "[VISUAL]" : "[NORMAL]");
+                if (prompt) printf("%s", prompt);
+                term_redraw_line(le);
+                fflush(stdout);
             }
             continue;
         }
