@@ -247,3 +247,4 @@
 ||- Phase 323: X09 Moonshot schema edge case expansion — 13 new assertions (17→30). Items tuple, empty/NULL/invalid JSON, deep nesting, all-null enum. Suite 325/0/14. v385.|
 ||- Phase 324: X09 Nous rate guard edge case expansion — 15 new assertions (8→23). Format boundaries, NULL path, tiny buffer, negative/large reset. Suite 325/0/14. v385.|
 ||- Phase 325: X09 Manual compression feedback edge case expansion — 19 new assertions (8→27). Zero counts, same tokens, reverse counterintuitive, negative counts, int max. Suite 325/0/14. v385.|
+||- Phase 326: X09 MoA mixture_of_agents edge case expansion — 6 new assertions (11→17). Empty prompt, numeric prompt, extra fields passthrough. Suite 325/0/14. v385.|

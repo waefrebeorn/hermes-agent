@@ -70,11 +70,43 @@ static void test_missing_user_prompt(void) {
     free(result);
 }
 
+static void test_empty_prompt_value(void) {
+    const char *args = "{\"user_prompt\":\"\"}";
+    char *result = handle_mixture_of_agents(args, NULL);
+    TEST("empty prompt: result not null", result != NULL);
+    json_t *j = json_parse(result, NULL);
+    TEST("empty prompt: valid JSON", j != NULL);
+    if (j) {
+        const char *err = json_get_str(j, "error", "");
+        TEST("empty prompt: error mentions missing",
+             strstr(err, "missing") != NULL);
+        json_free(j);
+    }
+    free(result);
+}
+
+static void test_numeric_prompt(void) {
+    const char *args = "{\"user_prompt\":123}";
+    char *result = handle_mixture_of_agents(args, NULL);
+    TEST("numeric prompt: result not null", result != NULL);
+    json_t *j = json_parse(result, NULL);
+    TEST("numeric prompt: valid JSON", j != NULL);
+    if (j) {
+        const char *err = json_get_str(j, "error", "");
+        TEST("numeric prompt: error (num coerces to '')",
+             strstr(err, "missing") != NULL);
+        json_free(j);
+    }
+    free(result);
+}
+
 int main(void) {
     test_null_args();
     test_invalid_json();
     test_empty_args();
     test_missing_user_prompt();
+    test_empty_prompt_value();
+    test_numeric_prompt();
 
     fprintf(stderr, "mixture_of_agents: %d/%d pass\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

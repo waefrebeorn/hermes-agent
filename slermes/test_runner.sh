@@ -2876,7 +2876,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_mixture_of_agents.c" \
     "$CDIR/src/tools/mixture_of_agents.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_moa -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_moa > /dev/null 2>&1; then ok "mixture_of_agents (11 tests)"
+    if /tmp/hermes_test_moa > /dev/null 2>&1; then ok "mixture_of_agents (17 tests)"
     else fail "mixture_of_agents (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_moa
 else skip "mixture_of_agents (compilation failed)"
