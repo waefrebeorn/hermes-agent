@@ -1,8 +1,8 @@
-# Slermes C — Vault: Hermes Upstream Update
+# Slermes — Vault: Hermes Upstream Update
 
 ## Python Hermes Upstream Status (as of 2026-05-25)
 
-The Python Hermes codebase at `/home/wubu/hermes-agent-dev/` has advanced independently since the C translation was forked. Below are the upstream modules/features with NO C equivalent in `C/`.
+The Python Hermes codebase at `/home/wubu/hermes-agent-dev/` has advanced independently since the C translation was forked. Below are the upstream modules/features with NO C equivalent in `slermes/`.
 
 ### New Python Agent Modules (not in C)
 - `agent/agent_init.py` (1,522 LOC) — Agent initialization orchestration

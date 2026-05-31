@@ -1,7 +1,11 @@
-# Slermes C
+# Slermes
 
 **Slermes — Full C translation of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.**  
 One static binary. Zero runtime deps beyond libc + libssl. 31M ELF.
+
+<p align="center">
+  <img src="assets/slermes.jpg" alt="Slermes the stuffy — claw machine champion" width="300">
+</p>
 
 ```text
 |||||||||||||||||||| Suite:  325/0/14 (289 test files, completes in <60s)

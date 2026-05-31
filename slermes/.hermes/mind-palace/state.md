@@ -1,4 +1,4 @@
-|||| Slermes C
+|||| Slermes
 
 ||||Suite: 325/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
