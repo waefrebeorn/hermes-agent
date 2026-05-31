@@ -24,6 +24,17 @@ static int pass = 0, fail = 0;
     } \
 } while(0)
 
+/* ── Helper: fresh noop backend ── */
+static cu_backend_t *make_noop(void) {
+    cu_backend_t *b = computer_use_new_noop_backend();
+    if (b) b->start();
+    return b;
+}
+
+static void destroy_noop(cu_backend_t *b) {
+    if (b) { b->stop(); free(b->state); free(b); }
+}
+
 /* ── Test: noop backend lifecycle ── */
 static int test_noop_lifecycle(void) {
     cu_backend_t *b = computer_use_new_noop_backend();
@@ -167,6 +178,203 @@ static int test_full_lifecycle(void) {
     return ok;
 }
 
+/* ── Edge case: NULL free safety ── */
+static int test_null_free(void) {
+    cu_capture_free(NULL);
+    cu_action_free(NULL);
+    return 1;
+}
+
+/* ── Edge case: click with NULL button ── */
+static int test_click_null_button(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->click(0, 100, 200, NULL, 1, NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: type with NULL text ── */
+static int test_type_null_text(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->type_text(NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: type with empty text ── */
+static int test_type_empty_text(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->type_text("");
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: type with very long text ── */
+static int test_type_long_text(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    char long_text[4001];
+    memset(long_text, 'A', sizeof(long_text) - 1);
+    long_text[sizeof(long_text) - 1] = '\0';
+    cu_action_t *act = b->type_text(long_text);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: key with NULL keys ── */
+static int test_key_null(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->key(NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: key with empty keys ── */
+static int test_key_empty(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->key("");
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: focus with NULL app ── */
+static int test_focus_null_app(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->focus_app(NULL, false);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: focus with empty app ── */
+static int test_focus_empty_app(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->focus_app("", false);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: scroll with NULL direction ── */
+static int test_scroll_null_dir(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->scroll(NULL, 0, 0, 0, 0, NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: scroll with zero amount ── */
+static int test_scroll_zero_amount(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->scroll("down", 0, 0, 0, 0, NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: wait with zero seconds ── */
+static int test_wait_zero(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->wait(0.0);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: wait with negative seconds ── */
+static int test_wait_negative(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->wait(-0.5);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: set_value with NULL value ── */
+static int test_set_value_null(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->set_value(NULL, 0);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: set_value with negative element ── */
+static int test_set_value_negative(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->set_value("hello", -1);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: drag with negative elements ── */
+static int test_drag_negative(void) {
+    cu_backend_t *b = make_noop();
+    if (!b) return 0;
+    cu_action_t *act = b->drag(-1, -1, 0, 0, 100, 100, "left", NULL);
+    int ok = (act != NULL && act->ok);
+    cu_action_free(act);
+    destroy_noop(b);
+    return ok;
+}
+
+/* ── Edge case: backend registry ── */
+static int test_backend_registry(void) {
+    cu_clear_backends();
+    int ok = 1;
+    ok = ok && cu_register_backend("test_1", "Test backend", computer_use_new_noop_backend);
+    ok = ok && cu_register_backend("test_2", "Another test", computer_use_new_noop_backend);
+    ok = ok && cu_register_backend("test_1", "Duplicate name", computer_use_new_noop_backend); /* allowed, overwrites */
+    /* Check list */
+    char *list = cu_list_backends();
+    ok = ok && (list != NULL);
+    if (list) {
+        ok = ok && (strstr(list, "test_1") != NULL);
+        ok = ok && (strstr(list, "test_2") != NULL);
+        free(list);
+    }
+    cu_clear_backends();
+    list = cu_list_backends();
+    ok = ok && (list != NULL && strstr(list, "test_1") == NULL);
+    free(list);
+    return ok;
+}
+
 int main(void) {
     printf("=== Computer Use Tests (S01-S02) ===\n");
     TEST(noop_lifecycle);
@@ -179,6 +387,25 @@ int main(void) {
     TEST(noop_focus);
     TEST(global_backend);
     TEST(full_lifecycle);
+
+    printf("\n--- Edge Cases ---\n");
+    TEST(null_free);
+    TEST(click_null_button);
+    TEST(type_null_text);
+    TEST(type_empty_text);
+    TEST(type_long_text);
+    TEST(key_null);
+    TEST(key_empty);
+    TEST(focus_null_app);
+    TEST(focus_empty_app);
+    TEST(scroll_null_dir);
+    TEST(scroll_zero_amount);
+    TEST(wait_zero);
+    TEST(wait_negative);
+    TEST(set_value_null);
+    TEST(set_value_negative);
+    TEST(drag_negative);
+    TEST(backend_registry);
 
     printf("\nResults: %d passed, %d failed\n", pass, fail);
     return fail > 0 ? 1 : 0;

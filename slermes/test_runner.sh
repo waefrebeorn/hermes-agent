@@ -974,7 +974,7 @@ if gcc -O2 -Wall -Wextra \
     "$CDIR/src/tools/registry.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_computer_use -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_computer_use > /dev/null 2>&1; then ok "computer_use (10 tests)"
+    if /tmp/hermes_test_computer_use > /dev/null 2>&1; then ok "computer_use (27 tests)"
     else fail "computer_use (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_computer_use
 else skip "computer_use (compilation failed)"

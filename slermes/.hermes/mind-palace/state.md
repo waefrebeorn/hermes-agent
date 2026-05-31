@@ -1,5 +1,5 @@
-|# State — Slermes C (v410)
-328/0/12. Phase 353: Audit rotation edge case expansion — 16 new assertions (11→27).
+|# State — Slermes C (v411)
+328/0/12. Phase 354: Computer use edge case expansion — 17 new tests (10→27).
   Setup edge cases (NULL/empty params, re-set), extractor NULL/missing field safety,
   queue NULL/empty params, queue overflow (ring buffer drops newest when full),
   unicode/special chars preserved, webhook empty body, missing conversationId

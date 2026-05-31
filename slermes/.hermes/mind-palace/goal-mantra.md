@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v410)
+# Goal Mantra — Slermes C (v411)
 
-328/0/12 (289 test files). 68 gaps. Phase 353: Audit rotation edge case expansion (16 new assertions).
+328/0/12 (289 test files). 68 gaps. Phase 354: Computer use edge case expansion (17 new tests).
 
 ## Loop
 
