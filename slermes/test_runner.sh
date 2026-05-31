@@ -3063,7 +3063,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_token_exchange.c" \
     "$CDIR/src/provider/token_exchange.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_token_exchange -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_token_exchange > /dev/null 2>&1; then ok "token_exchange (7 tests)"
+    if /tmp/hermes_test_token_exchange > /dev/null 2>&1; then ok "token_exchange (16 tests)"
     else fail "token_exchange (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_token_exchange
 else skip "token_exchange (compilation failed)"

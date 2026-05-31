@@ -1,6 +1,6 @@
-# Testing — Slermes C (v385)
+# Testing — Slermes C (v386)
 
-325/0/14, 289 test files. All pass. 68 gaps. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75).
+325/0/14, 289 test files. All pass. 68 gaps. Phase 329: X09 token exchange edge case expansion — 9 new assertions (7→16).
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

@@ -2,7 +2,7 @@
 
 ||||Suite: 325/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
 |||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-// Battleship v34 (68 gaps across 8 sectors, 1000+ test case gaps). v383. Phase 319: X09 approval edge case expansion — 56 new assertions (19→75). Covers approval_is_terminal_dangerous (25 patterns), approval_normalize_command (ANSI/edge cases), approval_is_path_dangerous (12 paths), approval_is_path_traversal (7 patterns). Suite 325/0/14. 68 gaps.
+// Battleship v34 (68 gaps across 8 sectors, 1000+ test case gaps). v386. Phase 329: X09 token exchange edge case expansion — 9 new assertions (7→16). Covers auth_store_free single/multi/zero-count, oauth_token_free partial/empty/long fields. Suite 325/0/14. 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -249,4 +249,5 @@
 ||- Phase 325: X09 Manual compression feedback edge case expansion — 19 new assertions (8→27). Zero counts, same tokens, reverse counterintuitive, negative counts, int max. Suite 325/0/14. v385.|
 ||- Phase 326: X09 MoA mixture_of_agents edge case expansion — 6 new assertions (11→17). Empty prompt, numeric prompt, extra fields passthrough. Suite 325/0/14. v385.|
 ||- Phase 327: X09 Tool init registry edge case expansion — 5 new assertions (13→18). Empty name, dispatch NULL args/task_id, get_name edge indices. Suite 325/0/14. v385.|
-||- Phase 328: X09 Delegate_tool edge case expansion — 3 new assertions (4→7). Empty args, whitespace goal, goal+subtasks validation. Suite 325/0/14. v385.|
+|||- Phase 328: X09 Delegate_tool edge case expansion — 3 new assertions (4→7). Empty args, whitespace goal, goal+subtasks validation. Suite 325/0/14. v385.|
+|||- Phase 329: X09 Token exchange edge case expansion — 9 new assertions (7→16). auth_store_free single/multi/zero-count entries, oauth_token_free partial (only access_token/refresh_token), all-empty strings, very long access_token (500 chars). Suite 325/0/14. v386.|

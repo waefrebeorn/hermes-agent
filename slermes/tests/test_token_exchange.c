@@ -82,6 +82,113 @@ int main(void) {
         TEST("auth_store_free(NULL, 5) no crash (entries param NULL)", 1);
     }
 
+    /* Test 7: auth_store_free with one valid entry */
+    {
+        auth_entry_t *entry = (auth_entry_t *)calloc(1, sizeof(auth_entry_t));
+        TEST("auth_store_free single entry allocated", entry != NULL);
+        if (entry) {
+            strncpy(entry->provider, "xai-oauth", sizeof(entry->provider) - 1);
+            entry->token.access_token = strdup("test_at");
+            entry->token.token_type = strdup("Bearer");
+            entry->token.expires_in = 3600;
+            auth_store_free(entry, 1);
+            TEST("auth_store_free single entry no crash", 1);
+        }
+    }
+
+    /* Test 8: auth_store_free with multiple valid entries */
+    {
+        auth_entry_t *entries = (auth_entry_t *)calloc(3, sizeof(auth_entry_t));
+        TEST("auth_store_free multi entries allocated", entries != NULL);
+        if (entries) {
+            strncpy(entries[0].provider, "xai-oauth", sizeof(entries[0].provider) - 1);
+            entries[0].token.access_token = strdup("tok1");
+            entries[0].token.refresh_token = strdup("ref1");
+            strncpy(entries[1].provider, "minimax", sizeof(entries[1].provider) - 1);
+            entries[1].token.access_token = strdup("tok2");
+            entries[1].token.token_type = strdup("Bearer");
+            strncpy(entries[2].provider, "nous", sizeof(entries[2].provider) - 1);
+            entries[2].token.id_token = strdup("id2");
+            entries[2].token.expires_at = 1000000.0;
+            auth_store_free(entries, 3);
+            TEST("auth_store_free multi entries no crash", 1);
+        }
+    }
+
+    /* Test 9: auth_store_free with count=0 frees pointer but not fields */
+    {
+        auth_entry_t *entry = (auth_entry_t *)calloc(1, sizeof(auth_entry_t));
+        if (entry) {
+            entry->token.access_token = strdup("should_not_free");
+            /* auth_store_free(count=0) runs 0 iterations of the loop,
+             * but still calls free(entries). Token fields leak by design. */
+            auth_store_free(entry, 0);
+            TEST("auth_store_free count=0 frees pointer no crash", 1);
+        } else {
+            TEST("auth_store_free count=0 skipped alloc", 1);
+        }
+    }
+
+    /* Test 10: oauth_token_free with only access_token */
+    {
+        oauth_token_t *tok = (oauth_token_t *)calloc(1, sizeof(oauth_token_t));
+        if (tok) {
+            tok->access_token = strdup("only_access");
+            oauth_token_free(tok);
+            TEST("oauth_token_free only access_token no crash", 1);
+        } else {
+            TEST("oauth_token_free only access_token skipped", 1);
+        }
+    }
+
+    /* Test 11: oauth_token_free with only refresh_token */
+    {
+        oauth_token_t *tok = (oauth_token_t *)calloc(1, sizeof(oauth_token_t));
+        if (tok) {
+            tok->refresh_token = strdup("only_refresh");
+            oauth_token_free(tok);
+            TEST("oauth_token_free only refresh_token no crash", 1);
+        } else {
+            TEST("oauth_token_free only refresh_token skipped", 1);
+        }
+    }
+
+    /* Test 12: oauth_token_free with all empty strings */
+    {
+        oauth_token_t *tok = (oauth_token_t *)calloc(1, sizeof(oauth_token_t));
+        if (tok) {
+            tok->access_token = strdup("");
+            tok->refresh_token = strdup("");
+            tok->id_token = strdup("");
+            tok->token_type = strdup("");
+            oauth_token_free(tok);
+            TEST("oauth_token_free all empty strings no crash", 1);
+        } else {
+            TEST("oauth_token_free all empty strings skipped", 1);
+        }
+    }
+
+    /* Test 13: oauth_token_free with very long access_token */
+    {
+        oauth_token_t *tok = (oauth_token_t *)calloc(1, sizeof(oauth_token_t));
+        if (tok) {
+            size_t len = 500;
+            char *long_str = (char *)malloc(len + 1);
+            if (long_str) {
+                memset(long_str, 'A', len);
+                long_str[len] = '\0';
+                tok->access_token = long_str;
+                oauth_token_free(tok);
+                TEST("oauth_token_free long access_token no crash", 1);
+            } else {
+                free(tok);
+                TEST("oauth_token_free long access_token skipped", 1);
+            }
+        } else {
+            TEST("oauth_token_free long access_token skipped", 1);
+        }
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All token exchange tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);

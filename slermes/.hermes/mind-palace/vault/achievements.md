@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v385** · 68 active gaps · **2141 entries** of progress
+> **v386** · 68 active gaps · **2142 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2177,3 +2177,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 326 | X09 | MoA mixture_of_agents edge case expansion — 6 new assertions (11→17). Covers: empty user_prompt value, numeric user_prompt (coerces to empty), valid args with extra fields. | `tests/test_mixture_of_agents.c` — 3 new test functions, 6 assertions (11→17). `test_runner.sh` — count 11→17. Suite 325/0/14. v385. |
 || 327 | X09 | Tool init registry edge case expansion — 5 new assertions (13→18). Covers: empty string name (allowed), dispatch NULL args, dispatch NULL task_id, get_name out-of-range, get_name max-size index. | `tests/test_tool_init.c` — 5 new assertions (13→18). `test_runner.sh` — count 13→18. Suite 325/0/14. v385. |
 || 328 | X09 | Delegate_tool edge case expansion — 3 new assertions (4→7). Covers: empty string args, whitespace-only goal (passes through, no strip), goal + subtasks passes validation. | `tests/test_delegate.c` — 3 new assertions (4→7). `test_runner.sh` — count 4→7. Suite 325/0/14. v385. |
+| 329 | X09 | Token exchange edge case expansion — 9 new assertions (7→16). Covers: auth_store_free single entry, auth_store_free multi-entry (3 providers with mixed field populations), auth_store_free count=0 pointer behavior, oauth_token_free only access_token, oauth_token_free only refresh_token, oauth_token_free all empty strings, oauth_token_free very long access_token (500 chars). | `tests/test_token_exchange.c` — 9 new assertions (7→16). `test_runner.sh` — count 7→16. Suite 325/0/14. v386. |

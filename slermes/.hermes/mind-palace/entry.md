@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v385)
+# Entry — Slermes C Parity (v386)
 
-Phase 319: X09 approval edge case expansion — 56 assertions (19→75). 68 gaps.
+Phase 329: X09 token exchange edge case expansion — 9 new assertions (7→16). 68 gaps.
