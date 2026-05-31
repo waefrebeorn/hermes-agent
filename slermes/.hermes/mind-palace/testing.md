@@ -1,6 +1,6 @@
-# Testing — Slermes C (v399)
+# Testing — Slermes C (v400)
 
-326/0/14, 289 test files. All pass. 68 gaps. Phase 342: tool_result_storage edge case expansion — 18 new assertions (16→34).
+326/0/14, 289 test files. All pass. 68 gaps. Phase 343: TUI edge case expansion — 30 new assertions (24→54).
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

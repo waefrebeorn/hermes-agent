@@ -1,5 +1,5 @@
-|# State — Slermes C (v399)
-326/0/14. Phase 342: tool_result_storage edge case expansion — 18 new assertions (16→34). max_chars=0/1/negative, NULL has_more, empty string, newline at exact halfway (not used), newline at halfway+1 (used), trailing newline.
+|# State — Slermes C (v400)
+326/0/14. Phase 343: TUI edge case expansion — 30 new assertions (24→54). ANSI color out-of-range, input history empty/duplicate/long/SIZE_MAX/NULL, progress total=0/negative/past-100%, display NULL/label/width=0.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

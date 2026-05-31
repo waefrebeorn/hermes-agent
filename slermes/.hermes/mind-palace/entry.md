@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v399)
+# Entry — Slermes C Parity (v400)
 
-Phase 342: tool_result_storage edge case expansion — 18 new assertions (16→34). 68 gaps.
+Phase 343: TUI edge case expansion — 30 new assertions (24→54). 68 gaps.

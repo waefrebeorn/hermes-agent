@@ -1,6 +1,6 @@
-# Plan — Next Phase (v399)
+# Plan — Next Phase (v400)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 342: tool_result_storage edge case expansion — 18 new assertions (16→34).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 343: TUI edge case expansion — 30 new assertions (24→54).
 
 **Next gap targets:**
 
