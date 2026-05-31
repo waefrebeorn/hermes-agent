@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v396)
+# Entry — Slermes C Parity (v397)
 
-Phase 339: skill_mgmt edge case expansion (9→15 tests). 68 gaps.
+Phase 340: clarify edge case expansion — 12 new tests (12→24). 68 gaps.
