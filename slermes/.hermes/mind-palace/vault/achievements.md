@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v412** · 68 active gaps · **2160 entries** of progress
+|> **v413** · 68 active gaps · **2160 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -2204,4 +2204,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 353 | X09 | Audit rotation edge case expansion — 16 new assertions (11→27). NULL safety for all 5 audit log functions (security/approval/redaction/violation), empty string params, audit_log_approval (approved+denied), audit_log_redaction, audit_log_violation, newline sanitization (CR/LF→spaces), long detail (3000 'A' chars, fits 4096 buffer), re-init after shutdown. | `tests/test_audit_rotate.c` — expanded 11→27 assertions. `test_runner.sh` — count 11→27. Suite 328/0/12. v410. |
 2205|| 354 | X09 | Computer use edge case expansion — 17 new tests (10→27). NULL free safety (cu_capture_free(NULL), cu_action_free(NULL)), click with NULL button, type with NULL/empty/4000-char text, key with NULL/empty keys, focus with NULL/empty app, scroll NULL direction/zero amount, wait 0.0/negative seconds, set_value NULL/negative element, drag with negative elements, backend registry (register/duplicate/list/clear). | `tests/test_computer_use.c` — expanded 10→27 tests. `test_runner.sh` — count 10→27. Suite 328/0/12. v411. |
 2206|| 355 | X09 | Todo tool edge case expansion — 13 new tests (10→23). NULL args error, invalid JSON error, list empty (count=0), all priority levels (p0/p1/p3), invalid priority defaults to p2, done not found, update missing ID, update not found, search by query/status/no-match, complete alias for done, 2000-char content boundary. | `tests/test_todo.c` — expanded 10→23 tests. `test_runner.sh` — count 10→23. Suite 328/0/12. v412. |
+2207|| 356 | X09 | Cron scripts edge case expansion — 9 new tests (10→19). Empty 0-byte script (no interp→error), no-output script (exit 0→empty string), 50-line output (realloc path), 511-char args, NULL exit_code with valid script, explicit interpreter overrides shebang, absolute /bin/sh path, 3x sequential runs, comment-only script fails without interp but works with /bin/sh. | `tests/test_cron_scripts.c` — expanded 10→19 tests. `test_runner.sh` — count 10→19. Suite 328/0/12. v413. |
 |

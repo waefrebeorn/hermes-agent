@@ -1201,7 +1201,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/cron/cron_scripts.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_cron_scripts -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_cron_scripts > /dev/null 2>&1; then ok "cron_scripts (10 tests)"
+    if /tmp/hermes_test_cron_scripts > /dev/null 2>&1; then ok "cron_scripts (19 tests)"
     else fail "cron_scripts (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_cron_scripts
