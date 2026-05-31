@@ -489,6 +489,8 @@ typedef struct {
  *  P192: STREAMING — token stream display and counter
  * ================================================================== */
 
+#define TYPE_AHEAD_BUF_SIZE 1024
+
 typedef struct {
     bool    active;
     bool    abort_requested;    /* Ctrl+C during streaming */
@@ -500,6 +502,9 @@ typedef struct {
     double  tokens_per_sec;
     int     bytes_received;
     bool    first_token;
+    /* Type-ahead buffer: captures keystrokes during streaming (T18) */
+    char    type_ahead_buf[TYPE_AHEAD_BUF_SIZE];
+    int     type_ahead_len;
 } stream_state_t;
 
 /* ==================================================================
@@ -1157,6 +1162,8 @@ static void tui_stream_start(void) {
     tui.stream.first_token = true;
     tui.stream.bytes_received = 0;
     tui.stream.tokens_per_sec = 0.0;
+    tui.stream.type_ahead_len = 0;
+    tui.stream.type_ahead_buf[0] = '\0';
     tui.think_frame = 0;
 
     /* Set input window to non-blocking during entire streaming */
@@ -1184,6 +1191,19 @@ static void tui_stream_finish(void) {
     /* Restore blocking input */
     if (tui.panes[PANE_INPUT].win)
         nodelay(tui.panes[PANE_INPUT].win, FALSE);
+
+    /* Inject type-ahead buffer captured during streaming (T18) */
+    if (tui.stream.type_ahead_len > 0) {
+        int inject_len = tui.stream.type_ahead_len;
+        if (tui.input.len + inject_len < INPUT_BUF_SIZE - 1) {
+            memcpy(tui.input.buf + tui.input.len, tui.stream.type_ahead_buf, inject_len);
+            tui.input.len += inject_len;
+            tui.input.buf[tui.input.len] = '\0';
+            tui.input.pos = tui.input.len;
+        }
+        tui.stream.type_ahead_len = 0;
+        tui.stream.type_ahead_buf[0] = '\0';
+    }
 
     /* Update token rate */
     double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
@@ -3900,8 +3920,11 @@ int tui_fullscreen_run(agent_state_t *state) {
                 napms(50);
                 continue;
             } else if (ch >= 32 && ch <= 126) {
-                /* Type-ahead: buffer character for after streaming ends */
-                /* For now, just beep to acknowledge but don't buffer */
+                /* Type-ahead: buffer character for after streaming ends (T18) */
+                if (tui.stream.type_ahead_len < TYPE_AHEAD_BUF_SIZE - 1) {
+                    tui.stream.type_ahead_buf[tui.stream.type_ahead_len++] = (char)ch;
+                    tui.stream.type_ahead_buf[tui.stream.type_ahead_len] = '\0';
+                }
                 beep();
             }
             continue; /* skip normal input processing during streaming */

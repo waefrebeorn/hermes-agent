@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
 | v422 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 365: Bugfix sweep — ctx:0% fix, status bar rollover, startup bar, [llm] diagnostic suppression. Suite 328/0/12. 67 gaps.**|
+|**Honest assessment: 66 structural gaps, 1000+ test case gaps. Phase 366: TUI type-ahead buffer (T18) — keystrokes buffered during streaming, replayed after stream end. Suite 328/0/12. 66 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -124,10 +124,10 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 || 15 | T15 | Todo panel | todoPanel.tsx | ✅ PORTED — /todos opens kanban task board overlay (Phase 364). Status colors: done/archived (dim), blocked (red), running (cyan), ready (green). Filters: All/Active/Done. Enter shows detail, c completes. | P2 |
 || 16 | T16 | Streaming markdown live update | streamingMarkdown.tsx | ✅ PORTED — tui_stream_cb + tui_fullscreen_stream_token real-time streaming | P1 |
 || 17 | T17 | Bounding box: window resize re-render | SIGWINCH + full re-layout | ✅ PORTED — handle_winch + tui_resize_panes (Phase 32: sig_atomic_t flag, deferred in main loop) | P1 |
-| 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | PARTIAL — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead beeps but doesn't buffer (Phase 363). Remaining: proper type-ahead buffer replayed after stream end. | P1 |
+| 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | ✅ PORTED — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead buffers up to 1024 chars in stream_state_t.type_ahead_buf, injected into input buffer after stream end. beep() retained as feedback. (Phase 366) | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
-**S4: 19 gaps (9 P1, 6 P2, 4 P3) — T09+T10+T12+T13+T15+T16+T17 PORTED, T11+T18 PARTIAL**
+**S4: 18 gaps (8 P1, 6 P2, 4 P3) — T09+T10+T12+T13+T15+T16+T17+T18 PORTED, T11 PARTIAL**
 
 ---
 
@@ -270,14 +270,14 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
-|| S4: TUI Ecosystem | 24 | 0 | 12 | 8 | 4 | Full TUI backend + React frontend — T12+T13+T16+T17 PORTED
+||| S4: TUI Ecosystem | 18 | 0 | 8 | 6 | 4 | Full TUI backend + React frontend — T09+T10+T12+T13+T15+T16+T17+T18 PORTED
 || S5: CLI Ecosystem | 24 | 0 | 1 | 11 | 12 | hermes_cli infrastructure — C02/C04/C06/C07/C08/C09/C13/C14/C15/C16 PORTED |
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **67** | **4** | **27** | **24** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 28→24 (T12+T13+T16+T17 PORTED). Phase 359: Nous device code flow added to C11.** |
+||| **TOTAL** | **66** | **4** | **27** | **23** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 24→18 (T09+T10+T12+T13+T15+T16+T17+T18 PORTED). Phase 366: TUI type-ahead buffer (T18) PORTED.** |
 
 ### Phase Map
 

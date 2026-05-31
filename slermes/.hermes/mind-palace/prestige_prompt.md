@@ -1,4 +1,4 @@
-# Prestige (v421)
+# Prestige (v422)
 
 ## P0 — Architecture (4 gaps)
 F01-F04, F09.
@@ -13,5 +13,5 @@ F01-F04, F09.
 
 ## Strategy
 
-Phase 364: TUI todo panel — kanban task board overlay (/todos command).
-S4 T15 IMPLEMENTED (kanban task board modal). S4 gaps: 20->19.
+Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, replayed into input buffer after stream end.
+S4 T18 IMPROVED from PARTIAL to PORTED (buffers + replays). S4 gaps: 19->18. Total: 67->66.

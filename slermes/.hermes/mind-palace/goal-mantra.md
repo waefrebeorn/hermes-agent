@@ -1,2 +1,2 @@
-# Goal Mantra — Slermes C (v421)
-328/0/12. 67 gaps. Phase 364: TUI todo panel (T15) — kanban task board overlay.
+# Goal Mantra — Slermes C (v422)
+328/0/12. 66 gaps. Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, injected after stream end.

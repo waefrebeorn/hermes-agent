@@ -1,6 +1,5 @@
-# State — Slermes C (v421)
-328/0/12. Phase 364: TUI todo panel (T15) — kanban task board overlay.
-  /todos command opens modal with task list, status colors, filter (All/Active/Done),
-  navigation (Up/Down/PgUp/PgDn), Enter to show details, c to complete.
-  Status colors: dim (done/archived), red (blocked), cyan (running), green (ready).
-67 gaps. S4 T15 IMPLEMENTED (kanban task board overlay).
+# State — Slermes C (v422)
+328/0/12. Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, injected after stream end.
+   Previously just beeped and discarded. Now buffers up to 1024 chars in stream_state_t.type_ahead_buf
+   and replays into input buffer when streaming finishes.
+66 gaps. S4 T18 IMPROVED from PARTIAL to PORTED (type-ahead buffer + replay).

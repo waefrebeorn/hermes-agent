@@ -1,6 +1,6 @@
-# Entry — Slermes C Parity (v421)
+# Entry — Slermes C Parity (v422)
 
-Phase 364: TUI todo panel (T15) — kanban task board overlay. 67 gaps. Suite 328/0/12.
+Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, replayed after stream end. 66 gaps. Suite 328/0/12.
 Dynamic upstream version extracted from Python at build time (v0.15.1-slermes).
 
 **Sectors:**
@@ -8,10 +8,3 @@ Dynamic upstream version extracted from Python at build time (v0.15.1-slermes).
 - S1 Core: PORTED (0 gaps)
 - S2 Agent: 15 won't-port (0 real)
 - S3 Gateway: PORTED (0 gaps)
-- S4 TUI: 19 gaps
-- S5 CLI: 11 gaps
-- S6 Tools: PORTED (0 gaps)
-- S7 Tests: 19 clusters (~1000+ tests)
-- S8 Providers: PORTED (0 gaps)
-- S9 Plugins: 19 gaps
-- S10 Arch: 7 gaps
