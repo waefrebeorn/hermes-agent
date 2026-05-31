@@ -1,2 +1,2 @@
-# Testing — Slermes C (v433)
-332/0/13. 58 gaps. Phase 377: TUI Transport Layer — T02 PORTED (FIFO transport abstraction, connection state machine, reconnection, state callbacks, message framing, poll-based I/O). 13-test suite (+1 new).
+# Testing — Slermes C (v434)
+333/0/13. 57 gaps. Phase 378: App Layout + Chrome — T08 PORTED (configurable pane layout engine, responsive modes, pane sizing policies, pane constraints, chrome decorations). 15-test suite (+1 new).

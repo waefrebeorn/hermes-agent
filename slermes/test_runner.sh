@@ -89,6 +89,7 @@ run_lib_test "tui_slash_worker" "tests/test_tui_slash_worker.c" "src/cli" "$CDIR
 run_lib_test "tui_entry" "tests/test_tui_entry.c" "src/cli" "$CDIR/src/cli/tui_entry.c -I$CDIR/include -I$CDIR/lib/libncurses/include -Wl,--unresolved-symbols=ignore-all"
 run_lib_test "tui_json_rpc" "tests/test_tui_json_rpc.c" "src/cli" "$CDIR/src/cli/tui_json_rpc.c $CDIR/lib/libjson/json.c -I$CDIR/include -I$CDIR/lib/libjson"
 run_lib_test "tui_transport" "tests/test_tui_transport.c" "src/cli" "$CDIR/src/cli/tui_transport.c -I$CDIR/include"
+run_lib_test "tui_layout" "tests/test_tui_layout.c" "src/cli" "$CDIR/src/cli/tui_layout.c -I$CDIR/include"
 echo ""; echo "=== Website Policy Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
     "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \

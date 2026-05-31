@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-||| v433 | Fork diverged — slermes/ lives only on fork | Suite 332/0/13 | 85 tools | 99 CLI** |
-|**|**Honest assessment: 58 structural gaps, 1000+ test case gaps. Phase 377: TUI Transport Layer — T02 PORTED (FIFO transport abstraction, connection state machine, reconnection, state callbacks, message framing, poll-based I/O). Suite 332/0/13. 58 gaps.**|
+|**| **v434** | Fork diverged — slermes/ lives only on fork | Suite 333/0/13 | 85 tools | 99 CLI** |
+|**|**Honest assessment: 57 structural gaps, 1000+ test case gaps. Phase 378: App Layout + Chrome — T08 PORTED (configurable pane layout engine, responsive modes, pane sizing policies, pane constraints, chrome decorations). Suite 333/0/13. 57 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -117,7 +117,7 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 || 05 | T05 | TUI entry/startup | tui_gateway/entry.py | ✅ PORTED — tui_entry.c/h: wraps TUI lifecycle with pre-flight checks (TERM, isatty, color), SIGTERM handler, startup result/exit reason codes, graceful degradation. 10-test suite. (Phase 375) | P1 |
 || 06 | T06 | TUI slash command worker | tui_gateway/slash_worker.py | ✅ PORTED — tui_slash_worker.c/h: dispatch-table architecture with 30 commands, 6 categories, argument parsing with quote support. Replaced tui_process_input's 200-line if/else chain. 20-test suite. (Phase 374) | P1 |
 || 07 | T07 | TUI event publisher | tui_gateway/event_publisher.py | ✅ PORTED — tui_eventpub.c/h: 22 event types, JSON-RPC 2.0 serialization, subscribe/dispatch with type filters, FIFO batched output with flush. 21-test suite. (Phase 373) | P1 |
-| 08 | T08 | App layout + chrome | appLayout.tsx, appChrome.tsx | ncurses panel only | P1 |
+|| 08 | T08 | App layout + chrome | appLayout.tsx, appChrome.tsx | ✅ PORTED — tui_layout.c/h: configurable pane layout engine with responsive modes (NORMAL/MOBILE/COMPACT/WIDE), pane sizing (FIXED/RATIO/FILL/AUTO), constraints (min/max), side placement (TOP/BOTTOM/LEFT/RIGHT/CENTER), chrome flags (HEADER/BORDER/SEPARATOR/SCROLL/FOOTER). 15-test suite. (Phase 378) | P1 |
 || 09 | T09 | Text input: autocomplete, history, multi-line | textInput.tsx (1233 LOC) | ✅ PORTED — getch()-based multi-line, emoji picker, slash autocomplete, history, Ctrl-key nav | P1 |
 || 10 | T10 | Markdown render: rich streaming render | markdown.tsx (1119 LOC) | ✅ PORTED — tui_render_markdown() role-colored, bold/italic/code markdown patterns | P1 |
 | 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | ✅ PORTED — rich animated states. Multi-frame spinner (| / - \\), animated ellipsis (.→..→...→.. 12-frame cycle), phase labels by elapsed time: think (0-2s), ponder (2-5s), deep (5-10s), focus (10s+). After first token: pulsing arrow (>→=>) + live token counter + tok/s rate. Ctrl+C abort via SIGINT handler, nodelay throughout streaming. (Phase 367) | P1 |
@@ -130,7 +130,7 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | ✅ PORTED — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead buffers up to 1024 chars in stream_state_t.type_ahead_buf, injected into input buffer after stream end. beep() retained as feedback. (Phase 366) | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
-**S4: 11 gaps (2 P1, 6 P2, 3 P3) — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01+T02 PORTED**
+**S4: 10 gaps (1 P1, 6 P2, 3 P3) — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01+T02+T08 PORTED**
 
 ---
 
@@ -273,14 +273,14 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
-||| S4: TUI Ecosystem | 11 | 0 | 2 | 6 | 3 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01+T02 PORTED
+||| S4: TUI Ecosystem | 10 | 0 | 1 | 6 | 3 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01+T02+T08 PORTED
 ||| S5: CLI Ecosystem | 10 | 0 | 0 | 4 | 6 | hermes_cli infrastructure — C01-C18 PORTED. C10+C12 WON'T PORT. C11 now PORTED (xAI OAuth callback).
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|| **TOTAL** | **58** | **4** | **22** | **19** | **21** | **S4: 14→13→12→11 (T02 PORTED). Total down from 59 to 58.** |
+|| **TOTAL** | **57** | **4** | **21** | **19** | **21** | **S4: 14→13→12→11→10 (T08 PORTED). Total down from 58 to 57.** |
 
 ### Phase Map
 

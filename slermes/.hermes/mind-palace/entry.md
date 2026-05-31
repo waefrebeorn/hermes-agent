@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v433)
+# Entry — Slermes C Parity (v434)
 
-Phase 377: TUI Transport Layer — T02 PORTED (FIFO transport abstraction, connection state machine, reconnection, state callbacks, message framing, poll-based I/O, send/recv/sendf/send_rpc API). 58 gaps. Suite 332/0/13.
+Phase 378: App Layout + Chrome — T08 PORTED (configurable pane layout engine, responsive modes, pane sizing policies, pane constraints, chrome decorations). 57 gaps. Suite 333/0/13.

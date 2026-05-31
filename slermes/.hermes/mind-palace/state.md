@@ -1,9 +1,9 @@
-# State — Slermes C (v433)
-332/0/13. Phase 377: TUI Transport Layer — T02 PORTED.
-   tui_transport.c/h — abstracted FIFO-based transport with connection
-   state machine (IDLE/CONNECTING/CONNECTED/DISCONNECTED/ERROR),
-   configurable reconnection, state change callbacks, message framing
-   (newline-delimited), poll-based I/O, send/recv API, send_rpc
-   convenience, sendf formatted output, shutdown cleanup.
-   13-test suite (test_tui_transport.c).
-58 gaps. S4 T02 PORTED. S4 gaps: 12→11.
+# State — Slermes C (v434)
+333/0/13. Phase 378: App Layout + Chrome — T08 PORTED.
+   tui_layout.c/h — configurable pane layout engine with chrome
+   decorations, responsive modes (NORMAL/MOBILE/COMPACT/WIDE),
+   pane sizing policies (FIXED/RATIO/FILL/AUTO), pane constraints
+   (min/max), side-based placement (TOP/BOTTOM/LEFT/RIGHT/CENTER),
+   chrome flags (HEADER/BORDER/SEPARATOR/SCROLL/FOOTER).
+   15-test suite (test_tui_layout.c).
+57 gaps. S4 T08 PORTED. S4 gaps: 11→10.
