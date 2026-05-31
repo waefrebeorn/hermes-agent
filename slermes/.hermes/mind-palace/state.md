@@ -1,5 +1,5 @@
-|# State — Slermes C (v412)
-328/0/12. Phase 356: Cron scripts edge case expansion — 9 new tests (10→19).
+# State — Slermes C (v415)
+328/0/12. Phase 357: Terminal transform sudo edge case expansion — 15 new tests (7→22).
   Setup edge cases (NULL/empty params, re-set), extractor NULL/missing field safety,
   queue NULL/empty params, queue overflow (ring buffer drops newest when full),
   unicode/special chars preserved, webhook empty body, missing conversationId
