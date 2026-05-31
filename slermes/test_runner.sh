@@ -131,7 +131,7 @@ echo ""; echo "=== Tool Init Tests (registry) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_tool_init.c" "$CDIR/src/tools/registry.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_tool_init -lm > /dev/null 2>&1; then
-    if /tmp/hermes_test_tool_init > /dev/null 2>&1; then ok "tool_init (13 tests)"
+    if /tmp/hermes_test_tool_init > /dev/null 2>&1; then ok "tool_init (18 tests)"
     else fail "tool_init (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_tool_init
 else fail "tool_init (compilation failed)"

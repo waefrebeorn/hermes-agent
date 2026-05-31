@@ -77,6 +77,28 @@ int main(void) {
     r = registry_register("null_handler", "No handler", "{}", NULL);
     TEST("register NULL handler returns false", !r);
 
+    /* Edge: empty string name (registry allows empty name) */
+    r = registry_register("", "Empty name", "{}", test_handler);
+    TEST("register empty name succeeds", r);
+
+    /* Edge: dispatch with NULL args */
+    out = registry_dispatch("test_tool", NULL, "task1");
+    TEST("dispatch NULL args returns non-NULL", out != NULL);
+    free(out);
+
+    /* Edge: dispatch with NULL task_id */
+    out = registry_dispatch("test_tool", "{}", NULL);
+    TEST("dispatch NULL task_id returns non-NULL", out != NULL);
+    free(out);
+
+    /* Edge: get_name with out-of-range index */
+    const char *name = registry_get_name(999999);
+    TEST("get_name out-of-range returns NULL", name == NULL);
+
+    /* Edge: get_name with huge index (overflow boundary) */
+    name = registry_get_name((size_t)-1);
+    TEST("get_name max-size returns NULL", name == NULL);
+
     /* Summation */
     printf("\n---\n");
     printf("  Results: %d passed, %d failed\n", passed, failed);
