@@ -670,6 +670,7 @@ typedef struct {
     agent_state_t        *agent;
 
     /* Modal overlay state */
+    int     think_frame;        /* P192 animation frame counter */
     enum {
         MODE_NORMAL,
         MODE_SESSION_BROWSE,
@@ -1126,6 +1127,11 @@ static void tui_stream_start(void) {
     tui.stream.first_token = true;
     tui.stream.bytes_received = 0;
     tui.stream.tokens_per_sec = 0.0;
+    tui.think_frame = 0;
+
+    /* Set input window to non-blocking for thinking animation */
+    if (tui.panes[PANE_INPUT].win)
+        nodelay(tui.panes[PANE_INPUT].win, TRUE);
 
     strcpy(tui.status.mode, "stream");
 }
@@ -1142,7 +1148,12 @@ static void tui_stream_finish(void) {
     }
 
     tui.stream.active = false;
+    tui.stream.first_token = false;
     strcpy(tui.status.mode, "chat");
+
+    /* Restore blocking input */
+    if (tui.panes[PANE_INPUT].win)
+        nodelay(tui.panes[PANE_INPUT].win, FALSE);
 
     /* Update token rate */
     double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
@@ -3555,6 +3566,25 @@ int tui_fullscreen_run(agent_state_t *state) {
             refresh();
             clear();
             tui_resize_panes();
+        }
+
+        /* Thinking indicator animation — P192: show spinner while
+         * streaming has started but no token received yet */
+        if (tui.stream.active && tui.stream.first_token) {
+            static const char spin[] = {'|', '/', '-', '\\\\'};
+            int frame = tui.think_frame % 4;
+            /* Show thinking indicator on status bar area */
+            if (tui.panes[PANE_STATUS].win) {
+                mvwaddch(tui.panes[PANE_STATUS].win, 0, 2, spin[frame]);
+                /* Update elapsed time display */
+                double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
+                mvwprintw(tui.panes[PANE_STATUS].win, 0, 4, " thinking  %4.1fs ", elapsed);
+                wnoutrefresh(tui.panes[PANE_STATUS].win);
+                doupdate();
+            }
+            tui.think_frame++;
+            napms(100);  /* ~10fps animation */
+            continue;    /* skip input — don't block */
         }
 
         /* Get input from the input pane */

@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v418)
+# Entry — Slermes C Parity (v419)
 
-Phase 361: /plugins show <name>. 67 gaps.
+Phase 362: Dynamic version + TUI thinking indicator. 67 gaps.

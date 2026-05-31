@@ -1,6 +1,11 @@
+# Dynamically detect Python Hermes version from upstream source
+HERMES_VERSION := $(shell python3 -c "import sys; sys.path.insert(0, '..'); from hermes_cli import __version__; print(__version__)" 2>/dev/null || echo "0.15.1")
+HERMES_RELEASE_DATE := $(shell python3 -c "import sys; sys.path.insert(0, '..'); from hermes_cli import __release_date__; print(__release_date__)" 2>/dev/null || echo "2026.5.29")
+
 CC = gcc
 AR = ar
 CFLAGS = -O2 -g -Wall -Wextra -Wno-pedantic -Wno-unused-result -Wno-format-truncation -Wno-stringop-truncation -Wno-misleading-indentation -Wno-discarded-qualifiers -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-extra-args -Wno-comment -Wno-format-zero-length -Wno-address -Wno-maybe-uninitialized -I include
+CFLAGS += -DHERMES_VERSION=\"$(HERMES_VERSION)-slermes\" -DHERMES_RELEASE_DATE=\"$(HERMES_RELEASE_DATE)\"
 LDFLAGS = -lssl -lcrypto -ldl -lpthread -lz
 LIBS = -lm
 

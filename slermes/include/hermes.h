@@ -36,10 +36,18 @@ typedef struct budget_tracker_t budget_tracker_t;
 /* ================================================================
  *  Version
  * ================================================================ */
+#ifndef HERMES_VERSION_MAJOR
 #define HERMES_VERSION_MAJOR 0
-#define HERMES_VERSION_MINOR 14
+#endif
+#ifndef HERMES_VERSION_MINOR
+#define HERMES_VERSION_MINOR 15
+#endif
+#ifndef HERMES_VERSION_PATCH
 #define HERMES_VERSION_PATCH 1
-#define HERMES_VERSION "0.14.1-wubu"
+#endif
+#ifndef HERMES_VERSION
+#define HERMES_VERSION "0.15.1-slermes"
+#endif
 
 /* Config file format version — incremented when struct layout changes
  * and migration is required. Stored as "config_version" in YAML. */

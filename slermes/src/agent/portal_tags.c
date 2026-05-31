@@ -14,7 +14,7 @@
 
 /* Version string — must match include/hermes.h */
 #ifndef HERMES_VERSION
-#define HERMES_VERSION "0.14.1-wubu"
+#define HERMES_VERSION "0.15.1-slermes"
 #endif
 
 char *hermes_client_tag(void)

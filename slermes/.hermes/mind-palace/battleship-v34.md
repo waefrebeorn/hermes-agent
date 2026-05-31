@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v418 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 361: /plugins show <name>. Suite 328/0/12. 67 gaps.**|
+| v419 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 362: Dynamic upstream version + TUI thinking indicator. Suite 328/0/12. 67 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -115,9 +115,9 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 06 | T06 | TUI slash command worker | tui_gateway/slash_worker.py | None | P1 |
 | 07 | T07 | TUI event publisher | tui_gateway/event_publisher.py | None | P1 |
 | 08 | T08 | App layout + chrome | appLayout.tsx, appChrome.tsx | ncurses panel only | P1 |
-| 09 | T09 | Text input: autocomplete, history, multi-line | textInput.tsx (1233 LOC) | fgets() line editor | P1 |
-| 10 | T10 | Markdown render: rich streaming render | markdown.tsx (1119 LOC) | None | P1 |
-| 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | None | P1 |
+|| 09 | T09 | Text input: autocomplete, history, multi-line | textInput.tsx (1233 LOC) | ✅ PORTED — getch()-based multi-line, emoji picker, slash autocomplete, history, Ctrl-key nav | P1 |
+|| 10 | T10 | Markdown render: rich streaming render | markdown.tsx (1119 LOC) | ✅ PORTED — tui_render_markdown() role-colored, bold/italic/code markdown patterns | P1 |
+|| 11 | T11 | Thinking indicator: animated states | thinking.tsx (1206 LOC) | PARTIAL — animated spinner (|/-\), nodelay during streaming, elapsed time (Phase 362) | P1 |
 || 12 | T12 | Session picker | sessionPicker.tsx | ✅ PORTED — tui_fullscreen_session_browse (Phase 195) | P2 |
 || 13 | T13 | Model picker | modelPicker.tsx | ✅ PORTED — tui_fullscreen.c model picker overlay (Phase 318, /model opens interactive picker, arrow keys, Enter to apply) | P2 |
 | 14 | T14 | Agents overlay | agentsOverlay.tsx | None | P2 |
@@ -127,7 +127,7 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | fgets blocks, input lost | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
-**S4: 24 gaps (12 P1, 8 P2, 4 P3) — T12+T13+T16+T17 PORTED**
+**S4: 20 gaps (10 P1, 6 P2, 4 P3) — T09+T10+T12+T13+T16+T17 PORTED, T11 PARTIAL**
 
 ---
 
@@ -277,7 +277,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-||| **TOTAL** | **67** | **4** | **29** | **26** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 28→24 (T12+T13+T16+T17 PORTED). Phase 359: Nous device code flow added to C11.** |
+||| **TOTAL** | **67** | **4** | **27** | **24** | **21** | **S0+S1+S3+S6+S8+R02+R04+R10 all PORTED. S5 19→12 (C01+C03+C13+C15+C16+C17+C18 PORTED). S4 28→24 (T12+T13+T16+T17 PORTED). Phase 359: Nous device code flow added to C11.** |
 
 ### Phase Map
 
