@@ -349,7 +349,9 @@ bool vision_supports_media_in_tool_results(const char *provider, const char *mod
         strcmp(provider, "google-gemini") == 0 ||
         strcmp(provider, "google-vertex-gemini") == 0) {
         if (!model || !model[0]) return false;
-        if (strstr(model, "gemini-3") || strstr(model, "gemini-pro-3") || strstr(model, "gemini-flash-3"))
+        if (strstr(model, "gemini-3.") || strstr(model, "gemini-3-") ||
+            strcmp(model, "gemini-3") == 0 ||
+            strstr(model, "gemini-pro-3") || strstr(model, "gemini-flash-3"))
             return true;
         return false;
     }

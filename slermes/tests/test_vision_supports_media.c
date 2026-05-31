@@ -54,6 +54,28 @@ int main(void) {
     TEST("empty provider rejects", !vision_supports_media_in_tool_results("", NULL));
     TEST("unknown provider rejects", !vision_supports_media_in_tool_results("unknown-provider", "some-model"));
 
+    /* Case sensitivity — strcmp is case-sensitive */
+    TEST("OpenRouter (capitalized) rejects", !vision_supports_media_in_tool_results("OpenRouter", NULL));
+    TEST("GEMINI-3-FLASH model with google rejects", !vision_supports_media_in_tool_results("google", "GEMINI-3-FLASH"));
+
+    /* Model version boundary — strstr false-positives */
+    TEST("gemini-30 model rejects (30 != 3.x)", !vision_supports_media_in_tool_results("google", "gemini-30-flash"));
+    TEST("gemini-pro-3.5 supports (dot version)", vision_supports_media_in_tool_results("google", "gemini-pro-3.5-flash"));
+    TEST("gemini-3 exact model supports", vision_supports_media_in_tool_results("google", "gemini-3"));
+
+    /* Anthropic/OpenAI always support regardless of model */
+    TEST("anthropic + NULL model supports", vision_supports_media_in_tool_results("anthropic", NULL));
+    TEST("openai + claude-3 model supports", vision_supports_media_in_tool_results("openai", "claude-3"));
+    TEST("openai + empty model supports", vision_supports_media_in_tool_results("openai", ""));
+
+    /* Provider whitespace — strcmp is exact */
+    TEST("leading space provider rejects", !vision_supports_media_in_tool_results(" openai", NULL));
+    TEST("trailing space provider rejects", !vision_supports_media_in_tool_results("openai ", NULL));
+
+    /* Anthropic aliases */
+    TEST("anthropic + claude-4 supports (future model)", vision_supports_media_in_tool_results("anthropic", "claude-4-sonnet"));
+    TEST("claude + any model supports", vision_supports_media_in_tool_results("claude", "claude-opus-4"));
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

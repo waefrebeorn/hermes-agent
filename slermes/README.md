@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/CLI-98%20commands-00AA55?style=flat-square" alt="98 CLI">
   <img src="https://img.shields.io/badge/Libs-65%20modules-0066FF?style=flat-square" alt="65 libs">
   <img src="https://img.shields.io/badge/Gateways-19%20platforms-FF6B35?style=flat-square" alt="19 gateways">
-  <img src="https://img.shields.io/badge/Phase-319-FFD700?style=flat-square" alt="Phase 319">
+  <img src="https://img.shields.io/badge/Phase-321-FFD700?style=flat-square" alt="Phase 321">
 </p>
 
 **Full C translation of [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.** One static binary, zero runtime deps beyond libc + libssl. 31M ELF.

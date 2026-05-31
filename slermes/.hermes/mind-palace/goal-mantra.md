@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v384)
+# Goal Mantra — Slermes C (v385)
 
-325/0/14 (289 test files). 68 gaps. Proc bugfix: proc_read_stat field-off-by-one.
+325/0/14 (289 test files). 68 gaps. Vision media-in-tool-results edge case expansion (12 new assertions) + gemini-30 precision fix.
 
 ## Loop
 

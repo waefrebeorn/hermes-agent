@@ -3031,7 +3031,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_vision_supports_media.c" \
     "$CDIR/src/tools/vision.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_vis_media -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_vis_media > /dev/null 2>&1; then ok "vision_supports_media (23 tests)"
+    if /tmp/hermes_test_vis_media > /dev/null 2>&1; then ok "vision_supports_media (35 tests)"
     else fail "vision_supports_media (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_vis_media
 else skip "vision_supports_media (compilation failed)"
