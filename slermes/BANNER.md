@@ -1,11 +1,11 @@
-**BANNER — WuBu Slermes C Translation (v404) — slermes/ directory**
+**BANNER — WuBu Slermes C Translation (v405) — slermes/ directory**
 
 ```text
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v404                                          ║
-║  327 tests · 68 gaps · 85 tools · 99 CLI · 65 libs         ║
+║  WuBu Slermes C v405                                          ║
+║  328 tests · 68 gaps · 85 tools · 99 CLI · 65 libs         ║
 ║  68 gaps  │  31MB binary  │  0 warnings                     ║
-║  Phase 347: provider error — 316 assertions                    ║
+║  Phase 348: json mode — 23 assertions                          ║
 ║  S0+S1+S3+S6+F10+R02+R04+R10+C03+C13+C15+C16+C17+C18 PORTED ║
 ╚══════════════════════════════════════════════════════════════╝
 ```

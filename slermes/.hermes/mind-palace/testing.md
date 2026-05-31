@@ -1,6 +1,6 @@
-# Testing — Slermes C (v404)
+# Testing — Slermes C (v405)
 
-327/0/13, 289 test files. All pass. 68 gaps. Phase 347: provider error edge case expansion — 91 new assertions (225→316). Recovered 1 test from SKIP.
+328/0/12, 289 test files. All pass. 68 gaps. Phase 348: json_mode edge case expansion — 13 new assertions (10→23). Recovered 1 test from SKIP.
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

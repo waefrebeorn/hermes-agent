@@ -1,5 +1,5 @@
-|# State — Slermes C (v404)
-327/0/13. Phase 347: provider_error edge case expansion — 91 new assertions (225→316). 9-provider context overflow error handling, boundary cases (very long error, unicode, null/empty error objects, no message field), OpenAI stream [DONE] marker. Fixed test_runner.sh compilation (missing url_safety.c dependency). Recovered 1 skipped test.
+|# State — Slermes C (v405)
+328/0/12. Phase 348: json_mode edge case expansion — 13 new assertions (10→23). 3 additional providers (Azure, Google, Bedrock), json_mode toggle (true→false→true), json_mode=false + explicit response_format, json_mode with streaming, json_mode with empty messages (0 messages), json_mode with response_format_strict. Fixed test_runner.sh corrupted redirect (2>-lm) + missing url_safety.c dep. Recovered 1 skipped test.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

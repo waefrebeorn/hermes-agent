@@ -2110,9 +2110,10 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
     "$CDIR/src/agent/provider_custom.c" \
     "$CDIR/src/agent/portal_tags.c" \
+    "$CDIR/src/tools/url_safety.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (10 tests)"
+    if /tmp/hermes_test_json_mode > /dev/null 2>&1; then ok "json_mode (23 tests)"
     else
         echo "  JSON mode test output:"
         /tmp/hermes_test_json_mode 2>&1 | sed 's/^/    /'
@@ -2130,8 +2131,9 @@ else
         "$CDIR/src/agent/provider_azure.c" "$CDIR/src/agent/provider_bedrock.c" \
         "$CDIR/src/agent/provider_custom.c" \
         "$CDIR/src/agent/portal_tags.c" \
+        "$CDIR/src/tools/url_safety.c" \
         "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
-        -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz 2>-lm -lssl -lcrypto 2>&11 | sed 's/^/    /'
+        -o /tmp/hermes_test_json_mode -lm -lssl -lcrypto -lz 2>&1 | sed 's/^/    /'
     skip "json_mode (compilation failed)"
 fi
 
