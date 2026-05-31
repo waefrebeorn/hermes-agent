@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v421 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 364: TUI todo panel (T15) — kanban task board overlay. Suite 328/0/12. 67 gaps.**|
+| v422 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 365: Bugfix sweep — ctx:0% fix, status bar rollover, startup bar, [llm] diagnostic suppression. Suite 328/0/12. 67 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
