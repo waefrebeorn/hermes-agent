@@ -1526,7 +1526,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_dingtalk.c" \
     "$CDIR/src/gateway/platforms/dingtalk.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_dingtalk -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_dingtalk > /dev/null 2>&1; then ok "dingtalk (10 tests)"
+    if /tmp/hermes_test_dingtalk > /dev/null 2>&1; then ok "dingtalk (46 tests)"
     else fail "dingtalk (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_dingtalk
 else skip "dingtalk (compilation failed)"

@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v408)
+# Entry — Slermes C Parity (v409)
 
-Phase 351: Triple DA TUI plumbing fix — 3 bugs fixed. 68 gaps.
+Phase 352: DingTalk edge case expansion (30 new assertions). 68 gaps.
