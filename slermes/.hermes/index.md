@@ -2,4 +2,4 @@
 
 > **This file has moved.** The canonical index is at `mind-palace/index.md`.
 >
-> 🔗 **[mind-palace/index.md](mind-palace/index.md)** (v432)
+> 🔗 **[mind-palace/index.md](mind-palace/index.md)** (v433)

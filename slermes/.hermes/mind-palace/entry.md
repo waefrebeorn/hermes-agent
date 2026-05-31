@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v432)
+# Entry — Slermes C Parity (v433)
 
-Phase 376: TUI JSON-RPC Gateway Server — T01 PORTED (method dispatch table, JSON-RPC 2.0 request/response, standard error codes, parameter extraction API). 59 gaps. Suite 331/0/13.
+Phase 377: TUI Transport Layer — T02 PORTED (FIFO transport abstraction, connection state machine, reconnection, state callbacks, message framing, poll-based I/O, send/recv/sendf/send_rpc API). 58 gaps. Suite 332/0/13.

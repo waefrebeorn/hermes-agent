@@ -1,2 +1,2 @@
-# Testing — Slermes C (v432)
-331/0/13. 59 gaps. Phase 376: TUI JSON-RPC Gateway Server — T01 PORTED (method dispatch table, JSON-RPC 2.0 request/response, standard error codes, parameter extraction API). 13-test suite (+1 new).
+# Testing — Slermes C (v433)
+332/0/13. 58 gaps. Phase 377: TUI Transport Layer — T02 PORTED (FIFO transport abstraction, connection state machine, reconnection, state callbacks, message framing, poll-based I/O). 13-test suite (+1 new).
