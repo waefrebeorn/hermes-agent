@@ -1,4 +1,4 @@
-# Goal Mantra — Slermes C (v386)
+# Goal Mantra — Slermes C (v390)
 
 325/0/14 (289 test files). 68 gaps. Token exchange edge case expansion (9 new assertions, 7→16).
 

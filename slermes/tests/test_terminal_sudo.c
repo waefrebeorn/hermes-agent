@@ -137,6 +137,61 @@ int main(void) {
         free(res);
     }
 
+    /* Test 11: NULL found pointer returns NULL (precondition) */
+    {
+        char *res = terminal_rewrite_sudo("ls", NULL);
+        TEST("NULL found pointer returns NULL", res == NULL);
+    }
+
+    /* Test 12: NULL found + sudo also returns NULL */
+    {
+        char *res = terminal_rewrite_sudo("sudo apt update", NULL);
+        TEST("NULL found + sudo returns NULL", res == NULL);
+    }
+
+    /* Test 13: Multiple pipes and sudo */
+    {
+        bool found = false;
+        char *res = terminal_rewrite_sudo("cmd1 | cmd2 | sudo tee output", &found);
+        TEST("multi pipe + sudo found=true", found == true);
+        if (res) {
+            TEST("sudo after multiple pipes rewritten", strstr(res, "sudo -S -p ''") != NULL);
+        }
+        free(res);
+    }
+
+    /* Test 14: Sudo with quoted arguments */
+    {
+        bool found = false;
+        char *res = terminal_rewrite_sudo("sudo echo 'hello world'", &found);
+        TEST("sudo with quotes found=true", found == true);
+        if (res) {
+            TEST("sudo with quotes rewritten", strstr(res, "sudo -S -p ''") != NULL);
+            TEST("quoted args preserved", strstr(res, "'hello world'") != NULL);
+        }
+        free(res);
+    }
+
+    /* Test 15: Sudo with env var in command */
+    {
+        bool found = false;
+        char *res = terminal_rewrite_sudo("sudo FOO=bar cmd", &found);
+        TEST("sudo with env found=true", found == true);
+        if (res) {
+            TEST("sudo with env rewritten", strstr(res, "sudo -S -p ''") != NULL);
+            TEST("env var preserved", strstr(res, "FOO=bar") != NULL);
+        }
+        free(res);
+    }
+
+    /* Test 16: Back-to-back operators before sudo */
+    {
+        bool found = false;
+        char *res = terminal_rewrite_sudo("cmd1 ; sudo cmd2", &found);
+        TEST("space-semicolon + sudo found=true", found == true);
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failures ? "SOME TESTS FAILED" : "All terminal sudo rewrite tests PASSED");
     return failures ? 1 : 0;

@@ -3156,7 +3156,7 @@ if gcc -O2 -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-format-tr
     "$CDIR/tests/test_terminal_sudo.c" \
     "$CDIR/src/tools/terminal.c" \
     -o /tmp/hermes_test_sudo -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_sudo > /dev/null 2>&1; then ok "terminal_sudo_rewrite (24 tests)"
+    if /tmp/hermes_test_sudo > /dev/null 2>&1; then ok "terminal_sudo_rewrite (36 tests)"
     else fail "terminal_sudo_rewrite (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_sudo
 else skip "terminal_sudo_rewrite (compilation failed)"

@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v389** · 68 active gaps · **2147 entries** of progress
+> **v390** · 68 active gaps · **2148 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2181,3 +2181,4 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | 330 | X09 | Bugfix sweep — 3 real bugs found via DA. **BUG1: Use-after-free in approval.c** ... **BUG2: `&&` operator false positive in tirith.c** ... **BUG3: strcat buffer overflow in cli.c:212** ... 13 new tirith arg injection tests. Suite 326/0/14. v387. | `src/tools/approval.c` — use-after-free fix (3 copy-to-detail_buf sites). `src/tools/tirith.c` — shell-operator-only exclusion. `src/cli/cli.c` — strcat→memcpy. `tests/test_tirith.c` — 13 new tests. `test_runner.sh` — new test file entry. Suite 325→326/0/14. v387. |
 | 331 | X09 | File merge edge case expansion — 5 new test functions (13→18 assertions) + stale test_runner count fix (4→13). Covers: empty modified content, both empty files, self-merge (base==modified==output), git-merge-file strategy, duplicate test_empty_base_file removed. Suite 326/0/14. v388. | `tests/test_file_merge.c` — 5 new test functions (13→18 assertions). `test_runner.sh` — count 4→13. Suite 326/0/14. v388. |
 | 332 | X09 | Vi mode arrow key bugfix — Up/Down arrow keys in INSERT mode were broken by vi mode. `continue` in ESC handler skipped escape sequence reading, so `\x1b[A` (Up arrow) toggled INSERT→NORMAL (via ESC), then `A` in NORMAL mode triggered "append" (back to INSERT). No history navigation ever executed. Fix: read escape sequence bytes BEFORE mode switch, insert mode switch as fallback after sequence consumption. | `lib/liblineedit/line_edit.c` — restructured ESC handler (escape read before mode switch). Suite 326/0/14. v389. |
+| 333 | X09 | Terminal sudo rewrite edge case expansion — 6 new test sections, 11 new assertions (25→36) + stale test_runner counts fixed (3→16, 24→36). Covers: NULL found pointer returns NULL (precondition), NULL found + sudo, multiple pipes + sudo, sudo with quoted args, sudo with env var, space-separated semicolons. Suite 326/0/14. v390. | `tests/test_terminal_sudo.c` — 6 new test sections (25→36 assertions). `test_runner.sh` — both terminal_sudo entries updated (3→16, 24→36). Suite 326/0/14. v390. |

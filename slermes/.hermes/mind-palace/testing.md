@@ -1,4 +1,4 @@
-# Testing — Slermes C (v386)
+# Testing — Slermes C (v390)
 
 325/0/14, 289 test files. All pass. 68 gaps. Phase 329: X09 token exchange edge case expansion — 9 new assertions (7→16).
 
