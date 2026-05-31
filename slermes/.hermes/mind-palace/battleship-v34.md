@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-|| v431 | Fork diverged — slermes/ lives only on fork | Suite 330/0/13 | 85 tools | 99 CLI** |
-|||**Honest assessment: 60 structural gaps, 1000+ test case gaps. Phase 375: TUI Entry/Startup Module — T05 PORTED (lifecycle wrapper, pre-flight checks, SIGTERM handler, startup result codes, exit reason tracking). Suite 330/0/13. 60 gaps.**|
+||| v432 | Fork diverged — slermes/ lives only on fork | Suite 331/0/13 | 85 tools | 99 CLI** |
+|**|**Honest assessment: 59 structural gaps, 1000+ test case gaps. Phase 376: TUI JSON-RPC Gateway Server — T01 PORTED (method dispatch table, JSON-RPC 2.0 request/response, standard error codes, parameter extraction API). Suite 331/0/13. 59 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -110,7 +110,7 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 
 | # | ID | Component | Python | C State | Priority |
 |---|----|-----------|--------|---------|----------|
-| 01 | T01 | TUI JSON-RPC gateway server | tui_gateway/server.py (6643 LOC) | 10 methods inline | P1 |
+|| 01 | T01 | TUI JSON-RPC gateway server | tui_gateway/server.py (6643 LOC) | ✅ PORTED — tui_json_rpc.c/h: method dispatch table with custom registration, JSON-RPC 2.0 request/response, standard error codes (parse/invalid_request/method_not_found/invalid_params/internal_error), parameter extraction API (string/int/bool/double). 13-test suite. (Phase 376) | P1 |
 | 02 | T02 | TUI transport layer | tui_gateway/transport.py | None | P1 |
 | 03 | T03 | TUI render engine | tui_gateway/render.py | ncurses panel only | P1 |
 | 04 | T04 | TUI WebSocket support | tui_gateway/ws.py | None | P1 |
@@ -130,7 +130,7 @@ C has 1 ncurses file (tui_fullscreen.c, 3374 LOC). Python has 28 Ink React tsx +
 | 18 | T18 | Recurrent typing: type-ahead during LLM call | Async input queue | ✅ PORTED — nodelay(TRUE) during streaming, Ctrl+C abort works (SIGINT handler), type-ahead buffers up to 1024 chars in stream_state_t.type_ahead_buf, injected into input buffer after stream end. beep() retained as feedback. (Phase 366) | P1 |
 | 19 | T19-T28 | (10 more tsx components) | ~4500 LOC total | None | P2-P3 |
 
-**S4: 13 gaps (3 P1, 6 P2, 4 P3) — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05 PORTED**
+**S4: 12 gaps (3 P1, 6 P2, 3 P3) — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01 PORTED**
 
 ---
 
@@ -273,14 +273,14 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S1: Conversation Loop Plumbing | 0 | 0 | 0 | 0 | 0 | All 28 real gaps stale-retired or implemented. L24+L25+L26+L27+L28 PORTED. S1 complete. |
 | S2: Agent Modules | 15 | 0 | 0 | 0 | 0 | All real gaps PORTED (A18/A22/A15). 15 won't-port remain. |
 | S3: Gateway Helpers | 0 | 0 | 0 | 0 | 0 | All PORTED (G01-G13). |
-||| S4: TUI Ecosystem | 13 | 0 | 3 | 6 | 4 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05 PORTED
+||| S4: TUI Ecosystem | 12 | 0 | 3 | 6 | 3 | Full TUI backend + React frontend — T09+T10+T11+T12+T13+T14+T15+T16+T17+T18+T07+T06+T05+T01 PORTED
 ||| S5: CLI Ecosystem | 10 | 0 | 0 | 4 | 6 | hermes_cli infrastructure — C01-C18 PORTED. C10+C12 WON'T PORT. C11 now PORTED (xAI OAuth callback).
 | S6: Tool Depth | 0 | 0 | 0 | 0 | 0 | All tools PORTED (B01-B10). |
 | S7: Test Coverage | 20* | 0 | 9 | 3 | 8 | *1,000+ test cases behind |
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|||| **TOTAL** | **60** | **4** | **24** | **19** | **21** | **S4: 14→13 (T05 PORTED). Total down from 61 to 60.** |
+|| **TOTAL** | **59** | **4** | **23** | **19** | **21** | **S4: 14→13→12 (T01 PORTED). Total down from 60 to 59.** |
 
 ### Phase Map
 

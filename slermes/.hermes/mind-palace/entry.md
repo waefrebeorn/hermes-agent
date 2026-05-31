@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v431)
+# Entry — Slermes C Parity (v432)
 
-Phase 375: TUI Entry/Startup Module — T05 PORTED (lifecycle wrapper). 60 gaps. Suite 330/0/13.
+Phase 376: TUI JSON-RPC Gateway Server — T01 PORTED (method dispatch table, JSON-RPC 2.0 request/response, standard error codes, parameter extraction API). 59 gaps. Suite 331/0/13.
