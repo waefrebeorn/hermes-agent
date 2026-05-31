@@ -341,6 +341,300 @@ static void test_free_response_null(void)
     provider_free(p);
 }
 
+static void test_url_building_edge_cases(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds url edge provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->build_url) { provider_free(p); return; }
+
+    /* Trailing slash */
+    char *u1 = ops->build_url(p, "https://api.deepseek.com/");
+    TEST("ds trailing slash url", u1 != NULL);
+    if (u1) {
+        TEST("ds no double slash", strstr(u1, "//chat") == NULL);
+        free(u1);
+    }
+
+    /* Custom proxy with path */
+    char *u2 = ops->build_url(p, "https://proxy.example.com/company/v1");
+    TEST("ds proxy url", u2 != NULL);
+    if (u2) {
+        TEST("ds proxy has /chat/completions", strstr(u2, "/chat/completions") != NULL);
+        TEST("ds proxy preserved", strstr(u2, "proxy.example.com") != NULL);
+        free(u2);
+    }
+
+    /* Empty base */
+    char *u3 = ops->build_url(p, "");
+    TEST("ds empty base", u3 != NULL);
+    free(u3);
+
+    provider_free(p);
+}
+
+static void test_headers_edge_cases(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+
+    /* Empty API key */
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "", "");
+    TEST("ds empty key provider", p != NULL);
+    if (p) {
+        const provider_ops_t *ops = provider_ops(p);
+        if (ops && ops->build_headers) {
+            char *h = ops->build_headers(p, "");
+            TEST("ds headers with empty key", h != NULL);
+            free(h);
+        }
+        provider_free(p);
+    }
+
+    /* Negative cache TTL (edge case) */
+    p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds neg ttl provider", p != NULL);
+    if (p) {
+        p->config.deepseek_cache_ttl = -1;
+        const provider_ops_t *ops = provider_ops(p);
+        if (ops && ops->build_headers) {
+            char *h = ops->build_headers(p, "sk-ds-test");
+            TEST("ds headers with neg ttl", h != NULL);
+            free(h);
+        }
+        provider_free(p);
+    }
+}
+
+static void test_parse_response_with_tool_calls(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds tool call provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_response) { provider_free(p); return; }
+
+    /* Single tool call (OpenAI-compatible) */
+    const char *json =
+        "{"
+        "\"id\":\"chatcmpl-dstc\","
+        "\"choices\":[{\"index\":0,\"message\":{"
+          "\"role\":\"assistant\",\"content\":null,"
+          "\"tool_calls\":[{\"id\":\"call_ds1\",\"type\":\"function\","
+            "\"function\":{\"name\":\"get_weather\",\"arguments\":\"{\\\"city\\\":\\\"Beijing\\\"}\"}}]"
+        "},\"finish_reason\":\"tool_calls\"}]"
+        "}";
+
+    provider_response_t *resp = ops->parse_response(p, json);
+    TEST("ds tool call parsed", resp != NULL);
+    if (resp) {
+        TEST("ds tool count 1", resp->tool_calls_count == 1);
+        TEST("ds tool id", strcmp(resp->tool_calls[0].id, "call_ds1") == 0);
+        TEST("ds tool name", strcmp(resp->tool_calls[0].name, "get_weather") == 0);
+        TEST("ds tool args has Beijing", strstr(resp->tool_calls[0].arguments, "Beijing") != NULL);
+        ops->free_response(resp);
+    }
+
+    provider_free(p);
+}
+
+static void test_parse_response_with_reasoning_and_tools(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-reasoner", "sk-ds-test", "");
+    TEST("ds reasoning+tool provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_response) { provider_free(p); return; }
+
+    /* DeepSeek response with both reasoning and tool call */
+    const char *json =
+        "{"
+        "\"id\":\"chatcmpl-dsrt\","
+        "\"choices\":[{\"index\":0,\"message\":{"
+          "\"role\":\"assistant\",\"content\":null,"
+          "\"reasoning_content\":\"I need to check weather first...\","
+          "\"tool_calls\":[{\"id\":\"call_rt1\",\"type\":\"function\","
+            "\"function\":{\"name\":\"get_weather\",\"arguments\":\"{\\\"city\\\":\\\"Shanghai\\\"}\"}}]"
+        "},\"finish_reason\":\"tool_calls\"}]"
+        "}";
+
+    provider_response_t *resp = ops->parse_response(p, json);
+    TEST("ds reasoning+tool parsed", resp != NULL);
+    if (resp) {
+        TEST("ds reasoning present", resp->reasoning != NULL);
+        TEST("ds tool count 1", resp->tool_calls_count == 1);
+        TEST("ds tool name correct", strcmp(resp->tool_calls[0].name, "get_weather") == 0);
+        ops->free_response(resp);
+    }
+
+    provider_free(p);
+}
+
+static void test_parse_stream_chunk_edge_cases(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds stream edge provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_stream_chunk) { provider_free(p); return; }
+
+    /* Chunk with finish_reason=length */
+    provider_response_t *r1 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"length\"}]}");
+    TEST("ds stream length finish", r1 != NULL);
+    if (r1) {
+        TEST("ds length finish reason", strcmp(r1->finish_reason, "length") == 0);
+        ops->free_response(r1);
+    }
+
+    /* Chunk with finish_reason=content_filter */
+    provider_response_t *r2 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"content_filter\"}]}");
+    TEST("ds stream content_filter finish", r2 != NULL);
+    if (r2) {
+        TEST("ds content_filter finish reason", strcmp(r2->finish_reason, "content_filter") == 0);
+        ops->free_response(r2);
+    }
+
+    /* Chunk with role delta (first chunk) */
+    provider_response_t *r3 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\"},\"finish_reason\":null}]}");
+    TEST("ds stream role delta", r3 != NULL);
+    if (r3) { ops->free_response(r3); }
+
+    /* Chunk with both content and reasoning */
+    provider_response_t *r4 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"answer\",\"reasoning_content\":\"think\"},\"finish_reason\":null}]}");
+    TEST("ds stream content+reasoning", r4 != NULL);
+    if (r4) {
+        TEST("ds stream reasoning text", r4->reasoning && strcmp(r4->reasoning, "think") == 0);
+        ops->free_response(r4);
+    }
+
+    /* Whitespace chunk */
+    provider_response_t *r5 = ops->parse_stream_chunk(p,
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}]}");
+    TEST("ds stream whitespace content", r5 != NULL);
+    if (r5) { ops->free_response(r5); }
+
+    /* Empty string chunk */
+    provider_response_t *r6 = ops->parse_stream_chunk(p, "");
+    TEST("ds stream empty string", r6 != NULL);
+    if (r6) { ops->free_response(r6); }
+
+    provider_free(p);
+}
+
+static void test_fim_response_edge_cases(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds fim edge provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_fim_response) { provider_free(p); return; }
+
+    /* FIM response with empty text */
+    provider_response_t *r1 = ops->parse_fim_response(p,
+        "{\"id\":\"fim-e\",\"choices\":[{\"index\":0,\"text\":\"\"}],\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0}}");
+    TEST("ds fim empty text", r1 != NULL);
+    if (r1) { ops->free_response(r1); }
+
+    /* FIM response with no choices */
+    provider_response_t *r2 = ops->parse_fim_response(p,
+        "{\"id\":\"fim-nc\",\"choices\":[]}");
+    TEST("ds fim no choices", r2 != NULL);
+    if (r2) { ops->free_response(r2); }
+
+    /* Empty JSON */
+    provider_response_t *r3 = ops->parse_fim_response(p, "{}");
+    TEST("ds fim empty json", r3 != NULL);
+    if (r3) { ops->free_response(r3); }
+
+    /* Invalid JSON */
+    provider_response_t *r4 = ops->parse_fim_response(p, "broken json");
+    TEST("ds fim broken json", r4 != NULL);
+    if (r4) { ops->free_response(r4); }
+
+    provider_free(p);
+}
+
+static void test_fim_body_edge_cases(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds fim body edge provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->build_fim_body) { provider_free(p); return; }
+
+    /* Empty prompt, non-empty suffix */
+    char *b1 = ops->build_fim_body(p, "", "    pass", 50);
+    TEST("ds fim empty prompt", b1 != NULL);
+    if (b1) { free(b1); }
+
+    /* Empty suffix, non-empty prompt */
+    char *b2 = ops->build_fim_body(p, "def foo():", "", 50);
+    TEST("ds fim empty suffix", b2 != NULL);
+    if (b2) { free(b2); }
+
+    /* Very long prompt (2000+ chars) */
+    char long_prompt[2048];
+    memset(long_prompt, 'x', sizeof(long_prompt) - 1);
+    long_prompt[sizeof(long_prompt) - 1] = '\0';
+    char *b3 = ops->build_fim_body(p, long_prompt, "return", 100);
+    TEST("ds fim long prompt", b3 != NULL);
+    if (b3) { free(b3); }
+
+    /* Zero max_tokens */
+    char *b4 = ops->build_fim_body(p, "test", "test", 0);
+    TEST("ds fim zero max_tokens", b4 != NULL);
+    if (b4) { free(b4); }
+
+    provider_free(p);
+}
+
+static void test_parse_response_empty_choices(void)
+{
+    provider_register(PROVIDER_DEEPSEEK, &PROVIDER_OPS_DEEPSEEK);
+    provider_t *p = provider_create("deepseek", "deepseek-chat", "sk-ds-test", "");
+    TEST("ds empty choice provider", p != NULL);
+    if (!p) return;
+
+    const provider_ops_t *ops = provider_ops(p);
+    if (!ops || !ops->parse_response) { provider_free(p); return; }
+
+    /* Response with empty choices array */
+    provider_response_t *r1 = ops->parse_response(p,
+        "{\"id\":\"empty_choice\",\"choices\":[],\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0}}");
+    TEST("ds empty choices", r1 != NULL);
+    if (r1) { ops->free_response(r1); }
+
+    /* Response with no choices key */
+    provider_response_t *r2 = ops->parse_response(p,
+        "{\"id\":\"no_choice\",\"object\":\"chat.completion\"}");
+    TEST("ds no choices key", r2 != NULL);
+    if (r2) { ops->free_response(r2); }
+
+    /* Response with null choices */
+    provider_response_t *r3 = ops->parse_response(p,
+        "{\"id\":\"null_choice\",\"choices\":null}");
+    TEST("ds null choices", r3 != NULL);
+    if (r3) { ops->free_response(r3); }
+
+    provider_free(p);
+}
+
 int main(void)
 {
     test_url_building();
@@ -354,6 +648,14 @@ int main(void)
     test_fim_body();
     test_parse_fim_response_basic();
     test_free_response_null();
+    test_url_building_edge_cases();
+    test_headers_edge_cases();
+    test_parse_response_with_tool_calls();
+    test_parse_response_with_reasoning_and_tools();
+    test_parse_stream_chunk_edge_cases();
+    test_fim_response_edge_cases();
+    test_fim_body_edge_cases();
+    test_parse_response_empty_choices();
 
     printf("provider_deepseek: %d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;

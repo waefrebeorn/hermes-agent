@@ -1,19 +1,23 @@
-# Overnight Map (v449)
+# Overnight Map (v450)
 
-## Phase 393 — Anthropic Provider Test Expansion
-**S7 X03 EXPANDED** — 70 new assertions in test_provider_anthropic.c (28→98 total)
-**Coverage:** response parsing (text, tool_use, multi-tool, empty, null, error, malformed),
-streaming (text_delta, block events, message_delta, ping, raw JSON, [DONE]),
-URL edge cases, headers edge cases
+## Phase 394 — DeepSeek Provider Test Expansion
+**S7 X03 EXPANDED** — 35 new assertions in test_provider_deepseek.c (71→106 total)
+**Coverage:** URL edge cases (trailing slash, proxy, empty base), header edge cases
+(empty key, negative cache TTL), tool call parsing, reasoning+tool call combined,
+streaming edge cases (length/content_filter finish, role delta, content+reasoning,
+whitespace, empty), FIM response edge cases (empty text, no choices, invalid JSON),
+FIM body edge cases (empty prompt/suffix, long prompt, zero max_tokens),
+response edge cases (empty/no/null choices).
 **Suite:** 338/?/13 — Awaiting full run
 **Gaps:** 53 (depth improved, no count reduction)
 
 ## Files Modified
-- tests/test_provider_anthropic.c — +70 assertions, ~700 LOC
-- test_runner.sh — label 74→98
-- .hermes/mind-palace/ — all walkways bumped v449
+- tests/test_provider_deepseek.c — +35 assertions, 8 new test functions
+- test_runner.sh — label 60→106
+- .hermes/mind-palace/ — all walkways bumped v450
 
 ## Phases This Session
 391: Delegate edge cases (S7 X04)
-392: OpenAI provider test expansion (S7 X03)
-393: Anthropic provider test expansion (S7 X03)
+392: OpenAI provider tests (S7 X03)
+393: Anthropic provider tests (S7 X03)
+394: DeepSeek provider tests (S7 X03)

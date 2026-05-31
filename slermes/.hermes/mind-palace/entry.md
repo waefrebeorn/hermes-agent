@@ -1,10 +1,10 @@
-# Entry — Slermes C Translation Project (v449)
+# Entry — Slermes C Translation Project (v450)
 
 ## Quick Stats
 - Suite: 338/?/13
 - Gaps: 53 (S4: 8, S5: 10, S7: 18 clusters, S9: 19, S10: 7)
-- Current Phase: 393 (Anthropic Provider Test Expansion)
-- Version: v449
+- Current Phase: 394 (DeepSeek Provider Test Expansion)
+- Version: v450
 
 ## Active Sectors
 | Sector | Status | Gaps |
@@ -15,7 +15,7 @@
 | S9 Plugin | 🔄 ACTIVE | 19 (P1-P3) |
 | S10 Arch | 🏛️ | 7 |
 
-## Latest Phase 393
-- test_provider_anthropic.c: 28→98 assertions (+70)
-- Response parsing, streaming, URL/header edge cases
-- S7 X03 coverage improved (OpenAI+Anthropic)
+## Latest Phase 394
+- test_provider_deepseek.c: 71→106 assertions (+35)
+- URL/header edge, tool calls, reasoning+tool, streaming edge, FIM edge
+- S7 X03 coverage improved (OpenAI+Anthropic+DeepSeek)

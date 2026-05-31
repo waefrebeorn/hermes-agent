@@ -549,7 +549,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_deepseek.c" \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_deepseek -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_deepseek ]]; then
     if /tmp/hermes_test_provider_deepseek > /dev/null 2>&1; then
-        ok "provider_deepseek (60 tests)"
+        ok "provider_deepseek (106 tests)"
     else fail "provider_deepseek (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_provider_deepseek

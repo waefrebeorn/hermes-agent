@@ -1,4 +1,4 @@
-# Index — Slermes C Mind Palace (v449)
+# Index — Slermes C Mind Palace (v450)
 
 ## Walkways
 | File | Purpose |
@@ -16,5 +16,5 @@
 | achievements.md | Vault of all closed gaps |
 | da-audit-v14.md, v15.md | Devil's Advocate audits |
 
-## Phase 393
-Anthropic Provider Test Expansion — S7 X03 EXPANDED. 70 new assertions. Response parsing, streaming, edge cases.
+## Phase 394
+DeepSeek Provider Test Expansion — S7 X03 EXPANDED. 35 new assertions. URL/header edge, tool calls, streaming, FIM edge cases.
