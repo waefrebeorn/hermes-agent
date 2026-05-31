@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v390)
+# Goal Mantra — Slermes C (v391)
 
-325/0/14 (289 test files). 68 gaps. Token exchange edge case expansion (9 new assertions, 7→16).
+326/0/14 (289 test files). 68 gaps. Phase 334: V4A patch bugfix (repl_len OBO) + 7 edge case tests. patch_v4a: 5→12 tests.
 
 ## Loop
 

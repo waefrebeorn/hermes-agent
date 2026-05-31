@@ -2901,7 +2901,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libfal_common/fal_common.c" \
     "$CDIR/lib/libenvpassthrough/env_passthrough.c" \
     -o /tmp/hermes_test_patch_v4a -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_patch_v4a > /dev/null 2>&1; then ok "patch_v4a (3 tests)"
+    if /tmp/hermes_test_patch_v4a > /dev/null 2>&1; then ok "patch_v4a (12 tests)"
     else fail "patch_v4a (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_patch_v4a
 else skip "patch_v4a (compilation failed)"

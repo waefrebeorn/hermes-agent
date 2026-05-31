@@ -1,6 +1,6 @@
-# Plan — Next Phase (v390)
+# Plan — Next Phase (v391)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 325/0/14. Token exchange edge case expansion (16 tests).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 334: V4A patch bugfix + 7 edge case tests. patch_v4a: 5→12 tests.
 
 **Next gap targets:**
 

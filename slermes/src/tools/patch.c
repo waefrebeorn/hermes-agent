@@ -540,6 +540,7 @@ static char *apply_v4a_hunk(const char *file_content, v4a_hunk_t *hunk,
     }
     if (pos > 0 && search_str[pos-1] == '\n') search_str[--pos] = '\0';
     search_str[pos] = '\0';
+    search_len = pos; /* use actual built length, not pre-computed */
 
     /* Build replacement string: ' ' or '+' prefix lines */
     size_t repl_len = 0;
@@ -562,6 +563,7 @@ static char *apply_v4a_hunk(const char *file_content, v4a_hunk_t *hunk,
     }
     if (pos > 0 && repl_str[pos-1] == '\n') repl_str[--pos] = '\0';
     repl_str[pos] = '\0';
+    repl_len = pos; /* use actual built length, not pre-computed */
 
     /* Find search string in file content */
     const char *match = strstr(file_content, search_str);

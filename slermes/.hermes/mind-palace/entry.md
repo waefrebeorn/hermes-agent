@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v390)
+# Entry — Slermes C Parity (v391)
 
-Phase 329: X09 token exchange edge case expansion — 9 new assertions (7→16). 68 gaps.
+Phase 334: V4A patch bugfix (repl_len OBO in apply_v4a_hunk) + 7 new edge case tests. patch_v4a: 5→12 tests. 68 gaps.
