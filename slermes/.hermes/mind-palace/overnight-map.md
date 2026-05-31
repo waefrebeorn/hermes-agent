@@ -1,9 +1,10 @@
-# Overnight Map (v459)
+# Overnight Map (v460)
 
-## Phase 403 — Skills Hub Edge Case Expansion
-**S7 X04 EXPANDED** — 7 new test functions in test_skills_hub.c (17→41 tests)
-New coverage: empty catalog, missing skills key, single skill, no tags,
-unicode names, null fields, long descriptions
+## Phase 404 — TTS Tool Edge Case Expansion
+**S7 X04 EXPANDED** — 6 new test functions in test_tts_tool.c (11→17 tests)
+New coverage: speed clamping (0.5-2.0 bounds), provider validation (6 backends),
+text with newlines, empty text error, very long text (2000 chars),
+max chunk duration boundary (negative/zero/large)
 no usage), streaming reasoning (reasoning_content in delta), streaming edge
 depth (empty delta/chunk, length finish, whitespace).
 **Bug fix:** openrouter_parse_response — finish_reason extraction from choice

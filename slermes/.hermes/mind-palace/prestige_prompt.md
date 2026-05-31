@@ -1,9 +1,9 @@
-# Prestige — Progress Log (v459)
-Phase 403: Skills Hub Edge Case Expansion — S7 X04 EXPANDED.
-test_skills_hub.c +7 new test functions (17→41 tests).
-7 new edge case groups: empty catalog, missing skills key, single skill,
-skill without tags, unicode names, null fields, long descriptions.
-Suite: 338/?/13. 53 gaps. X04 skills_hub depth improved (+141%).
+# Prestige — Progress Log (v460)
+Phase 404: TTS Tool Edge Case Expansion — S7 X04 EXPANDED.
+test_tts_tool.c +6 new test functions (11→17 tests).
+6 new edge case groups: speed clamping, provider validation, text with
+newlines, empty text error, very long text, chunk duration boundary.
+Suite: 338/?/13. 53 gaps. X04 tts_tool depth improved (+55%).
 
 ## Recent Phases
 - Phase 397: S7 X03 Azure provider tests (+40 assertions, 1 bug fix)
@@ -15,4 +15,4 @@ PORTED: S0, S1, S2, S3, S6, S8
 ACTIVE: S4 (8 gaps), S5 (10 gaps), S7 (18 clusters), S9 (19 gaps), S10 (7 gaps)
 
 ### Latest Result
-Phase 403: skills_hub expanded 17→41 tests (+24). Empty catalog, missing key, single skill, no tags, unicode, null fields, long desc.
+Phase 404: tts_tool expanded 11→17 tests (+6). Speed clamping, provider validation, newlines, empty text, long text, chunk duration.

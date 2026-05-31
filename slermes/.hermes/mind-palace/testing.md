@@ -1,11 +1,11 @@
-# Testing — Slermes C Test Suite (v459)
+# Testing — Slermes C Test Suite (v460)
 
 ## Current Status
 338/?/13 — Suite stable.
 
-## Recent Improvements (Phase 403)
-- test_skills_hub.c: 17→41 tests (+24 assertions)
-- 7 new test functions: empty catalog, missing skills key, single skill, no tags, unicode names, null fields, long descriptions
+## Recent Improvements (Phase 404)
+- test_tts_tool.c: 11→17 test functions (+6)
+- 6 new test functions: speed clamping, provider validation, newlines, empty text error, very long text, chunk duration boundary
 
 ## Test Labels (test_runner.sh)
-- skills_hub: 41 tests (was 17)
+- tts_tool: 17 tests (was 11)

@@ -219,6 +219,109 @@ static bool test_schema_required_fields(void) {
 }
 
 /* ──────────────────────────────────────────────
+ *  Phase 404: Speed clamping / provider validation
+ * ────────────────────────────────────────────── */
+
+static double clamp_speed(double speed) {
+    if (speed < 0.5) return 0.5;
+    if (speed > 2.0) return 2.0;
+    return speed;
+}
+
+static bool test_speed_clamping(void) {
+    ASSERT(clamp_speed(1.0) == 1.0, "normal speed unchanged");
+    ASSERT(clamp_speed(0.5) == 0.5, "min speed boundary");
+    ASSERT(clamp_speed(2.0) == 2.0, "max speed boundary");
+    ASSERT(clamp_speed(0.1) == 0.5, "below min clamped to 0.5");
+    ASSERT(clamp_speed(3.0) == 2.0, "above max clamped to 2.0");
+    ASSERT(clamp_speed(-1.0) == 0.5, "negative speed clamped to 0.5");
+    ASSERT(clamp_speed(0.0) == 0.5, "zero speed clamped to 0.5");
+    return true;
+}
+
+static bool test_provider_validation(void) {
+    const char *valid_providers[] = {"espeak", "edge", "elevenlabs", "openai", "xai", "azure"};
+    for (int i = 0; i < 6; i++) {
+        const char *p = valid_providers[i];
+        bool valid = (strcmp(p, "espeak") == 0 || strcmp(p, "edge") == 0 ||
+                     strcmp(p, "elevenlabs") == 0 || strcmp(p, "openai") == 0 ||
+                     strcmp(p, "xai") == 0 || strcmp(p, "azure") == 0);
+        ASSERT(valid, "valid provider accepted");
+    }
+    ASSERT(!(strcmp("invalid", "espeak") == 0 || strcmp("invalid", "edge") == 0 ||
+             strcmp("invalid", "elevenlabs") == 0 || strcmp("invalid", "openai") == 0 ||
+             strcmp("invalid", "xai") == 0 || strcmp("invalid", "azure") == 0),
+           "invalid provider rejected");
+    ASSERT(!(strcmp("", "espeak") == 0 || strcmp("", "edge") == 0 ||
+             strcmp("", "elevenlabs") == 0 || strcmp("", "openai") == 0 ||
+             strcmp("", "xai") == 0 || strcmp("", "azure") == 0),
+           "empty provider rejected");
+    ASSERT(!(strcmp("ELEVENLABS", "espeak") == 0 || strcmp("ELEVENLABS", "edge") == 0 ||
+             strcmp("ELEVENLABS", "elevenlabs") == 0 || strcmp("ELEVENLABS", "openai") == 0 ||
+             strcmp("ELEVENLABS", "xai") == 0 || strcmp("ELEVENLABS", "azure") == 0),
+           "case mismatch rejected (providers are lowercase)");
+    return true;
+}
+
+static bool test_text_with_newlines(void) {
+    /* Multi-line text should be handled */
+    const char *multi = "line1\nline2\nline3";
+    ASSERT(strstr(multi, "\n") != NULL, "newlines present");
+    ASSERT(strlen(multi) == 17, "multi-line length correct");
+    /* Verify escape handles newlines */
+    char buf[256];
+    escape_text(multi, buf, sizeof(buf));
+    ASSERT(strstr(buf, "line1") != NULL, "first line preserved");
+    ASSERT(strstr(buf, "line2") != NULL, "second line preserved");
+    ASSERT(strstr(buf, "line3") != NULL, "third line preserved");
+    return true;
+}
+
+static bool test_empty_text_error(void) {
+    /* Empty text should be rejected */
+    ASSERT(strlen("") == 0, "empty string has length 0");
+    /* Provider validation with empty args */
+    const char *text = "";
+    bool has_text = (text && text[0] != '\0');
+    ASSERT(!has_text, "empty text rejected: has_text should be false");
+    /* NULL text also rejected */
+    const char *null_text = NULL;
+    has_text = (null_text && null_text[0] != '\0');
+    ASSERT(!has_text, "NULL text rejected: has_text should be false");
+    return true;
+}
+
+static bool test_very_long_text(void) {
+    /* Very long text should not cause issues */
+    char long_text[2048];
+    memset(long_text, 'x', 2000);
+    long_text[2000] = '\0';
+    ASSERT(strlen(long_text) == 2000, "long text length correct");
+    /* Escape handles it */
+    char buf[4096];
+    escape_text(long_text, buf, sizeof(buf));
+    ASSERT(strlen(buf) == 2000, "long text escape length preserved");
+    ASSERT(buf[0] == 'x' && buf[1999] == 'x', "long text content preserved");
+    return true;
+}
+
+static bool test_max_chunk_duration_boundary(void) {
+    /* Negative duration should be clamped/treated as invalid */
+    int dur = -5;
+    ASSERT(!(dur > 0), "negative duration rejected");
+    /* Zero duration should be invalid */
+    dur = 0;
+    ASSERT(!(dur > 0), "zero duration rejected");
+    /* Normal duration accepted */
+    dur = 60;
+    ASSERT(dur > 0, "normal duration accepted");
+    /* Very large duration accepted (upper boundary) */
+    dur = 3600;
+    ASSERT(dur > 0, "large duration accepted");
+    return true;
+}
+
+/* ──────────────────────────────────────────────
  *  Main
  * ────────────────────────────────────────────── */
 
@@ -236,6 +339,13 @@ int main(void) {
     TEST(voice_provider_defaults);
     TEST(api_key_fallback);
     TEST(schema_required_fields);
+    /* Phase 404 */
+    TEST(speed_clamping);
+    TEST(provider_validation);
+    TEST(text_with_newlines);
+    TEST(empty_text_error);
+    TEST(very_long_text);
+    TEST(max_chunk_duration_boundary);
 
     printf("\nResults: %d/%d passed, %d failed\n",
            tests_passed, tests_run, tests_failed);

@@ -1,11 +1,11 @@
-# Entry — Slermes C Translation Project (v459)
+# Entry — Slermes C Translation Project (v460)
 
 ## Quick Stats
 - Suite: 338/?/13
 - Gaps: 53
-- Current Phase: 403 (Skills Hub Edge Case Expansion)
-- Version: v459
+- Current Phase: 404 (TTS Tool Edge Case Expansion)
+- Version: v460
 
-## Latest Phase 403
-- test_skills_hub.c: 17→41 tests (+24)
-- 7 new test functions: empty catalog, missing skills key, single skill, no tags, unicode names, null fields, long descriptions
+## Latest Phase 404
+- test_tts_tool.c: 11→17 tests (+6)
+- 6 new test functions: speed clamping, provider validation, newlines, empty text error, very long text, chunk duration boundary

@@ -1497,7 +1497,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libjson/json.c" \
     "$CDIR/lib/libhttp/http.c" \
     -o /tmp/hermes_test_tts -lm -lssl -lcrypto -lz -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_tts > /dev/null 2>&1; then ok "tts_tool (11 tests)"
+    if /tmp/hermes_test_tts > /dev/null 2>&1; then ok "tts_tool (17 tests)"
     else fail "tts_tool (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_tts
