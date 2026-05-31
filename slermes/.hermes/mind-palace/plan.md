@@ -1,6 +1,6 @@
-# Plan — Next Phase (v401)
+# Plan — Next Phase (v402)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 344: HTML edge case expansion — 16 new assertions (25→41).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 345: textwrap_chunk edge case expansion — 19 new assertions (23→42).
 
 **Next gap targets:**
 

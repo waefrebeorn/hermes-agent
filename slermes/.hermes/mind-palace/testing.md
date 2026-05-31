@@ -1,6 +1,6 @@
-# Testing — Slermes C (v401)
+# Testing — Slermes C (v402)
 
-326/0/14, 289 test files. All pass. 68 gaps. Phase 344: HTML edge case expansion — 16 new assertions (25→41).
+326/0/14, 289 test files. All pass. 68 gaps. Phase 345: textwrap_chunk edge case expansion — 19 new assertions (23→42).
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.
