@@ -1,11 +1,11 @@
-# Testing — Slermes C Test Suite (v460)
+# Testing — Slermes C Test Suite (v461)
 
 ## Current Status
 338/?/13 — Suite stable.
 
-## Recent Improvements (Phase 404)
-- test_tts_tool.c: 11→17 test functions (+6)
-- 6 new test functions: speed clamping, provider validation, newlines, empty text error, very long text, chunk duration boundary
+## Recent Improvements (Phase 405)
+- test_discord.c: 13→19 test functions (+6)
+- 6 new test functions: empty action, fetch_messages channel, search_members params, pin/unpin params, create_thread name, role mgmt
 
 ## Test Labels (test_runner.sh)
-- tts_tool: 17 tests (was 11)
+- discord_tool: 19 tests (was 13)

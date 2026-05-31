@@ -250,6 +250,99 @@ static bool test_admin_action_string_matching(void) {
     PASS; return true;
 }
 
+/* ─── Phase 405: More action edge cases ─── */
+
+static bool test_empty_action(void) {
+    set_token();
+    char *result = discord_handler("{\"action\":\"\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "Missing 'action'")) {
+        FAIL("expected 'Missing action' for empty action"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
+static bool test_fetch_messages_missing_channel(void) {
+    set_token();
+    char *result = discord_handler("{\"action\":\"fetch_messages\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "channel_id required")) {
+        FAIL("expected 'channel_id required' for fetch_messages"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
+static bool test_search_members_missing_params(void) {
+    set_token();
+    /* Missing guild_id */
+    char *result = discord_handler("{\"action\":\"search_members\",\"query\":\"test\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required params error for search_members"); free(result); return false;
+    }
+    free(result);
+    /* Missing query */
+    result = discord_handler("{\"action\":\"search_members\",\"guild_id\":\"123\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required params error for search_members (no query)"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
+static bool test_pin_unpin_missing_params(void) {
+    set_token();
+    /* pin_message: missing message_id */
+    char *result = discord_handler("{\"action\":\"pin_message\",\"channel_id\":\"123\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required error for pin_message (no message_id)"); free(result); return false;
+    }
+    free(result);
+    /* unpin_message: missing channel_id */
+    result = discord_handler("{\"action\":\"unpin_message\",\"message_id\":\"456\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "channel_id")) {
+        FAIL("expected 'channel_id required' for unpin_message"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
+static bool test_create_thread_missing_params(void) {
+    set_token();
+    /* Missing name */
+    char *result = discord_handler("{\"action\":\"create_thread\",\"channel_id\":\"123\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required error for create_thread (no name)"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
+static bool test_role_mgmt_missing_params(void) {
+    set_token();
+    /* add_role: missing role_id */
+    char *result = discord_handler("{\"action\":\"add_role\",\"guild_id\":\"1\",\"user_id\":\"2\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required error for add_role (no role_id)"); free(result); return false;
+    }
+    free(result);
+    /* remove_role: missing user_id */
+    result = discord_handler("{\"action\":\"remove_role\",\"guild_id\":\"1\",\"role_id\":\"3\"}", "test");
+    if (!result) { FAIL("null result"); free(result); return false; }
+    if (!json_contains(result, "required")) {
+        FAIL("expected required error for remove_role (no user_id)"); free(result); return false;
+    }
+    free(result);
+    PASS; return true;
+}
+
 /* ================================================================
  *  Main
  * ================================================================ */
@@ -270,6 +363,13 @@ int main(void) {
     TEST("delete_message params"); test_delete_message_missing_params();
     TEST("admin action params");  test_admin_action_missing_params();
     TEST("admin action dispatch"); test_admin_action_string_matching();
+    /* Phase 405 */
+    TEST("empty action");         test_empty_action();
+    TEST("fetch_messages channel"); test_fetch_messages_missing_channel();
+    TEST("search_members params"); test_search_members_missing_params();
+    TEST("pin/unpin params");     test_pin_unpin_missing_params();
+    TEST("create_thread params"); test_create_thread_missing_params();
+    TEST("role mgmt params");     test_role_mgmt_missing_params();
 
     printf("\nResults: %d/%d passed, %d failed\n", g_passed, g_passed + g_failed, g_failed);
     return g_failed > 0 ? 1 : 0;

@@ -1,9 +1,9 @@
-# Prestige — Progress Log (v460)
-Phase 404: TTS Tool Edge Case Expansion — S7 X04 EXPANDED.
-test_tts_tool.c +6 new test functions (11→17 tests).
-6 new edge case groups: speed clamping, provider validation, text with
-newlines, empty text error, very long text, chunk duration boundary.
-Suite: 338/?/13. 53 gaps. X04 tts_tool depth improved (+55%).
+# Prestige — Progress Log (v461)
+Phase 405: Discord Tool Edge Case Expansion — S7 X04 EXPANDED.
+test_discord.c +6 new test functions (13→19 tests).
+6 new edge case groups: empty action, fetch_messages missing channel,
+search_members params, pin/unpin params, create_thread, role mgmt.
+Suite: 338/?/13. 53 gaps. X04 discord_tool depth improved (+46%).
 
 ## Recent Phases
 - Phase 397: S7 X03 Azure provider tests (+40 assertions, 1 bug fix)

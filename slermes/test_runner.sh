@@ -1516,7 +1516,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/lib/libcrypto/crypto.c" \
     "$CDIR/lib/libtoolbackend/tool_backend.c" \
     -o /tmp/hermes_test_discord -lm -lssl -lcrypto -lz > /dev/null 2>&1; then
-    if /tmp/hermes_test_discord > /dev/null 2>&1; then ok "discord_tool (13 tests)"
+    if /tmp/hermes_test_discord > /dev/null 2>&1; then ok "discord_tool (19 tests)"
     else fail "discord_tool (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_discord

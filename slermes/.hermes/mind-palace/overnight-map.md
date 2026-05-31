@@ -1,10 +1,10 @@
-# Overnight Map (v460)
+# Overnight Map (v461)
 
-## Phase 404 — TTS Tool Edge Case Expansion
-**S7 X04 EXPANDED** — 6 new test functions in test_tts_tool.c (11→17 tests)
-New coverage: speed clamping (0.5-2.0 bounds), provider validation (6 backends),
-text with newlines, empty text error, very long text (2000 chars),
-max chunk duration boundary (negative/zero/large)
+## Phase 405 — Discord Tool Edge Case Expansion
+**S7 X04 EXPANDED** — 6 new test functions in test_discord.c (13→19 tests)
+New coverage: empty action (''→Missing action), fetch_messages missing channel,
+search_members missing guild_id/query, pin/unpin missing channel/message,
+create_thread missing name, role mgmt missing user/role_id
 no usage), streaming reasoning (reasoning_content in delta), streaming edge
 depth (empty delta/chunk, length finish, whitespace).
 **Bug fix:** openrouter_parse_response — finish_reason extraction from choice
