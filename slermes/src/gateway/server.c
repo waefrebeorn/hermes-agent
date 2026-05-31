@@ -1275,6 +1275,10 @@ void gw_platform_register(const gw_platform_t *plat) {
     g_gw.platform_defs[g_gw.platform_def_count++] = *plat;
 }
 
+int gw_platform_get_count(void) {
+    return g_gw.platform_def_count;
+}
+
 static gw_platform_t *gw_platform_find(const char *name) {
     if (!name) return NULL;
     for (int i = 0; i < g_gw.platform_def_count; i++) {

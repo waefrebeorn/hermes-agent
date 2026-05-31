@@ -11,6 +11,8 @@
 #include "hermes_xai_retirement.h"
 #include "hermes_logger.h"
 #include "hermes_markdown.h"
+#include "hermes_gateway.h"
+#include "provider.h"
 #include "ansi.h"
 #include "plugin.h"
 #include "line_edit.h"
@@ -310,11 +312,14 @@ static void print_banner(void) {
         g_cli.config.model[0] ? g_cli.config.model : "(default)",
         g_cli.config.provider[0] ? g_cli.config.provider : "(default)");
 
-    /* Stats summary line */
+    /* Stats summary line — dynamically queried */
     size_t tool_count = g_cli.agent.tools.count > 0 ? g_cli.agent.tools.count : registry_get_count();
+    int gw_count = gw_platform_get_count();
+    int prov_count = provider_get_count();
+    const char *home = g_cli.agent.hermes_home[0] ? g_cli.agent.hermes_home : "~/.hermes";
     pos += snprintf(banner_lines + pos, sizeof(banner_lines) - (size_t)pos,
-        "\x1B[2;38;2;%d;%d;%dm  Tools: %zu  Gateways: 19  Providers: 10  Suite: 230/0/25\x1B[0m",
-        dr, dg, db, tool_count);
+        "\x1B[2;38;2;%d;%d;%dm  Tools: %zu  Gateways: %d  Providers: %d  Config: %s\x1B[0m",
+        dr, dg, db, tool_count, gw_count, prov_count, home);
 
     /* Display as panel with skin border color */
     const char *border_color = skin_get(g_skin, "colors.banner_border", "#CD7F32");

@@ -104,3 +104,7 @@ slermes/extras/img2svg
 slermes/extras/palette
 slermes/extras/asciimg
 slermes/extras/morph
+# Slermes convenience symlink (old C/ → slermes/ mapping)
+/C
+# Slermes build artifact
+slermes/.digest_state.json

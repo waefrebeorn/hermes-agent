@@ -29,6 +29,10 @@ void provider_register(provider_type_t type, const provider_ops_t *ops) {
     g_provider_count++;
 }
 
+int provider_get_count(void) {
+    return g_provider_count;
+}
+
 void provider_register_builtins(void) {
     provider_register(PROVIDER_OPENAI, &PROVIDER_OPS_OPENAI);
     provider_register(PROVIDER_ANTHROPIC, &PROVIDER_OPS_ANTHROPIC);

@@ -133,6 +133,7 @@ struct provider_t {
 
 /* Register a provider implementation */
 void provider_register(provider_type_t type, const provider_ops_t *ops);
+int provider_get_count(void);
 
 /* Create a provider instance from config */
 provider_t *provider_create(const char *provider_name,

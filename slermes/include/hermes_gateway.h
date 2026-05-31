@@ -1114,6 +1114,7 @@ void gw_pool_cleanup(void);
 
 /* Register a platform implementation. Called at startup per platform type. */
 void gw_platform_register(const gw_platform_t *plat);
+int gw_platform_get_count(void);
 
 /* Send a message on a registered platform. Returns platform's send result. */
 bool gw_platform_send(const char *platform_name, const char *chat_id, const char *text);
