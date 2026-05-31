@@ -6,6 +6,8 @@
  *   --invert      Invert mask (subject darker than background)
  *   --eyes        Add eye/nose dots (default: off)
  *   --crop        Auto-crop to subject bounding box
+ *   --grid N      Grid mode: divide into NxM grid, dominant color per cell
+ *                 (default: off — uses contour tracing instead)
  *
  * Dependencies: stb_image.h (bundled), common.h
  * Build: cc -O2 -lm img2svg.c -o img2svg

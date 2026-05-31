@@ -1,7 +1,7 @@
 CC       = cc
 CFLAGS   = -O2 -Wall -Wextra -Wpedantic -Werror -Wno-unused-function
 LDLIBS   = -lm
-TARGETS  = img2svg palette asciimg morph
+TARGETS  = img2svg palette asciimg morph imggrid
 .PHONY: all clean test
 
 all: $(TARGETS)
@@ -18,6 +18,9 @@ asciimg: asciimg.c common.h stb_image.h
 morph: morph.c common.h stb_image.h
 	$(CC) $(CFLAGS) morph.c $(LDLIBS) -o morph
 
+imggrid: imggrid.c stb_image.h
+	$(CC) $(CFLAGS) imggrid.c $(LDLIBS) -o imggrid
+
 test: all
 	@echo "--- img2svg test ---"
 	./img2svg ../assets/slermes.jpg /tmp/slermes-test.svg --eps 1.5 --crop 2>/dev/null
@@ -29,6 +32,9 @@ test: all
 	@echo "--- morph test ---"
 	./morph ../assets/slermes.jpg edges /tmp/slermes-edges.pgm 2>/dev/null
 	wc -c /tmp/slermes-edges.pgm
+	@echo "--- imggrid test ---"
+	./imggrid ../assets/slermes.jpg /tmp/slermes-grid-test.svg 16 20 2>/dev/null
+	wc -c /tmp/slermes-grid-test.svg
 	@echo "ALL EXTRAS TESTS PASSED"
 
 clean:

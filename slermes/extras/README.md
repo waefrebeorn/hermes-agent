@@ -8,7 +8,8 @@ Zero runtime deps beyond libc + libm. Image loading via `stb_image.h`.
 
 | Tool | What | CLI | Output |
 |------|------|-----|--------|
-| **img2svg** | Contour-trace a bitmap to SVG vector | `./img2svg in.jpg out.svg --eyes --crop` | SVG file |
+| **imggrid** | Grid-detect multi-color SVG (pixel art) | `./imggrid in.jpg out.svg 20 26 10` | SVG file |
+| **img2svg** | Contour-trace bitmap to SVG vector | `./img2svg in.jpg out.svg --eyes --crop` | SVG file |
 | **palette** | Extract dominant color palette | `./palette in.jpg 12` | JSON to stdout |
 | **asciimg** | Convert image to ASCII art | `./asciimg in.jpg 80 block --invert` | ASCII to stdout |
 | **morph** | Edge detection & mask operations | `./morph in.jpg edges out.pgm` | PGM file |
@@ -43,7 +44,8 @@ extras/
 ├── Makefile          ← builds all tools
 ├── common.h          ← shared: color math, vec2, contour trace, DP simplify, SVG writer
 ├── stb_image.h       ← single-header image loader (public domain, by Sean Barrett)
-├── img2svg.c         ← full SVG generation pipeline
+├── imggrid.c         ← grid-based multi-color SVG (pixel art style)
+├── img2svg.c         ← contour-trace SVG pipeline
 ├── palette.c         ← color palette extraction
 ├── asciimg.c         ← ASCII art converter
 └── morph.c           ← edge detect + mask operations
