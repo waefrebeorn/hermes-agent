@@ -2,9 +2,9 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v402** · 68 active gaps · **2159 entries** of progress
-
-## 📊 Sector Summary
+|> **v403** · 68 active gaps · **2160 entries** of progress
+|
+|## 📊 Sector Summary
 
 | Sector | Status | Gaps Closed |
 |--------|--------|-------------|
@@ -2193,5 +2193,6 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 342 | X09 | Tool result storage edge case expansion — 18 new assertions (16→34). max_chars=0 returns empty (has_more=true), max_chars=1 minimal boundary, negative max_chars (unsigned SIZE_MAX overflow returns full content), NULL has_more pointer (short/NULL/truncation — no crash), empty string passthrough, newline exactly at halfway (not used — `>` not `>=`), newline at halfway+1 (triggers truncation at pos 52), trailing newline within limit. | `tests/test_tool_result_storage.c` — 18 new assertions (16→34). Suite 326/0/14. v399. |
 || 343 | X09 | TUI edge case expansion — 30 new assertions (24→54). ANSI color out-of-range (-1/256) non-NULL, input history empty line skipped by history_add, duplicate consecutive deduped, very long 2000-char cmd preserved, SIZE_MAX index returns NULL, 999 index, NULL handler safe (size=0, get=NULL), empty prompt handler works, progress total=0/-10/past-100% no crash (over 100% shows correct count), tui_ruler NULL/empty/width=0, tui_box NULL title/width=0. | `tests/test_tui.c` — 30 new assertions (24→54). Suite 326/0/14. v400. |
 || 344 | X09 | HTML edge case expansion — 16 new assertions (25→41). Escape: all 5 specials <>&\"' at once, already-escaped double-encodes, only-specials string, long 2000-char with embedded <>&. Unescape: NULL, unknown entity preserved, invalid numeric &#XYZ; safe, multiple consecutive round-trips <>&\"'. Strip tags: NULL returns NULL, self-closing <br/> & <br>, nested <div><p><b>, malformed <<<>>>. Frontmatter: empty body returns original, body after close ---, --- in body preserved. | `tests/test_html.c` — 16 new assertions (25→41). Suite 326/0/14. v401. |
-|| 345 | X09 | Textwrap chunk edge case expansion — 19 new assertions (23→42). max_len=0/negative returns NULL count=0, max_len=1 returns 5 single-char chunks, consecutive newlines (AAAAA\n\n\n\nbb) truncated with \n skip, newline at exact 6-char boundary yields 3 clean chunks (12345/ABCDE/XYZ), very long 2000-char hard cut into 50-char pieces (40 total), short mixed ab\nc split at \n. | `tests/test_textwrap_chunk.c` — 19 new assertions (23→42). Suite 326/0/14. v402. |
+||| 345 | X09 | Textwrap chunk edge case expansion — 19 new assertions (23→42). max_len=0/negative returns NULL count=0, max_len=1 returns 5 single-char chunks, consecutive newlines (AAAAA\n\n\n\nbb) truncated with \n skip, newline at exact 6-char boundary yields 3 clean chunks (12345/ABCDE/XYZ), very long 2000-char hard cut into 50-char pieces (40 total), short mixed ab\nc split at \n. | `tests/test_textwrap_chunk.c` — 19 new assertions (23→42). Suite 326/0/14. v402. |
+||| 346 | X09 | Signal helper edge case expansion — 11 new assertions (11→22). Uncatchable SIGKILL/SIGSTOP return false, invalid signum 0/-1 rejected, double-register same signal (replace semantics), toggle register→default→re-register, signal_register_common(NULL) safe, signal_safe_write(4000 chars) no crash. | `tests/test_hermes_signal.c` — 11 new assertions (11→22). Suite 326/0/14. v403. |
 |

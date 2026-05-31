@@ -87,6 +87,65 @@ static void test_signal_safe_write(void) {
     /* Empty message */
     signal_safe_write("");
     TEST("signal_safe_write('') doesn't crash", 1);
+
+    /* Very long message */
+    {
+        char long_msg[4096];
+        memset(long_msg, 'x', 4000);
+        long_msg[4000] = '\0';
+        signal_safe_write(long_msg);
+        TEST("signal_safe_write(4000 chars) doesn't crash", 1);
+    }
+}
+
+static void test_edge_cases(void) {
+    printf("\n--- Edge cases ---\n");
+
+    /* Uncatchable signals */
+    bool r = signal_on(SIGKILL, test_sig_handler);
+    TEST("signal_on(SIGKILL) returns false", !r);
+
+    r = signal_on(SIGSTOP, test_sig_handler);
+    TEST("signal_on(SIGSTOP) returns false", !r);
+
+    /* Invalid signum */
+    r = signal_on(0, test_sig_handler);
+    TEST("signal_on(sig=0) returns false", !r);
+
+    r = signal_on(-1, test_sig_handler);
+    TEST("signal_on(sig=-1) returns false", !r);
+
+    /* signal_default with uncatchable/invalid */
+    r = signal_default(SIGKILL);
+    TEST("signal_default(SIGKILL) returns false", !r);
+
+    r = signal_default(0);
+    TEST("signal_default(sig=0) returns false", !r);
+
+    /* Double-register same signal */
+    r = signal_on(SIGUSR1, test_sig_handler);
+    TEST("signal_on SIGUSR1 (first) returns true", r);
+
+    r = signal_on(SIGUSR1, test_sig_handler);
+    TEST("signal_on SIGUSR1 (second) returns true (replaces)", r);
+
+    r = signal_default(SIGUSR1);
+    TEST("signal_default SIGUSR1 restores default", r);
+
+    /* Toggle: register, restore, register again */
+    r = signal_on(SIGUSR2, test_sig_handler);
+    TEST("signal_on SIGUSR2 returns true", r);
+    r = signal_default(SIGUSR2);
+    TEST("signal_default SIGUSR2 returns true", r);
+    r = signal_on(SIGUSR2, test_sig_handler);
+    TEST("signal_on SIGUSR2 (re-register) returns true", r);
+    signal_default(SIGUSR2);
+
+    /* signal_register_common with NULL */
+    r = signal_register_common(NULL);
+    TEST("signal_register_common(NULL) returns true", r);
+    signal_default(SIGINT);
+    signal_default(SIGTERM);
 }
 
 int main(void) {
@@ -95,6 +154,7 @@ int main(void) {
     test_signal_on();
     test_signal_register_common();
     test_signal_safe_write();
+    test_edge_cases();
 
     printf("\n=== Results: %d passed, %d failed (%d assertions) ===\n",
            passed, failed, test_count);

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v402 | Fork diverged — slermes/ lives only on fork | Suite 326/0/14 | 85 tools | 99 CLI** |
-|**Honest assessment: 68 structural gaps, 1000+ test case gaps. Phase 345: textwrap_chunk edge case expansion — 19 new assertions (23→42). Suite 326/0/14. 68 gaps.**|
+| v403 | Fork diverged — slermes/ lives only on fork | Suite 326/0/14 | 85 tools | 99 CLI** |
+|**Honest assessment: 68 structural gaps, 1000+ test case gaps. Phase 346: signal helper edge case expansion — 11 new assertions (11→22). Suite 326/0/14. 68 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.

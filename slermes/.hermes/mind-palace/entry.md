@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v402)
+# Entry — Slermes C Parity (v403)
 
-Phase 345: textwrap_chunk edge case expansion — 19 new assertions (23→42). 68 gaps.
+Phase 346: signal helper edge case expansion — 11 new assertions (11→22). 68 gaps.

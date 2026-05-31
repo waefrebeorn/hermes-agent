@@ -1,5 +1,5 @@
-|# State — Slermes C (v402)
-326/0/14. Phase 345: textwrap_chunk edge case expansion — 19 new assertions (23→42). max_len=0/1/negative, consecutive \n, newline-at-boundary, very long hard-cut, short-mixed, only-\n removed.
+|# State — Slermes C (v403)
+326/0/14. Phase 346: signal helper edge case expansion — 11 new assertions (11→22). Uncatchable SIGKILL/SIGSTOP, invalid signum 0/-1, double-register, toggle re-register, NULL register_common, very long safe_write.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
