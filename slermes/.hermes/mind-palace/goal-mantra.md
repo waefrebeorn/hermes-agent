@@ -1,3 +1,4 @@
-# Goal Mantra — Slermes C (v436)
-335/0/13. 55 gaps. Phase 380: TUI WebSocket Support — T04 PORTED.
-All S4 P1 gaps resolved.
+v440
+338/0/13. 53 gaps. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED.
+90 new agent loop core assertions (session_id, configure_from_config,
+inject_history, snapshot lifecycle). S7 X06: 20%→improved parity.

@@ -124,6 +124,151 @@ int main(void) {
     memory_cleanup(&mem);
     TEST("memory_cleanup cleans up", 1);
 
+    /* ================================================================
+     *  Edge case tests (S7 X04 expansion)
+     * ================================================================ */
+
+    /* Re-init for edge case tests */
+    memory_t mem2;
+    memset(&mem2, 0, sizeof(mem2));
+    memory_init(&mem2, MEMORY_STORAGE_INMEM, "");
+
+    /* 14. memory_count */
+    TEST("count empty == 0", memory_count(&mem2) == 0);
+
+    /* 15. memory_store max-length key */
+    memory_entry_t long_key;
+    memset(&long_key, 0, sizeof(long_key));
+    memset(long_key.key, 'k', MEMORY_KEY_MAX - 2);
+    long_key.key[MEMORY_KEY_MAX - 2] = '\0';
+    snprintf(long_key.content, sizeof(long_key.content), "max key test");
+    TEST("store max-length key", memory_store(&mem2, &long_key));
+    TEST("count == 1 after store", memory_count(&mem2) == 1);
+
+    /* 16. memory_get success + fail */
+    memory_entry_t got;
+    memset(&got, 0, sizeof(got));
+    TEST("get existing key", memory_get(&mem2, long_key.key, &got));
+    TEST("get non-existent key returns false", !memory_get(&mem2, "nonexistent", &got));
+    TEST("get NULL key returns false", !memory_get(&mem2, NULL, &got));
+    TEST("get empty key returns false", !memory_get(&mem2, "", &got));
+
+    /* 17. memory_delete edge cases */
+    TEST("delete NULL key returns false", !memory_delete(&mem2, NULL));
+    TEST("delete empty key returns false", !memory_delete(&mem2, ""));
+
+    /* 18. memory_search edge cases */
+    memory_entry_t *sr = memory_search(&mem2, NULL, 5);
+    TEST("search NULL query returns NULL", sr == NULL);
+    sr = memory_search(&mem2, "", 5);
+    /* Empty query may return results — just verify no crash */
+    if (sr) free(sr);
+    TEST("search empty query no crash", 1);
+    sr = memory_search(&mem2, "max", 0);
+    /* Limit 0 may still return results — just verify no crash */
+    if (sr) free(sr);
+    TEST("search limit=0 no crash", 1);
+
+    /* 19. memory_search with valid query after storing */
+    memory_entry_t se;
+    memset(&se, 0, sizeof(se));
+    snprintf(se.key, sizeof(se.key), "searchme");
+    snprintf(se.content, sizeof(se.content), "unique_search_term_xyz");
+    memory_store(&mem2, &se);
+    sr = memory_search(&mem2, "unique_search", 10);
+    TEST("search finds result", sr != NULL);
+    if (sr) { free(sr); }
+
+    /* 20. memory_clear */
+    size_t before_clear = memory_count(&mem2);
+    TEST("entries exist before clear", before_clear > 0);
+    memory_clear(&mem2);
+    TEST("count == 0 after clear", memory_count(&mem2) == 0);
+
+    /* 21. Re-use after clear */
+    memory_entry_t after;
+    memset(&after, 0, sizeof(after));
+    snprintf(after.key, sizeof(after.key), "after");
+    snprintf(after.content, sizeof(after.content), "after clear test");
+    TEST("store after clear", memory_store(&mem2, &after));
+    TEST("count == 1 after re-store", memory_count(&mem2) == 1);
+
+    /* 22. memory_entry_expired */
+    memory_entry_t fresh;
+    memset(&fresh, 0, sizeof(fresh));
+    fresh.expires_at = 0;
+    TEST("no expiry = not expired", !memory_entry_expired(&fresh));
+    fresh.expires_at = 1;
+    TEST("past expiry = expired", memory_entry_expired(&fresh));
+    fresh.expires_at = time(NULL) + 3600;
+    TEST("future expiry = not expired", !memory_entry_expired(&fresh));
+
+    /* 23. memory_hash_content */
+    uint64_t h1 = memory_hash_content("hello");
+    uint64_t h2 = memory_hash_content("hello");
+    uint64_t h3 = memory_hash_content("world");
+    TEST("hash deterministic", h1 == h2);
+    TEST("hash different content differs", h1 != h3);
+    TEST("hash empty string", memory_hash_content("") != 0);
+    TEST("hash NULL safe", memory_hash_content(NULL) == 0);
+
+    /* 24. memory_get_prioritized */
+    memory_entry_t p1, p2;
+    memset(&p1, 0, sizeof(p1)); snprintf(p1.key, sizeof(p1.key), "high");
+    snprintf(p1.content, sizeof(p1.content), "high priority"); p1.priority = 100;
+    memset(&p2, 0, sizeof(p2)); snprintf(p2.key, sizeof(p2.key), "low");
+    snprintf(p2.content, sizeof(p2.content), "low priority"); p2.priority = 1;
+    memory_store(&mem2, &p1);
+    memory_store(&mem2, &p2);
+    size_t pcount = 0;
+    memory_entry_t *pr = memory_get_prioritized(&mem2, 10, &pcount);
+    TEST("prioritized returns results", pr != NULL && pcount >= 2);
+    if (pr && pcount >= 2) {
+        TEST("highest priority first", pr[0].priority == 100);
+        free(pr);
+    }
+
+    /* 25. memory_store with very long content (fits in buffer) */
+    memory_entry_t longc;
+    memset(&longc, 0, sizeof(longc));
+    snprintf(longc.key, sizeof(longc.key), "longc");
+    memset(longc.content, 'C', 5000);
+    longc.content[5000] = '\0';
+    TEST("store 5000-char content", memory_store(&mem2, &longc));
+
+    /* 26. memory_store duplicate key (update) */
+    memory_entry_t dup;
+    memset(&dup, 0, sizeof(dup));
+    snprintf(dup.key, sizeof(dup.key), "high");
+    snprintf(dup.content, sizeof(dup.content), "updated content");
+    dup.priority = 50;
+    TEST("store duplicate key (update)", memory_store(&mem2, &dup));
+    memory_entry_t g2;
+    memset(&g2, 0, sizeof(g2));
+    TEST("get updated entry", memory_get(&mem2, "high", &g2));
+    TEST("updated content matches", strcmp(g2.content, "updated content") == 0);
+
+    /* 27. Store with priority boundaries */
+    memory_entry_t pb;
+    memset(&pb, 0, sizeof(pb));
+    snprintf(pb.key, sizeof(pb.key), "neg_priority");
+    snprintf(pb.content, sizeof(pb.content), "negative priority");
+    pb.priority = -1;
+    TEST("store negative priority", memory_store(&mem2, &pb));
+
+    /* 28. Cleanup edge */
+    memory_cleanup(&mem2);
+    TEST("cleanup after re-init", 1);
+    /* Double cleanup should be safe */
+    memory_cleanup(&mem2);
+    TEST("double cleanup safe", 1);
+
+    /* 29. NULL pointer safety for remaining API */
+    memory_clear(NULL);
+    TEST("memory_clear(NULL) safe", 1);
+    TEST("memory_count(NULL) == 0", memory_count(NULL) == 0);
+    TEST("memory_list_keys(NULL) == NULL", memory_list_keys(NULL, NULL) == NULL);
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }

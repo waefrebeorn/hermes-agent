@@ -7,16 +7,16 @@
 # Slermes ☤
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Tests-335%2F0%2F13-00AA55?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-v436-8A2BE2?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Tests-338%2F0%2F13-00AA55?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Version-v440-8A2BE2?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/Binary-31MB%20ELF-FFD700?style=flat-square" alt="31MB">
   <img src="https://img.shields.io/badge/Source-108K%20LOC%20C-blue?style=flat-square" alt="108K LOC">
-  <img src="https://img.shields.io/badge/Gaps-55-FF6B35?style=flat-square" alt="55 gaps">
+  <img src="https://img.shields.io/badge/Gaps-53-FF6B35?style=flat-square" alt="53 gaps">
   <img src="https://img.shields.io/badge/Tools-85-8B5CF6?style=flat-square" alt="85 tools">
   <img src="https://img.shields.io/badge/CLI-98%20commands-00AA55?style=flat-square" alt="98 CLI">
   <img src="https://img.shields.io/badge/Libs-65%20modules-0066FF?style=flat-square" alt="65 libs">
   <img src="https://img.shields.io/badge/Gateways-19%20platforms-FF6B35?style=flat-square" alt="19 gateways">
-  <img src="https://img.shields.io/badge/Phase-380-FFD700?style=flat-square" alt="Phase 380">
+  <img src="https://img.shields.io/badge/Phase-384-FFD700?style=flat-square" alt="Phase 384">
 </p>
 
 **Full C translation of [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.** One static binary, zero runtime deps beyond libc + libssl. 31M ELF.
@@ -30,7 +30,7 @@ git clone https://github.com/waefrebeorn/slermes.git
 cd slermes/slermes/
 make -j$(nproc)            # 0 errors, 31M binary
 ./slermes --help           # Usage
-bash test_runner.sh        # 325/0/14 suite, <60s
+bash test_runner.sh        # 338/0/13 suite, <60s
 ```
 
 **Docker:**
@@ -322,7 +322,7 @@ slermes/
 │   ├── tools/                ← 85 tool handlers
 │   └── gateway/              ← 19 platform adapters, server
 ├── lib/                      ← 65 library modules
-├── tests/                    ← 239 test files (325/0/14)
+├── tests/                    ← 239 test files (338/0/13)
 ├── include/                  ← hermes.h + subsystem headers
 ├── assets/                   ← Logos, mascot, banners
 ├── extras/                   ← C toolchest (img2svg, palette, asciimg, morph, imggrid)
@@ -333,7 +333,7 @@ slermes/
 
 ## Parity
 
-**335 tests pass, 0 fail, 13 skip. 55 gaps across 8 sectors.**
+**338 tests pass, 0 fail, 13 skip. 53 gaps across 8 sectors.**
 
 | Sector | Status | Detail |
 |--------|--------|--------|
@@ -344,7 +344,7 @@ slermes/
 | S4 TUI | 🔄 ACTIVE | 8 gaps — Ink/React TUI parity |
 | S5 Agent Modules | 🔄 ACTIVE | 15 gaps — provider depth, agent runtime |
 | S6 Tools | ✅ PORTED | B01-B10 — all 85 tools registered |
-| S7 Test Coverage | 🔄 ACTIVE | 19 gaps — edge cases, stress, e2e |
+| S7 Test Coverage | 🔄 ACTIVE | 18 gaps — edge cases, stress, e2e |
 | S8 Providers | ✅ PORTED | R01+R02+R04+R10 — all 10 adapters |
 | S9 Ecosystem | 🔄 ACTIVE | 20 gaps — cron, MCP, voice, deploy, ACP |
 

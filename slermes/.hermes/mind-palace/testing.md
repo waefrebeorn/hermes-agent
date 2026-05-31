@@ -1,2 +1,4 @@
-# Testing — Slermes C (v436)
-335/0/13. 55 gaps. Phase 380: TUI WebSocket Support — T04 PORTED (WebSocket server wrapper, libwebsocket server API + ws:// support). 4-test suite (+1 new).
+# Testing — Slermes C (v440)
+338/0/13. 53 gaps. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED
+(test_agent_loop.c: 90 assertions — session_id format, agent_free, configure_from_config,
+inject_history, snapshot lifecycle).

@@ -1,12 +1,9 @@
-# State — Slermes C (v436)
-335/0/13. Phase 380: TUI WebSocket Support — T04 PORTED.
-   tui_websocket.c/h — WebSocket server wrapper for TUI: server
-   lifecycle (start/stop/port), client acceptance (accept/send/recv/
-   close/is_connected), wraps libwebsocket server API.
-   libwebsocket extended: ws_server_listen/accept/close/port added,
-   ws:// plain connections supported (was wss:// only), ws_send/recv/
-   close now use write_raw/read_raw helpers for SSL/plain auto-dispatch.
-   4-test suite (test_tui_websocket.c: start_stop, accept_nonblock,
-   port_zero, restart).
-55 gaps. S4 T04 PORTED. S4 gaps: 9→8.
-   All S4 P1 gaps resolved. S4 remaining: 8 P2-P3 gaps (T19-T28).
+# State — Slermes C (v440)
+338/0/13. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED.
+   test_agent_loop.c — 90 new assertions covering: session_id format,
+   agent_free (zeroed/messages/snapshot), agent_configure_from_config
+   (full mapping/partial/NULL safety), agent_inject_history
+   (valid/NULL/empty/invalid JSON/tool role/append), agent_snapshot
+   (empty/with messages/double take/restore).
+53 gaps. S7 X06 EXPANDED (agent loop core tests, 90 assertions).
+S7: 18 clusters (X06 improved, X04 improved, X09 ported).

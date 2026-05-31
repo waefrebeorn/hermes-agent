@@ -1,4 +1,4 @@
-# Prestige (v436)
+# Prestige (v440)
 
 ## Phase Map
 
@@ -10,6 +10,6 @@
 
 ## Strategy
 
-Phase 380: TUI WebSocket Support — T04 PORTED. S4: 9→8 gaps.
-**All S4 P1 gaps resolved.** 55 gaps remaining.
-Remaining S4: T19-T28 (P2-P3, React tsx parity).
+Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED (90 assertions).
+S7: 18 clusters (X06 agent loop core improved). 53 gaps remaining.
+Remaining: S4 T19-T28 (P2-P3), S5 C19-C30, S7 test coverage, S9/S10 arch.

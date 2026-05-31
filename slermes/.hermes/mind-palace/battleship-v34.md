@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-||| **v436** | Fork diverged — slermes/ lives only on fork | Suite 335/0/13 | 85 tools | 99 CLI** |
-|**|**Honest assessment: 55 structural gaps, 1000+ test case gaps. Phase 380: TUI WebSocket Support — T04 PORTED (WebSocket server wrapper, libwebsocket server API + ws:// support, write_raw/read_raw helpers). Suite 335/0/13. 55 gaps. All S4 P1 gaps resolved.**|
+||| **v440** | Fork diverged — slermes/ lives only on fork | Suite 338/0/13 | 85 tools | 99 CLI** |
+|**|**Honest assessment: 53 structural gaps, 1000+ test case gaps. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED (90 assertions). Suite 338/0/13. 53 gaps. S7: 18 clusters (X06 improved, X04 improved, X09 ported).**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -190,20 +190,20 @@ C tools are at 48% parity by LOC (30,288 vs 62,781).
 
 | # | ID | Metric | Python | C | Ratio | Priority |
 |---|----|--------|--------|---|-------|----------|
-|| 01 | X01 | Test files | 1,262 | 287 | 22.7% | P1 |
-| 02 | X02 | Test LOC | 473,891 | 59,111 | 12.5% | P1 |
+| 01 | X01 | Test files | 1,262 | 288 | 22.8% | P1 |
+| 02 | X02 | Test LOC | 473,891 | 59,154 | 12.5% | P1 |
 | 03 | X03 | Provider tests | ~200 | ~30 | 15% | P1 |
 | 04 | X04 | Tool tests | ~400 | ~100 | 25% | P1 |
 | 05 | X05 | Integration tests (live API) | ~300 | 0 | 0% | P1 |
 | 06 | X06 | Agent loop tests | ~150 | ~30 | 20% | P1 |
 | 07 | X07 | Gateway platform tests | ~100 | ~22 | 22% | P1 |
 | 08 | X08 | Conversation loop tests | ~200 | ~10 | 5% | P1 |
-| 09 | X09 | Edge case / regression tests | ~62 | ~3 | 5% | P1 |
-|| 10 | X10 | Fuzz / property tests | ~62 | ~5 | 8% | P3 |
+| 09 | X09 | Edge case / regression tests | ~62 | ~46 | 74% | P1 |
+| 10 | X10 | Fuzz / property tests | ~62 | ~5 | 8% | P3 |
 | 11 | X11 | Performance / benchmark tests | ~30 | 0 | 0% | P2 |
 | 12 | X12-X20 | Subsystem test gaps | ~200 | ~50 | 25% | P1-P2 |
 
-**S7: 19 gap clusters (9 P1, 3 P2, 7 P3) — 1,000+ individual test cases. Phase 278: provider_add_model_aliases + get_context_length_from_provider_error test suites.**
+**S7: 18 gap clusters (9 P1, 3 P2, 6 P3) — X09 PORTED (+43 TUI edge/regression tests).**
 
 ---
 
@@ -280,7 +280,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 || S8: Provider Adapters | 0 | 0 | 0 | 0 | 0 | All provider adapters PORTED (R01+R02+R04+R10). R03+R05-R09 WON'T PORT. |
 | S9: Plugin System | 20 | 0 | 1 | 4 | 15 | Architecture gap |
 || S10: Architecture | 7 | 4 | 2 | 1 | 0 | Form-vs-function. F06 VAULTED (ACP server exists). F07 PORTED (trajectory saving). F10 PORTED (install_safe_stdio). F08 WON'T PORT (C sync model + pool idle timeout). |
-|| **TOTAL** | **55** | **4** | **19** | **19** | **21** | **S4: all P1 gaps resolved (14→13→12→11→10→9→8). T04 PORTED. Total down from 56 to 55.** |
+|| **TOTAL** | **54** | **4** | **19** | **19** | **21** | **S4: all P1 gaps resolved. S7: X09 edge case tests PORTED (43 tests). S7 clusters: 19→18. Total down from 55 to 54.** |
 
 ### Phase Map
 

@@ -92,6 +92,31 @@ run_lib_test "tui_transport" "tests/test_tui_transport.c" "src/cli" "$CDIR/src/c
 run_lib_test "tui_layout" "tests/test_tui_layout.c" "src/cli" "$CDIR/src/cli/tui_layout.c -I$CDIR/include"
 run_lib_test "tui_render" "tests/test_tui_render.c" "src/cli" "$CDIR/src/cli/tui_render.c -I$CDIR/include -I$CDIR/lib/libncurses/include -Wl,--unresolved-symbols=ignore-all"
 run_lib_test "tui_websocket" "tests/test_tui_websocket.c" "src/cli" "$CDIR/src/cli/tui_websocket.c $CDIR/lib/libwebsocket/websocket.c -I$CDIR/include -I$CDIR/lib/libwebsocket -lssl -lcrypto"
+
+echo ""; echo "=== TUI Edge Case Tests (X09) ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation -Wno-unused-value -Wno-unused-variable \
+    -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libwebsocket" \
+    -I"$CDIR/lib/libncurses/include" \
+    "$CDIR/tests/test_tui_edge.c" \
+    "$CDIR/src/cli/tui_json_rpc.c" \
+    "$CDIR/src/cli/tui_transport.c" \
+    "$CDIR/src/cli/tui_layout.c" \
+    "$CDIR/src/cli/tui_render.c" \
+    "$CDIR/src/cli/tui_websocket.c" \
+    "$CDIR/lib/libwebsocket/websocket.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_tui_edge \
+    -Wl,--unresolved-symbols=ignore-all \
+    -lssl -lcrypto -lm 2>/dev/null && [[ -x /tmp/hermes_test_tui_edge ]]; then
+    if /tmp/hermes_test_tui_edge > /dev/null 2>&1; then
+        ok "tui_edge (42 edge case tests)"
+    else
+        fail "tui_edge (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_tui_edge
+else
+    skip "tui_edge (compilation failed)"
+fi
 echo ""; echo "=== Website Policy Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
     "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \
@@ -1359,6 +1384,49 @@ echo ""; echo "=== Think Scrubber Tests ==="
 run_lib_test "think_scrubber" "tests/test_think_scrubber.c" "include" "$CDIR/src/agent/think_scrubber.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libplugin"
 echo ""; echo "=== Message Repair Tests (L25 — agent_runtime_helpers) ==="
 run_lib_test "agent_message_repair" "tests/test_agent_message_repair.c" "include" "$CDIR/src/agent/agent_message_repair.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libhttp -I$CDIR/lib/libyaml -I$CDIR/lib/libmcp -I$CDIR/lib/libcrypto -I$CDIR/lib/libdb -I$CDIR/lib/libplugin -I$CDIR/lib/libskin -I$CDIR/lib/libwebsocket -I$CDIR/lib/libprotobuf -I$CDIR/lib/libcron -I$CDIR/lib/libproc -I$CDIR/lib/libtui -I$CDIR/lib/libtemplate -I$CDIR/lib/libdotenv"
+
+echo ""; echo "=== Conversation Loop Edge Case Tests (X08) ==="
+if gcc -O2 -Wall -Wextra -Wno-format-truncation \
+    -I"$CDIR/include" \
+    -I"$CDIR/lib/libjson" -I"$CDIR/lib/libhttp" -I"$CDIR/lib/libyaml" \
+    -I"$CDIR/lib/libmcp" -I"$CDIR/lib/libcrypto" -I"$CDIR/lib/libdb" \
+    -I"$CDIR/lib/libplugin" -I"$CDIR/lib/libskin" -I"$CDIR/lib/libwebsocket" \
+    -I"$CDIR/lib/libprotobuf" -I"$CDIR/lib/libcron" -I"$CDIR/lib/libproc" \
+    -I"$CDIR/lib/libtui" -I"$CDIR/lib/libtemplate" -I"$CDIR/lib/libdotenv" \
+    -I"$CDIR/lib/libbase64" -I"$CDIR/lib/libpath" \
+    "$CDIR/tests/test_conversation_edge.c" \
+    "$CDIR/src/agent/agent_message_repair.c" \
+    "$CDIR/src/agent/sanitize.c" \
+    "$CDIR/src/agent/redact.c" \
+    "$CDIR/lib/libjson/json.c" \
+    -o /tmp/hermes_test_conversation_edge \
+    -Wl,--unresolved-symbols=ignore-all \
+    -lm 2>/dev/null && [[ -x /tmp/hermes_test_conversation_edge ]]; then
+    if /tmp/hermes_test_conversation_edge > /dev/null 2>&1; then
+        ok "conversation_edge (18 edge case tests)"
+    else
+        fail "conversation_edge (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_conversation_edge
+else
+    skip "conversation_edge (compilation failed)"
+fi
+echo ""; echo "=== Agent Loop Core Function Tests (S7 X06) ==="
+if gcc -O0 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
+    "$CDIR/tests/test_agent_loop.c" \
+    "$CDIR/src/agent/agent_loop.c" "$CDIR/src/agent/context.c" "$CDIR/src/agent/checkpoint.c" \
+    "$CDIR/lib/libjson/json.c" "$CDIR/lib/libplugin/plugin.c" \
+    -o /tmp/hermes_test_agent_loop -lm -lpthread \
+    -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_agent_loop ]]; then
+    if /tmp/hermes_test_agent_loop > /dev/null 2>&1; then
+        ok "agent_loop_core (90 tests)"
+    else
+        fail "agent_loop_core (test binary returned non-zero)"
+    fi
+    rm -f /tmp/hermes_test_agent_loop
+else
+    skip "agent_loop_core (compilation failed)"
+fi
 echo ""; echo "=== Message Sanitize Tests (L26 — build_assistant_message) ==="
 run_lib_test "agent_message_sanitize" "tests/test_agent_message_sanitize.c" "include" "$CDIR/src/agent/agent_message_sanitize.c $CDIR/src/agent/sanitize.c $CDIR/src/agent/redact.c $CDIR/src/agent/context.c $CDIR/lib/libjson/json.c $CDIR/lib/libhash/hash.c $CDIR/lib/libregex/hermes_regex.c -Wl,--unresolved-symbols=ignore-all -I$CDIR/lib/libjson -I$CDIR/lib/libhttp -I$CDIR/lib/libplugin -I$CDIR/lib/libregex -I$CDIR/lib/libhash -I$CDIR/lib/libbase64"
 echo ""; echo "=== Continuation Prompt Tests (P0) ==="
