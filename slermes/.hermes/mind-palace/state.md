@@ -249,3 +249,4 @@
 ||- Phase 325: X09 Manual compression feedback edge case expansion — 19 new assertions (8→27). Zero counts, same tokens, reverse counterintuitive, negative counts, int max. Suite 325/0/14. v385.|
 ||- Phase 326: X09 MoA mixture_of_agents edge case expansion — 6 new assertions (11→17). Empty prompt, numeric prompt, extra fields passthrough. Suite 325/0/14. v385.|
 ||- Phase 327: X09 Tool init registry edge case expansion — 5 new assertions (13→18). Empty name, dispatch NULL args/task_id, get_name edge indices. Suite 325/0/14. v385.|
+||- Phase 328: X09 Delegate_tool edge case expansion — 3 new assertions (4→7). Empty args, whitespace goal, goal+subtasks validation. Suite 325/0/14. v385.|

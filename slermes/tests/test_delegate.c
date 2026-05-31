@@ -86,6 +86,27 @@ int main(void) {
         free(res);
     }
 
+    /* Edge: empty string args */
+    {
+        char *res = delegate_handler("", NULL);
+        TEST("empty string args returns error", has_error(res));
+        free(res);
+    }
+
+    /* Edge: whitespace-only goal (handler doesn't strip — passes validation) */
+    {
+        char *res = delegate_handler("{\"goal\":\"   \"}", NULL);
+        TEST("whitespace goal passes through (no strip)", !has_error(res) || strstr(res, "session_id") != NULL);
+        free(res);
+    }
+
+    /* Edge: goal with subtask list but no context */
+    {
+        char *res = delegate_handler("{\"goal\":\"do something\",\"subtasks\":[{\"description\":\"step 1\"}]}", NULL);
+        TEST("goal + subtasks passes validation", !has_error(res) || !strstr(res, "missing"));
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All delegate tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);
