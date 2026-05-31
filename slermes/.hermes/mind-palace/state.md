@@ -246,3 +246,4 @@
 ||- Phase 322: X09 Telegram thread_id edge case expansion — 7 new assertions (6→13). Leading zero, whitespace, non-numeric, multiple leading zeros. Suite 325/0/14. v385.|
 ||- Phase 323: X09 Moonshot schema edge case expansion — 13 new assertions (17→30). Items tuple, empty/NULL/invalid JSON, deep nesting, all-null enum. Suite 325/0/14. v385.|
 ||- Phase 324: X09 Nous rate guard edge case expansion — 15 new assertions (8→23). Format boundaries, NULL path, tiny buffer, negative/large reset. Suite 325/0/14. v385.|
+||- Phase 325: X09 Manual compression feedback edge case expansion — 19 new assertions (8→27). Zero counts, same tokens, reverse counterintuitive, negative counts, int max. Suite 325/0/14. v385.|

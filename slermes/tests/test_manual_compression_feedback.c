@@ -75,6 +75,48 @@ static void test_negative_tokens(void) {
     TEST("negative: no crash", fb.headline[0] != '\0');
 }
 
+static void test_zero_counts(void) {
+    compression_feedback_t fb;
+    summarize_manual_compression(0, 0, 0, 0, &fb);
+    TEST("zero: noop", fb.noop);
+    TEST_STR("zero: headline", fb.headline, "No changes from compression: 0 messages");
+    TEST_STR("zero: token_line", fb.token_line, "Approx request size: ~0 tokens (unchanged)");
+}
+
+static void test_compressed_same_tokens(void) {
+    compression_feedback_t fb;
+    summarize_manual_compression(10, 5, 5000, 5000, &fb);
+    TEST("same_tokens: not noop", !fb.noop);
+    TEST("same_tokens: arrow in headline",
+         strstr(fb.headline, "\xe2\x86\x92") != NULL);
+    TEST("same_tokens: note empty (tokens same)",
+         fb.note[0] == '\0');
+}
+
+static void test_reverse_counterintuitive(void) {
+    /* More messages but fewer tokens — not counterintuitive but worth documenting */
+    compression_feedback_t fb;
+    summarize_manual_compression(10, 15, 5000, 3000, &fb);
+    TEST("reverse: not noop", !fb.noop);
+    TEST("reverse: no note (not counterintuitive)",
+         fb.note[0] == '\0');
+}
+
+static void test_negative_message_counts(void) {
+    compression_feedback_t fb;
+    summarize_manual_compression(-5, -10, 5000, 3000, &fb);
+    TEST("neg_messages: not noop (different)", !fb.noop);
+    TEST("neg_messages: no crash", fb.headline[0] != '\0');
+}
+
+static void test_large_values(void) {
+    compression_feedback_t fb;
+    /* Near int max */
+    summarize_manual_compression(2000000000, 1000000000, 2000000000, 1000000000, &fb);
+    TEST("large: not noop", !fb.noop);
+    TEST("large: no crash", fb.headline[0] != '\0');
+}
+
 int main(void) {
     test_noop();
     test_noop_token_change();
@@ -82,6 +124,11 @@ int main(void) {
     test_counterintuitive_note();
     test_null_out();
     test_negative_tokens();
+    test_zero_counts();
+    test_compressed_same_tokens();
+    test_reverse_counterintuitive();
+    test_negative_message_counts();
+    test_large_values();
 
     fprintf(stderr, "manual_compression_feedback: %d/%d pass\\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;
