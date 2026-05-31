@@ -3874,33 +3874,49 @@ int tui_fullscreen_run(agent_state_t *state) {
             tui_resize_panes();
         }
 
-        /* Thinking indicator + non-blocking input during streaming */
+        /* Thinking indicator + non-blocking input during streaming (T11) */
         if (tui.stream.active) {
-            /* Show animated indicator on right side of status bar */
-            static const char spin[] = {'|', '/', '-', '\\'};
-            int frame = tui.think_frame % 4;
             if (tui.panes[PANE_STATUS].win) {
                 WINDOW *sw = tui.panes[PANE_STATUS].win;
                 int sw_cols = tui.panes[PANE_STATUS].cols;
-                /* Write thinking indicator at right side, preserving left model info */
+                double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
+                char think_buf[96];
+                
                 if (tui.stream.first_token) {
-                    double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
-                    char think_buf[64];
-                    snprintf(think_buf, sizeof(think_buf), " %c think %4.1fs  ", spin[frame], elapsed);
-                    int think_start = sw_cols - (int)strlen(think_buf) - 1;
-                    if (think_start < 0) think_start = 0;
-                    mvwprintw(sw, 0, think_start, "%s", think_buf);
+                    /* Before first token: rich animated thinking indicator */
+                    /* Multi-frame spinner with phase labels */
+                    static const char spin[] = {'|', '/', '-', '\\'};
+                    int frame = tui.think_frame % 4;
+                    
+                    /* Animated ellipsis: cycles through . .. ... patterns */
+                    int dot_phase = tui.think_frame % 12;
+                    const char *dots;
+                    if (dot_phase < 3)       dots = ".   ";  /* Phase 0-2: single dot */
+                    else if (dot_phase < 6)  dots = "..  ";  /* Phase 3-5: two dots */
+                    else if (dot_phase < 9)  dots = "... ";  /* Phase 6-8: three dots */
+                    else                     dots = " .. ";  /* Phase 9-11: two dots (return) */
+                    
+                    /* Phase label changes with elapsed time */
+                    const char *phase;
+                    if (elapsed < 2.0)       phase = "think";
+                    else if (elapsed < 5.0)  phase = "ponder";
+                    else if (elapsed < 10.0) phase = "deep";
+                    else                     phase = "focus";
+                    
+                    snprintf(think_buf, sizeof(think_buf), " %c %s%s %4.1fs  ", 
+                             spin[frame], phase, dots, elapsed);
                 } else {
-                    /* Show live token count during streaming */
-                    double elapsed = ((double)clock() / CLOCKS_PER_SEC) - tui.stream.start_time;
+                    /* After first token: live token counter + tok/s */
                     double tps = (elapsed > 0.1) ? tui.stream.token_count / elapsed : 0.0;
-                    char stream_buf[64];
-                    snprintf(stream_buf, sizeof(stream_buf), " t: %d  tok/s: %.0f  ", 
-                             tui.stream.token_count, tps);
-                    int stream_start = sw_cols - (int)strlen(stream_buf) - 1;
-                    if (stream_start < 0) stream_start = 0;
-                    mvwprintw(sw, 0, stream_start, "%s", stream_buf);
+                    /* Animated receiving indicator: arrow pulses */
+                    const char *recv_chr = (tui.think_frame % 8 < 3) ? ">" : "=>";
+                    snprintf(think_buf, sizeof(think_buf), " %s t:%d %.0f/s  ", 
+                             recv_chr, tui.stream.token_count, tps);
                 }
+                
+                int buf_start = sw_cols - (int)strlen(think_buf) - 1;
+                if (buf_start < 0) buf_start = 0;
+                mvwprintw(sw, 0, buf_start, "%s", think_buf);
                 wnoutrefresh(sw);
                 doupdate();
             }

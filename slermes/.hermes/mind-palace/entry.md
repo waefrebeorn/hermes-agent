@@ -1,6 +1,6 @@
-# Entry — Slermes C Parity (v422)
+# Entry — Slermes C Parity (v423)
 
-Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, replayed after stream end. 66 gaps. Suite 328/0/12.
+Phase 367: TUI thinking indicator (T11) — rich animated states: phase labels, animated ellipsis, pulsing arrow. 65 gaps. Suite 328/0/12.
 Dynamic upstream version extracted from Python at build time (v0.15.1-slermes).
 
 **Sectors:**

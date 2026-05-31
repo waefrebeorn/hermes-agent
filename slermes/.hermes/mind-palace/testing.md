@@ -1,2 +1,2 @@
-# Testing — Slermes C (v422)
-328/0/12. 66 gaps. Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, replayed after stream end.
+# Testing — Slermes C (v423)
+328/0/12. 65 gaps. Phase 367: TUI thinking indicator (T11) — rich animated states ported.

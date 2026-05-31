@@ -1,4 +1,4 @@
-# Prestige (v422)
+# Prestige (v423)
 
 ## P0 — Architecture (4 gaps)
 F01-F04, F09.
@@ -13,5 +13,5 @@ F01-F04, F09.
 
 ## Strategy
 
-Phase 366: TUI type-ahead buffer (T18) — keystrokes captured during streaming, replayed into input buffer after stream end.
-S4 T18 IMPROVED from PARTIAL to PORTED (buffers + replays). S4 gaps: 19->18. Total: 67->66.
+Phase 367: TUI thinking indicator (T11) — rich animated states: phase labels (think/ponder/deep/focus by elapsed time), animated ellipsis (.→..→...→.. cycle), pulsing arrow (>→=>) on token receive. T11 PORTED.
+S4 gaps: 18→17. Total: 66→65.
