@@ -1,9 +1,9 @@
-# Overnight Map (v458)
+# Overnight Map (v459)
 
-## Phase 402 — exec_code Tool Edge Case Expansion
-**S7 X04 EXPANDED** — 6 new test functions in test_exec_code.c (15→21 total)
-New coverage: large output truncation, negative timeout clamping,
-extra fields ignored, quote injection, task_id handling, field presence
+## Phase 403 — Skills Hub Edge Case Expansion
+**S7 X04 EXPANDED** — 7 new test functions in test_skills_hub.c (17→41 tests)
+New coverage: empty catalog, missing skills key, single skill, no tags,
+unicode names, null fields, long descriptions
 no usage), streaming reasoning (reasoning_content in delta), streaming edge
 depth (empty delta/chunk, length finish, whitespace).
 **Bug fix:** openrouter_parse_response — finish_reason extraction from choice

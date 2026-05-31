@@ -1,11 +1,11 @@
-# Entry — Slermes C Translation Project (v458)
+# Entry — Slermes C Translation Project (v459)
 
 ## Quick Stats
 - Suite: 338/?/13
 - Gaps: 53
-- Current Phase: 402 (exec_code Tool Edge Case Expansion)
-- Version: v458
+- Current Phase: 403 (Skills Hub Edge Case Expansion)
+- Version: v459
 
-## Latest Phase 402
-- test_exec_code.c: 15→21 test functions (+6)
-- New coverage: large output truncation, negative timeout, extra fields ignored, quote injection, task_id handling, field presence
+## Latest Phase 403
+- test_skills_hub.c: 17→41 tests (+24)
+- 7 new test functions: empty catalog, missing skills key, single skill, no tags, unicode names, null fields, long descriptions

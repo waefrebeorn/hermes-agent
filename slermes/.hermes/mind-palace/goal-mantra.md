@@ -1,5 +1,5 @@
-v458
-338/?/13. 53 gaps. Phase 402: exec_code Tool Edge Case Expansion — S7 X04 EXPANDED.
-6 new test functions (15→21 total). Large output truncation, negative timeout,
-extra fields, quote injection, task_id, field presence.
-**X04 tool test depth improved: exec_code +40%.**
+v459
+338/?/13. 53 gaps. Phase 403: Skills Hub Edge Case Expansion — S7 X04 EXPANDED.
+7 new test functions (17→41 tests). Empty catalog, missing key, single skill,
+no tags, unicode, null fields, long descriptions.
+**X04 tool test depth improved: skills_hub +141%.**

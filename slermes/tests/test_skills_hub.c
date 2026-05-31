@@ -18,6 +18,8 @@ static int pass = 0, fail = 0;
     } \
 } while(0)
 
+#define JSON_PARSE(json_str) ({ char *_e = NULL; json_t *_r = json_parse(json_str, &_e); free(_e); _r; })
+
 /* ================================================================
  *  Mock catalog JSON (subset of real browse.sh response)
  * ================================================================ */
@@ -52,12 +54,11 @@ static const char *MOCK_CATALOG = "{"
     "]}";
 
 /* ================================================================
- *  Mock: parse catalog from JSON string
+ *  Parse catalog from JSON string
  * ================================================================ */
 static void test_parse_catalog(void) {
     printf("\n=== Parse Catalog ===\n");
 
-    /* Parse mock JSON */
     char *err = NULL;
     json_t *root = json_parse(MOCK_CATALOG, &err);
     TEST("mock catalog parses", root != NULL);
@@ -72,7 +73,6 @@ static void test_parse_catalog(void) {
     TEST("skills array exists", skills_arr != NULL);
     TEST("skills array has 2 items", skills_arr && json_len(skills_arr) == 2);
 
-    /* Check first skill */
     json_t *first = skills_arr ? json_get(skills_arr, 0) : NULL;
     TEST("first skill exists", first != NULL);
     if (first) {
@@ -101,7 +101,6 @@ static void test_parse_catalog(void) {
         TEST("proxies = false", proxies == false);
     }
 
-    /* Check second skill */
     json_t *second = skills_arr ? json_get(skills_arr, 1) : NULL;
     TEST("second skill exists", second != NULL);
     if (second) {
@@ -118,16 +117,12 @@ static void test_parse_catalog(void) {
 static void test_skills_hub_no_network(void) {
     printf("\n=== Skills Hub (no network) ===\n");
 
-    /* Cache should be clear initially */
     skills_hub_clear_cache();
 
-    /* Searching without data should auto-fetch (which will fail without network) */
     hub_skill_meta_t results[10];
     int n = skills_hub_search("airbnb", results, 10);
-    /* May return 0 if network unavailable; that's OK */
     printf("  INFO: skills_hub_search returned %d (network may be unavailable)\n", n);
 
-    /* Clear cache — summary should say not loaded */
     skills_hub_clear_cache();
     char *summary = skills_hub_summary();
     TEST("summary not null", summary != NULL);
@@ -136,14 +131,135 @@ static void test_skills_hub_no_network(void) {
         free(summary);
     }
 
-    /* get_by_slug with empty catalog */
     hub_skill_meta_t meta;
     bool found = skills_hub_get_by_slug("nonexistent", &meta);
     TEST("nonexistent slug not found", !found);
 
-    /* clear_cache doesn't crash */
     skills_hub_clear_cache();
     TEST("clear_cache succeeds", 1);
+}
+
+/* --- Phase 403: Catalog edge case expansion --- */
+
+static void test_empty_catalog(void) {
+    printf("\n=== Empty Catalog ===\n");
+    json_t *root = JSON_PARSE("{\"skills\":[]}");
+    TEST("empty skills array parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        TEST("skills array exists", arr != NULL);
+        TEST("skills array empty", arr && json_len(arr) == 0);
+        json_free(root);
+    }
+}
+
+static void test_missing_skills_key(void) {
+    printf("\n=== Missing Skills Key ===\n");
+    json_t *root = JSON_PARSE("{}");
+    TEST("empty object parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        TEST("skills key is NULL", arr == NULL);
+        json_free(root);
+    }
+}
+
+static void test_single_skill_catalog(void) {
+    printf("\n=== Single Skill Catalog ===\n");
+    json_t *root = JSON_PARSE(
+        "{\"skills\":[{\"slug\":\"test-slug\",\"name\":\"test\","
+        "\"title\":\"Test Skill\",\"description\":\"A test\"}]}");
+    TEST("single skill parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        TEST("skills array has 1 item", arr && json_len(arr) == 1);
+        json_t *skill = json_get(arr, 0);
+        TEST("skill exists", skill != NULL);
+        if (skill) {
+            const char *slug = json_get_str(skill, "slug", NULL);
+            TEST("slug = test-slug", slug && strcmp(slug, "test-slug") == 0);
+            const char *name = json_get_str(skill, "name", NULL);
+            TEST("name = test", name && strcmp(name, "test") == 0);
+        }
+        json_free(root);
+    }
+}
+
+static void test_skill_no_tags(void) {
+    printf("\n=== Skill Without Tags ===\n");
+    json_t *root = JSON_PARSE(
+        "{\"skills\":[{\"slug\":\"no-tags\",\"name\":\"nope\","
+        "\"title\":\"No Tags\",\"description\":\"no tags here\"}]}");
+    TEST("no-tags skill parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        json_t *skill = json_get(arr, 0);
+        const char *title = json_get_str(skill, "title", NULL);
+        TEST("title accessible without tags", title && strcmp(title, "No Tags") == 0);
+        json_t *tags = json_obj_get(skill, "tags");
+        TEST("tags key is NULL", tags == NULL);
+        json_free(root);
+    }
+}
+
+static void test_unicode_skill_name(void) {
+    printf("\n=== Unicode Skill Name ===\n");
+    json_t *root = JSON_PARSE(
+        "{\"skills\":[{\"slug\":\"unicode\",\"name\":\"café résumé\","
+        "\"title\":\"Café Résumé\",\"description\":\"Unicode in fields\"}]}");
+    TEST("unicode skill parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        json_t *skill = json_get(arr, 0);
+        const char *name = json_get_str(skill, "name", NULL);
+        TEST("unicode name preserved", name && strcmp(name, "café résumé") == 0);
+        const char *title = json_get_str(skill, "title", NULL);
+        TEST("unicode title preserved", title && strcmp(title, "Café Résumé") == 0);
+        json_free(root);
+    }
+}
+
+static void test_skill_null_fields(void) {
+    printf("\n=== Skill With Null Fields ===\n");
+    json_t *root = JSON_PARSE(
+        "{\"skills\":[{\"slug\":\"null-fields\",\"name\":null,"
+        "\"title\":null,\"description\":null,\"hostname\":null,"
+        "\"category\":null}]}");
+    TEST("null-field skill parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        json_t *skill = json_get(arr, 0);
+        TEST("slug still present", skill != NULL);
+        const char *slug = json_get_str(skill, "slug", NULL);
+        TEST("slug = null-fields", slug && strcmp(slug, "null-fields") == 0);
+        const char *name = json_get_str(skill, "name", NULL);
+        TEST("null name returns NULL", name == NULL);
+        const char *title = json_get_str(skill, "title", NULL);
+        TEST("null title returns NULL", title == NULL);
+        json_free(root);
+    }
+}
+
+static void test_long_skill_fields(void) {
+    printf("\n=== Long Skill Fields ===\n");
+    char long_json[4096];
+    char long_desc[2000];
+    memset(long_desc, 'd', 1999);
+    long_desc[1999] = '\0';
+    snprintf(long_json, sizeof(long_json),
+        "{\"skills\":[{\"slug\":\"long\",\"name\":\"%.100s\","
+        "\"title\":\"%.100s\",\"description\":\"%s\"}]}",
+        long_desc, long_desc, long_desc);
+    json_t *root = JSON_PARSE(long_json);
+    TEST("long-field skill parses", root != NULL);
+    if (root) {
+        json_t *arr = json_obj_get(root, "skills");
+        json_t *skill = json_get(arr, 0);
+        TEST("long-field skill exists", skill != NULL);
+        const char *desc = json_get_str(skill, "description", NULL);
+        TEST("long description preserved", desc && strlen(desc) == 1999);
+        json_free(root);
+    }
 }
 
 int main(void) {
@@ -151,6 +267,14 @@ int main(void) {
 
     test_parse_catalog();
     test_skills_hub_no_network();
+    /* Phase 403 */
+    test_empty_catalog();
+    test_missing_skills_key();
+    test_single_skill_catalog();
+    test_skill_no_tags();
+    test_unicode_skill_name();
+    test_skill_null_fields();
+    test_long_skill_fields();
 
     printf("\n=== %d/%d passed ===\n", pass, pass + fail);
     return fail > 0 ? 1 : 0;

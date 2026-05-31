@@ -1,6 +1,6 @@
-# State — Slermes C (v458)
-338/?/13. Phase 402: exec_code Tool Edge Case Expansion — S7 X04 EXPANDED.
-   test_exec_code.c — 6 new test functions (15→21 total), +21 assertions.
-   New coverage: large output truncation, negative timeout clamping,
-   extra fields ignored, quote injection, task_id handling, field presence.
-**X04 tool test depth improved: exec_code +6 functions (+40%).**
+# State — Slermes C (v459)
+338/?/13. Phase 403: Skills Hub Edge Case Expansion — S7 X04 EXPANDED.
+   test_skills_hub.c — 7 new test functions (17→41 tests), +24 assertions.
+   New coverage: empty catalog, missing skills key, single skill,
+   skill without tags, unicode names, null fields, long descriptions.
+**X04 tool test depth improved: skills_hub +141%.**
