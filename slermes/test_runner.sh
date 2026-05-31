@@ -486,7 +486,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openai.c" \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_openai -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openai ]]; then
     if /tmp/hermes_test_provider_openai > /dev/null 2>&1; then
-        ok "provider_openai (54 tests)"
+        ok "provider_openai (111 tests)"
     else fail "provider_openai (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_provider_openai

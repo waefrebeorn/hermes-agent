@@ -1,11 +1,22 @@
-# Testing — Slermes C (v447)
+# Testing — Slermes C Test Suite (v448)
 
-**Suite: 338 passed, 0 failed, 13 skipped (351 total)**
+## Current Status
+338/?/13 — Suite stable. Pre-existing TTY skip fluctuation acceptable.
 
-| Test File | Assertions | Status |
-|-----------|-----------|--------|
-| test_conversation_edge.c | 76 (X08, conversation loop edge cases) | ✅ |
-| test_process.c | 34 (X04, process tool edge cases) | ✅ |
-| test_fuzz.c | 20 (X10, fuzz/property tests) | ✅ |
-| test_agent_loop.c | 90 (X06, agent loop core) | ✅ |
-| test_gateway_platforms.c | 123 (X07, gateway platform) | ✅ |
+## Test Categories
+- Library unit tests (json, protobuf, yaml, crypto, http, ...)
+- Provider unit tests (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
+- Tool tests (file, web, terminal, send_message, patch, session_search, ...)
+- TUI tests (json_rpc, transport, render, layout, entry, slash_worker, eventpub, websocket, edge)
+- Agent loop tests (agent_loop_core, conversation_edge, fuzz)
+- Gateway platform tests (gateway_platforms)
+- Process, tool coercion, delegate edge case tests
+
+## Recent Improvements (Phase 392)
+- test_provider_openai.c: 37→111 assertions (+74)
+- New coverage: multi-tool calls, empty/null content, streaming edge cases,
+  build_request_body (basic + tools), URL edge cases, finish_reason parsing
+- Bug fixes: finish_reason extraction, reasoning_content streaming
+
+## Test Labels (test_runner.sh)
+- provider_openai: 111 tests (was 54)

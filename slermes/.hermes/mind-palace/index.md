@@ -1,12 +1,20 @@
-# Slermes C — Index (v447)
+# Index — Slermes C Mind Palace (v448)
 
-- [State](state.md) — current build state, suite, gaps
-- [Plan](plan.md) — next gap target, sector priorities
-- [Battleship](battleship-v34.md) — full gap audit (53 gaps)
-- [Goal Mantra](goal-mantra.md) — one-liner status
-- [Prestige](prestige_prompt.md) — architectural overview
-- [Vault](vault/achievements.md) — 2167+ closed-gap entries
-- [Entry](entry.md) — project kickoff reference
-- [Testing](testing.md) — test suite reference
+## Walkways
+| File | Purpose |
+|------|---------|
+| state.md | Current session state — version, suite, phase |
+| plan.md | Next phase plan — gaps, targets |
+| goal-mantra.md | Short goal summary |
+| prestige_prompt.md | Progress log |
+| overnight-map.md | Overnight progress map |
 
-Phase 386: Conversation Loop Edge Case Expansion — S7 X08 EXPANDED (19 assertions). Suite 338/0/13. All S4 P1 gaps resolved.
+## Reference
+| File | Purpose |
+|------|---------|
+| battleship-v34.md | Active gap battleship (v34, DA v1 audit, 53 gaps) |
+| achievements.md | Vault of all closed gaps |
+| da-audit-v14.md, v15.md | Devil's Advocate audits |
+
+## Phase 392
+Provider Test Expansion — S7 X03 EXPANDED. 74 new assertions. Bug fixes.

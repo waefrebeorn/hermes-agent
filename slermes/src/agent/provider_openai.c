@@ -321,6 +321,10 @@ static provider_response_t *openai_parse_response(const provider_t *p,
         json_t *choice = json_get(choices, 0);
         json_t *message = json_object_get(choice, "message");
 
+        /* B22: finish_reason from choice level */
+        const char *fr = json_get_str(choice, "finish_reason", NULL);
+        if (fr) snprintf(resp->finish_reason, sizeof(resp->finish_reason), "%s", fr);
+
         if (message) {
             resp->content = strdup(json_get_str(message, "content", ""));
 
@@ -387,6 +391,9 @@ static provider_response_t *openai_parse_stream_chunk(const provider_t *p,
         json_t *delta = json_object_get(choice, "delta");
         if (delta) {
             resp->content = strdup(json_get_str(delta, "content", ""));
+            /* Reasoning content in streaming chunks (e.g. DeepSeek) */
+            const char *reason = json_get_str(delta, "reasoning_content", NULL);
+            if (reason) resp->reasoning = strdup(reason);
         }
     }
 
