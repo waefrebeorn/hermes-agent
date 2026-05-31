@@ -1,8 +1,37 @@
-# Vault of Achievements — Slermes C Translation
-> Archive of completed milestones, resolved gaps, and retired stale claims.
-> Every entry was verified against running source code at time of retirement.
+# 🏆 Vault of Achievements — Slermes C Translation
+> Every closed gap, resolved claim, and retired stale assertion.
+> Verified against running source at time of retirement.
+>
+> **v383** · 68 active gaps · **2141 entries** of progress
+
+## 📊 Sector Summary
+
+| Sector | Status | Gaps Closed |
+|--------|--------|-------------|
+| S0 Display/Input | ✅ PORTED | D01-D16, T13 |
+| S1 Agent Core | ✅ PORTED | L23-L28 |
+| S2 CLI/Config | ✅ PORTED | C01-C37 |
+| S3 Gateway | ✅ PORTED | G01-G13 |
+| S4 TUI | 🔄 ACTIVE | 2 remaining |
+| S5 Agent Modules | 🔄 ACTIVE | 15 remaining |
+| S6 Tools | ✅ PORTED | B01-B10 |
+| S7 Test Coverage | 🔄 ACTIVE | 20 remaining |
+| S8 Providers | ✅ PORTED | R01+R02+R04+R10 |
+| S9 Ecosystem | 🔄 ACTIVE | 20 remaining |
+| S10 Infrastructure | ✅ PORTED | F01-F10 |
+| S999 Stale Claims | 🗑️ ALL VAULTED | 47 retired |
+
+See [`battleship-v34.md`](../battleship-v34.md) for active gaps.
+
+## 💀 Stale Claim Graveyard
+Old battleship versions archived to `vault/bins/`:
+- battleship-v10 through v33 (24 versions)
+- da-audit-v11-500-goals, da-audit-v13
+- plans/battleship-v1, plans/battleship-v2
+- All contained inflated/stale gap counts — now superseded by v34.
+
 ---
-## Phase 1: Foundation & Core Infrastructure
+## 🏗️ Achievements
 | ID | Achievement | Evidence |
 |----|-------------|----------|
 | F01 | C build system (Makefile) — compiles 173 .c files, 73 headers, 65 libs | `make -j$(nproc)` clean |

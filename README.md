@@ -1,16 +1,21 @@
 <p align="center">
-  <img src="slermes/BANNER.md" alt="Slermes" width="100%">
-</p>
-
-# Slermes ☤ — C Translation of Hermes Agent
-
-**Slermes** is a zero-dependency [C translation](slermes/) of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. One static binary, zero runtime deps beyond libc + libssl.
-
-<p align="center">
   <a href="slermes/README.md">
     <img src="slermes/assets/slermes-logo-clean.svg" alt="Slermes" width="300">
   </a>
 </p>
+
+```text
+╔══════════════════════════════════════════════════════════════╗
+║  Slermes v383                                               ║
+║  C translation  ·  325/0/14 tests  ·  31MB binary          ║
+║  68 gaps  ·  85 tools  ·  99 CLI  ·  65 libs               ║
+║  19 gateways  ·  10 providers  ·  0 warnings                ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+# Slermes ☤ — C Translation of Hermes Agent
+
+**Slermes** is a zero-dependency [C translation](slermes/) of the Python [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. One static binary, zero runtime deps beyond libc + libssl.
 
 This repo (`waefrebeorn/slermes`) is a fork of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) with the C translation living in [`slermes/`](slermes/). The Python reference implementation lives at the repo root (tracking upstream).
 

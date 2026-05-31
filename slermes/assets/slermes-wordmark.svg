@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
   <style>
-    .text { font-family: system-ui, -apple-system, sans-serif; font-size: 44px; font-weight: 800; fill: #e06020; }
+    .text { font-family: system-ui, -apple-system, sans-serif; font-size: 44px; font-weight: 800; fill: #d36134; }
     .sub { font-family: monospace; font-size: 13px; fill: #666; }
-    .paw { fill: #e06020; opacity: 0.2; }
+    .paw { fill: #d36134; opacity: 0.2; }
   </style>
   <rect width="400" height="100" fill="#1a1a2e" rx="12"/>
   <circle cx="36" cy="72" r="7" class="paw"/>
