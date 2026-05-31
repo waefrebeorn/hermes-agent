@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v405)
+# Goal Mantra — Slermes C (v406)
 
-328/0/12 (289 test files). 68 gaps. Phase 348: json_mode edge case expansion — 13 new assertions (10→23). Recovered 1 test from SKIP.
+328/0/12 (289 test files). 68 gaps. Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15).
 
 ## Loop
 

@@ -1,6 +1,6 @@
-# Plan — Next Phase (v405)
+# Plan — Next Phase (v406)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 348: json_mode edge case expansion — 13 new assertions (10→23). Recovered 1 test from SKIP.
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15).
 
 **Next gap targets:**
 

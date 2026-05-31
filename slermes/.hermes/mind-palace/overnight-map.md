@@ -1,7 +1,8 @@
-# Overnight Map — Recent Phases (v405)
+# Overnight Map — Recent Phases (v406)
 
 | Phase | Change | What | Before | After |
 |-------|--------|------|--------|-------|
+| 349 | X09 | Sudo prompt edge case expansion — 9 new assertions (6→15). HERMES_INTERACTIVE variants: trailing space "1 ", "true", empty string. Timeout boundaries: 1 sec, INT_MAX. Multiple sequential calls (no stale state). | `tests/test_sudo_prompt.c` — 9 new TEST calls. Suite 328/0/12. v406. | 68 gaps | 68 gaps |
 | 348 | X09 | JSON mode edge case expansion — 13 new assertions (10→23). 3 additional providers (Azure, Google, Bedrock), json_mode toggle (true→false→true), json_mode=false + explicit response_format, json_mode with streaming, json_mode with empty messages (0 messages), json_mode with response_format_strict. Fixed test_runner corrupted redirect. | `tests/test_json_mode.c` — 13 new TEST calls. `test_runner.sh` — url_safety.c dep + redirect fix. Suite 328/0/12. v405. | 68 gaps | 68 gaps |
 | 347 | X09 | Provider error edge case expansion — 91 new assertions (225→316). Context overflow detection for 9 providers, boundary cases (long msg, unicode, null/empty error obj, no message field), OpenAI stream [DONE]. Fixed test_runner missing url_safety.c dep (test was stuck on SKIP). | `tests/test_provider_error.c` — 4 new test functions. Suite 327/0/13. v404. | 68 gaps | 68 gaps |
 | 346 | X09 | Signal helper edge case expansion — 11 new assertions (11→22). Uncatchable signals SIGKILL/SIGSTOP return false, invalid signum 0/-1 rejected, double-register same signal (replace semantics), toggle register→default→re-register, signal_register_common(NULL) safe, signal_safe_write(4000 chars) no crash. | `tests/test_hermes_signal.c` — 11 new assertions (11→22). Suite 326/0/14. v403. | 68 gaps | 68 gaps |

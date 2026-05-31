@@ -3200,7 +3200,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libplugin" \
     "$CDIR/src/tools/terminal.c" \
     -o /tmp/hermes_test_sudo_prompt -lm -lssl -lcrypto -lz \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_sudo_prompt > /dev/null 2>&1; then ok "terminal_sudo_prompt (5 tests)"
+    if /tmp/hermes_test_sudo_prompt > /dev/null 2>&1; then ok "terminal_sudo_prompt (15 tests)"
     else fail "terminal_sudo_prompt (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_sudo_prompt

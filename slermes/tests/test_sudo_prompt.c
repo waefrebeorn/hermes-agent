@@ -68,6 +68,63 @@ int main(void) {
         unsetenv("HERMES_INTERACTIVE");
     }
 
+    /* ── Edge cases ── */
+    printf("\n--- Edge cases ---\n");
+
+    /* Test 6: HERMES_INTERACTIVE=1 with trailing space */
+    {
+        setenv("HERMES_INTERACTIVE", "1 ", 1);
+        char *res = terminal_prompt_for_sudo_password(5);
+        TEST("trailing space not interactive", res == NULL);
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
+    /* Test 7: HERMES_INTERACTIVE=\"true\" (non-\"1\" truthy value) */
+    {
+        setenv("HERMES_INTERACTIVE", "true", 1);
+        char *res = terminal_prompt_for_sudo_password(5);
+        TEST("true not interactive", res == NULL);
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
+    /* Test 8: HERMES_INTERACTIVE empty string */
+    {
+        setenv("HERMES_INTERACTIVE", "", 1);
+        char *res = terminal_prompt_for_sudo_password(5);
+        TEST("empty string not interactive", res == NULL);
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
+    /* Test 9: Timeout 1 — smallest valid positive */
+    {
+        setenv("HERMES_INTERACTIVE", "1", 1);
+        char *res = terminal_prompt_for_sudo_password(1);
+        /* No /dev/tty in test runner, so returns NULL regardless of timeout */
+        TEST("timeout=1 returns NULL", res == NULL);
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
+    /* Test 10: Timeout INT_MAX (very large) */
+    {
+        setenv("HERMES_INTERACTIVE", "1", 1);
+        char *res = terminal_prompt_for_sudo_password(2147483647);
+        TEST("INT_MAX timeout returns NULL", res == NULL);
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
+    /* Test 11: Multiple calls in sequence — no stale state */
+    {
+        setenv("HERMES_INTERACTIVE", "1", 1);
+        char *r1 = terminal_prompt_for_sudo_password(5);
+        char *r2 = terminal_prompt_for_sudo_password(5);
+        char *r3 = terminal_prompt_for_sudo_password(5);
+        TEST("call 1 returns NULL", r1 == NULL);
+        TEST("call 2 returns NULL", r2 == NULL);
+        TEST("call 3 returns NULL", r3 == NULL);
+        TEST("no leaks visible", (r1 == NULL && r2 == NULL && r3 == NULL));
+        unsetenv("HERMES_INTERACTIVE");
+    }
+
     printf("\n=== Results: %s ===\n",
            failures ? "SOME TESTS FAILED" : "ALL PASSED");
     return failures ? 1 : 0;

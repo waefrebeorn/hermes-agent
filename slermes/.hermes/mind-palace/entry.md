@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v405)
+# Entry — Slermes C Parity (v406)
 
-Phase 348: json_mode edge case expansion — 13 new assertions (10→23). Recovered 1 test from SKIP. 68 gaps.
+Phase 349: sudo_prompt edge case expansion — 9 new assertions (6→15). 68 gaps.
