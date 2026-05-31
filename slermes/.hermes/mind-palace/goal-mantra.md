@@ -1,2 +1,2 @@
-# Goal Mantra — Slermes C (v426)
-328/0/12. 66 gaps. Phase 370: Live timestamp on CLI + TUI status bars (HH:MM). 2 new display gaps.
+# Goal Mantra — Slermes C (v427)
+327/0/13. 64 gaps. Phase 371: CLI status bar context% + budget/cost. D19+D20 PORTED. S0 complete.

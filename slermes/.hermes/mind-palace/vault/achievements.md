@@ -2,13 +2,13 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v426** · 66 active gaps · **2167 entries** of progress
+> **v427** · 64 active gaps · **2168 entries** of progress
 |
 |## 📊 Sector Summary
 
 | Sector | Status | Gaps Closed |
 |--------|--------|-------------|
-| S0 Display/Input | ✅ PORTED | D01-D16, T13 |
+| S0 Display/Input | ✅ PORTED | D01-D21 |
 | S1 Agent Core | ✅ PORTED | L23-L28 |
 | S2 CLI/Config | ✅ PORTED | C01-C37 |
 | S3 Gateway | ✅ PORTED | G01-G13 |
@@ -2220,3 +2220,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 368 | S4 T14 | TUI agent info overlay. `/agent` opens modal showing model, provider, session ID, iteration count, message count, tool count, token stats (input/output/total), budget remaining, JSON mode. Read-only info display. q/ESC closes. T14 changes from None to IMPLEMENTED. S4 gaps: 17->16. Total: 65->64. | `src/cli/tui_fullscreen.c` — tui_draw_agent_info() (72 LOC), MODE_AGENT_INFO enum, /agent slash command + handler. Suite 328/0/12. v424. |
 || 369 | S5 C11 | Auth credential validation — /auth validate <provider>. Tests API key via minimal API call for 8 providers: openai/openrouter/deepseek/xai/groq/together (GET/v1/models), anthropic (POST minimal messages with x-api-key header), google (?key= query param). Reports valid/invalid. C11 depth improved (1 of 2 remaining items done: callback server still pending). | `src/cli/commands.c` — /auth validate handler (~85 LOC). Suite 328/0/12. v425. |
 || 370 | S0 D21 | Live HH:MM timestamp on status bars. CLI `display_statusbar()` replaced raw session_id display (e.g. "20260531_031152") with real `strftime("%H:%M")`. TUI `tui_redraw_status()` replaced right-aligned version number with time. 2 new display gaps discovered: D19 (context usage %) + D20 (budget/cost) missing from CLI status bar. | `src/cli/display_core.c` — strftime time_str in display_statusbar. `src/cli/tui_fullscreen.c` — strftime time_str in tui_redraw_status. Suite 328/0/12. v426. |
+
+||| 371 | S0 D19+D20 | CLI status bar context% + budget/cost implemented. D19: ctx:XX% via hermes_token_context_size(). D20: Budget N/M + cost $X.XX via agent state. S0 complete. | src/cli/display_core.c -- status bar rewritten. Suite 327/0/13. v427. |

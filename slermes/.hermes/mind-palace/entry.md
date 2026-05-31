@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v426)
+# Entry — Slermes C Parity (v427)
 
-Phase 370: Live HH:MM timestamp on CLI/TUI status bars (replaced raw session_id). 2 new display gaps: D19 context%, D20 budget/cost. 66 gaps. Suite 328/0/12.
+Phase 371: CLI status bar context% + budget/cost implemented. D19+D20 PORTED. S0 complete (0 gaps). 64 gaps. Suite 327/0/13.

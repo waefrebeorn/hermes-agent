@@ -1,13 +1,13 @@
-**BANNER — WuBu Slermes C Translation (v426) — slermes/ directory**
+**BANNER — WuBu Slermes C Translation (v427) — slermes/ directory**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v426                                       ║
-║  328 tests · 66 gaps · 85 tools · 99 CLI · 65 libs         ║
-║  66 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v427                                       ║
+║  327 tests · 64 gaps · 85 tools · 99 CLI · 65 libs         ║
+║  64 gaps  │  31MB binary  │  0 warnings                     ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-**TIMESTAMP FIX** (Phase 370) — status bars show live HH:MM instead of raw session ID.
-**NEW GAPS:** D19 context%, D20 budget/cost in CLI status bar (from Python GUI audit).
-**Next:** Close D19 (context%) or D20 (budget/cost).
+**PHASE 371** — CLI status bar context% + budget/cost. D19+D20 PORTED.
+**S0 COMPLETE** — all display gaps resolved (D09, D19, D20, D21 all PORTED).
+**Next:** S4 TUI backend (T01-T08) or S5 CLI ecosystem.

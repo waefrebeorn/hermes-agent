@@ -1,2 +1,2 @@
-# Testing — Slermes C (v426)
-328/0/12. 66 gaps. Phase 370: Live HH:MM timestamp on CLI/TUI status bars.
+# Testing — Slermes C (v427)
+327/0/13. 64 gaps. Phase 371: CLI status bar context% + budget/cost implemented. D19+D20 PORTED.

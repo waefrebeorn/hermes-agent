@@ -199,7 +199,8 @@ void display_hr_hex(const char *hex_fg);
  * when a skin is active via display_set_skin(). Pass NULL fg_bg to use
  * terminal defaults. */
 void display_statusbar(const char *model, const char *session_id,
-                       int turn_count, int token_count, int max_iters);
+                       int turn_count, int token_count, int max_iters,
+                       int iteration_count, double estimated_cost);
 
 /* Print an ASCII table with headers and aligned columns.
  * columns: number of columns

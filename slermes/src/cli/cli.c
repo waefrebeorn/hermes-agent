@@ -917,7 +917,9 @@ start_interactive:
                 g_cli.agent.session_id,
                 0,
                 0,
-                g_cli.agent.max_iterations);
+                g_cli.agent.max_iterations,
+                0,
+                0.0);
         }
 while (g_cli.running) {
         /* P19: Check SIGHUP-based config reload before each input */
@@ -1094,7 +1096,9 @@ while (g_cli.running) {
                 g_cli.agent.session_id,
                 g_cli.agent.user_turn_count,
                 g_cli.agent.session_total_tokens,
-                g_cli.agent.max_iterations);
+                g_cli.agent.max_iterations,
+                g_cli.agent.iteration_count,
+                g_cli.agent.session_estimated_cost_usd);
         }
     }
 

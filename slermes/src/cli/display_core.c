@@ -16,6 +16,7 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <time.h>
+#include "hermes_tokenizer.h"
 
 /* ================================================================
  *  State
@@ -901,9 +902,11 @@ static bool skin_color_rgb(const char *key, const char *fallback_hex,
     return ansi_parse_hex(val, r, g, b);
 }
 
-/* Display a status bar line */
+/* Display a status bar line with context%, budget, and cost */
 void display_statusbar(const char *model, const char *session_id,
-                        int turn_count, int token_count, int max_iters) {
+                        int turn_count, int token_count, int max_iters,
+                        int iteration_count, double estimated_cost) {
+    (void)session_id;
     if (!is_tty) return;
 
     /* Get skin colors */
@@ -926,7 +929,7 @@ void display_statusbar(const char *model, const char *session_id,
     if (w > 100) w = 100;
     if (w < 40) { w = 40; } /* Minimum */
 
-    /* Build real timestamp instead of raw session_id */
+    /* Build real timestamp */
     char time_str[32];
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
@@ -935,27 +938,50 @@ void display_statusbar(const char *model, const char *session_id,
     else
         snprintf(time_str, sizeof(time_str), "--:--");
 
-    /* Build status bar segments: [model] | [time] | [context%] | [turns] */
-    char left[256];
-    snprintf(left, sizeof(left), " %s ", model ? model : "default");
-    char iter_tok[64];
-    if (token_count > 0 && turn_count > 0) {
-        snprintf(iter_tok, sizeof(iter_tok), " iter:%d tok:%d %s",
-                 turn_count, token_count, time_str);
-    } else if (token_count > 0) {
-        snprintf(iter_tok, sizeof(iter_tok), " iter:%d tok:%d %s",
-                 turn_count, token_count, time_str);
-    } else {
-        snprintf(iter_tok, sizeof(iter_tok), " iter:%d %s",
-                 turn_count, time_str);
+    /* D19: Context usage % */
+    char ctx_str[32] = "";
+    size_t ctx_max = hermes_token_context_size(model);
+    if (ctx_max > 0 && token_count > 0) {
+        int ctx_pct = (int)((double)token_count / ctx_max * 100.0);
+        if (ctx_pct > 100) ctx_pct = 100;
+        snprintf(ctx_str, sizeof(ctx_str), " ctx:%d%%", ctx_pct);
     }
 
+    /* D20: Budget (iterations used / max) */
+    char budget_str[32] = "";
+    if (max_iters > 0 && iteration_count > 0) {
+        snprintf(budget_str, sizeof(budget_str), " %d/%d", iteration_count, max_iters);
+    }
+
+    /* D20: Estimated cost */
+    char cost_str[32] = "";
+    if (estimated_cost > 0.0) {
+        if (estimated_cost < 0.01)
+            snprintf(cost_str, sizeof(cost_str), " $%.4f", estimated_cost);
+        else
+            snprintf(cost_str, sizeof(cost_str), " $%.2f", estimated_cost);
+    }
+
+    /* Build status bar segments */
+    char left[256];
+    snprintf(left, sizeof(left), " %s ", model ? model : "default");
+    char right[256];
+    if (token_count > 0 && turn_count > 0) {
+        snprintf(right, sizeof(right), " iter:%d%s tok:%d%s%s %s",
+                 turn_count, budget_str, token_count, ctx_str, cost_str, time_str);
+    } else if (token_count > 0) {
+        snprintf(right, sizeof(right), " iter:%d%s tok:%d%s%s %s",
+                 turn_count, budget_str, token_count, ctx_str, cost_str, time_str);
+    } else {
+        snprintf(right, sizeof(right), " iter:%d%s %s",
+                 turn_count, budget_str, time_str);
+    }
 
     /* Truncate if too long */
     int max_left = w / 2 - 4;
     if ((int)strlen(left) > max_left) left[max_left] = '\0';
-    if ((int)strlen(iter_tok) > w - (int)strlen(left) - 4)
-        iter_tok[w - (int)strlen(left) - 4] = '\0';
+    if ((int)strlen(right) > w - (int)strlen(left) - 4)
+        right[w - (int)strlen(left) - 4] = '\0';
 
     /* Clear line, then paint background */
     printf("\n\x1B[2K\x1B[48;2;%d;%d;%dm", bg_r, bg_g, bg_b);
@@ -964,12 +990,12 @@ void display_statusbar(const char *model, const char *session_id,
     printf("\x1B[38;2;%d;%d;%dm%s", fg_r, fg_g, fg_b, left);
 
     /* Right: aligned, session in dim, context in context color */
-    int pad = w - (int)strlen(left) - (int)strlen(iter_tok);
+    int pad = w - (int)strlen(left) - (int)strlen(right);
     if (pad < 1) pad = 1;
     for (int i = 0; i < pad; i++) putchar(' ');
 
     /* Right side in dim */
-    printf("\x1B[38;2;%d;%d;%dm%s", dim_r, dim_g, dim_b, iter_tok);
+    printf("\x1B[38;2;%d;%d;%dm%s", dim_r, dim_g, dim_b, right);
 
     /* Reset */
     printf("\x1B[0m\n");
