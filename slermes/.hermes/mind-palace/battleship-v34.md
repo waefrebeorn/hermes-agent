@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v413 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 68 structural gaps, 1000+ test case gaps. Phase 356: Cron scripts edge case expansion (9 new tests). Suite 328/0/12. 68 gaps.**|
+| v415 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 68 structural gaps, 1000+ test case gaps. Phase 357: Terminal transform sudo edge case expansion (7→22). Suite 328/0/12. 68 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.

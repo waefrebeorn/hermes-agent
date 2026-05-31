@@ -5017,12 +5017,74 @@ static void cmd_auth(const char *args, agent_state_t *state) {
         printf("  fireworks     API key ($FIREWORKS_API_KEY)\n");
         printf("  perplexity    API key ($PERPLEXITY_API_KEY)\n");
         printf("  cohere        API key ($COHERE_API_KEY)\n");
-        printf("\nTo add credentials: set the env var in .env or use the Python CLI.\n");
+        printf("\nTo add credentials: set the env var in .env or use /auth login <provider> [key].\n");
+        printf("  /auth login openai sk-xxx...\n");
+        printf("  /auth login anthropic   - prints instructions\n");
+        return;
+    }
+
+    if (strcmp(sub, "login") == 0 || strncmp(sub, "login ", 6) == 0) {
+        const char *rest = sub + 5;
+        while (*rest == ' ') rest++;
+        if (!*rest) {
+            printf("Usage: /auth login <provider> [api_key]\n");
+            printf("If no api_key provided, prints setup instructions.\n");
+            printf("If api_key provided, writes directly to .env.\n\n");
+            printf("Providers: openai, anthropic, openrouter, deepseek,\n");
+            printf("           google, xai, azure, bedrock, nous, hf,\n");
+            printf("           groq, together, mistral, fireworks,\n");
+            printf("           perplexity, cohere\n");
+            return;
+        }
+        const char *provider = rest;
+        const char *key_value = NULL;
+        const char *sp = strchr(provider, ' ');
+        if (sp) {
+            char pbuf[64];
+            size_t plen = (size_t)(sp - provider);
+            snprintf(pbuf, sizeof(pbuf), "%.*s", (int)plen, provider);
+            provider = pbuf;
+            key_value = sp + 1;
+            while (*key_value == ' ') key_value++;
+        }
+        typedef struct { const char *n; const char *e; } pm_t;
+        static const pm_t PM[] = {
+            {"openai","OPENAI_API_KEY"}, {"anthropic","ANTHROPIC_API_KEY"},
+            {"openrouter","OPENROUTER_API_KEY"}, {"deepseek","DEEPSEEK_API_KEY"},
+            {"google","GOOGLE_API_KEY"}, {"xai","XAI_API_KEY"},
+            {"azure","AZURE_API_KEY"}, {"bedrock","AWS_ACCESS_KEY_ID"},
+            {"nous","NOUS_API_KEY"}, {"hf","HF_TOKEN"},
+            {"groq","GROQ_API_KEY"}, {"together","TOGETHER_API_KEY"},
+            {"mistral","MISTRAL_API_KEY"}, {"fireworks","FIREWORKS_API_KEY"},
+            {"perplexity","PERPLEXITY_API_KEY"}, {"cohere","COHERE_API_KEY"},
+            {NULL,NULL}
+        };
+        const char *env_var = NULL;
+        for (int i = 0; PM[i].n; i++) {
+            if (strcasecmp(provider, PM[i].n) == 0) { env_var = PM[i].e; break; }
+        }
+        if (!env_var) { printf("Unknown provider. Run /auth providers\n"); return; }
+
+        if (key_value) {
+            const char *h = state->hermes_home[0] ? state->hermes_home : getenv("HOME");
+            if (!h) h = ".";
+            char ep[1024]; snprintf(ep, sizeof(ep), "%s/.env", h);
+            FILE *f = fopen(ep, "a");
+            if (!f) { printf("Cannot write %s\n", ep); return; }
+            fprintf(f, "\n# %s via /auth login\n%s=%s\n", provider, env_var, key_value);
+            fclose(f);
+            printf("Wrote %s=%s to %s\n", env_var, key_value, ep);
+            printf("Restart slermes or /reload to apply.\n");
+        } else {
+            printf("To configure %s:\n", provider);
+            printf("  export %s=<your_key>\n", env_var);
+            printf("  /auth login %s <your_key>\n", provider);
+        }
         return;
     }
 
     printf("Unknown subcommand: '%s'\n", sub);
-    printf("Usage: /auth status | providers\n");
+    printf("Usage: /auth status | providers | login\n");
 }
 
 /* ================================================================
