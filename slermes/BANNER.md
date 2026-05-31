@@ -1,12 +1,12 @@
-**BANNER — WuBu Slermes C Translation (v434) — slermes/ directory**
+**BANNER — WuBu Slermes C Translation (v435) — slermes/ directory**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  WuBu Slermes C v434                                       ║
-║  333 tests · 57 gaps · 85 tools · 99 CLI · 65 libs         ║
-║  57 gaps  │  31MB binary  │  0 warnings                     ║
+║  WuBu Slermes C v435                                       ║
+║  334 tests · 56 gaps · 85 tools · 99 CLI · 65 libs         ║
+║  56 gaps  │  31MB binary  │  0 warnings                     ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-**PHASE 378** — App Layout + Chrome (T08). Configurable pane layout engine with responsive modes (NORMAL/MOBILE/COMPACT/WIDE), pane sizing policies (FIXED/RATIO/FILL/AUTO), pane constraints (min/max), side-based placement, chrome decorations.
-**Next:** S4 TUI backend (T03: render engine, T04: WebSocket) or S7 test coverage.
+**PHASE 379** — TUI Render Engine (T03). Virtual screen with dirty-rect tracking, double buffering, text wrapping/scrolling, color/attr stacks, markdown pipeline, ncurses flush.
+**Next:** S4 T04 TUI WebSocket support.

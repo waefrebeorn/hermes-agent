@@ -1,8 +1,8 @@
-# STATE — Slermes C Translation (v434)
+# STATE — Slermes C Translation (v435)
 
 > **This file has moved.** The canonical state dashboard is at `mind-palace/state.md`.
 >
-> 10 providers, 19 gateways, 65 libs, 333/0/13 suite, 31M binary, ~43% parity at function level,
-> 57 gaps.
+> 10 providers, 19 gateways, 65 libs, 334/0/13 suite, 31M binary, ~43% parity at function level,
+> 56 gaps.
 >
 > 🔗 **[mind-palace/state.md](mind-palace/state.md)**

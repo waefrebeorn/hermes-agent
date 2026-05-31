@@ -1,2 +1,2 @@
-# Testing — Slermes C (v434)
-333/0/13. 57 gaps. Phase 378: App Layout + Chrome — T08 PORTED (configurable pane layout engine, responsive modes, pane sizing policies, pane constraints, chrome decorations). 15-test suite (+1 new).
+# Testing — Slermes C (v435)
+334/0/13. 56 gaps. Phase 379: TUI Render Engine — T03 PORTED (virtual screen, dirty-rect tracking, double buffering, text wrapping/scrolling, color/attr stacks, markdown pipeline, ncurses flush). 16-test suite (+1 new).

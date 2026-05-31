@@ -1,9 +1,9 @@
-# State — Slermes C (v434)
-333/0/13. Phase 378: App Layout + Chrome — T08 PORTED.
-   tui_layout.c/h — configurable pane layout engine with chrome
-   decorations, responsive modes (NORMAL/MOBILE/COMPACT/WIDE),
-   pane sizing policies (FIXED/RATIO/FILL/AUTO), pane constraints
-   (min/max), side-based placement (TOP/BOTTOM/LEFT/RIGHT/CENTER),
-   chrome flags (HEADER/BORDER/SEPARATOR/SCROLL/FOOTER).
-   15-test suite (test_tui_layout.c).
-57 gaps. S4 T08 PORTED. S4 gaps: 11→10.
+# State — Slermes C (v435)
+334/0/13. Phase 379: TUI Render Engine — T03 PORTED.
+   tui_render.c/h — virtual screen with dirty-rect tracking, double
+   buffering, text wrapping/scrolling, color/attribute stacks,
+   markdown render pipeline (**bold**, `code`, # headers, indented
+   code blocks, role-based coloring), flush to ncurses with
+   incremental dirty-region update.
+   16-test suite (test_tui_render.c).
+56 gaps. S4 T03 PORTED. S4 gaps: 10→9.
