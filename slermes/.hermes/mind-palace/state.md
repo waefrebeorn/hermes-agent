@@ -1,5 +1,5 @@
-|# State — Slermes C (v411)
-328/0/12. Phase 354: Computer use edge case expansion — 17 new tests (10→27).
+|# State — Slermes C (v412)
+328/0/12. Phase 355: Todo tool edge case expansion — 13 new tests (10→23). — 17 new tests (10→27).
   Setup edge cases (NULL/empty params, re-set), extractor NULL/missing field safety,
   queue NULL/empty params, queue overflow (ring buffer drops newest when full),
   unicode/special chars preserved, webhook empty body, missing conversationId

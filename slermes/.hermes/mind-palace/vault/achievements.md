@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v411** · 68 active gaps · **2160 entries** of progress
+|> **v412** · 68 active gaps · **2160 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -2203,4 +2203,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 2203|| 352 | X09 | DingTalk edge case expansion — 30 new assertions (16→46). Setup edge cases (NULL/empty, re-set), extractor safety (NULL/missing field), queue edge cases (NULL/empty params, overflow ring buffer drops newest), unicode/special chars preserved, webhook empty body safe, missing conversationId returns NULL, long text truncation to 4095. | `tests/test_dingtalk.c` — expanded 16→46 assertions. `test_runner.sh` — count 10→46. Suite 328/0/12. v409. |
 353 | X09 | Audit rotation edge case expansion — 16 new assertions (11→27). NULL safety for all 5 audit log functions (security/approval/redaction/violation), empty string params, audit_log_approval (approved+denied), audit_log_redaction, audit_log_violation, newline sanitization (CR/LF→spaces), long detail (3000 'A' chars, fits 4096 buffer), re-init after shutdown. | `tests/test_audit_rotate.c` — expanded 11→27 assertions. `test_runner.sh` — count 11→27. Suite 328/0/12. v410. |
 2205|| 354 | X09 | Computer use edge case expansion — 17 new tests (10→27). NULL free safety (cu_capture_free(NULL), cu_action_free(NULL)), click with NULL button, type with NULL/empty/4000-char text, key with NULL/empty keys, focus with NULL/empty app, scroll NULL direction/zero amount, wait 0.0/negative seconds, set_value NULL/negative element, drag with negative elements, backend registry (register/duplicate/list/clear). | `tests/test_computer_use.c` — expanded 10→27 tests. `test_runner.sh` — count 10→27. Suite 328/0/12. v411. |
+2206|| 355 | X09 | Todo tool edge case expansion — 13 new tests (10→23). NULL args error, invalid JSON error, list empty (count=0), all priority levels (p0/p1/p3), invalid priority defaults to p2, done not found, update missing ID, update not found, search by query/status/no-match, complete alias for done, 2000-char content boundary. | `tests/test_todo.c` — expanded 10→23 tests. `test_runner.sh` — count 10→23. Suite 328/0/12. v412. |
 |

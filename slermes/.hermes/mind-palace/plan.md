@@ -1,6 +1,6 @@
-# Plan — Next Phase (v411)
+# Plan — Next Phase (v412)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 354: Computer use edge case expansion (17 new tests).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 328/0/12. Phase 355: Todo tool edge case expansion (13 new tests).
 
 **Next gap targets:**
 
