@@ -1,5 +1,5 @@
-# State — Slermes C (v396)
-326/0/14. Phase 339: skill_mgmt edge case expansion — 6 new tests (9→15). special chars in name, empty SKILL.md dir, empty name, create action, delete action, edit action.
+|# State — Slermes C (v397)
+326/0/14. Phase 340: clarify tool edge case expansion — 12 new tests (12→24), 29 new assertions (12→41). Empty choices, single choice, out-of-range index 0, negative index, quotes in response, whitespace-only response, skip with choices, very long question, null choice items.
 68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.

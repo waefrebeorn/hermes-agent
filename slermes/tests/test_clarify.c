@@ -168,6 +168,138 @@ int main(void)
         }
     }
 
+    /* ── Empty choices array ── */
+    printf("\n-- Empty choices array --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick one\",\"choices\":[]}",
+            "My answer\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("choices_offered absent for empty choices",
+                 strstr(result, "\"choices_offered\"") == NULL);
+            TEST("response present", json_has(result, "response", "My answer"));
+            free(result);
+        }
+    }
+
+    /* ── Single choice ── */
+    printf("\n-- Single choice --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Continue?\",\"choices\":[\"Yes\"]}",
+            "1\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("selected is Yes", json_has(result, "selected", "Yes"));
+            TEST("choices_offered present",
+                 strstr(result, "\"choices_offered\"") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Response '0' with choices (out of range) ── */
+    printf("\n-- Response 0 (out of range) --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick one\",\"choices\":[\"A\",\"B\"]}",
+            "0\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("no selected for index 0",
+                 strstr(result, "\"selected\"") == NULL);
+            free(result);
+        }
+    }
+
+    /* ── Response negative with choices ── */
+    printf("\n-- Response negative --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick one\",\"choices\":[\"X\",\"Y\"]}",
+            "-1\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("no selected for negative",
+                 strstr(result, "\"selected\"") == NULL);
+            free(result);
+        }
+    }
+
+    /* ── Response with JSON special chars ── */
+    printf("\n-- Response with quotes and backslash --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"What's your name?\"}",
+            "he said \"hello\" and then \\\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response contains quotes",
+                 strstr(result, "said") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Whitespace-only response ── */
+    printf("\n-- Whitespace-only response --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Say something\"}",
+            "   \n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("whitespace response preserved",
+                 strstr(result, "\"response\":\"   \"") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Skip with choices ── */
+    printf("\n-- Skip with choices --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Continue?\",\"choices\":[\"Yes\",\"No\"]}",
+            "skip\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response is skip", json_has(result, "response", "skip"));
+            TEST("no selected for skip",
+                 strstr(result, "\"selected\"") == NULL);
+            free(result);
+        }
+    }
+
+    /* ── Very long question ── */
+    printf("\n-- Very long question --\n");
+    {
+        char long_q[1200];
+        memset(long_q, 'x', 1100);
+        memcpy(long_q, "{\"question\":\"", 13);
+        long_q[13 + 1100 - 1] = '\0';
+        strcat(long_q, "\"}");
+        char *result = clarify_with_input(long_q, "ok\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response present", json_has(result, "response", "ok"));
+            TEST("question not lost", strstr(result, "\"question\"") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Choices with non-string items ── */
+    printf("\n-- Choices with non-string items --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick\",\"choices\":[\"A\",null,\"C\"]}",
+            "2\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("null choice skipped gracefully — no selected",
+                 strstr(result, "\"selected\"") == NULL);
+            free(result);
+        }
+    }
+
     /* ── Summary ── */
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
