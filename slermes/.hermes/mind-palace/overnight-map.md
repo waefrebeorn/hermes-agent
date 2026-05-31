@@ -1,24 +1,20 @@
-# Overnight Map (v454)
+# Overnight Map (v455)
 
-## Phase 398 — Bedrock Provider Test Expansion
-**S7 X03 EXPANDED** — 61 new assertions in test_provider_bedrock.c (41→102 total)
-**Coverage:** Stop reason mapping (end_turn→stop, stop_sequence→stop,
-tool_use→tool_calls, max_tokens→length, content_filtered→content_filter,
-guardrail_intervened→content_filter, unknown_reason→stop, missing→"");
-error classification: bedrock_is_context_overflow (15 cases across 3
-patterns: validation+too_long, validation+exceeds+max_tokens,
-stream_error+too_long + non-matches), bedrock_classify_error (10 cases:
-context_overflow, rate_limit 3 patterns, overloaded 4 patterns, unknown, NULL);
-response edge cases (no output, no message, empty content→NULL,
-tool-only content→empty text+tool count); URL edge cases (NULL base→default
-region, empty model→default model); streaming (NULL→"", empty→"").
+## Phase 399 — OpenRouter Provider Test Expansion
+**S7 X03 EXPANDED** — 43 new assertions in test_provider_openrouter.c (51→94 total)
+**Coverage:** URL edge (double-slash fix, proxy, empty base), header edge
+(empty/NULL/long key), response edge (empty/no choices, null, length finish,
+no usage), streaming reasoning (reasoning_content in delta), streaming edge
+depth (empty delta/chunk, length finish, whitespace).
+**Bug fix:** openrouter_parse_response — finish_reason extraction from choice
+level (same pattern as xAI/Azure phases).
 **Suite:** 338/?/13 — Stable
 **Gaps:** 53 (depth improved)
 
 ## Files Modified
-- tests/test_provider_bedrock.c — +61 assertions, 6 new test functions
-- test_runner.sh — label 40→102
-- .hermes/mind-palace/ — all walkways bumped v454
+- tests/test_provider_openrouter.c — +43 assertions, 5 new test functions
+- src/agent/provider_openrouter.c — bug fix (+3 lines)
+- test_runner.sh — label 50→94
 
 ## Phases This Session
 391: Delegate (S7 X04)
@@ -29,3 +25,4 @@ region, empty model→default model); streaming (NULL→"", empty→"").
 396: xAI (S7 X03) — 1 bug fix
 397: Azure (S7 X03) — 1 bug fix
 398: Bedrock (S7 X03)
+399: OpenRouter (S7 X03) — 1 bug fix

@@ -1,10 +1,9 @@
-# Prestige — Progress Log (v454)
-Phase 398: Bedrock Provider Test Expansion — S7 X03 EXPANDED.
-test_provider_bedrock.c +61 new assertions (41→102 total).
-Stop reason mapping (6 Bedrock reasons), error classification
-(context_overflow/rate_limit/overloaded), response edge cases,
-streaming passthrough depth.
-Suite: 338/?/13. 53 gaps.
+# Prestige — Progress Log (v455)
+Phase 399: OpenRouter Provider Test Expansion — S7 X03 EXPANDED.
+test_provider_openrouter.c +43 new assertions (51→94 total).
+URL/header edge, response edge, streaming reasoning, streaming depth.
+Bug fix: missing finish_reason extraction in openrouter_parse_response.
+Suite: 338/?/13. 53 gaps. 8/10 providers expanded.
 
 ## Recent Phases
 - Phase 397: S7 X03 Azure provider tests (+40 assertions, 1 bug fix)

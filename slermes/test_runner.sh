@@ -818,7 +818,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_openrouter.c" \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_openrouter -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_openrouter ]]; then
     if /tmp/hermes_test_provider_openrouter > /dev/null 2>&1; then
-        ok "provider_openrouter (50 tests)"
+        ok "provider_openrouter (94 tests)"
     else fail "provider_openrouter (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_provider_openrouter
