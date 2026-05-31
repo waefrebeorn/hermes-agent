@@ -507,7 +507,7 @@ if gcc -O2 -Wall -Wextra "$CDIR/tests/test_provider_anthropic.c" \
     -Wl,--unresolved-symbols=ignore-all \
     -o /tmp/hermes_test_provider_anthropic -lm 2>/dev/null && [[ -x /tmp/hermes_test_provider_anthropic ]]; then
     if /tmp/hermes_test_provider_anthropic > /dev/null 2>&1; then
-        ok "provider_anthropic (74 tests)"
+        ok "provider_anthropic (98 tests)"
     else fail "provider_anthropic (test binary returned non-zero)"
     fi
     rm -f /tmp/hermes_test_provider_anthropic

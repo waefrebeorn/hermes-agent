@@ -1,5 +1,5 @@
-# STATE — Slermes C Translation (v448)
-338/0/13. Phase 392: Provider Test Expansion — S7 X03 EXPANDED.
-test_provider_openai.c — 74 new assertions (37→111 total).
-Bug fixes: finish_reason extraction, reasoning_content streaming.
+# STATE — Slermes C Translation (v449)
+338/0/13. Phase 393: Anthropic Provider Test Expansion — S7 X03 EXPANDED.
+test_provider_anthropic.c — 70 new assertions (28→98 total).
+Response parsing, streaming, URL/header edge cases.
 53 gaps. Suite stable.
