@@ -1,4 +1,4 @@
-v440
-338/0/13. 53 gaps. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED.
-90 new agent loop core assertions (session_id, configure_from_config,
-inject_history, snapshot lifecycle). S7 X06: 20%→improved parity.
+v441
+338/0/13. 53 gaps. Phase 385: Gateway Platform Test Expansion — S7 X07 EXPANDED.
+48 new gateway platform assertions (75→123 total). WhatsApp/Slack/Matrix/Mattermost/Discord
+coverage. S7 X07: 22%→improved parity.

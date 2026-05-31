@@ -1,4 +1,4 @@
-# Slermes C — Index (v440)
+# Slermes C — Index (v441)
 
 - [State](state.md) — current build state, suite, gaps
 - [Plan](plan.md) — next gap target, sector priorities
@@ -9,4 +9,4 @@
 - [Entry](entry.md) — project kickoff reference
 - [Testing](testing.md) — test suite reference
 
-Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED (90 assertions). Suite 338/0/13. All S4 P1 gaps resolved.
+Phase 385: Gateway Platform Test Expansion — S7 X07 EXPANDED (48 assertions). Suite 338/0/13. All S4 P1 gaps resolved.

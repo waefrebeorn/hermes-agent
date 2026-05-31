@@ -463,6 +463,270 @@ static void test_webhook_subscriptions(void) {
 #endif /* WEBHOOK_TESTS */
 
 /* ================================================================
+ *  WhatsApp: state setters & webhook verification
+ * ================================================================ */
+static void test_whatsapp_setters(void) {
+    printf("\n--- WhatsApp: state setters ---\n");
+    whatsapp_set_token("wa_token_abc123");
+    TEST("whatsapp_set_token no crash", 1);
+    whatsapp_set_phone_id("123456789");
+    TEST("whatsapp_set_phone_id no crash", 1);
+    whatsapp_set_verify_token("my_verify_me");
+    TEST("whatsapp_set_verify_token no crash", 1);
+    /* Re-set */
+    whatsapp_set_token("new_token");
+    whatsapp_set_phone_id("987654321");
+    whatsapp_set_verify_token("new_verify");
+    TEST("whatsapp setters re-set no crash", 1);
+}
+
+static void test_whatsapp_verify_webhook(void) {
+    printf("\n--- WhatsApp: webhook verification ---\n");
+
+    /* Set verify token */
+    whatsapp_set_verify_token("supersecret");
+
+    /* Valid verification request */
+    const char *result = whatsapp_verify_webhook(
+        "hub.mode=subscribe&hub.verify_token=supersecret&hub.challenge=challenge_abc");
+    TEST("valid verify returns challenge",
+         result != NULL && strcmp(result, "challenge_abc") == 0);
+
+    /* Wrong verify token */
+    result = whatsapp_verify_webhook(
+        "hub.mode=subscribe&hub.verify_token=wrongtoken&hub.challenge=challenge_abc");
+    TEST("wrong token returns NULL", result == NULL);
+
+    /* Wrong mode */
+    result = whatsapp_verify_webhook(
+        "hub.mode=unsubscribe&hub.verify_token=supersecret&hub.challenge=challenge_abc");
+    TEST("wrong mode returns NULL", result == NULL);
+
+    /* Missing params */
+    result = whatsapp_verify_webhook("hub.mode=subscribe&hub.verify_token=supersecret");
+    TEST("missing challenge returns NULL", result == NULL);
+
+    result = whatsapp_verify_webhook("hub.mode=subscribe&hub.challenge=challenge_abc");
+    TEST("missing verify_token returns NULL", result == NULL);
+
+    result = whatsapp_verify_webhook("hub.verify_token=supersecret&hub.challenge=challenge_abc");
+    TEST("missing mode returns NULL", result == NULL);
+
+    /* NULL / empty */
+    result = whatsapp_verify_webhook(NULL);
+    TEST("NULL query returns NULL", result == NULL);
+
+    result = whatsapp_verify_webhook("");
+    TEST("empty query returns NULL", result == NULL);
+
+    /* No verify token set */
+    whatsapp_set_verify_token("");
+    result = whatsapp_verify_webhook(
+        "hub.mode=subscribe&hub.verify_token=&hub.challenge=challenge_abc");
+    TEST("no verify token set returns NULL", result == NULL);
+
+    /* Re-set for other tests */
+    whatsapp_set_verify_token("test_verify");
+}
+
+/* ================================================================
+ *  Slack: state setters & info extraction
+ * ================================================================ */
+static void test_slack_setters(void) {
+    printf("\n--- Slack: state setters ---\n");
+    slack_set_token("xoxb-slack-token");
+    TEST("slack_set_token no crash", 1);
+    slack_set_channel("C12345");
+    TEST("slack_set_channel no crash", 1);
+    slack_set_signing_secret("signing_secret_123");
+    TEST("slack_set_signing_secret no crash", 1);
+    /* Re-set */
+    slack_set_token("xoxb-new-token");
+    slack_set_channel("C99999");
+    slack_set_signing_secret("new_secret");
+    TEST("slack setters re-set no crash", 1);
+}
+
+static void test_slack_get_chat_id(void) {
+    printf("\n--- Slack: get_chat_id ---\n");
+
+    /* Slack's get_chat_id just returns the static channel_id */
+    slack_set_channel("C_MY_CHANNEL");
+    json_node_t *upd = json_new_object();
+    json_object_set(upd, "dummy", json_new_number(1));
+    const char *cid = slack_get_chat_id(upd);
+    TEST("slack_get_chat_id returns channel_id",
+         cid != NULL && strcmp(cid, "C_MY_CHANNEL") == 0);
+    json_free(upd);
+    TEST("slack_get_chat_id(NULL) returns channel_id (never NULL)",
+         slack_get_chat_id(NULL) != NULL);
+}
+
+/* ================================================================
+ *  Matrix: state setters & info extraction
+ * ================================================================ */
+static void test_matrix_setters(void) {
+    printf("\n--- Matrix: state setters ---\n");
+    matrix_set_homeserver("https://my-matrix.org");
+    TEST("matrix_set_homeserver no crash", 1);
+    matrix_set_token("mytoken_abc");
+    TEST("matrix_set_token no crash", 1);
+    matrix_set_room("!roomid:matrix.org");
+    TEST("matrix_set_room no crash", 1);
+    matrix_set_user_id("@mybot:matrix.org");
+    TEST("matrix_set_user_id no crash", 1);
+    matrix_set_event_filter("m.room.message,m.room.member");
+    TEST("matrix_set_event_filter no crash", 1);
+
+    /* Empty filter clears to accept all */
+    matrix_set_event_filter("");
+    TEST("matrix_set_event_filter empty clears filter", 1);
+
+    /* NULL filter also clears */
+    matrix_set_event_filter(NULL);
+    TEST("matrix_set_event_filter NULL clears filter", 1);
+
+    /* Re-set to valid */
+    matrix_set_event_filter("m.room.message");
+    matrix_set_homeserver("https://matrix.org");
+    matrix_set_token("new_token");
+    matrix_set_room("!newroom:matrix.org");
+    matrix_set_user_id("@newbot:matrix.org");
+    TEST("matrix setters re-set no crash", 1);
+}
+
+static void test_matrix_get_chat_id(void) {
+    printf("\n--- Matrix: get_chat_id ---\n");
+    json_node_t *chat = json_new_object();
+    json_object_set(chat, "id", json_new_string("!room:matrix.org"));
+    json_node_t *msg = json_new_object();
+    json_object_set(msg, "chat", chat);
+    json_object_set(msg, "text", json_new_string("hello from matrix"));
+    json_node_t *upd = json_new_object();
+    json_object_set(upd, "message", msg);
+
+    const char *cid = matrix_get_chat_id(upd);
+    TEST("matrix_get_chat_id returns room id",
+         cid != NULL && strcmp(cid, "!room:matrix.org") == 0);
+    json_free(upd);
+    TEST("matrix_get_chat_id(NULL) returns NULL", matrix_get_chat_id(NULL) == NULL);
+
+    /* No message */
+    json_node_t *empty = json_new_object();
+    TEST("matrix_get_chat_id no message returns NULL", matrix_get_chat_id(empty) == NULL);
+    json_free(empty);
+}
+
+static void test_matrix_get_text(void) {
+    printf("\n--- Matrix: get_text ---\n");
+    json_node_t *msg = json_new_object();
+    json_object_set(msg, "text", json_new_string("matrix message text"));
+    json_node_t *upd = json_new_object();
+    json_object_set(upd, "message", msg);
+
+    const char *text = matrix_get_text(upd);
+    TEST("matrix_get_text returns text",
+         text != NULL && strcmp(text, "matrix message text") == 0);
+    json_free(upd);
+    TEST("matrix_get_text(NULL) returns NULL", matrix_get_text(NULL) == NULL);
+
+    json_node_t *empty = json_new_object();
+    TEST("matrix_get_text no message returns NULL", matrix_get_text(empty) == NULL);
+    json_free(empty);
+
+    /* No text field in message */
+    json_node_t *msg2 = json_new_object();
+    json_object_set(msg2, "sender", json_new_string("@user:matrix.org"));
+    json_node_t *upd2 = json_new_object();
+    json_object_set(upd2, "message", msg2);
+    TEST("matrix_get_text no text field returns NULL", matrix_get_text(upd2) == NULL);
+    json_free(upd2);
+}
+
+/* ================================================================
+ *  Mattermost: state setters
+ * ================================================================ */
+static void test_mattermost_setters(void) {
+    printf("\n--- Mattermost: state setters ---\n");
+    mattermost_set_url("https://mattermost.example.com");
+    TEST("mattermost_set_url no crash", 1);
+    mattermost_set_token("mm_token_abc");
+    TEST("mattermost_set_token no crash", 1);
+    mattermost_set_channel("channel_id_123");
+    TEST("mattermost_set_channel no crash", 1);
+
+    /* Trailing slash should be stripped */
+    mattermost_set_url("https://mattermost.example.com/");
+    TEST("mattermost_set_url trailing slash stripped no crash", 1);
+
+    /* Multiple trailing slashes */
+    mattermost_set_url("https://mattermost.example.com///");
+    TEST("mattermost_set_url multiple trailing slashes no crash", 1);
+
+    /* Re-set */
+    mattermost_set_url("http://localhost:8065");
+    mattermost_set_token("new_mm_token");
+    mattermost_set_channel("new_channel_id");
+    TEST("mattermost setters re-set no crash", 1);
+}
+
+/* ================================================================
+ *  Discord: get_chat_id & get_text (JSON parsing)
+ * ================================================================ */
+static void test_discord_get_chat_id(void) {
+    printf("\n--- Discord: get_chat_id ---\n");
+    json_node_t *chat = json_new_object();
+    json_object_set(chat, "channel_id", json_new_string("987654321"));
+    json_node_t *msg = json_new_object();
+    json_object_set(msg, "chat", chat);
+    json_object_set(msg, "text", json_new_string("discord message"));
+    json_node_t *upd = json_new_object();
+    json_object_set(upd, "message", msg);
+
+    /* With channel_id in chat object */
+    const char *cid = discord_get_chat_id(upd);
+    TEST_NOT_NULL("discord_get_chat_id with channel_id", cid);
+    if (cid) TEST_STR_EQ("discord_get_chat_id value", cid, "987654321");
+    json_free(upd);
+
+    /* NULL update */
+    TEST_NULL("discord_get_chat_id(NULL) returns NULL", discord_get_chat_id(NULL));
+
+    /* No message */
+    json_node_t *empty = json_new_object();
+    /* When no message, falls back to static channel_id — set it first */
+    discord_set_channel("fallback_channel");
+    cid = discord_get_chat_id(empty);
+    TEST_NOT_NULL("discord_get_chat_id fallback to channel_id", cid);
+    json_free(empty);
+}
+
+static void test_discord_get_text(void) {
+    printf("\n--- Discord: get_text ---\n");
+    json_node_t *msg = json_new_object();
+    json_object_set(msg, "text", json_new_string("discord text content"));
+    json_node_t *upd = json_new_object();
+    json_object_set(upd, "message", msg);
+
+    const char *text = discord_get_text(upd);
+    TEST_STR_EQ("discord_get_text returns text", text, "discord text content");
+    json_free(upd);
+    TEST_NULL("discord_get_text(NULL) returns NULL", discord_get_text(NULL));
+
+    json_node_t *empty = json_new_object();
+    TEST_NULL("discord_get_text no message returns NULL", discord_get_text(empty));
+    json_free(empty);
+
+    /* No text field */
+    json_node_t *msg2 = json_new_object();
+    json_object_set(msg2, "content", json_new_string("no text field"));
+    json_node_t *upd2 = json_new_object();
+    json_object_set(upd2, "message", msg2);
+    TEST_NULL("discord_get_text no text field returns NULL", discord_get_text(upd2));
+    json_free(upd2);
+}
+
+/* ================================================================
  *  G08: Signal rate-limit error detection & send timeout
  * ================================================================ */
 static void test_signal_rate_limit(void) {
@@ -565,6 +829,16 @@ int main(void) {
     test_telegram_get_text();
     test_telegram_get_update_type();
     test_discord_setters();
+    test_discord_get_chat_id();
+    test_discord_get_text();
+    test_whatsapp_setters();
+    test_whatsapp_verify_webhook();
+    test_slack_setters();
+    test_slack_get_chat_id();
+    test_matrix_setters();
+    test_matrix_get_chat_id();
+    test_matrix_get_text();
+    test_mattermost_setters();
     test_signal_rate_limit();
 #endif
 

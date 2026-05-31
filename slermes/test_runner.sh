@@ -2617,17 +2617,19 @@ else
     skip "gateway_escape (M07: compilation failed)"
 fi
 
-# Gateway per-platform integration tests (T01): Telegram + Discord parsers
-# Tests JSON parsing, state management without HTTP.
+# Gateway per-platform integration tests (T01): Telegram + Discord + Signal + Slack + Matrix + Mattermost + WhatsApp parsers
+# Tests JSON parsing, state management, webhook verification without HTTP.
 echo ""; echo "=== Gateway Per-Platform Tests (T01) ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/libplugin" \
     "$CDIR/tests/test_gateway_platforms.c" \
     "$CDIR/src/gateway/platforms/telegram.c" "$CDIR/src/gateway/platforms/discord.c" \
     "$CDIR/src/gateway/platforms/signal.c" \
+    "$CDIR/src/gateway/platforms/slack.c" "$CDIR/src/gateway/platforms/matrix.c" \
+    "$CDIR/src/gateway/platforms/mattermost.c" "$CDIR/src/gateway/platforms/whatsapp.c" \
     "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_gw_platforms -lm \
     -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 75 tests)"
+    if /tmp/hermes_test_gw_platforms > /dev/null 2>&1; then ok "gateway_platforms (T01: 123 tests)"
     else
         echo "  Gateway platform test output:"
         /tmp/hermes_test_gw_platforms 2>&1 | sed 's/^/    /'

@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-||| **v440** | Fork diverged — slermes/ lives only on fork | Suite 338/0/13 | 85 tools | 99 CLI** |
-|**|**Honest assessment: 53 structural gaps, 1000+ test case gaps. Phase 384: Agent Loop Core Function Tests — S7 X06 EXPANDED (90 assertions). Suite 338/0/13. 53 gaps. S7: 18 clusters (X06 improved, X04 improved, X09 ported).**|
+||| **v441** | Fork diverged — slermes/ lives only on fork | Suite 338/0/13 | 85 tools | 99 CLI** |
+|**|**Honest assessment: 53 structural gaps, 1000+ test case gaps. Phase 385: Gateway Platform Test Expansion — S7 X07 EXPANDED (48 assertions, 75→123). Suite 338/0/13. 53 gaps. S7: 18 clusters (X07 improved, X06 improved, X04 improved, X09 ported).**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
