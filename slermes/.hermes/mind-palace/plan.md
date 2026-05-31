@@ -1,6 +1,6 @@
-# Plan — Next Phase (v403)
+# Plan — Next Phase (v404)
 
-S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 326/0/14. Phase 346: signal helper edge case expansion — 11 new assertions (11→22).
+S0+S1+S3+S6+R02+R04+R10 PORTED. F10 PORTED. 68 gaps. Suite 327/0/13. Phase 347: provider_error edge case expansion — 91 new assertions (225→316). Recovered 1 test from SKIP.
 
 **Next gap targets:**
 

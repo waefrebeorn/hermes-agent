@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v403)
+# Entry — Slermes C Parity (v404)
 
-Phase 346: signal helper edge case expansion — 11 new assertions (11→22). 68 gaps.
+Phase 347: provider error edge case expansion — 91 new assertions (225→316). Recovered 1 test from SKIP. 68 gaps.

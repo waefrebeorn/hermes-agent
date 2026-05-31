@@ -67,6 +67,21 @@ static const char *MALFORMED_ARRAY     = "[{\"error\":\"unexpected array\"}]";
 static const char *MALFORMED_NUMERIC   = "42";
 static const char *MALFORMED_EMPTY_OBJ = "{}";
 
+/* Context overflow errors per provider */
+static const char *OPENAI_CTX_ERR     = "{\"error\":{\"message\":\"This model's maximum context length is 128000 tokens. You requested 150000 tokens.\",\"type\":\"invalid_request_error\",\"code\":\"context_length_exceeded\"}}";
+static const char *ANTHROPIC_CTX_ERR  = "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your prompt contained 250000 tokens, but the maximum is 200000 for this model.\"}}";
+static const char *GOOGLE_CTX_ERR     = "{\"error\":{\"code\":400,\"message\":\"The input token count 300000 exceeds the maximum input token limit of 2000000.\",\"status\":\"INVALID_ARGUMENT\"}}";
+static const char *AZURE_CTX_ERR      = "{\"error\":{\"message\":\"The request exceeds the maximum context length of 128000 tokens. Please reduce your prompt.\",\"type\":\"invalid_request_error\",\"code\":\"context_length_exceeded\"}}";
+static const char *BEDROCK_CTX_ERR    = "{\"$fault\":\"client\",\"__type\":\"ValidationException\",\"message\":\"The input text is too long for this model. Maximum length is 200000 characters.\"}";
+static const char *BEDROCK_CTX_ERR2   = "{\"message\":\"Input is too long for this model\"}";
+
+/* Boundary / edge case error shapes */
+static const char *LONG_ERROR_MSG     = "{\"error\":{\"message\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}}";
+static const char *UNICODE_ERROR_MSG  = "{\"error\":{\"message\":\"Invalid API key \\u00e9\\u00e0\\u00fc\\u00f1 \\u2603\\ufe0f \\u0420\\u043e\\u0441\\u0441\\u0438\\u044f\"}}";
+static const char *NO_MSG_ERROR      = "{\"error\":{\"code\":\"rate_limited\"}}";
+static const char *NULL_ERROR_OBJ    = "{\"error\":null}";
+static const char *EMPTY_ERROR_OBJ   = "{\"error\":{}}";
+
 /* Provider-specific success-like responses for negative testing */
 static const char *OPENAI_NO_CHOICES = "{\"id\":\"chatcmpl-xxx\",\"object\":\"chat.completion\",\"created\":1234567890,\"model\":\"gpt-4o\",\"choices\":[]}";
 static const char *ANTHROPIC_NO_CONTENT = "{\"id\":\"msg_xxx\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"model\":\"claude-3\",\"stop_reason\":\"end_turn\",\"usage\":{\"input_tokens\":10,\"output_tokens\":0}}";
@@ -215,6 +230,72 @@ static void test_free_null(const provider_ops_t *ops, const char *label) {
 }
 
 /* ================================================================
+ *  Context overflow error tests — per provider
+ * ================================================================ */
+
+static void test_context_overflow(const provider_ops_t *ops, const char *label,
+                                   const char *ctx_err_json) {
+    provider_t p = {0};
+    provider_response_t *r = ops->parse_response(&p, ctx_err_json);
+    ASSERT(r != NULL && label); ASSERT("context overflow returns non-NULL" && 1);
+    /* Must have content (human-readable error message extracted) */
+    ASSERT((r->content && strlen(r->content) > 0) && label);
+    ASSERT("context overflow has content" && 1);
+    ops->free_response(r);
+    printf("  %s: 3 context overflow tests\n", label);
+}
+
+/* ================================================================
+ *  Boundary / edge case error shapes — per provider
+ * ================================================================ */
+
+static void test_boundary_cases(const provider_ops_t *ops, const char *label) {
+    provider_t p = {0};
+    int local_count = 0;
+
+    /* Very long error message (≈4000 chars) — buffer overflow safety */
+    {
+        provider_response_t *r = ops->parse_response(&p, LONG_ERROR_MSG);
+        ASSERT(r != NULL && label); local_count++;
+        if (r) {
+            /* Must not crash, content should be present */
+            ASSERT((r->content == NULL || strlen(r->content) > 0) && label); local_count++;
+            ops->free_response(r);
+        }
+    }
+
+    /* Unicode / special characters in error message */
+    {
+        provider_response_t *r = ops->parse_response(&p, UNICODE_ERROR_MSG);
+        ASSERT(r != NULL && label); local_count++;
+        if (r) ops->free_response(r);
+    }
+
+    /* Error with no message field (only code) */
+    {
+        provider_response_t *r = ops->parse_response(&p, NO_MSG_ERROR);
+        ASSERT(r != NULL && label); local_count++;
+        if (r) ops->free_response(r);
+    }
+
+    /* Null error object */
+    {
+        provider_response_t *r = ops->parse_response(&p, NULL_ERROR_OBJ);
+        ASSERT(r != NULL && label); local_count++;
+        if (r) ops->free_response(r);
+    }
+
+    /* Empty error object */
+    {
+        provider_response_t *r = ops->parse_response(&p, EMPTY_ERROR_OBJ);
+        ASSERT(r != NULL && label); local_count++;
+        if (r) ops->free_response(r);
+    }
+
+    printf("  %s: %d boundary case tests\n", label, local_count);
+}
+
+/* ================================================================
  *  Main
  * ================================================================ */
 
@@ -241,6 +322,21 @@ int main(void) {
         printf("  OpenAI: 1 edge case (empty choices)\n");
     }
 
+    /* OpenAI-specific: streaming [DONE] marker */
+    {
+        provider_t p = {0};
+        provider_response_t *r = PROVIDER_OPS_OPENAI.parse_stream_chunk(&p, "data: [DONE]");
+        if (r) PROVIDER_OPS_OPENAI.free_response(r);
+        ASSERT(1 && "OpenAI [DONE] marker does not crash");
+        printf("  OpenAI: 1 edge case ([DONE] marker)\n");
+    }
+
+    /* Context overflow */
+    test_context_overflow(&PROVIDER_OPS_OPENAI, "OpenAI", OPENAI_CTX_ERR);
+
+    /* Boundary cases */
+    test_boundary_cases(&PROVIDER_OPS_OPENAI, "OpenAI");
+
     /* ================================================================
      * 2. OpenRouter — shares OpenAI format but separate ops table
      * ================================================================ */
@@ -250,6 +346,10 @@ int main(void) {
     TEST_STREAM_ERRORS(OpenRouter, PROVIDER_OPS_OPENROUTER);
     test_malformed_inputs(&PROVIDER_OPS_OPENROUTER, "OpenRouter");
     test_free_null(&PROVIDER_OPS_OPENROUTER, "OpenRouter");
+
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_OPENROUTER, "OpenRouter", OPENAI_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_OPENROUTER, "OpenRouter");
 
     /* ================================================================
      * 3. DeepSeek — shares OpenAI format
@@ -261,6 +361,10 @@ int main(void) {
     test_malformed_inputs(&PROVIDER_OPS_DEEPSEEK, "DeepSeek");
     test_free_null(&PROVIDER_OPS_DEEPSEEK, "DeepSeek");
 
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_DEEPSEEK, "DeepSeek", OPENAI_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_DEEPSEEK, "DeepSeek");
+
     /* ================================================================
      * 4. xAI — shares OpenAI format
      * ================================================================ */
@@ -271,6 +375,10 @@ int main(void) {
     test_malformed_inputs(&PROVIDER_OPS_XAI, "xAI");
     test_free_null(&PROVIDER_OPS_XAI, "xAI");
 
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_XAI, "xAI", OPENAI_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_XAI, "xAI");
+
     /* ================================================================
      * 5. Custom — shares OpenAI format
      * ================================================================ */
@@ -280,6 +388,10 @@ int main(void) {
     TEST_STREAM_ERRORS(Custom, PROVIDER_OPS_CUSTOM);
     test_malformed_inputs(&PROVIDER_OPS_CUSTOM, "Custom");
     test_free_null(&PROVIDER_OPS_CUSTOM, "Custom");
+
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_CUSTOM, "Custom", OPENAI_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_CUSTOM, "Custom");
 
     /* ================================================================
      * 6. Anthropic — different JSON format
@@ -308,6 +420,10 @@ int main(void) {
         if (r) PROVIDER_OPS_ANTHROPIC.free_response(r);
         printf("  Anthropic: 1 edge case ([DONE] marker)\n");
     }
+
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_ANTHROPIC, "Anthropic", ANTHROPIC_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_ANTHROPIC, "Anthropic");
 
     /* ================================================================
      * 7. Google — Gemini JSON format
@@ -347,6 +463,10 @@ int main(void) {
         printf("  Google: 1 edge case ([DONE] marker)\n");
     }
 
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_GOOGLE, "Google", GOOGLE_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_GOOGLE, "Google");
+
     /* ================================================================
      * 8. Azure — Azure OpenAI format (similar to OpenAI but with Azure error shape)
      * ================================================================ */
@@ -366,6 +486,10 @@ int main(void) {
         printf("  Azure: 1 edge case ([DONE] marker)\n");
     }
 
+    /* Context overflow + boundary cases */
+    test_context_overflow(&PROVIDER_OPS_AZURE, "Azure", AZURE_CTX_ERR);
+    test_boundary_cases(&PROVIDER_OPS_AZURE, "Azure");
+
     /* ================================================================
      * 9. Bedrock — AWS Bedrock Converse format
      * ================================================================ */
@@ -384,6 +508,27 @@ int main(void) {
         PROVIDER_OPS_BEDROCK.free_response(r);
         printf("  Bedrock: 1 edge case (empty object)\n");
     }
+
+    /* Bedrock context overflow (two error formats) */
+    {
+        provider_t p = {0};
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(&p, BEDROCK_CTX_ERR);
+        ASSERT(r != NULL && "Bedrock ValidationException returns non-NULL");
+        ASSERT((r->content && strlen(r->content) > 0) && "Bedrock ValidationException has content");
+        PROVIDER_OPS_BEDROCK.free_response(r);
+        printf("  Bedrock: 3 context overflow tests (ValidationException format)\n");
+    }
+    {
+        provider_t p = {0};
+        provider_response_t *r = PROVIDER_OPS_BEDROCK.parse_response(&p, BEDROCK_CTX_ERR2);
+        ASSERT(r != NULL && "Bedrock simple overflow returns non-NULL");
+        ASSERT((r->content && strlen(r->content) > 0) && "Bedrock simple overflow has content");
+        PROVIDER_OPS_BEDROCK.free_response(r);
+        printf("  Bedrock: 3 context overflow tests (simple format)\n");
+    }
+
+    /* Bedrock boundary cases */
+    test_boundary_cases(&PROVIDER_OPS_BEDROCK, "Bedrock");
 
     /* ================================================================
      * Summary

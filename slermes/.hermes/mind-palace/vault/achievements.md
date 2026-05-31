@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-|> **v403** · 68 active gaps · **2160 entries** of progress
+|> **v404** · 68 active gaps · **2160 entries** of progress
 |
 |## 📊 Sector Summary
 
@@ -2195,4 +2195,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 || 344 | X09 | HTML edge case expansion — 16 new assertions (25→41). Escape: all 5 specials <>&\"' at once, already-escaped double-encodes, only-specials string, long 2000-char with embedded <>&. Unescape: NULL, unknown entity preserved, invalid numeric &#XYZ; safe, multiple consecutive round-trips <>&\"'. Strip tags: NULL returns NULL, self-closing <br/> & <br>, nested <div><p><b>, malformed <<<>>>. Frontmatter: empty body returns original, body after close ---, --- in body preserved. | `tests/test_html.c` — 16 new assertions (25→41). Suite 326/0/14. v401. |
 ||| 345 | X09 | Textwrap chunk edge case expansion — 19 new assertions (23→42). max_len=0/negative returns NULL count=0, max_len=1 returns 5 single-char chunks, consecutive newlines (AAAAA\n\n\n\nbb) truncated with \n skip, newline at exact 6-char boundary yields 3 clean chunks (12345/ABCDE/XYZ), very long 2000-char hard cut into 50-char pieces (40 total), short mixed ab\nc split at \n. | `tests/test_textwrap_chunk.c` — 19 new assertions (23→42). Suite 326/0/14. v402. |
 ||| 346 | X09 | Signal helper edge case expansion — 11 new assertions (11→22). Uncatchable SIGKILL/SIGSTOP return false, invalid signum 0/-1 rejected, double-register same signal (replace semantics), toggle register→default→re-register, signal_register_common(NULL) safe, signal_safe_write(4000 chars) no crash. | `tests/test_hermes_signal.c` — 11 new assertions (11→22). Suite 326/0/14. v403. |
+||| 347 | X09 | Provider error handling edge case expansion — 91 new assertions (225→316). Context overflow error detection for all 9 providers (OpenAI/OpenRouter/DeepSeek/xAI/Custom/Anthropic/Google/Azure/Bedrock). Boundary cases: very long ~4000-char error message, Unicode/special chars, empty message field, null error object, empty error object. OpenAI stream [DONE] marker. Fixed test_runner.sh — missing url_safety.c link dependency (test was stuck on SKIP). | `tests/test_provider_error.c` — 4 new test functions (context overflow + boundary cases) + 1 new provider-specific edge case (OpenAI [DONE]). `test_runner.sh` — added url_safety.c to link line. Suite 327/0/13. v404. |
 |

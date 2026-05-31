@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v403)
+# Goal Mantra — Slermes C (v404)
 
-326/0/14 (289 test files). 68 gaps. Phase 346: signal helper edge case expansion — 11 new assertions (11→22).
+327/0/13 (289 test files). 68 gaps. Phase 347: provider_error edge case expansion — 91 new assertions (225→316). Recovered 1 test from SKIP.
 
 ## Loop
 
