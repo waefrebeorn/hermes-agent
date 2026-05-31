@@ -1,7 +1,7 @@
 # Battle Map v34 — Comprehensive Parity Assessment (DA v1)
 
-| v417 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
-|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 360: Auth CLI token refresh + listing. Suite 328/0/12. 67 gaps.**|
+| v418 | Fork diverged — slermes/ lives only on fork | Suite 328/0/12 | 85 tools | 99 CLI** |
+|**Honest assessment: 67 structural gaps, 1000+ test case gaps. Phase 361: /plugins show <name>. Suite 328/0/12. 67 gaps.**|
 
 v34 replaces v33's narrow 17-gap form-vs-function focus with true 7-axis parity audit.
 Every sector count verified against live source code. DA v1: first-pass deep audit.
@@ -231,7 +231,7 @@ C has plugin_ext.c for loading .so shared libraries but zero actual plugins ship
 
 | # | ID | Plugin | Python State | C State | Priority |
 |---|----|--------|-------------|---------|----------|
-| 01 | P01 | Architecture: plugin loading + lifecycle | 50+ plugins, plugin manager | plugin_ext.c loads .so only | P1 |
+|| 01 | P01 | Architecture: plugin loading + lifecycle | 50+ plugins, plugin manager | plugin_ext.c loads .so + /plugins list and show (Phase 361) | P1 |
 | 02 | P02 | Memory providers (mem0, honcho, etc.) | 8 plugins | 0 | P2 |
 | 03 | P03 | Model provider plugins | 29 plugins | hardcoded in provider_*.c | P2 |
 | 04 | P04 | Kanban board/workflow | 7 files, ~11,000 LOC | 0 | P2 |

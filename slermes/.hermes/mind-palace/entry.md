@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v417)
+# Entry — Slermes C Parity (v418)
 
-Phase 360: Auth CLI token management — /auth refresh, /auth tokens. 67 gaps.
+Phase 361: /plugins show <name>. 67 gaps.

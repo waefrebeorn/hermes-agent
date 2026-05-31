@@ -1,7 +1,6 @@
-# State — Slermes C (v417)
-328/0/12. Phase 360: Auth CLI token management — /auth refresh + /auth tokens.
-  /auth status now shows OAuth token expiry from auth store.
-  /auth refresh [provider] — refresh expiring OAuth tokens.
-  /auth tokens — list all stored OAuth tokens with status.
-  oauth_refresh_token() wired into CLI for nous-oauth and xai-oauth.
+# State — Slermes C (v418)
+328/0/12. Phase 361: /plugins show <name> command.
+  /plugins list shows loaded plugins from registry + filesystem .so files.
+  /plugins show <name> shows detailed plugin info (version, type, status, config).
+  Uses loaded plugin registry instead of re-scanning filesystem.
 67 gaps.

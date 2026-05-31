@@ -166,7 +166,7 @@ static const command_def_t COMMANDS[] = {
     {"/resume",  NULL,    "Resume a previously-named session: /resume <id>", cmd_resume},
     {"/yolo",    NULL,    "Toggle YOLO mode (skip dangerous command approvals)", cmd_yolo},
     {"/usage",   NULL,    "Show token usage and session statistics",      cmd_usage},
-    {"/plugins", NULL,    "List installed plugins and their status",      cmd_plugins},
+    {"/plugins", NULL,    "Plugin mgmt: list | show <name>",                cmd_plugins},
     {"/platforms",NULL,   "Show gateway/messaging platform status",       cmd_platforms},
     {"/redraw",  NULL,    "Force a full UI repaint",                      cmd_redraw},
     {"/background","/bg", "Run a prompt in the background",              cmd_background},
