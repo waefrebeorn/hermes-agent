@@ -1,5 +1,4 @@
-v455
-338/?/13. 53 gaps. Phase 399: OpenRouter Provider Test Expansion — S7 X03.
-43 new assertions (51→94). URL/header edge, response edge, streaming depth.
-Bug fix: finish_reason in openrouter_parse_response.
-S7 X03: 8/10 providers expanded.
+v456
+338/?/13. 53 gaps. Phase 400: Custom Provider Test Expansion — S7 X03 COMPLETE.
+35 new assertions (40→75). Bug fix: finish_reason in custom_parse_response.
+**All 10 provider test files expanded.** S7 X03 complete.
