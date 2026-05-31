@@ -1,9 +1,9 @@
-# Prestige — Progress Log (v457)
-Phase 401: Clarify Tool Edge Case Expansion — S7 X04 EXPANDED.
-test_clarify.c +20 new assertions (39→59 total).
-7 new test groups: unicode emoji, cancel, long response,
-multi-line, 10 choices, empty question.
-Suite: 338/?/13. 53 gaps. X04 clarify depth improved.
+# Prestige — Progress Log (v458)
+Phase 402: exec_code Tool Edge Case Expansion — S7 X04 EXPANDED.
+test_exec_code.c +6 new test functions (15→21 total).
+6 new edge case groups: large output truncation, negative timeout,
+extra fields ignored, quote injection, task_id handling, field presence.
+Suite: 338/?/13. 53 gaps. X04 exec_code depth improved (+40%).
 
 ## Recent Phases
 - Phase 397: S7 X03 Azure provider tests (+40 assertions, 1 bug fix)
@@ -15,4 +15,4 @@ PORTED: S0, S1, S2, S3, S6, S8
 ACTIVE: S4 (8 gaps), S5 (10 gaps), S7 (18 clusters), S9 (19 gaps), S10 (7 gaps)
 
 ### Latest Result
-Phase 401: clarify expanded 39→59 (+20 assertions). 7 new edge case groups.
+Phase 402: exec_code expanded 15→21 test functions (+6). Large output truncation, negative timeout, extra fields, quote injection, task_id, field presence.

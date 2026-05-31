@@ -1,6 +1,6 @@
-# State — Slermes C (v457)
-338/?/13. Phase 401: Clarify Tool Edge Case Expansion — S7 X04 EXPANDED.
-   test_clarify.c — 20 new assertions (39→59 total).
-   7 new test groups: unicode emoji, cancel, long response, multi-line,
-   10 choices, empty question, plus stdio buffer fix in test harness.
-**X04 tool test depth improved: clarify assertions +51%.**
+# State — Slermes C (v458)
+338/?/13. Phase 402: exec_code Tool Edge Case Expansion — S7 X04 EXPANDED.
+   test_exec_code.c — 6 new test functions (15→21 total), +21 assertions.
+   New coverage: large output truncation, negative timeout clamping,
+   extra fields ignored, quote injection, task_id handling, field presence.
+**X04 tool test depth improved: exec_code +6 functions (+40%).**

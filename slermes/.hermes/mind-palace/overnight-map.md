@@ -1,9 +1,9 @@
-# Overnight Map (v457)
+# Overnight Map (v458)
 
-## Phase 401 — Clarify Tool Edge Case Expansion
-**S7 X04 EXPANDED** — 20 new assertions in test_clarify.c (39→59 total)
-7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
-Test harness fix: stdio buffer hygiene between piped stdin calls
+## Phase 402 — exec_code Tool Edge Case Expansion
+**S7 X04 EXPANDED** — 6 new test functions in test_exec_code.c (15→21 total)
+New coverage: large output truncation, negative timeout clamping,
+extra fields ignored, quote injection, task_id handling, field presence
 no usage), streaming reasoning (reasoning_content in delta), streaming edge
 depth (empty delta/chunk, length finish, whitespace).
 **Bug fix:** openrouter_parse_response — finish_reason extraction from choice

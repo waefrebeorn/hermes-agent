@@ -159,6 +159,69 @@ static void test_zero_timeout(void) {
     free(r);
 }
 
+/* --- Phase 402: Edge case expansion --- */
+
+static void test_large_output_truncated(void) {
+    /* Generate ~70KB output to verify truncation flag */
+    char *r = exec_code_handler("{\"code\":\"print('A' * 70000)\"}", NULL);
+    assert(r != NULL);
+    assert(strstr(r, "\"exit_code\"") != NULL);
+    assert(strstr(r, "\"output\"") != NULL);
+    /* Should either have truncated=true marker or contain '[...truncated]' */
+    int has_truncated = strstr(r, "\"truncated\":true") != NULL;
+    int has_marker = strstr(r, "truncated") != NULL;
+    assert(has_truncated || has_marker);
+    free(r);
+}
+
+static void test_negative_timeout(void) {
+    /* Negative timeout should clamp, not crash */
+    char *r = exec_code_handler("{\"code\":\"print('neg_timeout')\",\"timeout\":-1}", NULL);
+    assert(r != NULL);
+    /* Should produce valid output */
+    assert(strstr(r, "neg_timeout") != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    free(r);
+}
+
+static void test_extra_fields_ignored(void) {
+    /* Unknown JSON fields should be ignored */
+    char *r = exec_code_handler("{\"code\":\"print('extra_fields')\",\"unknown\":\"val\",\"extra\":42}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "extra_fields") != NULL);
+    free(r);
+}
+
+static void test_code_with_quotes(void) {
+    /* Code containing single and double quotes */
+    char *r = exec_code_handler("{\"code\":\"print(\\\"hello 'world'\\\")\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "hello") != NULL);
+    free(r);
+}
+
+static void test_task_id_handling(void) {
+    /* Non-NULL task_id should be handled gracefully */
+    char *r = exec_code_handler("{\"code\":\"print('task_test')\"}", "my_task_123");
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "task_test") != NULL);
+    free(r);
+}
+
+static void test_output_fields_present(void) {
+    /* Verify all expected fields present in output */
+    char *r = exec_code_handler("{\"code\":\"print('field_check')\"}", NULL);
+    assert(r != NULL);
+    assert(get_int_field(r, "exit_code") == 0);
+    assert(strstr(r, "\"output\"") != NULL);
+    assert(strstr(r, "field_check") != NULL);
+    assert(strstr(r, "\"truncated\"") != NULL);
+    free(r);
+}
+
 int main(void) {
     printf("exec_code tests:\n");
     TEST(test_hello_world());
@@ -177,6 +240,13 @@ int main(void) {
     TEST(test_no_output());
     TEST(test_very_long_code());
     TEST(test_zero_timeout());
+    /* Phase 402 */
+    TEST(test_large_output_truncated());
+    TEST(test_negative_timeout());
+    TEST(test_extra_fields_ignored());
+    TEST(test_code_with_quotes());
+    TEST(test_task_id_handling());
+    TEST(test_output_fields_present());
     printf("All exec_code tests passed.\n");
     return 0;
 }

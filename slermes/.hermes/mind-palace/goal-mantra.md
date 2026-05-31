@@ -1,5 +1,5 @@
-v457
-338/?/13. 53 gaps. Phase 401: Clarify Tool Edge Case Expansion — S7 X04 EXPANDED.
-20 new assertions (39→59). 7 new test groups: unicode, cancel, long response,
-multi-line, 10-choices, empty question.
-**X04 tool test depth improved: clarify assertions +51%.**
+v458
+338/?/13. 53 gaps. Phase 402: exec_code Tool Edge Case Expansion — S7 X04 EXPANDED.
+6 new test functions (15→21 total). Large output truncation, negative timeout,
+extra fields, quote injection, task_id, field presence.
+**X04 tool test depth improved: exec_code +40%.**

@@ -1,12 +1,11 @@
-# Testing — Slermes C Test Suite (v457)
+# Testing — Slermes C Test Suite (v458)
 
 ## Current Status
 338/?/13 — Suite stable.
 
-## Recent Improvements (Phase 401)
-- test_clarify.c: 39→59 assertions (+20)
-- 7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
-- Test harness fix: stdio buffer hygiene between piped stdin calls
+## Recent Improvements (Phase 402)
+- test_exec_code.c: 15→21 test functions (+6)
+- New coverage: large output truncation, negative timeout, extra fields ignored, quote injection, task_id handling, output field presence
 
 ## Test Labels (test_runner.sh)
-- clarify: 59 assertions (was 39)
+- exec_code_tool: 21 tests (was 15)

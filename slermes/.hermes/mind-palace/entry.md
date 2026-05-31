@@ -1,12 +1,11 @@
-# Entry — Slermes C Translation Project (v457)
+# Entry — Slermes C Translation Project (v458)
 
 ## Quick Stats
 - Suite: 338/?/13
 - Gaps: 53
-- Current Phase: 401 (Clarify Tool Edge Case Expansion)
-- Version: v457
+- Current Phase: 402 (exec_code Tool Edge Case Expansion)
+- Version: v458
 
-## Latest Phase 401
-- test_clarify.c: 39→59 assertions (+20)
-- 7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
-- Test harness fix: stdio buffer hygiene between piped stdin calls
+## Latest Phase 402
+- test_exec_code.c: 15→21 test functions (+6)
+- New coverage: large output truncation, negative timeout, extra fields ignored, quote injection, task_id handling, field presence
