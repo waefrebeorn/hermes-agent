@@ -224,6 +224,77 @@ int main(void) {
         json_free(r2);
     }
 
+    /* 19. Negative session_id (poll) */
+    {
+        json_node_t *r2 = parse_result(process_handler(
+            "{\"action\":\"poll\",\"session_id\":-1}", NULL));
+        TEST("process poll negative session_id returns error",
+             r2 && strstr(json_object_get_string(r2, "error", ""), "not found") != NULL);
+        json_free(r2);
+    }
+
+    /* 20. Empty command (just verify no crash) */
+    {
+        json_node_t *r2 = parse_result(process_handler(
+            "{\"action\":\"start\",\"command\":\"\",\"timeout\":5}", NULL));
+        TEST("process start empty command does not crash", r2 != NULL);
+        json_free(r2);
+    }
+
+    /* 21. Write to a running process (cat to echo back) */
+    {
+        r = parse_result(process_handler(
+            "{\"action\":\"start\",\"command\":\"cat\",\"timeout\":5}", NULL));
+        TEST("process start for write test",
+             r && strcmp(result_get_str(r, "status", ""), "started") == 0);
+        double sid_write = json_object_get_number(r, "session_id", -1);
+        json_free(r);
+
+        char write_args[256];
+        snprintf(write_args, sizeof(write_args),
+                 "{\"action\":\"write\",\"session_id\":%.0f,\"data\":\"hello_write\"}", sid_write);
+        r = parse_result(process_handler(write_args, NULL));
+        TEST("process write returns status written",
+             r && strcmp(result_get_str(r, "status", ""), "written") == 0);
+        json_free(r);
+
+        snprintf(write_args, sizeof(write_args),
+                 "{\"action\":\"close\",\"session_id\":%.0f}", sid_write);
+        r = parse_result(process_handler(write_args, NULL));
+        /* Process may already have exited after cat echoed input — close may
+         * return "closed", "completed", or a different terminal status */
+        TEST("process close stdin does not crash",
+             r && strstr(result_get_str(r, "status", ""), "ed") != NULL);
+        json_free(r);
+    }
+
+    /* 22. Signal by number (SIGTERM=15) */
+    {
+        r = parse_result(process_handler(
+            "{\"action\":\"start\",\"command\":\"sleep 30\",\"timeout\":5}", NULL));
+        TEST("process start for signal number test",
+             r && strcmp(result_get_str(r, "status", ""), "started") == 0);
+        double sid_sig = json_object_get_number(r, "session_id", -1);
+        json_free(r);
+
+        char sig_args[256];
+        snprintf(sig_args, sizeof(sig_args),
+                 "{\"action\":\"signal\",\"session_id\":%.0f,\"signal\":15}", sid_sig);
+        r = parse_result(process_handler(sig_args, NULL));
+        TEST("process signal number 15 (SIGTERM) returns signal_sent",
+             r && strcmp(result_get_str(r, "status", ""), "signal_sent") == 0);
+        json_free(r);
+    }
+
+    /* 23. Log with non-existent session_id */
+    {
+        json_node_t *r2 = parse_result(process_handler(
+            "{\"action\":\"log\",\"session_id\":99999}", NULL));
+        TEST("process log non-existent returns error",
+             r2 && strstr(json_object_get_string(r2, "error", ""), "not found") != NULL);
+        json_free(r2);
+    }
+
     printf("\n=== Results: %d passed, %d failed ===\n", passed, failed);
     return failed > 0 ? 1 : 0;
 }
