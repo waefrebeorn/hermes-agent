@@ -852,33 +852,54 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
              * Arrow keys (UP/DOWN/RIGHT/LEFT) and other ESC-prefixed sequences
              * must be consumed BEFORE mode handling, otherwise the \x1b from
              * an arrow key press toggles INSERT->NORMAL and the trailing bytes
-             * get interpreted as vi commands (e.g. 'A' in "ESC[A" = append). */
+             * get interpreted as vi commands (e.g. 'A' in "ESC[A" = append).
+             *
+             * CRITICAL: use getchar() not read(STDIN_FILENO) because getchar()
+             * uses stdio buffered I/O. When the terminal sends \x1b[A as 3 bytes,
+             * getchar() may read all 3 into the stdio buffer but only return \x1b.
+             * Reading from the raw fd would miss [A stranded in the stdio buffer. */
             char seq[3];
-            if (read(STDIN_FILENO, &seq[0], 1) <= 0) continue;
-            if (read(STDIN_FILENO, &seq[1], 1) <= 0) continue;
+            int next_ch = getchar();
+            if (next_ch == EOF) continue;
+            seq[0] = (char)next_ch;
+            next_ch = getchar();
+            if (next_ch == EOF) continue;
+            seq[1] = (char)next_ch;
 
             if (seq[0] == '[') {
                 /* CSI sequence */
                 /* Check for bracketed paste \e[200~ (start) / \e[201~ (end) */
-                if (seq[1] == '2' || seq[1] == '2') {
+                if (seq[1] == '2') {
+                    /* Read rest of \e[200~ or \e[201~ via getchar (same buffer as seq) */
                     char rest[4];
-                    ssize_t rn = read(STDIN_FILENO, rest, 4);
-                    if (rn == 4 && rest[0] == '0' && rest[1] == '0' && rest[2] == '~') {
+                    int ri;
+                    for (ri = 0; ri < 4; ri++) {
+                        int rc = getchar();
+                        if (rc == EOF) break;
+                        rest[ri] = (char)rc;
+                    }
+                    if (ri == 4 && rest[0] == '0' && rest[1] == '0' && rest[2] == '~') {
                         /* \e[200~ — paste start: collect until \e[201~ */
                         while (1) {
-                            char pc;
-                            ssize_t pr = read(STDIN_FILENO, &pc, 1);
-                            if (pr <= 0) break;
+                            int pc_ch = getchar();
+                            if (pc_ch == EOF) break;
+                            char pc = (char)pc_ch;
                             if (pc == KEY_ESC) {
                                 char pseq[5];
-                                if (read(STDIN_FILENO, pseq, 5) > 0 &&
+                                int pi;
+                                for (pi = 0; pi < 5; pi++) {
+                                    int rc = getchar();
+                                    if (rc == EOF) break;
+                                    pseq[pi] = (char)rc;
+                                }
+                                if (pi == 5 &&
                                     pseq[0] == '[' && pseq[1] == '2' &&
                                     pseq[2] == '0' && pseq[3] == '1' && pseq[4] == '~')
                                     break; /* \e[201~ — paste end */
                                 /* Not paste end — re-insert ESC + sequence as literal */
                                 line_buf_insert(le->buf, KEY_ESC);
-                                for (int pi = 0; pi < 5; pi++)
-                                    line_buf_insert(le->buf, (unsigned char)pseq[pi]);
+                                for (int pj = 0; pj < pi; pj++)
+                                    line_buf_insert(le->buf, (unsigned char)pseq[pj]);
                                 continue;
                             }
                             if (pc == '\n' || pc == '\r') {
@@ -896,7 +917,7 @@ char *line_edit_read(line_edit_t *le, const char *prompt) {
                         fflush(stdout);
                         continue;
                     }
-                    if (rn == 4 && rest[0] == '0' && rest[1] == '1' && rest[2] == '~') {
+                    if (ri == 4 && rest[0] == '0' && rest[1] == '1' && rest[2] == '~') {
                         /* \e[201~ — paste end without start (shouldn't happen) */
                         continue;
                     }
