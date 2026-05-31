@@ -1,12 +1,12 @@
-# Entry — Slermes C Translation Project (v455)
+# Entry — Slermes C Translation Project (v457)
 
 ## Quick Stats
 - Suite: 338/?/13
 - Gaps: 53
-- Current Phase: 399 (OpenRouter Provider Test Expansion)
-- Version: v455
+- Current Phase: 401 (Clarify Tool Edge Case Expansion)
+- Version: v457
 
-## Latest Phase 399
-- test_provider_openrouter.c: 51→94 assertions (+43)
-- 5 new test functions + 1 bug fix (finish_reason in parse_response)
-- S7 X03: 8/10 providers expanded
+## Latest Phase 401
+- test_clarify.c: 39→59 assertions (+20)
+- 7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
+- Test harness fix: stdio buffer hygiene between piped stdin calls

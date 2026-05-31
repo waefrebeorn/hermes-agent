@@ -374,7 +374,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_clarify.c" "$CDIR/src/tools/clarify.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_clarify -lm -Wl,--unresolved-symbols=ignore-all 2>/dev/null && [[ -x /tmp/hermes_test_clarify ]]; then
     if /tmp/hermes_test_clarify > /dev/null 2>&1; then
-        ok "clarify"
+        ok "clarify (59 assertions)"
     else
         fail "clarify (test binary returned non-zero)"
     fi

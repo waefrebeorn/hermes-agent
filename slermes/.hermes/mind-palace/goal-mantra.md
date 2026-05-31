@@ -1,4 +1,5 @@
-v456
-338/?/13. 53 gaps. Phase 400: Custom Provider Test Expansion — S7 X03 COMPLETE.
-35 new assertions (40→75). Bug fix: finish_reason in custom_parse_response.
-**All 10 provider test files expanded.** S7 X03 complete.
+v457
+338/?/13. 53 gaps. Phase 401: Clarify Tool Edge Case Expansion — S7 X04 EXPANDED.
+20 new assertions (39→59). 7 new test groups: unicode, cancel, long response,
+multi-line, 10-choices, empty question.
+**X04 tool test depth improved: clarify assertions +51%.**

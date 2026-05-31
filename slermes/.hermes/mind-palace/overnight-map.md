@@ -1,9 +1,9 @@
-# Overnight Map (v455)
+# Overnight Map (v457)
 
-## Phase 399 — OpenRouter Provider Test Expansion
-**S7 X03 EXPANDED** — 43 new assertions in test_provider_openrouter.c (51→94 total)
-**Coverage:** URL edge (double-slash fix, proxy, empty base), header edge
-(empty/NULL/long key), response edge (empty/no choices, null, length finish,
+## Phase 401 — Clarify Tool Edge Case Expansion
+**S7 X04 EXPANDED** — 20 new assertions in test_clarify.c (39→59 total)
+7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
+Test harness fix: stdio buffer hygiene between piped stdin calls
 no usage), streaming reasoning (reasoning_content in delta), streaming edge
 depth (empty delta/chunk, length finish, whitespace).
 **Bug fix:** openrouter_parse_response — finish_reason extraction from choice

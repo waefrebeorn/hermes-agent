@@ -300,6 +300,110 @@ int main(void)
         }
     }
 
+    /* ── Unicode / emoji input ── */
+    printf("\n-- Unicode emoji input --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"What is your mood?\"}",
+            "😊👍 happy\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("emoji response present",
+                 strstr(result, "😊") != NULL);
+            TEST("response contains happy",
+                 json_has(result, "response", "😊👍 happy"));
+            free(result);
+        }
+    }
+
+    /* ── Cancel input (different from skip) ── */
+    printf("\n-- Cancel input --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Proceed?\"}",
+            "cancel\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response is cancel",
+                 json_has(result, "response", "cancel"));
+            free(result);
+        }
+    }
+
+    /* ── Very long response (>2KB) ── */
+    printf("\n-- Very long response --\n");
+    {
+        char long_resp[2100];
+        memset(long_resp, 'x', 2000);
+        memcpy(long_resp, "long_", 5);
+        long_resp[5 + 2000] = '\0';
+        char *full_input = malloc(strlen(long_resp) + 2);
+        if (full_input) {
+            sprintf(full_input, "%s\n", long_resp);
+            char *result = clarify_with_input(
+                "{\"question\":\"Say something long\"}", full_input);
+            TEST("result not null for long response", result != NULL);
+            if (result) {
+                TEST("response starts with long_",
+                     strstr(result, "\"response\":\"long_") != NULL);
+                TEST("response contains long string",
+                     strstr(result, "xxx") != NULL);
+                free(result);
+            }
+            free(full_input);
+        }
+    }
+
+    /* ── Multi-line input (fgets reads only first line) ── */
+    printf("\n-- Multi-line input --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Describe yourself\"}",
+            "single line answer\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("response present",
+                 strstr(result, "\"response\":\"single line answer\"") != NULL);
+            TEST("question present",
+                 json_has(result, "question", "Describe yourself"));
+            free(result);
+        }
+    }
+
+    /* ── 10 choices ── */
+    printf("\n-- 10 choices --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"Pick number\",\"choices\":[\"zero\",\"one\",\"two\",\"three\",\"four\",\"five\",\"six\",\"seven\",\"eight\",\"nine\"]}",
+            "5\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("selected is four",
+                 json_has(result, "selected", "four"));
+            TEST("response is '5'",
+                 json_has(result, "response", "5"));
+            TEST("choices_offered present",
+                 strstr(result, "\"choices_offered\"") != NULL);
+            free(result);
+        }
+    }
+
+    /* ── Empty string question ── */
+    printf("\n-- Empty string question --\n");
+    {
+        char *result = clarify_with_input(
+            "{\"question\":\"\"}",
+            "answer\n");
+        TEST("result not null", result != NULL);
+        if (result) {
+            TEST("question key present",
+                 strstr(result, "\"question\"") != NULL);
+            TEST("response present",
+                 json_has(result, "response", "answer"));
+            free(result);
+        }
+    }
+
     /* ── Summary ── */
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);

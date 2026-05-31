@@ -1,20 +1,12 @@
-# Testing — Slermes C Test Suite (v453)
-
-## Current Status
-338/?/13 — Suite stable. Pre-existing TTY skip fluctuation acceptable.
-
-## Test Categories
-- Library unit tests (json, protobuf, yaml, crypto, http, ...)
-- Provider unit tests (OpenAI, Anthropic, Google, DeepSeek, xAI, Azure, Bedrock, OpenRouter, Custom)
-- Tool tests (file, web, terminal, send_message, patch, session_search, ...)
-# Testing — Slermes C Test Suite (v455)
+# Testing — Slermes C Test Suite (v457)
 
 ## Current Status
 338/?/13 — Suite stable.
 
-## Recent Improvements (Phase 399)
-- test_provider_openrouter.c: 51→94 assertions (+43)
-- 5 new test functions + 1 bug fix (finish_reason in parse_response)
+## Recent Improvements (Phase 401)
+- test_clarify.c: 39→59 assertions (+20)
+- 7 new test groups: unicode emoji, cancel, long response, multi-line, 10 choices, empty question
+- Test harness fix: stdio buffer hygiene between piped stdin calls
 
 ## Test Labels (test_runner.sh)
-- provider_openrouter: 94 tests (was 50)
+- clarify: 59 assertions (was 39)

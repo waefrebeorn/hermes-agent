@@ -1,8 +1,6 @@
-# State — Slermes C (v456)
-338/?/13. Phase 400: Custom Provider Test Expansion — S7 X03 COMPLETE.
-   test_provider_custom.c — 35 new assertions (40→75 total).
-   4 new test functions + 1 bug fix (finish_reason in parse_response).
-   New coverage: URL edge, header edge, response edge, streaming depth.
-   Bug fix: custom_parse_response — finish_reason extraction.
-**ALL 10 PROVIDER TESTS EXPANDED.** S7 X03 phase complete.
-53 gaps. S7: 18 clusters (X03 100% provider test coverage).
+# State — Slermes C (v457)
+338/?/13. Phase 401: Clarify Tool Edge Case Expansion — S7 X04 EXPANDED.
+   test_clarify.c — 20 new assertions (39→59 total).
+   7 new test groups: unicode emoji, cancel, long response, multi-line,
+   10 choices, empty question, plus stdio buffer fix in test harness.
+**X04 tool test depth improved: clarify assertions +51%.**
