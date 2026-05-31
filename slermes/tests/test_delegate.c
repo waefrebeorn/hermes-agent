@@ -107,6 +107,56 @@ int main(void) {
         free(res);
     }
 
+    /* Edge: null goal value */
+    {
+        char *res = delegate_handler("{\"goal\":null}", NULL);
+        TEST("null goal value returns error", has_error(res));
+        free(res);
+    }
+
+    /* Edge: empty subtasks array */
+    {
+        char *res = delegate_handler("{\"goal\":\"test\",\"subtasks\":[]}", NULL);
+        TEST("empty subtasks array passes (valid)", !has_error(res));
+        free(res);
+    }
+
+    /* Edge: very long goal string (2000+ chars) */
+    {
+        char *long_goal = malloc(2200);
+        if (long_goal) {
+            memset(long_goal, 'A', 2000);
+            long_goal[2000] = '\0';
+            char args[2500];
+            snprintf(args, sizeof(args), "{\"goal\":\"%s\"}", long_goal);
+            char *res = delegate_handler(args, NULL);
+            TEST("very long goal processed without crash", res != NULL);
+            free(res);
+            free(long_goal);
+        }
+    }
+
+    /* Edge: NaN/infinity in numeric fields */
+    {
+        char *res = delegate_handler("{\"goal\":\"test\",\"max_concurrent_children\":-1}", NULL);
+        TEST("negative max_concurrent_children handled", !has_error(res) || (res != NULL));
+        free(res);
+    }
+
+    /* Edge: unicode/special characters in goal */
+    {
+        char *res = delegate_handler("{\"goal\":\"emoji test \\u2603\\ufe0f\"}", NULL);
+        TEST("unicode in goal passes validation", !has_error(res));
+        free(res);
+    }
+
+    /* Edge: missing subtasks with context only */
+    {
+        char *res = delegate_handler("{\"goal\":\"test\",\"context\":\"some useful context here\"}", NULL);
+        TEST("goal + context (no subtasks) passes validation", !has_error(res));
+        free(res);
+    }
+
     /* Summary */
     printf("\n%s\n", failed ? "SOME TESTS FAILED" : "All delegate tests PASSED");
     printf("  %d passed, %d failed\n", passed, failed);

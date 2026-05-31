@@ -3333,7 +3333,7 @@ if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libjson" -I"$CDIR/lib/li
     "$CDIR/tests/test_delegate.c" \
     "$CDIR/src/tools/delegate.c" "$CDIR/lib/libjson/json.c" \
     -o /tmp/hermes_test_delegate -lm -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if ulimit -s unlimited && /tmp/hermes_test_delegate > /dev/null 2>&1; then ok "delegate_tool (7 tests)"
+    if ulimit -s unlimited && /tmp/hermes_test_delegate > /dev/null 2>&1; then ok "delegate_tool (13 tests)"
     else fail "delegate_tool (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_delegate
 else skip "delegate_tool (compilation failed)"
