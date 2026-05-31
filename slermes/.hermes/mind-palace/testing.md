@@ -1,6 +1,6 @@
-# Testing — Slermes C (v391)
+# Testing — Slermes C (v392)
 
-326/0/14, 289 test files. All pass. 68 gaps. Phase 334: V4A patch bugfix (repl_len OBO) + 7 new edge case tests. patch_v4a: 5→12 tests.
+326/0/14, 289 test files. All pass. 68 gaps. Phase 335: arrow key NORMAL mode bugfix.
 
 Phase 318: T13 model picker — interactive model selection in TUI via /model. 16 models listed, arrow keys/Enter/ESC/q navigation. Suite 325/0/15. v382.
 Phase 321: X09 vision media-in-tool-results edge case expansion + gemini-30 precision fix. Suite 325/0/14. v385.

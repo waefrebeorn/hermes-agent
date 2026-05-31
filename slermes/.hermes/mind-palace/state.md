@@ -1,8 +1,6 @@
-||||| Slermes
-|
-|||||Suite: 326/0/14 | Tools: 85 | CLI: 99 | Config sections: 37 | GW: 19 | Prov: 10 | Libs: 65
-||||Binary: 31M | Warnings: 0 | Test files: 294 | C src: 180
-|// Battleship v34 (68 gaps across 8 sectors, 1000+ test case gaps). v391. Phase 334: V4A patch bugfix + 7 new edge case tests. repl_len OBO fixed in apply_v4a_hunk(). patch_v4a: 5→12 tests. Suite 326/0/14. 68 gaps.
+# State — Slermes C (v392)
+326/0/14. Phase 335: arrow key NORMAL mode bugfix.
+68 gaps.
 |||||||- Phase 245:
 |- Phase 246: R10 provider_is_local_endpoint() — port of Python model_metadata.is_local_endpoint(). Local/private endpoint detection with loopback, container DNS, RFC-1918, link-local, Tailscale CGNAT, and IPv6 support. 21 test assertions (→96). Suite 335/0/2. v313.
 |- Phase 247: R10 provider_infer_from_url() — port of Python model_metadata._infer_provider_from_url(). Maps URL hostnames to provider names via PROVIDERS table + aliases. 10 test assertions (→106). Suite 335/0/2. v314.
@@ -45,7 +43,7 @@
 ||- Phase 284: S0 D09 vi search depth — / ? n N forward/backward search implemented. Pressing / or ? in NORMAL mode prompts for a search pattern. / searches forward from cursor+1 (wraps to start), ? searches backward from cursor-1 (wraps to end). n repeats last search in same direction, N in opposite direction. line_edit_search_internal() helper function exposed in header for testing. 11 new assertions in test_line_edit.c (137→148). Suite 334/0/4. v351. S0 D09 remains PARTIAL (visual mode, count prefixes still missing).
 ||- Phase 285: S0 D09 vi visual mode — v/V enter visual mode with selection highlighting. x/d/y delete/yank selection into kill ring. ESC/v exit visual mode. Reverse video ANSI rendering in term_redraw_line (both scrolling and non-scrolling paths). 13 new assertions in test_line_edit.c (148→161). Suite 334/0/3. v352. S0 D09 remains PARTIAL (count prefixes still missing).
 |||- Phase 333: X09 Terminal sudo edge case expansion — 6 new test sections (25→36 assertions). NULL found, multiple pipes + sudo, quoted args, env vars, space-separated semicolons, stale test_runner counts fixed (3→16, 24→36). Suite 326/0/14. v390.
-|||- Phase 334: V4A patch repl_len OBO bugfix + 7 new edge case tests. apply_v4a_hunk() repl_len was pre-computed with trailing-newline overcount (repl_len=42 when actual was 41), causing memcpy to include null byte and truncate result at 41 chars. Multi-hunk updates now work correctly. New tests: update nonexistent file, delete nonexistent file, multi-file patch, deletion-only hunk, addition-only hunk, multi-hunk update, empty patch. patch_v4a: 5→12 tests. Suite 326/0/14. v391.
+|||- Phase 335: Up/Down arrow keys switching to NORMAL mode bugfix. CSI escape sequence cases (KEY_UP/KEY_DOWN/KEY_LEFT/KEY_RIGHT/KEY_HOME/KEY_END/KEY_DELETE) used 'break' inside switch(seq[1]), falling through to the standalone-ESC handler which switched vi_mode from INSERT→NORMAL. Changed all CSI cases to 'continue' instead of 'break'. Suite 326/0/14. v392.
 
 ## Fork State
 - **Fork**: waefrebeorn/slermes — tracks upstream NousResearch/hermes-agent

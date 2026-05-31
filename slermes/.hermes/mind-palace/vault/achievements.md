@@ -2,7 +2,7 @@
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v391** · 68 active gaps · **2148 entries** of progress
+> **v392** · 68 active gaps · **2149 entries** of progress
 
 ## 📊 Sector Summary
 
@@ -2183,3 +2183,5 @@ Suite: 335/0/0 (289 test files). Gaps: 103. v305
 | 332 | X09 | Vi mode arrow key bugfix — Up/Down arrow keys in INSERT mode were broken by vi mode. `continue` in ESC handler skipped escape sequence reading, so `\x1b[A` (Up arrow) toggled INSERT→NORMAL (via ESC), then `A` in NORMAL mode triggered "append" (back to INSERT). No history navigation ever executed. Fix: read escape sequence bytes BEFORE mode switch, insert mode switch as fallback after sequence consumption. | `lib/liblineedit/line_edit.c` — restructured ESC handler (escape read before mode switch). Suite 326/0/14. v389. |
 || 333 | X09 | Terminal sudo rewrite edge case expansion — 6 new test sections, 11 new assertions (25→36) + stale test_runner counts fixed (3→16, 24→36). Covers: NULL found pointer returns NULL (precondition), NULL found + sudo, multiple pipes + sudo, sudo with quoted args, sudo with env var, space-separated semicolons. Suite 326/0/14. v390. | `tests/test_terminal_sudo.c` — 6 new test sections (25→36 assertions). `test_runner.sh` — both terminal_sudo entries updated (3→16, 24→36). Suite 326/0/14. v390. |
 || 334 | X09 | V4A patch bugfix + edge case expansion — 7 new test functions, 5→12 tests. **Bugfix:** `apply_v4a_hunk()` `repl_len` OBO — pre-computed with trailing-newline overcount (42 vs 41 actual), caused memcpy to include null byte truncating result at 41 chars. Multi-hunk updates now work. New tests: update nonexistent file, delete nonexistent file, multi-file patch (Update+Add+Delete in one batch), deletion-only hunk (no + lines), addition-only hunk (no - lines), multi-hunk update (2 @@ sections), empty patch (0 ops, success). | `src/tools/patch.c` — `apply_v4a_hunk()` repl_len=pos after build (2 LOC). `tests/test_patch_v4a.c` — 7 new functions (5→12 tests). `test_runner.sh` — count 3→12. Suite 326/0/14. v391. |
+|| 335 | X09 | Up/Down arrow keys switching to NORMAL mode bugfix. CSI escape sequence cases (KEY_UP/KEY_DOWN/KEY_LEFT/KEY_RIGHT/KEY_HOME/KEY_END/KEY_DELETE) used `break` inside `switch(seq[1])`, falling through to the standalone-ESC handler which switched `vi_mode` from INSERT to NORMAL — causing subsequent keypresses to be interpreted as vi commands instead of text input. Fix: changed all CSI cases to `continue` instead of `break`. | `lib/liblineedit/line_edit.c` — 7 break→continue changes. Suite 326/0/14. v392. |
+|

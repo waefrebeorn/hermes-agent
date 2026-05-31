@@ -1,6 +1,6 @@
-# Goal Mantra — Slermes C (v391)
+# Goal Mantra — Slermes C (v392)
 
-326/0/14 (289 test files). 68 gaps. Phase 334: V4A patch bugfix (repl_len OBO) + 7 edge case tests. patch_v4a: 5→12 tests.
+326/0/14 (289 test files). 68 gaps. Phase 335: arrow key NORMAL mode bugfix.
 
 ## Loop
 
