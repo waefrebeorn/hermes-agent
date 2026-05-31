@@ -7,16 +7,16 @@
 # Slermes ☤
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Tests-329%2F0%2F13-00AA55?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-v430-8A2BE2?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Tests-330%2F0%2F13-00AA55?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Version-v431-8A2BE2?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/Binary-31MB%20ELF-FFD700?style=flat-square" alt="31MB">
   <img src="https://img.shields.io/badge/Source-108K%20LOC%20C-blue?style=flat-square" alt="108K LOC">
-  <img src="https://img.shields.io/badge/Gaps-61-FF6B35?style=flat-square" alt="61 gaps">
+  <img src="https://img.shields.io/badge/Gaps-60-FF6B35?style=flat-square" alt="60 gaps">
   <img src="https://img.shields.io/badge/Tools-85-8B5CF6?style=flat-square" alt="85 tools">
   <img src="https://img.shields.io/badge/CLI-98%20commands-00AA55?style=flat-square" alt="98 CLI">
   <img src="https://img.shields.io/badge/Libs-65%20modules-0066FF?style=flat-square" alt="65 libs">
   <img src="https://img.shields.io/badge/Gateways-19%20platforms-FF6B35?style=flat-square" alt="19 gateways">
-  <img src="https://img.shields.io/badge/Phase-374-FFD700?style=flat-square" alt="Phase 374">
+  <img src="https://img.shields.io/badge/Phase-375-FFD700?style=flat-square" alt="Phase 375">
 </p>
 
 **Full C translation of [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research.** One static binary, zero runtime deps beyond libc + libssl. 31M ELF.
@@ -333,7 +333,7 @@ slermes/
 
 ## Parity
 
-**329 tests pass, 0 fail, 13 skip. 61 gaps across 8 sectors.**
+**330 tests pass, 0 fail, 13 skip. 60 gaps across 8 sectors.**
 
 | Sector | Status | Detail |
 |--------|--------|--------|

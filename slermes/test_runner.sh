@@ -86,6 +86,7 @@ run_lib_test "slash_confirm" "tests/test_slash_confirm.c" "lib/libslashconfirm" 
 
 run_lib_test "tui_eventpub" "tests/test_tui_eventpub.c" "src/cli" "$CDIR/src/cli/tui_eventpub.c -I$CDIR/include"
 run_lib_test "tui_slash_worker" "tests/test_tui_slash_worker.c" "src/cli" "$CDIR/src/cli/tui_slash_worker.c -I$CDIR/include"
+run_lib_test "tui_entry" "tests/test_tui_entry.c" "src/cli" "$CDIR/src/cli/tui_entry.c -I$CDIR/include -I$CDIR/lib/libncurses/include -Wl,--unresolved-symbols=ignore-all"
 echo ""; echo "=== Website Policy Tests ==="
 if gcc -O2 -Wall -Wextra -I"$CDIR/include" -I"$CDIR/lib/libwebsite" \
     "$CDIR/tests/test_website.c" "$CDIR/lib/libwebsite/website_policy.c" \

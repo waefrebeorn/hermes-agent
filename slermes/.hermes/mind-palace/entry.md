@@ -1,3 +1,3 @@
-# Entry — Slermes C Parity (v430)
+# Entry — Slermes C Parity (v431)
 
-Phase 374: TUI Slash Command Worker — T06 PORTED (dispatch-table). 61 gaps. Suite 329/0/13.
+Phase 375: TUI Entry/Startup Module — T05 PORTED (lifecycle wrapper). 60 gaps. Suite 330/0/13.

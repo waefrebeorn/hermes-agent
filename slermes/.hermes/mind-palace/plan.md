@@ -1,18 +1,17 @@
-# Plan — Next Phase (v430)
+# Plan — Next Phase (v431)
 
-S0: D09+D19+D20+D21 all PORTED. C11 PORTED. **T07+T06 PORTED**.
-61 gaps. Suite 329/0/13.
+S0: D09+D19+D20+D21 all PORTED. C11 PORTED. **T07+T06+T05 PORTED**.
+60 gaps. Suite 330/0/13.
 
-**Latest:** Phase 374 — TUI Slash Command Worker (T06). Dispatch-table
-architecture with 30 registered commands across 6 categories (TUI,
-Agent, Session, Modal, Meta, Skills). Argument parsing with quote
-support, programmatic register/unregister, categorized help generation.
-Replaced tui_process_input's 200-line if/else chain with single
-tui_slash_dispatch() call. 20-test suite (test_tui_slash_worker.c).
-S4 depth improved from 15→14 gaps.
+**Latest:** Phase 375 — TUI Entry/Startup Module (T05). Lifecycle
+wrapper: pre-flight checks (TERM env, isatty, color support, minimum
+size), SIGTERM handler with atomic stop flag, startup result codes
+with human-readable messages, exit reason tracking. Graceful
+degradation for terminal too small / no color / no TERM. 
+10-test suite (test_tui_entry.c). S4 depth improved from 14→13 gaps.
 
 **Next gap target:**
-- S4 TUI backend (T01-T05, T08)
+- S4 TUI backend (T01-T04, T08)
 - S7 Test coverage
 
 **Structural gaps remaining by sector:**
