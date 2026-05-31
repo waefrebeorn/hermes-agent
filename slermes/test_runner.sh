@@ -2824,7 +2824,7 @@ if gcc -O2 -Wall -Wextra "${INCLUDES_ALL[@]}" \
     "$CDIR/src/tools/x_search.c" \
     "$CDIR/lib/libjson/json.c" "$CDIR/lib/libhttp/http.c" "$CDIR/lib/libbase64/base64.c" \
     -o /tmp/hermes_test_x_search -lm -lssl -lcrypto -Wl,--unresolved-symbols=ignore-all > /dev/null 2>&1; then
-    if /tmp/hermes_test_x_search > /dev/null 2>&1; then ok "x_search (9 tests: 4 error-path + 5 date validation)"
+    if /tmp/hermes_test_x_search > /dev/null 2>&1; then ok "x_search (24 tests: 4 error-path + 5 date validation + 15 edge cases)"
     else fail "x_search (test binary returned non-zero)"; fi
     rm -f /tmp/hermes_test_x_search
 else skip "x_search (compilation failed)"

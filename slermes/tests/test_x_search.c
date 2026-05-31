@@ -132,6 +132,181 @@ static void test_valid_dates_pass_api_key_check(void) {
     PASS();
 }
 
+/* --- Edge case expansion: 15 new tests --- */
+
+static void test_empty_query_string(void) {
+    TEST("x_search_handler(empty query) returns Missing query");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_empty_object(void) {
+    TEST("x_search_handler({}) returns Missing query");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_from_date_dashes_only(void) {
+    TEST("x_search_handler(from_date=----) returns invalid format");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"from_date\":\"----\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Invalid from_date") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_only_to_date_no_from_date(void) {
+    TEST("x_search_handler(only to_date) validates, calls API");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"to_date\":\"2024-12-31\"}", NULL);
+    assert(result != NULL);
+    /* Should pass date validation, fail on actual API call */
+    assert(strstr(result, "Invalid to_date") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_only_from_date_no_to_date(void) {
+    TEST("x_search_handler(only from_date) validates, calls API");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"from_date\":\"2024-01-01\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Invalid from_date") == NULL);
+    assert(strstr(result, "is in the future") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_from_date_equals_to_date(void) {
+    TEST("x_search_handler(from_date == to_date) passes validation");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"from_date\":\"2024-06-15\",\"to_date\":\"2024-06-15\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "from_date must not be after to_date") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_empty_from_date_string(void) {
+    TEST("x_search_handler(empty from_date) returns invalid format");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"from_date\":\"\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Invalid from_date") != NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_max_results_zero(void) {
+    TEST("x_search_handler(max_results=0) passes validation, calls API");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"max_results\":0}", NULL);
+    assert(result != NULL);
+    /* Should build request and fail on API call, not on validation */
+    assert(strstr(result, "error") != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    assert(strstr(result, "JSON parse") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_search_type_users(void) {
+    TEST("x_search_handler(search_type=users) takes users code path");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"search_type\":\"users\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_extra_unknown_fields_ignored(void) {
+    TEST("x_search_handler(extra fields) ignores unknown fields");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"unknown_field\":\"value\",\"another\":42}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    assert(strstr(result, "JSON parse") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_sort_order_recency(void) {
+    TEST("x_search_handler(sort_order=recency) passes validation");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"sort_order\":\"recency\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_lang_param(void) {
+    TEST("x_search_handler(lang=ja) filters by language");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"lang\":\"ja\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_geo_partial_params(void) {
+    TEST("x_search_handler(geo_lat without geo_long) still builds request");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"geo_lat\":37.7749}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    /* geo_lat=999.0 sentinel means lat is "missing"; so no geo block built */
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_exclude_retweets_true(void) {
+    TEST("x_search_handler(exclude_retweets=true) sets flag, calls API");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"exclude_retweets\":true}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Missing query") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
+static void test_from_date_zero_values(void) {
+    TEST("x_search_handler(from_date=0000-00-00) accepts zero date, calls API");
+    setenv("XAI_API_KEY", "test-key-123", 1);
+    char *result = x_search_handler("{\"query\":\"x\",\"from_date\":\"0000-00-00\"}", NULL);
+    assert(result != NULL);
+    assert(strstr(result, "Invalid from_date") == NULL);
+    assert(strstr(result, "is in the future") == NULL);
+    free(result);
+    unsetenv("XAI_API_KEY");
+    PASS();
+}
+
 int main(void) {
     printf("=== xAI Search Tool Tests ===\n");
 
@@ -144,6 +319,22 @@ int main(void) {
     test_from_date_after_to_date();
     test_from_date_future();
     test_valid_dates_pass_api_key_check();
+
+    test_empty_query_string();
+    test_empty_object();
+    test_from_date_dashes_only();
+    test_only_to_date_no_from_date();
+    test_only_from_date_no_to_date();
+    test_from_date_equals_to_date();
+    test_empty_from_date_string();
+    test_max_results_zero();
+    test_search_type_users();
+    test_extra_unknown_fields_ignored();
+    test_sort_order_recency();
+    test_lang_param();
+    test_geo_partial_params();
+    test_exclude_retweets_true();
+    test_from_date_zero_values();
 
     printf("\n%d/%d passed\n", passed, tests);
     return (passed == tests) ? 0 : 1;

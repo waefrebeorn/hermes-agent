@@ -1,17 +1,15 @@
-# Prestige — Progress Log (v462)
-Phase 406: Cron Tool Edge Case Expansion — S7 X04 EXPANDED.
-test_cron_tool.c +32 new assertions (25→57), +128%.
-21 new test blocks: empty action (→error), update (missing/with schedule/with command+retry),
-pause (missing/with name), resume (missing/with name), run (missing/with name),
-history (missing/with name/with limit), unknown @-schedule, add timezone, config timezone,
-empty command, name filter, bare config, empty schedule, empty name.
-Stubs: cron_sqlite_update_job, cron_sqlite_get_command, cron_run_job.
-Suite: 338/?/13. 53 gaps. X04 cronjob_tool depth improved (+128%).
+# Prestige — Progress Log (v463)
+Phase 407: x_Search Tool Edge Case Expansion — S7 X04 EXPANDED.
+test_x_search.c +15 new test functions (9→24), +167%.
+15 edge cases: empty query, empty object, from_date dashes-only,
+only to_date, only from_date, equal dates, empty from_date,
+max_results=0, search_type=users, extra fields, sort_order=recency,
+lang=ja, geo partial, exclude_retweets, zero date.
+Suite: 338/?/13. 53 gaps. X04 x_search_tool depth improved (+167%).
 
 ## Recent Phases
+- Phase 406: Cron Tool Edge Case Expansion — S7 X04 (25→57 asserts, +128%)
 - Phase 405: Discord Tool Edge Case Expansion — S7 X04 (13→19 tests, +46%)
-- Phase 404: TTS Tool Edge Case Expansion — S7 X04 (11→17 tests)
-- Phase 403: Skills Hub Edge Case Expansion — S7 X04 (17→41 tests, +141%)
 
 ### Sector Status
 PORTED: S0, S1, S2, S3, S6, S8

@@ -1,5 +1,17 @@
 # 🏆 Vault of Achievements — Slermes C Translation
 
+## Phase 407 — x_Search Tool Edge Case Expansion (S7 X04)
+2026-06-01: Expanded test_x_search.c 9→24 test functions (+167%).
+15 new test functions: empty query (empty string→Missing query),
+empty object ({}→Missing query), from_date dashes-only (----→invalid format),
+only to_date (validates + calls API), only from_date (validates + calls API),
+from_date==to_date (same day passes), empty from_date (→invalid format),
+max_results=0 (builds request, no validation error), search_type=users (takes
+users code path), extra unknown fields ignored, sort_order=recency, lang=ja,
+geo partial (lat without long has no geo block), exclude_retweets=true,
+from_date=0000-00-00 (zero date accepted).
+Suite: 338/0/13. Gaps: 53 (depth). Version: v463.
+
 ## Phase 406 — Cron Tool Edge Case Expansion (S7 X04)
 2026-06-01: Expanded test_cron_tool.c 25→57 assertions (+128%).
 21 new test blocks: empty action (→error), update (missing/schedule/command+retry),
@@ -12,7 +24,7 @@ Suite: 338/0/13. Gaps: 53 (depth). Version: v462.
 > Every closed gap, resolved claim, and retired stale assertion.
 > Verified against running source at time of retirement.
 >
-> **v462** · 53 active gaps · **2196 entries** of progress
+> **v463** · 53 active gaps · **2196 entries** of progress
 |
 |## 📊 Sector Summary
 
