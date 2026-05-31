@@ -880,11 +880,14 @@ llm_response_t *llm_chat_completion(llm_config_t *cfg,
                            0, 0, &err);
             char err_buf[256];
             error_format(&err, err_buf, sizeof(err_buf));
-            if (resp->diag.upstream_headers[0])
-                fprintf(stderr, "[llm] %s [upstream: %s]\n",
-                        err_buf, resp->diag.upstream_headers);
-            else
-                fprintf(stderr, "[llm] %s\n", err_buf);
+            /* P95: Diagnostic output -- SLERMES_DEBUG only */
+            if (getenv("SLERMES_DEBUG")) {
+                if (resp->diag.upstream_headers[0])
+                    fprintf(stderr, "[llm] %s [upstream: %s]\n",
+                            err_buf, resp->diag.upstream_headers);
+                else
+                    fprintf(stderr, "[llm] %s\n", err_buf);
+            }
             if (err.should_compress)
                 resp->compress_hint = true;
             if (err.should_rotate_credential)
@@ -1514,7 +1517,7 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
             size_t tokens = resp->diag.total_tokens;
             double ttfb = resp->diag.time_to_first_token;
 
-            fprintf(stderr, "[llm] Stream failed for %s/%s"
+            if (getenv("SLERMES_DEBUG")) fprintf(stderr, "[llm] Stream failed for %s/%s"
                     " elapsed=%.1fs tokens=%zu ttfb=%.2fs"
                     "%s%s\n",
                     cfg->provider, cfg->model,
@@ -1613,7 +1616,7 @@ llm_response_t *llm_chat_completion_stream(llm_config_t *cfg,
         double elapsed = resp->diag.total_stream_time > 0 ?
             resp->diag.total_stream_time : 0.0;
         size_t tokens = resp->diag.total_tokens;
-        fprintf(stderr, "[llm] Legacy stream failed after %.1fs (%zu tokens)\n",
+        if (getenv("SLERMES_DEBUG")) fprintf(stderr, "[llm] Legacy stream failed after %.1fs (%zu tokens)\n",
                 elapsed, tokens);
         char drop_msg[256];
         snprintf(drop_msg, sizeof(drop_msg),

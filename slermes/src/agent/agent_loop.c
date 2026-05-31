@@ -1230,8 +1230,8 @@ char *agent_run_conversation(agent_state_t *state,
         }
 
 retry_done:
-        /* P95: Log upstream diagnostic headers on success */
-        if (llm_resp && llm_resp->diag.upstream_headers[0]) {
+        /* P95: Log upstream diagnostic headers on success (verbose only) */
+        if (llm_resp && llm_resp->diag.upstream_headers[0] && getenv("SLERMES_DEBUG")) {
             fprintf(stderr, "[llm] upstream=[%s]\n",
                     llm_resp->diag.upstream_headers);
         }

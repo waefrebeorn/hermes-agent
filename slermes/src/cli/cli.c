@@ -909,7 +909,17 @@ start_interactive:
         }
     }
 
-    while (g_cli.running) {
+    
+        /* Show initial status bar */
+        if (g_cli.config.display.statusbar) {
+            display_statusbar(
+                g_cli.agent.llm.model,
+                g_cli.agent.session_id,
+                0,
+                0,
+                g_cli.agent.max_iterations);
+        }
+while (g_cli.running) {
         /* P19: Check SIGHUP-based config reload before each input */
         hermes_config_check_reload(&g_cli.config, NULL);
 
@@ -1083,7 +1093,8 @@ start_interactive:
                 g_cli.agent.llm.model,
                 g_cli.agent.session_id,
                 g_cli.agent.user_turn_count,
-                0);
+                g_cli.agent.session_total_tokens,
+                g_cli.agent.max_iterations);
         }
     }
 
